@@ -1,0 +1,281 @@
+
+Key parameters for ATxmega32C4
+
+
+Parameter
+
+	Value
+
+
+Flash (kBytes):
+
+	32 kBytes
+
+
+Pin Count:
+
+	44
+
+
+Max. Operating Freq. (MHz):
+
+	32 MHz
+
+
+CPU:
+
+	8-bit AVR
+
+
+# of Touch Channels:
+
+	16
+
+
+Hardware QTouch Acquisition:
+
+	No
+
+
+Max I/O Pins:
+
+	34
+
+
+Ext Interrupts:
+
+	34
+
+
+USB Transceiver:
+
+	1
+
+
+USB Speed:
+
+	Full Speed
+
+
+USB Interface:
+
+	Device
+
+
+SPI:
+
+	4
+
+
+TWI (I2C):
+
+	2
+
+
+UART:
+
+	2
+
+
+Graphic LCD:
+
+	No
+
+
+Video Decoder:
+
+	No
+
+
+Camera Interface:
+
+	No
+
+
+ADC Channels:
+
+	12
+
+
+ADC Resolution (bits):
+
+	12
+
+
+ADC Speed (ksps):
+
+	300
+
+
+Analog Comparators:
+
+	2
+
+
+Resistive Touch Screen:
+
+	No
+
+
+DAC Channels:
+
+	0
+
+
+DAC Resolution (bits):
+
+	0
+
+
+Temp. Sensor:
+
+	Yes
+
+
+SRAM (kBytes):
+
+	4
+
+
+EEPROM (Bytes):
+
+	1024
+
+
+Self Program Memory:
+
+	Yes
+
+
+External Bus Interface:
+
+	0
+
+
+DRAM Memory:
+
+	No
+
+
+NAND Interface:
+
+	No
+
+
+picoPower:
+
+	Yes
+
+
+Temp. Range (deg C):
+
+	-40 to 85
+
+
+I/O Supply Class:
+
+	1.6 to 3.6
+
+
+Operating Voltage (Vcc):
+
+	1.6 to 3.6
+
+
+FPU:
+
+	No
+
+
+MPU / MMU:
+
+	no / no
+
+
+Crypto Engine:
+
+	No
+
+
+Timers:
+
+	4
+
+
+Output Compare Channels:
+
+	14
+
+
+Input Capture Channels:
+
+	14
+
+
+PWM Channels:
+
+	14
+
+
+32kHz RTC:
+
+	Yes
+
+
+Calibrated RC Oscillator:
+
+	Yes
+
+
+Watchdog:
+
+	Yes
+
+
+CAN:
+
+	0
+
+
+LIN:
+
+	0
+
+
+Ethernet:
+
+	0
+
+
+Quadrature Decoder Channels:
+
+	1
+
+
+Debug Interface:
+
+	PDI
+
+
+I2S:
+
+	No
+
+
+RTC:
+
+	Counter
+
+
+Diff. ADC Inputs:
+
+	48
+
+
+Series:
+
+	C Series 
+
+
+
+<EOF>
