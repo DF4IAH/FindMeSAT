@@ -573,10 +573,10 @@ data entry: DF4IAH</description>
 </symbol>
 <symbol name="LM4120IM5-3.0">
 <pin name="VIN" x="-17.78" y="5.08" length="middle" direction="pwr"/>
-<pin name="REF" x="-17.78" y="-2.54" length="middle" direction="in"/>
+<pin name="REF" x="-17.78" y="-2.54" length="middle" direction="nc"/>
 <pin name="EN" x="-17.78" y="0" length="middle" direction="in"/>
 <pin name="GND" x="-17.78" y="-7.62" length="middle" direction="pas"/>
-<pin name="VOUT" x="17.78" y="5.08" length="middle" direction="out" rot="R180"/>
+<pin name="VOUT" x="17.78" y="5.08" length="middle" direction="sup" rot="R180"/>
 <wire x1="-12.7" y1="10.16" x2="-12.7" y2="-12.7" width="0.1524" layer="94"/>
 <wire x1="-12.7" y1="-12.7" x2="12.7" y2="-12.7" width="0.1524" layer="94"/>
 <wire x1="12.7" y1="-12.7" x2="12.7" y2="10.16" width="0.1524" layer="94"/>

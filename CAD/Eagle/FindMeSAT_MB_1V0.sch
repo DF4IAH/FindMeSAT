@@ -271,10 +271,10 @@ Power Supply devices but 78*, 79* regulators.</description>
 </symbol>
 <symbol name="LM4120IM5-3.0">
 <pin name="VIN" x="-17.78" y="5.08" length="middle" direction="pwr"/>
-<pin name="REF" x="-17.78" y="-2.54" length="middle" direction="in"/>
+<pin name="REF" x="-17.78" y="-2.54" length="middle" direction="nc"/>
 <pin name="EN" x="-17.78" y="0" length="middle" direction="in"/>
 <pin name="GND" x="-17.78" y="-7.62" length="middle" direction="pas"/>
-<pin name="VOUT" x="17.78" y="5.08" length="middle" direction="out" rot="R180"/>
+<pin name="VOUT" x="17.78" y="5.08" length="middle" direction="sup" rot="R180"/>
 <wire x1="-12.7" y1="10.16" x2="-12.7" y2="-12.7" width="0.1524" layer="94"/>
 <wire x1="-12.7" y1="-12.7" x2="12.7" y2="-12.7" width="0.1524" layer="94"/>
 <wire x1="12.7" y1="-12.7" x2="12.7" y2="10.16" width="0.1524" layer="94"/>
@@ -9296,7 +9296,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <part name="+3V3_291" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="L291" library="rcl" deviceset="L-EU" device="L3216C" value="WE-CBF_300R"/>
 <part name="+3V0_231" library="df4iah_supply" deviceset="+3V0" device=""/>
-<part name="C231" library="rcl" deviceset="C-EU" device="C0603" value="100p"/>
+<part name="C251" library="rcl" deviceset="C-EU" device="C0603" value="100p"/>
 <part name="GND231" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="R153" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R152" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
@@ -9309,7 +9309,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <part name="R131" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R132" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="+3V3_121" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R1" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R251" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R141" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R142" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 </parts>
@@ -9341,7 +9341,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>
 <instance part="U101" gate="A" x="109.22" y="104.14" smashed="yes">
 <attribute name="NAME" x="103.9876" y="143.2306" size="2.0828" layer="95" ratio="10" rot="SR0"/>
-<attribute name="VALUE" x="96.3676" y="60.2742" size="2.0828" layer="96" ratio="10" rot="SR0"/>
+<attribute name="VALUE" x="93.0656" y="60.2742" size="2.0828" layer="96" ratio="10" rot="SR0"/>
 </instance>
 <instance part="C151" gate="G$1" x="220.98" y="43.18"/>
 <instance part="GND151" gate="1" x="220.98" y="35.56"/>
@@ -9899,14 +9899,14 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <attribute name="VALUE" x="45.212" y="29.21" size="1.778" layer="96"/>
 </instance>
 <instance part="+3V0_231" gate="G$2" x="53.34" y="139.7" rot="R90"/>
-<instance part="C231" gate="G$1" x="86.36" y="137.16"/>
+<instance part="C251" gate="G$1" x="86.36" y="137.16"/>
 <instance part="GND231" gate="1" x="86.36" y="129.54"/>
 <instance part="R231" gate="G$1" x="180.34" y="55.88"/>
 <instance part="R232" gate="G$1" x="193.04" y="50.8"/>
 <instance part="R233" gate="G$1" x="180.34" y="45.72"/>
 <instance part="R234" gate="G$1" x="193.04" y="30.48"/>
 <instance part="R241" gate="G$1" x="195.58" y="96.52"/>
-<instance part="R1" gate="G$1" x="96.52" y="35.56"/>
+<instance part="R251" gate="G$1" x="96.52" y="35.56"/>
 </instances>
 <busses>
 </busses>
@@ -10018,7 +10018,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <pinref part="GND293" gate="1" pin="GND"/>
 </segment>
 <segment>
-<pinref part="C231" gate="G$1" pin="2"/>
+<pinref part="C251" gate="G$1" pin="2"/>
 <pinref part="GND231" gate="1" pin="GND"/>
 </segment>
 </net>
@@ -10144,7 +10144,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <segment>
 <pinref part="U201" gate="G$1" pin="1PPS"/>
 <wire x1="114.3" y1="63.5" x2="114.3" y2="35.56" width="0.1524" layer="91"/>
-<pinref part="R1" gate="G$1" pin="2"/>
+<pinref part="R251" gate="G$1" pin="2"/>
 <wire x1="114.3" y1="35.56" x2="101.6" y2="35.56" width="0.1524" layer="91"/>
 <label x="114.3" y="38.1" size="1.778" layer="95" rot="R90"/>
 </segment>
@@ -10348,7 +10348,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <pinref part="U201" gate="G$1" pin="VRTC"/>
 <wire x1="86.36" y1="139.7" x2="109.22" y2="139.7" width="0.1524" layer="91"/>
 <wire x1="109.22" y1="139.7" x2="109.22" y2="134.62" width="0.1524" layer="91"/>
-<pinref part="C231" gate="G$1" pin="1"/>
+<pinref part="C251" gate="G$1" pin="1"/>
 <junction x="86.36" y="139.7"/>
 </segment>
 </net>
@@ -10441,7 +10441,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <segment>
 <wire x1="91.44" y1="35.56" x2="88.9" y2="35.56" width="0.1524" layer="91"/>
 <label x="88.9" y="35.56" size="1.778" layer="97" rot="R180" xref="yes"/>
-<pinref part="R1" gate="G$1" pin="1"/>
+<pinref part="R251" gate="G$1" pin="1"/>
 </segment>
 </net>
 </nets>
@@ -11495,6 +11495,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 </sheet>
 </sheets>
 <errors>
+<approved hash="102,11,208.28,58.42,VOUT,+3V0,,,,"/>
 <approved hash="104,11,73.66,119.38,IC1111,VIN,+5V,,,"/>
 <approved hash="104,1,129.54,81.28,U101A,VBAT,+3V0,,,"/>
 <approved hash="104,11,73.66,63.5,U101B,VCC_2,+3V3,,,"/>
@@ -11506,7 +11507,6 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <approved hash="104,10,167.64,127,U1011,V+,+3V3,,,"/>
 <approved hash="104,10,167.64,114.3,U1011,V-,GND,,,"/>
 <approved hash="104,11,172.72,58.42,U1121,VIN,VBAT_DD,,,"/>
-<approved hash="202,11,172.72,50.8,U1121,REF,,,,"/>
 <approved hash="104,2,109.22,134.62,U201,VRTC,+3V0,,,"/>
 <approved hash="202,2,93.98,116.84,U201,MIC1P,,,,"/>
 <approved hash="202,2,93.98,114.3,U201,MIC1N,,,,"/>
@@ -11524,11 +11524,6 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <approved hash="204,8,177.8,109.22,J801B,T4,,,,"/>
 <approved hash="104,10,167.64,55.88,U1021,V+,+3V3,,,"/>
 <approved hash="104,10,167.64,43.18,U1021,V-,GND,,,"/>
-<approved hash="208,1,220.98,152.4,+3V0,sup,,,,"/>
-<approved hash="208,2,55.88,139.7,+3V0,sup,,,,"/>
-<approved hash="208,10,88.9,147.32,+3V0,sup,,,,"/>
-<approved hash="208,11,208.28,58.42,+3V0,out,,,,"/>
-<approved hash="208,11,228.6,58.42,+3V0,sup,,,,"/>
 </errors>
 </schematic>
 </drawing>
