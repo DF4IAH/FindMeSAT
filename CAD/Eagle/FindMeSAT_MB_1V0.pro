@@ -2,24 +2,24 @@ EAGLE AutoRouter Statistics:
 
 Job           : /Users/espero/Documents/eagle/FindMeSAT/FindMeSAT_MB_1V0.brd
 
-Start at      : 23:20:45 (14.12.16)
-End at        : 23:20:47 (14.12.16)
-Elapsed time  : 00:00:00
+Start at      : 22:43:43 (28.12.16)
+End at        : 22:44:28 (28.12.16)
+Elapsed time  : 00:00:37
 
-Signals       :     6   RoutingGrid: 19.685 mil  Layers: 4
-Connections   :    21   predefined:  19 ( 5 Vias )
+Signals       :    95   RoutingGrid: 9.84252 mil  Layers: 4
+Connections   :   259   predefined:  7 ( 0 Vias )
 
-Router memory :   369600
+Router memory :   1457184
 
-Passname          :    Busses     Route Optimize1 Optimize2 Optimize3 Optimize4
+Passname          :     Route Optimize1 Optimize2 Optimize3 Optimize4
 
-Time per pass     :  00:00:00  00:00:00  00:00:00  00:00:00  00:00:00  00:00:00
-Number of Ripups  :         0         0         0         0         0         0
-max. Level        :         0         0         0         0         0         0
-max. Total        :         0         0         0         0         0         0
+Time per pass     :  00:00:14  00:00:06  00:00:05  00:00:06  00:00:06
+Number of Ripups  :         5         0         0         0         0
+max. Level        :         2         0         0         0         0
+max. Total        :        63         0         0         0         0
 
-Routed            :         0         2         2         2         2         2
-Vias              :         0         2         0         0         0         0
-Resolution        :    90.5 %   100.0 %   100.0 %   100.0 %   100.0 %   100.0 %
+Routed            :       187       187       187       187       187
+Vias              :       142        94        90        90        90
+Resolution        :    74.9 %    74.9 %    74.9 %    74.9 %    74.9 %
 
-Final             : 100.0% beendet
+Final             : 74.9% beendet. Polygone könnten in mehrere Teile zerfallen sein.

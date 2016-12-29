@@ -9130,10 +9130,12 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <classes>
 <class number="0" name="default" width="0" drill="0">
 </class>
-<class number="1" name="R50" width="3.2" drill="0">
+<class number="1" name="pwr" width="0.8" drill="0">
 <clearance class="1" value="3"/>
 </class>
-<class number="2" name="power" width="2.5" drill="0">
+<class number="2" name="R50" width="0.64" drill="0">
+</class>
+<class number="3" name="R90" width="0.381" drill="0">
 </class>
 </classes>
 <parts>
@@ -9673,14 +9675,14 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <label x="190.5" y="106.68" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="USB_D+" class="0">
+<net name="USB_D_P" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PD7"/>
 <wire x1="129.54" y1="121.92" x2="137.16" y2="121.92" width="0.1524" layer="91"/>
 <label x="137.16" y="121.92" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="USB_D-" class="0">
+<net name="USB_D_N" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PD6"/>
 <wire x1="129.54" y1="124.46" x2="137.16" y2="124.46" width="0.1524" layer="91"/>
@@ -9782,7 +9784,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <label x="137.16" y="71.12" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="USB_RESET" class="0">
+<net name="USB_RESET" class="3">
 <segment>
 <wire x1="180.34" y1="127" x2="190.5" y2="127" width="0.1524" layer="91"/>
 <label x="190.5" y="127" size="1.778" layer="95" xref="yes"/>
@@ -9797,7 +9799,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <label x="137.16" y="127" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="USB_ID" class="0">
+<net name="USB_ID" class="3">
 <segment>
 <wire x1="187.96" y1="129.54" x2="190.5" y2="129.54" width="0.1524" layer="91"/>
 <label x="190.5" y="129.54" size="1.778" layer="95" xref="yes"/>
@@ -10297,7 +10299,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <label x="55.88" y="154.94" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="GPS_ANT" class="1">
+<net name="GPS_ANT" class="2">
 <segment>
 <pinref part="J291" gate="G$1" pin="1"/>
 <wire x1="27.94" y1="20.32" x2="43.18" y2="20.32" width="0.3048" layer="91"/>
@@ -10611,7 +10613,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <label x="167.64" y="142.24" size="1.778" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
-<net name="USB_D-" class="0">
+<net name="USB_D_N" class="0">
 <segment>
 <pinref part="R722" gate="G$1" pin="2"/>
 <wire x1="121.92" y1="91.44" x2="154.94" y2="91.44" width="0.1524" layer="91"/>
@@ -10624,7 +10626,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="167.64" y1="93.98" x2="175.26" y2="93.98" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="USB_D+" class="0">
+<net name="USB_D_P" class="0">
 <segment>
 <pinref part="R723" gate="G$1" pin="2"/>
 <wire x1="121.92" y1="88.9" x2="142.24" y2="88.9" width="0.1524" layer="91"/>
@@ -10646,7 +10648,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <pinref part="J701" gate="G$1" pin="J_ID"/>
 </segment>
 </net>
-<net name="USB_ID" class="0">
+<net name="USB_ID" class="3">
 <segment>
 <wire x1="121.92" y1="66.04" x2="175.26" y2="66.04" width="0.1524" layer="91"/>
 <label x="175.26" y="66.04" size="1.778" layer="95" xref="yes"/>
@@ -10666,7 +10668,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="30.48" y1="88.9" x2="33.02" y2="88.9" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="USB_RESET" class="0">
+<net name="USB_RESET" class="3">
 <segment>
 <pinref part="R721" gate="G$1" pin="2"/>
 <wire x1="121.92" y1="101.6" x2="175.26" y2="101.6" width="0.1524" layer="91"/>
