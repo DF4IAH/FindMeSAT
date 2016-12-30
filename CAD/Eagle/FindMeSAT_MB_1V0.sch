@@ -9130,12 +9130,14 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <classes>
 <class number="0" name="default" width="0" drill="0">
 </class>
-<class number="1" name="pwr" width="0.8" drill="0">
+<class number="1" name="pwr2A" width="0.8" drill="0">
 <clearance class="1" value="3"/>
 </class>
 <class number="2" name="R50" width="0.64" drill="0">
 </class>
 <class number="3" name="R90" width="0.381" drill="0">
+</class>
+<class number="4" name="pwrA5" width="0.4" drill="0">
 </class>
 </classes>
 <parts>
@@ -9366,10 +9368,10 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <instance part="R152" gate="G$1" x="175.26" y="106.68"/>
 <instance part="R151" gate="G$1" x="182.88" y="109.22"/>
 <instance part="R131" gate="G$1" x="182.88" y="137.16"/>
-<instance part="R132" gate="G$1" x="175.26" y="134.62"/>
+<instance part="R132" gate="G$1" x="175.26" y="132.08"/>
 <instance part="+3V3_121" gate="G$1" x="55.88" y="154.94"/>
-<instance part="R141" gate="G$1" x="182.88" y="129.54"/>
-<instance part="R142" gate="G$1" x="175.26" y="127"/>
+<instance part="R141" gate="G$1" x="167.64" y="129.54"/>
+<instance part="R142" gate="G$1" x="182.88" y="127"/>
 </instances>
 <busses>
 </busses>
@@ -9728,17 +9730,10 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 </net>
 <net name="GSM_PCM_OUT" class="0">
 <segment>
-<wire x1="180.34" y1="134.62" x2="190.5" y2="134.62" width="0.1524" layer="91"/>
+<wire x1="129.54" y1="134.62" x2="190.5" y2="134.62" width="0.1524" layer="91"/>
 <label x="190.5" y="134.62" size="1.778" layer="95" xref="yes"/>
-<pinref part="R132" gate="G$1" pin="2"/>
-</segment>
-</net>
-<net name="GSM_PCM_IN" class="0">
-<segment>
-<label x="190.5" y="132.08" size="1.778" layer="95" xref="yes"/>
-<pinref part="U101" gate="A" pin="PD3"/>
-<wire x1="190.5" y1="132.08" x2="129.54" y2="132.08" width="0.1524" layer="91"/>
-<label x="137.16" y="132.08" size="1.778" layer="95"/>
+<pinref part="U101" gate="A" pin="PD2"/>
+<label x="137.16" y="134.62" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="GSM_PCM_CLK_DRV" class="0">
@@ -9747,14 +9742,6 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <pinref part="U101" gate="A" pin="PD1"/>
 <wire x1="177.8" y1="137.16" x2="129.54" y2="137.16" width="0.1524" layer="91"/>
 <label x="137.16" y="137.16" size="1.778" layer="95"/>
-</segment>
-</net>
-<net name="GSM_PCM_OUT_DRV" class="0">
-<segment>
-<pinref part="R132" gate="G$1" pin="1"/>
-<pinref part="U101" gate="A" pin="PD2"/>
-<wire x1="170.18" y1="134.62" x2="129.54" y2="134.62" width="0.1524" layer="91"/>
-<label x="137.16" y="134.62" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="+3V3" class="0">
@@ -9786,7 +9773,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 </net>
 <net name="USB_RESET" class="3">
 <segment>
-<wire x1="180.34" y1="127" x2="190.5" y2="127" width="0.1524" layer="91"/>
+<wire x1="187.96" y1="127" x2="190.5" y2="127" width="0.1524" layer="91"/>
 <label x="190.5" y="127" size="1.778" layer="95" xref="yes"/>
 <pinref part="R142" gate="G$1" pin="2"/>
 </segment>
@@ -9794,14 +9781,14 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <net name="USB_RESET_DRV" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PD5"/>
-<wire x1="129.54" y1="127" x2="170.18" y2="127" width="0.1524" layer="91"/>
+<wire x1="129.54" y1="127" x2="177.8" y2="127" width="0.1524" layer="91"/>
 <pinref part="R142" gate="G$1" pin="1"/>
 <label x="137.16" y="127" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="USB_ID" class="3">
 <segment>
-<wire x1="187.96" y1="129.54" x2="190.5" y2="129.54" width="0.1524" layer="91"/>
+<wire x1="172.72" y1="129.54" x2="190.5" y2="129.54" width="0.1524" layer="91"/>
 <label x="190.5" y="129.54" size="1.778" layer="95" xref="yes"/>
 <pinref part="R141" gate="G$1" pin="2"/>
 </segment>
@@ -9810,7 +9797,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <segment>
 <pinref part="R141" gate="G$1" pin="1"/>
 <pinref part="U101" gate="A" pin="PD4"/>
-<wire x1="177.8" y1="129.54" x2="129.54" y2="129.54" width="0.1524" layer="91"/>
+<wire x1="162.56" y1="129.54" x2="129.54" y2="129.54" width="0.1524" layer="91"/>
 <label x="137.16" y="129.54" size="1.778" layer="95"/>
 </segment>
 </net>
@@ -9833,6 +9820,21 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <pinref part="U101" gate="A" pin="PC2"/>
 <wire x1="88.9" y1="88.9" x2="86.36" y2="88.9" width="0.1524" layer="91"/>
 <label x="86.36" y="88.9" size="1.778" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="GSM_PCM_IN_DRV" class="0">
+<segment>
+<pinref part="U101" gate="A" pin="PD3"/>
+<wire x1="170.18" y1="132.08" x2="129.54" y2="132.08" width="0.1524" layer="91"/>
+<label x="137.16" y="132.08" size="1.778" layer="95"/>
+<pinref part="R132" gate="G$1" pin="1"/>
+</segment>
+</net>
+<net name="GSM_PCM_IN" class="0">
+<segment>
+<pinref part="R132" gate="G$1" pin="2"/>
+<wire x1="180.34" y1="132.08" x2="190.5" y2="132.08" width="0.1524" layer="91"/>
+<label x="190.5" y="132.08" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
 </nets>
@@ -10024,7 +10026,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <pinref part="GND231" gate="1" pin="GND"/>
 </segment>
 </net>
-<net name="GPS_RF_IN" class="1">
+<net name="GPS_RF_IN" class="2">
 <segment>
 <pinref part="U201" gate="G$1" pin="GPS_RF_IN"/>
 <wire x1="83.82" y1="20.32" x2="91.44" y2="20.32" width="0.3048" layer="91"/>
@@ -10059,7 +10061,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <junction x="139.7" y="147.32"/>
 </segment>
 </net>
-<net name="+5V" class="2">
+<net name="+5V" class="4">
 <segment>
 <pinref part="+5V0_201" gate="G$1" pin="+5V"/>
 <pinref part="U201" gate="G$1" pin="VBUS"/>
@@ -10176,7 +10178,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <label x="170.18" y="81.28" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="GSM_ANT" class="1">
+<net name="GSM_ANT" class="2">
 <segment>
 <wire x1="200.66" y1="114.3" x2="208.28" y2="114.3" width="0.3048" layer="91"/>
 <label x="223.52" y="114.3" size="1.778" layer="97" xref="yes"/>
@@ -10324,7 +10326,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <junction x="208.28" y="81.28"/>
 </segment>
 </net>
-<net name="GSM_RF" class="1">
+<net name="GSM_RF" class="2">
 <segment>
 <pinref part="U201" gate="G$1" pin="GSM_RF_IN"/>
 <wire x1="165.1" y1="114.3" x2="182.88" y2="114.3" width="0.3048" layer="91"/>
@@ -10596,7 +10598,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <pinref part="J701" gate="G$1" pin="J_D-"/>
 </segment>
 </net>
-<net name="+5V" class="2">
+<net name="+5V" class="4">
 <segment>
 <pinref part="RPOLY711" gate="G$1" pin="2"/>
 <wire x1="121.92" y1="142.24" x2="142.24" y2="142.24" width="0.1524" layer="91"/>
@@ -10655,7 +10657,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <pinref part="R725" gate="G$1" pin="2"/>
 </segment>
 </net>
-<net name="J_SCHIELD" class="0">
+<net name="J_SHIELD" class="0">
 <segment>
 <wire x1="30.48" y1="88.9" x2="30.48" y2="71.12" width="0.1524" layer="91"/>
 <wire x1="30.48" y1="71.12" x2="30.48" y2="58.42" width="0.1524" layer="91"/>
@@ -10675,7 +10677,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <label x="175.26" y="101.6" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="J_VUSB" class="0">
+<net name="J_VUSB" class="4">
 <segment>
 <pinref part="J701" gate="G$1" pin="J_VUSB"/>
 <wire x1="45.72" y1="93.98" x2="50.8" y2="93.98" width="0.1524" layer="91"/>
@@ -11242,7 +11244,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <label x="66.04" y="132.08" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="+5V" class="2">
+<net name="+5V" class="4">
 <segment>
 <pinref part="+5V0_1111" gate="G$1" pin="+5V"/>
 <wire x1="25.4" y1="149.86" x2="25.4" y2="137.16" width="0.1524" layer="91"/>
