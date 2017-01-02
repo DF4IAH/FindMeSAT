@@ -10181,7 +10181,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <pinref part="R231" gate="G$1" pin="2"/>
 </segment>
 </net>
-<net name="BT_RF" class="1">
+<net name="BT_RF" class="2">
 <segment>
 <pinref part="U201" gate="G$1" pin="ANT_BT"/>
 <wire x1="165.1" y1="81.28" x2="182.88" y2="81.28" width="0.3048" layer="91"/>
@@ -10330,7 +10330,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <label x="30.48" y="20.32" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="BT_ANT" class="1">
+<net name="BT_ANT" class="2">
 <segment>
 <wire x1="200.66" y1="81.28" x2="208.28" y2="81.28" width="0.3048" layer="91"/>
 <label x="223.52" y="81.28" size="1.778" layer="97" xref="yes"/>
@@ -10351,7 +10351,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <label x="170.18" y="114.3" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="GPS_PWR" class="1">
+<net name="GPS_PWR" class="0">
 <segment>
 <pinref part="RPOLY291" gate="G$1" pin="1"/>
 <wire x1="43.18" y1="33.02" x2="43.18" y2="38.1" width="0.1524" layer="91"/>
@@ -11531,6 +11531,15 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <approved hash="204,8,177.8,109.22,J801B,T4,,,,"/>
 <approved hash="104,10,167.64,55.88,U1021,V+,+3V3,,,"/>
 <approved hash="104,10,167.64,43.18,U1021,V-,GND,,,"/>
+<approved hash="113,2,195.58,115.295,R271,,,,,"/>
+<approved hash="113,2,195.58,82.2748,R281,,,,,"/>
+<approved hash="113,2,78.74,21.3148,R291,,,,,"/>
+<approved hash="113,2,62.4417,16.51,C291,,,,,"/>
+<approved hash="113,2,94.7567,16.51,C292,,,,,"/>
+<approved hash="113,2,179.282,110.49,C271,,,,,"/>
+<approved hash="113,2,179.282,77.47,C281,,,,,"/>
+<approved hash="113,2,211.597,110.49,C272,,,,,"/>
+<approved hash="113,2,211.597,77.47,C282,,,,,"/>
 </errors>
 </schematic>
 </drawing>
