@@ -7165,7 +7165,7 @@ Source: http://www.mouser.com/ds/2/392/products_18-2245.pdf</description>
 <wire x1="3.175" y1="2.54" x2="3.81" y2="1.905" width="0.1524" layer="21"/>
 <wire x1="3.81" y1="1.905" x2="3.81" y2="-1.905" width="0.1524" layer="21"/>
 <wire x1="1.905" y1="-2.54" x2="3.175" y2="-2.54" width="0.1524" layer="21"/>
-<pad name="1" x="-2.54" y="-1.27" drill="1.016" shape="octagon"/>
+<pad name="1" x="-2.54" y="-1.27" drill="1.016" shape="square"/>
 <pad name="2" x="-2.54" y="1.27" drill="1.016" shape="octagon"/>
 <pad name="3" x="0" y="-1.27" drill="1.016" shape="octagon"/>
 <pad name="4" x="0" y="1.27" drill="1.016" shape="octagon"/>
@@ -9200,8 +9200,8 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <part name="C1094" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
 <part name="C1096" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
 <part name="GND1091" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C151" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>
-<part name="GND151" library="df4iah_supply" deviceset="GND" device=""/>
+<part name="C101" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>
+<part name="GND101" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V0_151" library="df4iah_supply" deviceset="+3V0" device=""/>
 <part name="FRAME9" library="df4iah_frame" deviceset="A4L-LOC" device="" value="VCTCXO"/>
 <part name="U1001" library="df4iah_osc" deviceset="CFPT-141" device=""/>
@@ -9232,11 +9232,11 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <part name="GND901" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="VBAT_901" library="df4iah_supply" deviceset="VBAT" device=""/>
 <part name="RPOLY901" library="rcl" deviceset="R-EU_" device="M1206" value="2.2A"/>
-<part name="R121" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R122" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R131" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R132" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R112" library="rcl" deviceset="R-EU_" device="R0603" value="10k"/>
-<part name="JP121" library="df4iah_connector" deviceset="HEADER-2X3" device="" value="PDI"/>
-<part name="GND121" library="df4iah_supply" deviceset="GND" device=""/>
+<part name="JP131" library="df4iah_connector" deviceset="HEADER-2X3" device="" value="PDI"/>
+<part name="GND131" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="R1002" library="rcl" deviceset="R-EU_" device="R0603" value="10k"/>
 <part name="JP111" library="df4iah_connector" deviceset="AVR-JTAG-10" device="" value="JTAG"/>
 <part name="GND111" library="df4iah_supply" deviceset="GND" device=""/>
@@ -9273,12 +9273,12 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <part name="R211" library="rcl" deviceset="R-EU_" device="R0603" value="3.3k"/>
 <part name="R212" library="rcl" deviceset="R-EU_" device="R0603" value="3.3k"/>
 <part name="+3V3_211" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R162" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R172" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R224" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R223" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R221" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R163" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R161" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R173" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R171" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R222" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R271" library="rcl" deviceset="R-EU_" device="R0603"/>
 <part name="R281" library="rcl" deviceset="R-EU_" device="R0603"/>
@@ -9301,22 +9301,25 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <part name="+3V0_231" library="df4iah_supply" deviceset="+3V0" device=""/>
 <part name="C251" library="rcl" deviceset="C-EU" device="C0603" value="100p"/>
 <part name="GND231" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R153" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R152" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R151" library="rcl" deviceset="R-EU_" device="R0603" value="4.7k"/>
+<part name="R163" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R162" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R161" library="rcl" deviceset="R-EU_" device="R0603" value="4.7k"/>
 <part name="R231" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R232" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R233" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R234" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R241" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R131" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R132" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="+3V3_121" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R251" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R141" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R142" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="C131" library="rcl" deviceset="C-EU" device="C0603" value="100p"/>
-<part name="GND131" library="df4iah_supply" deviceset="GND" device=""/>
+<part name="+3V3_121" library="df4iah_supply" deviceset="+3V3" device=""/>
+<part name="R251" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R151" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R152" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="C141" library="rcl" deviceset="C-EU" device="C0603" value="100p"/>
+<part name="GND141" library="df4iah_supply" deviceset="GND" device=""/>
+<part name="JP121" library="df4iah_connector" deviceset="HEADER-2X3" device="" value="DISPLAY"/>
+<part name="GND121" library="df4iah_supply" deviceset="GND" device=""/>
+<part name="+5V1" library="df4iah_supply" deviceset="+5V" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -9324,7 +9327,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <plain>
 <text x="132.08" y="66.04" size="1.778" layer="97">XTAL 1</text>
 <text x="149.86" y="99.06" size="1.778" layer="97">32.768 kHz</text>
-<text x="37.084" y="60.452" size="1.778" layer="94" ratio="10">PDI</text>
+<text x="37.084" y="35.052" size="1.778" layer="94" ratio="10">PDI</text>
 <text x="5.08" y="114.3" size="1.778" layer="97">2x ADC B Audio</text>
 <text x="5.08" y="129.54" size="1.778" layer="97">8x ADC A MEAS</text>
 <text x="5.08" y="83.82" size="1.778" layer="97">4x PWM</text>
@@ -9341,6 +9344,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <text x="226.06" y="127" size="1.778" layer="97">2x I/O D</text>
 <text x="5.08" y="68.58" size="1.778" layer="97">2x PDI</text>
 <text x="5.08" y="109.22" size="1.778" layer="97">2x DAC B Audio</text>
+<text x="37.084" y="70.612" size="1.778" layer="94" ratio="10">DISPLAY</text>
 </plain>
 <instances>
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>
@@ -9348,47 +9352,50 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <attribute name="NAME" x="103.9876" y="143.2306" size="2.0828" layer="95" ratio="10" rot="SR0"/>
 <attribute name="VALUE" x="93.0656" y="60.2742" size="2.0828" layer="96" ratio="10" rot="SR0"/>
 </instance>
-<instance part="C151" gate="G$1" x="220.98" y="43.18"/>
-<instance part="GND151" gate="1" x="220.98" y="35.56"/>
+<instance part="C101" gate="G$1" x="220.98" y="43.18"/>
+<instance part="GND101" gate="1" x="220.98" y="35.56"/>
 <instance part="+3V0_151" gate="G$2" x="220.98" y="154.94"/>
 <instance part="Q101" gate="G$1" x="167.64" y="99.06"/>
-<instance part="R121" gate="G$1" x="78.74" y="71.12"/>
-<instance part="R122" gate="G$1" x="66.04" y="68.58"/>
+<instance part="R131" gate="G$1" x="76.2" y="38.1"/>
+<instance part="R132" gate="G$1" x="68.58" y="30.48"/>
 <instance part="R112" gate="G$1" x="43.18" y="124.46"/>
-<instance part="JP121" gate="G$1" x="43.18" y="68.58"/>
-<instance part="GND121" gate="1" x="50.8" y="60.96"/>
+<instance part="JP131" gate="G$1" x="43.18" y="43.18"/>
+<instance part="GND131" gate="1" x="50.8" y="35.56"/>
 <instance part="JP111" gate="G$1" x="43.18" y="106.68" smashed="yes" rot="R180">
-<attribute name="NAME" x="37.084" y="95.758" size="1.778" layer="95" ratio="10"/>
+<attribute name="NAME" x="33.782" y="115.57" size="1.778" layer="95" ratio="10"/>
 </instance>
 <instance part="GND111" gate="1" x="35.56" y="93.98"/>
 <instance part="R111" gate="G$1" x="43.18" y="134.62"/>
-<instance part="R162" gate="G$1" x="167.64" y="86.36"/>
-<instance part="R163" gate="G$1" x="167.64" y="76.2"/>
-<instance part="R161" gate="G$1" x="182.88" y="91.44"/>
-<instance part="R153" gate="G$1" x="167.64" y="104.14"/>
-<instance part="R152" gate="G$1" x="175.26" y="106.68"/>
-<instance part="R151" gate="G$1" x="182.88" y="109.22"/>
-<instance part="R131" gate="G$1" x="182.88" y="137.16"/>
-<instance part="R132" gate="G$1" x="175.26" y="132.08"/>
+<instance part="R172" gate="G$1" x="167.64" y="86.36"/>
+<instance part="R173" gate="G$1" x="167.64" y="76.2"/>
+<instance part="R171" gate="G$1" x="182.88" y="91.44"/>
+<instance part="R163" gate="G$1" x="167.64" y="104.14"/>
+<instance part="R162" gate="G$1" x="175.26" y="106.68"/>
+<instance part="R161" gate="G$1" x="182.88" y="109.22"/>
+<instance part="R141" gate="G$1" x="182.88" y="137.16"/>
+<instance part="R142" gate="G$1" x="175.26" y="132.08"/>
 <instance part="+3V3_121" gate="G$1" x="55.88" y="154.94"/>
-<instance part="R141" gate="G$1" x="167.64" y="129.54"/>
-<instance part="R142" gate="G$1" x="182.88" y="127"/>
-<instance part="C131" gate="G$1" x="35.56" y="154.94"/>
-<instance part="GND131" gate="1" x="35.56" y="147.32"/>
+<instance part="R151" gate="G$1" x="167.64" y="129.54"/>
+<instance part="R152" gate="G$1" x="182.88" y="127"/>
+<instance part="C141" gate="G$1" x="40.64" y="154.94"/>
+<instance part="GND141" gate="1" x="40.64" y="147.32"/>
+<instance part="JP121" gate="G$1" x="43.18" y="78.74"/>
+<instance part="GND121" gate="1" x="50.8" y="66.04"/>
+<instance part="+5V1" gate="G$1" x="25.4" y="86.36"/>
 </instances>
 <busses>
 </busses>
 <nets>
 <net name="GND" class="0">
 <segment>
-<pinref part="GND151" gate="1" pin="GND"/>
-<pinref part="C151" gate="G$1" pin="2"/>
+<pinref part="GND101" gate="1" pin="GND"/>
+<pinref part="C101" gate="G$1" pin="2"/>
 </segment>
 <segment>
-<pinref part="GND121" gate="1" pin="GND"/>
-<wire x1="50.8" y1="63.5" x2="50.8" y2="66.04" width="0.1524" layer="91"/>
-<pinref part="JP121" gate="G$1" pin="6"/>
-<wire x1="50.8" y1="66.04" x2="48.26" y2="66.04" width="0.1524" layer="91"/>
+<pinref part="GND131" gate="1" pin="GND"/>
+<wire x1="50.8" y1="38.1" x2="50.8" y2="40.64" width="0.1524" layer="91"/>
+<pinref part="JP131" gate="G$1" pin="6"/>
+<wire x1="50.8" y1="40.64" x2="48.26" y2="40.64" width="0.1524" layer="91"/>
 </segment>
 <segment>
 <pinref part="GND111" gate="1" pin="GND"/>
@@ -9401,15 +9408,26 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <pinref part="JP111" gate="G$1" pin="10"/>
 </segment>
 <segment>
-<pinref part="C131" gate="G$1" pin="2"/>
-<pinref part="GND131" gate="1" pin="GND"/>
+<pinref part="C141" gate="G$1" pin="2"/>
+<pinref part="GND141" gate="1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="GND121" gate="1" pin="GND"/>
+<wire x1="50.8" y1="68.58" x2="50.8" y2="76.2" width="0.1524" layer="91"/>
+<pinref part="JP121" gate="G$1" pin="6"/>
+<wire x1="50.8" y1="76.2" x2="48.26" y2="76.2" width="0.1524" layer="91"/>
+<wire x1="50.8" y1="68.58" x2="35.56" y2="68.58" width="0.1524" layer="91"/>
+<wire x1="35.56" y1="68.58" x2="35.56" y2="81.28" width="0.1524" layer="91"/>
+<pinref part="JP121" gate="G$1" pin="1"/>
+<wire x1="35.56" y1="81.28" x2="38.1" y2="81.28" width="0.1524" layer="91"/>
+<junction x="50.8" y="68.58"/>
 </segment>
 </net>
 <net name="+3V0" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="VBAT"/>
 <wire x1="129.54" y1="81.28" x2="220.98" y2="81.28" width="0.1524" layer="91"/>
-<pinref part="C151" gate="G$1" pin="1"/>
+<pinref part="C101" gate="G$1" pin="1"/>
 <wire x1="220.98" y1="81.28" x2="220.98" y2="45.72" width="0.1524" layer="91"/>
 <wire x1="220.98" y1="81.28" x2="220.98" y2="152.4" width="0.1524" layer="91"/>
 <junction x="220.98" y="81.28"/>
@@ -9438,58 +9456,59 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <segment>
 <pinref part="U101" gate="A" pin="PR1"/>
 <wire x1="129.54" y1="68.58" x2="144.78" y2="68.58" width="0.1524" layer="91"/>
-<wire x1="144.78" y1="68.58" x2="144.78" y2="45.72" width="0.1524" layer="91"/>
-<wire x1="144.78" y1="45.72" x2="35.56" y2="45.72" width="0.1524" layer="91"/>
-<label x="35.56" y="45.72" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="144.78" y1="68.58" x2="144.78" y2="25.4" width="0.1524" layer="91"/>
+<wire x1="144.78" y1="25.4" x2="35.56" y2="25.4" width="0.1524" layer="91"/>
+<label x="35.56" y="25.4" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="PDI_DATA_CPU" class="0">
 <segment>
-<pinref part="R121" gate="G$1" pin="2"/>
+<pinref part="R131" gate="G$1" pin="2"/>
 <pinref part="U101" gate="A" pin="PDI_DATA"/>
-<wire x1="83.82" y1="71.12" x2="88.9" y2="71.12" width="0.1524" layer="91"/>
-<label x="86.36" y="71.12" size="1.778" layer="95" rot="R270" xref="yes"/>
+<wire x1="81.28" y1="38.1" x2="86.36" y2="38.1" width="0.1524" layer="91"/>
+<wire x1="86.36" y1="38.1" x2="86.36" y2="71.12" width="0.1524" layer="91"/>
+<wire x1="86.36" y1="71.12" x2="88.9" y2="71.12" width="0.1524" layer="91"/>
+<label x="86.36" y="48.26" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="PDI_CLK_CPU" class="0">
 <segment>
-<pinref part="R122" gate="G$1" pin="2"/>
+<pinref part="R132" gate="G$1" pin="2"/>
 <pinref part="U101" gate="A" pin="!RESET!/PDI_CLK"/>
-<wire x1="71.12" y1="68.58" x2="88.9" y2="68.58" width="0.1524" layer="91"/>
-<label x="81.28" y="68.58" size="1.778" layer="95" rot="R270" xref="yes"/>
+<wire x1="73.66" y1="30.48" x2="88.9" y2="30.48" width="0.1524" layer="91"/>
+<wire x1="88.9" y1="30.48" x2="88.9" y2="68.58" width="0.1524" layer="91"/>
+<label x="88.9" y="48.26" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="PDI_DATA" class="0">
 <segment>
-<pinref part="R121" gate="G$1" pin="1"/>
-<wire x1="73.66" y1="71.12" x2="58.42" y2="71.12" width="0.1524" layer="91"/>
-<wire x1="58.42" y1="71.12" x2="58.42" y2="78.74" width="0.1524" layer="91"/>
-<wire x1="58.42" y1="78.74" x2="35.56" y2="78.74" width="0.1524" layer="91"/>
-<wire x1="35.56" y1="78.74" x2="35.56" y2="71.12" width="0.1524" layer="91"/>
-<pinref part="JP121" gate="G$1" pin="1"/>
-<wire x1="35.56" y1="71.12" x2="38.1" y2="71.12" width="0.1524" layer="91"/>
-<label x="37.846" y="79.756" size="1.778" layer="95"/>
+<pinref part="R131" gate="G$1" pin="1"/>
+<wire x1="71.12" y1="38.1" x2="58.42" y2="38.1" width="0.1524" layer="91"/>
+<wire x1="58.42" y1="38.1" x2="58.42" y2="53.34" width="0.1524" layer="91"/>
+<wire x1="58.42" y1="53.34" x2="35.56" y2="53.34" width="0.1524" layer="91"/>
+<wire x1="35.56" y1="53.34" x2="35.56" y2="45.72" width="0.1524" layer="91"/>
+<pinref part="JP131" gate="G$1" pin="1"/>
+<wire x1="35.56" y1="45.72" x2="38.1" y2="45.72" width="0.1524" layer="91"/>
+<label x="37.846" y="54.356" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="PDI_CLK" class="0">
 <segment>
-<pinref part="R122" gate="G$1" pin="1"/>
-<wire x1="60.96" y1="68.58" x2="58.42" y2="68.58" width="0.1524" layer="91"/>
-<wire x1="58.42" y1="68.58" x2="58.42" y2="55.88" width="0.1524" layer="91"/>
-<wire x1="58.42" y1="55.88" x2="35.56" y2="55.88" width="0.1524" layer="91"/>
-<wire x1="35.56" y1="55.88" x2="35.56" y2="66.04" width="0.1524" layer="91"/>
-<pinref part="JP121" gate="G$1" pin="5"/>
-<wire x1="35.56" y1="66.04" x2="38.1" y2="66.04" width="0.1524" layer="91"/>
+<pinref part="R132" gate="G$1" pin="1"/>
+<wire x1="63.5" y1="30.48" x2="35.56" y2="30.48" width="0.1524" layer="91"/>
+<wire x1="35.56" y1="30.48" x2="35.56" y2="40.64" width="0.1524" layer="91"/>
+<pinref part="JP131" gate="G$1" pin="5"/>
+<wire x1="35.56" y1="40.64" x2="38.1" y2="40.64" width="0.1524" layer="91"/>
 <wire x1="38.1" y1="106.68" x2="27.94" y2="106.68" width="0.1524" layer="91"/>
-<wire x1="27.94" y1="106.68" x2="27.94" y2="55.88" width="0.1524" layer="91"/>
-<wire x1="27.94" y1="55.88" x2="35.56" y2="55.88" width="0.1524" layer="91"/>
-<junction x="35.56" y="55.88"/>
+<wire x1="27.94" y1="106.68" x2="27.94" y2="30.48" width="0.1524" layer="91"/>
+<wire x1="27.94" y1="30.48" x2="35.56" y2="30.48" width="0.1524" layer="91"/>
+<junction x="35.56" y="30.48"/>
 <pinref part="R112" gate="G$1" pin="1"/>
 <wire x1="38.1" y1="124.46" x2="27.94" y2="124.46" width="0.1524" layer="91"/>
 <wire x1="27.94" y1="124.46" x2="27.94" y2="106.68" width="0.1524" layer="91"/>
 <junction x="27.94" y="106.68"/>
 <pinref part="JP111" gate="G$1" pin="6"/>
-<label x="38.1" y="53.34" size="1.778" layer="95"/>
+<label x="38.1" y="30.48" size="1.778" layer="95"/>
 <label x="30.48" y="113.03" size="1.778" layer="95" rot="R90"/>
 </segment>
 </net>
@@ -9593,12 +9612,12 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <pinref part="U101" gate="A" pin="PF3"/>
 <wire x1="129.54" y1="86.36" x2="162.56" y2="86.36" width="0.1524" layer="91"/>
 <label x="154.94" y="86.36" size="1.778" layer="95"/>
-<pinref part="R162" gate="G$1" pin="1"/>
+<pinref part="R172" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="GSM_RXD" class="0">
 <segment>
-<pinref part="R162" gate="G$1" pin="2"/>
+<pinref part="R172" gate="G$1" pin="2"/>
 <wire x1="172.72" y1="86.36" x2="190.5" y2="86.36" width="0.1524" layer="91"/>
 <label x="190.5" y="86.36" size="1.778" layer="95" xref="yes"/>
 </segment>
@@ -9621,27 +9640,27 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <segment>
 <pinref part="U101" gate="A" pin="PF7"/>
 <wire x1="129.54" y1="76.2" x2="162.56" y2="76.2" width="0.1524" layer="91"/>
-<pinref part="R163" gate="G$1" pin="1"/>
+<pinref part="R173" gate="G$1" pin="1"/>
 <label x="154.94" y="76.2" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="GSM_RTS" class="0">
 <segment>
-<pinref part="R163" gate="G$1" pin="2"/>
+<pinref part="R173" gate="G$1" pin="2"/>
 <wire x1="172.72" y1="76.2" x2="190.5" y2="76.2" width="0.1524" layer="91"/>
 <label x="190.5" y="76.2" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="GSM_DTR" class="0">
 <segment>
-<pinref part="R161" gate="G$1" pin="2"/>
+<pinref part="R171" gate="G$1" pin="2"/>
 <wire x1="187.96" y1="91.44" x2="190.5" y2="91.44" width="0.1524" layer="91"/>
 <label x="190.5" y="91.44" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
 <net name="DCD1" class="0">
 <segment>
-<pinref part="R161" gate="G$1" pin="1"/>
+<pinref part="R171" gate="G$1" pin="1"/>
 <pinref part="U101" gate="A" pin="PF1"/>
 <wire x1="177.8" y1="91.44" x2="129.54" y2="91.44" width="0.1524" layer="91"/>
 <label x="154.94" y="91.44" size="1.778" layer="95"/>
@@ -9657,14 +9676,14 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <net name="RESET_GSM" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PE5"/>
-<pinref part="R153" gate="G$1" pin="1"/>
+<pinref part="R163" gate="G$1" pin="1"/>
 <wire x1="129.54" y1="104.14" x2="162.56" y2="104.14" width="0.1524" layer="91"/>
 <label x="137.16" y="104.14" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="GSM_RESET" class="0">
 <segment>
-<pinref part="R153" gate="G$1" pin="2"/>
+<pinref part="R163" gate="G$1" pin="2"/>
 <wire x1="172.72" y1="104.14" x2="190.5" y2="104.14" width="0.1524" layer="91"/>
 <label x="190.5" y="104.14" size="1.778" layer="95" xref="yes"/>
 </segment>
@@ -9672,14 +9691,14 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <net name="PWRKEY_GSM" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PE4"/>
-<pinref part="R152" gate="G$1" pin="1"/>
+<pinref part="R162" gate="G$1" pin="1"/>
 <wire x1="129.54" y1="106.68" x2="170.18" y2="106.68" width="0.1524" layer="91"/>
 <label x="137.16" y="106.68" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="GSM_PWRKEY" class="0">
 <segment>
-<pinref part="R152" gate="G$1" pin="2"/>
+<pinref part="R162" gate="G$1" pin="2"/>
 <wire x1="180.34" y1="106.68" x2="190.5" y2="106.68" width="0.1524" layer="91"/>
 <label x="190.5" y="106.68" size="1.778" layer="95" xref="yes"/>
 </segment>
@@ -9701,14 +9720,14 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <net name="POWERED_GSM" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PE3"/>
-<pinref part="R151" gate="G$1" pin="1"/>
+<pinref part="R161" gate="G$1" pin="1"/>
 <wire x1="129.54" y1="109.22" x2="177.8" y2="109.22" width="0.1524" layer="91"/>
 <label x="137.16" y="109.22" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="GSM_VDD_EXT" class="0">
 <segment>
-<pinref part="R151" gate="G$1" pin="2"/>
+<pinref part="R161" gate="G$1" pin="2"/>
 <wire x1="187.96" y1="109.22" x2="190.5" y2="109.22" width="0.1524" layer="91"/>
 <label x="190.5" y="109.22" size="1.778" layer="95" xref="yes"/>
 </segment>
@@ -9732,7 +9751,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <segment>
 <wire x1="187.96" y1="137.16" x2="190.5" y2="137.16" width="0.1524" layer="91"/>
 <label x="190.5" y="137.16" size="1.778" layer="95" xref="yes"/>
-<pinref part="R131" gate="G$1" pin="2"/>
+<pinref part="R141" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="GSM_PCM_OUT" class="0">
@@ -9745,7 +9764,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 </net>
 <net name="GSM_PCM_CLK_DRV" class="0">
 <segment>
-<pinref part="R131" gate="G$1" pin="1"/>
+<pinref part="R141" gate="G$1" pin="1"/>
 <pinref part="U101" gate="A" pin="PD1"/>
 <wire x1="177.8" y1="137.16" x2="129.54" y2="137.16" width="0.1524" layer="91"/>
 <label x="137.16" y="137.16" size="1.778" layer="95"/>
@@ -9756,9 +9775,10 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="55.88" y1="152.4" x2="55.88" y2="134.62" width="0.1524" layer="91"/>
 <wire x1="55.88" y1="134.62" x2="55.88" y2="124.46" width="0.1524" layer="91"/>
 <wire x1="55.88" y1="124.46" x2="55.88" y2="109.22" width="0.1524" layer="91"/>
-<pinref part="JP121" gate="G$1" pin="2"/>
-<wire x1="55.88" y1="109.22" x2="55.88" y2="71.12" width="0.1524" layer="91"/>
-<wire x1="55.88" y1="71.12" x2="48.26" y2="71.12" width="0.1524" layer="91"/>
+<pinref part="JP131" gate="G$1" pin="2"/>
+<wire x1="55.88" y1="109.22" x2="55.88" y2="60.96" width="0.1524" layer="91"/>
+<wire x1="55.88" y1="60.96" x2="55.88" y2="45.72" width="0.1524" layer="91"/>
+<wire x1="55.88" y1="45.72" x2="48.26" y2="45.72" width="0.1524" layer="91"/>
 <pinref part="R111" gate="G$1" pin="2"/>
 <wire x1="55.88" y1="134.62" x2="48.26" y2="134.62" width="0.1524" layer="91"/>
 <junction x="55.88" y="134.62"/>
@@ -9769,6 +9789,11 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <junction x="55.88" y="109.22"/>
 <pinref part="JP111" gate="G$1" pin="7"/>
 <pinref part="+3V3_121" gate="G$1" pin="+3V3"/>
+<wire x1="55.88" y1="60.96" x2="33.02" y2="60.96" width="0.1524" layer="91"/>
+<wire x1="33.02" y1="60.96" x2="33.02" y2="76.2" width="0.1524" layer="91"/>
+<pinref part="JP121" gate="G$1" pin="5"/>
+<wire x1="33.02" y1="76.2" x2="38.1" y2="76.2" width="0.1524" layer="91"/>
+<junction x="55.88" y="60.96"/>
 </segment>
 </net>
 <net name="GPS_1PPS" class="0">
@@ -9782,14 +9807,14 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <segment>
 <wire x1="187.96" y1="127" x2="190.5" y2="127" width="0.1524" layer="91"/>
 <label x="190.5" y="127" size="1.778" layer="95" xref="yes"/>
-<pinref part="R142" gate="G$1" pin="2"/>
+<pinref part="R152" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="USB_RESET_DRV" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PD5"/>
 <wire x1="129.54" y1="127" x2="177.8" y2="127" width="0.1524" layer="91"/>
-<pinref part="R142" gate="G$1" pin="1"/>
+<pinref part="R152" gate="G$1" pin="1"/>
 <label x="137.16" y="127" size="1.778" layer="95"/>
 </segment>
 </net>
@@ -9797,12 +9822,12 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <segment>
 <wire x1="172.72" y1="129.54" x2="190.5" y2="129.54" width="0.1524" layer="91"/>
 <label x="190.5" y="129.54" size="1.778" layer="95" xref="yes"/>
-<pinref part="R141" gate="G$1" pin="2"/>
+<pinref part="R151" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="USB_ID_DRV" class="0">
 <segment>
-<pinref part="R141" gate="G$1" pin="1"/>
+<pinref part="R151" gate="G$1" pin="1"/>
 <pinref part="U101" gate="A" pin="PD4"/>
 <wire x1="162.56" y1="129.54" x2="129.54" y2="129.54" width="0.1524" layer="91"/>
 <label x="137.16" y="129.54" size="1.778" layer="95"/>
@@ -9812,14 +9837,14 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <segment>
 <pinref part="U101" gate="A" pin="PA6"/>
 <wire x1="88.9" y1="124.46" x2="58.42" y2="124.46" width="0.1524" layer="91"/>
-<wire x1="58.42" y1="124.46" x2="58.42" y2="170.18" width="0.1524" layer="91"/>
-<wire x1="58.42" y1="170.18" x2="35.56" y2="170.18" width="0.1524" layer="91"/>
-<label x="33.02" y="170.18" size="1.778" layer="95" rot="R180" xref="yes"/>
-<label x="66.04" y="124.46" size="1.778" layer="95"/>
-<pinref part="C131" gate="G$1" pin="1"/>
-<wire x1="35.56" y1="170.18" x2="33.02" y2="170.18" width="0.1524" layer="91"/>
-<wire x1="35.56" y1="170.18" x2="35.56" y2="157.48" width="0.1524" layer="91"/>
-<junction x="35.56" y="170.18"/>
+<wire x1="58.42" y1="124.46" x2="58.42" y2="162.56" width="0.1524" layer="91"/>
+<wire x1="58.42" y1="162.56" x2="40.64" y2="162.56" width="0.1524" layer="91"/>
+<label x="35.56" y="162.56" size="1.778" layer="95" rot="R180" xref="yes"/>
+<label x="60.96" y="124.46" size="1.778" layer="95"/>
+<pinref part="C141" gate="G$1" pin="1"/>
+<wire x1="40.64" y1="162.56" x2="35.56" y2="162.56" width="0.1524" layer="91"/>
+<wire x1="40.64" y1="162.56" x2="40.64" y2="157.48" width="0.1524" layer="91"/>
+<junction x="40.64" y="162.56"/>
 </segment>
 </net>
 <net name="GSM_NETLIGHT" class="0">
@@ -9841,14 +9866,70 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <pinref part="U101" gate="A" pin="PD3"/>
 <wire x1="170.18" y1="132.08" x2="129.54" y2="132.08" width="0.1524" layer="91"/>
 <label x="137.16" y="132.08" size="1.778" layer="95"/>
-<pinref part="R132" gate="G$1" pin="1"/>
+<pinref part="R142" gate="G$1" pin="1"/>
 </segment>
 </net>
 <net name="GSM_PCM_IN" class="0">
 <segment>
-<pinref part="R132" gate="G$1" pin="2"/>
+<pinref part="R142" gate="G$1" pin="2"/>
 <wire x1="180.34" y1="132.08" x2="190.5" y2="132.08" width="0.1524" layer="91"/>
 <label x="190.5" y="132.08" size="1.778" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="AD_PHS_I" class="0">
+<segment>
+<pinref part="U101" gate="A" pin="PA4"/>
+<wire x1="88.9" y1="129.54" x2="86.36" y2="129.54" width="0.1524" layer="91"/>
+<label x="86.36" y="129.54" size="1.778" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="AD_PHS_Q" class="0">
+<segment>
+<pinref part="U101" gate="A" pin="PA5"/>
+<wire x1="88.9" y1="127" x2="86.36" y2="127" width="0.1524" layer="91"/>
+<label x="86.36" y="127" size="1.778" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="SDA2" class="0">
+<segment>
+<pinref part="U101" gate="A" pin="PC0"/>
+<wire x1="88.9" y1="93.98" x2="53.34" y2="93.98" width="0.1524" layer="91"/>
+<label x="78.74" y="93.98" size="1.778" layer="95"/>
+<wire x1="53.34" y1="93.98" x2="53.34" y2="78.74" width="0.1524" layer="91"/>
+<pinref part="JP121" gate="G$1" pin="4"/>
+<wire x1="53.34" y1="78.74" x2="48.26" y2="78.74" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="SCL2" class="0">
+<segment>
+<pinref part="U101" gate="A" pin="PC1"/>
+<wire x1="88.9" y1="91.44" x2="50.8" y2="91.44" width="0.1524" layer="91"/>
+<label x="78.74" y="91.44" size="1.778" layer="95"/>
+<wire x1="50.8" y1="91.44" x2="50.8" y2="81.28" width="0.1524" layer="91"/>
+<pinref part="JP121" gate="G$1" pin="2"/>
+<wire x1="50.8" y1="81.28" x2="48.26" y2="81.28" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="PULSE_I" class="0">
+<segment>
+<pinref part="U101" gate="A" pin="PC4"/>
+<wire x1="88.9" y1="83.82" x2="86.36" y2="83.82" width="0.1524" layer="91"/>
+<label x="86.36" y="83.82" size="1.778" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="PULSE_Q" class="0">
+<segment>
+<pinref part="U101" gate="A" pin="PC5"/>
+<wire x1="88.9" y1="81.28" x2="86.36" y2="81.28" width="0.1524" layer="91"/>
+<label x="86.36" y="81.28" size="1.778" layer="95" rot="R180" xref="yes"/>
+</segment>
+</net>
+<net name="+5V" class="4">
+<segment>
+<pinref part="+5V1" gate="G$1" pin="+5V"/>
+<wire x1="25.4" y1="83.82" x2="25.4" y2="78.74" width="0.1524" layer="91"/>
+<pinref part="JP121" gate="G$1" pin="3"/>
+<wire x1="25.4" y1="78.74" x2="38.1" y2="78.74" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
