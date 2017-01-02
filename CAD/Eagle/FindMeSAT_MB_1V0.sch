@@ -7630,10 +7630,10 @@ MANUFACTURER: SAMTEC</description>
 <smd name="GND" x="1.3" y="4.15" dx="0.4" dy="1.35" layer="1" rot="R180" thermals="no"/>
 <hole x="2.5" y="4.15" drill="0.85"/>
 <hole x="-2.5" y="4.15" drill="0.85"/>
-<wire x1="-5" y1="0" x2="5" y2="0" width="0.127" layer="49"/>
-<wire x1="-5" y1="5" x2="5" y2="5" width="0.127" layer="49"/>
-<wire x1="-5" y1="5" x2="-5" y2="0" width="0.127" layer="49"/>
-<wire x1="5" y1="5" x2="5" y2="0" width="0.127" layer="49"/>
+<wire x1="-5" y1="0" x2="5" y2="0" width="0.127" layer="51"/>
+<wire x1="-5" y1="5" x2="5" y2="5" width="0.127" layer="51"/>
+<wire x1="-5" y1="5" x2="-5" y2="0" width="0.127" layer="51"/>
+<wire x1="5" y1="5" x2="5" y2="0" width="0.127" layer="51"/>
 <wire x1="-5.15" y1="5.15" x2="-5.15" y2="4.2733" width="0.3048" layer="21"/>
 <wire x1="-5.15" y1="5.15" x2="-3.65" y2="5.15" width="0.3048" layer="21"/>
 <wire x1="5.15" y1="4.2733" x2="5.15" y2="5.15" width="0.3048" layer="21"/>
@@ -7654,14 +7654,14 @@ MANUFACTURER: SAMTEC</description>
 <smd name="G8" x="6.875" y="-7.04" dx="1.35" dy="2.6" layer="1"/>
 <text x="-1.27" y="9.779" size="0.6096" layer="25" font="vector" ratio="20">&gt;NAME</text>
 <text x="-1.27" y="-9.779" size="0.6096" layer="27" font="vector" ratio="20" align="top-left">&gt;VALUE</text>
-<wire x1="-6.5" y1="8.91" x2="-6.5" y2="-8.89" width="0.127" layer="49"/>
-<wire x1="6.5" y1="8.91" x2="6.5" y2="-8.89" width="0.127" layer="49"/>
+<wire x1="-6.5" y1="8.91" x2="-6.5" y2="-8.89" width="0.127" layer="51"/>
+<wire x1="6.5" y1="8.91" x2="6.5" y2="-8.89" width="0.127" layer="51"/>
 <text x="-9.4098" y="-10.7024" size="0.3048" layer="51">PCB Front</text>
 <wire x1="-7.2256" y1="-10.0358" x2="-6.9256" y2="-9.3358" width="0.08" layer="51"/>
 <wire x1="-6.9256" y1="-9.3358" x2="-7.1256" y2="-9.4358" width="0.08" layer="51"/>
 <wire x1="-6.9256" y1="-9.3358" x2="-6.8256" y2="-9.5358" width="0.08" layer="51"/>
-<wire x1="6.5" y1="-8.89" x2="-6.5" y2="-8.89" width="0.127" layer="49"/>
-<wire x1="6.5" y1="8.91" x2="-6.5" y2="8.91" width="0.127" layer="49"/>
+<wire x1="6.5" y1="-8.89" x2="-6.5" y2="-8.89" width="0.127" layer="51"/>
+<wire x1="6.5" y1="8.91" x2="-6.5" y2="8.91" width="0.127" layer="51"/>
 <wire x1="-6.5" y1="-6.89" x2="-6.5" y2="-8.89" width="0.3048" layer="21"/>
 <wire x1="6.5" y1="-6.89" x2="6.5" y2="-8.89" width="0.3048" layer="21"/>
 <wire x1="-4.5" y1="8.91" x2="-6.5" y2="8.91" width="0.3048" layer="21"/>
@@ -7693,13 +7693,13 @@ MANUFACTURER: SAMTEC</description>
 <smd name="T8" x="-6.875" y="4.71" dx="1.35" dy="0.58" layer="1"/>
 <smd name="G4" x="-6.875" y="8.01" dx="1.35" dy="1.8" layer="1"/>
 <smd name="SW" x="-6.7" y="6.125" dx="1.7" dy="0.7" layer="1"/>
-<wire x1="-5.08" y1="6.096" x2="-3.81" y2="6.096" width="0.127" layer="48"/>
-<wire x1="-3.81" y1="6.096" x2="-3.81" y2="3.81" width="0.127" layer="48"/>
-<wire x1="-3.81" y1="3.81" x2="-2.54" y2="2.54" width="0.127" layer="48"/>
-<wire x1="-3.81" y1="2.54" x2="-3.81" y2="-0.762" width="0.127" layer="48"/>
-<wire x1="-3.81" y1="-0.762" x2="-5.08" y2="-0.762" width="0.127" layer="48"/>
-<text x="-2.54" y="3.81" size="0.6096" layer="48">Switch</text>
-<text x="-2.54" y="5.08" size="0.6096" layer="48">SD</text>
+<wire x1="-5.08" y1="6.096" x2="-3.81" y2="6.096" width="0.127" layer="51"/>
+<wire x1="-3.81" y1="6.096" x2="-3.81" y2="3.81" width="0.127" layer="51"/>
+<wire x1="-3.81" y1="3.81" x2="-2.54" y2="2.54" width="0.127" layer="51"/>
+<wire x1="-3.81" y1="2.54" x2="-3.81" y2="-0.762" width="0.127" layer="51"/>
+<wire x1="-3.81" y1="-0.762" x2="-5.08" y2="-0.762" width="0.127" layer="51"/>
+<text x="-2.54" y="3.81" size="0.6096" layer="51">Switch</text>
+<text x="-2.54" y="5.08" size="0.6096" layer="51">SD</text>
 </package>
 </packages>
 <symbols>
