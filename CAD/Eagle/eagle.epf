@@ -19,15 +19,18 @@ UsedLibrary="lbr/df4iah_crystal.lbr"
 UsedLibrary="lbr/df4iah_opamp.lbr"
 UsedLibrary="lbr/df4iah_sensors.lbr"
 UsedLibrary="lbr/df4iah_processors.lbr"
+UsedLibrary="lbr/df4iah_gsm.lbr"
+UsedLibrary="lbr/df4iah_rf.lbr"
+UsedLibrary="lbr/Adafruit-Eagle-Library-master/adafruit.lbr"
 
 [Win_1]
 Type="Library Editor"
 Loc="17 23 2539 1367"
 State=2
 Number=3
-File="lbr/df4iah_sensors.lbr"
-View="-0.925322 -1.69666 3.42532 4.19666"
-WireWidths=" 0 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0.4064 0.254 0.127"
+File="lbr/Adafruit-Eagle-Library-master/adafruit.lbr"
+View="-7.25427 -3.30369 13.3519 5.58969"
+WireWidths=" 0 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0.4064 0.127 0.254"
 PadDiameters=" 0.254 0.3048 0.4064 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0"
 PadDrills=" 0.5 0.6 0.7 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 2 2.2 2.8 3.2 0.8"
 ViaDiameters=" 0.254 0.3048 0.4064 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0"
@@ -41,7 +44,7 @@ DimensionWidths=" 0 0.127 0.254 0.1 0.26 0.13"
 DimensionExtWidths=" 0.127 0.254 0.1 0.13 0.26 0"
 DimensionExtLengths=" 1.27 2.54 1 2 3 0"
 DimensionExtOffsets=" 1.27 2.54 1 2 3 0"
-SmdSizes=" 0.6096 0.3048 0.8128 0.4064 1.016 0.508 1.27 0.6604 1.4224 0.7112 1.6764 0.8128 1.778 0.9144 1.9304 0.9652 2.1844 1.0668 2.54 1.27 3.81 1.9304 5.08 2.54 6.4516 3.2512 1.27 0.635 2.3 1.4 0.9 1.7"
+SmdSizes=" 0.8128 0.4064 1.016 0.508 1.27 0.6604 1.4224 0.7112 1.6764 0.8128 1.778 0.9144 1.9304 0.9652 2.1844 1.0668 2.54 1.27 3.81 1.9304 5.08 2.54 6.4516 3.2512 1.27 0.635 2.3 1.4 0.9 1.7 2.95 2.95"
 WireBend=3
 WireBendSet=0
 WireCap=1
@@ -56,7 +59,7 @@ TextRatio=8
 DimensionUnit=1
 DimensionPrecision=2
 DimensionShowUnit=0
-PinDirection=6
+PinDirection=5
 PinFunction=0
 PinLength=2
 PinVisible=3
@@ -64,15 +67,22 @@ SwapLevel=0
 ArcDirection=0
 AddLevel=2
 PadsSameType=0
-Layer=21
+Layer=94
+Device="CRYSTAL"
 
 [Win_2]
+Type="Control Panel"
+Loc="17 451 1780 1202"
+State=2
+Number=0
+
+[Win_3]
 Type="Board Editor"
 Loc="12 24 2534 1365"
 State=2
 Number=2
 File="FindMeSAT_MB_1V0.brd"
-View="-17.9781 -24.6126 124.404 66.5226"
+View="34.3111 -3.81619 105.502 41.7514"
 WireWidths=" 0 80 1 10 193 100 0.1 0.15"
 PadDiameters=" 0.254 0.3048 0.4064 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0"
 PadDrills=" 0.5 0.6 0.7 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 2 2.2 2.8 3.2 0.8"
@@ -112,13 +122,13 @@ AddLevel=2
 PadsSameType=0
 Layer=1
 
-[Win_3]
+[Win_4]
 Type="Schematic Editor"
 Loc="18 28 2539 1369"
 State=2
 Number=1
 File="FindMeSAT_MB_1V0.sch"
-View="-46.9021 -9.71678 224.702 177.357"
+View="-5.73116 -4.10556 265.873 182.968"
 WireWidths=" 0 0.3048 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0.4064 0.1524"
 PadDiameters=" 0.254 0.3048 0.4064 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0"
 PadDrills=" 0.5 0.6 0.7 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 2 2.2 2.8 3.2 0.8"
@@ -157,14 +167,8 @@ ArcDirection=0
 AddLevel=2
 PadsSameType=0
 Layer=91
-Views=" 1: -46.9021 -9.71678 224.702 177.357 2: -5.73116 -4.10556 265.873 182.968 3: -24.0422 5.52344 247.562 192.597 4: 3.81194 -2.802 275.416 184.271 5: 1.35784 -9.71656 272.962 177.357 8: -5.73116 -4.10556 265.873 182.968 10: -5.73116 -4.10556 265.873 182.968"
-Sheet="1"
-
-[Win_4]
-Type="Control Panel"
-Loc="17 451 1780 1202"
-State=2
-Number=0
+Views=" 1: -5.73116 -4.10556 265.873 182.968 2: -5.73116 -4.10556 265.873 182.968 3: -24.0422 5.52344 247.562 192.597 4: 3.81194 -2.802 275.416 184.271 5: 1.35784 -9.71656 272.962 177.357 6: -5.73116 -4.10556 265.873 182.968 8: -5.73116 -4.10556 265.873 182.968 10: -5.73116 -4.10556 265.873 182.968"
+Sheet="6"
 
 [Desktop]
 Screen="640 480"
