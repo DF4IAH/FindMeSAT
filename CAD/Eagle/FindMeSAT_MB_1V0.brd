@@ -8,12 +8,12 @@
 </settings>
 <grid distance="1.27" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="0.127" altunitdist="mm" altunit="mm"/>
 <layers>
-<layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
+<layer number="1" name="Top" color="4" fill="1" visible="no" active="yes"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="yes" active="yes"/>
 <layer number="3" name="Route3" color="4" fill="3" visible="no" active="no"/>
 <layer number="14" name="Route14" color="1" fill="6" visible="no" active="no"/>
-<layer number="15" name="Route15" color="4" fill="6" visible="yes" active="yes"/>
-<layer number="16" name="Bottom" color="1" fill="1" visible="yes" active="yes"/>
+<layer number="15" name="Route15" color="4" fill="6" visible="no" active="yes"/>
+<layer number="16" name="Bottom" color="1" fill="1" visible="no" active="yes"/>
 <layer number="17" name="Pads" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="18" name="Vias" color="2" fill="1" visible="yes" active="yes"/>
 <layer number="19" name="Unrouted" color="6" fill="1" visible="yes" active="yes"/>
@@ -22,7 +22,7 @@
 <layer number="22" name="bPlace" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="23" name="tOrigins" color="15" fill="1" visible="yes" active="yes"/>
 <layer number="24" name="bOrigins" color="15" fill="1" visible="yes" active="yes"/>
-<layer number="25" name="tNames" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="25" name="tNames" color="7" fill="1" visible="no" active="yes"/>
 <layer number="26" name="bNames" color="7" fill="1" visible="no" active="yes"/>
 <layer number="27" name="tValues" color="7" fill="1" visible="no" active="yes"/>
 <layer number="28" name="bValues" color="7" fill="1" visible="no" active="yes"/>
@@ -36,20 +36,20 @@
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
 <layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
-<layer number="39" name="tKeepout" color="4" fill="11" visible="yes" active="yes"/>
-<layer number="40" name="bKeepout" color="1" fill="11" visible="yes" active="yes"/>
+<layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
+<layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
 <layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
 <layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
 <layer number="43" name="vRestrict" color="2" fill="10" visible="yes" active="yes"/>
-<layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
-<layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
-<layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
-<layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
+<layer number="44" name="Drills" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="45" name="Holes" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="yes" active="yes"/>
+<layer number="47" name="Measures" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="48" name="Document" color="7" fill="1" visible="no" active="yes"/>
-<layer number="49" name="Reference" color="7" fill="1" visible="no" active="yes"/>
+<layer number="49" name="Reference" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
-<layer number="51" name="tDocu" color="7" fill="1" visible="no" active="yes"/>
-<layer number="52" name="bDocu" color="7" fill="1" visible="no" active="yes"/>
+<layer number="51" name="tDocu" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="52" name="bDocu" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="53" name="tGND_GNDA" color="7" fill="9" visible="no" active="no"/>
 <layer number="54" name="bGND_GNDA" color="1" fill="9" visible="no" active="no"/>
 <layer number="56" name="wert" color="7" fill="1" visible="no" active="no"/>
@@ -201,6 +201,8 @@
 <vertex x="21.59" y="1.27"/>
 </polygon>
 <text x="49.149" y="9.779" size="0.6096" layer="21" ratio="20">1</text>
+<dimension x1="2.54" y1="48.641" x2="66.675" y2="48.641" x3="34.6075" y3="50.292" textsize="0.6096" layer="47"/>
+<dimension x1="0.635" y1="0.635" x2="0.635" y2="29.845" x3="-1.016" y3="15.24" textsize="0.6096" layer="47"/>
 </plain>
 <libraries>
 <library name="rcl">
@@ -3069,10 +3071,34 @@ Your Eurocircuits Team
 <wire x1="92.71" y1="8.636" x2="89.535" y2="8.636" width="0.225" layer="16"/>
 <wire x1="89.535" y1="8.636" x2="89.193" y2="8.128" width="0.225" layer="16"/>
 <wire x1="89.193" y1="8.128" x2="89.027" y2="8.294" width="0.225" layer="16"/>
+<wire x1="98.259" y1="16.852" x2="98.259" y2="18.288" width="0.225" layer="16"/>
+<wire x1="98.259" y1="18.288" x2="98.132" y2="18.415" width="0.225" layer="16"/>
+<polygon width="0.1" layer="16" thermals="no">
+<vertex x="8.636" y="16.51" curve="180"/>
+<vertex x="8.636" y="14.986"/>
+<vertex x="8.636" y="13.589"/>
+<vertex x="7.366" y="12.827"/>
+<vertex x="2.667" y="0.127"/>
+<vertex x="1.27" y="0.127"/>
+<vertex x="1.27" y="1.143"/>
+<vertex x="7.366" y="17.78"/>
+<vertex x="8.636" y="17.526"/>
+</polygon>
+<polygon width="0.1" layer="16" thermals="no">
+<vertex x="8.636" y="27.94" curve="-180"/>
+<vertex x="8.636" y="29.464"/>
+<vertex x="8.636" y="30.861"/>
+<vertex x="7.366" y="32.639"/>
+<vertex x="3.937" y="47.879"/>
+<vertex x="1.016" y="47.879" curve="90"/>
+<vertex x="2.54" y="46.736"/>
+<vertex x="6.985" y="26.924"/>
+<vertex x="8.636" y="26.924"/>
+</polygon>
 <wire x1="94.019" y1="32.258" x2="94.996" y2="38.1" width="0" layer="19" extent="16-16"/>
 <wire x1="92.202" y1="22.667" x2="93.98" y2="29.337" width="0" layer="19" extent="1-16"/>
 <wire x1="97.47" y1="21.463" x2="92.202" y2="22.667" width="0" layer="19" extent="1-1"/>
-<wire x1="98.259" y1="16.852" x2="97.47" y2="19.751" width="0" layer="19" extent="1-16"/>
+<wire x1="98.132" y1="18.415" x2="97.47" y2="19.751" width="0" layer="19" extent="1-16"/>
 <wire x1="92.202" y1="16.002" x2="97.282" y2="16.002" width="0" layer="19" extent="1-1"/>
 <wire x1="97.282" y1="10.922" x2="97.282" y2="16.002" width="0" layer="19" extent="1-1"/>
 <wire x1="97.79" y1="8.636" x2="97.282" y2="10.922" width="0" layer="19" extent="1-1"/>
@@ -3133,8 +3159,28 @@ Your Eurocircuits Team
 <wire x1="16.81" y1="14.86" x2="16.81" y2="16.86" width="0" layer="19" extent="16-16"/>
 <wire x1="20.32" y1="2.104" x2="20.574" y2="8.382" width="0" layer="19" extent="1-1"/>
 <wire x1="11.43" y1="3.81" x2="18.923" y2="1.143" width="0" layer="19" extent="1-1"/>
-<wire x1="98.259" y1="16.852" x2="98.259" y2="18.288" width="0.225" layer="16"/>
-<wire x1="98.259" y1="18.288" x2="98.132" y2="18.415" width="0.225" layer="16"/>
+<polygon width="0.1" layer="2" thermals="no">
+<vertex x="8.636" y="16.51" curve="180"/>
+<vertex x="8.636" y="14.986"/>
+<vertex x="8.636" y="13.589"/>
+<vertex x="7.366" y="12.827"/>
+<vertex x="2.667" y="0.127"/>
+<vertex x="1.27" y="0.127"/>
+<vertex x="1.27" y="1.143"/>
+<vertex x="7.366" y="17.78"/>
+<vertex x="8.636" y="17.526"/>
+</polygon>
+<polygon width="0.1" layer="2" thermals="no">
+<vertex x="8.636" y="27.94" curve="-180"/>
+<vertex x="8.636" y="29.464"/>
+<vertex x="8.636" y="30.861"/>
+<vertex x="7.366" y="32.639"/>
+<vertex x="3.937" y="47.879"/>
+<vertex x="1.016" y="47.879" curve="90"/>
+<vertex x="2.54" y="46.736"/>
+<vertex x="6.985" y="26.924"/>
+<vertex x="8.636" y="26.924"/>
+</polygon>
 </signal>
 <signal name="EN">
 <contactref element="IC1111" pad="4"/>
@@ -4510,6 +4556,16 @@ Your Eurocircuits Team
 <contactref element="R281" pad="2"/>
 <contactref element="C282" pad="1"/>
 <wire x1="11.215" y1="15.875" x2="9.525" y2="15.836" width="0.64" layer="16"/>
+<via x="8.636" y="15.748" extent="1-16" drill="0.3" shape="octagon"/>
+<wire x1="8.636" y1="15.748" x2="9.525" y2="15.748" width="0.604" layer="16"/>
+<wire x1="9.525" y1="15.748" x2="9.525" y2="15.836" width="0.604" layer="16"/>
+<wire x1="0.635" y1="29.591" x2="0.635" y2="0.635" width="0.604" layer="16"/>
+<via x="0.635" y="0.635" extent="1-16" drill="0.3" shape="octagon"/>
+<wire x1="0.635" y1="0.635" x2="1.397" y2="0.635" width="0.604" layer="15"/>
+<wire x1="1.397" y1="0.635" x2="2.159" y2="1.27" width="0.604" layer="15" curve="90"/>
+<wire x1="2.159" y1="1.27" x2="7.366" y2="15.367" width="0.604" layer="15"/>
+<wire x1="7.366" y1="15.367" x2="7.874" y2="15.748" width="0.604" layer="15" curve="-90"/>
+<wire x1="7.874" y1="15.748" x2="8.636" y2="15.748" width="0.604" layer="15"/>
 </signal>
 <signal name="GSM_RF" class="2">
 <contactref element="U201" pad="P$66"/>
@@ -4525,6 +4581,16 @@ Your Eurocircuits Team
 <contactref element="C272" pad="1"/>
 <wire x1="11.215" y1="28.829" x2="11.303" y2="28.868" width="0.64" layer="16"/>
 <wire x1="11.303" y1="28.868" x2="9.525" y2="28.868" width="0.64" layer="16"/>
+<via x="8.636" y="28.702" extent="1-16" drill="0.3" shape="octagon"/>
+<wire x1="8.636" y1="28.702" x2="9.525" y2="28.702" width="0.604" layer="16"/>
+<wire x1="9.525" y1="28.702" x2="9.525" y2="28.868" width="0.604" layer="16"/>
+<via x="2.54" y="48.641" extent="1-16" drill="0.3" shape="octagon"/>
+<wire x1="8.636" y1="28.702" x2="8.128" y2="28.702" width="0.604" layer="15"/>
+<wire x1="8.128" y1="28.702" x2="7.239" y2="29.464" width="0.604" layer="15" curve="-90"/>
+<wire x1="7.239" y1="29.464" x2="3.302" y2="46.863" width="0.604" layer="15"/>
+<wire x1="3.302" y1="46.863" x2="2.794" y2="47.498" width="0.604" layer="15" curve="90"/>
+<wire x1="2.794" y1="47.498" x2="2.54" y2="48.641" width="0.604" layer="15" curve="-90"/>
+<wire x1="2.54" y1="48.641" x2="66.421" y2="48.641" width="0.604" layer="16"/>
 </signal>
 <signal name="GPS_PWR">
 <contactref element="RPOLY291" pad="1"/>
