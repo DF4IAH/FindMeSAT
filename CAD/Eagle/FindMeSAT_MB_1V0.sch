@@ -7660,12 +7660,10 @@ MANUFACTURER: SAMTEC</description>
 <wire x1="-6.9256" y1="-9.3358" x2="-6.8256" y2="-9.5358" width="0.08" layer="51"/>
 <wire x1="6.5" y1="-8.89" x2="-6.5" y2="-8.89" width="0.127" layer="51"/>
 <wire x1="6.5" y1="8.91" x2="-6.5" y2="8.91" width="0.127" layer="51"/>
-<wire x1="-6.5" y1="-6.89" x2="-6.5" y2="-8.89" width="0.3048" layer="21"/>
-<wire x1="6.5" y1="-6.89" x2="6.5" y2="-8.89" width="0.3048" layer="21"/>
-<wire x1="-4.5" y1="8.91" x2="-6.5" y2="8.91" width="0.3048" layer="21"/>
-<wire x1="-6.5" y1="8.91" x2="-6.5" y2="6.91" width="0.3048" layer="21"/>
-<wire x1="6.5" y1="8.91" x2="4.5" y2="8.91" width="0.3048" layer="21"/>
-<wire x1="6.5" y1="8.91" x2="6.5" y2="6.91" width="0.3048" layer="21"/>
+<wire x1="6.5" y1="-8.795" x2="6.5" y2="-8.87" width="0.3048" layer="21"/>
+<wire x1="6.5" y1="-8.87" x2="6.5" y2="-8.89" width="0.3048" layer="21"/>
+<wire x1="-4.5" y1="8.91" x2="-5.865" y2="8.91" width="0.3048" layer="21"/>
+<wire x1="5.865" y1="8.91" x2="4.5" y2="8.91" width="0.3048" layer="21"/>
 <wire x1="-7" y1="-9.09" x2="7" y2="-9.09" width="0" layer="51"/>
 <smd name="G1" x="-6.875" y="-7.04" dx="1.35" dy="2.6" layer="1"/>
 <smd name="S1" x="6.875" y="-5.13" dx="1.35" dy="0.58" layer="1"/>
@@ -7698,6 +7696,10 @@ MANUFACTURER: SAMTEC</description>
 <wire x1="-3.81" y1="-0.762" x2="-5.08" y2="-0.762" width="0.127" layer="51"/>
 <text x="-2.54" y="3.81" size="0.6096" layer="51">Switch</text>
 <text x="-2.54" y="5.08" size="0.6096" layer="51">SD</text>
+<wire x1="-6.5" y1="-8.795" x2="-6.5" y2="-8.87" width="0.3048" layer="21"/>
+<wire x1="-6.5" y1="-8.87" x2="-6.5" y2="-8.89" width="0.3048" layer="21"/>
+<wire x1="-4.5" y1="-8.87" x2="-6.5" y2="-8.87" width="0.3048" layer="21"/>
+<wire x1="6.5" y1="-8.87" x2="4.5" y2="-8.87" width="0.3048" layer="21"/>
 </package>
 <package name="SMA_SMT_AMPHENOL_901-143">
 <pad name="1" x="0" y="0" drill="1.4986"/>
@@ -8161,21 +8163,21 @@ Radiall&lt;p&gt;</description>
 <packages>
 <package name="CFPT-141">
 <description>&lt;b&gt;3.0V CMOS Clock Oscillator&lt;/b&gt;</description>
-<wire x1="-2.5" y1="-1.6" x2="2.5" y2="-1.6" width="0.2032" layer="51"/>
-<wire x1="2.5" y1="-1.6" x2="2.5" y2="1.6" width="0.2032" layer="51"/>
-<wire x1="2.5" y1="1.6" x2="-2.5" y2="1.6" width="0.2032" layer="51"/>
-<wire x1="-2.5" y1="1.6" x2="-2.5" y2="-1.6" width="0.2032" layer="51"/>
-<wire x1="-1.368" y1="-1.6" x2="1.368" y2="-1.6" width="0.2032" layer="21"/>
-<wire x1="-2.5" y1="0.876" x2="-2.5" y2="-0.876" width="0.2032" layer="21"/>
-<wire x1="1.368" y1="1.6" x2="-1.368" y2="1.6" width="0.2032" layer="21"/>
-<wire x1="2.5" y1="-0.876" x2="2.5" y2="0.876" width="0.2032" layer="21"/>
-<circle x="-1.814053125" y="-0.946890625" radius="0.254" width="0" layer="21"/>
-<smd name="1" x="-1.9" y="-1.15" dx="0.9" dy="1.4" layer="1" rot="R90"/>
-<smd name="2" x="1.9" y="-1.15" dx="0.9" dy="1.4" layer="1" rot="R90"/>
-<smd name="3" x="1.9" y="1.15" dx="0.9" dy="1.4" layer="1" rot="R270"/>
-<smd name="4" x="-1.9" y="1.15" dx="0.9" dy="1.4" layer="1" rot="R270"/>
-<text x="-2.887103125" y="-1.7212" size="1.27" layer="25" rot="R90">&gt;NAME</text>
-<text x="4.184525" y="-1.74833125" size="1.27" layer="27" rot="R90">&gt;VALUE</text>
+<wire x1="-1.6" y1="2.5" x2="-1.6" y2="-2.5" width="0.2032" layer="51"/>
+<wire x1="-1.6" y1="-2.5" x2="1.6" y2="-2.5" width="0.2032" layer="51"/>
+<wire x1="1.6" y1="-2.5" x2="1.6" y2="2.5" width="0.2032" layer="51"/>
+<wire x1="1.6" y1="2.5" x2="-1.6" y2="2.5" width="0.2032" layer="51"/>
+<wire x1="-1.6" y1="1.368" x2="-1.6" y2="-1.368" width="0.2032" layer="21"/>
+<wire x1="0.876" y1="2.5" x2="-0.876" y2="2.5" width="0.2032" layer="21"/>
+<wire x1="1.6" y1="-1.368" x2="1.6" y2="1.368" width="0.2032" layer="21"/>
+<wire x1="-0.876" y1="-2.5" x2="0.876" y2="-2.5" width="0.2032" layer="21"/>
+<circle x="-2.216890625" y="2.449053125" radius="0.254" width="0" layer="21"/>
+<smd name="1" x="-1.15" y="1.9" dx="0.9" dy="1.4" layer="1"/>
+<smd name="2" x="-1.15" y="-1.9" dx="0.9" dy="1.4" layer="1"/>
+<smd name="3" x="1.15" y="-1.9" dx="0.9" dy="1.4" layer="1" rot="R180"/>
+<smd name="4" x="1.15" y="1.9" dx="0.9" dy="1.4" layer="1" rot="R180"/>
+<text x="-1.7212" y="2.887103125" size="1.27" layer="25">&gt;NAME</text>
+<text x="-1.74833125" y="-4.184525" size="1.27" layer="27">&gt;VALUE</text>
 </package>
 </packages>
 <symbols>
@@ -8397,168 +8399,168 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <description>&lt;h3&gt;24-Pin QFN -  3.0 x 3.0 mm - No center pad&lt;/h3&gt;
 &lt;p&gt;&lt;b&gt;Note:&lt;/b&gt; No center pad per "Exposed Die Pad Precautions" section of the &lt;a href="http://www.digikey.com/Web%20Export/Supplier%20Content/invensense-1428/pdf/invensense-mems-handling.pdf"&gt;InvenSense MEMS Handling application note&lt;/a&gt;.&lt;/p&gt;</description>
 <wire x1="-1.5" y1="1.5" x2="-1.5" y2="-1.5" width="0.127" layer="51"/>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.5" y="1.1"/>
 <vertex x="-1.28" y="1.1"/>
 <vertex x="-1.2" y="1.02" curve="-90"/>
 <vertex x="-1.3" y="0.9"/>
 <vertex x="-1.5" y="0.9"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.5" y="0.7"/>
 <vertex x="-1.3" y="0.7" curve="-90"/>
 <vertex x="-1.2" y="0.6" curve="-90"/>
 <vertex x="-1.3" y="0.5"/>
 <vertex x="-1.5" y="0.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.5" y="-1.1"/>
 <vertex x="-1.28" y="-1.1"/>
 <vertex x="-1.2" y="-1.02" curve="90"/>
 <vertex x="-1.3" y="-0.9"/>
 <vertex x="-1.5" y="-0.9"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.5" y="0.3"/>
 <vertex x="-1.3" y="0.3" curve="-90"/>
 <vertex x="-1.2" y="0.2" curve="-90"/>
 <vertex x="-1.3" y="0.1"/>
 <vertex x="-1.5" y="0.1"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.5" y="-0.1"/>
 <vertex x="-1.3" y="-0.1" curve="-90"/>
 <vertex x="-1.2" y="-0.2" curve="-90"/>
 <vertex x="-1.3" y="-0.3"/>
 <vertex x="-1.5" y="-0.3"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.5" y="-0.5"/>
 <vertex x="-1.3" y="-0.5" curve="-90"/>
 <vertex x="-1.2" y="-0.6" curve="-90"/>
 <vertex x="-1.3" y="-0.7"/>
 <vertex x="-1.5" y="-0.7"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.1" y="-1.5"/>
 <vertex x="-1.1" y="-1.28"/>
 <vertex x="-1.02" y="-1.2" curve="-90"/>
 <vertex x="-0.9" y="-1.3"/>
 <vertex x="-0.9" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-0.7" y="-1.5"/>
 <vertex x="-0.7" y="-1.3" curve="-90"/>
 <vertex x="-0.6" y="-1.2" curve="-90"/>
 <vertex x="-0.5" y="-1.3"/>
 <vertex x="-0.5" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.1" y="-1.5"/>
 <vertex x="1.1" y="-1.28"/>
 <vertex x="1.02" y="-1.2" curve="90"/>
 <vertex x="0.9" y="-1.3"/>
 <vertex x="0.9" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-0.3" y="-1.5"/>
 <vertex x="-0.3" y="-1.3" curve="-90"/>
 <vertex x="-0.2" y="-1.2" curve="-90"/>
 <vertex x="-0.1" y="-1.3"/>
 <vertex x="-0.1" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="0.1" y="-1.5"/>
 <vertex x="0.1" y="-1.3" curve="-90"/>
 <vertex x="0.2" y="-1.2" curve="-90"/>
 <vertex x="0.3" y="-1.3"/>
 <vertex x="0.3" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="0.5" y="-1.5"/>
 <vertex x="0.5" y="-1.3" curve="-90"/>
 <vertex x="0.6" y="-1.2" curve="-90"/>
 <vertex x="0.7" y="-1.3"/>
 <vertex x="0.7" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.5" y="-1.1"/>
 <vertex x="1.28" y="-1.1"/>
 <vertex x="1.2" y="-1.02" curve="-90"/>
 <vertex x="1.3" y="-0.9"/>
 <vertex x="1.5" y="-0.9"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.5" y="-0.7"/>
 <vertex x="1.3" y="-0.7" curve="-90"/>
 <vertex x="1.2" y="-0.6" curve="-90"/>
 <vertex x="1.3" y="-0.5"/>
 <vertex x="1.5" y="-0.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.5" y="1.1"/>
 <vertex x="1.28" y="1.1"/>
 <vertex x="1.2" y="1.02" curve="90"/>
 <vertex x="1.3" y="0.9"/>
 <vertex x="1.5" y="0.9"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.5" y="-0.3"/>
 <vertex x="1.3" y="-0.3" curve="-90"/>
 <vertex x="1.2" y="-0.2" curve="-90"/>
 <vertex x="1.3" y="-0.1"/>
 <vertex x="1.5" y="-0.1"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.5" y="0.1"/>
 <vertex x="1.3" y="0.1" curve="-90"/>
 <vertex x="1.2" y="0.2" curve="-90"/>
 <vertex x="1.3" y="0.3"/>
 <vertex x="1.5" y="0.3"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.5" y="0.5"/>
 <vertex x="1.3" y="0.5" curve="-90"/>
 <vertex x="1.2" y="0.6" curve="-90"/>
 <vertex x="1.3" y="0.7"/>
 <vertex x="1.5" y="0.7"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.1" y="1.5"/>
 <vertex x="1.1" y="1.28"/>
 <vertex x="1.02" y="1.2" curve="-90"/>
 <vertex x="0.9" y="1.3"/>
 <vertex x="0.9" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="0.7" y="1.5"/>
 <vertex x="0.7" y="1.3" curve="-90"/>
 <vertex x="0.6" y="1.2" curve="-90"/>
 <vertex x="0.5" y="1.3"/>
 <vertex x="0.5" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.1" y="1.5"/>
 <vertex x="-1.1" y="1.28"/>
 <vertex x="-1.02" y="1.2" curve="90"/>
 <vertex x="-0.9" y="1.3"/>
 <vertex x="-0.9" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="0.3" y="1.5"/>
 <vertex x="0.3" y="1.3" curve="-90"/>
 <vertex x="0.2" y="1.2" curve="-90"/>
 <vertex x="0.1" y="1.3"/>
 <vertex x="0.1" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-0.1" y="1.5"/>
 <vertex x="-0.1" y="1.3" curve="-90"/>
 <vertex x="-0.2" y="1.2" curve="-90"/>
 <vertex x="-0.3" y="1.3"/>
 <vertex x="-0.3" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-0.5" y="1.5"/>
 <vertex x="-0.5" y="1.3" curve="-90"/>
 <vertex x="-0.6" y="1.2" curve="-90"/>
@@ -8588,7 +8590,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <smd name="21" x="0.2" y="1.5" dx="0.25" dy="0.6" layer="1" roundness="20" stop="no" thermals="no"/>
 <smd name="22" x="-0.2" y="1.5" dx="0.25" dy="0.6" layer="1" roundness="20" stop="no" thermals="no"/>
 <smd name="23" x="-0.6" y="1.5" dx="0.25" dy="0.6" layer="1" roundness="20" stop="no" thermals="no"/>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-0.85" y="0.55"/>
 <vertex x="-0.85" y="-0.62" curve="90"/>
 <vertex x="-0.7" y="-0.77"/>
@@ -8608,7 +8610,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="1.6" y1="1.6" x2="1.37" y2="1.6" width="0.2032" layer="21"/>
 <wire x1="1.6" y1="1.37" x2="1.6" y2="1.6" width="0.2032" layer="21"/>
 <wire x1="-1.48" y1="1.37" x2="-1.37" y2="1.48" width="0.2032" layer="21"/>
-<circle x="-1.746" y="1.746" radius="0.254" width="0" layer="21"/>
+<circle x="-1.746" y="1.746" radius="0.1905" width="0" layer="21"/>
 <text x="0" y="2.032" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;Name</text>
 <text x="0" y="-1.905" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;Value</text>
 <polygon width="0.002540625" layer="1">
@@ -8697,7 +8699,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="-1.9" y1="-1.8" x2="1.9" y2="-1.8" width="0.127" layer="51"/>
 <wire x1="1.9" y1="-1.8" x2="1.9" y2="1.8" width="0.127" layer="51"/>
 <wire x1="1.9" y1="1.8" x2="-1.9" y2="1.8" width="0.127" layer="51"/>
-<circle x="1.766" y="2.274" radius="0.254" width="0" layer="21"/>
+<circle x="2.401" y="2.274" radius="0.254" width="0" layer="21"/>
 <wire x1="-1.5" y1="1" x2="-1.5" y2="-1" width="0.127" layer="51"/>
 <wire x1="-1.5" y1="-1" x2="-1" y2="-1.5" width="0.127" layer="51" curve="90"/>
 <wire x1="-1" y1="-1.5" x2="1" y2="-1.5" width="0.127" layer="51"/>
@@ -8706,7 +8708,6 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="1.5" y1="1" x2="1" y2="1.5" width="0.127" layer="51" curve="90"/>
 <wire x1="1" y1="1.5" x2="-1" y2="1.5" width="0.127" layer="51"/>
 <wire x1="-1" y1="1.5" x2="-1.5" y2="1" width="0.127" layer="51" curve="90"/>
-<circle x="0.75" y="0.75" radius="0.125" width="0.6096" layer="51"/>
 <text x="0" y="2.032" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;NAME</text>
 <text x="0" y="-2.032" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;VALUE</text>
 <wire x1="-2" y1="-0.665" x2="-2" y2="-1.875" width="0.127" layer="21"/>
@@ -8714,7 +8715,6 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="-2" y1="1.875" x2="-2" y2="0.665" width="0.127" layer="21"/>
 <wire x1="2" y1="0.665" x2="2" y2="1.875" width="0.127" layer="21"/>
 <wire x1="2" y1="1.875" x2="0.54" y2="1.875" width="0.127" layer="21"/>
-<wire x1="3.08" y1="-3.145" x2="7.08" y2="-3.145" width="0.127" layer="21"/>
 <wire x1="0.54" y1="-1.875" x2="2" y2="-1.875" width="0.127" layer="21"/>
 <wire x1="-0.54" y1="1.875" x2="-2" y2="1.875" width="0.127" layer="21"/>
 <wire x1="-2" y1="-1.875" x2="-0.54" y2="-1.875" width="0.127" layer="21"/>
@@ -8747,7 +8747,6 @@ body 2.5x2.5mm, pitch 0.5mm</description>
 <smd name="8" x="2.425" y="2" dx="0.55" dy="0.25" layer="1" roundness="20" rot="R180" stop="no" thermals="no"/>
 <rectangle x1="2.08" y1="0.305" x2="2.77" y2="2.195" layer="29"/>
 <smd name="9" x="1.25" y="1.25" dx="0.9" dy="1.7" layer="1" thermals="no"/>
-<circle x="0.385" y="2.3114" radius="0.06985" width="0.1397" layer="51"/>
 </package>
 </packages>
 <symbols>
@@ -9727,21 +9726,21 @@ Datasheet: &lt;a href="http://ae-bst.resource.bosch.com/media/products/dokumente
 <description>&lt;h3&gt;20-Pin QFN -  4.0 x 4.0 mm - 0.5P - with center pad&lt;/h3&gt;
 &lt;p&gt;&lt;b&gt;Reference:&lt;/b&gt;&lt;br/&gt;&lt;a href="http://www.onsemi.com/pub/Collateral/AX5243-D.PDF"&gt;http://www.onsemi.com/pub/Collateral/AX5243-D.PDF&lt;/a&gt;.&lt;/p&gt;</description>
 <wire x1="-1.5" y1="1.5" x2="-1.5" y2="-1.5" width="0.127" layer="51"/>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-0.6" y="-1.5"/>
 <vertex x="-0.6" y="-1.3" curve="-90"/>
 <vertex x="-0.5" y="-1.2" curve="-90"/>
 <vertex x="-0.4" y="-1.3"/>
 <vertex x="-0.4" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-0.1" y="-1.5"/>
 <vertex x="-0.1" y="-1.3" curve="-90"/>
 <vertex x="0" y="-1.2" curve="-90"/>
 <vertex x="0.1" y="-1.3"/>
 <vertex x="0.1" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="0.4" y="-1.5"/>
 <vertex x="0.4" y="-1.3" curve="-90"/>
 <vertex x="0.5" y="-1.2" curve="-90"/>
@@ -9760,7 +9759,7 @@ Datasheet: &lt;a href="http://ae-bst.resource.bosch.com/media/products/dokumente
 <smd name="17" x="0.5" y="1.85" dx="0.35" dy="0.6" layer="1" roundness="20" stop="no" thermals="no"/>
 <smd name="18" x="0" y="1.85" dx="0.35" dy="0.6" layer="1" roundness="20" stop="no" thermals="no"/>
 <smd name="19" x="-0.5" y="1.85" dx="0.35" dy="0.6" layer="1" roundness="20" stop="no" thermals="no"/>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-0.87" y="0.57"/>
 <vertex x="-0.87" y="-0.75" curve="90"/>
 <vertex x="-0.75" y="-0.87"/>
@@ -9805,119 +9804,119 @@ Datasheet: &lt;a href="http://ae-bst.resource.bosch.com/media/products/dokumente
 <rectangle x1="0.625" y1="-1.125" x2="1.125" y2="-0.625" layer="31"/>
 <rectangle x1="0.625" y1="0.625" x2="1.125" y2="1.125" layer="31"/>
 <rectangle x1="-1.125" y1="0.625" x2="-0.625" y2="1.125" layer="31"/>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-1.1" y="-1.5"/>
 <vertex x="-1.1" y="-1.3" curve="-90"/>
 <vertex x="-1" y="-1.2" curve="-90"/>
 <vertex x="-0.9" y="-1.3"/>
 <vertex x="-0.9" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="0.9" y="-1.5"/>
 <vertex x="0.9" y="-1.3" curve="-90"/>
 <vertex x="1" y="-1.2" curve="-90"/>
 <vertex x="1.1" y="-1.3"/>
 <vertex x="1.1" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="0.6" y="1.5"/>
 <vertex x="0.6" y="1.3" curve="-90"/>
 <vertex x="0.5" y="1.2" curve="-90"/>
 <vertex x="0.4" y="1.3"/>
 <vertex x="0.4" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="0.1" y="1.5"/>
 <vertex x="0.1" y="1.3" curve="-90"/>
 <vertex x="0" y="1.2" curve="-90"/>
 <vertex x="-0.1" y="1.3"/>
 <vertex x="-0.1" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-0.4" y="1.5"/>
 <vertex x="-0.4" y="1.3" curve="-90"/>
 <vertex x="-0.5" y="1.2" curve="-90"/>
 <vertex x="-0.6" y="1.3"/>
 <vertex x="-0.6" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="1.1" y="1.5"/>
 <vertex x="1.1" y="1.3" curve="-90"/>
 <vertex x="1" y="1.2" curve="-90"/>
 <vertex x="0.9" y="1.3"/>
 <vertex x="0.9" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-0.9" y="1.5"/>
 <vertex x="-0.9" y="1.3" curve="-90"/>
 <vertex x="-1" y="1.2" curve="-90"/>
 <vertex x="-1.1" y="1.3"/>
 <vertex x="-1.1" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="1.5" y="-0.6"/>
 <vertex x="1.3" y="-0.6" curve="-90"/>
 <vertex x="1.2" y="-0.5" curve="-90"/>
 <vertex x="1.3" y="-0.4"/>
 <vertex x="1.5" y="-0.4"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="1.5" y="-0.1"/>
 <vertex x="1.3" y="-0.1" curve="-90"/>
 <vertex x="1.2" y="0" curve="-90"/>
 <vertex x="1.3" y="0.1"/>
 <vertex x="1.5" y="0.1"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="1.5" y="0.4"/>
 <vertex x="1.3" y="0.4" curve="-90"/>
 <vertex x="1.2" y="0.5" curve="-90"/>
 <vertex x="1.3" y="0.6"/>
 <vertex x="1.5" y="0.6"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="1.5" y="-1.1"/>
 <vertex x="1.3" y="-1.1" curve="-90"/>
 <vertex x="1.2" y="-1" curve="-90"/>
 <vertex x="1.3" y="-0.9"/>
 <vertex x="1.5" y="-0.9"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="1.5" y="0.9"/>
 <vertex x="1.3" y="0.9" curve="-90"/>
 <vertex x="1.2" y="1" curve="-90"/>
 <vertex x="1.3" y="1.1"/>
 <vertex x="1.5" y="1.1"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-1.5" y="0.6"/>
 <vertex x="-1.3" y="0.6" curve="-90"/>
 <vertex x="-1.2" y="0.5" curve="-90"/>
 <vertex x="-1.3" y="0.4"/>
 <vertex x="-1.5" y="0.4"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-1.5" y="0.1"/>
 <vertex x="-1.3" y="0.1" curve="-90"/>
 <vertex x="-1.2" y="0" curve="-90"/>
 <vertex x="-1.3" y="-0.1"/>
 <vertex x="-1.5" y="-0.1"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-1.5" y="-0.4"/>
 <vertex x="-1.3" y="-0.4" curve="-90"/>
 <vertex x="-1.2" y="-0.5" curve="-90"/>
 <vertex x="-1.3" y="-0.6"/>
 <vertex x="-1.5" y="-0.6"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-1.5" y="1.1"/>
 <vertex x="-1.3" y="1.1" curve="-90"/>
 <vertex x="-1.2" y="1" curve="-90"/>
 <vertex x="-1.3" y="0.9"/>
 <vertex x="-1.5" y="0.9"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-1.5" y="-0.9"/>
 <vertex x="-1.3" y="-0.9" curve="-90"/>
 <vertex x="-1.2" y="-1" curve="-90"/>

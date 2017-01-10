@@ -26,26 +26,26 @@
 <layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="27" name="tValues" color="5" fill="1" visible="no" active="yes"/>
 <layer number="28" name="bValues" color="5" fill="1" visible="no" active="yes"/>
-<layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
-<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
-<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
-<layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
+<layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="32" name="bCream" color="7" fill="5" visible="yes" active="yes"/>
 <layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
 <layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
 <layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
-<layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
-<layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
-<layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="yes"/>
-<layer number="42" name="bRestrict" color="1" fill="10" visible="no" active="yes"/>
-<layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
+<layer number="39" name="tKeepout" color="4" fill="11" visible="yes" active="yes"/>
+<layer number="40" name="bKeepout" color="1" fill="11" visible="yes" active="yes"/>
+<layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
+<layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
+<layer number="43" name="vRestrict" color="2" fill="10" visible="yes" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
-<layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="yes" active="yes"/>
 <layer number="47" name="Measures" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="48" name="Document" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="48" name="Document" color="7" fill="1" visible="no" active="yes"/>
 <layer number="49" name="Reference" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
 <layer number="51" name="tDocu" color="7" fill="1" visible="yes" active="yes"/>
@@ -695,12 +695,10 @@ MANUFACTURER: SAMTEC</description>
 <wire x1="-6.9256" y1="-9.3358" x2="-6.8256" y2="-9.5358" width="0.08" layer="51"/>
 <wire x1="6.5" y1="-8.89" x2="-6.5" y2="-8.89" width="0.127" layer="51"/>
 <wire x1="6.5" y1="8.91" x2="-6.5" y2="8.91" width="0.127" layer="51"/>
-<wire x1="-6.5" y1="-6.89" x2="-6.5" y2="-8.89" width="0.3048" layer="21"/>
-<wire x1="6.5" y1="-6.89" x2="6.5" y2="-8.89" width="0.3048" layer="21"/>
-<wire x1="-4.5" y1="8.91" x2="-6.5" y2="8.91" width="0.3048" layer="21"/>
-<wire x1="-6.5" y1="8.91" x2="-6.5" y2="6.91" width="0.3048" layer="21"/>
-<wire x1="6.5" y1="8.91" x2="4.5" y2="8.91" width="0.3048" layer="21"/>
-<wire x1="6.5" y1="8.91" x2="6.5" y2="6.91" width="0.3048" layer="21"/>
+<wire x1="6.5" y1="-8.795" x2="6.5" y2="-8.87" width="0.3048" layer="21"/>
+<wire x1="6.5" y1="-8.87" x2="6.5" y2="-8.89" width="0.3048" layer="21"/>
+<wire x1="-4.5" y1="8.91" x2="-5.865" y2="8.91" width="0.3048" layer="21"/>
+<wire x1="5.865" y1="8.91" x2="4.5" y2="8.91" width="0.3048" layer="21"/>
 <wire x1="-7" y1="-9.09" x2="7" y2="-9.09" width="0" layer="51"/>
 <smd name="G1" x="-6.875" y="-7.04" dx="1.35" dy="2.6" layer="1"/>
 <smd name="S1" x="6.875" y="-5.13" dx="1.35" dy="0.58" layer="1"/>
@@ -733,6 +731,10 @@ MANUFACTURER: SAMTEC</description>
 <wire x1="-3.81" y1="-0.762" x2="-5.08" y2="-0.762" width="0.127" layer="51"/>
 <text x="-2.54" y="3.81" size="0.6096" layer="51">Switch</text>
 <text x="-2.54" y="5.08" size="0.6096" layer="51">SD</text>
+<wire x1="-6.5" y1="-8.795" x2="-6.5" y2="-8.87" width="0.3048" layer="21"/>
+<wire x1="-6.5" y1="-8.87" x2="-6.5" y2="-8.89" width="0.3048" layer="21"/>
+<wire x1="-4.5" y1="-8.87" x2="-6.5" y2="-8.87" width="0.3048" layer="21"/>
+<wire x1="6.5" y1="-8.87" x2="4.5" y2="-8.87" width="0.3048" layer="21"/>
 </package>
 <package name="SMA_SMT_AMPHENOL_901-143">
 <pad name="1" x="0" y="0" drill="1.4986"/>
@@ -765,21 +767,21 @@ MANUFACTURER: SAMTEC</description>
 <packages>
 <package name="CFPT-141">
 <description>&lt;b&gt;3.0V CMOS Clock Oscillator&lt;/b&gt;</description>
-<wire x1="-2.5" y1="-1.6" x2="2.5" y2="-1.6" width="0.2032" layer="51"/>
-<wire x1="2.5" y1="-1.6" x2="2.5" y2="1.6" width="0.2032" layer="51"/>
-<wire x1="2.5" y1="1.6" x2="-2.5" y2="1.6" width="0.2032" layer="51"/>
-<wire x1="-2.5" y1="1.6" x2="-2.5" y2="-1.6" width="0.2032" layer="51"/>
-<wire x1="-1.368" y1="-1.6" x2="1.368" y2="-1.6" width="0.2032" layer="21"/>
-<wire x1="-2.5" y1="0.876" x2="-2.5" y2="-0.876" width="0.2032" layer="21"/>
-<wire x1="1.368" y1="1.6" x2="-1.368" y2="1.6" width="0.2032" layer="21"/>
-<wire x1="2.5" y1="-0.876" x2="2.5" y2="0.876" width="0.2032" layer="21"/>
-<circle x="-1.814053125" y="-0.946890625" radius="0.254" width="0" layer="21"/>
-<smd name="1" x="-1.9" y="-1.15" dx="0.9" dy="1.4" layer="1" rot="R90"/>
-<smd name="2" x="1.9" y="-1.15" dx="0.9" dy="1.4" layer="1" rot="R90"/>
-<smd name="3" x="1.9" y="1.15" dx="0.9" dy="1.4" layer="1" rot="R270"/>
-<smd name="4" x="-1.9" y="1.15" dx="0.9" dy="1.4" layer="1" rot="R270"/>
-<text x="-2.887103125" y="-1.7212" size="1.27" layer="25" rot="R90">&gt;NAME</text>
-<text x="4.184525" y="-1.74833125" size="1.27" layer="27" rot="R90">&gt;VALUE</text>
+<wire x1="-1.6" y1="2.5" x2="-1.6" y2="-2.5" width="0.2032" layer="51"/>
+<wire x1="-1.6" y1="-2.5" x2="1.6" y2="-2.5" width="0.2032" layer="51"/>
+<wire x1="1.6" y1="-2.5" x2="1.6" y2="2.5" width="0.2032" layer="51"/>
+<wire x1="1.6" y1="2.5" x2="-1.6" y2="2.5" width="0.2032" layer="51"/>
+<wire x1="-1.6" y1="1.368" x2="-1.6" y2="-1.368" width="0.2032" layer="21"/>
+<wire x1="0.876" y1="2.5" x2="-0.876" y2="2.5" width="0.2032" layer="21"/>
+<wire x1="1.6" y1="-1.368" x2="1.6" y2="1.368" width="0.2032" layer="21"/>
+<wire x1="-0.876" y1="-2.5" x2="0.876" y2="-2.5" width="0.2032" layer="21"/>
+<circle x="-2.216890625" y="2.449053125" radius="0.254" width="0" layer="21"/>
+<smd name="1" x="-1.15" y="1.9" dx="0.9" dy="1.4" layer="1"/>
+<smd name="2" x="-1.15" y="-1.9" dx="0.9" dy="1.4" layer="1"/>
+<smd name="3" x="1.15" y="-1.9" dx="0.9" dy="1.4" layer="1" rot="R180"/>
+<smd name="4" x="1.15" y="1.9" dx="0.9" dy="1.4" layer="1" rot="R180"/>
+<text x="-1.7212" y="2.887103125" size="1.27" layer="25">&gt;NAME</text>
+<text x="-1.74833125" y="-4.184525" size="1.27" layer="27">&gt;VALUE</text>
 </package>
 </packages>
 </library>
@@ -864,168 +866,168 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <description>&lt;h3&gt;24-Pin QFN -  3.0 x 3.0 mm - No center pad&lt;/h3&gt;
 &lt;p&gt;&lt;b&gt;Note:&lt;/b&gt; No center pad per "Exposed Die Pad Precautions" section of the &lt;a href="http://www.digikey.com/Web%20Export/Supplier%20Content/invensense-1428/pdf/invensense-mems-handling.pdf"&gt;InvenSense MEMS Handling application note&lt;/a&gt;.&lt;/p&gt;</description>
 <wire x1="-1.5" y1="1.5" x2="-1.5" y2="-1.5" width="0.127" layer="51"/>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.5" y="1.1"/>
 <vertex x="-1.28" y="1.1"/>
 <vertex x="-1.2" y="1.02" curve="-90"/>
 <vertex x="-1.3" y="0.9"/>
 <vertex x="-1.5" y="0.9"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.5" y="0.7"/>
 <vertex x="-1.3" y="0.7" curve="-90"/>
 <vertex x="-1.2" y="0.6" curve="-90"/>
 <vertex x="-1.3" y="0.5"/>
 <vertex x="-1.5" y="0.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.5" y="-1.1"/>
 <vertex x="-1.28" y="-1.1"/>
 <vertex x="-1.2" y="-1.02" curve="90"/>
 <vertex x="-1.3" y="-0.9"/>
 <vertex x="-1.5" y="-0.9"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.5" y="0.3"/>
 <vertex x="-1.3" y="0.3" curve="-90"/>
 <vertex x="-1.2" y="0.2" curve="-90"/>
 <vertex x="-1.3" y="0.1"/>
 <vertex x="-1.5" y="0.1"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.5" y="-0.1"/>
 <vertex x="-1.3" y="-0.1" curve="-90"/>
 <vertex x="-1.2" y="-0.2" curve="-90"/>
 <vertex x="-1.3" y="-0.3"/>
 <vertex x="-1.5" y="-0.3"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.5" y="-0.5"/>
 <vertex x="-1.3" y="-0.5" curve="-90"/>
 <vertex x="-1.2" y="-0.6" curve="-90"/>
 <vertex x="-1.3" y="-0.7"/>
 <vertex x="-1.5" y="-0.7"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.1" y="-1.5"/>
 <vertex x="-1.1" y="-1.28"/>
 <vertex x="-1.02" y="-1.2" curve="-90"/>
 <vertex x="-0.9" y="-1.3"/>
 <vertex x="-0.9" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-0.7" y="-1.5"/>
 <vertex x="-0.7" y="-1.3" curve="-90"/>
 <vertex x="-0.6" y="-1.2" curve="-90"/>
 <vertex x="-0.5" y="-1.3"/>
 <vertex x="-0.5" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.1" y="-1.5"/>
 <vertex x="1.1" y="-1.28"/>
 <vertex x="1.02" y="-1.2" curve="90"/>
 <vertex x="0.9" y="-1.3"/>
 <vertex x="0.9" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-0.3" y="-1.5"/>
 <vertex x="-0.3" y="-1.3" curve="-90"/>
 <vertex x="-0.2" y="-1.2" curve="-90"/>
 <vertex x="-0.1" y="-1.3"/>
 <vertex x="-0.1" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="0.1" y="-1.5"/>
 <vertex x="0.1" y="-1.3" curve="-90"/>
 <vertex x="0.2" y="-1.2" curve="-90"/>
 <vertex x="0.3" y="-1.3"/>
 <vertex x="0.3" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="0.5" y="-1.5"/>
 <vertex x="0.5" y="-1.3" curve="-90"/>
 <vertex x="0.6" y="-1.2" curve="-90"/>
 <vertex x="0.7" y="-1.3"/>
 <vertex x="0.7" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.5" y="-1.1"/>
 <vertex x="1.28" y="-1.1"/>
 <vertex x="1.2" y="-1.02" curve="-90"/>
 <vertex x="1.3" y="-0.9"/>
 <vertex x="1.5" y="-0.9"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.5" y="-0.7"/>
 <vertex x="1.3" y="-0.7" curve="-90"/>
 <vertex x="1.2" y="-0.6" curve="-90"/>
 <vertex x="1.3" y="-0.5"/>
 <vertex x="1.5" y="-0.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.5" y="1.1"/>
 <vertex x="1.28" y="1.1"/>
 <vertex x="1.2" y="1.02" curve="90"/>
 <vertex x="1.3" y="0.9"/>
 <vertex x="1.5" y="0.9"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.5" y="-0.3"/>
 <vertex x="1.3" y="-0.3" curve="-90"/>
 <vertex x="1.2" y="-0.2" curve="-90"/>
 <vertex x="1.3" y="-0.1"/>
 <vertex x="1.5" y="-0.1"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.5" y="0.1"/>
 <vertex x="1.3" y="0.1" curve="-90"/>
 <vertex x="1.2" y="0.2" curve="-90"/>
 <vertex x="1.3" y="0.3"/>
 <vertex x="1.5" y="0.3"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.5" y="0.5"/>
 <vertex x="1.3" y="0.5" curve="-90"/>
 <vertex x="1.2" y="0.6" curve="-90"/>
 <vertex x="1.3" y="0.7"/>
 <vertex x="1.5" y="0.7"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="1.1" y="1.5"/>
 <vertex x="1.1" y="1.28"/>
 <vertex x="1.02" y="1.2" curve="-90"/>
 <vertex x="0.9" y="1.3"/>
 <vertex x="0.9" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="0.7" y="1.5"/>
 <vertex x="0.7" y="1.3" curve="-90"/>
 <vertex x="0.6" y="1.2" curve="-90"/>
 <vertex x="0.5" y="1.3"/>
 <vertex x="0.5" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-1.1" y="1.5"/>
 <vertex x="-1.1" y="1.28"/>
 <vertex x="-1.02" y="1.2" curve="90"/>
 <vertex x="-0.9" y="1.3"/>
 <vertex x="-0.9" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="0.3" y="1.5"/>
 <vertex x="0.3" y="1.3" curve="-90"/>
 <vertex x="0.2" y="1.2" curve="-90"/>
 <vertex x="0.1" y="1.3"/>
 <vertex x="0.1" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-0.1" y="1.5"/>
 <vertex x="-0.1" y="1.3" curve="-90"/>
 <vertex x="-0.2" y="1.2" curve="-90"/>
 <vertex x="-0.3" y="1.3"/>
 <vertex x="-0.3" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-0.5" y="1.5"/>
 <vertex x="-0.5" y="1.3" curve="-90"/>
 <vertex x="-0.6" y="1.2" curve="-90"/>
@@ -1055,7 +1057,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <smd name="21" x="0.2" y="1.5" dx="0.25" dy="0.6" layer="1" roundness="20" stop="no" thermals="no"/>
 <smd name="22" x="-0.2" y="1.5" dx="0.25" dy="0.6" layer="1" roundness="20" stop="no" thermals="no"/>
 <smd name="23" x="-0.6" y="1.5" dx="0.25" dy="0.6" layer="1" roundness="20" stop="no" thermals="no"/>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-0.85" y="0.55"/>
 <vertex x="-0.85" y="-0.62" curve="90"/>
 <vertex x="-0.7" y="-0.77"/>
@@ -1075,7 +1077,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="1.6" y1="1.6" x2="1.37" y2="1.6" width="0.2032" layer="21"/>
 <wire x1="1.6" y1="1.37" x2="1.6" y2="1.6" width="0.2032" layer="21"/>
 <wire x1="-1.48" y1="1.37" x2="-1.37" y2="1.48" width="0.2032" layer="21"/>
-<circle x="-1.746" y="1.746" radius="0.254" width="0" layer="21"/>
+<circle x="-1.746" y="1.746" radius="0.1905" width="0" layer="21"/>
 <text x="0" y="2.032" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;Name</text>
 <text x="0" y="-1.905" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;Value</text>
 <polygon width="0.002540625" layer="1">
@@ -1164,7 +1166,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="-1.9" y1="-1.8" x2="1.9" y2="-1.8" width="0.127" layer="51"/>
 <wire x1="1.9" y1="-1.8" x2="1.9" y2="1.8" width="0.127" layer="51"/>
 <wire x1="1.9" y1="1.8" x2="-1.9" y2="1.8" width="0.127" layer="51"/>
-<circle x="1.766" y="2.274" radius="0.254" width="0" layer="21"/>
+<circle x="2.401" y="2.274" radius="0.254" width="0" layer="21"/>
 <wire x1="-1.5" y1="1" x2="-1.5" y2="-1" width="0.127" layer="51"/>
 <wire x1="-1.5" y1="-1" x2="-1" y2="-1.5" width="0.127" layer="51" curve="90"/>
 <wire x1="-1" y1="-1.5" x2="1" y2="-1.5" width="0.127" layer="51"/>
@@ -1173,7 +1175,6 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="1.5" y1="1" x2="1" y2="1.5" width="0.127" layer="51" curve="90"/>
 <wire x1="1" y1="1.5" x2="-1" y2="1.5" width="0.127" layer="51"/>
 <wire x1="-1" y1="1.5" x2="-1.5" y2="1" width="0.127" layer="51" curve="90"/>
-<circle x="0.75" y="0.75" radius="0.125" width="0.6096" layer="51"/>
 <text x="0" y="2.032" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;NAME</text>
 <text x="0" y="-2.032" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;VALUE</text>
 <wire x1="-2" y1="-0.665" x2="-2" y2="-1.875" width="0.127" layer="21"/>
@@ -1181,7 +1182,6 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="-2" y1="1.875" x2="-2" y2="0.665" width="0.127" layer="21"/>
 <wire x1="2" y1="0.665" x2="2" y2="1.875" width="0.127" layer="21"/>
 <wire x1="2" y1="1.875" x2="0.54" y2="1.875" width="0.127" layer="21"/>
-<wire x1="3.08" y1="-3.145" x2="7.08" y2="-3.145" width="0.127" layer="21"/>
 <wire x1="0.54" y1="-1.875" x2="2" y2="-1.875" width="0.127" layer="21"/>
 <wire x1="-0.54" y1="1.875" x2="-2" y2="1.875" width="0.127" layer="21"/>
 <wire x1="-2" y1="-1.875" x2="-0.54" y2="-1.875" width="0.127" layer="21"/>
@@ -1214,7 +1214,6 @@ body 2.5x2.5mm, pitch 0.5mm</description>
 <smd name="8" x="2.425" y="2" dx="0.55" dy="0.25" layer="1" roundness="20" rot="R180" stop="no" thermals="no"/>
 <rectangle x1="2.08" y1="0.305" x2="2.77" y2="2.195" layer="29"/>
 <smd name="9" x="1.25" y="1.25" dx="0.9" dy="1.7" layer="1" thermals="no"/>
-<circle x="0.385" y="2.3114" radius="0.06985" width="0.1397" layer="51"/>
 </package>
 </packages>
 </library>
@@ -1692,21 +1691,21 @@ body 2.5x2.5mm, pitch 0.5mm</description>
 <description>&lt;h3&gt;20-Pin QFN -  4.0 x 4.0 mm - 0.5P - with center pad&lt;/h3&gt;
 &lt;p&gt;&lt;b&gt;Reference:&lt;/b&gt;&lt;br/&gt;&lt;a href="http://www.onsemi.com/pub/Collateral/AX5243-D.PDF"&gt;http://www.onsemi.com/pub/Collateral/AX5243-D.PDF&lt;/a&gt;.&lt;/p&gt;</description>
 <wire x1="-1.5" y1="1.5" x2="-1.5" y2="-1.5" width="0.127" layer="51"/>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-0.6" y="-1.5"/>
 <vertex x="-0.6" y="-1.3" curve="-90"/>
 <vertex x="-0.5" y="-1.2" curve="-90"/>
 <vertex x="-0.4" y="-1.3"/>
 <vertex x="-0.4" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-0.1" y="-1.5"/>
 <vertex x="-0.1" y="-1.3" curve="-90"/>
 <vertex x="0" y="-1.2" curve="-90"/>
 <vertex x="0.1" y="-1.3"/>
 <vertex x="0.1" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="0.4" y="-1.5"/>
 <vertex x="0.4" y="-1.3" curve="-90"/>
 <vertex x="0.5" y="-1.2" curve="-90"/>
@@ -1725,7 +1724,7 @@ body 2.5x2.5mm, pitch 0.5mm</description>
 <smd name="17" x="0.5" y="1.85" dx="0.35" dy="0.6" layer="1" roundness="20" stop="no" thermals="no"/>
 <smd name="18" x="0" y="1.85" dx="0.35" dy="0.6" layer="1" roundness="20" stop="no" thermals="no"/>
 <smd name="19" x="-0.5" y="1.85" dx="0.35" dy="0.6" layer="1" roundness="20" stop="no" thermals="no"/>
-<polygon width="0" layer="51">
+<polygon width="0.0025" layer="51">
 <vertex x="-0.87" y="0.57"/>
 <vertex x="-0.87" y="-0.75" curve="90"/>
 <vertex x="-0.75" y="-0.87"/>
@@ -1770,119 +1769,119 @@ body 2.5x2.5mm, pitch 0.5mm</description>
 <rectangle x1="0.625" y1="-1.125" x2="1.125" y2="-0.625" layer="31"/>
 <rectangle x1="0.625" y1="0.625" x2="1.125" y2="1.125" layer="31"/>
 <rectangle x1="-1.125" y1="0.625" x2="-0.625" y2="1.125" layer="31"/>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-1.1" y="-1.5"/>
 <vertex x="-1.1" y="-1.3" curve="-90"/>
 <vertex x="-1" y="-1.2" curve="-90"/>
 <vertex x="-0.9" y="-1.3"/>
 <vertex x="-0.9" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="0.9" y="-1.5"/>
 <vertex x="0.9" y="-1.3" curve="-90"/>
 <vertex x="1" y="-1.2" curve="-90"/>
 <vertex x="1.1" y="-1.3"/>
 <vertex x="1.1" y="-1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="0.6" y="1.5"/>
 <vertex x="0.6" y="1.3" curve="-90"/>
 <vertex x="0.5" y="1.2" curve="-90"/>
 <vertex x="0.4" y="1.3"/>
 <vertex x="0.4" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="0.1" y="1.5"/>
 <vertex x="0.1" y="1.3" curve="-90"/>
 <vertex x="0" y="1.2" curve="-90"/>
 <vertex x="-0.1" y="1.3"/>
 <vertex x="-0.1" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-0.4" y="1.5"/>
 <vertex x="-0.4" y="1.3" curve="-90"/>
 <vertex x="-0.5" y="1.2" curve="-90"/>
 <vertex x="-0.6" y="1.3"/>
 <vertex x="-0.6" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="1.1" y="1.5"/>
 <vertex x="1.1" y="1.3" curve="-90"/>
 <vertex x="1" y="1.2" curve="-90"/>
 <vertex x="0.9" y="1.3"/>
 <vertex x="0.9" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-0.9" y="1.5"/>
 <vertex x="-0.9" y="1.3" curve="-90"/>
 <vertex x="-1" y="1.2" curve="-90"/>
 <vertex x="-1.1" y="1.3"/>
 <vertex x="-1.1" y="1.5"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="1.5" y="-0.6"/>
 <vertex x="1.3" y="-0.6" curve="-90"/>
 <vertex x="1.2" y="-0.5" curve="-90"/>
 <vertex x="1.3" y="-0.4"/>
 <vertex x="1.5" y="-0.4"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="1.5" y="-0.1"/>
 <vertex x="1.3" y="-0.1" curve="-90"/>
 <vertex x="1.2" y="0" curve="-90"/>
 <vertex x="1.3" y="0.1"/>
 <vertex x="1.5" y="0.1"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="1.5" y="0.4"/>
 <vertex x="1.3" y="0.4" curve="-90"/>
 <vertex x="1.2" y="0.5" curve="-90"/>
 <vertex x="1.3" y="0.6"/>
 <vertex x="1.5" y="0.6"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="1.5" y="-1.1"/>
 <vertex x="1.3" y="-1.1" curve="-90"/>
 <vertex x="1.2" y="-1" curve="-90"/>
 <vertex x="1.3" y="-0.9"/>
 <vertex x="1.5" y="-0.9"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="1.5" y="0.9"/>
 <vertex x="1.3" y="0.9" curve="-90"/>
 <vertex x="1.2" y="1" curve="-90"/>
 <vertex x="1.3" y="1.1"/>
 <vertex x="1.5" y="1.1"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-1.5" y="0.6"/>
 <vertex x="-1.3" y="0.6" curve="-90"/>
 <vertex x="-1.2" y="0.5" curve="-90"/>
 <vertex x="-1.3" y="0.4"/>
 <vertex x="-1.5" y="0.4"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-1.5" y="0.1"/>
 <vertex x="-1.3" y="0.1" curve="-90"/>
 <vertex x="-1.2" y="0" curve="-90"/>
 <vertex x="-1.3" y="-0.1"/>
 <vertex x="-1.5" y="-0.1"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-1.5" y="-0.4"/>
 <vertex x="-1.3" y="-0.4" curve="-90"/>
 <vertex x="-1.2" y="-0.5" curve="-90"/>
 <vertex x="-1.3" y="-0.6"/>
 <vertex x="-1.5" y="-0.6"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-1.5" y="1.1"/>
 <vertex x="-1.3" y="1.1" curve="-90"/>
 <vertex x="-1.2" y="1" curve="-90"/>
 <vertex x="-1.3" y="0.9"/>
 <vertex x="-1.5" y="0.9"/>
 </polygon>
-<polygon width="0" layer="51">
+<polygon width="0.0635" layer="51">
 <vertex x="-1.5" y="-0.9"/>
 <vertex x="-1.3" y="-0.9" curve="-90"/>
 <vertex x="-1.2" y="-1" curve="-90"/>
@@ -2285,13 +2284,13 @@ Your Eurocircuits Team
 <attribute name="NAME" x="77.343" y="19.304" size="0.6096" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="76.708" y="20.32" size="0.6096" layer="28" rot="MR0"/>
 </element>
-<element name="U1001" library="df4iah_osc" package="CFPT-141" value="CFPT-141" x="69.85" y="33.02" smashed="yes" rot="R270">
-<attribute name="OC_FARNELL" value="1100745" x="69.85" y="33.02" size="0.6096" layer="27" rot="R270" display="off"/>
-<attribute name="OC_NEWARK" value="-" x="69.85" y="33.02" size="0.6096" layer="27" rot="R270" display="off"/>
-<attribute name="MPN" value="LFTVXO022175" x="69.85" y="33.02" size="0.6096" layer="27" rot="R270" display="off"/>
-<attribute name="MF" value="IQD-FREQUENCY-PRODUCTS" x="69.85" y="33.02" size="0.6096" layer="27" rot="R270" display="off"/>
-<attribute name="NAME" x="68.2558" y="35.780103125" size="0.6096" layer="25"/>
-<attribute name="VALUE" x="70.097525" y="31.01766875" size="0.6096" layer="27" rot="R90"/>
+<element name="U1001" library="df4iah_osc" package="CFPT-141" value="CFPT-141" x="70.231" y="33.02" smashed="yes">
+<attribute name="OC_FARNELL" value="1100745" x="70.231" y="33.02" size="0.6096" layer="27" display="off"/>
+<attribute name="OC_NEWARK" value="-" x="70.231" y="33.02" size="0.6096" layer="27" display="off"/>
+<attribute name="MPN" value="LFTVXO022175" x="70.231" y="33.02" size="0.6096" layer="27" display="off"/>
+<attribute name="MF" value="IQD-FREQUENCY-PRODUCTS" x="70.231" y="33.02" size="0.6096" layer="27" display="off"/>
+<attribute name="NAME" x="67.470896875" y="31.4258" size="0.6096" layer="25" rot="R90"/>
+<attribute name="VALUE" x="72.23333125" y="33.267525" size="0.6096" layer="27" rot="R180"/>
 </element>
 <element name="C1002" library="rcl" package="C0805" value="100n" x="71.12" y="33.02" smashed="yes" rot="MR0">
 <attribute name="NAME" x="72.517" y="34.417" size="0.6096" layer="26" rot="MR0"/>
@@ -2913,7 +2912,7 @@ Your Eurocircuits Team
 <wire x1="71.1454" y1="27.94" x2="71.12" y2="27.94" width="0.15" layer="1"/>
 <wire x1="71.12" y1="27.94" x2="70.231" y2="28.194" width="0.15" layer="1" curve="-31.890792"/>
 <via x="69.469" y="32.004" extent="1-16" drill="0.3" shape="octagon"/>
-<wire x1="68.7" y1="31.12" x2="69.469" y2="32.004" width="0.15" layer="1"/>
+<wire x1="69.081" y1="31.12" x2="69.469" y2="32.004" width="0.15" layer="1"/>
 <wire x1="70.17" y1="33.02" x2="69.469" y2="32.004" width="0.15" layer="16"/>
 <via x="67.818" y="36.322" extent="1-16" drill="0.3" shape="octagon"/>
 <wire x1="66.89" y1="36.322" x2="67.818" y2="36.322" width="0.15" layer="1"/>
@@ -3532,15 +3531,13 @@ Your Eurocircuits Team
 <wire x1="76.796" y1="20.574" x2="75.692" y2="21.844" width="0.15" layer="16"/>
 <wire x1="37.21" y1="35.26" x2="37.172" y2="36.963" width="0.15" layer="16"/>
 <wire x1="37.172" y1="36.963" x2="37.504" y2="36.957" width="0.15" layer="16"/>
-<wire x1="71" y1="34.92" x2="71.38" y2="35.3" width="0.15" layer="1"/>
+<wire x1="71.381" y1="34.92" x2="71.38" y2="35.3" width="0.15" layer="1"/>
 <wire x1="71.38" y1="35.3" x2="71.6654" y2="35.5854" width="0.15" layer="1"/>
 <wire x1="71.6654" y1="35.5854" x2="73.9648" y2="35.5854" width="0.15" layer="1"/>
 <via x="72.39" y="34.036" extent="1-16" drill="0.3" shape="octagon"/>
 <wire x1="72.07" y1="33.02" x2="72.39" y2="33.34" width="0.15" layer="16"/>
 <wire x1="72.39" y1="33.34" x2="72.39" y2="34.036" width="0.15" layer="16"/>
-<wire x1="71" y1="34.92" x2="72.014" y2="34.92" width="0.15" layer="1"/>
-<wire x1="72.014" y1="34.92" x2="72.39" y2="34.544" width="0.15" layer="1"/>
-<wire x1="72.39" y1="34.544" x2="72.39" y2="34.036" width="0.15" layer="1"/>
+<wire x1="72.39" y1="34.92" x2="72.39" y2="34.036" width="0.15" layer="1"/>
 <via x="65.024" y="28.575" extent="1-16" drill="0.3" shape="octagon"/>
 <wire x1="66.04" y1="27.52" x2="66.04" y2="28.575" width="0.15" layer="1"/>
 <wire x1="66.04" y1="28.575" x2="65.024" y2="28.575" width="0.15" layer="1"/>
@@ -3574,6 +3571,7 @@ Your Eurocircuits Team
 <wire x1="75.5142" y1="22.0218" x2="75.5142" y2="22.987" width="0.15" layer="1"/>
 <wire x1="75.438" y1="24.13" x2="75.5142" y2="24.0538" width="0.15" layer="1"/>
 <wire x1="75.5142" y1="24.0538" x2="75.5142" y2="22.987" width="0.15" layer="1"/>
+<wire x1="71.381" y1="34.92" x2="72.39" y2="34.92" width="0.15" layer="1"/>
 </signal>
 <signal name="XO_LP">
 <contactref element="R1001" pad="2"/>
@@ -3626,7 +3624,7 @@ Your Eurocircuits Team
 <wire x1="71.1454" y1="28.8798" x2="71.1454" y2="30.4546" width="0.15" layer="1"/>
 <wire x1="71.1454" y1="30.4546" x2="71.12" y2="30.48" width="0.15" layer="1"/>
 <wire x1="71.12" y1="30.48" x2="71.12" y2="31" width="0.15" layer="1"/>
-<wire x1="71.12" y1="31" x2="71" y2="31.12" width="0.15" layer="1"/>
+<wire x1="71.12" y1="31" x2="71.381" y2="31.12" width="0.15" layer="1"/>
 </signal>
 <signal name="TCXO_20MHZ">
 <contactref element="R1013" pad="2"/>
@@ -3735,7 +3733,7 @@ Your Eurocircuits Team
 <wire x1="83.82" y1="33.86" x2="81.28" y2="33.86" width="0.15" layer="16"/>
 <wire x1="81.28" y1="33.86" x2="81.28" y2="34.925" width="0.15" layer="16"/>
 <wire x1="81.28" y1="34.925" x2="79.756" y2="36.449" width="0.15" layer="16"/>
-<via x="79.756" y="36.449" extent="1-16" drill="0.35" shape="octagon"/>
+<via x="79.756" y="36.449" extent="1-16" drill="0.3" shape="octagon"/>
 <wire x1="79.756" y1="36.449" x2="79.695" y2="36.51" width="0.15" layer="1"/>
 <wire x1="79.695" y1="36.51" x2="78.74" y2="36.51" width="0.15" layer="1"/>
 </signal>
@@ -3807,7 +3805,7 @@ Your Eurocircuits Team
 <signal name="XO_VC">
 <contactref element="U1001" pad="1"/>
 <contactref element="R1002" pad="2"/>
-<wire x1="68.7" y1="34.92" x2="66.895" y2="34.92" width="0.15" layer="1"/>
+<wire x1="69.081" y1="34.92" x2="66.895" y2="34.92" width="0.15" layer="1"/>
 <wire x1="66.895" y1="34.92" x2="66.89" y2="34.925" width="0.15" layer="1"/>
 </signal>
 <signal name="TMS">
@@ -5239,12 +5237,6 @@ Your Eurocircuits Team
 <approved hash="5,16,cacffed2eda6c6ac"/>
 <approved hash="5,16,04e3a8c8f0606113"/>
 <approved hash="4,16,ada5098f356567a8"/>
-<approved hash="18,29,23483152c4fdd6e7"/>
-<approved hash="18,29,eb3123456a0abc86"/>
-<approved hash="18,29,a6f60ab45b35e98f"/>
-<approved hash="18,29,089c035dff80f441"/>
-<approved hash="18,29,eb318bd0429a3c83"/>
-<approved hash="18,29,a708d221039f684e"/>
 <approved hash="18,29,22498f4f349c109a"/>
 <approved hash="18,29,7118514c59354a31"/>
 <approved hash="18,29,28fdfeea22a6b9aa"/>
@@ -5253,34 +5245,6 @@ Your Eurocircuits Team
 <approved hash="18,29,31c943067bfada44"/>
 <approved hash="18,29,7118915cf925ea31"/>
 <approved hash="18,29,e249f0e45becba11"/>
-<approved hash="18,29,05ca6d39843dfa98"/>
-<approved hash="18,29,96c79d8f46893d77"/>
-<approved hash="18,29,b81b26b34b1d177b"/>
-<approved hash="18,29,d54f6e9cda1e22d5"/>
-<approved hash="18,29,e21446875b8a17bf"/>
-<approved hash="18,29,90d32abc561e7e41"/>
-<approved hash="18,29,7f4a7b3d110d3b41"/>
-<approved hash="18,29,564faaa9310a3e04"/>
-<approved hash="18,29,1b02d73069c3ba68"/>
-<approved hash="18,29,5bc369cdb52a4204"/>
-<approved hash="18,29,e2be12f9c70791f7"/>
-<approved hash="18,29,aecae3f5869890fd"/>
-<approved hash="18,29,bd3fe9f4249bb81a"/>
-<approved hash="18,29,7ff35e47ac47c72f"/>
-<approved hash="18,29,34134d6e8dcf49a1"/>
-<approved hash="18,29,4be44425b8f8b739"/>
-<approved hash="18,29,f731872837e22a03"/>
-<approved hash="18,29,aa08cfd914e71cce"/>
-<approved hash="18,30,bf3b65249bd63915"/>
-<approved hash="18,30,693b3b1d82fb28e6"/>
-<approved hash="18,30,c1bb21ac3e8ade81"/>
-<approved hash="18,30,bfb841072b712d94"/>
-<approved hash="18,30,d7494a4b944e094e"/>
-<approved hash="18,30,d917482a1a2bb216"/>
-<approved hash="18,30,9b06b01ac4e2d728"/>
-<approved hash="18,30,bd11665c0adbc8d6"/>
-<approved hash="18,30,e3f65e2bccee596d"/>
-<approved hash="18,30,b201c809c820b228"/>
 <approved hash="7,39,d466c5ccecfe057a"/>
 <approved hash="7,39,9fe8f65cb33a22a0"/>
 <approved hash="3,16,c8e63107c8098e18"/>
@@ -5317,6 +5281,10 @@ Your Eurocircuits Team
 <approved hash="3,16,d7f0c0787fceffc8"/>
 <approved hash="3,16,162518531b9915ef"/>
 <approved hash="3,16,9649d4c39ab499bf"/>
+<approved hash="5,15,4bce93675f8d113e"/>
+<approved hash="18,29,aecae3f5869890fd"/>
+<approved hash="18,29,e2be12f9c70791f7"/>
+<approved hash="18,29,bd3fe9f4249bb81a"/>
 <approved hash="3,1,01310f3f0f33013d"/>
 <approved hash="3,1,342f3e233c23342d"/>
 <approved hash="3,1,3d2f3d233f233d2d"/>
@@ -5448,10 +5416,62 @@ Your Eurocircuits Team
 <approved hash="7,40,8d19ccd94cd90d19"/>
 <approved hash="7,40,779d385ab85af79d"/>
 <approved hash="7,40,acd8ec986c982cd8"/>
+<approved hash="18,29,089c035dff80f441"/>
+<approved hash="18,29,a708d221039f684e"/>
+<approved hash="18,29,eb318bd0429a3c83"/>
+<approved hash="18,29,23483152c4fdd6e7"/>
+<approved hash="18,29,eb3123456a0abc86"/>
+<approved hash="18,29,a6f60ab45b35e98f"/>
+<approved hash="18,29,b81b26b34b1d177b"/>
+<approved hash="18,29,96c79d8f46893d77"/>
+<approved hash="18,29,05ca6d39843dfa98"/>
+<approved hash="18,29,d54f6e9cda1e22d5"/>
+<approved hash="18,29,e21446875b8a17bf"/>
+<approved hash="18,29,90d32abc561e7e41"/>
+<approved hash="18,29,7f4a7b3d110d3b41"/>
+<approved hash="18,29,564faaa9310a3e04"/>
+<approved hash="18,29,829e0016002682ae"/>
+<approved hash="18,29,6afcb66252937115"/>
+<approved hash="18,29,6ba42cca34f8a261"/>
+<approved hash="18,29,226ab5d3adedea6c"/>
+<approved hash="18,29,f27af5d3edf32a62"/>
+<approved hash="18,29,021e80968084020c"/>
+<approved hash="18,29,2a13edf2f5e2f27b"/>
+<approved hash="18,29,5bc369cdb52a4204"/>
+<approved hash="18,29,1b02d73069c3ba68"/>
+<approved hash="18,29,f84cb16d6a1d4c3c"/>
+<approved hash="18,29,12035204eb6fab4c"/>
+<approved hash="18,29,101a93c305a10646"/>
+<approved hash="18,29,71c28db50bfef7a2"/>
+<approved hash="18,29,fa468e39b2daad30"/>
+<approved hash="18,29,325cb0f699bd9b2c"/>
+<approved hash="18,29,bb3e6af97f85adb7"/>
+<approved hash="18,29,164a9bf5df1aacbd"/>
+<approved hash="18,29,289f44207a1ecf27"/>
+<approved hash="18,29,11fd4534639bee18"/>
+<approved hash="18,29,401bea2c2c3a4849"/>
+<approved hash="18,29,7947ebb2228f7ef2"/>
+<approved hash="18,29,34134d6e8dcf49a1"/>
+<approved hash="18,29,7ff35e47ac47c72f"/>
+<approved hash="18,29,e0c659225512ac52"/>
+<approved hash="18,29,336f562e8b505358"/>
+<approved hash="18,29,4be44425b8f8b739"/>
+<approved hash="18,29,aa08cfd914e71cce"/>
+<approved hash="18,29,f731872837e22a03"/>
+<approved hash="18,30,bf3b65249bd63915"/>
+<approved hash="18,30,693b3b1d82fb28e6"/>
+<approved hash="18,30,c1bb21ac3e8ade81"/>
+<approved hash="18,30,bfb841072b712d94"/>
+<approved hash="18,30,d7494a4b944e094e"/>
+<approved hash="18,30,d917482a1a2bb216"/>
+<approved hash="18,30,9b06b01ac4e2d728"/>
+<approved hash="18,30,bd11665c0adbc8d6"/>
+<approved hash="18,30,e3f65e2bccee596d"/>
+<approved hash="18,30,b201c809c820b228"/>
 <approved hash="5,1,2be83f49206fd150"/>
 <approved hash="5,1,2dea399625d8d1ae"/>
-<approved hash="5,1,4a9d571bb8bb5a89"/>
 <approved hash="5,1,4fbd502ebbee5a61"/>
+<approved hash="5,1,4a9d571bb8bb5a89"/>
 <approved hash="5,1,3a234fd079265621"/>
 <approved hash="5,1,3339836bfd13522e"/>
 <approved hash="5,1,1413a478a9fd9b9c"/>
@@ -5461,19 +5481,19 @@ Your Eurocircuits Team
 <approved hash="5,1,d1f0113f5620030f"/>
 <approved hash="5,1,838a27600f2a1af5"/>
 <approved hash="5,1,d65814e652cf0591"/>
-<approved hash="5,1,843a2180098a1ea2"/>
 <approved hash="5,1,9ae3899fd0170021"/>
+<approved hash="5,1,843a2180098a1ea2"/>
 <approved hash="5,1,f94b6220c5ffa1ee"/>
 <approved hash="5,1,40f2fdadec630913"/>
 <approved hash="5,1,c682a1970820abb7"/>
 <approved hash="5,1,afd28e348ad7d206"/>
-<approved hash="5,1,5c03afe4e856ca7f"/>
-<approved hash="5,1,f6ae0967d10e2390"/>
-<approved hash="5,1,3fafcee65720b3f0"/>
 <approved hash="5,1,af9c810fe873162f"/>
+<approved hash="5,1,5c03afe4e856ca7f"/>
 <approved hash="5,1,a9802f755899309a"/>
 <approved hash="5,1,5d97f5676b47fcb0"/>
 <approved hash="5,1,2330c4ad51758f96"/>
+<approved hash="5,1,f6ae0967d10e2390"/>
+<approved hash="5,1,3fafcee65720b3f0"/>
 <approved hash="5,1,b87eb042052bcbc8"/>
 <approved hash="5,1,a279d5e14f128793"/>
 <approved hash="5,1,3d03b74c3c8c0b43"/>
@@ -5508,7 +5528,6 @@ Your Eurocircuits Team
 <approved hash="5,2,18b6580412dfe82c"/>
 <approved hash="5,2,dd28d92ff5f66cda"/>
 <approved hash="5,2,989696025ac561fb"/>
-<approved hash="5,15,4bce93675f8d113e"/>
 <approved hash="5,16,11cbecfe1681fbb8"/>
 <approved hash="5,16,8fd2d463229f1c50"/>
 <approved hash="5,16,18da9d600c9b962f"/>
@@ -5518,26 +5537,26 @@ Your Eurocircuits Team
 <approved hash="5,16,1a51df145165a594"/>
 <approved hash="5,16,f567f7adbe876cb4"/>
 <approved hash="5,16,6de327d3c3ad4e7b"/>
-<approved hash="5,16,a83316d7ece3172d"/>
 <approved hash="5,16,82d6c9c94dfbc8bd"/>
+<approved hash="5,16,a83316d7ece3172d"/>
 <approved hash="5,16,ca32c819c801798d"/>
 <approved hash="5,16,3848492dd49afc10"/>
 <approved hash="5,16,0398576c0b53f2c4"/>
-<approved hash="5,16,d02b8a64a4218915"/>
 <approved hash="5,16,8208de067fe45ac9"/>
+<approved hash="5,16,d02b8a64a4218915"/>
 <approved hash="5,16,fd937eb3db168ef5"/>
 <approved hash="5,16,91df896dd28d53dd"/>
 <approved hash="5,16,7833d7efd5f0b0bc"/>
 <approved hash="5,16,6c24159b57c1cd94"/>
 <approved hash="5,16,66b2824839f3b5c9"/>
 <approved hash="5,16,2260cac3a5013e90"/>
-<approved hash="5,16,c6afdb02f2bc4ff4"/>
-<approved hash="5,16,1c47c422f2ac8a2c"/>
 <approved hash="5,16,dc09c4caf2b44a92"/>
+<approved hash="5,16,c6afdb02f2bc4ff4"/>
 <approved hash="5,16,18edc42af2a48e86"/>
+<approved hash="5,16,1c47c422f2ac8a2c"/>
 <approved hash="5,16,b3bbeaa81156136f"/>
-<approved hash="5,16,86724dff8523a90f"/>
 <approved hash="5,16,dad8f5a6fff13347"/>
+<approved hash="5,16,86724dff8523a90f"/>
 <approved hash="5,16,323bd86828560202"/>
 <approved hash="5,16,0f6e61a263b3077b"/>
 <approved hash="5,16,aa39d7413b31abff"/>

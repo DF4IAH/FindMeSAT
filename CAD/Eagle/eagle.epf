@@ -25,18 +25,12 @@ UsedLibrary="lbr/Adafruit-Eagle-Library-master/adafruit.lbr"
 UsedLibrary="lbr/df4iah_bipoltransistor.lbr"
 
 [Win_1]
-Type="Control Panel"
-Loc="17 451 1780 1202"
-State=2
-Number=0
-
-[Win_2]
 Type="Library Editor"
 Loc="17 23 2539 1367"
 State=2
 Number=3
-File="lbr/df4iah_sensors.lbr"
-View="-5.89368 -4.94162 5.89368 5.03306"
+File="lbr/df4iah_osc.lbr"
+View="-3.21708 -5.73627 5.04855 5.72372"
 WireWidths=" 0 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0.4064 0.04 0.254 0.127"
 PadDiameters=" 0.254 0.3048 0.4064 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0"
 PadDrills=" 0.5 0.6 0.7 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 2 2.2 2.8 3.2 0.8"
@@ -75,6 +69,13 @@ ArcDirection=0
 AddLevel=2
 PadsSameType=0
 Layer=21
+Package="CFPT-126"
+
+[Win_2]
+Type="Control Panel"
+Loc="17 451 1780 1202"
+State=2
+Number=0
 
 [Win_3]
 Type="Schematic Editor"
@@ -131,7 +132,7 @@ State=2
 Number=2
 File="FindMeSAT_MB_1V0.brd"
 View="-17.9781 -24.6126 124.404 66.5226"
-WireWidths=" 0 10 193 100 80 0.225 0.1 1 0.604 0.15 0.4064"
+WireWidths=" 0 10 193 100 80 0.225 0.1 1 0.604 0.4064 0.15"
 PadDiameters=" 0.254 0.3048 0.4064 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0"
 PadDrills=" 0.7 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 2 2.2 2.8 3.2 0.8 0.35 0.3"
 ViaDiameters=" 0.254 0.3048 0.4064 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0"
@@ -168,7 +169,7 @@ SwapLevel=0
 ArcDirection=0
 AddLevel=2
 PadsSameType=0
-Layer=16
+Layer=1
 
 [Desktop]
 Screen="2560 1440"
