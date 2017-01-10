@@ -8601,13 +8601,13 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="1.5" y1="1.5" x2="-1.5" y2="1.5" width="0.127" layer="51"/>
 <wire x1="-1.5" y1="-1.5" x2="1.5" y2="-1.5" width="0.127" layer="51"/>
 <wire x1="1.5" y1="-1.5" x2="1.5" y2="1.5" width="0.127" layer="51"/>
-<wire x1="-1.6" y1="-1.6" x2="-1.25" y2="-1.6" width="0.2032" layer="21"/>
-<wire x1="-1.6" y1="-1.25" x2="-1.6" y2="-1.6" width="0.2032" layer="21"/>
-<wire x1="1.25" y1="-1.6" x2="1.6" y2="-1.6" width="0.2032" layer="21"/>
-<wire x1="1.6" y1="-1.6" x2="1.6" y2="-1.25" width="0.2032" layer="21"/>
-<wire x1="1.6" y1="1.6" x2="1.25" y2="1.6" width="0.2032" layer="21"/>
-<wire x1="1.6" y1="1.25" x2="1.6" y2="1.6" width="0.2032" layer="21"/>
-<wire x1="-1.6" y1="1.25" x2="-1.25" y2="1.6" width="0.2032" layer="21"/>
+<wire x1="-1.6" y1="-1.6" x2="-1.37" y2="-1.6" width="0.2032" layer="21"/>
+<wire x1="-1.6" y1="-1.37" x2="-1.6" y2="-1.6" width="0.2032" layer="21"/>
+<wire x1="1.37" y1="-1.6" x2="1.6" y2="-1.6" width="0.2032" layer="21"/>
+<wire x1="1.6" y1="-1.6" x2="1.6" y2="-1.37" width="0.2032" layer="21"/>
+<wire x1="1.6" y1="1.6" x2="1.37" y2="1.6" width="0.2032" layer="21"/>
+<wire x1="1.6" y1="1.37" x2="1.6" y2="1.6" width="0.2032" layer="21"/>
+<wire x1="-1.48" y1="1.37" x2="-1.37" y2="1.48" width="0.2032" layer="21"/>
 <circle x="-1.746" y="1.746" radius="0.254" width="0" layer="21"/>
 <text x="0" y="2.032" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;Name</text>
 <text x="0" y="-1.905" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;Value</text>
@@ -8706,24 +8706,29 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="1.5" y1="1" x2="1" y2="1.5" width="0.127" layer="51" curve="90"/>
 <wire x1="1" y1="1.5" x2="-1" y2="1.5" width="0.127" layer="51"/>
 <wire x1="-1" y1="1.5" x2="-1.5" y2="1" width="0.127" layer="51" curve="90"/>
-<wire x1="-2" y1="1.875" x2="-2" y2="-1.875" width="0.127" layer="21"/>
-<wire x1="-2" y1="-1.875" x2="2" y2="-1.875" width="0.127" layer="21"/>
-<wire x1="2" y1="-1.875" x2="2" y2="1.875" width="0.127" layer="21"/>
-<wire x1="2" y1="1.875" x2="-2" y2="1.875" width="0.127" layer="21"/>
 <circle x="0.75" y="0.75" radius="0.125" width="0.6096" layer="51"/>
 <text x="0" y="2.032" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;NAME</text>
 <text x="0" y="-2.032" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;VALUE</text>
+<wire x1="-2" y1="-0.665" x2="-2" y2="-1.875" width="0.127" layer="21"/>
+<wire x1="2" y1="-1.875" x2="2" y2="-0.665" width="0.127" layer="21"/>
+<wire x1="-2" y1="1.875" x2="-2" y2="0.665" width="0.127" layer="21"/>
+<wire x1="2" y1="0.665" x2="2" y2="1.875" width="0.127" layer="21"/>
+<wire x1="2" y1="1.875" x2="0.54" y2="1.875" width="0.127" layer="21"/>
+<wire x1="3.08" y1="-3.145" x2="7.08" y2="-3.145" width="0.127" layer="21"/>
+<wire x1="0.54" y1="-1.875" x2="2" y2="-1.875" width="0.127" layer="21"/>
+<wire x1="-0.54" y1="1.875" x2="-2" y2="1.875" width="0.127" layer="21"/>
+<wire x1="-2" y1="-1.875" x2="-0.54" y2="-1.875" width="0.127" layer="21"/>
 </package>
 <package name="DFN8/SHT">
 <description>&lt;b&gt;DFN 8 / SHT3x-DIS package&lt;/b&gt;&lt;p&gt;
 body 2.5x2.5mm, pitch 0.5mm</description>
-<wire x1="2.5" y1="2.3" x2="2.5" y2="2.5" width="0.2032" layer="21"/>
+<wire x1="2.5" y1="2.3876" x2="2.5" y2="2.5" width="0.2032" layer="21"/>
 <wire x1="2.5" y1="2.5" x2="0" y2="2.5" width="0.2032" layer="21"/>
-<wire x1="0" y1="2.5" x2="0" y2="2.3" width="0.2032" layer="21"/>
-<wire x1="2.5" y1="0" x2="2.5" y2="0.2" width="0.2032" layer="21"/>
-<wire x1="0" y1="0" x2="0" y2="0.2" width="0.2032" layer="21"/>
+<wire x1="0" y1="2.5" x2="0" y2="2.3876" width="0.2032" layer="21"/>
+<wire x1="2.5" y1="0" x2="2.5" y2="0.1124" width="0.2032" layer="21"/>
+<wire x1="0" y1="0" x2="0" y2="0.1124" width="0.2032" layer="21"/>
 <wire x1="2.5" y1="0" x2="0" y2="0" width="0.2032" layer="21"/>
-<circle x="-0.3048" y="2.8448" radius="0.254" width="0" layer="21"/>
+<circle x="-0.3048" y="2.8448" radius="0.1905" width="0" layer="21"/>
 <text x="0" y="2.75" size="0.6096" layer="25" ratio="10">&gt;NAME</text>
 <rectangle x1="-0.27" y1="0.305" x2="0.42" y2="2.195" layer="29"/>
 <text x="-0.25" y="-0.895" size="0.6096" layer="27">&gt;VALUE</text>
@@ -11332,7 +11337,7 @@ Source: 008-0260-0_E.pdf</description>
 <part name="JP121" library="df4iah_connector" deviceset="HEADER-2X3" device="" value=""/>
 <part name="GND121" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+5V1" library="df4iah_supply" deviceset="+5V" device=""/>
-<part name="U301" library="df4iah_sensors" deviceset="MPU-9250" device="" value="MPU-9250"/>
+<part name="U301" library="df4iah_sensors" deviceset="MPU-9250" device="" value="9DoF IMU"/>
 <part name="GND311" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V3_311" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="C301" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>

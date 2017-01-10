@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="no"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="0.4" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="0.04" altunitdist="mm" altunit="mm"/>
+<grid distance="0.05" unitdist="inch" unit="mm" style="lines" multiple="1" display="yes" altdistance="0.04" altunitdist="mm" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Route2" color="1" fill="3" visible="no" active="yes"/>
@@ -48,8 +48,8 @@
 <layer number="48" name="Document" color="7" fill="1" visible="no" active="yes"/>
 <layer number="49" name="Reference" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
-<layer number="51" name="tDocu" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="52" name="bDocu" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="51" name="tDocu" color="7" fill="1" visible="no" active="yes"/>
+<layer number="52" name="bDocu" color="7" fill="1" visible="no" active="yes"/>
 <layer number="53" name="tGND_GNDA" color="7" fill="9" visible="no" active="no"/>
 <layer number="54" name="bGND_GNDA" color="1" fill="9" visible="no" active="no"/>
 <layer number="56" name="wert" color="7" fill="1" visible="no" active="no"/>
@@ -152,12 +152,12 @@ body 3x3mm, pitch 1mm</description>
 <wire x1="1.5" y1="1.5" x2="1.5" y2="-1.5" width="0.0508" layer="51"/>
 <wire x1="1.5" y1="-1.5" x2="-1.5" y2="-1.5" width="0.0508" layer="51"/>
 <wire x1="-1.5" y1="-1.5" x2="-1.5" y2="1.5" width="0.0508" layer="51"/>
-<wire x1="-1.5" y1="1.75" x2="-1.75" y2="1.75" width="0.2032" layer="21"/>
-<wire x1="-1.75" y1="1.75" x2="-1.75" y2="-1.75" width="0.2032" layer="21"/>
-<wire x1="-1.75" y1="-1.75" x2="-1.5" y2="-1.75" width="0.2032" layer="21"/>
-<wire x1="1.75" y1="1.75" x2="1.5" y2="1.75" width="0.2032" layer="21"/>
-<wire x1="1.75" y1="-1.75" x2="1.5" y2="-1.75" width="0.2032" layer="21"/>
-<wire x1="1.75" y1="1.75" x2="1.75" y2="-1.75" width="0.2032" layer="21"/>
+<wire x1="1.75" y1="1.5" x2="1.75" y2="1.75" width="0.2032" layer="21"/>
+<wire x1="1.75" y1="1.75" x2="-1.75" y2="1.75" width="0.2032" layer="21"/>
+<wire x1="-1.75" y1="1.75" x2="-1.75" y2="1.5" width="0.2032" layer="21"/>
+<wire x1="1.75" y1="-1.75" x2="1.75" y2="-1.5" width="0.2032" layer="21"/>
+<wire x1="-1.75" y1="-1.75" x2="-1.75" y2="-1.5" width="0.2032" layer="21"/>
+<wire x1="1.75" y1="-1.75" x2="-1.75" y2="-1.75" width="0.2032" layer="21"/>
 <wire x1="0.8" y1="0.8" x2="0.8" y2="-0.8" width="0.0508" layer="51"/>
 <wire x1="1.2" y1="0.8" x2="1.2" y2="-0.8" width="0.0508" layer="51"/>
 <wire x1="0.8" y1="0.8" x2="1.2" y2="0.8" width="0.0508" layer="51"/>
@@ -167,17 +167,17 @@ body 3x3mm, pitch 1mm</description>
 <wire x1="0.7" y1="0.9" x2="0.7" y2="-0.9" width="0.0508" layer="51"/>
 <wire x1="1.3" y1="0.9" x2="1.3" y2="-0.9" width="0.0508" layer="51"/>
 <circle x="-1" y="-1" radius="0.3162" width="0.0508" layer="51"/>
-<smd name="1" x="-1" y="-1.4" dx="0.7" dy="0.4" layer="1" rot="R90"/>
-<smd name="2" x="0" y="-1.4" dx="0.7" dy="0.4" layer="1" rot="R90"/>
-<smd name="3" x="1" y="-1.4" dx="0.7" dy="0.4" layer="1" rot="R90"/>
-<smd name="4" x="1" y="1.4" dx="0.7" dy="0.4" layer="1" rot="R90"/>
-<smd name="5" x="0" y="1.4" dx="0.7" dy="0.4" layer="1" rot="R90"/>
-<smd name="6" x="-1" y="1.4" dx="0.7" dy="0.4" layer="1" rot="R90"/>
-<text x="-2.25" y="-1.875" size="1.016" layer="25" ratio="18" rot="R90">&gt;NAME</text>
-<text x="2.875" y="-1.875" size="0.8128" layer="27" ratio="10" rot="R90">&gt;VALUE</text>
-<rectangle x1="-1.25" y1="-0.75" x2="1.25" y2="0.75" layer="29"/>
-<rectangle x1="-1.125" y1="-0.625" x2="1.125" y2="0.625" layer="31"/>
-<rectangle x1="-2.125" y1="-1.625" x2="-1.75" y2="-1.25" layer="21"/>
+<smd name="1" x="-1.4" y="1" dx="0.7" dy="0.4" layer="1"/>
+<smd name="2" x="-1.4" y="0" dx="0.7" dy="0.4" layer="1"/>
+<smd name="3" x="-1.4" y="-1" dx="0.7" dy="0.4" layer="1"/>
+<smd name="4" x="1.4" y="-1" dx="0.7" dy="0.4" layer="1"/>
+<smd name="5" x="1.4" y="0" dx="0.7" dy="0.4" layer="1"/>
+<smd name="6" x="1.4" y="1" dx="0.7" dy="0.4" layer="1"/>
+<text x="-1.875" y="2.25" size="1.016" layer="25" ratio="18">&gt;NAME</text>
+<text x="-1.875" y="-2.875" size="0.8128" layer="27" ratio="10">&gt;VALUE</text>
+<rectangle x1="-1.25" y1="-0.75" x2="1.25" y2="0.75" layer="29" rot="R270"/>
+<rectangle x1="-1.125" y1="-0.625" x2="1.125" y2="0.625" layer="31" rot="R270"/>
+<circle x="-2.032" y="2.032" radius="0.1905" width="0" layer="21"/>
 </package>
 <package name="SHT1X">
 <description>&lt;h3&gt;SHT1x (SHT10, SHT11, SHT15) Humidity and Temperature Sensors&lt;/h3&gt;
@@ -422,13 +422,13 @@ body 3x3mm, pitch 1mm</description>
 <wire x1="1.5" y1="1.5" x2="-1.5" y2="1.5" width="0.127" layer="51"/>
 <wire x1="-1.5" y1="-1.5" x2="1.5" y2="-1.5" width="0.127" layer="51"/>
 <wire x1="1.5" y1="-1.5" x2="1.5" y2="1.5" width="0.127" layer="51"/>
-<wire x1="-1.6" y1="-1.6" x2="-1.25" y2="-1.6" width="0.2032" layer="21"/>
-<wire x1="-1.6" y1="-1.25" x2="-1.6" y2="-1.6" width="0.2032" layer="21"/>
-<wire x1="1.25" y1="-1.6" x2="1.6" y2="-1.6" width="0.2032" layer="21"/>
-<wire x1="1.6" y1="-1.6" x2="1.6" y2="-1.25" width="0.2032" layer="21"/>
-<wire x1="1.6" y1="1.6" x2="1.25" y2="1.6" width="0.2032" layer="21"/>
-<wire x1="1.6" y1="1.25" x2="1.6" y2="1.6" width="0.2032" layer="21"/>
-<wire x1="-1.6" y1="1.25" x2="-1.25" y2="1.6" width="0.2032" layer="21"/>
+<wire x1="-1.6" y1="-1.6" x2="-1.37" y2="-1.6" width="0.2032" layer="21"/>
+<wire x1="-1.6" y1="-1.37" x2="-1.6" y2="-1.6" width="0.2032" layer="21"/>
+<wire x1="1.37" y1="-1.6" x2="1.6" y2="-1.6" width="0.2032" layer="21"/>
+<wire x1="1.6" y1="-1.6" x2="1.6" y2="-1.37" width="0.2032" layer="21"/>
+<wire x1="1.6" y1="1.6" x2="1.37" y2="1.6" width="0.2032" layer="21"/>
+<wire x1="1.6" y1="1.37" x2="1.6" y2="1.6" width="0.2032" layer="21"/>
+<wire x1="-1.48" y1="1.37" x2="-1.37" y2="1.48" width="0.2032" layer="21"/>
 <circle x="-1.746" y="1.746" radius="0.254" width="0" layer="21"/>
 <text x="0" y="2.032" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;Name</text>
 <text x="0" y="-1.905" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;Value</text>
@@ -527,24 +527,29 @@ body 3x3mm, pitch 1mm</description>
 <wire x1="1.5" y1="1" x2="1" y2="1.5" width="0.127" layer="51" curve="90"/>
 <wire x1="1" y1="1.5" x2="-1" y2="1.5" width="0.127" layer="51"/>
 <wire x1="-1" y1="1.5" x2="-1.5" y2="1" width="0.127" layer="51" curve="90"/>
-<wire x1="-2" y1="1.875" x2="-2" y2="-1.875" width="0.127" layer="21"/>
-<wire x1="-2" y1="-1.875" x2="2" y2="-1.875" width="0.127" layer="21"/>
-<wire x1="2" y1="-1.875" x2="2" y2="1.875" width="0.127" layer="21"/>
-<wire x1="2" y1="1.875" x2="-2" y2="1.875" width="0.127" layer="21"/>
 <circle x="0.75" y="0.75" radius="0.125" width="0.6096" layer="51"/>
 <text x="0" y="2.032" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;NAME</text>
 <text x="0" y="-2.032" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;VALUE</text>
+<wire x1="-2" y1="-0.665" x2="-2" y2="-1.875" width="0.127" layer="21"/>
+<wire x1="2" y1="-1.875" x2="2" y2="-0.665" width="0.127" layer="21"/>
+<wire x1="-2" y1="1.875" x2="-2" y2="0.665" width="0.127" layer="21"/>
+<wire x1="2" y1="0.665" x2="2" y2="1.875" width="0.127" layer="21"/>
+<wire x1="2" y1="1.875" x2="0.54" y2="1.875" width="0.127" layer="21"/>
+<wire x1="3.08" y1="-3.145" x2="7.08" y2="-3.145" width="0.127" layer="21"/>
+<wire x1="0.54" y1="-1.875" x2="2" y2="-1.875" width="0.127" layer="21"/>
+<wire x1="-0.54" y1="1.875" x2="-2" y2="1.875" width="0.127" layer="21"/>
+<wire x1="-2" y1="-1.875" x2="-0.54" y2="-1.875" width="0.127" layer="21"/>
 </package>
 <package name="DFN8/SHT">
 <description>&lt;b&gt;DFN 8 / SHT3x-DIS package&lt;/b&gt;&lt;p&gt;
 body 2.5x2.5mm, pitch 0.5mm</description>
-<wire x1="2.5" y1="2.3" x2="2.5" y2="2.5" width="0.2032" layer="21"/>
+<wire x1="2.5" y1="2.3876" x2="2.5" y2="2.5" width="0.2032" layer="21"/>
 <wire x1="2.5" y1="2.5" x2="0" y2="2.5" width="0.2032" layer="21"/>
-<wire x1="0" y1="2.5" x2="0" y2="2.3" width="0.2032" layer="21"/>
-<wire x1="2.5" y1="0" x2="2.5" y2="0.2" width="0.2032" layer="21"/>
-<wire x1="0" y1="0" x2="0" y2="0.2" width="0.2032" layer="21"/>
+<wire x1="0" y1="2.5" x2="0" y2="2.3876" width="0.2032" layer="21"/>
+<wire x1="2.5" y1="0" x2="2.5" y2="0.1124" width="0.2032" layer="21"/>
+<wire x1="0" y1="0" x2="0" y2="0.1124" width="0.2032" layer="21"/>
 <wire x1="2.5" y1="0" x2="0" y2="0" width="0.2032" layer="21"/>
-<circle x="-0.3048" y="2.8448" radius="0.254" width="0" layer="21"/>
+<circle x="-0.3048" y="2.8448" radius="0.1905" width="0" layer="21"/>
 <text x="0" y="2.75" size="0.6096" layer="25" ratio="10">&gt;NAME</text>
 <rectangle x1="-0.27" y1="0.305" x2="0.42" y2="2.195" layer="29"/>
 <text x="-0.25" y="-0.895" size="0.6096" layer="27">&gt;VALUE</text>
