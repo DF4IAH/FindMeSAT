@@ -11247,10 +11247,10 @@ Source: 008-0260-0_E.pdf</description>
 <part name="R131" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R132" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="R112" library="rcl" deviceset="R-EU_" device="R0603" value="10k"/>
-<part name="JP131" library="df4iah_connector" deviceset="HEADER-2X3" device="" value="PDI"/>
+<part name="JP131" library="df4iah_connector" deviceset="HEADER-2X3" device="" value=""/>
 <part name="GND131" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="R1002" library="rcl" deviceset="R-EU_" device="R0603" value="10k"/>
-<part name="JP111" library="df4iah_connector" deviceset="AVR-JTAG-10" device="" value="JTAG"/>
+<part name="JP111" library="df4iah_connector" deviceset="AVR-JTAG-10" device="" value=""/>
 <part name="GND111" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="R111" library="rcl" deviceset="R-EU_" device="R0805" value="150"/>
 <part name="J901" library="df4iah_connector" deviceset="JST_S3B-XH-A" device=""/>
@@ -11329,10 +11329,10 @@ Source: 008-0260-0_E.pdf</description>
 <part name="R152" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
 <part name="C141" library="rcl" deviceset="C-EU" device="C0603" value="100p"/>
 <part name="GND141" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="JP121" library="df4iah_connector" deviceset="HEADER-2X3" device="" value="DISPLAY"/>
+<part name="JP121" library="df4iah_connector" deviceset="HEADER-2X3" device="" value=""/>
 <part name="GND121" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+5V1" library="df4iah_supply" deviceset="+5V" device=""/>
-<part name="U301" library="df4iah_sensors" deviceset="MPU-9250" device="" value="9DoF IMU"/>
+<part name="U301" library="df4iah_sensors" deviceset="MPU-9250" device="" value="MPU-9250"/>
 <part name="GND311" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V3_311" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="C301" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>
