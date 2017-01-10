@@ -11163,7 +11163,7 @@ Source: 008-0260-0_E.pdf</description>
 <part name="FRAME8" library="df4iah_frame" deviceset="A4L-LOC" device="" value="Micro-SIM"/>
 <part name="FRAME10" library="df4iah_frame" deviceset="A4L-LOC" device="" value="BatteryConnector"/>
 <part name="FRAME11" library="df4iah_frame" deviceset="A4L-LOC" device="" value="Power"/>
-<part name="IC1111" library="df4iah_powersupply" deviceset="LM2831" device="" technology="YMF" value="LM2831YMF"/>
+<part name="U1111" library="df4iah_powersupply" deviceset="LM2831" device="" technology="YMF" value="LM2831YMF"/>
 <part name="+5V0_1111" library="df4iah_supply" deviceset="+5V" device=""/>
 <part name="C1111" library="rcl" deviceset="C-EU" device="C0805" value="47u"/>
 <part name="GND1111" library="df4iah_supply" deviceset="GND" device=""/>
@@ -13636,7 +13636,7 @@ Source: 008-0260-0_E.pdf</description>
 </plain>
 <instances>
 <instance part="FRAME11" gate="G$1" x="0" y="0"/>
-<instance part="IC1111" gate="A" x="91.44" y="127" smashed="yes">
+<instance part="U1111" gate="A" x="91.44" y="127" smashed="yes">
 <attribute name="NAME" x="87.249" y="140.6906" size="2.0828" layer="95" ratio="10" rot="SR0"/>
 <attribute name="VALUE" x="84.5058" y="111.252" size="2.0828" layer="96" ratio="10" rot="SR0"/>
 </instance>
@@ -13775,7 +13775,7 @@ Source: 008-0260-0_E.pdf</description>
 <pinref part="GND1116" gate="1" pin="GND"/>
 </segment>
 <segment>
-<pinref part="IC1111" gate="A" pin="GND"/>
+<pinref part="U1111" gate="A" pin="GND"/>
 <pinref part="GND1113" gate="1" pin="GND"/>
 <wire x1="109.22" y1="127" x2="127" y2="127" width="0.1524" layer="91"/>
 </segment>
@@ -13807,7 +13807,7 @@ Source: 008-0260-0_E.pdf</description>
 </net>
 <net name="EN" class="0">
 <segment>
-<pinref part="IC1111" gate="A" pin="EN"/>
+<pinref part="U1111" gate="A" pin="EN"/>
 <wire x1="73.66" y1="134.62" x2="63.5" y2="134.62" width="0.1524" layer="91"/>
 <wire x1="63.5" y1="134.62" x2="63.5" y2="132.08" width="0.1524" layer="91"/>
 <pinref part="R1113" gate="G$1" pin="2"/>
@@ -13818,7 +13818,7 @@ Source: 008-0260-0_E.pdf</description>
 <segment>
 <pinref part="+5V0_1111" gate="G$1" pin="+5V"/>
 <wire x1="25.4" y1="149.86" x2="25.4" y2="137.16" width="0.1524" layer="91"/>
-<pinref part="IC1111" gate="A" pin="VIN"/>
+<pinref part="U1111" gate="A" pin="VIN"/>
 <wire x1="25.4" y1="137.16" x2="25.4" y2="119.38" width="0.1524" layer="91"/>
 <wire x1="73.66" y1="119.38" x2="63.5" y2="119.38" width="0.1524" layer="91"/>
 <wire x1="63.5" y1="119.38" x2="63.5" y2="121.92" width="0.1524" layer="91"/>
@@ -13841,7 +13841,7 @@ Source: 008-0260-0_E.pdf</description>
 </net>
 <net name="SW" class="0">
 <segment>
-<pinref part="IC1111" gate="A" pin="SW"/>
+<pinref part="U1111" gate="A" pin="SW"/>
 <wire x1="109.22" y1="119.38" x2="127" y2="119.38" width="0.1524" layer="91"/>
 <pinref part="D1111" gate="G$1" pin="C"/>
 <wire x1="127" y1="119.38" x2="127" y2="111.76" width="0.1524" layer="91"/>
@@ -13922,7 +13922,7 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="218.44" y1="104.14" x2="218.44" y2="106.68" width="0.1524" layer="91"/>
 <wire x1="218.44" y1="104.14" x2="210.82" y2="104.14" width="0.1524" layer="91"/>
 <wire x1="210.82" y1="104.14" x2="210.82" y2="134.62" width="0.1524" layer="91"/>
-<pinref part="IC1111" gate="A" pin="FB"/>
+<pinref part="U1111" gate="A" pin="FB"/>
 <wire x1="210.82" y1="134.62" x2="109.22" y2="134.62" width="0.1524" layer="91"/>
 <junction x="218.44" y="104.14"/>
 <pinref part="R1115" gate="G$1" pin="1"/>
@@ -14070,7 +14070,7 @@ Source: 008-0260-0_E.pdf</description>
 </sheets>
 <errors>
 <approved hash="102,11,208.28,58.42,VOUT,+3V0,,,,"/>
-<approved hash="104,11,73.66,119.38,IC1111,VIN,+5V,,,"/>
+<approved hash="104,11,73.66,119.38,U1111,VIN,+5V,,,"/>
 <approved hash="104,1,129.54,81.28,U101A,VBAT,+3V0,,,"/>
 <approved hash="104,11,73.66,63.5,U101B,VCC_2,+3V3,,,"/>
 <approved hash="104,11,73.66,60.96,U101B,VCC_3,+3V3,,,"/>
