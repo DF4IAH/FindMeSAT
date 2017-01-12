@@ -143,7 +143,7 @@
 <layer number="255" name="routoute" color="7" fill="1" visible="no" active="yes"/>
 </layers>
 <library>
-<description>&lt;b&gt;DF4IAH Library - MMUs and CPUs&lt;/b&gt;&lt;p&gt;</description>
+<description>&lt;b&gt;DF4IAH Library - Processors: central controlling devices&lt;/b&gt;&lt;p&gt;</description>
 <packages>
 <package name="DIL40">
 <description>&lt;B&gt;Dual In Line&lt;/B&gt;&lt;p&gt;

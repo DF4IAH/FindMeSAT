@@ -143,7 +143,7 @@
 <layer number="255" name="routoute" color="7" fill="1" visible="no" active="yes"/>
 </layers>
 <library>
-<description>&lt;b&gt;DF4IAH Library - Connectors: headers, coax-jacks, USB&lt;/b&gt;&lt;p&gt;</description>
+<description>&lt;b&gt;DF4IAH Library - Connectors: headers, coax-jacks, BNC, SMA, MCX, USB and more ...&lt;/b&gt;</description>
 <packages>
 <package name="MCX-J-P-X-RA-SM1">
 <description>MCX RIGHT ANGLE, SMT JACK-50OHM.
