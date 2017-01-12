@@ -106,7 +106,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="ABS07" prefix="Q">
+<deviceset name="ABS07-32.768KHZ" prefix="Q">
 <description>&lt;b&gt;ABRACON ABS07&lt;/b&gt;&lt;p&gt;
 &lt;b&gt;32.768 kHz SMD LOW PROFILE CRYSTAL&lt;/b&gt;&lt;p&gt;
 

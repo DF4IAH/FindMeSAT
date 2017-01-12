@@ -8183,31 +8183,31 @@ Radiall&lt;p&gt;</description>
 <symbols>
 <symbol name="CFPT-141">
 <description>&lt;b&gt;3.0V CMOS Clock Oscillator&lt;/b&gt;</description>
-<wire x1="-7.62" y1="5.08" x2="12.7" y2="5.08" width="0.254" layer="94"/>
-<wire x1="12.7" y1="5.08" x2="12.7" y2="-5.08" width="0.254" layer="94"/>
-<wire x1="12.7" y1="-5.08" x2="-7.62" y2="-5.08" width="0.254" layer="94"/>
-<wire x1="-7.62" y1="-5.08" x2="-7.62" y2="5.08" width="0.254" layer="94"/>
-<wire x1="2.54" y1="-0.508" x2="2.54" y2="-1.27" width="0.127" layer="94"/>
-<wire x1="2.54" y1="-1.27" x2="2.54" y2="-2.032" width="0.127" layer="94"/>
-<wire x1="1.524" y1="-1.27" x2="2.54" y2="-1.27" width="0.127" layer="94"/>
-<wire x1="3.048" y1="-0.762" x2="3.556" y2="-0.762" width="0.127" layer="94"/>
-<wire x1="3.556" y1="-0.762" x2="3.556" y2="-1.778" width="0.127" layer="94"/>
-<wire x1="3.556" y1="-1.778" x2="3.048" y2="-1.778" width="0.127" layer="94"/>
-<wire x1="3.048" y1="-1.778" x2="3.048" y2="-0.762" width="0.127" layer="94"/>
-<wire x1="4.064" y1="-0.508" x2="4.064" y2="-1.27" width="0.127" layer="94"/>
-<wire x1="4.064" y1="-1.27" x2="4.064" y2="-2.032" width="0.127" layer="94"/>
-<wire x1="5.08" y1="-1.27" x2="4.064" y2="-1.27" width="0.127" layer="94"/>
-<text x="-7.62" y="5.842" size="1.778" layer="95">&gt;NAME</text>
-<text x="-7.62" y="-7.62" size="1.778" layer="96">&gt;VALUE</text>
-<pin name="VCC_3V0" x="-10.16" y="2.54" length="short" direction="pwr"/>
-<pin name="VC" x="-10.16" y="0" length="short" direction="in"/>
-<pin name="GND" x="-10.16" y="-2.54" length="short" direction="pwr"/>
-<pin name="OUT" x="15.24" y="2.54" length="short" direction="out" rot="R180"/>
+<wire x1="-10.16" y1="5.08" x2="10.16" y2="5.08" width="0.254" layer="94"/>
+<wire x1="10.16" y1="5.08" x2="10.16" y2="-5.08" width="0.254" layer="94"/>
+<wire x1="10.16" y1="-5.08" x2="-10.16" y2="-5.08" width="0.254" layer="94"/>
+<wire x1="-10.16" y1="-5.08" x2="-10.16" y2="5.08" width="0.254" layer="94"/>
+<wire x1="0" y1="-0.508" x2="0" y2="-1.27" width="0.127" layer="94"/>
+<wire x1="0" y1="-1.27" x2="0" y2="-2.032" width="0.127" layer="94"/>
+<wire x1="-1.016" y1="-1.27" x2="0" y2="-1.27" width="0.127" layer="94"/>
+<wire x1="0.508" y1="-0.762" x2="1.016" y2="-0.762" width="0.127" layer="94"/>
+<wire x1="1.016" y1="-0.762" x2="1.016" y2="-1.778" width="0.127" layer="94"/>
+<wire x1="1.016" y1="-1.778" x2="0.508" y2="-1.778" width="0.127" layer="94"/>
+<wire x1="0.508" y1="-1.778" x2="0.508" y2="-0.762" width="0.127" layer="94"/>
+<wire x1="1.524" y1="-0.508" x2="1.524" y2="-1.27" width="0.127" layer="94"/>
+<wire x1="1.524" y1="-1.27" x2="1.524" y2="-2.032" width="0.127" layer="94"/>
+<wire x1="2.54" y1="-1.27" x2="1.524" y2="-1.27" width="0.127" layer="94"/>
+<text x="-10.16" y="5.842" size="1.778" layer="95">&gt;NAME</text>
+<text x="-10.16" y="-7.62" size="1.778" layer="96">&gt;VALUE</text>
+<pin name="VCC_3V0" x="-12.7" y="2.54" length="short" direction="pwr"/>
+<pin name="VC" x="-12.7" y="0" length="short" direction="in"/>
+<pin name="GND" x="-12.7" y="-2.54" length="short" direction="pwr"/>
+<pin name="OUT" x="12.7" y="2.54" length="short" direction="out" rot="R180"/>
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="CFPT-141" prefix="IC">
-<description>TCXO, 3.0V</description>
+<deviceset name="CFPT-141" prefix="U">
+<description>VCTCXO, 3.0V</description>
 <gates>
 <gate name="&gt;NAME" symbol="CFPT-141" x="0" y="0"/>
 </gates>
@@ -8220,11 +8220,11 @@ Radiall&lt;p&gt;</description>
 <connect gate="&gt;NAME" pin="VCC_3V0" pad="4"/>
 </connects>
 <technologies>
-<technology name="">
-<attribute name="MF" value="IQD-FREQUENCY-PRODUCTS"/>
-<attribute name="MPN" value="LFTVXO022175"/>
-<attribute name="OC_FARNELL" value="1100745"/>
-<attribute name="OC_NEWARK" value="-"/>
+<technology name="-20MHZ">
+<attribute name="MF" value="IQD-FREQUENCY-PRODUCTS" constant="no"/>
+<attribute name="MPN" value="LFTVXO022175" constant="no"/>
+<attribute name="OC_FARNELL" value="1100745" constant="no"/>
+<attribute name="OC_NEWARK" value="" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -8270,7 +8270,7 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 </symbol>
 </symbols>
 <devicesets>
-<deviceset name="ABS07" prefix="Q">
+<deviceset name="ABS07-32.768KHZ" prefix="Q">
 <description>&lt;b&gt;ABRACON ABS07&lt;/b&gt;&lt;p&gt;
 &lt;b&gt;32.768 kHz SMD LOW PROFILE CRYSTAL&lt;/b&gt;&lt;p&gt;
 
@@ -8753,24 +8753,24 @@ body 2.5x2.5mm, pitch 0.5mm</description>
 <symbol name="MPU-9250">
 <description>&lt;b&gt;MPU-9250&lt;/b&gt;&lt;br /&gt;
 9DOF IMU</description>
-<wire x1="-12.7" y1="10.16" x2="-12.7" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="-12.7" y1="-7.62" x2="12.7" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="12.7" y1="-7.62" x2="12.7" y2="10.16" width="0.254" layer="94"/>
-<wire x1="12.7" y1="10.16" x2="-12.7" y2="10.16" width="0.254" layer="94"/>
-<pin name="!CS" x="17.78" y="2.54" length="middle" direction="in" function="dot" rot="R180"/>
-<pin name="AD0/SDO" x="17.78" y="-5.08" length="middle" rot="R180"/>
-<pin name="AUX_CL" x="17.78" y="7.62" length="middle" direction="out" rot="R180"/>
-<pin name="AUX_DA" x="17.78" y="5.08" length="middle" rot="R180"/>
-<pin name="FSYNC" x="-17.78" y="0" length="middle" direction="pas"/>
-<pin name="GND" x="-17.78" y="-5.08" length="middle" direction="pas"/>
-<pin name="INT" x="-17.78" y="2.54" length="middle" direction="out"/>
-<pin name="REGOUT" x="-17.78" y="-2.54" length="middle" direction="pas"/>
-<pin name="SCL/SCLK" x="17.78" y="0" length="middle" direction="in" function="clk" rot="R180"/>
-<pin name="SDA/SDI" x="17.78" y="-2.54" length="middle" rot="R180"/>
-<pin name="VDD" x="-17.78" y="7.62" length="middle" direction="pwr"/>
-<pin name="VDDIO" x="-17.78" y="5.08" length="middle" direction="pwr"/>
-<text x="-12.7" y="10.414" size="1.778" layer="95" font="vector">&gt;NAME</text>
-<text x="-12.7" y="-7.874" size="1.778" layer="96" font="vector" align="top-left">&gt;VALUE</text>
+<wire x1="-12.7" y1="7.62" x2="-12.7" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="-12.7" y1="-10.16" x2="12.7" y2="-10.16" width="0.254" layer="94"/>
+<wire x1="12.7" y1="-10.16" x2="12.7" y2="7.62" width="0.254" layer="94"/>
+<wire x1="12.7" y1="7.62" x2="-12.7" y2="7.62" width="0.254" layer="94"/>
+<pin name="!CS" x="17.78" y="0" length="middle" direction="in" function="dot" rot="R180"/>
+<pin name="AD0/SDO" x="17.78" y="-7.62" length="middle" rot="R180"/>
+<pin name="AUX_CL" x="17.78" y="5.08" length="middle" direction="out" rot="R180"/>
+<pin name="AUX_DA" x="17.78" y="2.54" length="middle" rot="R180"/>
+<pin name="FSYNC" x="-17.78" y="-2.54" length="middle" direction="pas"/>
+<pin name="GND" x="-17.78" y="-7.62" length="middle" direction="pas"/>
+<pin name="INT" x="-17.78" y="0" length="middle" direction="out"/>
+<pin name="REGOUT" x="-17.78" y="-5.08" length="middle" direction="pas"/>
+<pin name="SCL/SCLK" x="17.78" y="-2.54" length="middle" direction="in" function="clk" rot="R180"/>
+<pin name="SDA/SDI" x="17.78" y="-5.08" length="middle" rot="R180"/>
+<pin name="VDD" x="-17.78" y="5.08" length="middle" direction="pwr"/>
+<pin name="VDDIO" x="-17.78" y="2.54" length="middle" direction="pwr"/>
+<text x="-12.7" y="7.874" size="1.778" layer="95" font="vector">&gt;NAME</text>
+<text x="-12.7" y="-10.414" size="1.778" layer="96" font="vector" align="top-left">&gt;VALUE</text>
 </symbol>
 <symbol name="BMP180">
 <description>&lt;h3&gt;Bosch BMP180 Digital Barometric Pressures Sensor&lt;/h3&gt;
@@ -8846,7 +8846,6 @@ NC pin 19. 2-6 &amp; 14-17 not internally connected. May be used for PCB trace r
 <technologies>
 <technology name="">
 <attribute name="PROD_ID" value="IC-13192"/>
-<attribute name="VALUE" value="9DoF IMU" constant="no"/>
 </technology>
 </technologies>
 </device>
@@ -11169,19 +11168,19 @@ Source: 008-0260-0_E.pdf</description>
 <part name="FRAME11" library="df4iah_frame" deviceset="A4L-LOC" device="" value="Power"/>
 <part name="U1111" library="df4iah_powersupply" deviceset="LM2831" device="" technology="YMF" value="LM2831YMF"/>
 <part name="+5V0_1111" library="df4iah_supply" deviceset="+5V" device=""/>
-<part name="C1111" library="rcl" deviceset="C-EU" device="C0805" value="47u"/>
+<part name="C1111" library="rcl" deviceset="C-EU" device="C0805" value="47uF"/>
 <part name="GND1111" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="D1111" library="df4iah_diode" deviceset="CRS08" device=""/>
 <part name="GND1114" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="L1111" library="rcl" deviceset="L-EU" device="L5650M" value="4.7uH"/>
-<part name="C1112" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
-<part name="C1113" library="rcl" deviceset="C-EU" device="C0805" value="47u"/>
+<part name="C1112" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="C1113" library="rcl" deviceset="C-EU" device="C0805" value="47uF"/>
 <part name="GND1115" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V3_1111" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="GND1117" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R1114" library="rcl" deviceset="R-EU_" device="R0603" value="15k"/>
-<part name="R1115" library="rcl" deviceset="R-EU_" device="R0603" value="68k"/>
-<part name="R1113" library="rcl" deviceset="R-EU_" device="R0603" value="100k"/>
+<part name="R1114" library="rcl" deviceset="R-EU_" device="R0603" value="15kR"/>
+<part name="R1115" library="rcl" deviceset="R-EU_" device="R0603" value="68kR"/>
+<part name="R1113" library="rcl" deviceset="R-EU_" device="R0603" value="100kR"/>
 <part name="FRAME12" library="df4iah_frame" deviceset="A4L-LOC" device="" value="Mounting"/>
 <part name="H1204" library="holes" deviceset="MOUNT-PAD-ROUND" device="2.8"/>
 <part name="H1203" library="holes" deviceset="MOUNT-PAD-ROUND" device="2.8"/>
@@ -11190,75 +11189,75 @@ Source: 008-0260-0_E.pdf</description>
 <part name="GND1201" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND1203" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND701" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="RPOLY711" library="rcl" deviceset="R-EU_" device="M1206" value="1A"/>
-<part name="R722" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
-<part name="R723" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
-<part name="C711" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
-<part name="C712" library="rcl" deviceset="C-EU" device="C0805" value="47u"/>
+<part name="RPOLY711" library="rcl" deviceset="R-EU_" device="M1206" value="1A0"/>
+<part name="R722" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R723" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="C711" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="C712" library="rcl" deviceset="C-EU" device="C0805" value="47uF"/>
 <part name="GND711" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+5V0_711" library="df4iah_supply" deviceset="+5V" device=""/>
-<part name="R724" library="rcl" deviceset="R-EU_" device="R0603" value="1M"/>
-<part name="R721" library="rcl" deviceset="R-EU_" device="R0603" value="1k5"/>
+<part name="R724" library="rcl" deviceset="R-EU_" device="R0603" value="1MR"/>
+<part name="R721" library="rcl" deviceset="R-EU_" device="R0603" value="1.5kR"/>
 <part name="GND721" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="D721" library="df4iah_diode" deviceset="BZX84CSMD" device="" value="BZX84-3V6"/>
 <part name="D722" library="df4iah_diode" deviceset="BZX84CSMD" device="" value="BZX84-3V6"/>
-<part name="R725" library="rcl" deviceset="R-EU_" device="R0603" value="68"/>
-<part name="R701" library="rcl" deviceset="R-EU_" device="R0603" value="330k"/>
-<part name="C701" library="rcl" deviceset="C-EU" device="C0603" value="1n"/>
+<part name="R725" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R701" library="rcl" deviceset="R-EU_" device="R0603" value="330kR"/>
+<part name="C701" library="rcl" deviceset="C-EU" device="C0603" value="1nF"/>
 <part name="U101" library="df4iah_processors" deviceset="ATXMEGA256A3BU-AU" device=""/>
 <part name="GND1092" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V3_1091" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="L1091" library="rcl" deviceset="L-EU" device="L5650M" value="10uH"/>
-<part name="C1091" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
-<part name="C1093" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
-<part name="C1095" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
-<part name="C1092" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
-<part name="C1094" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
-<part name="C1096" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
+<part name="C1091" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="C1093" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="C1095" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="C1092" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="C1094" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="C1096" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
 <part name="GND1091" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C101" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>
+<part name="C101" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="GND101" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V0_151" library="df4iah_supply" deviceset="+3V0" device=""/>
 <part name="FRAME9" library="df4iah_frame" deviceset="A4L-LOC" device="" value="VCTCXO"/>
-<part name="U1001" library="df4iah_osc" deviceset="CFPT-141" device=""/>
+<part name="U1001" library="df4iah_osc" deviceset="CFPT-141" device="" technology="-20MHZ" value="CFPT-141-20MHZ"/>
 <part name="GND1002" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C1002" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
+<part name="C1002" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
 <part name="+3V0_1001" library="df4iah_supply" deviceset="+3V0" device=""/>
-<part name="C1001" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>
-<part name="R1001" library="rcl" deviceset="R-EU_" device="R0603" value="100k"/>
+<part name="C1001" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
+<part name="R1001" library="rcl" deviceset="R-EU_" device="R0603" value="100kR"/>
 <part name="GND1001" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R1013" library="rcl" deviceset="R-EU_" device="R0603" value="10"/>
+<part name="R1013" library="rcl" deviceset="R-EU_" device="R0603" value="10R"/>
 <part name="VBAT_1121" library="df4iah_supply" deviceset="VBAT" device=""/>
 <part name="+3V0_1121" library="df4iah_supply" deviceset="+3V0" device=""/>
 <part name="GND1116" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND1113" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="Q101" library="df4iah_crystal" deviceset="ABS07" device=""/>
+<part name="Q101" library="df4iah_crystal" deviceset="ABS07-32.768KHZ" device=""/>
 <part name="U1011" library="df4iah_opamp" deviceset="OPA354" device=""/>
 <part name="GND1012" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C1012" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
+<part name="C1012" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
 <part name="+3V3_1011" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R1012" library="rcl" deviceset="R-EU_" device="R0603" value="470k"/>
-<part name="R1011" library="rcl" deviceset="R-EU_" device="R0603" value="100k"/>
+<part name="R1012" library="rcl" deviceset="R-EU_" device="R0603" value="470kR"/>
+<part name="R1011" library="rcl" deviceset="R-EU_" device="R0603" value="100kR"/>
 <part name="GND1011" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="D1122" library="df4iah_diode" deviceset="CRS08" device=""/>
 <part name="D1121" library="df4iah_diode" deviceset="CRS08" device=""/>
 <part name="U1121" library="df4iah_powersupply" deviceset="LM4120IM5-3.0" device=""/>
 <part name="GND1121" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C1121" library="rcl" deviceset="C-EU" device="C0805" value="100n"/>
+<part name="C1121" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
 <part name="GND901" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="VBAT_901" library="df4iah_supply" deviceset="VBAT" device=""/>
 <part name="RPOLY901" library="rcl" deviceset="R-EU_" device="M1206" value="2.2A"/>
-<part name="R131" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R132" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R112" library="rcl" deviceset="R-EU_" device="R0603" value="10k"/>
+<part name="R131" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R132" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R112" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="JP131" library="df4iah_connector" deviceset="HEADER-2X3" device="" value=""/>
 <part name="GND131" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R1002" library="rcl" deviceset="R-EU_" device="R0603" value="10k"/>
+<part name="R1002" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="JP111" library="df4iah_connector" deviceset="AVR-JTAG-10" device="" value=""/>
 <part name="GND111" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R111" library="rcl" deviceset="R-EU_" device="R0805" value="150"/>
+<part name="R111" library="rcl" deviceset="R-EU_" device="R0805" value="150R"/>
 <part name="J901" library="df4iah_connector" deviceset="JST_S3B-XH-A" device=""/>
-<part name="C901" library="rcl" deviceset="C-EU" device="C0805" value="100u"/>
+<part name="C901" library="rcl" deviceset="C-EU" device="C0805" value="100uF"/>
 <part name="GND902" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="J291" library="df4iah_connector" deviceset="MCX-J-P-X-RA-SM1" device=""/>
 <part name="GND291" library="df4iah_supply" deviceset="GND" device=""/>
@@ -11266,36 +11265,36 @@ Source: 008-0260-0_E.pdf</description>
 <part name="GND201" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="VBAT_201" library="df4iah_supply" deviceset="VBAT" device=""/>
 <part name="D201" library="df4iah_diode" deviceset="BZX84CSMD" device="" value="BZX84-5V1"/>
-<part name="C201" library="rcl" deviceset="C-EU" device="C0603" value="100p"/>
-<part name="C1011" library="rcl" deviceset="C-EU" device="C0603" value="100p"/>
+<part name="C201" library="rcl" deviceset="C-EU" device="C0603" value="100pF"/>
+<part name="C1011" library="rcl" deviceset="C-EU" device="C0603" value="100pF"/>
 <part name="J701" library="df4iah_connector" deviceset="USB_MICRO-B_MOLEX" device="" value="MOLEX_105017-0001"/>
 <part name="+5V0_201" library="df4iah_supply" deviceset="+5V" device=""/>
 <part name="GND801" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND802" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="J801" library="df4iah_connector" deviceset="MICROSIM-8P_SDCARD-8P_MOLEX-104642-1610" device=""/>
-<part name="R1142" library="rcl" deviceset="R-EU_" device="R0603" value="2.0k"/>
-<part name="R1112" library="rcl" deviceset="R-EU_" device="R0603" value="6.04k"/>
-<part name="R1111" library="rcl" deviceset="R-EU_" device="R0603" value="4.02k"/>
+<part name="R1142" library="rcl" deviceset="R-EU_" device="R0603" value="2.0kR"/>
+<part name="R1112" library="rcl" deviceset="R-EU_" device="R0603" value="6.04kR"/>
+<part name="R1111" library="rcl" deviceset="R-EU_" device="R0603" value="4.02kR"/>
 <part name="GND1112" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R1141" library="rcl" deviceset="R-EU_" device="R0603" value="4.02k"/>
+<part name="R1141" library="rcl" deviceset="R-EU_" device="R0603" value="4.02kR"/>
 <part name="GND1141" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="U1021" library="df4iah_opamp" deviceset="OPA354" device=""/>
 <part name="GND1021" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V3_1021" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R1021" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R1132" library="rcl" deviceset="R-EU_" device="R0603" value="6.04k"/>
-<part name="R1131" library="rcl" deviceset="R-EU_" device="R0603" value="4.02k"/>
+<part name="R1021" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R1132" library="rcl" deviceset="R-EU_" device="R0603" value="6.04kR"/>
+<part name="R1131" library="rcl" deviceset="R-EU_" device="R0603" value="4.02kR"/>
 <part name="GND1131" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R211" library="rcl" deviceset="R-EU_" device="R0603" value="3.3k"/>
-<part name="R212" library="rcl" deviceset="R-EU_" device="R0603" value="3.3k"/>
+<part name="R211" library="rcl" deviceset="R-EU_" device="R0603" value="3.3kR"/>
+<part name="R212" library="rcl" deviceset="R-EU_" device="R0603" value="3.3kR"/>
 <part name="+3V3_211" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R172" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R224" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R223" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R221" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R173" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R171" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R222" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R172" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R224" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R223" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R221" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R173" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R171" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R222" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
 <part name="R271" library="rcl" deviceset="R-EU_" device="R0603"/>
 <part name="R281" library="rcl" deviceset="R-EU_" device="R0603"/>
 <part name="R291" library="rcl" deviceset="R-EU_" device="R0603"/>
@@ -11311,61 +11310,61 @@ Source: 008-0260-0_E.pdf</description>
 <part name="GND282" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND271" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND272" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="RPOLY291" library="rcl" deviceset="R-EU_" device="M1206" value="150mA"/>
+<part name="RPOLY291" library="rcl" deviceset="R-EU_" device="M1206" value="0A150"/>
 <part name="+3V3_291" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="L291" library="rcl" deviceset="L-EU" device="L3216C" value="WE-CBF_300R"/>
 <part name="+3V0_231" library="df4iah_supply" deviceset="+3V0" device=""/>
-<part name="C251" library="rcl" deviceset="C-EU" device="C0603" value="100p"/>
+<part name="C251" library="rcl" deviceset="C-EU" device="C0603" value="100pF"/>
 <part name="GND231" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R163" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R162" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R161" library="rcl" deviceset="R-EU_" device="R0603" value="4.7k"/>
-<part name="R231" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R232" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R233" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R234" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R241" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R141" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R142" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
+<part name="R163" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R162" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R161" library="rcl" deviceset="R-EU_" device="R0603" value="4.7kR"/>
+<part name="R231" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R232" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R233" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R234" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R241" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R141" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R142" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
 <part name="+3V3_121" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R251" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R151" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="R152" library="rcl" deviceset="R-EU_" device="R0603" value="27"/>
-<part name="C141" library="rcl" deviceset="C-EU" device="C0603" value="100p"/>
+<part name="R251" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R151" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R152" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="C141" library="rcl" deviceset="C-EU" device="C0603" value="100pF"/>
 <part name="GND141" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="JP121" library="df4iah_connector" deviceset="HEADER-2X3" device="" value=""/>
 <part name="GND121" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+5V1" library="df4iah_supply" deviceset="+5V" device=""/>
-<part name="U301" library="df4iah_sensors" deviceset="MPU-9250" device="" value="9DoF IMU"/>
+<part name="U301" library="df4iah_sensors" deviceset="MPU-9250" device="" value="MPU-9250"/>
 <part name="GND311" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V3_311" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="C301" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>
-<part name="C302" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>
+<part name="C301" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
+<part name="C302" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="U401" library="df4iah_sensors" deviceset="BMP180" device=""/>
 <part name="GND401" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V3_401" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="C401" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>
+<part name="C401" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="U501" library="df4iah_sensors" deviceset="SHT3" device="" technology="1-DIS"/>
 <part name="+3V3_501" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="GND501" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C501" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>
+<part name="C501" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="GND601" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="U601" library="df4iah_rf" deviceset="AX5243" device=""/>
 <part name="+3V3_601" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="C601" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>
+<part name="C601" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="GND691" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C612" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>
-<part name="C611" library="rcl" deviceset="C-EU" device="C0603" value="100n"/>
+<part name="C612" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
+<part name="C611" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="GND611" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND612" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="Q651" library="adafruit" deviceset="CRYSTAL" device="CTS406" value="ABM3B-16MHZ-10-R50-1-U"/>
 <part name="L671" library="rcl" deviceset="R-EU_" device="R0603" value="22nH"/>
-<part name="C681" library="rcl" deviceset="C-EU" device="C0603" value="68p"/>
+<part name="C681" library="rcl" deviceset="C-EU" device="C0603" value="68pF"/>
 <part name="GND683" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="L686" library="rcl" deviceset="R-EU_" device="R0603" value="150nH"/>
 <part name="L682" library="rcl" deviceset="R-EU_" device="R0603" value="68nH"/>
 <part name="GND684" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C686" library="rcl" deviceset="C-EU" device="C0603" value="18p"/>
+<part name="C686" library="rcl" deviceset="C-EU" device="C0603" value="18pF"/>
 <part name="L681" library="rcl" deviceset="R-EU_" device="R0603" value="150nH"/>
 <part name="J685" library="df4iah_connector" deviceset="SMA_SMT_AMPHENOL-901-143" device="" value="SMA_CON"/>
 <part name="GND689" library="df4iah_supply" deviceset="GND" device=""/>
@@ -11377,7 +11376,6 @@ Source: 008-0260-0_E.pdf</description>
 <description>CPU</description>
 <plain>
 <text x="132.08" y="66.04" size="1.778" layer="97">XTAL 1</text>
-<text x="149.86" y="99.06" size="1.778" layer="97">32.768 kHz</text>
 <text x="37.084" y="35.052" size="1.778" layer="94" ratio="10">PDI</text>
 <text x="5.08" y="114.3" size="1.778" layer="97">2x ADC B Audio</text>
 <text x="5.08" y="129.54" size="1.778" layer="97">8x ADC A MEAS</text>
@@ -11407,7 +11405,7 @@ Source: 008-0260-0_E.pdf</description>
 <instance part="C101" gate="G$1" x="220.98" y="43.18"/>
 <instance part="GND101" gate="1" x="220.98" y="35.56"/>
 <instance part="+3V0_151" gate="G$2" x="220.98" y="154.94"/>
-<instance part="Q101" gate="G$1" x="167.64" y="99.06"/>
+<instance part="Q101" gate="G$1" x="139.7" y="99.06"/>
 <instance part="R131" gate="G$1" x="76.2" y="38.1"/>
 <instance part="R132" gate="G$1" x="68.58" y="30.48"/>
 <instance part="R112" gate="G$1" x="43.18" y="124.46"/>
@@ -11500,15 +11498,15 @@ Source: 008-0260-0_E.pdf</description>
 <segment>
 <pinref part="U101" gate="A" pin="TOSC2"/>
 <pinref part="Q101" gate="G$1" pin="1"/>
-<wire x1="129.54" y1="99.06" x2="165.1" y2="99.06" width="0.1524" layer="91"/>
+<wire x1="129.54" y1="99.06" x2="137.16" y2="99.06" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="TOSC1" class="0">
 <segment>
 <pinref part="Q101" gate="G$1" pin="2"/>
-<wire x1="170.18" y1="99.06" x2="177.8" y2="99.06" width="0.1524" layer="91"/>
-<wire x1="177.8" y1="99.06" x2="177.8" y2="101.6" width="0.1524" layer="91"/>
-<wire x1="177.8" y1="101.6" x2="129.54" y2="101.6" width="0.1524" layer="91"/>
+<wire x1="142.24" y1="99.06" x2="149.86" y2="99.06" width="0.1524" layer="91"/>
+<wire x1="149.86" y1="99.06" x2="149.86" y2="101.6" width="0.1524" layer="91"/>
+<wire x1="149.86" y1="101.6" x2="129.54" y2="101.6" width="0.1524" layer="91"/>
 <pinref part="U101" gate="A" pin="TOSC1"/>
 </segment>
 </net>
@@ -12682,7 +12680,7 @@ Source: 008-0260-0_E.pdf</description>
 </plain>
 <instances>
 <instance part="FRAME3" gate="G$1" x="0" y="0"/>
-<instance part="U301" gate="G$1" x="129.54" y="93.98"/>
+<instance part="U301" gate="G$1" x="129.54" y="96.52"/>
 <instance part="GND311" gate="1" x="81.28" y="76.2"/>
 <instance part="+3V3_311" gate="G$1" x="81.28" y="121.92"/>
 <instance part="C301" gate="G$1" x="81.28" y="91.44"/>
@@ -13481,8 +13479,8 @@ Source: 008-0260-0_E.pdf</description>
 <instances>
 <instance part="FRAME9" gate="G$1" x="0" y="0"/>
 <instance part="U1001" gate="&gt;NAME" x="109.22" y="119.38" smashed="yes">
-<attribute name="NAME" x="108.966" y="125.73" size="1.778" layer="95"/>
-<attribute name="VALUE" x="105.41" y="111.506" size="1.778" layer="96"/>
+<attribute name="NAME" x="105.664" y="125.73" size="1.778" layer="95"/>
+<attribute name="VALUE" x="98.806" y="111.252" size="1.778" layer="96"/>
 </instance>
 <instance part="GND1002" gate="1" x="93.98" y="86.36"/>
 <instance part="C1002" gate="G$1" x="88.9" y="101.6" smashed="yes">
@@ -13528,7 +13526,7 @@ Source: 008-0260-0_E.pdf</description>
 <pinref part="GND1002" gate="1" pin="GND"/>
 <wire x1="93.98" y1="88.9" x2="93.98" y2="116.84" width="0.1524" layer="91"/>
 <pinref part="U1001" gate="&gt;NAME" pin="GND"/>
-<wire x1="93.98" y1="116.84" x2="99.06" y2="116.84" width="0.1524" layer="91"/>
+<wire x1="93.98" y1="116.84" x2="96.52" y2="116.84" width="0.1524" layer="91"/>
 <wire x1="93.98" y1="88.9" x2="88.9" y2="88.9" width="0.1524" layer="91"/>
 <pinref part="C1002" gate="G$1" pin="2"/>
 <wire x1="88.9" y1="88.9" x2="88.9" y2="96.52" width="0.1524" layer="91"/>
@@ -13579,7 +13577,7 @@ Source: 008-0260-0_E.pdf</description>
 <pinref part="C1002" gate="G$1" pin="1"/>
 <wire x1="88.9" y1="121.92" x2="88.9" y2="104.14" width="0.1524" layer="91"/>
 <pinref part="U1001" gate="&gt;NAME" pin="VCC_3V0"/>
-<wire x1="88.9" y1="121.92" x2="99.06" y2="121.92" width="0.1524" layer="91"/>
+<wire x1="88.9" y1="121.92" x2="96.52" y2="121.92" width="0.1524" layer="91"/>
 <junction x="88.9" y="121.92"/>
 <label x="88.9" y="142.24" size="1.778" layer="95" xref="yes"/>
 <label x="88.9" y="142.24" size="1.778" layer="95" rot="R180" xref="yes"/>
@@ -13612,7 +13610,7 @@ Source: 008-0260-0_E.pdf</description>
 <net name="XO_DRV" class="0">
 <segment>
 <pinref part="U1001" gate="&gt;NAME" pin="OUT"/>
-<wire x1="124.46" y1="121.92" x2="167.64" y2="121.92" width="0.1524" layer="91"/>
+<wire x1="121.92" y1="121.92" x2="167.64" y2="121.92" width="0.1524" layer="91"/>
 <label x="127" y="119.38" size="1.778" layer="95"/>
 <pinref part="U1011" gate="A" pin="+IN"/>
 </segment>
@@ -13665,7 +13663,7 @@ Source: 008-0260-0_E.pdf</description>
 <net name="XO_VC" class="0">
 <segment>
 <pinref part="U1001" gate="&gt;NAME" pin="VC"/>
-<wire x1="99.06" y1="119.38" x2="71.12" y2="119.38" width="0.1524" layer="91"/>
+<wire x1="96.52" y1="119.38" x2="71.12" y2="119.38" width="0.1524" layer="91"/>
 <label x="78.74" y="116.84" size="1.778" layer="95"/>
 <pinref part="R1002" gate="G$1" pin="2"/>
 </segment>
@@ -14143,7 +14141,7 @@ Source: 008-0260-0_E.pdf</description>
 <approved hash="104,11,73.66,66.04,U101B,VCC_1,+3V3,,,"/>
 <approved hash="104,11,73.66,58.42,U101B,VCC_4,+3V3,,,"/>
 <approved hash="104,11,73.66,55.88,U101B,VCC_5,+3V3,,,"/>
-<approved hash="104,10,99.06,121.92,U1001,VCC_3V0,+3V0,,,"/>
+<approved hash="104,10,96.52,121.92,U1001,VCC_3V0,+3V0,,,"/>
 <approved hash="104,10,167.64,127,U1011,V+,+3V3,,,"/>
 <approved hash="104,10,167.64,114.3,U1011,V-,GND,,,"/>
 <approved hash="104,11,172.72,58.42,U1121,VIN,VBAT_DD,,,"/>
