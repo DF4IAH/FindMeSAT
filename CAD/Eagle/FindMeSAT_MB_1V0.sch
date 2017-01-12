@@ -8675,50 +8675,6 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <rectangle x1="-1.2" y1="1.12" x2="1.2" y2="1.88" layer="29"/>
 <rectangle x1="-1.2" y1="-1.88" x2="1.2" y2="-1.12" layer="29"/>
 </package>
-<package name="BMP180">
-<description>&lt;h3&gt;BMP180 Pressure Sensor&lt;/h3&gt;
-&lt;p&gt;&lt;a href="http://cdn.sparkfun.com/datasheets/Sensors/Pressure/BMP180.pdf"&gt;Datasheet&lt;/a&gt;&lt;/p&gt;
-&lt;p&gt;Specifications:
-&lt;ul&gt;
-&lt;li&gt;Pin Count: 7&lt;/li&gt;
-&lt;li&gt;Dimensions: 3.6 x 3.8 x 0.93 mm&lt;/li&gt;
-&lt;li&gt;Pitch: 1.5 mm (1.45 mm between middle and outer pads)&lt;/li&gt;
-&lt;/ul&gt;
-&lt;p&gt;Devices Using:&lt;/p&gt;
-&lt;ul&gt;
-&lt;li&gt;BMP180&lt;/li&gt;
-&lt;/ul&gt;</description>
-<smd name="1" x="1.5" y="1.45" dx="0.5" dy="0.6" layer="1" rot="R90"/>
-<smd name="2" x="0" y="1.45" dx="0.5" dy="0.6" layer="1" rot="R90"/>
-<smd name="3" x="-1.5" y="1.45" dx="0.5" dy="0.6" layer="1" rot="R90"/>
-<smd name="4" x="-1.5" y="-1.45" dx="0.5" dy="0.6" layer="1" rot="R90"/>
-<smd name="5" x="0" y="-1.45" dx="0.5" dy="0.6" layer="1" rot="R90"/>
-<smd name="6" x="1.5" y="-1.45" dx="0.5" dy="0.6" layer="1" rot="R90"/>
-<smd name="7" x="1.5" y="0" dx="0.5" dy="0.6" layer="1" rot="R180"/>
-<wire x1="-1.9" y1="1.8" x2="-1.9" y2="-1.8" width="0.127" layer="51"/>
-<wire x1="-1.9" y1="-1.8" x2="1.9" y2="-1.8" width="0.127" layer="51"/>
-<wire x1="1.9" y1="-1.8" x2="1.9" y2="1.8" width="0.127" layer="51"/>
-<wire x1="1.9" y1="1.8" x2="-1.9" y2="1.8" width="0.127" layer="51"/>
-<circle x="2.401" y="2.274" radius="0.254" width="0" layer="21"/>
-<wire x1="-1.5" y1="1" x2="-1.5" y2="-1" width="0.127" layer="51"/>
-<wire x1="-1.5" y1="-1" x2="-1" y2="-1.5" width="0.127" layer="51" curve="90"/>
-<wire x1="-1" y1="-1.5" x2="1" y2="-1.5" width="0.127" layer="51"/>
-<wire x1="1" y1="-1.5" x2="1.5" y2="-1" width="0.127" layer="51" curve="90"/>
-<wire x1="1.5" y1="-1" x2="1.5" y2="1" width="0.127" layer="51"/>
-<wire x1="1.5" y1="1" x2="1" y2="1.5" width="0.127" layer="51" curve="90"/>
-<wire x1="1" y1="1.5" x2="-1" y2="1.5" width="0.127" layer="51"/>
-<wire x1="-1" y1="1.5" x2="-1.5" y2="1" width="0.127" layer="51" curve="90"/>
-<text x="0" y="2.032" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;NAME</text>
-<text x="0" y="-2.032" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;VALUE</text>
-<wire x1="-2" y1="-0.665" x2="-2" y2="-1.875" width="0.127" layer="21"/>
-<wire x1="2" y1="-1.875" x2="2" y2="-0.665" width="0.127" layer="21"/>
-<wire x1="-2" y1="1.875" x2="-2" y2="0.665" width="0.127" layer="21"/>
-<wire x1="2" y1="0.665" x2="2" y2="1.875" width="0.127" layer="21"/>
-<wire x1="2" y1="1.875" x2="0.54" y2="1.875" width="0.127" layer="21"/>
-<wire x1="0.54" y1="-1.875" x2="2" y2="-1.875" width="0.127" layer="21"/>
-<wire x1="-0.54" y1="1.875" x2="-2" y2="1.875" width="0.127" layer="21"/>
-<wire x1="-2" y1="-1.875" x2="-0.54" y2="-1.875" width="0.127" layer="21"/>
-</package>
 <package name="DFN8/SHT">
 <description>&lt;b&gt;DFN 8 / SHT3x-DIS package&lt;/b&gt;&lt;p&gt;
 body 2.5x2.5mm, pitch 0.5mm</description>
@@ -8748,6 +8704,51 @@ body 2.5x2.5mm, pitch 0.5mm</description>
 <rectangle x1="2.08" y1="0.305" x2="2.77" y2="2.195" layer="29"/>
 <smd name="9" x="1.25" y="1.25" dx="0.9" dy="1.7" layer="1" thermals="no"/>
 </package>
+<package name="MS5607-02BA">
+<description>&lt;h3&gt;MS5607-02BA Pressure Sensor&lt;/h3&gt;
+&lt;p&gt;&lt;a href="http://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&amp;DocNm=MS5607-02BA03&amp;DocType=Data+Sheet&amp;DocLang=English"&gt;Datasheet&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Specifications:
+&lt;ul&gt;
+&lt;li&gt;Pin Count: 8&lt;/li&gt;
+&lt;li&gt;Dimensions: 3.0 x 5.0 x 0.95 mm&lt;/li&gt;
+&lt;li&gt;Pitch: 1.25 mm&lt;/li&gt;
+&lt;/ul&gt;</description>
+<smd name="1" x="-1.1" y="1.875" dx="1.1" dy="0.6" layer="1" roundness="20" thermals="no"/>
+<smd name="2" x="-1.1" y="0.625" dx="1.1" dy="0.6" layer="1" roundness="20" thermals="no"/>
+<smd name="3" x="-1.1" y="-0.625" dx="1.1" dy="0.6" layer="1" roundness="20" thermals="no"/>
+<smd name="6" x="1.1" y="-0.625" dx="1.1" dy="0.67" layer="1" roundness="19" rot="R180" thermals="no"/>
+<smd name="7" x="1.1" y="0.625" dx="1.1" dy="0.6" layer="1" roundness="20" rot="R180" thermals="no"/>
+<smd name="8" x="1.1" y="1.875" dx="1.1" dy="0.6" layer="1" roundness="20" rot="R180" thermals="no"/>
+<wire x1="-1.675" y1="-2.275" x2="1.675" y2="-2.275" width="0.127" layer="51"/>
+<wire x1="1.675" y1="-2.275" x2="1.675" y2="2.275" width="0.127" layer="51"/>
+<wire x1="1.675" y1="2.275" x2="-1.675" y2="2.275" width="0.127" layer="51"/>
+<wire x1="-1.675" y1="2.275" x2="-1.675" y2="-2.275" width="0.127" layer="51"/>
+<circle x="-2.399" y="2.901" radius="0.254" width="0" layer="21"/>
+<text x="0" y="3.042" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;NAME</text>
+<text x="0" y="-2.952" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;VALUE</text>
+<wire x1="1.165" y1="-2.5" x2="2" y2="-2.5" width="0.127" layer="21"/>
+<wire x1="2" y1="2.5" x2="1.165" y2="2.5" width="0.127" layer="21"/>
+<wire x1="-2" y1="-2.5" x2="-1.165" y2="-2.5" width="0.127" layer="21"/>
+<wire x1="-1.04" y1="2.5" x2="-2" y2="2.5" width="0.127" layer="21"/>
+<wire x1="-2" y1="2.5" x2="-2" y2="1.665" width="0.127" layer="21"/>
+<wire x1="2" y1="1.665" x2="2" y2="2.5" width="0.127" layer="21"/>
+<wire x1="-2" y1="-1.665" x2="-2" y2="-2.5" width="0.127" layer="21"/>
+<wire x1="2" y1="-2.5" x2="2" y2="-1.665" width="0.127" layer="21"/>
+<smd name="4" x="-1.1" y="-1.875" dx="1.1" dy="0.6" layer="1" roundness="20" thermals="no"/>
+<smd name="5" x="1.1" y="-1.875" dx="1.1" dy="0.6" layer="1" roundness="19" rot="R180" thermals="no"/>
+<rectangle x1="-1.65" y1="-1.875" x2="1.65" y2="1.875" layer="39"/>
+<circle x="0.65" y="1.65" radius="0.25" width="0" layer="51"/>
+<circle x="-0.65" y="-1.65" radius="0.25" width="0" layer="51"/>
+<wire x1="1.175" y1="2.025" x2="-1.175" y2="2.025" width="0.127" layer="51"/>
+<wire x1="-1.175" y1="-2.025" x2="-1.15" y2="-2.025" width="0.127" layer="51"/>
+<wire x1="-1.15" y1="-2.025" x2="1.25" y2="-2.025" width="0.127" layer="51"/>
+<wire x1="-1.425" y1="1.775" x2="-1.425" y2="-1.775" width="0.127" layer="51"/>
+<wire x1="1.425" y1="-1.775" x2="1.425" y2="1.775" width="0.127" layer="51"/>
+<wire x1="-1.425" y1="1.775" x2="-1.25" y2="2.025" width="0.127" layer="51" curve="-90"/>
+<wire x1="1.175" y1="2.025" x2="1.425" y2="1.775" width="0.127" layer="51" curve="-90"/>
+<wire x1="-1.15" y1="-2.025" x2="-1.425" y2="-1.775" width="0.127" layer="51" curve="-90"/>
+<wire x1="1.425" y1="-1.775" x2="1.25" y2="-2.025" width="0.127" layer="51" curve="-90"/>
+</package>
 </packages>
 <symbols>
 <symbol name="MPU-9250">
@@ -8771,21 +8772,6 @@ body 2.5x2.5mm, pitch 0.5mm</description>
 <pin name="VDDIO" x="-17.78" y="2.54" length="middle" direction="pwr"/>
 <text x="-12.7" y="7.874" size="1.778" layer="95" font="vector">&gt;NAME</text>
 <text x="-12.7" y="-10.414" size="1.778" layer="96" font="vector" align="top-left">&gt;VALUE</text>
-</symbol>
-<symbol name="BMP180">
-<description>&lt;h3&gt;Bosch BMP180 Digital Barometric Pressures Sensor&lt;/h3&gt;
-&lt;p&gt;The BMP180 is the function compatible successor of the BMP085, a new generation of high precision digital pressure sensors for consumer applications.&lt;/p&gt;</description>
-<pin name="VDD" x="12.7" y="5.08" length="short" direction="pwr" rot="R180"/>
-<pin name="VDDIO" x="12.7" y="0" length="short" direction="pwr" rot="R180"/>
-<pin name="SCL" x="-12.7" y="-2.54" length="short" direction="in" function="clk"/>
-<pin name="SDA" x="-12.7" y="2.54" length="short"/>
-<pin name="GND" x="12.7" y="-5.08" length="short" direction="pas" rot="R180"/>
-<wire x1="-10.16" y1="7.62" x2="-10.16" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="-10.16" y1="-7.62" x2="10.16" y2="-7.62" width="0.254" layer="94"/>
-<wire x1="10.16" y1="-7.62" x2="10.16" y2="7.62" width="0.254" layer="94"/>
-<wire x1="10.16" y1="7.62" x2="-10.16" y2="7.62" width="0.254" layer="94"/>
-<text x="-10.16" y="7.874" size="1.778" layer="95" font="vector">&gt;Name</text>
-<text x="-10.16" y="-7.874" size="1.778" layer="96" font="vector" align="top-left">&gt;Value</text>
 </symbol>
 <symbol name="SHT3X-DIS">
 <description>&lt;b&gt;SHT3x-DIS - Humidity and Temperature Sensor&lt;/b&gt;&lt;p&gt;
@@ -8812,6 +8798,33 @@ body 2.5x2.5mm, pitch 0.5mm</description>
 <pin name="VSS" x="15.24" y="7.62" length="middle" direction="pas" rot="R180"/>
 <circle x="-8.636" y="8.89" radius="0.254" width="0.254" layer="94"/>
 <pin name="PAD" x="2.54" y="15.24" length="middle" direction="pas" rot="R270"/>
+</symbol>
+<symbol name="MS607-02BA">
+<description>&lt;h3&gt;MS5607-02BA Pressure Sensor&lt;/h3&gt;
+&lt;p&gt;&lt;a href="http://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&amp;DocNm=MS5607-02BA03&amp;DocType=Data+Sheet&amp;DocLang=English"&gt;Datasheet&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Specifications:
+&lt;ul&gt;
+&lt;li&gt;Pin Count: 8&lt;/li&gt;
+&lt;li&gt;Dimensions: 3.0 x 5.0 x 0.95 mm&lt;/li&gt;
+&lt;li&gt;Pitch: 1.25 mm&lt;/li&gt;
+&lt;/ul&gt;</description>
+<wire x1="-12.7" y1="12.7" x2="12.7" y2="12.7" width="0.4064" layer="94"/>
+<wire x1="12.7" y1="12.7" x2="12.7" y2="-12.7" width="0.4064" layer="94"/>
+<wire x1="12.7" y1="-12.7" x2="-12.7" y2="-12.7" width="0.4064" layer="94"/>
+<wire x1="-12.7" y1="-12.7" x2="-12.7" y2="12.7" width="0.4064" layer="94"/>
+<text x="0" y="13.462" size="1.778" layer="95" align="bottom-center">&gt;NAME</text>
+<text x="0" y="-13.462" size="1.778" layer="96" align="top-center">&gt;VALUE</text>
+<pin name="VDD" x="-17.78" y="7.62" length="middle" direction="pwr"/>
+<pin name="SDI_SDA" x="17.78" y="2.54" length="middle" rot="R180"/>
+<pin name="SCL_SCLK" x="17.78" y="7.62" length="middle" direction="in" function="clk" rot="R180"/>
+<pin name="PS" x="-17.78" y="2.54" length="middle" direction="in"/>
+<circle x="5.08" y="10.16" radius="1.135921875" width="0" layer="94"/>
+<pin name="NC" x="17.78" y="-7.62" length="middle" direction="nc" rot="R180"/>
+<pin name="GND" x="-17.78" y="-2.54" length="middle" direction="pas"/>
+<circle x="-10.16" y="10.16" radius="0.508" width="0.254" layer="94"/>
+<circle x="-5.08" y="-10.16" radius="1.135921875" width="0" layer="94"/>
+<pin name="CSB_!ADDR" x="-17.78" y="-7.62" length="middle" direction="in"/>
+<pin name="SDO" x="17.78" y="-2.54" length="middle" direction="out" rot="R180"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -8851,38 +8864,6 @@ NC pin 19. 2-6 &amp; 14-17 not internally connected. May be used for PCB trace r
 </device>
 </devices>
 </deviceset>
-<deviceset name="BMP180" prefix="U">
-<description>&lt;h3&gt;Bosch BMP180 Digital Barometric Pressures Sensor&lt;/h3&gt;
-&lt;p&gt;The BMP180 is the function compatible successor of the BMP085, a new generation of high precision digital pressure sensors for consumer applications.&lt;/p&gt;
-&lt;p&gt;The ultra-low power, low voltage electronics of the BMP180 is optimized for use in mobile phones, PDAs, GPS navigation devices and outdoor equipment. With a low altitude noise of merely 0.25m at fast conversion time, the BMP180 offers superior performance. The I2C interface allows for easy system integration with a microcontroller. The BMP180 is based on piezo-resistive technology for EMC robustness, high accuracy and linearity as well as long term stability.&lt;/p&gt;
-&lt;p&gt;Web page: &lt;a href="http://www.bosch-sensortec.com/en/homepage/products_3/environmental_sensors_1/bmp180_1/bmp180"&gt;http://www.bosch-sensortec.com/en/homepage/products_3/environmental_sensors_1/bmp180_1/bmp180&lt;/a&gt;&lt;br&gt;
-Datasheet: &lt;a href="http://ae-bst.resource.bosch.com/media/products/dokumente/bmp180/BST-BMP180-DS000-09.pdf"&gt; http://ae-bst.resource.bosch.com/media/products/dokumente/bmp180/BST-BMP180-DS000-09.pdf&lt;/a&gt;&lt;/p&gt;
-&lt;h4&gt;SparkFun Products&lt;/h4&gt;
-&lt;ul&gt;
-&lt;li&gt;&lt;a href="https://www.sparkfun.com/products/11823"&gt;Barometric Pressure Sensor - BMP180&lt;/a&gt; (COM-11823)&lt;/li&gt;
-&lt;li&gt;&lt;a href="https://www.sparkfun.com/products/11824"&gt;SparkFun Barometric Pressure Sensor Breakout - BMP180&lt;/a&gt; (SEN-11824)&lt;/li&gt;
-&lt;/ul&gt;</description>
-<gates>
-<gate name="G$1" symbol="BMP180" x="0" y="0"/>
-</gates>
-<devices>
-<device name="" package="BMP180">
-<connects>
-<connect gate="G$1" pin="GND" pad="7"/>
-<connect gate="G$1" pin="SCL" pad="5"/>
-<connect gate="G$1" pin="SDA" pad="6"/>
-<connect gate="G$1" pin="VDD" pad="2"/>
-<connect gate="G$1" pin="VDDIO" pad="3"/>
-</connects>
-<technologies>
-<technology name="">
-<attribute name="PROD_ID" value="IC-11600"/>
-<attribute name="SF_ID" value="11823"/>
-</technology>
-</technologies>
-</device>
-</devices>
-</deviceset>
 <deviceset name="SHT3" prefix="U">
 <description>&lt;b&gt;SHT3x-DIS - Humidity and Temperature Sensor&lt;/b&gt;&lt;p&gt;
 &lt;table&gt;
@@ -8911,6 +8892,36 @@ Datasheet: &lt;a href="http://ae-bst.resource.bosch.com/media/products/dokumente
 <technology name="0-DIS"/>
 <technology name="1-DIS"/>
 <technology name="5-DIS"/>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="MS5607-02BA" prefix="U">
+<description>&lt;h3&gt;MS5607-02BA03 Pressure Sensor&lt;/h3&gt;
+&lt;p&gt;&lt;a href="http://www.te.com/commerce/DocumentDelivery/DDEController?Action=srchrtrv&amp;DocNm=MS5607-02BA03&amp;DocType=Data+Sheet&amp;DocLang=English"&gt;Datasheet&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;Specifications:
+&lt;ul&gt;
+&lt;li&gt;Pin Count: 8&lt;/li&gt;
+&lt;li&gt;Dimensions: 3.0 x 5.0 x 0.95 mm&lt;/li&gt;
+&lt;li&gt;Pitch: 1.25 mm&lt;/li&gt;
+&lt;/ul&gt;</description>
+<gates>
+<gate name="G$1" symbol="MS607-02BA" x="0" y="0"/>
+</gates>
+<devices>
+<device name="" package="MS5607-02BA">
+<connects>
+<connect gate="G$1" pin="CSB_!ADDR" pad="4"/>
+<connect gate="G$1" pin="GND" pad="3"/>
+<connect gate="G$1" pin="NC" pad="5"/>
+<connect gate="G$1" pin="PS" pad="2"/>
+<connect gate="G$1" pin="SCL_SCLK" pad="8"/>
+<connect gate="G$1" pin="SDI_SDA" pad="7"/>
+<connect gate="G$1" pin="SDO" pad="6"/>
+<connect gate="G$1" pin="VDD" pad="1"/>
+</connects>
+<technologies>
+<technology name="03"/>
 </technologies>
 </device>
 </devices>
@@ -11340,7 +11351,6 @@ Source: 008-0260-0_E.pdf</description>
 <part name="+3V3_311" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="C301" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="C302" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
-<part name="U401" library="df4iah_sensors" deviceset="BMP180" device=""/>
 <part name="GND401" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V3_401" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="C401" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
@@ -11370,6 +11380,7 @@ Source: 008-0260-0_E.pdf</description>
 <part name="GND689" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="JP181" library="df4iah_connector" deviceset="HEADER-2X3" device="" value=""/>
 <part name="GND181" library="df4iah_supply" deviceset="GND" device=""/>
+<part name="U401" library="df4iah_sensors" deviceset="MS5607-02BA" device="" technology="03"/>
 </parts>
 <sheets>
 <sheet>
@@ -12772,14 +12783,16 @@ Source: 008-0260-0_E.pdf</description>
 <sheet>
 <description>Baro_Temp</description>
 <plain>
-<text x="116.84" y="68.58" size="1.778" layer="97">I2C address = 1110111</text>
+<text x="116.332" y="64.262" size="1.778" layer="97">I2C address = 1110110</text>
+<text x="154.178" y="85.344" size="1.778" layer="97">NC</text>
+<text x="154.178" y="90.424" size="1.778" layer="97">NC</text>
 </plain>
 <instances>
 <instance part="FRAME4" gate="G$1" x="0" y="0"/>
-<instance part="U401" gate="G$1" x="127" y="91.44"/>
-<instance part="GND401" gate="1" x="160.02" y="73.66"/>
-<instance part="+3V3_401" gate="G$1" x="160.02" y="111.76"/>
-<instance part="C401" gate="G$1" x="160.02" y="86.36"/>
+<instance part="GND401" gate="1" x="83.82" y="81.28" rot="MR0"/>
+<instance part="+3V3_401" gate="G$1" x="83.82" y="111.76" rot="MR0"/>
+<instance part="C401" gate="G$1" x="83.82" y="96.52" rot="MR0"/>
+<instance part="U401" gate="G$1" x="132.08" y="93.98"/>
 </instances>
 <busses>
 </busses>
@@ -12788,42 +12801,44 @@ Source: 008-0260-0_E.pdf</description>
 <segment>
 <pinref part="GND401" gate="1" pin="GND"/>
 <pinref part="C401" gate="G$1" pin="2"/>
-<wire x1="160.02" y1="76.2" x2="160.02" y2="78.74" width="0.1524" layer="91"/>
-<wire x1="160.02" y1="78.74" x2="160.02" y2="81.28" width="0.1524" layer="91"/>
-<wire x1="160.02" y1="78.74" x2="142.24" y2="78.74" width="0.1524" layer="91"/>
-<wire x1="142.24" y1="78.74" x2="142.24" y2="86.36" width="0.1524" layer="91"/>
+<wire x1="83.82" y1="83.82" x2="83.82" y2="91.44" width="0.1524" layer="91"/>
+<wire x1="83.82" y1="91.44" x2="114.3" y2="91.44" width="0.1524" layer="91"/>
+<junction x="83.82" y="91.44"/>
 <pinref part="U401" gate="G$1" pin="GND"/>
-<wire x1="142.24" y1="86.36" x2="139.7" y2="86.36" width="0.1524" layer="91"/>
-<junction x="160.02" y="78.74"/>
 </segment>
 </net>
 <net name="+3V3" class="0">
 <segment>
 <pinref part="+3V3_401" gate="G$1" pin="+3V3"/>
 <pinref part="C401" gate="G$1" pin="1"/>
-<wire x1="160.02" y1="109.22" x2="160.02" y2="96.52" width="0.1524" layer="91"/>
-<pinref part="U401" gate="G$1" pin="VDDIO"/>
-<wire x1="160.02" y1="96.52" x2="160.02" y2="91.44" width="0.1524" layer="91"/>
-<wire x1="160.02" y1="91.44" x2="160.02" y2="88.9" width="0.1524" layer="91"/>
-<wire x1="160.02" y1="91.44" x2="139.7" y2="91.44" width="0.1524" layer="91"/>
+<wire x1="83.82" y1="109.22" x2="83.82" y2="101.6" width="0.1524" layer="91"/>
+<wire x1="83.82" y1="101.6" x2="83.82" y2="99.06" width="0.1524" layer="91"/>
+<wire x1="83.82" y1="101.6" x2="109.22" y2="101.6" width="0.1524" layer="91"/>
+<junction x="83.82" y="101.6"/>
 <pinref part="U401" gate="G$1" pin="VDD"/>
-<wire x1="160.02" y1="96.52" x2="139.7" y2="96.52" width="0.1524" layer="91"/>
-<junction x="160.02" y="91.44"/>
-<junction x="160.02" y="96.52"/>
+<wire x1="109.22" y1="101.6" x2="114.3" y2="101.6" width="0.1524" layer="91"/>
+<wire x1="109.22" y1="101.6" x2="109.22" y2="96.52" width="0.1524" layer="91"/>
+<pinref part="U401" gate="G$1" pin="PS"/>
+<wire x1="109.22" y1="96.52" x2="114.3" y2="96.52" width="0.1524" layer="91"/>
+<junction x="109.22" y="101.6"/>
+<wire x1="109.22" y1="96.52" x2="109.22" y2="86.36" width="0.1524" layer="91"/>
+<pinref part="U401" gate="G$1" pin="CSB_!ADDR"/>
+<wire x1="109.22" y1="86.36" x2="114.3" y2="86.36" width="0.1524" layer="91"/>
+<junction x="109.22" y="96.52"/>
 </segment>
 </net>
 <net name="SDA1" class="0">
 <segment>
-<pinref part="U401" gate="G$1" pin="SDA"/>
-<wire x1="114.3" y1="93.98" x2="73.66" y2="93.98" width="0.1524" layer="91"/>
-<label x="73.66" y="93.98" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="149.86" y1="96.52" x2="175.26" y2="96.52" width="0.1524" layer="91"/>
+<label x="175.26" y="96.52" size="1.778" layer="95" xref="yes"/>
+<pinref part="U401" gate="G$1" pin="SDI_SDA"/>
 </segment>
 </net>
 <net name="SCL1" class="0">
 <segment>
-<pinref part="U401" gate="G$1" pin="SCL"/>
-<wire x1="114.3" y1="88.9" x2="73.66" y2="88.9" width="0.1524" layer="91"/>
-<label x="73.66" y="88.9" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="149.86" y1="101.6" x2="175.26" y2="101.6" width="0.1524" layer="91"/>
+<label x="175.26" y="101.6" size="1.778" layer="95" xref="yes"/>
+<pinref part="U401" gate="G$1" pin="SCL_SCLK"/>
 </segment>
 </net>
 </nets>
@@ -14164,10 +14179,9 @@ Source: 008-0260-0_E.pdf</description>
 <approved hash="104,10,167.64,43.18,U1021,V-,GND,,,"/>
 <approved hash="104,3,111.76,101.6,U301,VDD,+3V3,,,"/>
 <approved hash="104,3,111.76,99.06,U301,VDDIO,+3V3,,,"/>
-<approved hash="104,4,139.7,96.52,U401,VDD,+3V3,,,"/>
-<approved hash="104,4,139.7,91.44,U401,VDDIO,+3V3,,,"/>
 <approved hash="104,5,137.16,83.82,U501,VDD,+3V3,,,"/>
 <approved hash="104,6,71.12,134.62,U601,VDD_IO,+3V3,,,"/>
+<approved hash="104,4,114.3,101.6,U401,VDD,+3V3,,,"/>
 <approved hash="113,2,195.58,115.295,R271,,,,,"/>
 <approved hash="113,2,195.58,82.2748,R281,,,,,"/>
 <approved hash="113,2,78.74,21.3148,R291,,,,,"/>

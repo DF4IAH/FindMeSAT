@@ -25,12 +25,18 @@ UsedLibrary="lbr/Adafruit-Eagle-Library-master/adafruit.lbr"
 UsedLibrary="lbr/df4iah_bipoltransistor.lbr"
 
 [Win_1]
+Type="Control Panel"
+Loc="17 451 1780 1202"
+State=2
+Number=0
+
+[Win_2]
 Type="Library Editor"
 Loc="17 23 2539 1367"
 State=2
 Number=3
-File="lbr/df4iah_osc.lbr"
-View="-17.6987 -8.54117 17.6987 8.54117"
+File="lbr/df4iah_40xxx.lbr"
+View="-0.508 -0.508 25.908 25.908"
 WireWidths=" 0 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0.4064 0.04 0.127 0.254"
 PadDiameters=" 0.254 0.3048 0.4064 0.6096 0.8128 1.016 1.27 1.4224 1.6764 1.778 1.9304 2.1844 2.54 3.81 6.4516 0"
 PadDrills=" 0.5 0.6 0.7 0.9 1 1.1 1.2 1.3 1.4 1.5 1.6 2 2.2 2.8 3.2 0.8"
@@ -46,7 +52,7 @@ DimensionExtWidths=" 0.127 0.254 0.1 0.13 0.26 0"
 DimensionExtLengths=" 1.27 2.54 1 2 3 0"
 DimensionExtOffsets=" 1.27 2.54 1 2 3 0"
 SmdSizes=" 0.8128 0.4064 1.016 0.508 1.27 0.6604 1.4224 0.7112 1.6764 0.8128 1.778 0.9144 1.9304 0.9652 2.1844 1.0668 2.54 1.27 3.81 1.9304 5.08 2.54 6.4516 3.2512 1.27 0.635 2.3 1.4 0.9 1.7 2.95 2.95"
-WireBend=3
+WireBend=7
 WireBendSet=0
 WireCap=1
 MiterStyle=0
@@ -60,7 +66,7 @@ TextRatio=8
 DimensionUnit=1
 DimensionPrecision=2
 DimensionShowUnit=0
-PinDirection=6
+PinDirection=2
 PinFunction=0
 PinLength=2
 PinVisible=3
@@ -68,13 +74,7 @@ SwapLevel=0
 ArcDirection=0
 AddLevel=2
 PadsSameType=0
-Layer=94
-
-[Win_2]
-Type="Control Panel"
-Loc="17 451 1780 1202"
-State=2
-Number=0
+Layer=16
 
 [Win_3]
 Type="Schematic Editor"
@@ -121,7 +121,7 @@ ArcDirection=0
 AddLevel=2
 PadsSameType=0
 Layer=91
-Views=" 1: -5.73116 -4.10556 265.873 182.968 2: -5.73116 -4.10556 265.873 182.968 3: -5.73116 -4.10556 265.873 182.968 4: -5.73116 -4.10556 265.873 182.968 5: -5.73116 -4.10556 265.873 182.968 6: -5.73116 -4.10556 265.873 182.968 7: -5.73116 -4.10556 265.873 182.968 8: -5.73116 -4.10556 265.873 182.968 10: -39.4684 1.63494 232.136 188.708 11: -5.73116 -4.10556 265.873 182.968 12: -5.73116 -4.10556 265.873 182.968"
+Views=" 1: -5.73116 -4.10556 265.873 182.968 2: -5.73116 -4.10556 265.873 182.968 3: -5.73116 -4.10556 265.873 182.968 4: -5.73116 -4.10556 265.873 182.968 5: -5.73116 -4.10556 265.873 182.968 6: -5.73116 -4.10556 265.873 182.968 7: -5.73116 -4.10556 265.873 182.968 8: -5.73116 -4.10556 265.873 182.968 10: -5.73116 -4.10556 265.873 182.968 11: -5.73116 -4.10556 265.873 182.968 12: -5.73116 -4.10556 265.873 182.968"
 Sheet="1"
 
 [Win_4]
@@ -146,7 +146,7 @@ DimensionExtWidths=" 0.127 0.254 0.1 0.13 0.26 0"
 DimensionExtLengths=" 1.27 2.54 1 2 3 0"
 DimensionExtOffsets=" 1.27 2.54 1 2 3 0"
 SmdSizes=" 0.3048 0.1524 0.4064 0.2032 0.6096 0.3048 0.8128 0.4064 1.016 0.508 1.27 0.6604 1.4224 0.7112 1.6764 0.8128 1.778 0.9144 1.9304 0.9652 2.1844 1.0668 2.54 1.27 3.81 1.9304 5.08 2.54 6.4516 3.2512 1.27 0.635"
-WireBend=1
+WireBend=6
 WireBendSet=0
 WireCap=1
 MiterStyle=0
@@ -168,10 +168,10 @@ SwapLevel=0
 ArcDirection=0
 AddLevel=2
 PadsSameType=0
-Layer=15
+Layer=1
 
 [Desktop]
-Screen="2560 1440"
+Screen="640 480"
 Window="Win_1"
 Window="Win_2"
 Window="Win_3"
