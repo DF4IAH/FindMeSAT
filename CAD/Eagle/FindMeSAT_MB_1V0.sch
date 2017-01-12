@@ -8167,17 +8167,21 @@ Radiall&lt;p&gt;</description>
 <wire x1="-1.6" y1="-2.5" x2="1.6" y2="-2.5" width="0.2032" layer="51"/>
 <wire x1="1.6" y1="-2.5" x2="1.6" y2="2.5" width="0.2032" layer="51"/>
 <wire x1="1.6" y1="2.5" x2="-1.6" y2="2.5" width="0.2032" layer="51"/>
-<wire x1="-1.6" y1="1.368" x2="-1.6" y2="-1.368" width="0.2032" layer="21"/>
-<wire x1="0.876" y1="2.5" x2="-0.876" y2="2.5" width="0.2032" layer="21"/>
-<wire x1="1.6" y1="-1.368" x2="1.6" y2="1.368" width="0.2032" layer="21"/>
-<wire x1="-0.876" y1="-2.5" x2="0.876" y2="-2.5" width="0.2032" layer="21"/>
-<circle x="-2.216890625" y="2.449053125" radius="0.254" width="0" layer="21"/>
+<wire x1="1.7272" y1="2.7432" x2="1.0922" y2="2.7432" width="0.2032" layer="21"/>
+<wire x1="1.7272" y1="2.1082" x2="1.7272" y2="2.7432" width="0.2032" layer="21"/>
 <smd name="1" x="-1.15" y="1.9" dx="0.9" dy="1.4" layer="1"/>
 <smd name="2" x="-1.15" y="-1.9" dx="0.9" dy="1.4" layer="1"/>
 <smd name="3" x="1.15" y="-1.9" dx="0.9" dy="1.4" layer="1" rot="R180"/>
 <smd name="4" x="1.15" y="1.9" dx="0.9" dy="1.4" layer="1" rot="R180"/>
 <text x="-1.7212" y="2.887103125" size="1.27" layer="25">&gt;NAME</text>
 <text x="-1.74833125" y="-4.184525" size="1.27" layer="27">&gt;VALUE</text>
+<wire x1="1.7272" y1="-2.7432" x2="1.7272" y2="-2.1082" width="0.2032" layer="21"/>
+<wire x1="1.7272" y1="-2.7432" x2="1.0922" y2="-2.7432" width="0.2032" layer="21"/>
+<wire x1="-1.7272" y1="-2.7432" x2="-1.7272" y2="-2.1082" width="0.2032" layer="21"/>
+<wire x1="-1.7272" y1="2.1082" x2="-1.7272" y2="2.4932" width="0.2032" layer="21"/>
+<wire x1="-1.0922" y1="-2.7432" x2="-1.7272" y2="-2.7432" width="0.2032" layer="21"/>
+<wire x1="-1.0922" y1="2.7432" x2="-1.5" y2="2.75" width="0.2032" layer="21"/>
+<wire x1="-1.5" y1="2.75" x2="-1.7272" y2="2.4932" width="0.2032" layer="21"/>
 </package>
 </packages>
 <symbols>
@@ -8610,7 +8614,6 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <wire x1="1.6" y1="1.6" x2="1.37" y2="1.6" width="0.2032" layer="21"/>
 <wire x1="1.6" y1="1.37" x2="1.6" y2="1.6" width="0.2032" layer="21"/>
 <wire x1="-1.48" y1="1.37" x2="-1.37" y2="1.48" width="0.2032" layer="21"/>
-<circle x="-1.746" y="1.746" radius="0.1905" width="0" layer="21"/>
 <text x="0" y="2.032" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;Name</text>
 <text x="0" y="-1.905" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;Value</text>
 <polygon width="0.002540625" layer="1">
@@ -8679,12 +8682,11 @@ Source: http://www.abracon.com/Resonators/ABS07.pdf</description>
 <description>&lt;b&gt;DFN 8 / SHT3x-DIS package&lt;/b&gt;&lt;p&gt;
 body 2.5x2.5mm, pitch 0.5mm</description>
 <wire x1="2.5" y1="2.3876" x2="2.5" y2="2.5" width="0.2032" layer="21"/>
-<wire x1="2.5" y1="2.5" x2="0" y2="2.5" width="0.2032" layer="21"/>
-<wire x1="0" y1="2.5" x2="0" y2="2.3876" width="0.2032" layer="21"/>
+<wire x1="2.5" y1="2.5" x2="0.125" y2="2.5" width="0.2032" layer="21"/>
+<wire x1="0.125" y1="2.5" x2="0" y2="2.3876" width="0.2032" layer="21"/>
 <wire x1="2.5" y1="0" x2="2.5" y2="0.1124" width="0.2032" layer="21"/>
 <wire x1="0" y1="0" x2="0" y2="0.1124" width="0.2032" layer="21"/>
 <wire x1="2.5" y1="0" x2="0" y2="0" width="0.2032" layer="21"/>
-<circle x="-0.3048" y="2.8448" radius="0.1905" width="0" layer="21"/>
 <text x="0" y="2.75" size="0.6096" layer="25" ratio="10">&gt;NAME</text>
 <rectangle x1="-0.27" y1="0.305" x2="0.42" y2="2.195" layer="29"/>
 <text x="-0.25" y="-0.895" size="0.6096" layer="27">&gt;VALUE</text>
@@ -8723,17 +8725,17 @@ body 2.5x2.5mm, pitch 0.5mm</description>
 <wire x1="1.675" y1="-2.275" x2="1.675" y2="2.275" width="0.127" layer="51"/>
 <wire x1="1.675" y1="2.275" x2="-1.675" y2="2.275" width="0.127" layer="51"/>
 <wire x1="-1.675" y1="2.275" x2="-1.675" y2="-2.275" width="0.127" layer="51"/>
-<circle x="-2.399" y="2.901" radius="0.254" width="0" layer="21"/>
-<text x="0" y="3.042" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;NAME</text>
+<text x="0" y="2.667" size="0.6096" layer="25" font="vector" ratio="20" align="bottom-center">&gt;NAME</text>
 <text x="0" y="-2.952" size="0.6096" layer="27" font="vector" ratio="20" align="top-center">&gt;VALUE</text>
-<wire x1="1.165" y1="-2.5" x2="2" y2="-2.5" width="0.127" layer="21"/>
-<wire x1="2" y1="2.5" x2="1.165" y2="2.5" width="0.127" layer="21"/>
-<wire x1="-2" y1="-2.5" x2="-1.165" y2="-2.5" width="0.127" layer="21"/>
-<wire x1="-1.04" y1="2.5" x2="-2" y2="2.5" width="0.127" layer="21"/>
-<wire x1="-2" y1="2.5" x2="-2" y2="1.665" width="0.127" layer="21"/>
-<wire x1="2" y1="1.665" x2="2" y2="2.5" width="0.127" layer="21"/>
-<wire x1="-2" y1="-1.665" x2="-2" y2="-2.5" width="0.127" layer="21"/>
-<wire x1="2" y1="-2.5" x2="2" y2="-1.665" width="0.127" layer="21"/>
+<wire x1="1.165" y1="-2.5" x2="1.875" y2="-2.5" width="0.127" layer="21"/>
+<wire x1="1.875" y1="2.5" x2="1.165" y2="2.5" width="0.127" layer="21"/>
+<wire x1="-1.875" y1="-2.5" x2="-1.165" y2="-2.5" width="0.127" layer="21"/>
+<wire x1="-1.04" y1="2.5" x2="-1.625" y2="2.5" width="0.127" layer="21"/>
+<wire x1="-1.625" y1="2.5" x2="-1.875" y2="2.25" width="0.127" layer="21"/>
+<wire x1="-1.875" y1="2.25" x2="-1.875" y2="1.665" width="0.127" layer="21"/>
+<wire x1="1.875" y1="1.665" x2="1.875" y2="2.5" width="0.127" layer="21"/>
+<wire x1="-1.875" y1="-1.665" x2="-1.875" y2="-2.5" width="0.127" layer="21"/>
+<wire x1="1.875" y1="-2.5" x2="1.875" y2="-1.665" width="0.127" layer="21"/>
 <smd name="4" x="-1.1" y="-1.875" dx="1.1" dy="0.6" layer="1" roundness="20" thermals="no"/>
 <smd name="5" x="1.1" y="-1.875" dx="1.1" dy="0.6" layer="1" roundness="19" rot="R180" thermals="no"/>
 <rectangle x1="-1.65" y1="-1.875" x2="1.65" y2="1.875" layer="39"/>
