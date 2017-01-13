@@ -11341,7 +11341,6 @@ Source: 008-0260-0_E.pdf</description>
 <part name="R142" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
 <part name="+3V3_121" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="R251" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R151" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
 <part name="R152" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
 <part name="C141" library="rcl" deviceset="C-EU" device="C0603" value="100pF"/>
 <part name="GND141" library="df4iah_supply" deviceset="GND" device=""/>
@@ -11438,7 +11437,6 @@ Source: 008-0260-0_E.pdf</description>
 <instance part="R141" gate="G$1" x="182.88" y="137.16"/>
 <instance part="R142" gate="G$1" x="175.26" y="132.08"/>
 <instance part="+3V3_121" gate="G$1" x="55.88" y="154.94"/>
-<instance part="R151" gate="G$1" x="167.64" y="129.54"/>
 <instance part="R152" gate="G$1" x="182.88" y="127"/>
 <instance part="C141" gate="G$1" x="40.64" y="154.94"/>
 <instance part="GND141" gate="1" x="40.64" y="147.32"/>
@@ -11889,21 +11887,6 @@ Source: 008-0260-0_E.pdf</description>
 <label x="137.16" y="127" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="USB_ID" class="0">
-<segment>
-<wire x1="172.72" y1="129.54" x2="190.5" y2="129.54" width="0.1524" layer="91"/>
-<label x="190.5" y="129.54" size="1.778" layer="95" xref="yes"/>
-<pinref part="R151" gate="G$1" pin="2"/>
-</segment>
-</net>
-<net name="USB_ID_DRV" class="0">
-<segment>
-<pinref part="R151" gate="G$1" pin="1"/>
-<pinref part="U101" gate="A" pin="PD4"/>
-<wire x1="162.56" y1="129.54" x2="129.54" y2="129.54" width="0.1524" layer="91"/>
-<label x="137.16" y="129.54" size="1.778" layer="95"/>
-</segment>
-</net>
 <net name="GSM_RF_SYNC" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PA6"/>
@@ -12017,7 +12000,7 @@ Source: 008-0260-0_E.pdf</description>
 <label x="86.36" y="86.36" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="IO_AD1" class="0">
+<net name="IO_ADC4" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PA4"/>
 <wire x1="88.9" y1="129.54" x2="71.12" y2="129.54" width="0.1524" layer="91"/>
@@ -12026,7 +12009,7 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="71.12" y1="165.1" x2="95.25" y2="165.1" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="IO_AD2" class="0">
+<net name="IO_ADC5" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PA5"/>
 <wire x1="88.9" y1="127" x2="73.66" y2="127" width="0.1524" layer="91"/>
@@ -12035,18 +12018,18 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="73.66" y1="162.56" x2="95.25" y2="162.56" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="IO_D1" class="0">
+<net name="IO_OC1A" class="0">
 <segment>
-<pinref part="U101" gate="A" pin="PB1"/>
-<wire x1="88.9" y1="114.3" x2="83.82" y2="114.3" width="0.1524" layer="91"/>
-<wire x1="83.82" y1="114.3" x2="83.82" y2="147.32" width="0.1524" layer="91"/>
-<wire x1="83.82" y1="147.32" x2="119.38" y2="147.32" width="0.1524" layer="91"/>
-<wire x1="119.38" y1="147.32" x2="119.38" y2="167.64" width="0.1524" layer="91"/>
+<wire x1="119.38" y1="149.86" x2="119.38" y2="167.64" width="0.1524" layer="91"/>
 <wire x1="119.38" y1="167.64" x2="105.41" y2="167.64" width="0.1524" layer="91"/>
 <pinref part="JP181" gate="G$1" pin="2"/>
+<wire x1="119.38" y1="149.86" x2="134.62" y2="149.86" width="0.1524" layer="91"/>
+<wire x1="134.62" y1="149.86" x2="134.62" y2="129.54" width="0.1524" layer="91"/>
+<pinref part="U101" gate="A" pin="PD4"/>
+<wire x1="134.62" y1="129.54" x2="129.54" y2="129.54" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="IO_D2" class="0">
+<net name="IO_DAC0" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PB2"/>
 <wire x1="88.9" y1="111.76" x2="81.28" y2="111.76" width="0.1524" layer="91"/>
@@ -12057,7 +12040,7 @@ Source: 008-0260-0_E.pdf</description>
 <pinref part="JP181" gate="G$1" pin="4"/>
 </segment>
 </net>
-<net name="IO_D3" class="0">
+<net name="IO_DAC1" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PB3"/>
 <wire x1="88.9" y1="109.22" x2="78.74" y2="109.22" width="0.1524" layer="91"/>
@@ -12066,6 +12049,13 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="114.3" y1="152.4" x2="114.3" y2="162.56" width="0.1524" layer="91"/>
 <wire x1="114.3" y1="162.56" x2="105.41" y2="162.56" width="0.1524" layer="91"/>
 <pinref part="JP181" gate="G$1" pin="6"/>
+</segment>
+</net>
+<net name="USB_ID" class="0">
+<segment>
+<pinref part="U101" gate="A" pin="PB1"/>
+<wire x1="88.9" y1="114.3" x2="86.36" y2="114.3" width="0.1524" layer="91"/>
+<label x="86.36" y="114.3" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 </nets>
