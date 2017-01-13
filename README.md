@@ -6,11 +6,11 @@ GPS assisted tracking device with GSM (SMS & GPRS) and Bluetooth connectivity.
 * __GSM / GPS / BT: SIM808__ (SMS / DPRS / ...)
 * __VHF: AX5243__ (VHF TX/RX)
 * __Accel/Gyro/Mag: MPU-9250__ (3Axis-Acceleration, 3Axis-Gyro, 3Axis-Magneto)
-* __Baro/Temp: MS560702BA03-50__ (0.2 meter height resolution, better than 0.01° resolution)
-* __Hygro: SHT31-DIS__ (hygromter within the air stream of the board
-* __VCTCXO: CFPT-141_20MHz__ (pulled to be synchron with GPS 1PPS)
-* __GSM antenna: on PCB__
-* __BT antenna: on PCB__
+* __Baro/Temp: MS560702BA03-50__ (0.2 meter height resolution, better than 0.01°C resolution)
+* __Hygro: SHT31-DIS__ (hygromter within the air stream of the board)
+* __VCTCXO: CFPT-141_20MHz__ (being synchronized to the GPS 1PPS by pulling VC)
+* __GSM antenna: within the PCB__
+* __BT antenna: within the PCB__
 * __GPS antenna: external active antenna__ via MCX connector
 * __VHF antenna: external passive antenna__ via SMA connector
 
