@@ -3,7 +3,7 @@ GPS assisted tracking device with GSM (SMS & GPRS) and Bluetooth connectivity.
 
 ## List of devices
 * __CPU: Atmel ATxmega256A3BU__ (256kB Flash / 16kB RAM / 4kB EEPROM)
-* __GSM / GPS / BT: SIM808__ (SMS / DPRS / ...)
+* __GSM / GPS / BT: SIM808__ (SMS / GPRS / ...)
 * __VHF: AX5243__ (VHF TX/RX)
 * __Accel/Gyro/Mag: MPU-9250__ (3Axis-Acceleration, 3Axis-Gyro, 3Axis-Magneto)
 * __Baro/Temp: MS560702BA03-50__ (0.2 meter height resolution, better than 0.01°C resolution)
