@@ -8859,9 +8859,7 @@ NC pin 19. 2-6 &amp; 14-17 not internally connected. May be used for PCB trace r
 <connect gate="G$1" pin="VDDIO" pad="1 8"/>
 </connects>
 <technologies>
-<technology name="">
-<attribute name="PROD_ID" value="IC-13192"/>
-</technology>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
@@ -11298,8 +11296,8 @@ Source: 008-0260-0_E.pdf</description>
 <part name="R1132" library="rcl" deviceset="R-EU_" device="R0603" value="6.04kR"/>
 <part name="R1131" library="rcl" deviceset="R-EU_" device="R0603" value="4.02kR"/>
 <part name="GND1131" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R211" library="rcl" deviceset="R-EU_" device="R0603" value="3.3kR"/>
-<part name="R212" library="rcl" deviceset="R-EU_" device="R0603" value="3.3kR"/>
+<part name="R211" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
+<part name="R212" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="+3V3_211" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="R172" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
 <part name="R224" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
@@ -11382,6 +11380,9 @@ Source: 008-0260-0_E.pdf</description>
 <part name="JP181" library="df4iah_connector" deviceset="HEADER-2X3" device="" value=""/>
 <part name="GND181" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="U401" library="df4iah_sensors" deviceset="MS5607-02BA" device="" technology="03"/>
+<part name="R402" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
+<part name="R401" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
+<part name="+3V3_1" library="df4iah_supply" deviceset="+3V3" device=""/>
 </parts>
 <sheets>
 <sheet>
@@ -12785,6 +12786,9 @@ Source: 008-0260-0_E.pdf</description>
 <instance part="+3V3_401" gate="G$1" x="83.82" y="111.76" rot="MR0"/>
 <instance part="C401" gate="G$1" x="83.82" y="96.52" rot="MR0"/>
 <instance part="U401" gate="G$1" x="132.08" y="93.98"/>
+<instance part="R402" gate="G$1" x="167.64" y="116.84" rot="R90"/>
+<instance part="R401" gate="G$1" x="157.48" y="116.84" rot="R90"/>
+<instance part="+3V3_1" gate="G$1" x="167.64" y="142.24"/>
 </instances>
 <busses>
 </busses>
@@ -12818,19 +12822,37 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="109.22" y1="86.36" x2="114.3" y2="86.36" width="0.1524" layer="91"/>
 <junction x="109.22" y="96.52"/>
 </segment>
+<segment>
+<pinref part="+3V3_1" gate="G$1" pin="+3V3"/>
+<wire x1="167.64" y1="139.7" x2="167.64" y2="129.54" width="0.1524" layer="91"/>
+<wire x1="167.64" y1="129.54" x2="157.48" y2="129.54" width="0.1524" layer="91"/>
+<junction x="167.64" y="129.54"/>
+<pinref part="R401" gate="G$1" pin="2"/>
+<wire x1="157.48" y1="129.54" x2="157.48" y2="121.92" width="0.1524" layer="91"/>
+<pinref part="R402" gate="G$1" pin="2"/>
+<wire x1="167.64" y1="129.54" x2="167.64" y2="121.92" width="0.1524" layer="91"/>
+</segment>
 </net>
 <net name="SDA1" class="0">
 <segment>
-<wire x1="149.86" y1="96.52" x2="175.26" y2="96.52" width="0.1524" layer="91"/>
+<wire x1="149.86" y1="96.52" x2="167.64" y2="96.52" width="0.1524" layer="91"/>
 <label x="175.26" y="96.52" size="1.778" layer="95" xref="yes"/>
 <pinref part="U401" gate="G$1" pin="SDI_SDA"/>
+<wire x1="167.64" y1="96.52" x2="175.26" y2="96.52" width="0.1524" layer="91"/>
+<junction x="167.64" y="96.52"/>
+<pinref part="R402" gate="G$1" pin="1"/>
+<wire x1="167.64" y1="96.52" x2="167.64" y2="111.76" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="SCL1" class="0">
 <segment>
-<wire x1="149.86" y1="101.6" x2="175.26" y2="101.6" width="0.1524" layer="91"/>
+<wire x1="149.86" y1="101.6" x2="157.48" y2="101.6" width="0.1524" layer="91"/>
 <label x="175.26" y="101.6" size="1.778" layer="95" xref="yes"/>
 <pinref part="U401" gate="G$1" pin="SCL_SCLK"/>
+<wire x1="157.48" y1="101.6" x2="175.26" y2="101.6" width="0.1524" layer="91"/>
+<junction x="157.48" y="101.6"/>
+<pinref part="R401" gate="G$1" pin="1"/>
+<wire x1="157.48" y1="101.6" x2="157.48" y2="111.76" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
