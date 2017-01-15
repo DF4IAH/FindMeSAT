@@ -8718,7 +8718,7 @@ body 2.5x2.5mm, pitch 0.5mm</description>
 <smd name="1" x="-1.1" y="1.875" dx="1.1" dy="0.6" layer="1" roundness="20" thermals="no"/>
 <smd name="2" x="-1.1" y="0.625" dx="1.1" dy="0.6" layer="1" roundness="20" thermals="no"/>
 <smd name="3" x="-1.1" y="-0.625" dx="1.1" dy="0.6" layer="1" roundness="20" thermals="no"/>
-<smd name="6" x="1.1" y="-0.625" dx="1.1" dy="0.67" layer="1" roundness="19" rot="R180" thermals="no"/>
+<smd name="6" x="1.1" y="-0.625" dx="1.1" dy="0.67" layer="1" roundness="20" rot="R180" thermals="no"/>
 <smd name="7" x="1.1" y="0.625" dx="1.1" dy="0.6" layer="1" roundness="20" rot="R180" thermals="no"/>
 <smd name="8" x="1.1" y="1.875" dx="1.1" dy="0.6" layer="1" roundness="20" rot="R180" thermals="no"/>
 <wire x1="-1.675" y1="-2.275" x2="1.675" y2="-2.275" width="0.127" layer="51"/>
@@ -8737,7 +8737,7 @@ body 2.5x2.5mm, pitch 0.5mm</description>
 <wire x1="-1.875" y1="-1.665" x2="-1.875" y2="-2.5" width="0.127" layer="21"/>
 <wire x1="1.875" y1="-2.5" x2="1.875" y2="-1.665" width="0.127" layer="21"/>
 <smd name="4" x="-1.1" y="-1.875" dx="1.1" dy="0.6" layer="1" roundness="20" thermals="no"/>
-<smd name="5" x="1.1" y="-1.875" dx="1.1" dy="0.6" layer="1" roundness="19" rot="R180" thermals="no"/>
+<smd name="5" x="1.1" y="-1.875" dx="1.1" dy="0.6" layer="1" roundness="20" rot="R180" thermals="no"/>
 <rectangle x1="-1.65" y1="-1.875" x2="1.65" y2="1.875" layer="39"/>
 <circle x="0.65" y="1.65" radius="0.25" width="0" layer="51"/>
 <circle x="-0.65" y="-1.65" radius="0.25" width="0" layer="51"/>
@@ -11160,10 +11160,16 @@ Source: 008-0260-0_E.pdf</description>
 <class number="2" name="R50" width="0.64" drill="0">
 <clearance class="2" value="0.55"/>
 </class>
-<class number="3" name="R90" width="0.225" drill="0">
+<class number="3" name="R90_USB" width="0.35" drill="0">
 <clearance class="3" value="0.15"/>
 </class>
 <class number="4" name="pwrA5" width="0.4" drill="0">
+</class>
+<class number="5" name="R75" width="0.3" drill="0">
+<clearance class="5" value="0.2"/>
+</class>
+<class number="6" name="R110_SPI" width="0.225" drill="0">
+<clearance class="6" value="0.15"/>
 </class>
 </classes>
 <parts>
@@ -11184,7 +11190,7 @@ Source: 008-0260-0_E.pdf</description>
 <part name="D1111" library="df4iah_diode" deviceset="CRS08" device=""/>
 <part name="GND1114" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="L1111" library="rcl" deviceset="L-EU" device="L5650M" value="4.7uH"/>
-<part name="C1112" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="C1112" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="C1113" library="rcl" deviceset="C-EU" device="C0805" value="47uF"/>
 <part name="GND1115" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V3_1111" library="df4iah_supply" deviceset="+3V3" device=""/>
@@ -11200,10 +11206,10 @@ Source: 008-0260-0_E.pdf</description>
 <part name="GND1201" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND1203" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND701" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="RPOLY711" library="rcl" deviceset="R-EU_" device="M1206" value="1A0"/>
+<part name="RPOLY711" library="rcl" deviceset="R-EU_" device="M1206" value="0.5A/1.0A"/>
 <part name="R722" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R723" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
-<part name="C711" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="C711" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="C712" library="rcl" deviceset="C-EU" device="C0805" value="47uF"/>
 <part name="GND711" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+5V0_711" library="df4iah_supply" deviceset="+5V" device=""/>
@@ -11218,13 +11224,13 @@ Source: 008-0260-0_E.pdf</description>
 <part name="U101" library="df4iah_processors" deviceset="ATXMEGA256A3BU-AU" device=""/>
 <part name="GND1092" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V3_1091" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="L1091" library="rcl" deviceset="L-EU" device="L5650M" value="10uH"/>
-<part name="C1091" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
-<part name="C1093" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
-<part name="C1095" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
-<part name="C1092" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
-<part name="C1094" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
-<part name="C1096" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="L191" library="rcl" deviceset="L-EU" device="L5650M" value="10uH"/>
+<part name="C191" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
+<part name="C193" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
+<part name="C195" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
+<part name="C192" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
+<part name="C194" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
+<part name="C196" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="GND1091" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="C101" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="GND101" library="df4iah_supply" deviceset="GND" device=""/>
@@ -11232,12 +11238,12 @@ Source: 008-0260-0_E.pdf</description>
 <part name="FRAME9" library="df4iah_frame" deviceset="A4L-LOC" device="" value="VCTCXO"/>
 <part name="U1001" library="df4iah_osc" deviceset="CFPT-141" device="" technology="-20MHZ" value="CFPT-141-20MHZ"/>
 <part name="GND1002" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C1002" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="C1002" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="+3V0_1001" library="df4iah_supply" deviceset="+3V0" device=""/>
 <part name="C1001" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="R1001" library="rcl" deviceset="R-EU_" device="R0603" value="100kR"/>
 <part name="GND1001" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R1013" library="rcl" deviceset="R-EU_" device="R0603" value="10R"/>
+<part name="R1013" library="rcl" deviceset="R-EU_" device="R0603" value="47R"/>
 <part name="VBAT_1121" library="df4iah_supply" deviceset="VBAT" device=""/>
 <part name="+3V0_1121" library="df4iah_supply" deviceset="+3V0" device=""/>
 <part name="GND1116" library="df4iah_supply" deviceset="GND" device=""/>
@@ -11245,7 +11251,7 @@ Source: 008-0260-0_E.pdf</description>
 <part name="Q101" library="df4iah_crystal" deviceset="ABS07-32.768KHZ" device=""/>
 <part name="U1011" library="df4iah_opamp" deviceset="OPA354" device=""/>
 <part name="GND1012" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C1012" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="C1012" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="+3V3_1011" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="R1012" library="rcl" deviceset="R-EU_" device="R0603" value="470kR"/>
 <part name="R1011" library="rcl" deviceset="R-EU_" device="R0603" value="100kR"/>
@@ -11254,12 +11260,12 @@ Source: 008-0260-0_E.pdf</description>
 <part name="D1121" library="df4iah_diode" deviceset="CRS08" device=""/>
 <part name="U1121" library="df4iah_powersupply" deviceset="LM4120IM5-3.0" device=""/>
 <part name="GND1121" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C1121" library="rcl" deviceset="C-EU" device="C0805" value="100nF"/>
+<part name="C1121" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="GND901" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="VBAT_901" library="df4iah_supply" deviceset="VBAT" device=""/>
-<part name="RPOLY901" library="rcl" deviceset="R-EU_" device="M1206" value="2.2A"/>
-<part name="R131" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R132" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="RPOLY901" library="rcl" deviceset="R-EU_" device="M1206" value="1.1A/2.2A"/>
+<part name="R131" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R132" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R112" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="JP131" library="df4iah_connector" deviceset="HEADER-2X3" device="" value=""/>
 <part name="GND131" library="df4iah_supply" deviceset="GND" device=""/>
@@ -11299,13 +11305,13 @@ Source: 008-0260-0_E.pdf</description>
 <part name="R211" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="R212" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="+3V3_211" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R172" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R224" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R223" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R221" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R173" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R171" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R222" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R172" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R224" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R223" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R221" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R173" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R171" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R222" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R271" library="rcl" deviceset="R-EU_" device="R0603"/>
 <part name="R281" library="rcl" deviceset="R-EU_" device="R0603"/>
 <part name="R291" library="rcl" deviceset="R-EU_" device="R0603"/>
@@ -11321,25 +11327,25 @@ Source: 008-0260-0_E.pdf</description>
 <part name="GND282" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND271" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND272" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="RPOLY291" library="rcl" deviceset="R-EU_" device="M1206" value="0A150"/>
+<part name="RPOLY291" library="rcl" deviceset="R-EU_" device="M1206" value="50mA/150mA"/>
 <part name="+3V3_291" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="L291" library="rcl" deviceset="L-EU" device="L3216C" value="WE-CBF_300R"/>
 <part name="+3V0_231" library="df4iah_supply" deviceset="+3V0" device=""/>
 <part name="C251" library="rcl" deviceset="C-EU" device="C0603" value="100pF"/>
 <part name="GND231" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R163" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R162" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R163" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R162" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R161" library="rcl" deviceset="R-EU_" device="R0603" value="4.7kR"/>
-<part name="R231" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R232" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R233" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R234" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R241" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R141" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R142" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R231" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R232" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R233" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R234" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R241" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R141" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R142" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="+3V3_121" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R251" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
-<part name="R152" library="rcl" deviceset="R-EU_" device="R0603" value="27R"/>
+<part name="R251" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R151" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="C141" library="rcl" deviceset="C-EU" device="C0603" value="100pF"/>
 <part name="GND141" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="JP121" library="df4iah_connector" deviceset="HEADER-2X3" device="" value=""/>
@@ -11383,6 +11389,7 @@ Source: 008-0260-0_E.pdf</description>
 <part name="R402" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="R401" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="+3V3_1" library="df4iah_supply" deviceset="+3V3" device=""/>
+<part name="R301" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 </parts>
 <sheets>
 <sheet>
@@ -11438,7 +11445,7 @@ Source: 008-0260-0_E.pdf</description>
 <instance part="R141" gate="G$1" x="182.88" y="137.16"/>
 <instance part="R142" gate="G$1" x="175.26" y="132.08"/>
 <instance part="+3V3_121" gate="G$1" x="55.88" y="154.94"/>
-<instance part="R152" gate="G$1" x="182.88" y="127"/>
+<instance part="R151" gate="G$1" x="182.88" y="127"/>
 <instance part="C141" gate="G$1" x="40.64" y="154.94"/>
 <instance part="GND141" gate="1" x="40.64" y="147.32"/>
 <instance part="JP121" gate="G$1" x="43.18" y="78.74"/>
@@ -11630,29 +11637,29 @@ Source: 008-0260-0_E.pdf</description>
 </net>
 <net name="AD_3V0" class="0">
 <segment>
-<wire x1="88.9" y1="139.7" x2="86.36" y2="139.7" width="0.1524" layer="91"/>
-<label x="86.36" y="139.7" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="88.9" y1="139.7" x2="83.82" y2="139.7" width="0.1524" layer="91"/>
+<label x="83.82" y="139.7" size="1.778" layer="95" rot="R180" xref="yes"/>
 <pinref part="U101" gate="A" pin="PA0"/>
 </segment>
 </net>
 <net name="AD_5V0" class="0">
 <segment>
-<wire x1="88.9" y1="134.62" x2="86.36" y2="134.62" width="0.1524" layer="91"/>
-<label x="86.36" y="134.62" size="1.778" layer="97" rot="R180" xref="yes"/>
+<wire x1="88.9" y1="134.62" x2="83.82" y2="134.62" width="0.1524" layer="91"/>
+<label x="83.82" y="134.62" size="1.778" layer="97" rot="R180" xref="yes"/>
 <pinref part="U101" gate="A" pin="PA2"/>
 </segment>
 </net>
 <net name="AD_VBAT" class="0">
 <segment>
-<wire x1="88.9" y1="132.08" x2="86.36" y2="132.08" width="0.1524" layer="91"/>
-<label x="86.36" y="132.08" size="1.778" layer="97" rot="R180" xref="yes"/>
+<wire x1="88.9" y1="132.08" x2="83.82" y2="132.08" width="0.1524" layer="91"/>
+<label x="83.82" y="132.08" size="1.778" layer="97" rot="R180" xref="yes"/>
 <pinref part="U101" gate="A" pin="PA3"/>
 </segment>
 </net>
 <net name="AD_VCTCXO" class="0">
 <segment>
-<label x="86.36" y="137.16" size="1.778" layer="97" rot="R180" xref="yes"/>
-<wire x1="88.9" y1="137.16" x2="86.36" y2="137.16" width="0.1524" layer="91"/>
+<label x="83.82" y="137.16" size="1.778" layer="97" rot="R180" xref="yes"/>
+<wire x1="88.9" y1="137.16" x2="83.82" y2="137.16" width="0.1524" layer="91"/>
 <pinref part="U101" gate="A" pin="PA1"/>
 </segment>
 </net>
@@ -11877,14 +11884,14 @@ Source: 008-0260-0_E.pdf</description>
 <segment>
 <wire x1="187.96" y1="127" x2="190.5" y2="127" width="0.1524" layer="91"/>
 <label x="190.5" y="127" size="1.778" layer="95" xref="yes"/>
-<pinref part="R152" gate="G$1" pin="2"/>
+<pinref part="R151" gate="G$1" pin="2"/>
 </segment>
 </net>
 <net name="USB_RESET_DRV" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PD5"/>
 <wire x1="129.54" y1="127" x2="177.8" y2="127" width="0.1524" layer="91"/>
-<pinref part="R152" gate="G$1" pin="1"/>
+<pinref part="R151" gate="G$1" pin="1"/>
 <label x="137.16" y="127" size="1.778" layer="95"/>
 </segment>
 </net>
@@ -11905,15 +11912,15 @@ Source: 008-0260-0_E.pdf</description>
 <net name="GSM_NETLIGHT" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PA7"/>
-<wire x1="88.9" y1="121.92" x2="86.36" y2="121.92" width="0.1524" layer="91"/>
-<label x="86.36" y="121.92" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="88.9" y1="121.92" x2="83.82" y2="121.92" width="0.1524" layer="91"/>
+<label x="83.82" y="121.92" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="XO_VC_PWM" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PC2"/>
-<wire x1="88.9" y1="88.9" x2="86.36" y2="88.9" width="0.1524" layer="91"/>
-<label x="86.36" y="88.9" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="88.9" y1="88.9" x2="83.82" y2="88.9" width="0.1524" layer="91"/>
+<label x="83.82" y="88.9" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="GSM_PCM_IN_DRV" class="0">
@@ -11962,43 +11969,43 @@ Source: 008-0260-0_E.pdf</description>
 <net name="I2C2_INT" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PB0"/>
-<wire x1="88.9" y1="116.84" x2="86.36" y2="116.84" width="0.1524" layer="91"/>
-<label x="86.36" y="116.84" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="88.9" y1="116.84" x2="83.82" y2="116.84" width="0.1524" layer="91"/>
+<label x="83.82" y="116.84" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="AX_MISO" class="0">
+<net name="AX_MISO" class="6">
 <segment>
 <pinref part="U101" gate="A" pin="PC6"/>
-<wire x1="88.9" y1="78.74" x2="86.36" y2="78.74" width="0.1524" layer="91"/>
-<label x="86.36" y="78.74" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="88.9" y1="78.74" x2="83.82" y2="78.74" width="0.1524" layer="91"/>
+<label x="83.82" y="78.74" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="AX_SEL" class="0">
+<net name="AX_SEL" class="6">
 <segment>
 <pinref part="U101" gate="A" pin="PC4"/>
-<wire x1="86.36" y1="83.82" x2="88.9" y2="83.82" width="0.1524" layer="91"/>
-<label x="86.36" y="83.82" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="83.82" y1="83.82" x2="88.9" y2="83.82" width="0.1524" layer="91"/>
+<label x="83.82" y="83.82" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="AX_CLK" class="0">
+<net name="AX_CLK" class="6">
 <segment>
 <pinref part="U101" gate="A" pin="PC7"/>
-<wire x1="86.36" y1="76.2" x2="88.9" y2="76.2" width="0.1524" layer="91"/>
-<label x="86.36" y="76.2" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="83.82" y1="76.2" x2="88.9" y2="76.2" width="0.1524" layer="91"/>
+<label x="83.82" y="76.2" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="AX_MOSI" class="0">
+<net name="AX_MOSI" class="6">
 <segment>
 <pinref part="U101" gate="A" pin="PC5"/>
-<wire x1="86.36" y1="81.28" x2="88.9" y2="81.28" width="0.1524" layer="91"/>
-<label x="86.36" y="81.28" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="83.82" y1="81.28" x2="88.9" y2="81.28" width="0.1524" layer="91"/>
+<label x="83.82" y="81.28" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
-<net name="AX_IRQ" class="0">
+<net name="AX_IRQ" class="6">
 <segment>
 <pinref part="U101" gate="A" pin="PC3"/>
-<wire x1="88.9" y1="86.36" x2="86.36" y2="86.36" width="0.1524" layer="91"/>
-<label x="86.36" y="86.36" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="88.9" y1="86.36" x2="83.82" y2="86.36" width="0.1524" layer="91"/>
+<label x="83.82" y="86.36" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 <net name="IO_ADC4" class="0">
@@ -12024,10 +12031,10 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="119.38" y1="149.86" x2="119.38" y2="167.64" width="0.1524" layer="91"/>
 <wire x1="119.38" y1="167.64" x2="105.41" y2="167.64" width="0.1524" layer="91"/>
 <pinref part="JP181" gate="G$1" pin="2"/>
-<wire x1="119.38" y1="149.86" x2="134.62" y2="149.86" width="0.1524" layer="91"/>
-<wire x1="134.62" y1="149.86" x2="134.62" y2="129.54" width="0.1524" layer="91"/>
+<wire x1="119.38" y1="149.86" x2="132.08" y2="149.86" width="0.1524" layer="91"/>
+<wire x1="132.08" y1="149.86" x2="132.08" y2="129.54" width="0.1524" layer="91"/>
 <pinref part="U101" gate="A" pin="PD4"/>
-<wire x1="134.62" y1="129.54" x2="129.54" y2="129.54" width="0.1524" layer="91"/>
+<wire x1="132.08" y1="129.54" x2="129.54" y2="129.54" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="IO_DAC0" class="0">
@@ -12054,9 +12061,13 @@ Source: 008-0260-0_E.pdf</description>
 </net>
 <net name="USB_ID" class="0">
 <segment>
+<label x="190.5" y="119.38" size="1.778" layer="95" xref="yes"/>
+<wire x1="190.5" y1="119.38" x2="134.62" y2="119.38" width="0.1524" layer="91"/>
+<wire x1="134.62" y1="119.38" x2="134.62" y2="147.32" width="0.1524" layer="91"/>
+<wire x1="134.62" y1="147.32" x2="86.36" y2="147.32" width="0.1524" layer="91"/>
+<wire x1="86.36" y1="147.32" x2="86.36" y2="114.3" width="0.1524" layer="91"/>
 <pinref part="U101" gate="A" pin="PB1"/>
-<wire x1="88.9" y1="114.3" x2="86.36" y2="114.3" width="0.1524" layer="91"/>
-<label x="86.36" y="114.3" size="1.778" layer="95" rot="R180" xref="yes"/>
+<wire x1="86.36" y1="114.3" x2="88.9" y2="114.3" width="0.1524" layer="91"/>
 </segment>
 </net>
 </nets>
@@ -12064,11 +12075,14 @@ Source: 008-0260-0_E.pdf</description>
 <sheet>
 <description>GSM_GPS_BT</description>
 <plain>
+<text x="35.814" y="39.624" size="1.778" layer="97" rot="R90">LITTLEFUSE
+1206L005WR</text>
+<text x="7.62" y="18.034" size="1.778" layer="97" rot="R90">GPS active antenna</text>
 </plain>
 <instances>
 <instance part="FRAME2" gate="G$1" x="0" y="0"/>
 <instance part="J291" gate="G$1" x="25.4" y="20.32" smashed="yes">
-<attribute name="VALUE" x="5.08" y="12.7" size="1.778" layer="96"/>
+<attribute name="VALUE" x="11.684" y="18.034" size="1.778" layer="96" rot="R90"/>
 <attribute name="NAME" x="20.32" y="26.162" size="1.778" layer="95"/>
 </instance>
 <instance part="GND291" gate="1" x="33.02" y="10.16"/>
@@ -12689,6 +12703,7 @@ Source: 008-0260-0_E.pdf</description>
 <instance part="+3V3_311" gate="G$1" x="81.28" y="121.92"/>
 <instance part="C301" gate="G$1" x="81.28" y="91.44"/>
 <instance part="C302" gate="G$1" x="96.52" y="88.9"/>
+<instance part="R301" gate="G$1" x="111.76" y="60.96"/>
 </instances>
 <busses>
 </busses>
@@ -12741,15 +12756,6 @@ Source: 008-0260-0_E.pdf</description>
 <junction x="81.28" y="109.22"/>
 </segment>
 </net>
-<net name="I2C2_INT" class="0">
-<segment>
-<pinref part="U301" gate="G$1" pin="INT"/>
-<wire x1="111.76" y1="96.52" x2="91.44" y2="96.52" width="0.1524" layer="91"/>
-<wire x1="91.44" y1="96.52" x2="91.44" y2="60.96" width="0.1524" layer="91"/>
-<wire x1="91.44" y1="60.96" x2="200.66" y2="60.96" width="0.1524" layer="91"/>
-<label x="200.66" y="60.96" size="1.778" layer="95" xref="yes"/>
-</segment>
-</net>
 <net name="GAM_RO" class="0">
 <segment>
 <pinref part="U301" gate="G$1" pin="REGOUT"/>
@@ -12769,6 +12775,23 @@ Source: 008-0260-0_E.pdf</description>
 <pinref part="U301" gate="G$1" pin="SDA/SDI"/>
 <wire x1="147.32" y1="91.44" x2="200.66" y2="91.44" width="0.1524" layer="91"/>
 <label x="200.66" y="91.44" size="1.778" layer="95" xref="yes"/>
+</segment>
+</net>
+<net name="I2C2_INT" class="0">
+<segment>
+<label x="200.66" y="60.96" size="1.778" layer="95" xref="yes"/>
+<pinref part="R301" gate="G$1" pin="2"/>
+<wire x1="116.84" y1="60.96" x2="200.66" y2="60.96" width="0.1524" layer="91"/>
+</segment>
+</net>
+<net name="MPU_INT" class="0">
+<segment>
+<pinref part="U301" gate="G$1" pin="INT"/>
+<wire x1="111.76" y1="96.52" x2="91.44" y2="96.52" width="0.1524" layer="91"/>
+<wire x1="91.44" y1="96.52" x2="91.44" y2="60.96" width="0.1524" layer="91"/>
+<wire x1="91.44" y1="60.96" x2="106.68" y2="60.96" width="0.1524" layer="91"/>
+<pinref part="R301" gate="G$1" pin="1"/>
+<label x="93.98" y="60.96" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
@@ -12896,6 +12919,10 @@ Source: 008-0260-0_E.pdf</description>
 <junction x="142.24" y="99.06"/>
 <junction x="182.88" y="111.76"/>
 <junction x="124.46" y="111.76"/>
+<wire x1="142.24" y1="93.98" x2="142.24" y2="88.9" width="0.1524" layer="91"/>
+<pinref part="U501" gate="G$1" pin="!RESET"/>
+<wire x1="142.24" y1="88.9" x2="137.16" y2="88.9" width="0.1524" layer="91"/>
+<junction x="142.24" y="93.98"/>
 </segment>
 </net>
 <net name="+3V3" class="0">
@@ -13035,7 +13062,7 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="226.06" y1="66.04" x2="226.06" y2="76.2" width="0.1524" layer="91"/>
 </segment>
 </net>
-<net name="AX_SEL" class="0">
+<net name="AX_SEL" class="6">
 <segment>
 <pinref part="U601" gate="A" pin="SEL"/>
 <wire x1="71.12" y1="109.22" x2="30.48" y2="109.22" width="0.1524" layer="91"/>
@@ -13043,7 +13070,7 @@ Source: 008-0260-0_E.pdf</description>
 <label x="58.42" y="109.22" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="AX_CLK" class="0">
+<net name="AX_CLK" class="6">
 <segment>
 <pinref part="U601" gate="A" pin="CLK"/>
 <wire x1="71.12" y1="104.14" x2="30.48" y2="104.14" width="0.1524" layer="91"/>
@@ -13051,7 +13078,7 @@ Source: 008-0260-0_E.pdf</description>
 <label x="58.42" y="104.14" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="AX_MOSI" class="0">
+<net name="AX_MOSI" class="6">
 <segment>
 <pinref part="U601" gate="A" pin="MOSI"/>
 <wire x1="71.12" y1="93.98" x2="30.48" y2="93.98" width="0.1524" layer="91"/>
@@ -13059,7 +13086,7 @@ Source: 008-0260-0_E.pdf</description>
 <label x="58.42" y="93.98" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="AX_MISO" class="0">
+<net name="AX_MISO" class="6">
 <segment>
 <pinref part="U601" gate="A" pin="MISO"/>
 <wire x1="71.12" y1="99.06" x2="30.48" y2="99.06" width="0.1524" layer="91"/>
@@ -13100,7 +13127,7 @@ Source: 008-0260-0_E.pdf</description>
 <label x="121.92" y="99.06" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="AX_IRQ" class="0">
+<net name="AX_IRQ" class="6">
 <segment>
 <pinref part="U601" gate="A" pin="IRQ"/>
 <wire x1="71.12" y1="83.82" x2="30.48" y2="83.82" width="0.1524" layer="91"/>
@@ -13175,6 +13202,8 @@ Source: 008-0260-0_E.pdf</description>
 <sheet>
 <description>USB</description>
 <plain>
+<text x="112.776" y="149.098" size="1.778" layer="97">LITTLEFUSE
+1206L050YR</text>
 </plain>
 <instances>
 <instance part="FRAME7" gate="G$1" x="0" y="0"/>
@@ -13445,7 +13474,7 @@ Source: 008-0260-0_E.pdf</description>
 <sheet>
 <description>BatteryConnector</description>
 <plain>
-<text x="121.92" y="104.14" size="1.778" layer="97">LITTLEFUSE
+<text x="125.984" y="101.092" size="1.778" layer="97">LITTLEFUSE
 1206L110THYR</text>
 </plain>
 <instances>
@@ -13753,13 +13782,13 @@ Source: 008-0260-0_E.pdf</description>
 </instance>
 <instance part="GND1092" gate="1" x="127" y="25.4"/>
 <instance part="+3V3_1091" gate="G$1" x="25.4" y="81.28"/>
-<instance part="L1091" gate="G$1" x="33.02" y="50.8" rot="R270"/>
-<instance part="C1091" gate="G$1" x="45.72" y="43.18"/>
-<instance part="C1093" gate="G$1" x="55.88" y="43.18"/>
-<instance part="C1095" gate="G$1" x="66.04" y="43.18"/>
-<instance part="C1092" gate="G$1" x="50.8" y="33.02"/>
-<instance part="C1094" gate="G$1" x="60.96" y="33.02"/>
-<instance part="C1096" gate="G$1" x="71.12" y="33.02"/>
+<instance part="L191" gate="G$1" x="33.02" y="50.8" rot="R270"/>
+<instance part="C191" gate="G$1" x="45.72" y="43.18"/>
+<instance part="C193" gate="G$1" x="55.88" y="43.18"/>
+<instance part="C195" gate="G$1" x="66.04" y="43.18"/>
+<instance part="C192" gate="G$1" x="50.8" y="33.02"/>
+<instance part="C194" gate="G$1" x="60.96" y="33.02"/>
+<instance part="C196" gate="G$1" x="71.12" y="33.02"/>
 <instance part="GND1091" gate="1" x="25.4" y="25.4"/>
 <instance part="VBAT_1121" gate="G$2" x="170.18" y="91.44"/>
 <instance part="+3V0_1121" gate="G$2" x="231.14" y="58.42" rot="R270"/>
@@ -13841,20 +13870,20 @@ Source: 008-0260-0_E.pdf</description>
 </segment>
 <segment>
 <pinref part="GND1091" gate="1" pin="GND"/>
-<pinref part="C1092" gate="G$1" pin="2"/>
+<pinref part="C192" gate="G$1" pin="2"/>
 <wire x1="25.4" y1="27.94" x2="45.72" y2="27.94" width="0.1524" layer="91"/>
-<pinref part="C1094" gate="G$1" pin="2"/>
+<pinref part="C194" gate="G$1" pin="2"/>
 <wire x1="45.72" y1="27.94" x2="50.8" y2="27.94" width="0.1524" layer="91"/>
 <wire x1="50.8" y1="27.94" x2="55.88" y2="27.94" width="0.1524" layer="91"/>
-<pinref part="C1096" gate="G$1" pin="2"/>
+<pinref part="C196" gate="G$1" pin="2"/>
 <wire x1="55.88" y1="27.94" x2="60.96" y2="27.94" width="0.1524" layer="91"/>
 <wire x1="60.96" y1="27.94" x2="66.04" y2="27.94" width="0.1524" layer="91"/>
-<pinref part="C1091" gate="G$1" pin="2"/>
+<pinref part="C191" gate="G$1" pin="2"/>
 <wire x1="66.04" y1="27.94" x2="71.12" y2="27.94" width="0.1524" layer="91"/>
 <wire x1="45.72" y1="27.94" x2="45.72" y2="38.1" width="0.1524" layer="91"/>
-<pinref part="C1093" gate="G$1" pin="2"/>
+<pinref part="C193" gate="G$1" pin="2"/>
 <wire x1="55.88" y1="27.94" x2="55.88" y2="38.1" width="0.1524" layer="91"/>
-<pinref part="C1095" gate="G$1" pin="2"/>
+<pinref part="C195" gate="G$1" pin="2"/>
 <wire x1="66.04" y1="27.94" x2="66.04" y2="38.1" width="0.1524" layer="91"/>
 <junction x="45.72" y="27.94"/>
 <junction x="50.8" y="27.94"/>
@@ -13984,7 +14013,7 @@ Source: 008-0260-0_E.pdf</description>
 <pinref part="U101" gate="B" pin="VCC_5"/>
 <wire x1="60.96" y1="58.42" x2="73.66" y2="58.42" width="0.1524" layer="91"/>
 <wire x1="25.4" y1="55.88" x2="66.04" y2="55.88" width="0.1524" layer="91"/>
-<pinref part="L1091" gate="G$1" pin="2"/>
+<pinref part="L191" gate="G$1" pin="2"/>
 <wire x1="66.04" y1="55.88" x2="73.66" y2="55.88" width="0.1524" layer="91"/>
 <wire x1="27.94" y1="50.8" x2="25.4" y2="50.8" width="0.1524" layer="91"/>
 <junction x="25.4" y="66.04"/>
@@ -13992,15 +14021,15 @@ Source: 008-0260-0_E.pdf</description>
 <junction x="25.4" y="60.96"/>
 <junction x="25.4" y="58.42"/>
 <junction x="25.4" y="55.88"/>
-<pinref part="C1091" gate="G$1" pin="1"/>
+<pinref part="C191" gate="G$1" pin="1"/>
 <wire x1="45.72" y1="45.72" x2="45.72" y2="66.04" width="0.1524" layer="91"/>
-<pinref part="C1092" gate="G$1" pin="1"/>
+<pinref part="C192" gate="G$1" pin="1"/>
 <wire x1="50.8" y1="35.56" x2="50.8" y2="63.5" width="0.1524" layer="91"/>
-<pinref part="C1093" gate="G$1" pin="1"/>
+<pinref part="C193" gate="G$1" pin="1"/>
 <wire x1="55.88" y1="45.72" x2="55.88" y2="60.96" width="0.1524" layer="91"/>
-<pinref part="C1094" gate="G$1" pin="1"/>
+<pinref part="C194" gate="G$1" pin="1"/>
 <wire x1="60.96" y1="35.56" x2="60.96" y2="58.42" width="0.1524" layer="91"/>
-<pinref part="C1095" gate="G$1" pin="1"/>
+<pinref part="C195" gate="G$1" pin="1"/>
 <wire x1="66.04" y1="45.72" x2="66.04" y2="55.88" width="0.1524" layer="91"/>
 <junction x="45.72" y="66.04"/>
 <junction x="50.8" y="63.5"/>
@@ -14025,10 +14054,10 @@ Source: 008-0260-0_E.pdf</description>
 </net>
 <net name="AVCC" class="0">
 <segment>
-<pinref part="L1091" gate="G$1" pin="1"/>
+<pinref part="L191" gate="G$1" pin="1"/>
 <pinref part="U101" gate="B" pin="AVCC"/>
 <wire x1="38.1" y1="50.8" x2="71.12" y2="50.8" width="0.1524" layer="91"/>
-<pinref part="C1096" gate="G$1" pin="1"/>
+<pinref part="C196" gate="G$1" pin="1"/>
 <wire x1="71.12" y1="50.8" x2="73.66" y2="50.8" width="0.1524" layer="91"/>
 <wire x1="71.12" y1="35.56" x2="71.12" y2="50.8" width="0.1524" layer="91"/>
 <junction x="71.12" y="50.8"/>
