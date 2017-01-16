@@ -11327,7 +11327,7 @@ Source: 008-0260-0_E.pdf</description>
 <part name="GND282" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND271" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND272" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="RPOLY291" library="rcl" deviceset="R-EU_" device="M1206" value="50mA/150mA"/>
+<part name="RPOLY291" library="rcl" deviceset="R-EU_" device="R1210" value="50mA/150mA"/>
 <part name="+3V3_291" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="L291" library="rcl" deviceset="L-EU" device="L3216C" value="WE-CBF_300R"/>
 <part name="+3V0_231" library="df4iah_supply" deviceset="+3V0" device=""/>
@@ -13482,9 +13482,9 @@ Source: 008-0260-0_E.pdf</description>
 <instance part="GND901" gate="1" x="96.52" y="78.74"/>
 <instance part="VBAT_901" gate="G$2" x="187.96" y="93.98" rot="R270"/>
 <instance part="RPOLY901" gate="G$1" x="129.54" y="93.98"/>
-<instance part="J901" gate="A" x="81.28" y="91.44" smashed="yes" rot="R180">
-<attribute name="NAME" x="77.47" y="97.282" size="1.778" layer="95" ratio="10"/>
-<attribute name="VALUE" x="70.358" y="83.566" size="1.778" layer="96" ratio="10"/>
+<instance part="J901" gate="A" x="81.28" y="91.44" smashed="yes" rot="MR0">
+<attribute name="NAME" x="77.47" y="98.298" size="1.778" layer="95" ratio="10" rot="MR180"/>
+<attribute name="VALUE" x="70.358" y="84.074" size="1.778" layer="96" ratio="10" rot="MR180"/>
 </instance>
 <instance part="C901" gate="G$1" x="167.64" y="88.9"/>
 <instance part="GND902" gate="1" x="167.64" y="78.74"/>
@@ -13496,8 +13496,8 @@ Source: 008-0260-0_E.pdf</description>
 <segment>
 <pinref part="GND901" gate="1" pin="GND"/>
 <wire x1="96.52" y1="81.28" x2="96.52" y2="88.9" width="0.1524" layer="91"/>
+<pinref part="J901" gate="A" pin="3"/>
 <wire x1="96.52" y1="88.9" x2="83.82" y2="88.9" width="0.1524" layer="91"/>
-<pinref part="J901" gate="A" pin="1"/>
 </segment>
 <segment>
 <pinref part="GND902" gate="1" pin="GND"/>
@@ -13518,12 +13518,11 @@ Source: 008-0260-0_E.pdf</description>
 <label x="180.34" y="93.98" size="1.778" layer="95" rot="R90" xref="yes"/>
 </segment>
 </net>
-<net name="BATTERY" class="1">
+<net name="BATTERY" class="0">
 <segment>
 <pinref part="RPOLY901" gate="G$1" pin="1"/>
+<pinref part="J901" gate="A" pin="1"/>
 <wire x1="124.46" y1="93.98" x2="83.82" y2="93.98" width="0.1524" layer="91"/>
-<label x="97.536" y="94.996" size="1.778" layer="95"/>
-<pinref part="J901" gate="A" pin="3"/>
 </segment>
 </net>
 </nets>

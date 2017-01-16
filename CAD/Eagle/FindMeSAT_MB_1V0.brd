@@ -28,8 +28,8 @@
 <layer number="28" name="bValues" color="5" fill="1" visible="no" active="yes"/>
 <layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
 <layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
-<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
-<layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="32" name="bCream" color="7" fill="5" visible="yes" active="yes"/>
 <layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
 <layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
@@ -208,8 +208,8 @@
 <text x="29.845" y="47.879" size="1.016" layer="21" ratio="20">GSM antenna</text>
 <text x="1.397" y="8.509" size="1.016" layer="21" ratio="20" rot="R90">Bluetooth antenna</text>
 <text x="22.606" y="28.702" size="1.016" layer="21" ratio="20">LiPo</text>
-<text x="20.193" y="29.083" size="1.016" layer="21" ratio="20">+</text>
-<text x="27.051" y="29.337" size="0.6096" layer="21" ratio="20">GND</text>
+<text x="27.051" y="28.956" size="1.016" layer="21" ratio="20">+</text>
+<text x="19.812" y="29.21" size="0.6096" layer="21" ratio="20">GND</text>
 <text x="45.339" y="5.969" size="1.016" layer="21" ratio="20">LCD</text>
 <text x="62.484" y="4.191" size="1.016" layer="21" ratio="20">JTAG</text>
 <text x="83.566" y="28.702" size="1.016" layer="21" ratio="20">PDI</text>
@@ -269,6 +269,22 @@ molded</description>
 <rectangle x1="0.4318" y1="-0.4318" x2="0.8382" y2="0.4318" layer="51"/>
 <rectangle x1="-0.8382" y1="-0.4318" x2="-0.4318" y2="0.4318" layer="51"/>
 <rectangle x1="-0.1999" y1="-0.4001" x2="0.1999" y2="0.4001" layer="35"/>
+</package>
+<package name="R1210">
+<description>&lt;b&gt;RESISTOR&lt;/b&gt;</description>
+<wire x1="-0.913" y1="1.219" x2="0.939" y2="1.219" width="0.1524" layer="51"/>
+<wire x1="-0.913" y1="-1.219" x2="0.939" y2="-1.219" width="0.1524" layer="51"/>
+<wire x1="-2.473" y1="1.483" x2="2.473" y2="1.483" width="0.0508" layer="39"/>
+<wire x1="2.473" y1="1.483" x2="2.473" y2="-1.483" width="0.0508" layer="39"/>
+<wire x1="2.473" y1="-1.483" x2="-2.473" y2="-1.483" width="0.0508" layer="39"/>
+<wire x1="-2.473" y1="-1.483" x2="-2.473" y2="1.483" width="0.0508" layer="39"/>
+<smd name="1" x="-1.4" y="0" dx="1.6" dy="2.7" layer="1"/>
+<smd name="2" x="1.4" y="0" dx="1.6" dy="2.7" layer="1"/>
+<text x="-2.54" y="1.905" size="1.27" layer="25">&gt;NAME</text>
+<text x="-2.54" y="-3.175" size="1.27" layer="27">&gt;VALUE</text>
+<rectangle x1="-1.651" y1="-1.3081" x2="-0.9009" y2="1.2918" layer="51"/>
+<rectangle x1="0.9144" y1="-1.3081" x2="1.6645" y2="1.2918" layer="51"/>
+<rectangle x1="-0.3" y1="-0.8999" x2="0.3" y2="0.8999" layer="35"/>
 </package>
 <package name="M1206">
 <description>&lt;b&gt;RESISTOR&lt;/b&gt;&lt;p&gt;
@@ -1952,8 +1968,9 @@ Source: 008-0260-0_E.pdf</description>
 <clearance class="6" value="0.15"/>
 </class>
 </classes>
-<designrules name="eC_4Layer_PClass6_BaseCopperO18-I35_eCDefault *">
+<designrules name="FindMeSAT_MB_1V0">
 <description language="de">
+
 &lt;p&gt;
 &lt;b&gt;Eurocircuits-EAGLE design rules&lt;/b&gt;&lt;br&gt;
 &lt;br&gt;
@@ -1976,6 +1993,7 @@ If you need lower minimum values, please use a different Eurocircuits-EAGLE desi
 Your Eurocircuits Team
 </description>
 <description language="en">
+
 &lt;p&gt;
 &lt;b&gt;Eurocircuits-EAGLE design rules&lt;/b&gt;&lt;br&gt;
 &lt;br&gt;
@@ -2044,16 +2062,16 @@ Your Eurocircuits Team
 <param name="psFirst" value="-1"/>
 <param name="psElongationLong" value="100"/>
 <param name="psElongationOffset" value="100"/>
-<param name="mvStopFrame" value="0"/>
-<param name="mvCreamFrame" value="0"/>
-<param name="mlMinStopFrame" value="0mil"/>
-<param name="mlMaxStopFrame" value="0mil"/>
-<param name="mlMinCreamFrame" value="0mil"/>
-<param name="mlMaxCreamFrame" value="0mil"/>
-<param name="mlViaStopLimit" value="0.45mm"/>
-<param name="srRoundness" value="0"/>
-<param name="srMinRoundness" value="0mil"/>
-<param name="srMaxRoundness" value="0mil"/>
+<param name="mvStopFrame" value="0.025"/>
+<param name="mvCreamFrame" value="0.15"/>
+<param name="mlMinStopFrame" value="0.05mm"/>
+<param name="mlMaxStopFrame" value="0.225mm"/>
+<param name="mlMinCreamFrame" value="0.05mm"/>
+<param name="mlMaxCreamFrame" value="0.225mm"/>
+<param name="mlViaStopLimit" value="0.35mm"/>
+<param name="srRoundness" value="0.2"/>
+<param name="srMinRoundness" value="0.01mm"/>
+<param name="srMaxRoundness" value="0.03mm"/>
 <param name="slThermalIsolate" value="0.2mm"/>
 <param name="slThermalsForVias" value="1"/>
 <param name="dpMaxLengthDifference" value="10mm"/>
@@ -2366,9 +2384,9 @@ Your Eurocircuits Team
 <attribute name="NAME" x="78.74" y="34.163" size="0.6096" layer="25" rot="R90"/>
 <attribute name="VALUE" x="77.851" y="34.671" size="0.6096" layer="27" rot="R90"/>
 </element>
-<element name="RPOLY901" library="rcl" package="M1206" value="1.1A/2.2A" x="23.241" y="37.719" smashed="yes" rot="MR180">
-<attribute name="NAME" x="20.828" y="38.1" size="0.6096" layer="26" rot="MR0"/>
-<attribute name="VALUE" x="22.098" y="37.973" size="0.6096" layer="28" rot="MR180"/>
+<element name="RPOLY901" library="rcl" package="M1206" value="1.1A/2.2A" x="24.638" y="37.846" smashed="yes" rot="MR0">
+<attribute name="NAME" x="27.051" y="37.465" size="0.6096" layer="26" rot="MR180"/>
+<attribute name="VALUE" x="25.781" y="37.592" size="0.6096" layer="28" rot="MR0"/>
 </element>
 <element name="R131" library="rcl" package="R0603" value="68R" x="74.93" y="30.734" smashed="yes" rot="MR0">
 <attribute name="NAME" x="76.2" y="31.496" size="0.6096" layer="26" rot="MR0"/>
@@ -2402,9 +2420,9 @@ Your Eurocircuits Team
 <attribute name="NAME" x="16.764" y="30.948" size="0.6096" layer="25" ratio="20"/>
 <attribute name="VALUE" x="20.828" y="34.711" size="0.6096" layer="27" ratio="10"/>
 </element>
-<element name="C901" library="rcl" package="C0805" value="100uF" x="30.48" y="39.497" smashed="yes" rot="MR90">
-<attribute name="NAME" x="31.369" y="38.481" size="0.6096" layer="26" rot="MR90"/>
-<attribute name="VALUE" x="29.972" y="38.862" size="0.6096" layer="28" rot="MR90"/>
+<element name="C901" library="rcl" package="C0805" value="100uF" x="20.574" y="37.719" smashed="yes" rot="MR0">
+<attribute name="NAME" x="21.59" y="38.608" size="0.6096" layer="26" rot="MR0"/>
+<attribute name="VALUE" x="21.209" y="37.211" size="0.6096" layer="28" rot="MR0"/>
 </element>
 <element name="J291" library="df4iah_connector" package="MCX-J-P-X-RA-SM1" value="MCX-J-P-X-RA-SM1" x="95.25" y="5.08" smashed="yes" rot="R270">
 <attribute name="VALUE" x="91.234" y="4.698" size="0.6096" layer="27"/>
@@ -2414,13 +2432,13 @@ Your Eurocircuits Team
 <attribute name="NAME" x="15.875" y="32.131" size="0.8128" layer="26" ratio="20" rot="MR90"/>
 <attribute name="VALUE" x="28.194" y="22.606" size="0.4064" layer="28" ratio="10" rot="MR180"/>
 </element>
-<element name="D201" library="df4iah_diode" package="TO236" value="BZX84-5V1" x="16.891" y="38.1" smashed="yes" rot="R180">
-<attribute name="NAME" x="15.875" y="35.576" size="0.6096" layer="25"/>
-<attribute name="VALUE" x="18.05" y="33.655" size="0.6096" layer="27" rot="R90"/>
+<element name="D201" library="df4iah_diode" package="TO236" value="BZX84-5V1" x="16.891" y="39.37" smashed="yes" rot="R180">
+<attribute name="NAME" x="13.081" y="40.91" size="0.6096" layer="25"/>
+<attribute name="VALUE" x="18.05" y="34.925" size="0.6096" layer="27" rot="R90"/>
 </element>
-<element name="C201" library="rcl" package="C0603" value="100pF" x="28.448" y="39.37" smashed="yes" rot="MR90">
-<attribute name="NAME" x="28.321" y="40.894" size="0.6096" layer="26" rot="MR90"/>
-<attribute name="VALUE" x="28.194" y="38.608" size="0.6096" layer="28" rot="MR90"/>
+<element name="C201" library="rcl" package="C0603" value="100pF" x="16.51" y="36.068" smashed="yes" rot="R180">
+<attribute name="NAME" x="15.24" y="36.703" size="0.6096" layer="25"/>
+<attribute name="VALUE" x="17.272" y="36.322" size="0.6096" layer="27" rot="R180"/>
 </element>
 <element name="C1011" library="rcl" package="C0603" value="100pF" x="67.818" y="27.813" smashed="yes" rot="MR270">
 <attribute name="NAME" x="68.453" y="26.416" size="0.6096" layer="26" rot="MR90"/>
@@ -2449,7 +2467,7 @@ Your Eurocircuits Team
 <attribute name="VALUE" x="62.865" y="26.924" size="0.6096" layer="28" rot="MR90"/>
 </element>
 <element name="R1141" library="rcl" package="R0603" value="4.02kR" x="66.04" y="27.94" smashed="yes" rot="MR270">
-<attribute name="NAME" x="66.802" y="26.543" size="0.6096" layer="26" rot="MR90"/>
+<attribute name="NAME" x="66.675" y="26.543" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="65.659" y="26.924" size="0.6096" layer="28" rot="MR90"/>
 </element>
 <element name="U1021" library="df4iah_opamp" package="SOT-23-5" value="OPA354" x="66.04" y="31.75" smashed="yes" rot="R270">
@@ -2545,9 +2563,9 @@ Your Eurocircuits Team
 <attribute name="NAME" x="9.271" y="17.78" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="10.922" y="14.605" size="0.6096" layer="28" rot="MR270"/>
 </element>
-<element name="RPOLY291" library="rcl" package="M1206" value="50mA/150mA" x="47.244" y="7.874" smashed="yes" rot="MR90">
-<attribute name="NAME" x="48.514" y="5.715" size="0.6096" layer="26" rot="MR90"/>
-<attribute name="VALUE" x="46.99" y="6.35" size="0.6096" layer="28" rot="MR90"/>
+<element name="RPOLY291" library="rcl" package="R1210" value="50mA/150mA" x="47.244" y="7.874" smashed="yes" rot="MR90">
+<attribute name="NAME" x="48.768" y="5.842" size="0.6096" layer="26" rot="MR90"/>
+<attribute name="VALUE" x="46.609" y="5.334" size="0.6096" layer="28" rot="MR90"/>
 </element>
 <element name="L291" library="rcl" package="L3216C" value="WE-CBF_300R" x="47.498" y="2.794" smashed="yes" rot="MR270">
 <attribute name="NAME" x="48.641" y="1.905" size="0.6096" layer="26" rot="MR90"/>
@@ -2757,7 +2775,6 @@ Your Eurocircuits Team
 <contactref element="JP131" pad="6"/>
 <contactref element="JP111" pad="2"/>
 <contactref element="JP111" pad="10"/>
-<contactref element="J901" pad="1"/>
 <contactref element="C901" pad="2"/>
 <contactref element="J291" pad="2"/>
 <contactref element="J291" pad="3"/>
@@ -2917,10 +2934,8 @@ Your Eurocircuits Team
 <wire x1="14.605" y1="30.568" x2="14.097" y2="30.353" width="0.64" layer="16"/>
 <wire x1="14.097" y1="30.353" x2="9.906" y2="30.353" width="0.64" layer="16"/>
 <wire x1="9.906" y1="30.353" x2="9.525" y2="30.568" width="0.64" layer="16"/>
-<via x="21.717" y="34.163" extent="1-16" drill="0.3" shape="octagon"/>
-<via x="22.733" y="34.163" extent="1-16" drill="0.3" shape="octagon"/>
-<wire x1="22.733" y1="34.163" x2="21.717" y2="34.163" width="0.85" layer="16"/>
-<wire x1="22.21" y1="35.26" x2="21.717" y2="34.163" width="0.15" layer="16"/>
+<via x="22.225" y="34.163" extent="1-16" drill="0.3" shape="octagon"/>
+<wire x1="22.21" y1="35.26" x2="22.225" y2="34.163" width="0.64" layer="16"/>
 <wire x1="19.922" y1="1.85" x2="20.32" y2="2.104" width="0.15" layer="1"/>
 <wire x1="20.32" y1="2.104" x2="20.32" y2="0.889" width="0.15" layer="1"/>
 <wire x1="33.528" y1="1.143" x2="33.528" y2="1.96" width="0.15" layer="1"/>
@@ -2944,10 +2959,6 @@ Your Eurocircuits Team
 <wire x1="77.47" y1="34.837" x2="77.47" y2="32.766" width="0.15" layer="1"/>
 <wire x1="77.47" y1="32.766" x2="76.708" y2="32.004" width="0.15" layer="1"/>
 <wire x1="76.708" y1="32.004" x2="74.93" y2="32.004" width="0.15" layer="1"/>
-<wire x1="28.448" y1="40.22" x2="26.79" y2="40.22" width="0.64" layer="16"/>
-<wire x1="26.79" y1="40.22" x2="26.63" y2="40.06" width="0.15" layer="16"/>
-<wire x1="30.48" y1="40.447" x2="29.872" y2="40.22" width="0.64" layer="16"/>
-<wire x1="29.872" y1="40.22" x2="28.448" y2="40.22" width="0.64" layer="16"/>
 <via x="60.96" y="25.781" extent="1-16" drill="0.3" shape="octagon"/>
 <via x="62.357" y="28.575" extent="1-16" drill="0.3" shape="octagon"/>
 <wire x1="60.96" y1="24.98" x2="60.96" y2="25.781" width="0.15" layer="16"/>
@@ -2956,9 +2967,8 @@ Your Eurocircuits Team
 <contactref element="C141" pad="2"/>
 <via x="65.786" y="15.748" extent="1-16" drill="0.3" shape="octagon"/>
 <wire x1="65.786" y1="15.748" x2="65.405" y2="16.676" width="0.15" layer="16"/>
-<wire x1="17.891" y1="39.1" x2="16.605" y2="40.386" width="0.254" layer="1"/>
-<wire x1="16.605" y1="40.386" x2="13.716" y2="40.386" width="0.254" layer="1"/>
-<wire x1="13.716" y1="40.386" x2="11.43" y2="38.1" width="0.254" layer="1"/>
+<wire x1="17.891" y1="40.37" x2="17.018" y2="41.402" width="0.254" layer="1"/>
+<wire x1="17.018" y1="41.402" x2="14.732" y2="41.402" width="0.254" layer="1"/>
 <contactref element="JP121" pad="6"/>
 <contactref element="JP121" pad="1"/>
 <contactref element="U301" pad="9"/>
@@ -2969,6 +2979,7 @@ Your Eurocircuits Team
 <contactref element="C302" pad="2"/>
 <contactref element="C401" pad="2"/>
 <via x="48.006" y="34.544" extent="1-16" drill="0.3" shape="octagon"/>
+<wire x1="14.732" y1="41.402" x2="14.7" y2="41.402" width="0.254" layer="1"/>
 <wire x1="49.711" y1="23.392" x2="49.711" y2="22.787" width="0.15" layer="1"/>
 <wire x1="49.711" y1="22.787" x2="49.276" y2="22.352" width="0.15" layer="1"/>
 <wire x1="49.276" y1="22.352" x2="46.99" y2="22.352" width="0.15" layer="1"/>
@@ -3175,6 +3186,16 @@ Your Eurocircuits Team
 <wire x1="33.926" y1="10.504" x2="33.672" y2="10.25" width="0.15" layer="1"/>
 <wire x1="34.163" y1="9.906" x2="34.016" y2="9.906" width="0.15" layer="1"/>
 <wire x1="34.016" y1="9.906" x2="33.672" y2="10.25" width="0.15" layer="1"/>
+<contactref element="J901" pad="3"/>
+<wire x1="21.59" y1="40.005" x2="21.082" y2="40.005" width="0.64" layer="16"/>
+<wire x1="21.082" y1="40.005" x2="19.304" y2="38.227" width="0.64" layer="16"/>
+<wire x1="22.987" y1="34.163" x2="20.828" y2="34.163" width="0.64" layer="16"/>
+<wire x1="20.828" y1="34.163" x2="19.685" y2="35.306" width="0.64" layer="16"/>
+<wire x1="19.685" y1="35.306" x2="19.685" y2="37.592" width="0.64" layer="16"/>
+<wire x1="15.367" y1="36.068" x2="13.335" y2="36.068" width="0.254" layer="1"/>
+<wire x1="13.335" y1="36.068" x2="11.43" y2="37.973" width="0.254" layer="1"/>
+<wire x1="14.7" y1="41.402" x2="14.605" y2="41.402" width="0.254" layer="1"/>
+<wire x1="14.605" y1="41.402" x2="11.303" y2="38.1" width="0.254" layer="1"/>
 <wire x1="93.384" y1="32.258" x2="94.996" y2="38.1" width="0" layer="19" extent="16-16"/>
 <wire x1="92.202" y1="22.567" x2="93.091" y2="29.464" width="0" layer="19" extent="1-16"/>
 <wire x1="97.47" y1="21.463" x2="93.345" y2="21.971" width="0" layer="19" extent="1-1"/>
@@ -3228,16 +3249,24 @@ Your Eurocircuits Team
 <wire x1="40.132" y1="3.009" x2="34.671" y2="0.635" width="0" layer="19" extent="16-16"/>
 <wire x1="45.212" y1="3.81" x2="40.513" y2="3.81" width="0" layer="19" extent="1-1"/>
 <wire x1="81.28" y1="26.67" x2="76.708" y2="32.004" width="0" layer="19" extent="1-1"/>
-<wire x1="30.48" y1="40.447" x2="39.204" y2="36.957" width="0" layer="19" extent="16-16"/>
-<wire x1="23.21" y1="35.26" x2="26.63" y2="40.06" width="0" layer="19" extent="16-16"/>
-<wire x1="22.21" y1="35.26" x2="23.21" y2="35.26" width="0" layer="19" extent="16-16"/>
-<wire x1="21.21" y1="35.26" x2="22.21" y2="35.26" width="0" layer="19" extent="16-16"/>
-<wire x1="17.891" y1="39.1" x2="21.21" y2="35.26" width="0" layer="19" extent="1-16"/>
-<wire x1="16.81" y1="30.86" x2="21.717" y2="34.163" width="0" layer="19" extent="16-16"/>
-<wire x1="14.986" y1="17.145" x2="16.193" y2="26.86" width="0" layer="19" extent="16-16"/>
-<wire x1="19.922" y1="16.9" x2="16.81" y2="16.86" width="0" layer="19" extent="1-16"/>
+<wire x1="21.21" y1="10.46" x2="32.21" y2="10.46" width="0" layer="19" extent="16-16"/>
+<wire x1="16.81" y1="16.86" x2="19.922" y2="16.9" width="0" layer="19" extent="1-16"/>
+<wire x1="16.81" y1="14.86" x2="16.81" y2="16.86" width="0" layer="19" extent="16-16"/>
 <wire x1="20.32" y1="2.104" x2="20.447" y2="8.128" width="0" layer="19" extent="1-1"/>
 <wire x1="11.43" y1="3.81" x2="18.923" y2="0.635" width="0" layer="19" extent="1-1"/>
+<wire x1="16.193" y1="26.86" x2="14.986" y2="17.145" width="0" layer="19" extent="16-16"/>
+<wire x1="16.81" y1="29.86" x2="16.81" y2="27.86" width="0" layer="19" extent="16-16"/>
+<wire x1="20.828" y1="34.163" x2="16.81" y2="30.86" width="0" layer="19" extent="16-16"/>
+<wire x1="19.624" y1="37.719" x2="19.685" y2="37.592" width="0" layer="19" extent="16-16"/>
+<wire x1="19.304" y1="38.227" x2="19.624" y2="37.719" width="0" layer="19" extent="16-16"/>
+<wire x1="21.63" y1="40.06" x2="21.59" y2="40.005" width="0" layer="19" extent="16-16"/>
+<wire x1="22.225" y1="34.163" x2="22.987" y2="34.163" width="0" layer="19" extent="16-16"/>
+<wire x1="23.21" y1="35.26" x2="22.21" y2="35.26" width="0" layer="19" extent="16-16"/>
+<wire x1="21.21" y1="35.26" x2="22.21" y2="35.26" width="0" layer="19" extent="16-16"/>
+<wire x1="17.891" y1="40.37" x2="19.304" y2="38.227" width="0" layer="19" extent="1-16"/>
+<wire x1="11.43" y1="38.1" x2="11.303" y2="38.1" width="0" layer="19" extent="1-1"/>
+<wire x1="11.43" y1="37.973" x2="11.43" y2="38.1" width="0" layer="19" extent="1-1"/>
+<wire x1="15.66" y1="36.068" x2="15.367" y2="36.068" width="0" layer="19" extent="1-1"/>
 </signal>
 <signal name="EN">
 <contactref element="U1111" pad="4"/>
@@ -3489,14 +3518,11 @@ Your Eurocircuits Team
 <wire x1="44.45" y1="37.68" x2="46.99" y2="37.68" width="0.15" layer="1"/>
 <wire x1="55.118" y1="16.891" x2="55.626" y2="16.383" width="0.15" layer="1"/>
 <wire x1="55.626" y1="16.383" x2="55.626" y2="10.414" width="0.15" layer="1"/>
-<wire x1="55.626" y1="12.7" x2="55.626" y2="10.414" width="0" layer="19" extent="1-16"/>
 <wire x1="55.626" y1="10.414" x2="54.991" y2="9.779" width="0.15" layer="1"/>
 <wire x1="54.991" y1="9.779" x2="54.991" y2="9.398" width="0.15" layer="1"/>
 <wire x1="55.118" y1="16.891" x2="54.396" y2="16.891" width="0.15" layer="1"/>
 <wire x1="54.396" y1="16.891" x2="54.396" y2="17.272" width="0.15" layer="1"/>
 <via x="54.991" y="9.398" extent="1-16" drill="0.3" shape="octagon"/>
-<wire x1="56.515" y1="12.7" x2="56.515" y2="12.7" width="0" layer="19" extent="1-16"/>
-<wire x1="56.515" y1="12.7" x2="55.626" y2="12.7" width="0" layer="19" extent="1-16"/>
 <wire x1="54.991" y1="9.398" x2="54.991" y2="8.509" width="0.15" layer="16"/>
 <wire x1="54.991" y1="8.509" x2="55.118" y2="8.255" width="0.15" layer="16"/>
 <wire x1="55.118" y1="8.255" x2="55.118" y2="8.062" width="0.15" layer="16"/>
@@ -3511,7 +3537,7 @@ Your Eurocircuits Team
 <wire x1="61.126" y1="33.02" x2="66.714" y2="33.02" width="0" layer="19" extent="16-16"/>
 <wire x1="76.2" y1="12.28" x2="75.946" y2="18.376" width="0" layer="19" extent="16-16"/>
 <wire x1="59.69" y1="11.43" x2="63.373" y2="10.033" width="0" layer="19" extent="1-1"/>
-<wire x1="56.515" y1="12.7" x2="59.69" y2="11.43" width="0" layer="19" extent="1-1"/>
+<wire x1="55.626" y1="10.414" x2="59.69" y2="11.43" width="0" layer="19" extent="1-1"/>
 <wire x1="52.324" y1="23.495" x2="53.721" y2="19.725" width="0" layer="19" extent="1-1"/>
 <wire x1="49.311" y1="23.392" x2="51.4635" y2="23.892" width="0" layer="19" extent="1-1"/>
 <wire x1="49.711" y1="26.392" x2="48.3585" y2="25.892" width="0" layer="19" extent="1-1"/>
@@ -3839,44 +3865,41 @@ Your Eurocircuits Team
 <contactref element="D201" pad="C"/>
 <contactref element="C201" pad="1"/>
 <contactref element="R1132" pad="1"/>
-<wire x1="24.641" y1="37.719" x2="25.49559375" y2="36.934078125" width="0.85" layer="16"/>
-<wire x1="25.49559375" y1="36.934078125" x2="26.162" y2="36.322" width="0.85" layer="16"/>
-<wire x1="26.162" y1="36.322" x2="25.4" y2="36.322" width="0.85" layer="16"/>
-<wire x1="25.4" y1="36.322" x2="24.511" y2="36.322" width="0.85" layer="16"/>
-<wire x1="24.641" y1="37.719" x2="24.384" y2="37.084" width="0.85" layer="16"/>
-<wire x1="24.384" y1="37.084" x2="24.257" y2="36.957" width="0.85" layer="16"/>
-<wire x1="24.257" y1="36.957" x2="24.257" y2="36.068" width="0.85" layer="16"/>
 <wire x1="24.21" y1="35.26" x2="24.257" y2="35.307" width="0.15" layer="16"/>
 <wire x1="24.257" y1="35.307" x2="24.257" y2="36.068" width="0.225" layer="16"/>
-<wire x1="24.21" y1="35.26" x2="24.13" y2="35.34" width="0.15" layer="16"/>
-<wire x1="24.13" y1="35.34" x2="24.13" y2="36.83" width="0.15" layer="16"/>
 <wire x1="25.21" y1="35.26" x2="25.4" y2="35.45" width="0.15" layer="16"/>
-<wire x1="25.4" y1="35.45" x2="25.4" y2="36.322" width="0.15" layer="16"/>
 <wire x1="26.21" y1="35.26" x2="26.162" y2="35.308" width="0.15" layer="16"/>
-<wire x1="26.162" y1="35.308" x2="26.162" y2="36.322" width="0.15" layer="16"/>
 <wire x1="81.28" y1="37.26" x2="80.44" y2="38.227" width="0.15" layer="16"/>
 <wire x1="80.44" y1="38.227" x2="58.42" y2="38.227" width="0.15" layer="16"/>
 <via x="58.42" y="38.227" extent="1-16" drill="0.3" shape="octagon"/>
 <wire x1="58.42" y1="38.227" x2="52.451" y2="38.227" width="0.15" layer="1"/>
 <via x="52.451" y="38.227" extent="1-16" drill="0.3" shape="octagon"/>
-<wire x1="28.448" y1="38.52" x2="27.081515625" y2="38.52" width="0.64" layer="16"/>
-<wire x1="27.081515625" y1="38.52" x2="25.49559375" y2="36.934078125" width="0.64" layer="16"/>
-<via x="25.146" y="36.576" extent="1-16" drill="0.3" shape="octagon"/>
-<wire x1="25.4" y1="36.322" x2="25.146" y2="36.576" width="0.64" layer="16"/>
-<wire x1="16.891" y1="36.576" x2="25.146" y2="36.576" width="0.254" layer="1"/>
-<wire x1="28.448" y1="38.52" x2="27.967" y2="38.547" width="0.64" layer="16"/>
-<wire x1="27.967" y1="38.547" x2="30.48" y2="38.547" width="0.64" layer="16"/>
-<wire x1="29.784" y1="38.547" x2="30.48" y2="38.547" width="0.15" layer="16"/>
+<via x="24.765" y="36.322" extent="1-16" drill="0.3" shape="octagon"/>
+<wire x1="18.161" y1="36.576" x2="24.511" y2="36.576" width="0.254" layer="1"/>
+<wire x1="24.511" y1="36.576" x2="24.765" y2="36.322" width="0.254" layer="1"/>
 <wire x1="52.451" y1="38.227" x2="52.451" y2="31.877" width="0.15" layer="1"/>
 <wire x1="52.451" y1="31.877" x2="53.848" y2="30.48" width="0.15" layer="1"/>
 <wire x1="53.848" y1="30.48" x2="53.848" y2="27.559" width="0.15" layer="1"/>
 <wire x1="53.848" y1="27.559" x2="54.61" y2="26.797" width="0.15" layer="1"/>
 <wire x1="54.61" y1="26.797" x2="57.873" y2="26.797" width="0.15" layer="1"/>
 <wire x1="57.873" y1="26.797" x2="60.96" y2="23.71" width="0.15" layer="1"/>
-<wire x1="16.891" y1="36.576" x2="16.891" y2="37.1" width="0.15" layer="1"/>
-<wire x1="29.652" y1="38.735" x2="30.48" y2="38.547" width="0.15" layer="16"/>
-<wire x1="52.451" y1="38.227" x2="29.784" y2="38.227" width="0.15" layer="16"/>
-<wire x1="29.784" y1="38.227" x2="30.48" y2="38.547" width="0.15" layer="16"/>
+<wire x1="23.238" y1="37.846" x2="23.241" y2="37.846" width="0.64" layer="16"/>
+<wire x1="23.241" y1="37.846" x2="24.765" y2="36.322" width="0.64" layer="16"/>
+<wire x1="24.257" y1="36.068" x2="26.162" y2="36.068" width="0.64" layer="16"/>
+<wire x1="21.524" y1="37.719" x2="23.111" y2="37.719" width="0.64" layer="16"/>
+<wire x1="23.111" y1="37.719" x2="23.238" y2="37.846" width="0.64" layer="16"/>
+<wire x1="17.36" y1="36.068" x2="17.653" y2="36.068" width="0.254" layer="1"/>
+<wire x1="17.653" y1="36.068" x2="18.161" y2="36.576" width="0.254" layer="1"/>
+<wire x1="16.891" y1="38.37" x2="16.891" y2="37.846" width="0.254" layer="1"/>
+<wire x1="16.891" y1="37.846" x2="18.161" y2="36.576" width="0.254" layer="1"/>
+<wire x1="52.451" y1="38.227" x2="28.575" y2="38.227" width="0.15" layer="16"/>
+<wire x1="28.575" y1="38.227" x2="27.305" y2="36.957" width="0.15" layer="16"/>
+<wire x1="27.305" y1="36.957" x2="26.67" y2="36.449" width="0.15" layer="16" curve="-90"/>
+<wire x1="26.67" y1="36.449" x2="26.416" y2="36.449" width="0.15" layer="16"/>
+<wire x1="26.416" y1="36.449" x2="26.162" y2="36.068" width="0.15" layer="16"/>
+<wire x1="26.162" y1="36.068" x2="26.162" y2="35.308" width="0" layer="19" extent="16-16"/>
+<wire x1="24.765" y1="36.322" x2="24.257" y2="36.068" width="0" layer="19" extent="16-16"/>
+<wire x1="25.4" y1="35.45" x2="26.162" y2="35.308" width="0" layer="19" extent="16-16"/>
 </signal>
 <signal name="VBAT_DD">
 <contactref element="D1121" pad="C"/>
@@ -3897,11 +3920,6 @@ Your Eurocircuits Team
 <via x="79.756" y="36.449" extent="1-16" drill="0.3" shape="octagon"/>
 <wire x1="79.756" y1="36.449" x2="79.695" y2="36.51" width="0.15" layer="1"/>
 <wire x1="79.695" y1="36.51" x2="77.47" y2="36.537" width="0.15" layer="1"/>
-</signal>
-<signal name="BATTERY" class="1">
-<contactref element="RPOLY901" pad="1"/>
-<contactref element="J901" pad="3"/>
-<wire x1="21.841" y1="37.719" x2="21.63" y2="40.06" width="0.85" layer="16"/>
 </signal>
 <signal name="PDI_DATA_CPU">
 <contactref element="R131" pad="2"/>
@@ -4392,17 +4410,17 @@ Your Eurocircuits Team
 <signal name="GSM_VDD_EXT">
 <contactref element="U201" pad="P$7"/>
 <contactref element="R161" pad="2"/>
-<via x="28.702" y="37.338" extent="1-16" drill="0.3" shape="octagon"/>
-<wire x1="27.21" y1="35.26" x2="27.21" y2="36.544" width="0.15" layer="16"/>
-<wire x1="27.21" y1="36.544" x2="28.194" y2="37.338" width="0.15" layer="16"/>
-<wire x1="28.194" y1="37.338" x2="28.702" y2="37.338" width="0.15" layer="16"/>
+<via x="28.702" y="33.528" extent="1-16" drill="0.3" shape="octagon"/>
+<wire x1="27.21" y1="35.26" x2="27.21" y2="33.75" width="0.15" layer="16"/>
+<wire x1="27.21" y1="33.75" x2="27.432" y2="33.528" width="0.15" layer="16"/>
+<wire x1="27.432" y1="33.528" x2="28.702" y2="33.528" width="0.15" layer="16"/>
 <wire x1="83.4" y1="17.78" x2="83.4" y2="17.868" width="0.15" layer="16"/>
 <wire x1="83.4" y1="17.868" x2="83.82" y2="18.669" width="0.15" layer="16"/>
 <via x="83.82" y="18.669" extent="1-16" drill="0.3" shape="octagon"/>
 <wire x1="83.82" y1="18.669" x2="88.519" y2="23.368" width="0.15" layer="1"/>
 <wire x1="88.519" y1="23.368" x2="88.519" y2="37.846" width="0.15" layer="1"/>
 <wire x1="88.519" y1="37.846" x2="89.027" y2="38.354" width="0.15" layer="1"/>
-<wire x1="28.702" y1="37.338" x2="28.702" y2="41.021" width="0.15" layer="1"/>
+<wire x1="28.702" y1="33.528" x2="28.702" y2="41.021" width="0.15" layer="1"/>
 <wire x1="28.702" y1="41.021" x2="28.829" y2="41.148" width="0.15" layer="1"/>
 <wire x1="28.829" y1="41.148" x2="88.9" y2="41.148" width="0.15" layer="1"/>
 <wire x1="88.9" y1="41.148" x2="89.027" y2="41.021" width="0.15" layer="1"/>
@@ -5281,8 +5299,108 @@ Your Eurocircuits Team
 <wire x1="51.054" y1="22.987" x2="50.927" y2="23.3235" width="0.15" layer="1"/>
 <wire x1="50.927" y1="23.3235" x2="50.911" y2="23.3395" width="0.15" layer="1"/>
 </signal>
+<signal name="BATTERY">
+<contactref element="RPOLY901" pad="1"/>
+<contactref element="J901" pad="1"/>
+<wire x1="26.038" y1="37.846" x2="26.63" y2="37.846" width="0.64" layer="16"/>
+<wire x1="26.63" y1="37.846" x2="26.63" y2="40.06" width="0.64" layer="16"/>
+</signal>
 </signals>
 <errors>
+<approved hash="7,39,3518d487a0731a94"/>
+<approved hash="7,39,fff83800385bffa3"/>
+<approved hash="7,39,ffcc38343856ffae"/>
+<approved hash="7,39,44006f7a40e630e4"/>
+<approved hash="7,39,68805b7bcba79ea4"/>
+<approved hash="7,39,64804f7231ae20a4"/>
+<approved hash="7,39,be4c18341856be2e"/>
+<approved hash="7,39,0118f8060e3291d4"/>
+<approved hash="7,39,1518f40fb03b6bd4"/>
+<approved hash="7,39,be781800185bbe23"/>
+<approved hash="7,39,48005b73b86fce64"/>
+<approved hash="7,39,7ecc7a347a597ea1"/>
+<approved hash="7,39,44006f4a26565064"/>
+<approved hash="7,39,0118d88e5efae214"/>
+<approved hash="7,39,3518d4b7c0c37c14"/>
+<approved hash="7,39,7ef87a007a547eac"/>
+<approved hash="7,39,2b801b442f183824"/>
+<approved hash="7,39,4118bb39a88d7554"/>
+<approved hash="7,39,667aa6b926b9e67a"/>
+<approved hash="7,39,ad2ef657280523cc"/>
+<approved hash="7,39,7e74bebb3ebbfe74"/>
+<approved hash="7,39,1ce65329d3299ce6"/>
+<approved hash="7,39,1053509cd09c9053"/>
+<approved hash="7,39,0865cf254f248864"/>
+<approved hash="7,39,f7a4b664366477a4"/>
+<approved hash="7,39,61cd3f8abf8ae1cd"/>
+<approved hash="7,39,bfa4ffe77fe73fa4"/>
+<approved hash="7,39,839076e876d283aa"/>
+<approved hash="7,39,4312739788abd5d6"/>
+<approved hash="7,39,050a3feca8d8ffc6"/>
+<approved hash="7,39,835c762477c982b1"/>
+<approved hash="7,39,af0c6e4bee4b2f0c"/>
+<approved hash="7,39,2492c3984ee49c96"/>
+<approved hash="7,39,331016e816d2332a"/>
+<approved hash="7,39,22923f9cfbe08d96"/>
+<approved hash="7,39,b50a5863e1973986"/>
+<approved hash="7,39,33dc162417c93231"/>
+<approved hash="7,39,490a5e67f0938c86"/>
+<approved hash="7,39,f44d5c3000db50c3"/>
+<approved hash="7,39,99ced9f1a7f1e7ce"/>
+<approved hash="7,39,bfe36f88b9ff91f1"/>
+<approved hash="7,39,cafe140614c0ca38"/>
+<approved hash="7,39,9411230eb712e2d5"/>
+<approved hash="7,39,99fbd9e6a7e6e7fb"/>
+<approved hash="7,39,74fcdf7d4390903c"/>
+<approved hash="7,39,4d22e34bb7a76b20"/>
+<approved hash="7,39,19cb59eea7eee7cb"/>
+<approved hash="7,39,195f596da76de75f"/>
+<approved hash="7,39,bf72eca67a94516d"/>
+<approved hash="7,39,c0123fe1b35d5256"/>
+<approved hash="7,39,490abc9a2f2ec446"/>
+<approved hash="7,39,b3fe640664c0b338"/>
+<approved hash="7,39,a0ea64b5e4b620e9"/>
+<approved hash="7,39,8f194cd8ccdf0f1e"/>
+<approved hash="7,39,05ce440ec40e85ce"/>
+<approved hash="7,40,8d19ccd94cd90d19"/>
+<approved hash="7,40,1fbb5e7cde7c9fbb"/>
+<approved hash="7,40,779d385ab85af79d"/>
+<approved hash="7,40,acd8ec986c982cd8"/>
+<approved hash="18,29,eb3123456a0abc86"/>
+<approved hash="18,29,a6f60ab45b35e98f"/>
+<approved hash="18,29,eb318bd0429a3c83"/>
+<approved hash="18,29,a708d221039f684e"/>
+<approved hash="18,29,05ca6d39843dfa98"/>
+<approved hash="18,29,96c79d8f46893d77"/>
+<approved hash="18,29,b81b26b34b1d177b"/>
+<approved hash="18,29,d54f6e9cda1e22d5"/>
+<approved hash="18,29,e21446875b8a17bf"/>
+<approved hash="18,29,90d32abc561e7e41"/>
+<approved hash="18,29,7f4a7b3d110d3b41"/>
+<approved hash="18,29,564faaa9310a3e04"/>
+<approved hash="18,29,1b02d73069c3ba68"/>
+<approved hash="18,29,5bc369cdb52a4204"/>
+<approved hash="18,29,aca231cdb0d491c0"/>
+<approved hash="18,29,34134d6e8dcf49a1"/>
+<approved hash="18,29,7ff35e47ac47c72f"/>
+<approved hash="18,29,f731872837e22a03"/>
+<approved hash="18,29,aa08cfd914e71cce"/>
+<approved hash="18,30,ee92c7d78bebb922"/>
+<approved hash="18,30,693b3b1d82fb28e6"/>
+<approved hash="18,30,c1bb21ac3e8ade81"/>
+<approved hash="18,30,bf3b65249bd63915"/>
+<approved hash="18,30,bfb841072b712d94"/>
+<approved hash="18,30,d7494a4b944e094e"/>
+<approved hash="18,30,d917482a1a2bb216"/>
+<approved hash="18,30,bd11665c0adbc8d6"/>
+<approved hash="18,30,9b06b01ac4e2d728"/>
+<approved hash="18,30,e3f65e2bccee596d"/>
+<approved hash="18,30,693b3b1d447bee66"/>
+<approved hash="18,30,bf3b65245d56ff95"/>
+<approved hash="18,30,bfb84107edf1eb14"/>
+<approved hash="18,30,c1bb21acf80a1801"/>
+<approved hash="18,30,96284af9c9170de0"/>
+<approved hash="18,30,b201c809c820b228"/>
 <approved hash="3,1,01310f3f0f33013d"/>
 <approved hash="3,1,342f3e233c23342d"/>
 <approved hash="3,1,3d2f3d233f233d2d"/>
@@ -5360,123 +5478,84 @@ Your Eurocircuits Team
 <approved hash="3,16,c905e6397da573d8"/>
 <approved hash="3,16,cbc3c9da6692a8ed"/>
 <approved hash="3,16,6fc196cbc1f1d3cc"/>
-<approved hash="7,39,3518d487a0731a94"/>
-<approved hash="7,39,fff83800385bffa3"/>
-<approved hash="7,39,ffcc38343856ffae"/>
-<approved hash="7,39,44006f7a40e630e4"/>
-<approved hash="7,39,68805b7bcba79ea4"/>
-<approved hash="7,39,64804f7231ae20a4"/>
-<approved hash="7,39,be4c18341856be2e"/>
-<approved hash="7,39,0118f8060e3291d4"/>
-<approved hash="7,39,1518f40fb03b6bd4"/>
-<approved hash="7,39,be781800185bbe23"/>
-<approved hash="7,39,48005b73b86fce64"/>
-<approved hash="7,39,7ecc7a347a597ea1"/>
-<approved hash="7,39,44006f4a26565064"/>
-<approved hash="7,39,0118d88e5efae214"/>
-<approved hash="7,39,3518d4b7c0c37c14"/>
-<approved hash="7,39,7ef87a007a547eac"/>
-<approved hash="7,39,2b801b442f183824"/>
-<approved hash="7,39,4118bb39a88d7554"/>
-<approved hash="7,39,667aa6b926b9e67a"/>
-<approved hash="7,39,ad2ef657280523cc"/>
-<approved hash="7,39,7e74bebb3ebbfe74"/>
-<approved hash="7,39,1ce65329d3299ce6"/>
-<approved hash="7,39,1053509cd09c9053"/>
-<approved hash="7,39,0865cf254f248864"/>
-<approved hash="7,39,f7a4b664366477a4"/>
-<approved hash="7,39,61cd3f8abf8ae1cd"/>
-<approved hash="7,39,bfa4ffe77fe73fa4"/>
-<approved hash="7,39,839076e876d283aa"/>
-<approved hash="7,39,4312739788abd5d6"/>
-<approved hash="7,39,050a3feca8d8ffc6"/>
-<approved hash="7,39,835c762477c982b1"/>
-<approved hash="7,39,af0c6e4bee4b2f0c"/>
-<approved hash="7,39,2492c3984ee49c96"/>
-<approved hash="7,39,331016e816d2332a"/>
-<approved hash="7,39,22923f9cfbe08d96"/>
-<approved hash="7,39,b50a5863e1973986"/>
-<approved hash="7,39,33dc162417c93231"/>
-<approved hash="7,39,490a5e67f0938c86"/>
-<approved hash="7,39,f44d5c3000db50c3"/>
-<approved hash="7,39,99ced9f1a7f1e7ce"/>
-<approved hash="7,39,bfe36f88b9ff91f1"/>
-<approved hash="7,39,cafe140614c0ca38"/>
-<approved hash="7,39,9411230eb712e2d5"/>
-<approved hash="7,39,99fbd9e6a7e6e7fb"/>
-<approved hash="7,39,74fcdf7d4390903c"/>
-<approved hash="7,39,4d22e34bb7a76b20"/>
-<approved hash="7,39,19cb59eea7eee7cb"/>
-<approved hash="7,39,195f596da76de75f"/>
-<approved hash="7,39,bf72eca67a94516d"/>
-<approved hash="7,39,c0123fe1b35d5256"/>
-<approved hash="7,39,490abc9a2f2ec446"/>
-<approved hash="7,39,b3fe640664c0b338"/>
-<approved hash="7,39,a0ea64b5e4b620e9"/>
-<approved hash="7,39,8f194cd8ccdf0f1e"/>
-<approved hash="7,39,05ce440ec40e85ce"/>
-<approved hash="7,40,8d19ccd94cd90d19"/>
-<approved hash="7,40,1fbb5e7cde7c9fbb"/>
-<approved hash="7,40,779d385ab85af79d"/>
-<approved hash="7,40,acd8ec986c982cd8"/>
-<approved hash="18,29,23483152c4fdd6e7"/>
-<approved hash="18,29,eb3123456a0abc86"/>
-<approved hash="18,29,a6f60ab45b35e98f"/>
 <approved hash="18,29,089c035dff80f441"/>
-<approved hash="18,29,a708d221039f684e"/>
-<approved hash="18,29,eb318bd0429a3c83"/>
-<approved hash="18,29,96c79d8f46893d77"/>
-<approved hash="18,29,05ca6d39843dfa98"/>
-<approved hash="18,29,b81b26b34b1d177b"/>
-<approved hash="18,29,d54f6e9cda1e22d5"/>
-<approved hash="18,29,e21446875b8a17bf"/>
-<approved hash="18,29,90d32abc561e7e41"/>
-<approved hash="18,29,7f4a7b3d110d3b41"/>
-<approved hash="18,29,564faaa9310a3e04"/>
-<approved hash="18,29,1b02d73069c3ba68"/>
-<approved hash="18,29,5bc369cdb52a4204"/>
-<approved hash="18,29,aca231cdb0d491c0"/>
-<approved hash="18,29,34134d6e8dcf49a1"/>
-<approved hash="18,29,7ff35e47ac47c72f"/>
+<approved hash="18,29,151e83641fca9748"/>
+<approved hash="18,29,42c3475024cf3fa4"/>
+<approved hash="18,29,23483152c4fdd6e7"/>
+<approved hash="18,29,151a649379c716b6"/>
+<approved hash="18,29,42c6efe70c7fbfa6"/>
+<approved hash="18,29,05ca6d78c5ffbb18"/>
+<approved hash="18,29,96c79dcd07487cf7"/>
+<approved hash="18,29,b81b26b38a9dd6fb"/>
+<approved hash="18,29,189e876ebcb4bcac"/>
+<approved hash="18,29,e6c0459a9420cf5c"/>
+<approved hash="18,29,b6c8e98bd52cabaa"/>
+<approved hash="18,29,179edb86871adaca"/>
+<approved hash="18,29,5ff0265026b65f16"/>
+<approved hash="18,29,e21f5e599342931d"/>
+<approved hash="18,29,a5f7b437a064d7c0"/>
+<approved hash="18,29,881bd51858bdfb9a"/>
+<approved hash="18,29,a5f660aad41bd500"/>
+<approved hash="18,29,5228081c08f25036"/>
+<approved hash="18,29,de1f9d3935ac8953"/>
+<approved hash="18,29,ce6c060ad9eadbab"/>
+<approved hash="18,29,3920d19851b737cb"/>
+<approved hash="18,29,af64fbdef21a3740"/>
+<approved hash="18,29,4b44cb5b4baeada6"/>
+<approved hash="18,29,e429af934ae2a9ea"/>
+<approved hash="18,29,2c2aa7aba9dbe4e4"/>
+<approved hash="18,29,7ff35e19628409af"/>
+<approved hash="18,29,22bc178631422f77"/>
+<approved hash="18,29,fecbdb7bcd7828ab"/>
+<approved hash="18,29,a458dded8dd61509"/>
+<approved hash="18,29,b636a7c87ff7a01e"/>
+<approved hash="18,29,29d9579fc1d5a886"/>
+<approved hash="18,29,0108eab22db3fd65"/>
+<approved hash="18,29,10c92a33f3b90a69"/>
+<approved hash="18,29,1b29a5d2a9d06fdc"/>
+<approved hash="18,29,5b24b885a0af2fbd"/>
+<approved hash="18,29,2471e4bbb3c64a30"/>
 <approved hash="18,29,4be44425b8f8b739"/>
-<approved hash="18,29,aa08cfd914e71cce"/>
-<approved hash="18,29,f731872837e22a03"/>
-<approved hash="18,30,bf3b65249bd63915"/>
-<approved hash="18,30,bfb841072b712d94"/>
-<approved hash="18,30,693b3b1d82fb28e6"/>
-<approved hash="18,30,c1bb21ac3e8ade81"/>
-<approved hash="18,30,d7494a4b944e094e"/>
-<approved hash="18,30,d917482a1a2bb216"/>
-<approved hash="18,30,9b06b01ac4e2d728"/>
-<approved hash="18,30,bd11665c0adbc8d6"/>
-<approved hash="18,30,e3f65e2bccee596d"/>
-<approved hash="18,30,b201c809c820b228"/>
-<approved hash="5,1,2be83f49206fd150"/>
+<approved hash="18,29,091e839c6ab28dc8"/>
+<approved hash="18,29,43c35aa83fb74b24"/>
+<approved hash="18,30,bce8c7a997acfb64"/>
+<approved hash="18,30,01e10f982b9b9b8a"/>
+<approved hash="18,30,01e10f982b9b9b8a"/>
+<approved hash="18,30,9e6d9e24c0321c7c"/>
+<approved hash="18,30,5e0c0242e032583d"/>
+<approved hash="18,30,5c0b106a167b5e04"/>
+<approved hash="18,30,9c8bc02b1e3c1e84"/>
+<approved hash="18,30,7679cf04082138eb"/>
+<approved hash="18,30,4c592f640826befb"/>
+<approved hash="18,30,57d70f7c0827463c"/>
+<approved hash="18,30,8ae38ae0182b4ce9"/>
+<approved hash="18,30,d2ed668d8895c8da"/>
 <approved hash="5,1,2dea399625d8d1ae"/>
-<approved hash="5,1,4fbd502ebbee5a61"/>
+<approved hash="5,1,2be83f49206fd150"/>
 <approved hash="5,1,4a9d571bb8bb5a89"/>
+<approved hash="5,1,4fbd502ebbee5a61"/>
 <approved hash="5,1,3a234fd079265621"/>
 <approved hash="5,1,3339836bfd13522e"/>
 <approved hash="5,1,1413a478a9fd9b9c"/>
 <approved hash="5,1,d2381491515a0213"/>
+<approved hash="5,1,d65814e652cf0591"/>
+<approved hash="5,1,40f2fdadec630913"/>
+<approved hash="5,1,c682a1970820abb7"/>
+<approved hash="5,1,afd28e348ad7d206"/>
 <approved hash="5,1,4220feafec230e60"/>
 <approved hash="5,1,4c7e4974a76e5a3a"/>
-<approved hash="5,1,d65814e652cf0591"/>
 <approved hash="5,1,d1f0113f5620030f"/>
 <approved hash="5,1,843a2180098a1ea2"/>
 <approved hash="5,1,9ae3899fd0170021"/>
 <approved hash="5,1,f94b6220c5ffa1ee"/>
-<approved hash="5,1,40f2fdadec630913"/>
-<approved hash="5,1,c682a1970820abb7"/>
-<approved hash="5,1,afd28e348ad7d206"/>
 <approved hash="5,1,838a27600f2a1af5"/>
 <approved hash="5,1,5c03afe4e856ca7f"/>
+<approved hash="5,1,f6ae0967d10e2390"/>
+<approved hash="5,1,3fafcee65720b3f0"/>
 <approved hash="5,1,af9c810fe873162f"/>
 <approved hash="5,1,a9802f755899309a"/>
 <approved hash="5,1,5d97f5676b47fcb0"/>
 <approved hash="5,1,2330c4ad51758f96"/>
-<approved hash="5,1,f6ae0967d10e2390"/>
-<approved hash="5,1,3fafcee65720b3f0"/>
 <approved hash="5,1,b87eb042052bcbc8"/>
 <approved hash="5,1,a279d5e14f128793"/>
 <approved hash="5,1,3d03b74c3c8c0b43"/>
@@ -5525,8 +5604,8 @@ Your Eurocircuits Team
 <approved hash="5,16,ca32c819c801798d"/>
 <approved hash="5,16,3848492dd49afc10"/>
 <approved hash="5,16,0398576c0b53f2c4"/>
-<approved hash="5,16,d02b8a64a4218915"/>
 <approved hash="5,16,8208de067fe45ac9"/>
+<approved hash="5,16,d02b8a64a4218915"/>
 <approved hash="5,16,fd937eb3db168ef5"/>
 <approved hash="5,16,91df896dd28d53dd"/>
 <approved hash="5,16,7833d7efd5f0b0bc"/>
@@ -5534,12 +5613,12 @@ Your Eurocircuits Team
 <approved hash="5,16,66b2824839f3b5c9"/>
 <approved hash="5,16,2260cac3a5013e90"/>
 <approved hash="5,16,dc09c4caf2b44a92"/>
-<approved hash="5,16,c6afdb02f2bc4ff4"/>
-<approved hash="5,16,1c47c422f2ac8a2c"/>
 <approved hash="5,16,18edc42af2a48e86"/>
+<approved hash="5,16,1c47c422f2ac8a2c"/>
+<approved hash="5,16,c6afdb02f2bc4ff4"/>
 <approved hash="5,16,b3bbeaa81156136f"/>
-<approved hash="5,16,86724dff8523a90f"/>
 <approved hash="5,16,dad8f5a6fff13347"/>
+<approved hash="5,16,86724dff8523a90f"/>
 <approved hash="5,16,323bd86828560202"/>
 <approved hash="5,16,0f6e61a263b3077b"/>
 <approved hash="5,16,aa39d7413b31abff"/>
