@@ -7725,6 +7725,43 @@ MANUFACTURER: SAMTEC</description>
 <text x="-4.445" y="12.446" size="2.0828" layer="25" ratio="10" rot="SR0">&gt;NAME</text>
 <text x="-5.6642" y="-6.3754" size="2.0828" layer="27" ratio="10" rot="SR0">&gt;VALUE</text>
 </package>
+<package name="1X02">
+<description>&lt;b&gt;PIN HEADER&lt;/b&gt;</description>
+<wire x1="-1.27" y1="-0.635" x2="-0.635" y2="-1.27" width="0.1524" layer="21"/>
+<wire x1="0.635" y1="-1.27" x2="1.27" y2="-0.635" width="0.1524" layer="21"/>
+<wire x1="-1.27" y1="-0.635" x2="-1.27" y2="3.175" width="0.1524" layer="21"/>
+<wire x1="-1.27" y1="3.175" x2="-0.635" y2="3.81" width="0.1524" layer="21"/>
+<wire x1="-0.635" y1="3.81" x2="0.635" y2="3.81" width="0.1524" layer="21"/>
+<wire x1="0.635" y1="3.81" x2="1.27" y2="3.175" width="0.1524" layer="21"/>
+<wire x1="1.27" y1="3.175" x2="1.27" y2="-0.635" width="0.1524" layer="21"/>
+<wire x1="-0.635" y1="-1.27" x2="0.635" y2="-1.27" width="0.1524" layer="21"/>
+<pad name="1" x="0" y="0" drill="1.016" shape="square"/>
+<pad name="2" x="0" y="2.54" drill="1.016" shape="octagon"/>
+<text x="-2.54" y="4.445" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="-2.54" y="-3.175" size="1.27" layer="27">&gt;VALUE</text>
+<rectangle x1="-0.254" y1="-0.254" x2="0.254" y2="0.254" layer="51"/>
+<rectangle x1="-0.254" y1="2.286" x2="0.254" y2="2.794" layer="51"/>
+</package>
+<package name="1X02/90">
+<description>&lt;b&gt;PIN HEADER&lt;/b&gt;</description>
+<wire x1="-1.27" y1="1.905" x2="1.27" y2="1.905" width="0.1524" layer="21"/>
+<wire x1="1.27" y1="1.905" x2="1.27" y2="4.445" width="0.1524" layer="21"/>
+<wire x1="1.27" y1="4.445" x2="-1.27" y2="4.445" width="0.1524" layer="21"/>
+<wire x1="-1.27" y1="4.445" x2="-1.27" y2="1.905" width="0.1524" layer="21"/>
+<wire x1="0" y1="10.795" x2="0" y2="5.08" width="0.762" layer="21"/>
+<wire x1="1.27" y1="1.905" x2="3.81" y2="1.905" width="0.1524" layer="21"/>
+<wire x1="3.81" y1="1.905" x2="3.81" y2="4.445" width="0.1524" layer="21"/>
+<wire x1="3.81" y1="4.445" x2="1.27" y2="4.445" width="0.1524" layer="21"/>
+<wire x1="2.54" y1="10.795" x2="2.54" y2="5.08" width="0.762" layer="21"/>
+<pad name="1" x="0" y="0" drill="1.016" shape="square"/>
+<pad name="2" x="2.54" y="0" drill="1.016" shape="octagon"/>
+<text x="-1.905" y="0" size="1.27" layer="25" ratio="10" rot="R90">&gt;NAME</text>
+<text x="5.715" y="0" size="1.27" layer="27" rot="R90">&gt;VALUE</text>
+<rectangle x1="-0.381" y1="4.445" x2="0.381" y2="4.953" layer="21"/>
+<rectangle x1="2.159" y1="4.445" x2="2.921" y2="4.953" layer="21"/>
+<rectangle x1="-0.381" y1="0.889" x2="0.381" y2="1.905" layer="21"/>
+<rectangle x1="2.159" y1="0.889" x2="2.921" y2="1.905" layer="21"/>
+</package>
 </packages>
 <symbols>
 <symbol name="HEADER-2X3">
@@ -7933,6 +7970,18 @@ MANUFACTURER: SAMTEC</description>
 <circle x="1.27" y="0" radius="0" width="0.635" layer="94"/>
 <wire x1="-4.572" y1="0" x2="0.508" y2="0" width="0.254" layer="94"/>
 <wire x1="-2.54" y1="-4.318" x2="-2.54" y2="-3.048" width="0.254" layer="94"/>
+</symbol>
+<symbol name="HEADER-1X2">
+<description>&lt;b&gt;Header 2X3 2.54mm&lt;/b&gt;</description>
+<wire x1="-3.81" y1="-5.08" x2="3.81" y2="-5.08" width="0.4064" layer="94"/>
+<wire x1="3.81" y1="-5.08" x2="3.81" y2="2.54" width="0.4064" layer="94"/>
+<wire x1="3.81" y1="2.54" x2="-3.81" y2="2.54" width="0.4064" layer="94"/>
+<wire x1="-3.81" y1="2.54" x2="-3.81" y2="-5.08" width="0.4064" layer="94"/>
+<wire x1="0.635" y1="0" x2="1.27" y2="0" width="1.016" layer="94"/>
+<wire x1="0.635" y1="-2.54" x2="1.27" y2="-2.54" width="1.016" layer="94"/>
+<text x="-1.27" y="3.81" size="1.778" layer="95" ratio="10">&gt;NAME</text>
+<pin name="1" x="-2.54" y="0" visible="pad" length="short" direction="pas"/>
+<pin name="2" x="-2.54" y="-2.54" visible="pad" length="short" direction="pas"/>
 </symbol>
 </symbols>
 <devicesets>
@@ -8152,6 +8201,32 @@ Radiall&lt;p&gt;</description>
 <attribute name="PACKAGE" value="RF/COAXIAL, SMA JACK, R/A, 50OHM, THD " constant="no"/>
 <attribute name="SUPPLIER" value="Amphenol" constant="no"/>
 </technology>
+</technologies>
+</device>
+</devices>
+</deviceset>
+<deviceset name="HEADER-1X2" prefix="JP" uservalue="yes">
+<description>&lt;b&gt;Header 1X2 2.54mm&lt;/b&gt;&lt;p&gt; ISP, ...</description>
+<gates>
+<gate name="A" symbol="HEADER-1X2" x="0" y="0"/>
+</gates>
+<devices>
+<device name="/90" package="1X02/90">
+<connects>
+<connect gate="A" pin="1" pad="1"/>
+<connect gate="A" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
+</technologies>
+</device>
+<device name="" package="1X02">
+<connects>
+<connect gate="A" pin="1" pad="1"/>
+<connect gate="A" pin="2" pad="2"/>
+</connects>
+<technologies>
+<technology name=""/>
 </technologies>
 </device>
 </devices>
@@ -11390,6 +11465,7 @@ Source: 008-0260-0_E.pdf</description>
 <part name="R401" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="+3V3_1" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="R301" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="JP201" library="df4iah_connector" deviceset="HEADER-1X2" device="" value="POW"/>
 </parts>
 <sheets>
 <sheet>
@@ -12101,7 +12177,7 @@ Source: 008-0260-0_E.pdf</description>
 <attribute name="NAME" x="151.384" y="142.621" size="1.778" layer="95"/>
 <attribute name="VALUE" x="151.384" y="140.081" size="1.778" layer="96"/>
 </instance>
-<instance part="+5V0_201" gate="G$1" x="83.82" y="170.18"/>
+<instance part="+5V0_201" gate="G$1" x="81.28" y="170.18"/>
 <instance part="R211" gate="G$1" x="78.74" y="50.8"/>
 <instance part="R212" gate="G$1" x="78.74" y="43.18"/>
 <instance part="+3V3_211" gate="G$1" x="66.04" y="60.96"/>
@@ -12151,6 +12227,9 @@ Source: 008-0260-0_E.pdf</description>
 <instance part="R234" gate="G$1" x="193.04" y="30.48"/>
 <instance part="R241" gate="G$1" x="195.58" y="96.52"/>
 <instance part="R251" gate="G$1" x="96.52" y="35.56"/>
+<instance part="JP201" gate="A" x="63.5" y="104.14" smashed="yes" rot="MR0">
+<attribute name="NAME" x="59.944" y="109.22" size="1.778" layer="95" ratio="10" rot="MR180"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -12304,10 +12383,10 @@ Source: 008-0260-0_E.pdf</description>
 <net name="+5V" class="4">
 <segment>
 <pinref part="+5V0_201" gate="G$1" pin="+5V"/>
-<pinref part="U201" gate="G$1" pin="VBUS"/>
-<wire x1="83.82" y1="167.64" x2="83.82" y2="101.6" width="0.1524" layer="91"/>
-<wire x1="83.82" y1="101.6" x2="93.98" y2="101.6" width="0.1524" layer="91"/>
-<label x="83.82" y="165.1" size="1.778" layer="95" xref="yes"/>
+<wire x1="81.28" y1="167.64" x2="81.28" y2="104.14" width="0.1524" layer="91"/>
+<label x="81.28" y="165.1" size="1.778" layer="95" xref="yes"/>
+<pinref part="JP201" gate="A" pin="1"/>
+<wire x1="81.28" y1="104.14" x2="66.04" y2="104.14" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="SIM_VCC" class="0">
@@ -12686,6 +12765,14 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="91.44" y1="35.56" x2="88.9" y2="35.56" width="0.1524" layer="91"/>
 <label x="88.9" y="35.56" size="1.778" layer="97" rot="R180" xref="yes"/>
 <pinref part="R251" gate="G$1" pin="1"/>
+</segment>
+</net>
+<net name="SIM_VBUS" class="0">
+<segment>
+<pinref part="U201" gate="G$1" pin="VBUS"/>
+<wire x1="93.98" y1="101.6" x2="66.04" y2="101.6" width="0.1524" layer="91"/>
+<pinref part="JP201" gate="A" pin="2"/>
+<label x="68.58" y="99.06" size="1.778" layer="95"/>
 </segment>
 </net>
 </nets>
@@ -14211,7 +14298,7 @@ Source: 008-0260-0_E.pdf</description>
 <approved hash="202,2,93.98,114.3,U201,MIC1N,,,,"/>
 <approved hash="202,2,93.98,106.68,U201,ADC1,,,,"/>
 <approved hash="202,2,93.98,104.14,U201,ADC2,,,,"/>
-<approved hash="104,2,93.98,101.6,U201,VBUS,+5V,,,"/>
+<approved hash="104,2,93.98,101.6,U201,VBUS,SIM_VBUS,,,"/>
 <approved hash="104,2,93.98,91.44,U201,SIM_VDD,SIM_VCC,,,"/>
 <approved hash="202,2,165.1,96.52,U201,COL3,,,,"/>
 <approved hash="202,2,165.1,99.06,U201,COL2,,,,"/>
