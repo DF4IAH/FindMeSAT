@@ -11299,7 +11299,7 @@ Source: 008-0260-0_E.pdf</description>
 <part name="U101" library="df4iah_processors" deviceset="ATXMEGA256A3BU-AU" device=""/>
 <part name="GND1092" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="+3V3_1091" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="L191" library="rcl" deviceset="L-EU" device="L5650M" value="10uH"/>
+<part name="L191" library="rcl" deviceset="R-EU_" device="R0603" value="10uH"/>
 <part name="C191" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="C193" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="C195" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
@@ -11575,6 +11575,7 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="66.04" y1="152.4" x2="66.04" y2="167.64" width="0.1524" layer="91"/>
 <pinref part="JP181" gate="G$1" pin="1"/>
 <wire x1="66.04" y1="167.64" x2="95.25" y2="167.64" width="0.1524" layer="91"/>
+<label x="78.74" y="167.64" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="+3V0" class="0">
@@ -11643,7 +11644,7 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="35.56" y1="53.34" x2="35.56" y2="45.72" width="0.1524" layer="91"/>
 <pinref part="JP131" gate="G$1" pin="1"/>
 <wire x1="35.56" y1="45.72" x2="38.1" y2="45.72" width="0.1524" layer="91"/>
-<label x="37.846" y="54.356" size="1.778" layer="95"/>
+<label x="22.86" y="45.72" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="PDI_CLK" class="0">
@@ -11662,7 +11663,7 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="27.94" y1="124.46" x2="27.94" y2="106.68" width="0.1524" layer="91"/>
 <junction x="27.94" y="106.68"/>
 <pinref part="JP111" gate="G$1" pin="6"/>
-<label x="38.1" y="30.48" size="1.778" layer="95"/>
+<label x="22.86" y="40.64" size="1.778" layer="95"/>
 <label x="30.48" y="113.03" size="1.778" layer="95" rot="R90"/>
 </segment>
 </net>
@@ -12092,6 +12093,7 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="71.12" y1="129.54" x2="71.12" y2="165.1" width="0.1524" layer="91"/>
 <pinref part="JP181" gate="G$1" pin="3"/>
 <wire x1="71.12" y1="165.1" x2="95.25" y2="165.1" width="0.1524" layer="91"/>
+<label x="78.74" y="165.1" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="IO_ADC5" class="0">
@@ -12101,6 +12103,7 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="73.66" y1="127" x2="73.66" y2="162.56" width="0.1524" layer="91"/>
 <pinref part="JP181" gate="G$1" pin="5"/>
 <wire x1="73.66" y1="162.56" x2="95.25" y2="162.56" width="0.1524" layer="91"/>
+<label x="78.74" y="162.56" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="IO_OC1A" class="0">
@@ -12112,6 +12115,7 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="132.08" y1="149.86" x2="132.08" y2="129.54" width="0.1524" layer="91"/>
 <pinref part="U101" gate="A" pin="PD4"/>
 <wire x1="132.08" y1="129.54" x2="129.54" y2="129.54" width="0.1524" layer="91"/>
+<label x="121.92" y="167.64" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="IO_DAC0" class="0">
@@ -12123,6 +12127,7 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="116.84" y1="149.86" x2="116.84" y2="165.1" width="0.1524" layer="91"/>
 <wire x1="116.84" y1="165.1" x2="105.41" y2="165.1" width="0.1524" layer="91"/>
 <pinref part="JP181" gate="G$1" pin="4"/>
+<label x="121.92" y="165.1" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="IO_DAC1" class="0">
@@ -12134,6 +12139,7 @@ Source: 008-0260-0_E.pdf</description>
 <wire x1="114.3" y1="152.4" x2="114.3" y2="162.56" width="0.1524" layer="91"/>
 <wire x1="114.3" y1="162.56" x2="105.41" y2="162.56" width="0.1524" layer="91"/>
 <pinref part="JP181" gate="G$1" pin="6"/>
+<label x="121.92" y="162.56" size="1.778" layer="95"/>
 </segment>
 </net>
 <net name="USB_ID" class="0">
@@ -13870,7 +13876,10 @@ Source: 008-0260-0_E.pdf</description>
 </instance>
 <instance part="GND1092" gate="1" x="127" y="27.94"/>
 <instance part="+3V3_1091" gate="G$1" x="25.4" y="81.28"/>
-<instance part="L191" gate="G$1" x="33.02" y="50.8" rot="R270"/>
+<instance part="L191" gate="G$1" x="33.02" y="50.8" smashed="yes" rot="R180">
+<attribute name="NAME" x="29.21" y="52.2986" size="1.778" layer="95"/>
+<attribute name="VALUE" x="29.21" y="47.498" size="1.778" layer="96"/>
+</instance>
 <instance part="C191" gate="G$1" x="45.72" y="45.72"/>
 <instance part="C193" gate="G$1" x="55.88" y="45.72"/>
 <instance part="C195" gate="G$1" x="66.04" y="45.72"/>
