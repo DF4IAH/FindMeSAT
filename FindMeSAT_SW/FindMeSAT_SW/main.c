@@ -1,9 +1,10 @@
-/**
- * \file
+/*
+ * FindMeSAT
+ * main.c
  *
- * \brief Empty user application template
- *
- */
+ * Created: 22.01.2017 13:13:47
+ * Author : DF4IAH
+ */ 
 
 /**
  * \mainpage User Application template doxygen documentation
@@ -30,12 +31,19 @@
  */
 #include <asf.h>
 
-int main_TEMPLATE(void)
+//#include <avr/io.h>
+
+
+int main(void)
 {
 	/* Insert system clock initialization code here (sysclk_init()). */
 
 	board_init();
 
 	/* Insert application code here, after the board has been initialized. */
-	return 0;
+
+    /* Replace with your application code */
+    while (1) 
+    {
+    }
 }
