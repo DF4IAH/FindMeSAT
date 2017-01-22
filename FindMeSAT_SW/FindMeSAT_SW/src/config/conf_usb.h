@@ -49,7 +49,6 @@
 
 #include "compiler.h"
 
-#warning You must refill the following definitions with a correct values
 
 /**
  * USB Device Configuration
@@ -63,8 +62,8 @@
 #define  USB_DEVICE_MINOR_VERSION         0
 #define  USB_DEVICE_POWER                 500  // Consumption on Vbus line (mA)
 #define  USB_DEVICE_ATTR                  \
-// (USB_CONFIG_ATTR_SELF_POWERED)
 (USB_CONFIG_ATTR_BUS_POWERED)
+// (USB_CONFIG_ATTR_SELF_POWERED)
 // (USB_CONFIG_ATTR_REMOTE_WAKEUP|USB_CONFIG_ATTR_SELF_POWERED)
 // (USB_CONFIG_ATTR_REMOTE_WAKEUP|USB_CONFIG_ATTR_BUS_POWERED)
 
