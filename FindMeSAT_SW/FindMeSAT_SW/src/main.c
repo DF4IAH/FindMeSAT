@@ -1,7 +1,11 @@
 /**
  * \file
  *
- * \brief Empty user application template
+ * \brief FindMeSAT
+ * main.c
+ *
+ * Created: 22.01.2017 13:13:47
+ * Author : DF4IAH
  *
  */
 
@@ -30,12 +34,21 @@
  */
 #include <asf.h>
 
-int main_TEMPLATE(void)
+int main(void)
 {
 	/* Insert system clock initialization code here (sysclk_init()). */
+	sysclk_init();
 
 	board_init();
+	
+	/* Enabling USB handling */
+	udd_enable();
 
 	/* Insert application code here, after the board has been initialized. */
+    /* Replace with your application code */
+    while (1)
+    {
+    }
+
 	return 0;
 }
