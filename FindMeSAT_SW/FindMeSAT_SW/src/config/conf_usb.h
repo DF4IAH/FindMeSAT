@@ -48,6 +48,7 @@
 #define _CONF_USB_H_
 
 #include "compiler.h"
+#include "usb_protocol_cdc.h"
 
 
 /**
@@ -60,12 +61,12 @@
 #define  USB_DEVICE_PRODUCT_ID            USB_PID_ATMEL_ASF_CDC
 #define  USB_DEVICE_MAJOR_VERSION         1
 #define  USB_DEVICE_MINOR_VERSION         0
-#define  USB_DEVICE_POWER                 500  // Consumption on Vbus line (mA)
+#define  USB_DEVICE_POWER                 400  // Consumption on Vbus line (mA)
 #define  USB_DEVICE_ATTR                  \
-(USB_CONFIG_ATTR_BUS_POWERED)
+(USB_CONFIG_ATTR_REMOTE_WAKEUP|USB_CONFIG_ATTR_BUS_POWERED)
+// (USB_CONFIG_ATTR_BUS_POWERED)
 // (USB_CONFIG_ATTR_SELF_POWERED)
 // (USB_CONFIG_ATTR_REMOTE_WAKEUP|USB_CONFIG_ATTR_SELF_POWERED)
-// (USB_CONFIG_ATTR_REMOTE_WAKEUP|USB_CONFIG_ATTR_BUS_POWERED)
 
 //! USB Device string definitions (Optional)
 #define  USB_DEVICE_MANUFACTURE_NAME      "DF4IAH Solutions"
@@ -93,16 +94,16 @@
 // extern void user_callback_vbus_action(bool b_vbus_high);
 // #define  UDC_SOF_EVENT()                  user_callback_sof_action()
 // extern void user_callback_sof_action(void);
-// #define  UDC_SUSPEND_EVENT()              user_callback_suspend_action()
-// extern void user_callback_suspend_action(void);
-// #define  UDC_RESUME_EVENT()               user_callback_resume_action()
-// extern void user_callback_resume_action(void);
+#define  UDC_SUSPEND_EVENT()              usb_callback_suspend_action()
+extern void usb_callback_suspend_action(void);
+#define  UDC_RESUME_EVENT()               usb_callback_resume_action()
+extern void usb_callback_resume_action(void);
 // Mandatory when USB_DEVICE_ATTR authorizes remote wakeup feature
-// #define  UDC_REMOTEWAKEUP_ENABLE()        user_callback_remotewakeup_enable()
-// extern void user_callback_remotewakeup_enable(void);
-// #define  UDC_REMOTEWAKEUP_DISABLE()       user_callback_remotewakeup_disable()
-// extern void user_callback_remotewakeup_disable(void);
-// When a extra string descriptor must be supported
+#define  UDC_REMOTEWAKEUP_ENABLE()        usb_callback_remotewakeup_enable()
+extern void usb_callback_remotewakeup_enable(void);
+#define  UDC_REMOTEWAKEUP_DISABLE()       usb_callback_remotewakeup_disable()
+extern void usb_callback_remotewakeup_disable(void);
+// When an extra string descriptor must be supported
 // other than manufacturer, product and serial string
 // #define  UDC_GET_EXTRA_STRING()
 //@}
@@ -123,28 +124,28 @@
 #define  UDI_CDC_PORT_NB 1
 
 //! Interface callback definition
-#define  UDI_CDC_ENABLE_EXT(port)          true
-#define  UDI_CDC_DISABLE_EXT(port)
-#define  UDI_CDC_RX_NOTIFY(port)
-#define  UDI_CDC_TX_EMPTY_NOTIFY(port)
-#define  UDI_CDC_SET_CODING_EXT(port,cfg)
-#define  UDI_CDC_SET_DTR_EXT(port,set)
-#define  UDI_CDC_SET_RTS_EXT(port,set)
+//#define  UDI_CDC_ENABLE_EXT(port)          true
+//#define  UDI_CDC_DISABLE_EXT(port)
+//#define  UDI_CDC_RX_NOTIFY(port)
+//#define  UDI_CDC_TX_EMPTY_NOTIFY(port)
+//#define  UDI_CDC_SET_CODING_EXT(port,cfg)
+//#define  UDI_CDC_SET_DTR_EXT(port,set)
+//#define  UDI_CDC_SET_RTS_EXT(port,set)
 
-// #define UDI_CDC_ENABLE_EXT(port) my_callback_cdc_enable()
-// extern bool my_callback_cdc_enable(void);
-// #define UDI_CDC_DISABLE_EXT(port) my_callback_cdc_disable()
-// extern void my_callback_cdc_disable(void);
-// #define  UDI_CDC_RX_NOTIFY(port) my_callback_rx_notify(port)
-// extern void my_callback_rx_notify(uint8_t port);
-// #define  UDI_CDC_TX_EMPTY_NOTIFY(port) my_callback_tx_empty_notify(port)
-// extern void my_callback_tx_empty_notify(uint8_t port);
-// #define  UDI_CDC_SET_CODING_EXT(port,cfg) my_callback_config(port,cfg)
-// extern void my_callback_config(uint8_t port, usb_cdc_line_coding_t * cfg);
-// #define  UDI_CDC_SET_DTR_EXT(port,set) my_callback_cdc_set_dtr(port,set)
-// extern void my_callback_cdc_set_dtr(uint8_t port, bool b_enable);
-// #define  UDI_CDC_SET_RTS_EXT(port,set) my_callback_cdc_set_rts(port,set)
-// extern void my_callback_cdc_set_rts(uint8_t port, bool b_enable);
+#define UDI_CDC_ENABLE_EXT(port) usb_callback_cdc_enable()
+extern bool usb_callback_cdc_enable(void);
+#define UDI_CDC_DISABLE_EXT(port) usb_callback_cdc_disable()
+extern void usb_callback_cdc_disable(void);
+#define  UDI_CDC_RX_NOTIFY(port) usb_callback_rx_notify(port)
+extern void usb_callback_rx_notify(uint8_t port);
+#define  UDI_CDC_TX_EMPTY_NOTIFY(port) usb_callback_tx_empty_notify(port)
+extern void usb_callback_tx_empty_notify(uint8_t port);
+#define  UDI_CDC_SET_CODING_EXT(port,cfg) usb_callback_config(port,cfg)
+extern void usb_callback_config(uint8_t port, usb_cdc_line_coding_t * cfg);
+#define  UDI_CDC_SET_DTR_EXT(port,set) usb_callback_cdc_set_dtr(port,set)
+extern void usb_callback_cdc_set_dtr(uint8_t port, bool b_enable);
+#define  UDI_CDC_SET_RTS_EXT(port,set) usb_callback_cdc_set_rts(port,set)
+extern void usb_callback_cdc_set_rts(uint8_t port, bool b_enable);
 
 //! Define it when the transfer CDC Device to Host is a low rate (<512000 bauds)
 //! to reduce CDC buffers size
@@ -155,6 +156,9 @@
 #define  UDI_CDC_DEFAULT_STOPBITS         CDC_STOP_BITS_1
 #define  UDI_CDC_DEFAULT_PARITY           CDC_PAR_NONE
 #define  UDI_CDC_DEFAULT_DATABITS         8
+
+#include "udi_cdc_conf.h"
+
 //@}
 //@}
 

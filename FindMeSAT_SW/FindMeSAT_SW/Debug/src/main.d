@@ -61,7 +61,7 @@ src/main.d src/main.o: ../src/main.c ../src/asf.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\gcc\avr\4.9.2\include\stdarg.h \
  ../src/ASF/common/services/usb/udc/udc.h \
  ../src/ASF/common/services/usb/udc/udd.h \
- ../src/ASF/xmega/utils/status_codes.h
+ ../src/ASF/xmega/utils/status_codes.h ../src/main.h
 
 ../src/asf.h:
 
@@ -196,3 +196,5 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\lib\
 ../src/ASF/common/services/usb/udc/udd.h:
 
 ../src/ASF/xmega/utils/status_codes.h:
+
+../src/main.h:

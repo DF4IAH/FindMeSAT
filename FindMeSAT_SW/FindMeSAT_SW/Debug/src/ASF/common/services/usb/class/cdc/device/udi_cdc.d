@@ -30,8 +30,8 @@ src/ASF/common/services/usb/class/cdc/device/udi_cdc.d \
  ../src/ASF/common/utils/interrupt.h \
  ../src/ASF/common/utils/interrupt/interrupt_avr8.h \
  c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\interrupt.h \
- ../src/ASF/common/services/usb/class/cdc/device/udi_cdc_conf.h \
  ../src/ASF/common/services/usb/class/cdc/usb_protocol_cdc.h \
+ ../src/ASF/common/services/usb/class/cdc/device/udi_cdc_conf.h \
  ../src/ASF/common/services/usb/usb_protocol.h \
  ../src/ASF/common/services/usb/usb_atmel.h \
  ../src/ASF/common/services/usb/udc/udd.h \
@@ -104,9 +104,9 @@ c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\
 
 c:\program\ files\ (x86)\atmel\studio\7.0\toolchain\avr8\avr8-gnu-toolchain\avr\include\avr\interrupt.h:
 
-../src/ASF/common/services/usb/class/cdc/device/udi_cdc_conf.h:
-
 ../src/ASF/common/services/usb/class/cdc/usb_protocol_cdc.h:
+
+../src/ASF/common/services/usb/class/cdc/device/udi_cdc_conf.h:
 
 ../src/ASF/common/services/usb/usb_protocol.h:
 

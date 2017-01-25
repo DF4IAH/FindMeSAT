@@ -1,7 +1,7 @@
 /**
  * \file
  *
- * \brief User board configuration template
+ * \brief User board configuration for FindMeSAT
  *
  */
 /*
@@ -10,5 +10,11 @@
 
 #ifndef CONF_BOARD_H
 #define CONF_BOARD_H
+
+/* USB pins are used */
+//#define CONF_BOARD_USB_PORT
+
+/* Enable USB VBUS detect */
+//#define CONF_BOARD_USB_VBUS_DETECT
 
 #endif // CONF_BOARD_H
