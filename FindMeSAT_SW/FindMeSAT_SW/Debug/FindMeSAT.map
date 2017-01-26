@@ -193,7 +193,7 @@ Discarded input sections
  .debug_macro   0x00000000       0xf0 src/ASF/xmega/drivers/usb/usb_device.o
  .debug_macro   0x00000000       0x4c src/ASF/xmega/drivers/usb/usb_device.o
  .debug_macro   0x00000000      0x2c6 src/ASF/xmega/drivers/usb/usb_device.o
- .debug_macro   0x00000000      0x24a src/ASF/xmega/drivers/usb/usb_device.o
+ .debug_macro   0x00000000      0x292 src/ASF/xmega/drivers/usb/usb_device.o
  .debug_macro   0x00000000       0x7d src/ASF/xmega/drivers/usb/usb_device.o
  .debug_macro   0x00000000       0x2f src/ASF/xmega/drivers/usb/usb_device.o
  .debug_macro   0x00000000      0x154 src/ASF/xmega/drivers/usb/usb_device.o
@@ -297,7 +297,7 @@ Discarded input sections
  .debug_macro   0x00000000       0x32 src/main.o
  .debug_macro   0x00000000       0xe4 src/main.o
  .debug_macro   0x00000000       0x34 src/main.o
- .debug_macro   0x00000000      0x24a src/main.o
+ .debug_macro   0x00000000      0x292 src/main.o
  .debug_macro   0x00000000      0x2c6 src/main.o
  .debug_macro   0x00000000       0x26 src/main.o
  .debug_macro   0x00000000       0x42 src/main.o
@@ -395,7 +395,7 @@ Discarded input sections
  .debug_macro   0x00000000       0xe4 src/ASF/common/services/clock/xmega/sysclk.o
  .debug_macro   0x00000000       0x4c src/ASF/common/services/clock/xmega/sysclk.o
  .debug_macro   0x00000000      0x2c6 src/ASF/common/services/clock/xmega/sysclk.o
- .debug_macro   0x00000000      0x24a src/ASF/common/services/clock/xmega/sysclk.o
+ .debug_macro   0x00000000      0x292 src/ASF/common/services/clock/xmega/sysclk.o
  .debug_macro   0x00000000       0x7d src/ASF/common/services/clock/xmega/sysclk.o
  .debug_macro   0x00000000       0x2f src/ASF/common/services/clock/xmega/sysclk.o
  .debug_macro   0x00000000      0x154 src/ASF/common/services/clock/xmega/sysclk.o
@@ -2105,24 +2105,24 @@ END GROUP
  .debug_frame   0x00000610      0x43c src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .debug_frame   0x00000a4c      0x114 src/ASF/common/services/usb/udc/udc.o
 
-.debug_str      0x00000000    0x36554
+.debug_str      0x00000000    0x36734
  *(.debug_str)
  .debug_str     0x00000000     0x21e4 C:/Program Files (x86)/Atmel/Studio/7.0/Packs/atmel/XMEGAA_DFP/1.1.63/gcc/dev/atxmega256a3bu/avrxmega6/crtatxmega256a3bu.o
- .debug_str     0x000021e4    0x2e2b7 src/ASF/common/boards/user_board/init.o
-                              0x2e968 (size before relaxing)
- .debug_str     0x0003049b     0x4076 src/ASF/xmega/drivers/usb/usb_device.o
-                              0x30fa8 (size before relaxing)
- .debug_str     0x00034511      0x2ee src/main.o
-                              0x2ed9c (size before relaxing)
- .debug_str     0x000347ff      0x442 src/ASF/common/services/clock/xmega/sysclk.o
-                              0x2ade4 (size before relaxing)
- .debug_str     0x00034c41       0x35 src/ASF/common/services/sleepmgr/xmega/sleepmgr.o
+ .debug_str     0x000021e4    0x2e497 src/ASF/common/boards/user_board/init.o
+                              0x2eb48 (size before relaxing)
+ .debug_str     0x0003067b     0x4076 src/ASF/xmega/drivers/usb/usb_device.o
+                              0x31188 (size before relaxing)
+ .debug_str     0x000346f1      0x2ee src/main.o
+                              0x2ef7c (size before relaxing)
+ .debug_str     0x000349df      0x442 src/ASF/common/services/clock/xmega/sysclk.o
+                              0x2afc4 (size before relaxing)
+ .debug_str     0x00034e21       0x35 src/ASF/common/services/sleepmgr/xmega/sleepmgr.o
                               0x28731 (size before relaxing)
- .debug_str     0x00034c76      0xc50 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+ .debug_str     0x00034e56      0xc50 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
                               0x2d0ac (size before relaxing)
- .debug_str     0x000358c6      0x56b src/ASF/common/services/usb/class/cdc/device/udi_cdc_desc.o
+ .debug_str     0x00035aa6      0x56b src/ASF/common/services/usb/class/cdc/device/udi_cdc_desc.o
                               0x2c653 (size before relaxing)
- .debug_str     0x00035e31      0x723 src/ASF/common/services/usb/udc/udc.o
+ .debug_str     0x00036011      0x723 src/ASF/common/services/usb/udc/udc.o
                               0x2b827 (size before relaxing)
 
 .debug_loc      0x00000000     0x2f94
@@ -2161,7 +2161,7 @@ END GROUP
  .debug_ranges  0x000003d0       0xc8 src/ASF/common/services/usb/udc/udc.o
  .debug_ranges  0x00000498       0x20 src/ASF/xmega/drivers/nvm/nvm_asm.o
 
-.debug_macro    0x00000000     0xb5c7
+.debug_macro    0x00000000     0xb60f
  *(.debug_macro)
  .debug_macro   0x00000000      0x300 src/ASF/common/boards/user_board/init.o
  .debug_macro   0x00000300      0xa8a src/ASF/common/boards/user_board/init.o
@@ -2196,35 +2196,35 @@ END GROUP
  .debug_macro   0x00008d12       0x32 src/ASF/common/boards/user_board/init.o
  .debug_macro   0x00008d44       0xe4 src/ASF/common/boards/user_board/init.o
  .debug_macro   0x00008e28       0x34 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x00008e5c      0x24a src/ASF/common/boards/user_board/init.o
- .debug_macro   0x000090a6      0x2c6 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x0000936c       0x26 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x00009392       0x42 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x000093d4       0x10 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x000093e4       0x4c src/ASF/common/boards/user_board/init.o
- .debug_macro   0x00009430       0x7d src/ASF/common/boards/user_board/init.o
- .debug_macro   0x000094ad       0x2f src/ASF/common/boards/user_board/init.o
- .debug_macro   0x000094dc      0x154 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x00009630      0x228 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x00009858       0xb2 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x0000990a       0xf0 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x000099fa      0x24b src/ASF/common/boards/user_board/init.o
- .debug_macro   0x00009c45      0x162 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x00009da7       0x16 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x00009dbd       0x1c src/ASF/common/boards/user_board/init.o
- .debug_macro   0x00009dd9      0x192 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x00009f6b       0x58 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x00009fc3       0x10 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x00009fd3       0xf2 src/ASF/common/boards/user_board/init.o
- .debug_macro   0x0000a0c5      0x2bf src/ASF/xmega/drivers/usb/usb_device.o
- .debug_macro   0x0000a384       0xac src/ASF/xmega/drivers/usb/usb_device.o
- .debug_macro   0x0000a430      0x46a src/ASF/xmega/drivers/usb/usb_device.o
- .debug_macro   0x0000a89a       0x16 src/ASF/xmega/drivers/usb/usb_device.o
- .debug_macro   0x0000a8b0      0x300 src/main.o
- .debug_macro   0x0000abb0      0x1db src/ASF/common/services/clock/xmega/sysclk.o
- .debug_macro   0x0000ad8b      0x1a3 src/ASF/common/services/sleepmgr/xmega/sleepmgr.o
- .debug_macro   0x0000af2e      0x299 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
- .debug_macro   0x0000b1c7      0x20a src/ASF/common/services/usb/class/cdc/device/udi_cdc_desc.o
- .debug_macro   0x0000b3d1      0x1f6 src/ASF/common/services/usb/udc/udc.o
+ .debug_macro   0x00008e5c      0x292 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x000090ee      0x2c6 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x000093b4       0x26 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x000093da       0x42 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x0000941c       0x10 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x0000942c       0x4c src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x00009478       0x7d src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x000094f5       0x2f src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x00009524      0x154 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x00009678      0x228 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x000098a0       0xb2 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x00009952       0xf0 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x00009a42      0x24b src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x00009c8d      0x162 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x00009def       0x16 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x00009e05       0x1c src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x00009e21      0x192 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x00009fb3       0x58 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x0000a00b       0x10 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x0000a01b       0xf2 src/ASF/common/boards/user_board/init.o
+ .debug_macro   0x0000a10d      0x2bf src/ASF/xmega/drivers/usb/usb_device.o
+ .debug_macro   0x0000a3cc       0xac src/ASF/xmega/drivers/usb/usb_device.o
+ .debug_macro   0x0000a478      0x46a src/ASF/xmega/drivers/usb/usb_device.o
+ .debug_macro   0x0000a8e2       0x16 src/ASF/xmega/drivers/usb/usb_device.o
+ .debug_macro   0x0000a8f8      0x300 src/main.o
+ .debug_macro   0x0000abf8      0x1db src/ASF/common/services/clock/xmega/sysclk.o
+ .debug_macro   0x0000add3      0x1a3 src/ASF/common/services/sleepmgr/xmega/sleepmgr.o
+ .debug_macro   0x0000af76      0x299 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+ .debug_macro   0x0000b20f      0x20a src/ASF/common/services/usb/class/cdc/device/udi_cdc_desc.o
+ .debug_macro   0x0000b419      0x1f6 src/ASF/common/services/usb/udc/udc.o
 OUTPUT(FindMeSAT.elf elf32-avr)
 LOAD linker stubs
