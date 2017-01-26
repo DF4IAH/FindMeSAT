@@ -68,6 +68,7 @@ SUBDIRS :=  \
 
 # Add inputs and outputs from these tool invocations to the build variables 
 C_SRCS +=  \
+../src/ASF/common/boards/user_board/init.c \
 ../src/ASF/xmega/drivers/usb/usb_device.c \
 ../src/main.c \
 ../src/ASF/common/services/clock/xmega/sysclk.c \
@@ -78,8 +79,7 @@ C_SRCS +=  \
 ../src/ASF/common/utils/stdio/read.c \
 ../src/ASF/common/utils/stdio/stdio_usb/stdio_usb.c \
 ../src/ASF/common/utils/stdio/write.c \
-../src/ASF/xmega/drivers/nvm/nvm.c \
-../src/ASF/common/boards/user_board/init.c
+../src/ASF/xmega/drivers/nvm/nvm.c
 
 
 PREPROCESSING_SRCS +=  \
@@ -91,6 +91,7 @@ ASM_SRCS +=
 
 
 OBJS +=  \
+src/ASF/common/boards/user_board/init.o \
 src/ASF/xmega/drivers/usb/usb_device.o \
 src/main.o \
 src/ASF/common/services/clock/xmega/sysclk.o \
@@ -103,10 +104,10 @@ src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o \
 src/ASF/common/utils/stdio/write.o \
 src/ASF/xmega/drivers/nvm/nvm.o \
 src/ASF/xmega/drivers/nvm/nvm_asm.o \
-src/ASF/xmega/drivers/cpu/ccp.o \
-src/ASF/common/boards/user_board/init.o
+src/ASF/xmega/drivers/cpu/ccp.o
 
 OBJS_AS_ARGS +=  \
+src/ASF/common/boards/user_board/init.o \
 src/ASF/xmega/drivers/usb/usb_device.o \
 src/main.o \
 src/ASF/common/services/clock/xmega/sysclk.o \
@@ -119,10 +120,10 @@ src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o \
 src/ASF/common/utils/stdio/write.o \
 src/ASF/xmega/drivers/nvm/nvm.o \
 src/ASF/xmega/drivers/nvm/nvm_asm.o \
-src/ASF/xmega/drivers/cpu/ccp.o \
-src/ASF/common/boards/user_board/init.o
+src/ASF/xmega/drivers/cpu/ccp.o
 
 C_DEPS +=  \
+src/ASF/common/boards/user_board/init.d \
 src/ASF/xmega/drivers/usb/usb_device.d \
 src/main.d \
 src/ASF/common/services/clock/xmega/sysclk.d \
@@ -135,10 +136,10 @@ src/ASF/common/utils/stdio/stdio_usb/stdio_usb.d \
 src/ASF/common/utils/stdio/write.d \
 src/ASF/xmega/drivers/nvm/nvm.d \
 src/ASF/xmega/drivers/nvm/nvm_asm.d \
-src/ASF/xmega/drivers/cpu/ccp.d \
-src/ASF/common/boards/user_board/init.d
+src/ASF/xmega/drivers/cpu/ccp.d
 
 C_DEPS_AS_ARGS +=  \
+src/ASF/common/boards/user_board/init.d \
 src/ASF/xmega/drivers/usb/usb_device.d \
 src/main.d \
 src/ASF/common/services/clock/xmega/sysclk.d \
@@ -151,8 +152,7 @@ src/ASF/common/utils/stdio/stdio_usb/stdio_usb.d \
 src/ASF/common/utils/stdio/write.d \
 src/ASF/xmega/drivers/nvm/nvm.d \
 src/ASF/xmega/drivers/nvm/nvm_asm.d \
-src/ASF/xmega/drivers/cpu/ccp.d \
-src/ASF/common/boards/user_board/init.d
+src/ASF/xmega/drivers/cpu/ccp.d
 
 OUTPUT_FILE_PATH +=FindMeSAT.elf
 
@@ -192,6 +192,13 @@ LINKER_SCRIPT_DEP+=
 
 
 
+
+src/ASF/common/boards/user_board/%.o: ../src/ASF/common/boards/user_board/%.c
+	@echo Building file: $<
+	@echo Invoking: AVR/GNU C Compiler : 4.9.2
+	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -DDEBUG -DBOARD=USER_BOARD  -I"../src/ASF/common/boards/user_board" -I"../src/ASF/common/boards" -I"../src/ASF/xmega/utils/preprocessor" -I"../src/ASF/xmega/utils" -I"../src/ASF/common/utils" -I"../src" -I"../src/config" -I"../src/ASF/xmega/drivers/cpu" -I"../src/ASF/xmega/drivers/nvm" -I"../src/ASF/xmega/drivers/sleep" -I"../src/ASF/common/services/clock" -I"../src/ASF/common/services/sleepmgr" -I"../src/ASF/common/services/usb" -I"../src/ASF/common/services/usb/class/cdc" -I"../src/ASF/common/services/usb/class/cdc/device" -I"../src/ASF/common/services/usb/udc" -I"../src/ASF/common/utils/stdio/stdio_usb" -I"../src/ASF/xmega/drivers/usb" -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.63\include"  -O1 -fdata-sections -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g3 -Wall -mmcu=atxmega256a3bu -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.63\gcc\dev\atxmega256a3bu" -c -std=gnu99 -fno-strict-aliasing -Wstrict-prototypes -Wmissing-prototypes -Werror-implicit-function-declaration -Wpointer-arith -mrelax -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
+	@echo Finished building: $<
+	
 
 src/ASF/xmega/drivers/usb/%.o: ../src/ASF/xmega/drivers/usb/%.c
 	@echo Building file: $<
@@ -250,13 +257,6 @@ src/ASF/common/utils/stdio/stdio_usb/%.o: ../src/ASF/common/utils/stdio/stdio_us
 	
 
 src/ASF/xmega/drivers/nvm/%.o: ../src/ASF/xmega/drivers/nvm/%.c
-	@echo Building file: $<
-	@echo Invoking: AVR/GNU C Compiler : 4.9.2
-	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -DDEBUG -DBOARD=USER_BOARD  -I"../src/ASF/common/boards/user_board" -I"../src/ASF/common/boards" -I"../src/ASF/xmega/utils/preprocessor" -I"../src/ASF/xmega/utils" -I"../src/ASF/common/utils" -I"../src" -I"../src/config" -I"../src/ASF/xmega/drivers/cpu" -I"../src/ASF/xmega/drivers/nvm" -I"../src/ASF/xmega/drivers/sleep" -I"../src/ASF/common/services/clock" -I"../src/ASF/common/services/sleepmgr" -I"../src/ASF/common/services/usb" -I"../src/ASF/common/services/usb/class/cdc" -I"../src/ASF/common/services/usb/class/cdc/device" -I"../src/ASF/common/services/usb/udc" -I"../src/ASF/common/utils/stdio/stdio_usb" -I"../src/ASF/xmega/drivers/usb" -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.63\include"  -O1 -fdata-sections -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g3 -Wall -mmcu=atxmega256a3bu -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.63\gcc\dev\atxmega256a3bu" -c -std=gnu99 -fno-strict-aliasing -Wstrict-prototypes -Wmissing-prototypes -Werror-implicit-function-declaration -Wpointer-arith -mrelax -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 
-	@echo Finished building: $<
-	
-
-src/ASF/common/boards/user_board/%.o: ../src/ASF/common/boards/user_board/%.c
 	@echo Building file: $<
 	@echo Invoking: AVR/GNU C Compiler : 4.9.2
 	$(QUOTE)C:\Program Files (x86)\Atmel\Studio\7.0\toolchain\avr8\avr8-gnu-toolchain\bin\avr-gcc.exe$(QUOTE)  -x c -DDEBUG -DBOARD=USER_BOARD  -I"../src/ASF/common/boards/user_board" -I"../src/ASF/common/boards" -I"../src/ASF/xmega/utils/preprocessor" -I"../src/ASF/xmega/utils" -I"../src/ASF/common/utils" -I"../src" -I"../src/config" -I"../src/ASF/xmega/drivers/cpu" -I"../src/ASF/xmega/drivers/nvm" -I"../src/ASF/xmega/drivers/sleep" -I"../src/ASF/common/services/clock" -I"../src/ASF/common/services/sleepmgr" -I"../src/ASF/common/services/usb" -I"../src/ASF/common/services/usb/class/cdc" -I"../src/ASF/common/services/usb/class/cdc/device" -I"../src/ASF/common/services/usb/udc" -I"../src/ASF/common/utils/stdio/stdio_usb" -I"../src/ASF/xmega/drivers/usb" -I"C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.63\include"  -O1 -fdata-sections -ffunction-sections -fdata-sections -fpack-struct -fshort-enums -g3 -Wall -mmcu=atxmega256a3bu -B "C:\Program Files (x86)\Atmel\Studio\7.0\Packs\atmel\XMEGAA_DFP\1.1.63\gcc\dev\atxmega256a3bu" -c -std=gnu99 -fno-strict-aliasing -Wstrict-prototypes -Wmissing-prototypes -Werror-implicit-function-declaration -Wpointer-arith -mrelax -MD -MP -MF "$(@:%.o=%.d)" -MT"$(@:%.o=%.d)" -MT"$(@:%.o=%.o)"   -o "$@" "$<" 

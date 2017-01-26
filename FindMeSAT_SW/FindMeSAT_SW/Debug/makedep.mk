@@ -2,6 +2,8 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
+src\ASF\common\boards\user_board\init.c
+
 src\ASF\xmega\drivers\usb\usb_device.c
 
 src\main.c
@@ -27,6 +29,4 @@ src\ASF\xmega\drivers\nvm\nvm.c
 src\ASF\xmega\drivers\nvm\nvm_asm.s
 
 src\ASF\xmega\drivers\cpu\ccp.s
-
-src\ASF\common\boards\user_board\init.c
 
