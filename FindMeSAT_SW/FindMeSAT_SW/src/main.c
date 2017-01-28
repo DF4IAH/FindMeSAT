@@ -167,24 +167,50 @@ void halt(void)
 int main(void)
 {
 	uint8_t retcode = 0;
+	struct pwm_config pwm_vctcxo_cfg;
 	
+	pmic_init();
 	sysclk_init();
+
+
+	/* VCTCXO PWM signal generation */
+#if 1
+	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_D, 500);							// Init pwm structure and enable timer
+	pwm_start(&pwm_vctcxo_cfg, 45);												// Start PWM. Percentage with 1% granularity is to coarse, use driver access instead
+	tc_write_cc_buffer(&TCC0, TC_CCD, (uint16_t) (0.5f + 65536 * 1.5f/3.3f));	// Initial value for VCTCXO @ 1.5 V
+#else
+	tc_enable(&TCC0);
+	tc_set_wgm(&TCC0, TC_WG_SS);												// 16-bit counter with PWM signal generation
+	tc_write_period(&TCC0, 60000);												// Clock @ 30 MHz gives 500 iterations / sec for the VCTCXO pull-voltage low pass filter
+	tc_write_cc_buffer(&TCC0, TC_CCD, (uint16_t) (65536 * 1.5f/3.3f));			// Initial value for VCTCXO @ 1.5 V
+	tc_enable_cc_channels(&TCC0, TC_CCDEN);										// Enable PWM to pin alternate selection for TCC0D
+#endif
+
+	/* all interrupt sources prepared for enabling interrupt, here */
 	irq_initialize_vectors();
 	cpu_irq_enable();
+
+
+	/* all timer starts, here */
+	tc_write_clock_source(&TCC0, TC_TC0_CLKSEL_DIV1_gc);			// VCTCXO PWM start, output still is Z-state
+	
+	/* activates all in/out pins - transitions from Z to dedicated states */
 	board_init();
+	
+	/* unlocks all sleep mode levels */
 	sleepmgr_init();
-		
+	
 	/* USB device stack start function to enable stack and start USB */
 	udc_start();
 
-	/* Insert application code here, after the board has been initialized. */
-    /* Replace with your application code */
+
+	/* The application code */
 	runmode = (uint8_t) 1;
     while (runmode) {
 		task();
 		sleepmgr_enter_sleep();
     }
-
+	
 	cpu_irq_disable();
 	sleepmgr_enter_sleep();
 	

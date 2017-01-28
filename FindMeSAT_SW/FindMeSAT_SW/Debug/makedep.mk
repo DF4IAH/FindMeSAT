@@ -4,7 +4,11 @@
 
 src\ASF\common\boards\user_board\init.c
 
+src\ASF\xmega\drivers\tc\tc.c
+
 src\ASF\xmega\drivers\usb\usb_device.c
+
+src\ASF\xmega\services\pwm\pwm.c
 
 src\main.c
 

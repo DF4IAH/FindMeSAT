@@ -271,6 +271,8 @@
 // External oscillator startup time
 #define BOARD_XOSC_STARTUP_US  100000
 
+// for internal clock distribution @see conf_clock.h
+
 /**
  * @}
  */
