@@ -52,12 +52,18 @@
  * running the ASF driver selector tool. Any changes will be discarded.
  */
 
+// From module: ADC - XMEGA A/AU Implementation
+#include <adc.h>
+
 // From module: CPU specific features
 #include <ccp.h>
 #include <xmega_reset_cause.h>
 
 // From module: Common build items for user board support templates
 #include <user_board.h>
+
+// From module: DAC - Digital to Analog Converter
+#include <dac.h>
 
 // From module: Generic board support
 #include <board.h>

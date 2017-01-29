@@ -4,6 +4,12 @@
 
 src\ASF\common\boards\user_board\init.c
 
+src\ASF\xmega\drivers\adc\adc.c
+
+src\ASF\xmega\drivers\adc\xmega_aau\adc_aau.c
+
+src\ASF\xmega\drivers\dac\dac.c
+
 src\ASF\xmega\drivers\tc\tc.c
 
 src\ASF\xmega\drivers\usb\usb_device.c

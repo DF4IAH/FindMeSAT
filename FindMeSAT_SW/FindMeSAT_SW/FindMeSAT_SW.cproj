@@ -32,6 +32,8 @@
     <option id="common.boards" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.usb.class.device" value="Add" config="cdc_stdio" content-id="Atmel.ASF" />
     <option id="xmega.services.pwm" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="xmega.drivers.adc" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="xmega.drivers.dac" value="Add" config="" content-id="Atmel.ASF" />
   </options>
   <configurations>
     <configuration key="config.xmega.drivers.usb.device.sleepmgr" value="with_sleepmgr" default="with_sleepmgr" content-id="Atmel.ASF" />
@@ -105,6 +107,12 @@
     <file path="src/ASF/xmega/drivers/tc/tc.h" framework="" version="3.32.0" source="xmega\drivers\tc\tc.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/xmega/services/pwm/pwm.c" framework="" version="3.32.0" source="xmega\services\pwm\pwm.c" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/xmega/services/pwm/pwm.h" framework="" version="3.32.0" source="xmega\services\pwm\pwm.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/xmega/drivers/dac/dac.h" framework="" version="3.32.0" source="xmega\drivers\dac\dac.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.c" framework="" version="3.32.0" source="xmega\drivers\adc\xmega_aau\adc_aau.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/xmega/drivers/adc/adc.c" framework="" version="3.32.0" source="xmega\drivers\adc\adc.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/xmega/drivers/adc/adc.h" framework="" version="3.32.0" source="xmega\drivers\adc\adc.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/Config/conf_adc.h" framework="" version="3.32.0" source="xmega\drivers\adc\module_config\conf_adc.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/xmega/drivers/dac/dac.c" framework="" version="3.32.0" source="xmega\drivers\dac\dac.c" changed="False" content-id="Atmel.ASF" />
   </files>
   <documentation help="http://asf.atmel.com/docs/3.32.0/common.applications.user_application.user_board.xmegaau/html/index.html" />
   <offline-documentation help="" />
@@ -183,6 +191,8 @@
       <Value>../src/ASF/xmega/drivers/pmic</Value>
       <Value>../src/ASF/xmega/drivers/tc</Value>
       <Value>../src/ASF/xmega/services/pwm</Value>
+      <Value>../src/ASF/xmega/drivers/dac</Value>
+      <Value>../src/ASF/xmega/drivers/adc</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
@@ -217,6 +227,8 @@
       <Value>../src/ASF/xmega/drivers/pmic</Value>
       <Value>../src/ASF/xmega/drivers/tc</Value>
       <Value>../src/ASF/xmega/services/pwm</Value>
+      <Value>../src/ASF/xmega/drivers/dac</Value>
+      <Value>../src/ASF/xmega/drivers/adc</Value>
     </ListValues>
   </avrgcc.assembler.general.IncludePaths>
 </AvrGcc>
@@ -261,6 +273,8 @@
       <Value>../src/ASF/xmega/drivers/pmic</Value>
       <Value>../src/ASF/xmega/drivers/tc</Value>
       <Value>../src/ASF/xmega/services/pwm</Value>
+      <Value>../src/ASF/xmega/drivers/dac</Value>
+      <Value>../src/ASF/xmega/drivers/adc</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -296,6 +310,8 @@
       <Value>../src/ASF/xmega/drivers/pmic</Value>
       <Value>../src/ASF/xmega/drivers/tc</Value>
       <Value>../src/ASF/xmega/services/pwm</Value>
+      <Value>../src/ASF/xmega/drivers/dac</Value>
+      <Value>../src/ASF/xmega/drivers/adc</Value>
     </ListValues>
   </avrgcc.assembler.general.IncludePaths>
   <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
@@ -314,6 +330,21 @@
     <None Include="src\ASF\xmega\drivers\pmic\pmic.h">
       <SubType>compile</SubType>
     </None>
+    <None Include="src\ASF\xmega\drivers\dac\dac.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\xmega\drivers\adc\adc.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\xmega\drivers\adc\adc.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\xmega\drivers\adc\xmega_aau\adc_aau.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\ASF\xmega\drivers\dac\dac.c">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\ASF\xmega\drivers\tc\tc.c">
       <SubType>compile</SubType>
     </Compile>
@@ -329,6 +360,12 @@
     <None Include="src\ASF\xmega\services\pwm\pwm.h">
       <SubType>compile</SubType>
     </None>
+    <None Include="src\config\conf_adc.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\config\conf_dac.h">
+      <SubType>compile</SubType>
+    </Compile>
     <Compile Include="src\main.c">
       <SubType>compile</SubType>
     </Compile>
@@ -530,7 +567,10 @@
     <Folder Include="src\ASF\common\utils\stdio\stdio_usb\" />
     <Folder Include="src\ASF\xmega\" />
     <Folder Include="src\ASF\xmega\drivers\" />
+    <Folder Include="src\ASF\xmega\drivers\adc\" />
+    <Folder Include="src\ASF\xmega\drivers\adc\xmega_aau\" />
     <Folder Include="src\ASF\xmega\drivers\cpu\" />
+    <Folder Include="src\ASF\xmega\drivers\dac\" />
     <Folder Include="src\ASF\xmega\drivers\nvm\" />
     <Folder Include="src\ASF\xmega\drivers\pmic\" />
     <Folder Include="src\ASF\xmega\drivers\sleep\" />

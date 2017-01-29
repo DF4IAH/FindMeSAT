@@ -10,7 +10,14 @@
 #define MAIN_H_
 
 
-void usb_init(void);
+/* INIT section */
+
+static void evsys_init(void);
+static void tc_init(void);
+static void tc_start(void);
+static void adc_init(void);
+static void dac_init(void);
+static void usb_init(void);
 
 void usb_callback_suspend_action(void);
 void usb_callback_resume_action(void);
@@ -27,7 +34,12 @@ void usb_callback_cdc_set_rts(uint8_t port, bool b_enable);
 void usb_callback_rx_notify(uint8_t port);
 void usb_callback_tx_empty_notify(uint8_t port);
 
-void task(void);
+
+/* RUNNING section */
+
+static void task_dac(void);
+static void task_usb(void);
+static void task(void);
 
 void halt(void);
 
