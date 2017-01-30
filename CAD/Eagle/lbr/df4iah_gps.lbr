@@ -26,10 +26,10 @@
 <layer number="26" name="bNames" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="27" name="tValues" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="28" name="bValues" color="7" fill="1" visible="yes" active="yes"/>
-<layer number="29" name="tStop" color="7" fill="3" visible="no" active="yes"/>
-<layer number="30" name="bStop" color="7" fill="6" visible="no" active="yes"/>
-<layer number="31" name="tCream" color="7" fill="4" visible="no" active="yes"/>
-<layer number="32" name="bCream" color="7" fill="5" visible="no" active="yes"/>
+<layer number="29" name="tStop" color="7" fill="3" visible="yes" active="yes"/>
+<layer number="30" name="bStop" color="7" fill="6" visible="yes" active="yes"/>
+<layer number="31" name="tCream" color="7" fill="4" visible="yes" active="yes"/>
+<layer number="32" name="bCream" color="7" fill="5" visible="yes" active="yes"/>
 <layer number="33" name="tFinish" color="6" fill="3" visible="no" active="yes"/>
 <layer number="34" name="bFinish" color="6" fill="6" visible="no" active="yes"/>
 <layer number="35" name="tGlue" color="7" fill="4" visible="no" active="yes"/>
@@ -41,10 +41,10 @@
 <layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
 <layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
 <layer number="43" name="vRestrict" color="2" fill="10" visible="yes" active="yes"/>
-<layer number="44" name="Drills" color="7" fill="1" visible="no" active="yes"/>
-<layer number="45" name="Holes" color="7" fill="1" visible="no" active="yes"/>
-<layer number="46" name="Milling" color="3" fill="1" visible="no" active="yes"/>
-<layer number="47" name="Measures" color="7" fill="1" visible="no" active="yes"/>
+<layer number="44" name="Drills" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="45" name="Holes" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="46" name="Milling" color="3" fill="1" visible="yes" active="yes"/>
+<layer number="47" name="Measures" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="48" name="Document" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="49" name="Reference" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
@@ -61,12 +61,12 @@
 <layer number="98" name="Guide" color="6" fill="1" visible="yes" active="yes"/>
 <layer number="99" name="SpiceOrder" color="5" fill="1" visible="yes" active="yes"/>
 <layer number="100" name="Muster" color="7" fill="1" visible="no" active="no"/>
-<layer number="101" name="Patch_Top" color="12" fill="4" visible="yes" active="yes"/>
-<layer number="116" name="Patch_BOT" color="9" fill="4" visible="yes" active="yes"/>
+<layer number="101" name="Patch_Top" color="12" fill="4" visible="no" active="yes"/>
+<layer number="116" name="Patch_BOT" color="9" fill="4" visible="no" active="yes"/>
 <layer number="200" name="200bmp" color="1" fill="10" visible="no" active="no"/>
 <layer number="250" name="Descript" color="3" fill="1" visible="no" active="no"/>
 <layer number="251" name="SMDround" color="12" fill="11" visible="no" active="no"/>
-<layer number="254" name="cooling" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="254" name="cooling" color="7" fill="1" visible="no" active="yes"/>
 </layers>
 <library>
 <description>&lt;b&gt;DF4IAH Library - GPS: GPS modules and devices&lt;/b&gt;&lt;p&gt;</description>
@@ -133,59 +133,59 @@ data entry: 2015-03-17 by DF4IAH.</description>
 <description>&lt;b&gt;TJ1513MTBD based on MediaTek MT3333&lt;/b&gt;&lt;p&gt;
 Many brands like: MediaTek, SkyLab, T.JWL and others&lt;br/&gt;
 GNSS Receiver Module for GPS, QZSS, Galileo and Beidou&lt;p&gt;
-data entry: 2015-04-08 by DF4IAH.</description>
-<smd name="5" x="-6.35" y="1.58" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="4" x="-6.35" y="2.83" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="6" x="-6.35" y="0.12" dx="1.75" dy="1" layer="1"/>
-<smd name="3" x="-6.35" y="4.08" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="7" x="-6.35" y="-1.35" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="8" x="-6.35" y="-2.6" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="2" x="-6.35" y="5.33" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="1" x="-6.35" y="6.58" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="9" x="-6.35" y="-3.85" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="18" x="6.65" y="1.58" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="17" x="6.65" y="0.12" dx="1.75" dy="1" layer="1"/>
-<smd name="16" x="6.65" y="-1.35" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="15" x="6.65" y="-2.6" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="14" x="6.65" y="-3.85" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="19" x="6.65" y="2.83" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="20" x="6.65" y="4.08" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="21" x="6.65" y="5.33" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="22" x="6.65" y="6.58" dx="1.75" dy="0.6667" layer="1"/>
-<wire x1="-6.35" y1="7.62" x2="6.65" y2="7.62" width="0.2032" layer="21"/>
-<wire x1="6.65" y1="-7.38" x2="-6.35" y2="-7.38" width="0.2032" layer="21"/>
-<wire x1="6.65" y1="7.62" x2="6.65" y2="-7.38" width="0.2032" layer="51"/>
-<wire x1="-6.35" y1="-7.38" x2="-6.35" y2="7.62" width="0.2032" layer="51"/>
+data entry: 2017-01-30 by DF4IAH.</description>
+<smd name="5" x="-6.75" y="1.2" dx="2" dy="0.65" layer="1"/>
+<smd name="4" x="-6.75" y="2.48" dx="2" dy="0.65" layer="1"/>
+<smd name="6" x="-6.75" y="0" dx="2" dy="1" layer="1"/>
+<smd name="3" x="-6.75" y="3.76" dx="2" dy="0.65" layer="1"/>
+<smd name="7" x="-6.75" y="-1.2" dx="2" dy="0.65" layer="1"/>
+<smd name="8" x="-6.75" y="-2.48" dx="2" dy="0.65" layer="1"/>
+<smd name="2" x="-6.75" y="5.04" dx="2" dy="0.65" layer="1"/>
+<smd name="1" x="-6.75" y="6.32" dx="2" dy="0.65" layer="1"/>
+<smd name="9" x="-6.75" y="-3.76" dx="2" dy="0.65" layer="1"/>
+<smd name="18" x="6.75" y="1.2" dx="2" dy="0.65" layer="1"/>
+<smd name="17" x="6.75" y="0" dx="2" dy="1" layer="1"/>
+<smd name="16" x="6.75" y="-1.2" dx="2" dy="0.65" layer="1"/>
+<smd name="15" x="6.75" y="-2.48" dx="2" dy="0.65" layer="1"/>
+<smd name="14" x="6.75" y="-3.76" dx="2" dy="0.65" layer="1"/>
+<smd name="19" x="6.75" y="2.48" dx="2" dy="0.65" layer="1"/>
+<smd name="20" x="6.75" y="3.76" dx="2" dy="0.65" layer="1"/>
+<smd name="21" x="6.75" y="5.04" dx="2" dy="0.65" layer="1"/>
+<smd name="22" x="6.75" y="6.32" dx="2" dy="0.65" layer="1"/>
+<wire x1="-6.75" y1="7.975" x2="6.75" y2="7.975" width="0.2032" layer="21"/>
+<wire x1="6.75" y1="-7.975" x2="-6.75" y2="-7.975" width="0.2032" layer="21"/>
+<wire x1="6.75" y1="7.975" x2="6.75" y2="-7.975" width="0.2032" layer="51"/>
+<wire x1="-6.75" y1="-7.975" x2="-6.75" y2="7.975" width="0.2032" layer="51"/>
 <circle x="-4.244590625" y="5.9634375" radius="0.254" width="0.2032" layer="21"/>
 <circle x="-4.22545" y="5.940065625" radius="0.095121875" width="0.2032" layer="21"/>
 <text x="-2.0916" y="8.716" size="1.016" layer="25">&gt;NAME</text>
-<smd name="10" x="-6.35" y="-5.1" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="11" x="-6.35" y="-6.35" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="13" x="6.65" y="-5.1" dx="1.75" dy="0.6667" layer="1"/>
-<smd name="12" x="6.65" y="-6.35" dx="1.75" dy="0.6667" layer="1"/>
+<smd name="10" x="-6.75" y="-5.04" dx="2" dy="0.65" layer="1"/>
+<smd name="11" x="-6.75" y="-6.32" dx="2" dy="0.65" layer="1"/>
+<smd name="13" x="6.75" y="-5.04" dx="2" dy="0.65" layer="1"/>
+<smd name="12" x="6.75" y="-6.32" dx="2" dy="0.65" layer="1"/>
 <text x="-4.3916" y="-9.319" size="1.016" layer="21" font="vector">TJ1513MTBD</text>
-<text x="-10.02" y="-0.13" size="0.6096" layer="21" font="vector">GND</text>
-<text x="7.995" y="-0.13" size="0.6096" layer="21" font="vector">GND</text>
-<text x="-10.02" y="1.27" size="0.6096" layer="21" font="vector">RXD1</text>
-<text x="-10.02" y="2.54" size="0.6096" layer="21" font="vector">TXD1</text>
-<text x="-10.02" y="3.81" size="0.6096" layer="21" font="vector">1 PPS</text>
-<text x="-10.02" y="5.08" size="0.6096" layer="21" font="vector">Rsvd.</text>
-<text x="-10.02" y="6.35" size="0.6096" layer="21" font="vector">Rsvd.</text>
-<text x="-10.02" y="-6.68" size="0.6096" layer="21" font="vector">RESET</text>
-<text x="8.015" y="-6.68" size="0.6096" layer="21" font="vector">V_BAKP</text>
-<text x="-10.02" y="-5.43" size="0.6096" layer="21" font="vector">Rsvd.</text>
-<text x="-10.02" y="-4.18" size="0.6096" layer="21" font="vector">Rsvd.</text>
-<text x="-10.02" y="-2.93" size="0.6096" layer="21" font="vector">Rsvd.</text>
-<text x="-10.02" y="-1.68" size="0.6096" layer="21" font="vector">Rsvd.</text>
-<text x="8.015" y="-5.43" size="0.6096" layer="21" font="vector">VCC</text>
-<text x="8.015" y="-4.18" size="0.6096" layer="21" font="vector">Rsvd.</text>
-<text x="8.015" y="-2.93" size="0.6096" layer="21" font="vector">Rsvd.</text>
-<text x="8.015" y="-1.68" size="0.6096" layer="21" font="vector">Rsvd.</text>
-<text x="8.015" y="6.35" size="0.6096" layer="21" font="vector">GND</text>
-<text x="8.015" y="5.08" size="0.6096" layer="21" font="vector">RF_IN</text>
-<text x="8.015" y="3.81" size="0.6096" layer="21" font="vector">GND</text>
-<text x="8.015" y="2.54" size="0.6096" layer="21" font="vector">VCC_RF</text>
-<text x="8.015" y="1.27" size="0.6096" layer="21" font="vector">BOOTSEL</text>
+<text x="-10.147" y="-0.257" size="0.6096" layer="21" font="vector">GND</text>
+<text x="8.376" y="-0.257" size="0.6096" layer="21" font="vector">GND</text>
+<text x="-10.655" y="0.889" size="0.6096" layer="21" font="vector">RXD1</text>
+<text x="-10.655" y="2.159" size="0.6096" layer="21" font="vector">TXD1</text>
+<text x="-10.655" y="3.429" size="0.6096" layer="21" font="vector">1PPS</text>
+<text x="-10.909" y="4.572" size="0.6096" layer="21" font="vector">Rsvd.</text>
+<text x="-10.909" y="5.969" size="0.6096" layer="21" font="vector">Rsvd.</text>
+<text x="-11.163" y="-6.553" size="0.6096" layer="21" font="vector">RESET</text>
+<text x="8.396" y="-6.553" size="0.6096" layer="21" font="vector">V_BAKP</text>
+<text x="-10.909" y="-5.43" size="0.6096" layer="21" font="vector">Rsvd.</text>
+<text x="-10.909" y="-4.053" size="0.6096" layer="21" font="vector">Rsvd.</text>
+<text x="-10.909" y="-2.803" size="0.6096" layer="21" font="vector">Rsvd.</text>
+<text x="-10.909" y="-1.553" size="0.6096" layer="21" font="vector">Rsvd.</text>
+<text x="8.396" y="-5.303" size="0.6096" layer="21" font="vector">VCC</text>
+<text x="8.396" y="-4.053" size="0.6096" layer="21" font="vector">Rsvd.</text>
+<text x="8.396" y="-2.803" size="0.6096" layer="21" font="vector">Rsvd.</text>
+<text x="8.396" y="-1.553" size="0.6096" layer="21" font="vector">Rsvd.</text>
+<text x="8.396" y="5.969" size="0.6096" layer="21" font="vector">GND</text>
+<text x="8.396" y="4.699" size="0.6096" layer="21" font="vector">RF_IN</text>
+<text x="8.396" y="3.429" size="0.6096" layer="21" font="vector">GND</text>
+<text x="8.396" y="2.159" size="0.6096" layer="21" font="vector">VCC_RF</text>
+<text x="8.396" y="0.889" size="0.6096" layer="21" font="vector">BOOTSEL</text>
 <text x="1.839" y="-2.9216" size="1.016" layer="51" font="vector" rot="R90">based on 
 MediaTek
 MT3333</text>
@@ -211,6 +211,10 @@ MT3333</text>
 <text x="4.42" y="-6.68" size="0.6096" layer="51">12</text>
 <text x="4.42" y="-2.93" size="0.6096" layer="51">15</text>
 <text x="4.42" y="-1.68" size="0.6096" layer="51">16</text>
+<wire x1="6.75" y1="7.975" x2="6.75" y2="7.265" width="0.2032" layer="21"/>
+<wire x1="6.75" y1="-7.265" x2="6.75" y2="-7.975" width="0.2032" layer="21"/>
+<wire x1="-6.75" y1="-7.975" x2="-6.75" y2="-7.265" width="0.2032" layer="21"/>
+<wire x1="-6.75" y1="7.265" x2="-6.75" y2="7.975" width="0.2032" layer="21"/>
 </package>
 <package name="LINX-RXM-GNSS-TM">
 <description>&lt;b&gt;Linx TM-Series 712-RXM-GNSS-TM-B&lt;/b&gt;&lt;p&gt;
@@ -326,7 +330,7 @@ data entry: 2015-03-17 by DF4IAH.</description>
 <description>&lt;b&gt;TJ1513MTBD based on MediaTek MT3333&lt;/b&gt;&lt;p&gt;
 Many brands like: MediaTek, SkyLab, T.JWL and others&lt;br/&gt;
 GNSS Receiver Module for GPS, QZSS, Galileo and Beidou&lt;p&gt;
-data entry: 2015-04-08 by DF4IAH.</description>
+data entry: 2017-01-30 by DF4IAH.</description>
 <pin name="RXD1" x="-25.4" y="5.08" length="middle" direction="in"/>
 <pin name="TXD1" x="-25.4" y="10.16" length="middle" direction="out"/>
 <pin name="TIMEPULSE" x="-25.4" y="15.24" length="middle" direction="out"/>
@@ -456,7 +460,7 @@ data entry: 2015-03-17 by DF4IAH.</description>
 <description>&lt;b&gt;TJ1513MTBD based on MediaTek MT3333&lt;/b&gt;&lt;p&gt;
 Many brands like: MediaTek, SkyLab, T.JWL and others&lt;br/&gt;
 GNSS Receiver Module for GPS, QZSS, Galileo and Beidou&lt;p&gt;
-data entry: 2015-04-08 by DF4IAH.</description>
+data entry: 2017-01-30 by DF4IAH.</description>
 <gates>
 <gate name="G$1" symbol="TJ1513MTBD" x="0" y="0"/>
 </gates>
