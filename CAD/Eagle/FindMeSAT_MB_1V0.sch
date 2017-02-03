@@ -11347,7 +11347,7 @@ Source: 008-0260-0_E.pdf</description>
 <part name="R1002" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="JP111" library="df4iah_connector" deviceset="AVR-JTAG-10" device="" value=""/>
 <part name="GND111" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R111" library="rcl" deviceset="R-EU_" device="R0805" value="150R"/>
+<part name="R111" library="rcl" deviceset="R-EU_" device="R0805" value="0R"/>
 <part name="J901" library="df4iah_connector" deviceset="JST_S3B-XH-A" device=""/>
 <part name="C901" library="rcl" deviceset="C-EU" device="C0805" value="100uF"/>
 <part name="GND902" library="df4iah_supply" deviceset="GND" device=""/>

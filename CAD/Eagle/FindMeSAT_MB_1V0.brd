@@ -2437,7 +2437,7 @@ Your Eurocircuits Team
 <attribute name="NAME" x="61.849" y="3.937" size="0.6096" layer="25" ratio="20" rot="R90"/>
 <attribute name="VALUE" x="62.357" y="7.62" size="0.8128" layer="27" ratio="20" rot="R90"/>
 </element>
-<element name="R111" library="rcl" package="R0805" value="150R" x="55.118" y="7.112" smashed="yes" rot="MR90">
+<element name="R111" library="rcl" package="R0805" value="0R" x="55.118" y="7.112" smashed="yes" rot="MR90">
 <attribute name="NAME" x="55.245" y="3.302" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="55.499" y="7.747" size="0.6096" layer="28" rot="MR270"/>
 </element>
