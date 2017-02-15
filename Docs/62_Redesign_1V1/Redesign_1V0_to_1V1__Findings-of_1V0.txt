@@ -1,0 +1,51 @@
+==================================================
+List of Corrections to be done for  V1.0 —> V1.1
+==================================================
+
+				Update: 2017-02-15
+
+Inspection of V1.0 showed that a short circuit between
+the two internal layers GND and 3.3V renders the V1.0
+useless due to misplaced layers stack.
+
+00)	All version numbers to V1.1 —> Done.
+
+01)	Increase Clearance to Pads and Via to 0.30mm, or
+	0.35mm if feasible. —> Settings done. Redesign still to do.
+
+02)	Do not generate Thermals for Vias.  —> Done.
+
+03)	Take Antennas more away from their edges, at least 2mm.
+
+04)	Place text for the antennas to the bottom (solder) side. —> Done.
+
+05)	Move internal text block of the board name more left to stand alone. —> Done.
+
+06)	USB-connector: Reduce outline on tDoc layer.
+
+07)	USB-connector: use greater size for restring of long hole.
+
+08)	Place headers more distant to each other.
+
+09)	Color: use red instead of blue for stop mask.
+
+10)	Place name on tName/bName more distant to the devices.
+
+11)	Test keepout areas for all plated holes. / Check with gerber inspection for
+	clearance.
+
+12)	Adjust staple of layers to new core thickness = 0.88mm. —> Done.
+
+13)	Add three fiducials.
+
+14)	Add three inspection windows: 4-layered rings with decreasing radius and
+	„rotating axis“. Each layer this axis is turned 45 deg left.
+
+
+15)	tNames/bNames increase size:
+	- minimum character width (spacing): 0.15mm
+	- minimum character height: 0.80mm
+
+
+
+<EOF>
