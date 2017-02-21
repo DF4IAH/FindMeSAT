@@ -16,4 +16,4 @@ GPS assisted tracking device with GSM (SMS & GPRS) and Bluetooth connectivity.
 * __LiPo: 1-cell 3.7V__ (high power request by the SIM808 device to be satisfied)
 
 ###Current PCB overview:
-![current PCB overview](https://raw.githubusercontent.com/DF4IAH/FindMeSAT/master/Docs/61_Designing/Placement/2_Eagle-Layout.png)
+![current PCB overview](https://raw.githubusercontent.com/DF4IAH/FindMeSAT/master/Docs/62_Redesign_1V1/Placement/2_Eagle-Layout_b.png)
