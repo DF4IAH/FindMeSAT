@@ -5484,8 +5484,8 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <wire x1="44.323" y1="24.765" x2="44.323" y2="25.146" width="0.4064" layer="16"/>
 <wire x1="44.323" y1="25.146" x2="44.196" y2="25.273" width="0.4064" layer="16"/>
 </signal>
-<signal name="N$1">
-<polygon width="0.05" layer="2" pour="cutout">
+<signal name="SHIELD_BT">
+<polygon width="0.127" layer="2" pour="cutout">
 <vertex x="7.239" y="18.415"/>
 <vertex x="9.398" y="17.78"/>
 <vertex x="9.398" y="13.335"/>
@@ -5497,8 +5497,8 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <vertex x="7.239" y="18.034"/>
 </polygon>
 </signal>
-<signal name="N$2">
-<polygon width="0.05" layer="2" pour="cutout">
+<signal name="SHIELD_GSM">
+<polygon width="0.127" layer="2" pour="cutout">
 <vertex x="7.112" y="35.941"/>
 <vertex x="7.747" y="32.766"/>
 <vertex x="9.144" y="30.861"/>
