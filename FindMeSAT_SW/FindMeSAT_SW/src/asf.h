@@ -65,6 +65,12 @@
 // From module: DAC - Digital to Analog Converter
 #include <dac.h>
 
+// From module: GFX Monochrome - Monochrome Graphic Library
+#include <gfx_mono.h>
+
+// From module: GFX Monochrome - System Font
+#include <sysfont.h>
+
 // From module: Generic board support
 #include <board.h>
 

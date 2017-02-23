@@ -81,7 +81,7 @@
 #define RI1                             RI1_GPIO
 #define RTS1                            RTS1_GPIO
 #define GSM_RTS                         GSM_RTS_GPIO
-#define RESET                           RESET_GSM
+#define RESET_N                         RESET_GSM
 //@}
 
 

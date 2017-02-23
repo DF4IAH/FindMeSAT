@@ -31,15 +31,18 @@
   <options>
     <option id="common.boards" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.usb.class.device" value="Add" config="cdc_stdio" content-id="Atmel.ASF" />
-    <option id="xmega.services.pwm" value="Add" config="" content-id="Atmel.ASF" />
     <option id="xmega.drivers.adc" value="Add" config="" content-id="Atmel.ASF" />
     <option id="xmega.drivers.dac" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="xmega.services.pwm" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="common.services.gfx_mono" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="common.services.gfx_mono.font" value="Add" config="" content-id="Atmel.ASF" />
   </options>
   <configurations>
     <configuration key="config.xmega.drivers.usb.device.sleepmgr" value="with_sleepmgr" default="with_sleepmgr" content-id="Atmel.ASF" />
     <configuration key="config.thirdparty.wireless.avr2025_mac.source.mac.api" value="yes" default="yes" content-id="Atmel.ASF" />
     <configuration key="config.thirdparty.wireless.avr2025_mac.source.mac.callbacks" value="all" default="all" content-id="Atmel.ASF" />
     <configuration key="config.thirdparty.wireless.avr2025_mac.source.tal" value="at86rf212" default="at86rf212" content-id="Atmel.ASF" />
+    <configuration key="config.gfx_mono.display" value="null" default="null" content-id="Atmel.ASF" />
   </configurations>
   <files>
     <file path="src/main.c" framework="" version="" source="common/applications/user_application/main.c" changed="False" content-id="Atmel.ASF" />
@@ -113,6 +116,22 @@
     <file path="src/ASF/xmega/drivers/adc/adc.h" framework="" version="3.32.0" source="xmega\drivers\adc\adc.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/Config/conf_adc.h" framework="" version="3.32.0" source="xmega\drivers\adc\module_config\conf_adc.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/xmega/drivers/dac/dac.c" framework="" version="3.32.0" source="xmega\drivers\dac\dac.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/docsrc/gfx_mono_overview.png" framework="" version="3.32.0" source="common\services\gfx_mono\docsrc\gfx_mono_overview.png" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/sysfont.h" framework="" version="3.32.0" source="common\services\gfx_mono\sysfont.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/gfx_mono_text.h" framework="" version="3.32.0" source="common\services\gfx_mono\gfx_mono_text.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/Config/conf_sysfont.h" framework="" version="3.32.0" source="common\services\gfx_mono\module_config\conf_sysfont.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/gfx_mono_generic.c" framework="" version="3.32.0" source="common\services\gfx_mono\gfx_mono_generic.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/gfx_mono_generic.h" framework="" version="3.32.0" source="common\services\gfx_mono\gfx_mono_generic.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/gfx_mono_framebuffer.c" framework="" version="3.32.0" source="common\services\gfx_mono\gfx_mono_framebuffer.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/gfx_mono_framebuffer.h" framework="" version="3.32.0" source="common\services\gfx_mono\gfx_mono_framebuffer.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/tools/dump_display_over_serial.py" framework="" version="3.32.0" source="common\services\gfx_mono\tools\dump_display_over_serial.py" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/tools/bitmap.py" framework="" version="3.32.0" source="common\services\gfx_mono\tools\bitmap.py" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/tools/readme.txt" framework="" version="3.32.0" source="common\services\gfx_mono\tools\readme.txt" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/gfx_mono_null.c" framework="" version="3.32.0" source="common\services\gfx_mono\gfx_mono_null.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/gfx_mono_null.h" framework="" version="3.32.0" source="common\services\gfx_mono\gfx_mono_null.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/gfx_mono.h" framework="" version="3.32.0" source="common\services\gfx_mono\gfx_mono.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/sysfont.c" framework="" version="3.32.0" source="common\services\gfx_mono\sysfont.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/gfx_mono/gfx_mono_text.c" framework="" version="3.32.0" source="common\services\gfx_mono\gfx_mono_text.c" changed="False" content-id="Atmel.ASF" />
   </files>
   <documentation help="http://asf.atmel.com/docs/3.32.0/common.applications.user_application.user_board.xmegaau/html/index.html" />
   <offline-documentation help="" />
@@ -193,6 +212,7 @@
       <Value>../src/ASF/xmega/services/pwm</Value>
       <Value>../src/ASF/xmega/drivers/dac</Value>
       <Value>../src/ASF/xmega/drivers/adc</Value>
+      <Value>../src/ASF/common/services/gfx_mono</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
@@ -229,6 +249,7 @@
       <Value>../src/ASF/xmega/services/pwm</Value>
       <Value>../src/ASF/xmega/drivers/dac</Value>
       <Value>../src/ASF/xmega/drivers/adc</Value>
+      <Value>../src/ASF/common/services/gfx_mono</Value>
     </ListValues>
   </avrgcc.assembler.general.IncludePaths>
 </AvrGcc>
@@ -275,6 +296,7 @@
       <Value>../src/ASF/xmega/services/pwm</Value>
       <Value>../src/ASF/xmega/drivers/dac</Value>
       <Value>../src/ASF/xmega/drivers/adc</Value>
+      <Value>../src/ASF/common/services/gfx_mono</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -312,6 +334,7 @@
       <Value>../src/ASF/xmega/services/pwm</Value>
       <Value>../src/ASF/xmega/drivers/dac</Value>
       <Value>../src/ASF/xmega/drivers/adc</Value>
+      <Value>../src/ASF/common/services/gfx_mono</Value>
     </ListValues>
   </avrgcc.assembler.general.IncludePaths>
   <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
@@ -327,10 +350,55 @@
     <Compile Include="src\ASF\common\boards\user_board\user_board.h">
       <SubType>compile</SubType>
     </Compile>
+    <None Include="src\ASF\common\services\gfx_mono\docsrc\gfx_mono_overview.png">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\ASF\common\services\gfx_mono\tools\bitmap.py">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\ASF\common\services\gfx_mono\tools\dump_display_over_serial.py">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\ASF\common\services\gfx_mono\tools\readme.txt">
+      <SubType>compile</SubType>
+    </None>
     <None Include="src\ASF\xmega\drivers\pmic\pmic.h">
       <SubType>compile</SubType>
     </None>
     <None Include="src\ASF\xmega\drivers\dac\dac.h">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\ASF\common\services\gfx_mono\gfx_mono.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\common\services\gfx_mono\gfx_mono_framebuffer.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\common\services\gfx_mono\gfx_mono_framebuffer.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\common\services\gfx_mono\gfx_mono_generic.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\common\services\gfx_mono\gfx_mono_generic.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\common\services\gfx_mono\gfx_mono_null.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\common\services\gfx_mono\gfx_mono_null.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\common\services\gfx_mono\gfx_mono_text.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\common\services\gfx_mono\gfx_mono_text.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\common\services\gfx_mono\sysfont.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\common\services\gfx_mono\sysfont.h">
       <SubType>compile</SubType>
     </None>
     <Compile Include="src\ASF\xmega\drivers\adc\adc.c">
@@ -366,6 +434,9 @@
     <Compile Include="src\config\conf_dac.h">
       <SubType>compile</SubType>
     </Compile>
+    <None Include="src\config\conf_sysfont.h">
+      <SubType>compile</SubType>
+    </None>
     <Compile Include="src\main.c">
       <SubType>compile</SubType>
     </Compile>
@@ -553,6 +624,9 @@
     <Folder Include="src\ASF\common\services\" />
     <Folder Include="src\ASF\common\services\clock\" />
     <Folder Include="src\ASF\common\services\clock\xmega\" />
+    <Folder Include="src\ASF\common\services\gfx_mono\" />
+    <Folder Include="src\ASF\common\services\gfx_mono\docsrc\" />
+    <Folder Include="src\ASF\common\services\gfx_mono\tools\" />
     <Folder Include="src\ASF\common\services\sleepmgr\" />
     <Folder Include="src\ASF\common\services\sleepmgr\xmega\" />
     <Folder Include="src\ASF\common\services\usb\" />
