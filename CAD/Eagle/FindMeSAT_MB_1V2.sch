@@ -7148,12 +7148,12 @@ Molex 90130 series</description>
 <wire x1="-4.06" y1="3.175" x2="4.06" y2="3.175" width="0.1524" layer="51"/>
 <wire x1="-4.06" y1="-3.175" x2="4.06" y2="-3.175" width="0.1524" layer="51"/>
 <wire x1="4.06" y1="3.175" x2="4.06" y2="-3.175" width="0.1524" layer="51"/>
-<pad name="2" x="-2.54" y="-1.27" drill="1.016" shape="octagon"/>
-<pad name="1" x="-2.54" y="1.27" drill="1.016" shape="square" first="yes"/>
-<pad name="4" x="0" y="-1.27" drill="1.016" shape="octagon"/>
-<pad name="3" x="0" y="1.27" drill="1.016" shape="octagon"/>
-<pad name="6" x="2.54" y="-1.27" drill="1.016" shape="octagon"/>
-<pad name="5" x="2.54" y="1.27" drill="1.016" shape="octagon"/>
+<pad name="1" x="-2.54" y="-1.27" drill="1.016" shape="square"/>
+<pad name="2" x="-2.54" y="1.27" drill="1.016" shape="octagon" first="yes"/>
+<pad name="3" x="0" y="-1.27" drill="1.016" shape="octagon"/>
+<pad name="4" x="0" y="1.27" drill="1.016" shape="octagon"/>
+<pad name="5" x="2.54" y="-1.27" drill="1.016" shape="octagon"/>
+<pad name="6" x="2.54" y="1.27" drill="1.016" shape="octagon"/>
 <text x="-3.81" y="5.715" size="1.27" layer="25" ratio="10">&gt;NAME</text>
 <text x="-3.81" y="-6.985" size="1.27" layer="27">&gt;VALUE</text>
 <rectangle x1="-2.794" y1="-1.524" x2="-2.286" y2="-1.016" layer="51"/>
@@ -7166,14 +7166,16 @@ Molex 90130 series</description>
 <wire x1="-4.98" y1="4.875" x2="-4.98" y2="-4.875" width="0.1524" layer="51"/>
 <wire x1="-4.98" y1="4.875" x2="4.98" y2="4.875" width="0.1524" layer="51"/>
 <wire x1="-4.98" y1="-4.875" x2="4.98" y2="-4.875" width="0.1524" layer="51"/>
-<wire x1="-2.54" y1="5.08" x2="-5.08" y2="5.08" width="0.254" layer="21"/>
 <wire x1="-5.08" y1="5.08" x2="-5.08" y2="3.81" width="0.254" layer="21"/>
-<wire x1="-2.54" y1="-5.08" x2="-5.08" y2="-5.08" width="0.254" layer="21"/>
+<wire x1="-1.27" y1="-5.08" x2="-5.08" y2="-5.08" width="0.254" layer="21"/>
 <wire x1="-5.08" y1="-5.08" x2="-5.08" y2="-3.81" width="0.254" layer="21"/>
-<wire x1="2.54" y1="-5.08" x2="5.08" y2="-5.08" width="0.254" layer="21"/>
+<wire x1="1.27" y1="-5.08" x2="5.08" y2="-5.08" width="0.254" layer="21"/>
 <wire x1="5.08" y1="-5.08" x2="5.08" y2="-3.81" width="0.254" layer="21"/>
-<wire x1="2.54" y1="5.08" x2="5.08" y2="5.08" width="0.254" layer="21"/>
+<wire x1="-5.08" y1="5.08" x2="5.08" y2="5.08" width="0.254" layer="21"/>
 <wire x1="5.08" y1="5.08" x2="5.08" y2="3.81" width="0.254" layer="21"/>
+<wire x1="-1.27" y1="-5.08" x2="-1.27" y2="-4.445" width="0.254" layer="21"/>
+<wire x1="-1.27" y1="-4.445" x2="1.27" y2="-4.445" width="0.254" layer="21"/>
+<wire x1="1.27" y1="-4.445" x2="1.27" y2="-5.08" width="0.254" layer="21"/>
 </package>
 <package name="2X03">
 <description>&lt;b&gt;PIN HEADER&lt;/b&gt;</description>
@@ -7839,19 +7841,22 @@ Molex 90130 series</description>
 <wire x1="6.35" y1="-5.08" x2="6.35" y2="5.08" width="0.4064" layer="94"/>
 <wire x1="6.35" y1="5.08" x2="-6.35" y2="5.08" width="0.4064" layer="94"/>
 <wire x1="-6.35" y1="5.08" x2="-6.35" y2="-5.08" width="0.4064" layer="94"/>
-<wire x1="-1.905" y1="2.54" x2="-1.27" y2="2.54" width="1.016" layer="94"/>
+<wire x1="1.27" y1="2.54" x2="1.905" y2="2.54" width="1.016" layer="94"/>
 <wire x1="-1.905" y1="0" x2="-1.27" y2="0" width="1.016" layer="94"/>
 <wire x1="-1.905" y1="-2.54" x2="-1.27" y2="-2.54" width="1.016" layer="94"/>
 <wire x1="1.27" y1="0" x2="1.905" y2="0" width="1.016" layer="94"/>
 <wire x1="1.27" y1="-2.54" x2="1.905" y2="-2.54" width="1.016" layer="94"/>
 <text x="-6.35" y="6.35" size="1.778" layer="95" ratio="10">&gt;NAME</text>
-<pin name="5" x="5.08" y="-2.54" visible="pad" length="short" direction="pas" rot="R180"/>
-<pin name="2" x="-5.08" y="2.54" visible="pad" length="short" direction="pas"/>
-<pin name="4" x="-5.08" y="0" visible="pad" length="short" direction="pas"/>
-<pin name="1" x="5.08" y="2.54" visible="pad" length="short" direction="pas" rot="R180"/>
-<pin name="6" x="-5.08" y="-2.54" visible="pad" length="short" direction="pas"/>
-<pin name="3" x="5.08" y="0" visible="pad" length="short" direction="pas" rot="R180"/>
-<rectangle x1="0.8255" y1="2.032" x2="2.3495" y2="3.048" layer="94"/>
+<pin name="6" x="5.08" y="-2.54" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="1" x="-5.08" y="2.54" visible="pad" length="short" direction="pas"/>
+<pin name="3" x="-5.08" y="0" visible="pad" length="short" direction="pas"/>
+<pin name="2" x="5.08" y="2.54" visible="pad" length="short" direction="pas" rot="R180"/>
+<pin name="5" x="-5.08" y="-2.54" visible="pad" length="short" direction="pas"/>
+<pin name="4" x="5.08" y="0" visible="pad" length="short" direction="pas" rot="R180"/>
+<rectangle x1="-2.3495" y1="2.032" x2="-0.8255" y2="3.048" layer="94"/>
+<wire x1="-6.096" y1="1.27" x2="-5.588" y2="1.27" width="0.4064" layer="94"/>
+<wire x1="-5.588" y1="1.27" x2="-5.588" y2="-1.016" width="0.4064" layer="94"/>
+<wire x1="-5.588" y1="-1.016" x2="-6.096" y2="-1.016" width="0.4064" layer="94"/>
 </symbol>
 <symbol name="HEADER-2X3">
 <description>&lt;b&gt;Header 2X3 2.54mm&lt;/b&gt;</description>
@@ -10615,7 +10620,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <description>CPU</description>
 <plain>
 <text x="132.08" y="66.04" size="1.778" layer="97">XTAL 1</text>
-<text x="37.084" y="35.052" size="1.778" layer="94" ratio="10">PDI</text>
+<text x="39.624" y="35.052" size="1.778" layer="94" ratio="10">PDI</text>
 <text x="5.08" y="114.3" size="1.778" layer="97">2x ADC B Audio</text>
 <text x="5.08" y="129.54" size="1.778" layer="97">8x ADC A MEAS</text>
 <text x="5.08" y="83.82" size="1.778" layer="97">2x PWM</text>
@@ -10632,7 +10637,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <text x="226.06" y="127" size="1.778" layer="97">2x I/O D</text>
 <text x="5.08" y="68.58" size="1.778" layer="97">2x PDI</text>
 <text x="5.08" y="109.22" size="1.778" layer="97">2x DAC B Audio</text>
-<text x="37.084" y="70.612" size="1.778" layer="94" ratio="10">DISPLAY</text>
+<text x="39.624" y="70.612" size="1.778" layer="94" ratio="10">LCD</text>
 <text x="94.234" y="157.226" size="1.778" layer="94" ratio="10">I/O</text>
 </plain>
 <instances>
@@ -10672,7 +10677,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <instance part="X121" gate="G$1" x="43.18" y="78.74" smashed="yes">
 <attribute name="NAME" x="36.83" y="85.09" size="2.1844" layer="95" ratio="10"/>
 </instance>
-<instance part="GND121" gate="1" x="50.8" y="66.04"/>
+<instance part="GND121" gate="1" x="35.56" y="66.04"/>
 <instance part="+5V1" gate="G$1" x="25.4" y="86.36"/>
 <instance part="X181" gate="G$1" x="100.33" y="165.1" smashed="yes">
 <attribute name="NAME" x="93.98" y="171.45" size="2.1844" layer="95" ratio="10"/>
@@ -10710,14 +10715,14 @@ Diameter = 1mm, Clearance = 3R</description>
 </segment>
 <segment>
 <pinref part="GND121" gate="1" pin="GND"/>
-<wire x1="50.8" y1="68.58" x2="50.8" y2="76.2" width="0.1524" layer="91"/>
-<pinref part="X121" gate="G$1" pin="5"/>
-<wire x1="50.8" y1="76.2" x2="48.26" y2="76.2" width="0.1524" layer="91"/>
-<wire x1="50.8" y1="68.58" x2="35.56" y2="68.58" width="0.1524" layer="91"/>
 <wire x1="35.56" y1="68.58" x2="35.56" y2="81.28" width="0.1524" layer="91"/>
-<pinref part="X121" gate="G$1" pin="2"/>
+<pinref part="X121" gate="G$1" pin="1"/>
 <wire x1="35.56" y1="81.28" x2="38.1" y2="81.28" width="0.1524" layer="91"/>
-<junction x="50.8" y="68.58"/>
+<pinref part="X121" gate="G$1" pin="6"/>
+<wire x1="48.26" y1="76.2" x2="50.8" y2="76.2" width="0.1524" layer="91"/>
+<wire x1="50.8" y1="76.2" x2="50.8" y2="68.58" width="0.1524" layer="91"/>
+<wire x1="50.8" y1="68.58" x2="35.56" y2="68.58" width="0.1524" layer="91"/>
+<junction x="35.56" y="68.58"/>
 </segment>
 <segment>
 <pinref part="GND181" gate="1" pin="GND"/>
@@ -11093,10 +11098,10 @@ Diameter = 1mm, Clearance = 3R</description>
 <junction x="55.88" y="109.22"/>
 <pinref part="X111" gate="G$1" pin="7"/>
 <pinref part="+3V3_121" gate="G$1" pin="+3V3"/>
-<wire x1="55.88" y1="60.96" x2="33.02" y2="60.96" width="0.1524" layer="91"/>
-<wire x1="33.02" y1="60.96" x2="33.02" y2="76.2" width="0.1524" layer="91"/>
-<pinref part="X121" gate="G$1" pin="6"/>
-<wire x1="33.02" y1="76.2" x2="38.1" y2="76.2" width="0.1524" layer="91"/>
+<wire x1="55.88" y1="60.96" x2="30.48" y2="60.96" width="0.1524" layer="91"/>
+<wire x1="30.48" y1="60.96" x2="30.48" y2="76.2" width="0.1524" layer="91"/>
+<pinref part="X121" gate="G$1" pin="5"/>
+<wire x1="30.48" y1="76.2" x2="38.1" y2="76.2" width="0.1524" layer="91"/>
 <junction x="55.88" y="60.96"/>
 </segment>
 </net>
@@ -11171,7 +11176,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <wire x1="88.9" y1="93.98" x2="53.34" y2="93.98" width="0.1524" layer="91"/>
 <label x="78.74" y="93.98" size="1.778" layer="95"/>
 <wire x1="53.34" y1="93.98" x2="53.34" y2="78.74" width="0.1524" layer="91"/>
-<pinref part="X121" gate="G$1" pin="3"/>
+<pinref part="X121" gate="G$1" pin="4"/>
 <wire x1="53.34" y1="78.74" x2="48.26" y2="78.74" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -11181,7 +11186,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <wire x1="88.9" y1="91.44" x2="50.8" y2="91.44" width="0.1524" layer="91"/>
 <label x="78.74" y="91.44" size="1.778" layer="95"/>
 <wire x1="50.8" y1="91.44" x2="50.8" y2="81.28" width="0.1524" layer="91"/>
-<pinref part="X121" gate="G$1" pin="1"/>
+<pinref part="X121" gate="G$1" pin="2"/>
 <wire x1="50.8" y1="81.28" x2="48.26" y2="81.28" width="0.1524" layer="91"/>
 </segment>
 </net>
@@ -11189,7 +11194,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <segment>
 <pinref part="+5V1" gate="G$1" pin="+5V"/>
 <wire x1="25.4" y1="83.82" x2="25.4" y2="78.74" width="0.1524" layer="91"/>
-<pinref part="X121" gate="G$1" pin="4"/>
+<pinref part="X121" gate="G$1" pin="3"/>
 <wire x1="25.4" y1="78.74" x2="38.1" y2="78.74" width="0.1524" layer="91"/>
 </segment>
 </net>
