@@ -10389,6 +10389,12 @@ Diameter = 1mm, Clearance = 3R</description>
 <class number="6" name="R110_SPI" width="0.15" drill="0">
 <clearance class="6" value="0.15"/>
 </class>
+<class number="7" name="+3V3" width="0" drill="0">
+<clearance class="7" value="0.5"/>
+</class>
+<class number="8" name="GND" width="0" drill="0">
+<clearance class="8" value="0.5"/>
+</class>
 </classes>
 <parts>
 <part name="FRAME1" library="df4iah_frame" deviceset="A4L-LOC" device="" value="CPU"/>
@@ -10687,7 +10693,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <busses>
 </busses>
 <nets>
-<net name="GND" class="0">
+<net name="GND" class="8">
 <segment>
 <pinref part="GND101" gate="1" pin="GND"/>
 <pinref part="C101" gate="G$1" pin="2"/>
@@ -11079,7 +11085,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="137.16" y="137.16" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="+3V3" class="0">
+<net name="+3V3" class="7">
 <segment>
 <wire x1="55.88" y1="152.4" x2="55.88" y2="134.62" width="0.1524" layer="91"/>
 <wire x1="55.88" y1="134.62" x2="55.88" y2="124.46" width="0.1524" layer="91"/>
@@ -11394,7 +11400,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <busses>
 </busses>
 <nets>
-<net name="GND" class="0">
+<net name="GND" class="8">
 <segment>
 <pinref part="GND291" gate="1" pin="GND"/>
 <wire x1="33.02" y1="12.7" x2="33.02" y2="17.78" width="0.1524" layer="91"/>
@@ -11606,7 +11612,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <junction x="119.38" y="43.18"/>
 </segment>
 </net>
-<net name="+3V3" class="0">
+<net name="+3V3" class="7">
 <segment>
 <pinref part="+3V3_211" gate="G$1" pin="+3V3"/>
 <pinref part="R212" gate="G$1" pin="1"/>
@@ -11959,7 +11965,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <busses>
 </busses>
 <nets>
-<net name="GND" class="0">
+<net name="GND" class="8">
 <segment>
 <pinref part="GND311" gate="1" pin="GND"/>
 <wire x1="81.28" y1="78.74" x2="81.28" y2="81.28" width="0.1524" layer="91"/>
@@ -11985,7 +11991,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <junction x="96.52" y="81.28"/>
 </segment>
 </net>
-<net name="+3V3" class="0">
+<net name="+3V3" class="7">
 <segment>
 <pinref part="+3V3_311" gate="G$1" pin="+3V3"/>
 <wire x1="81.28" y1="119.38" x2="81.28" y2="109.22" width="0.1524" layer="91"/>
@@ -12070,7 +12076,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <busses>
 </busses>
 <nets>
-<net name="GND" class="0">
+<net name="GND" class="8">
 <segment>
 <pinref part="GND401" gate="1" pin="GND"/>
 <pinref part="C401" gate="G$1" pin="2"/>
@@ -12080,7 +12086,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <pinref part="U401" gate="G$1" pin="GND"/>
 </segment>
 </net>
-<net name="+3V3" class="0">
+<net name="+3V3" class="7">
 <segment>
 <pinref part="+3V3_401" gate="G$1" pin="+3V3"/>
 <pinref part="C401" gate="G$1" pin="1"/>
@@ -12152,7 +12158,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <busses>
 </busses>
 <nets>
-<net name="GND" class="0">
+<net name="GND" class="8">
 <segment>
 <pinref part="GND501" gate="1" pin="GND"/>
 <pinref part="C501" gate="G$1" pin="2"/>
@@ -12182,7 +12188,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <junction x="142.24" y="93.98"/>
 </segment>
 </net>
-<net name="+3V3" class="0">
+<net name="+3V3" class="7">
 <segment>
 <pinref part="+3V3_501" gate="G$1" pin="+3V3"/>
 <pinref part="C501" gate="G$1" pin="1"/>
@@ -12269,7 +12275,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <busses>
 </busses>
 <nets>
-<net name="+3V3" class="0">
+<net name="+3V3" class="7">
 <segment>
 <pinref part="+3V3_601" gate="G$1" pin="+3V3"/>
 <wire x1="45.72" y1="149.86" x2="45.72" y2="134.62" width="0.1524" layer="91"/>
@@ -12280,7 +12286,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <pinref part="U601" gate="A" pin="VDD_IO"/>
 </segment>
 </net>
-<net name="GND" class="0">
+<net name="GND" class="8">
 <segment>
 <pinref part="GND601" gate="1" pin="GND"/>
 <wire x1="45.72" y1="66.04" x2="45.72" y2="68.58" width="0.1524" layer="91"/>
@@ -12510,7 +12516,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <busses>
 </busses>
 <nets>
-<net name="GND" class="0">
+<net name="GND" class="8">
 <segment>
 <pinref part="GND701" gate="1" pin="GND"/>
 <wire x1="50.8" y1="53.34" x2="50.8" y2="58.42" width="0.1524" layer="91"/>
@@ -12682,7 +12688,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <busses>
 </busses>
 <nets>
-<net name="GND" class="0">
+<net name="GND" class="8">
 <segment>
 <pinref part="GND802" gate="1" pin="GND"/>
 <wire x1="205.74" y1="99.06" x2="205.74" y2="101.6" width="0.1524" layer="91"/>
@@ -12769,7 +12775,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <busses>
 </busses>
 <nets>
-<net name="GND" class="0">
+<net name="GND" class="8">
 <segment>
 <pinref part="GND901" gate="1" pin="GND"/>
 <wire x1="96.52" y1="81.28" x2="96.52" y2="88.9" width="0.1524" layer="91"/>
@@ -12855,7 +12861,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <busses>
 </busses>
 <nets>
-<net name="GND" class="0">
+<net name="GND" class="8">
 <segment>
 <pinref part="GND1002" gate="1" pin="GND"/>
 <wire x1="93.98" y1="88.9" x2="93.98" y2="116.84" width="0.1524" layer="91"/>
@@ -12957,7 +12963,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="200.66" y="124.46" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="+3V3" class="0">
+<net name="+3V3" class="7">
 <segment>
 <pinref part="+3V3_1011" gate="G$1" pin="+3V3"/>
 <wire x1="157.48" y1="147.32" x2="157.48" y2="137.16" width="0.1524" layer="91"/>
@@ -13101,7 +13107,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <busses>
 </busses>
 <nets>
-<net name="GND" class="0">
+<net name="GND" class="8">
 <segment>
 <pinref part="GND1111" gate="1" pin="GND"/>
 <pinref part="C1111" gate="G$1" pin="2"/>
@@ -13241,7 +13247,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="132.08" y="116.84" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="+3V3" class="0">
+<net name="+3V3" class="7">
 <segment>
 <pinref part="L1111" gate="G$1" pin="1"/>
 <wire x1="149.86" y1="119.38" x2="157.48" y2="119.38" width="0.1524" layer="91"/>
@@ -13455,7 +13461,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <busses>
 </busses>
 <nets>
-<net name="GND" class="0">
+<net name="GND" class="8">
 <segment>
 <pinref part="GND1201" gate="1" pin="GND"/>
 <wire x1="58.42" y1="132.08" x2="58.42" y2="134.62" width="0.1524" layer="91"/>
