@@ -1,0 +1,11 @@
+Warning detected by hpeesofsim during SP analysis `SP1'.
+    The positive terminal of port `Term2' is connected to ground.
+        This may cause a 180 degree phase shift in the S parameters
+        associated with this port.
+
+SP SP1[1] <FindMeSAT_lib:AX5043-Fig10_1:schematic>   freq=(10 MHz->1 GHz)
+,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,
+
+Resource usage:
+  Total stopwatch time     =     0.34 seconds.
+

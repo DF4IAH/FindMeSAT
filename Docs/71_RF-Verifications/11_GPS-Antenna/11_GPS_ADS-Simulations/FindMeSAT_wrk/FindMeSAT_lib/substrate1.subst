@@ -1,0 +1,26 @@
+<!DOCTYPE Substrate>
+<SubstrateModel>
+    <stack BAL_TYPE="NONE" BAL_NUM="0">
+        <material materialname="AIR" BAL_TYPE="INHERIT" BAL_NUM="0"/>
+        <interface materialname="" BAL_TYPE="INHERIT" thick="0" thickunit="millimeter" BAL_NUM="0"/>
+        <material materialname="SolderMask" BAL_TYPE="INHERIT" thick="20" thickunit="micron" BAL_NUM="0"/>
+        <interface materialname="PERFECT_CONDUCTOR" BAL_TYPE="NONE" thick="0" thickunit="micron" BAL_NUM="0"/>
+        <material materialname="FR_4_Prepreg" BAL_TYPE="INHERIT" thick="120" thickunit="micron" BAL_NUM="0"/>
+        <interface materialname="" BAL_TYPE="INHERIT" thick="0" thickunit="micron" BAL_NUM="0"/>
+        <material materialname="FR_4_Core" BAL_TYPE="INHERIT" thick="1200" thickunit="micron" BAL_NUM="0"/>
+        <interface materialname="" BAL_TYPE="INHERIT" thick="0" thickunit="millimeter" BAL_NUM="0"/>
+        <material materialname="FR_4_Prepreg" BAL_TYPE="INHERIT" thick="120" thickunit="micron" BAL_NUM="0"/>
+        <interface materialname="" BAL_TYPE="INHERIT" thick="0" thickunit="millimeter" BAL_NUM="0"/>
+        <material materialname="SolderMask" BAL_TYPE="INHERIT" thick="20" thickunit="micron" BAL_NUM="0"/>
+        <interface materialname="" BAL_TYPE="INHERIT" thick="0" thickunit="millimeter" BAL_NUM="0"/>
+        <material materialname="AIR" BAL_TYPE="INHERIT" BAL_NUM="0"/>
+    </stack>
+    <layers>
+        <layer materialname="Copper" toprough="" pinsOnly="0" bottomrough="" thick="-35" precedence="0" sheet="0" thickunit="micron" layer="19" negative="0" subtype="0" expand="1" index="1" angle="90"/>
+        <layer materialname="Copper" toprough="" pinsOnly="0" bottomrough="" thick="-17.5" precedence="1" sheet="0" thickunit="micron" layer="18" negative="0" subtype="0" expand="1" index="2" angle="90"/>
+        <layer materialname="Copper" toprough="" pinsOnly="0" bottomrough="" thick="17.5" precedence="0" sheet="0" thickunit="micron" layer="17" negative="0" subtype="0" expand="1" index="3" angle="90"/>
+        <layer materialname="Copper" toprough="" pinsOnly="0" bottomrough="" thick="35" precedence="0" sheet="0" thickunit="micron" layer="16" negative="0" subtype="0" expand="1" index="4" angle="90"/>
+    </layers>
+    <vias/>
+    <substrates/>
+</SubstrateModel>

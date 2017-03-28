@@ -1,0 +1,22 @@
+
+Options ResourceUsage=yes UseNutmegFormat=no EnableOptim=no TopDesignName="FindMeSAT_lib:GSM:schematic"
+S_Param:SP1 CalcS=yes CalcY=no CalcZ=no GroupDelayAperture=1e-4 FreqConversion=no FreqConversionPort=1 StatusLevel=2 CalcNoise=no SortNoise=0 BandwidthForNoise=1.0 Hz DevOpPtLevel=0 \
+SweepVar="freq" SweepPlan="SP1_stim" OutputPlan="SP1_Output" 
+
+SweepPlan: SP1_stim Start=0.1 GHz Stop=4 GHz Step=1 MHz 
+
+OutputPlan:SP1_Output \
+      Type="Output" \
+      UseEquationNestLevel=yes \
+      EquationNestLevel=2 \
+      UseSavedEquationNestLevel=yes \
+      SavedEquationNestLevel=2
+
+#load "python","LinearCollapse"
+Component Module="LinearCollapse" Type="ModelExtractor" NetworkRepresentation=2
+Port:Term1  N__3 0 Num=1 Z=50 Ohm Noise=yes 
+model "FR4-4Layers" MSUB H=120 um Er=4.3 Mur=1 Cond=1.0E+50 Hu=150 um T=35 um TanD=0.019 Rough=0 mm DielectricLossModel=1 FreqForEpsrTanD=1.0 GHz LowFreqForTanD=1.0 kHz HighFreqForTanD=1.0 THz RoughnessModel=2 
+C:C1  N__3 0 C=12 pF tune{ 0.1 pF to 15 pF by 0.1 pF } 
+C:C2  N__4 0 C=0.1 pF tune{ 0.1 pF to 60 pF by 0.1 pF } 
+R:R1  N__3 N__4 R=1.5 Ohm tune{ 0.01 Ohm to 50 Ohm by 0.1 Ohm } Noise=yes 
+MLEF2:TL1  N__4 Subst="FR4-4Layers" W=0.8 mm tune{ 0.3 mm to 0.9 mm by 0.05 mm } L=80.4 mm tune{ 50 mm to 100 mm by 0.1 mm } Wall1=2.5e+028 mm Wall2=2.5e+028 mm Mod=1 

@@ -1,0 +1,4 @@
+INCLUDE $HPEESOF_DIR/oalibs/analog_rf.defs
+INCLUDE $HPEESOF_DIR/oalibs/dsp.defs
+DEFINE FindMeSAT_lib FindMeSAT_lib
+ASSIGN FindMeSAT_lib libMode shared
