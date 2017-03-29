@@ -1,0 +1,102 @@
+===========================
+DF4IAH_FindMeSAT_Schematics
+===========================
+
+CPU with these features:
+	Atmel ATxmega256A3-BU
+	MANDATORY: PDI, JTAG, USB, 1x I2C, 1x USART, EVOUT / clk_PER, 2x AWEXC, 2x TC0, 1x ACPOS&ACNEG, 1x ADCA&ADCB, 1x ADCA
+	OPTIONAL:  XTAL, SPI vs. EVOUT / clk_PER
+
+
+
+--- 8< ---
+
+Mandatory:
+
+
+- MPU/USB:
+( 3,69 Û ATXMEGA32C4-AU-ND (Flash 32kB / SRAM 4kB / EEPROM 1kB) )
+4,90 Û ATXMEGA256A3BU-AN (Flash 256kB / SRAM 16kB / EEPROM 4kB)
+
+
+
+- GPS/GSM:
+
+100,00 Û FONA808 + GPS-Antenne + GSM-Antenne + LiPo 500 mAh + GSM-Karte / Adafruit
+
+
+
+- Gyro/Mag:
+5,73 Û 13, MPU9250 BMP280 10DOF Acceleration Gyroscope Compass Nine Shaft Sensor GY-91 / Electronic Fans
+
+
+Optional 1:
+
+- Piezo-Speaker(s)
+
+- Electret-Mic
+
+- Phototransistor
+
+- LCD Module
+
+- Keypads
+
+
+- Baro/Temp:
+4,54 Û Elecrow BMP180 Barometer Pressure/Temperature/Altitude Sensor BMP085 Sensor Module for Arduino diy Kit Electronics / Elecrow Tech co.,Ltd.
+5,04 Û 1pcs MS5611-01BA03 561101BA03 barometer, altimeter Sensor (MS5611) replace 561101BA01 / SunYou
+
+
+Optional 2:
+
+- Hygro via external bus:
+5,80 Û 2.5-5V DC Digital Hygro SHT31 SHT31-D Analog Temperature Humidity Sensor SHT Breakout Weather For Arduino / Sean_Wang Electronics
+
+
+Optional 3:
+
+- Alcohol sensor:
+
+
+Optional 4:
+
+- SD-card
+
+
+Optional 5:
+
+- USB-Hub
+
+- USB-port for memory sticks
+
+
+Optional 6:
+
+- TFT display
+
+- Touch sensitive display unit
+
+
+Optional 7:
+
+- HAM radio transmitter / receiver module
+
+
+- - 8 < - -
+
+Obsolete:
+
+
+- GPS:
+12,00 Û TJ1513MTBD, 5PCS LOT GPS positioning module MT3333 +free shipping / Shenzhen Taida Century Technology Co.,Ltd
+
+
+- GSM:
+2,07 Û Free Shipping 1PCS DIY KIT GSM GPRS M590 gsm module Short Message Service SMS module project for Arduino remote sensing alarm / KELI Electronics Technology Co., Ltd
+7,32 Û New SIM800L GPRS GSM Module w/ PCB Antenna SIM Board Quad band for MCU for Arduino / All Electronics Trading Company
+4,43 Û NEW Smallest SIM800C GPRS GSM Module MicroSIM Card Core Board Quad-band TTL Serial Port (Compatible SIM800L SIM900A) / Shenzhen CAIZHIXING Electronic Co., Ltd.
+
+
+
+<EOF>

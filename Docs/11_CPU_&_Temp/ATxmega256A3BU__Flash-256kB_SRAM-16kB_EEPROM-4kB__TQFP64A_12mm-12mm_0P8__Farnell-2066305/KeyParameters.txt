@@ -1,0 +1,279 @@
+Key parameters for ATxmega256A3BU
+
+Parameter
+
+	Value
+
+
+Flash (kBytes):
+
+	256 kBytes
+
+
+Pin Count:
+
+	64
+
+
+Max. Operating Freq. (MHz):
+
+	32 MHz
+
+
+CPU:
+
+	8-bit AVR
+
+
+# of Touch Channels:
+
+	16
+
+
+Hardware QTouch Acquisition:
+
+	No
+
+
+Max I/O Pins:
+
+	47
+
+
+Ext Interrupts:
+
+	49
+
+
+USB Transceiver:
+
+	1
+
+
+USB Speed:
+
+	Full Speed
+
+
+USB Interface:
+
+	Device
+
+
+SPI:
+
+	8
+
+
+TWI (I2C):
+
+	2
+
+
+UART:
+
+	6
+
+
+Graphic LCD:
+
+	No
+
+
+Video Decoder:
+
+	No
+
+
+Camera Interface:
+
+	No
+
+
+ADC Channels:
+
+	16
+
+
+ADC Resolution (bits):
+
+	12
+
+
+ADC Speed (ksps):
+
+	2000
+
+
+Analog Comparators:
+
+	4
+
+
+Resistive Touch Screen:
+
+	No
+
+
+DAC Channels:
+
+	2
+
+
+DAC Resolution (bits):
+
+	12
+
+
+Temp. Sensor:
+
+	Yes
+
+
+Crypto Engine:
+
+	AES/DES
+
+
+SRAM (kBytes):
+
+	16
+
+
+EEPROM (Bytes):
+
+	4096
+
+
+Self Program Memory:
+
+	Yes
+
+
+External Bus Interface:
+
+	0
+
+
+DRAM Memory:
+
+	No
+
+
+NAND Interface:
+
+	No
+
+
+picoPower:
+
+	Yes
+
+
+Temp. Range (deg C):
+
+	-40 to 85
+
+
+I/O Supply Class:
+
+	1.6 to 3.6
+
+
+Operating Voltage (Vcc):
+
+	1.6 to 3.6
+
+
+FPU:
+
+	No
+
+
+MPU / MMU:
+
+	no / no
+
+
+Timers:
+
+	7
+
+
+Output Compare Channels:
+
+	22
+
+
+Input Capture Channels:
+
+	22
+
+
+PWM Channels:
+
+	22
+
+
+32kHz RTC:
+
+	Yes
+
+
+Calibrated RC Oscillator:
+
+	Yes
+
+
+Watchdog:
+
+	Yes
+
+
+CAN:
+
+	0
+
+
+LIN:
+
+	0
+
+
+Ethernet:
+
+	0
+
+
+Quadrature Decoder Channels:
+
+	3
+
+
+Debug Interface:
+
+	JTAG and PDI
+
+
+I2S:
+
+	No
+
+
+RTC:
+
+	Counter
+
+
+Diff. ADC Inputs:
+
+	64
+
+
+Series:
+
+	A Series 
+
+
+
+<EOF>
