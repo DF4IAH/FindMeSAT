@@ -10375,15 +10375,15 @@ Diameter = 1mm, Clearance = 3R</description>
 </class>
 <class number="1" name="pwr2A" width="0.8" drill="0">
 </class>
-<class number="2" name="R50" width="0.4064" drill="0">
+<class number="2" name="R50" width="0.2032" drill="0">
 <clearance class="2" value="0.9"/>
 </class>
-<class number="3" name="R90_USB" width="0.2921" drill="0">
+<class number="3" name="R90_USB" width="0.15" drill="0">
 <clearance class="3" value="0.2032"/>
 </class>
 <class number="4" name="pwrA5" width="0.4" drill="0">
 </class>
-<class number="5" name="R75" width="0.1524" drill="0">
+<class number="5" name="R75" width="0.15" drill="0">
 <clearance class="5" value="0.2032"/>
 </class>
 <class number="6" name="R110_SPI" width="0.15" drill="0">
@@ -10536,8 +10536,8 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="R173" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R171" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R222" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
-<part name="R271" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="R281" library="rcl" deviceset="R-EU_" device="R0603"/>
+<part name="R271" library="rcl" deviceset="R-EU_" device="R0805"/>
+<part name="R281" library="rcl" deviceset="R-EU_" device="R0805"/>
 <part name="R291" library="rcl" deviceset="R-EU_" device="R0603"/>
 <part name="C291" library="rcl" deviceset="C-EU" device="C0603"/>
 <part name="C292" library="rcl" deviceset="C-EU" device="C0603"/>
