@@ -10395,6 +10395,9 @@ Diameter = 1mm, Clearance = 3R</description>
 <class number="8" name="GND" width="0" drill="0">
 <clearance class="8" value="0.5"/>
 </class>
+<class number="9" name="antenna" width="0.8" drill="0">
+<clearance class="9" value="0.5"/>
+</class>
 </classes>
 <parts>
 <part name="FRAME1" library="df4iah_frame" deviceset="A4L-LOC" device="" value="CPU"/>
@@ -11663,7 +11666,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="170.18" y="81.28" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="GSM_ANT" class="2">
+<net name="GSM_ANT" class="9">
 <segment>
 <wire x1="200.66" y1="114.3" x2="208.28" y2="114.3" width="0.3048" layer="91"/>
 <label x="223.52" y="114.3" size="1.778" layer="97" xref="yes"/>
@@ -11801,7 +11804,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="30.48" y="20.32" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="BT_ANT" class="2">
+<net name="BT_ANT" class="9">
 <segment>
 <wire x1="200.66" y1="81.28" x2="208.28" y2="81.28" width="0.3048" layer="91"/>
 <label x="223.52" y="81.28" size="1.778" layer="97" xref="yes"/>
