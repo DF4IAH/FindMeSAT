@@ -7717,6 +7717,31 @@ MANUFACTURER: SAMTEC</description>
 <wire x1="3.5" y1="1.8" x2="3.5" y2="1.1" width="0.6" layer="46"/>
 <smd name="JSHIELD@1" x="-3.2" y="1.45" dx="1.8" dy="1.9" layer="16" roundness="60" rot="R180" thermals="no"/>
 <smd name="JSHIELD@7" x="3.2" y="1.45" dx="1.8" dy="1.9" layer="16" roundness="60" rot="R180" thermals="no"/>
+<polygon width="0.005" layer="2" pour="cutout">
+<vertex x="-4.21" y="0.9"/>
+<vertex x="-4.21" y="2" curve="-180"/>
+<vertex x="-2.775" y="2"/>
+<vertex x="-2.775" y="0.9" curve="-180"/>
+</polygon>
+<polygon width="0.005" layer="2" pour="cutout">
+<vertex x="2.775" y="0.9"/>
+<vertex x="2.775" y="2" curve="-180"/>
+<vertex x="4.21" y="2"/>
+<vertex x="4.21" y="0.9" curve="-180"/>
+</polygon>
+<wire x1="3.5" y1="1.8" x2="3.5" y2="1.1" width="0.6" layer="46"/>
+<polygon width="0.005" layer="15" pour="cutout">
+<vertex x="-4.21" y="0.9"/>
+<vertex x="-4.21" y="2" curve="-180"/>
+<vertex x="-2.775" y="2"/>
+<vertex x="-2.775" y="0.9" curve="-180"/>
+</polygon>
+<polygon width="0.005" layer="15" pour="cutout">
+<vertex x="2.775" y="0.9"/>
+<vertex x="2.775" y="2" curve="-180"/>
+<vertex x="4.21" y="2"/>
+<vertex x="4.21" y="0.9" curve="-180"/>
+</polygon>
 </package>
 <package name="MICROSIM-8P_SDCARD-8P_MOLEX-104642-1610">
 <smd name="G8" x="6.875" y="-7.04" dx="1.35" dy="2.6" layer="1"/>
@@ -10395,9 +10420,6 @@ Diameter = 1mm, Clearance = 3R</description>
 <class number="8" name="GND" width="0" drill="0">
 <clearance class="8" value="0.5"/>
 </class>
-<class number="9" name="antenna" width="0.8" drill="0">
-<clearance class="9" value="0.5"/>
-</class>
 </classes>
 <parts>
 <part name="FRAME1" library="df4iah_frame" deviceset="A4L-LOC" device="" value="CPU"/>
@@ -11666,7 +11688,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="170.18" y="81.28" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="GSM_ANT" class="9">
+<net name="GSM_ANT" class="2">
 <segment>
 <wire x1="200.66" y1="114.3" x2="208.28" y2="114.3" width="0.3048" layer="91"/>
 <label x="223.52" y="114.3" size="1.778" layer="97" xref="yes"/>
@@ -11804,7 +11826,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="30.48" y="20.32" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="BT_ANT" class="9">
+<net name="BT_ANT" class="2">
 <segment>
 <wire x1="200.66" y1="81.28" x2="208.28" y2="81.28" width="0.3048" layer="91"/>
 <label x="223.52" y="81.28" size="1.778" layer="97" xref="yes"/>
