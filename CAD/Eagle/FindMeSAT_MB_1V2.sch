@@ -7717,6 +7717,31 @@ MANUFACTURER: SAMTEC</description>
 <wire x1="3.5" y1="1.8" x2="3.5" y2="1.1" width="0.6" layer="46"/>
 <smd name="JSHIELD@1" x="-3.2" y="1.45" dx="1.8" dy="1.9" layer="16" roundness="60" rot="R180" thermals="no"/>
 <smd name="JSHIELD@7" x="3.2" y="1.45" dx="1.8" dy="1.9" layer="16" roundness="60" rot="R180" thermals="no"/>
+<polygon width="0.005" layer="2" pour="cutout">
+<vertex x="-4.21" y="0.9"/>
+<vertex x="-4.21" y="2" curve="-180"/>
+<vertex x="-2.775" y="2"/>
+<vertex x="-2.775" y="0.9" curve="-180"/>
+</polygon>
+<polygon width="0.005" layer="2" pour="cutout">
+<vertex x="2.775" y="0.9"/>
+<vertex x="2.775" y="2" curve="-180"/>
+<vertex x="4.21" y="2"/>
+<vertex x="4.21" y="0.9" curve="-180"/>
+</polygon>
+<wire x1="3.5" y1="1.8" x2="3.5" y2="1.1" width="0.6" layer="46"/>
+<polygon width="0.005" layer="15" pour="cutout">
+<vertex x="-4.21" y="0.9"/>
+<vertex x="-4.21" y="2" curve="-180"/>
+<vertex x="-2.775" y="2"/>
+<vertex x="-2.775" y="0.9" curve="-180"/>
+</polygon>
+<polygon width="0.005" layer="15" pour="cutout">
+<vertex x="2.775" y="0.9"/>
+<vertex x="2.775" y="2" curve="-180"/>
+<vertex x="4.21" y="2"/>
+<vertex x="4.21" y="0.9" curve="-180"/>
+</polygon>
 </package>
 <package name="MICROSIM-8P_SDCARD-8P_MOLEX-104642-1610">
 <smd name="G8" x="6.875" y="-7.04" dx="1.35" dy="2.6" layer="1"/>
