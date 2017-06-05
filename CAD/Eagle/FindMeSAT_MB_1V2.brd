@@ -2516,7 +2516,7 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <attribute name="NAME" x="69.596" y="23.368" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="69.469" y="27.432" size="0.6096" layer="28" rot="MR90"/>
 </element>
-<element name="R1012" library="rcl" package="R0603" value="470kR" x="67.691" y="33.02" smashed="yes" rot="MR0">
+<element name="R1012" library="rcl" package="R0603" value="270kR" x="67.691" y="33.02" smashed="yes" rot="MR0">
 <attribute name="NAME" x="68.961" y="33.909" size="0.6096" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="68.453" y="32.766" size="0.6096" layer="28" rot="MR0"/>
 </element>
