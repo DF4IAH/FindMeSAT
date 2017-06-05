@@ -122,14 +122,14 @@ enum pwm_tc_t {
  * \brief Valid clock source indexes
  */
 enum pwm_clk_sel {
-	PWM_CLK_OFF     = TC_TC0_CLKSEL_OFF_gc,
-	PWM_CLK_DIV1    = TC_TC0_CLKSEL_DIV1_gc,
-	PWM_CLK_DIV2    = TC_TC0_CLKSEL_DIV2_gc,
-	PWM_CLK_DIV4    = TC_TC0_CLKSEL_DIV4_gc,
-	PWM_CLK_DIV8    = TC_TC0_CLKSEL_DIV8_gc,
-	PWM_CLK_DIV64   = TC_TC0_CLKSEL_DIV64_gc,
-	PWM_CLK_DIV256  = TC_TC0_CLKSEL_DIV256_gc,
-	PWM_CLK_DIV1024 = TC_TC0_CLKSEL_DIV1024_gc,
+	PWM_CLK_OFF     = TC_CLKSEL_OFF_gc,
+	PWM_CLK_DIV1    = TC_CLKSEL_DIV1_gc,
+	PWM_CLK_DIV2    = TC_CLKSEL_DIV2_gc,
+	PWM_CLK_DIV4    = TC_CLKSEL_DIV4_gc,
+	PWM_CLK_DIV8    = TC_CLKSEL_DIV8_gc,
+	PWM_CLK_DIV64   = TC_CLKSEL_DIV64_gc,
+	PWM_CLK_DIV256  = TC_CLKSEL_DIV256_gc,
+	PWM_CLK_DIV1024 = TC_CLKSEL_DIV1024_gc,
 };
 
  /**
@@ -178,7 +178,7 @@ static inline void pwm_set_duty_cycle_percent(struct pwm_config *config,
  */
 static inline void pwm_stop(struct pwm_config *config)
 {
-	tc_write_clock_source(config->tc, TC_TC0_CLKSEL_OFF_gc);
+	tc_write_clock_source(config->tc, TC_CLKSEL_OFF_gc);
 }
 
 /**
