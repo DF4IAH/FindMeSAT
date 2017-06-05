@@ -10489,7 +10489,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="GND1002" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="C1002" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="+3V0_1001" library="df4iah_supply" deviceset="+3V0" device=""/>
-<part name="C1001" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
+<part name="C1001" library="rcl" deviceset="C-EU" device="C0603" value="10uF"/>
 <part name="R1001" library="rcl" deviceset="R-EU_" device="R0603" value="100kR"/>
 <part name="GND1001" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="R1013" library="rcl" deviceset="R-EU_" device="R0603" value="47R"/>
@@ -10502,7 +10502,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="GND1012" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="C1012" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="+3V3_1011" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R1012" library="rcl" deviceset="R-EU_" device="R0603" value="470kR"/>
+<part name="R1012" library="rcl" deviceset="R-EU_" device="R0603" value="270kR"/>
 <part name="R1011" library="rcl" deviceset="R-EU_" device="R0603" value="100kR"/>
 <part name="GND1011" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="D1122" library="df4iah_diode" deviceset="CRS08" device=""/>
@@ -12838,7 +12838,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <sheet>
 <description>VCTCXO</description>
 <plain>
-<text x="35.56" y="127" size="1.778" layer="97">f_LP = 15 Hz</text>
+<text x="35.56" y="127" size="1.778" layer="97">f_LP = 1 Hz, PWM min. 100 Hz</text>
 <text x="144.78" y="116.84" size="1.778" layer="97">580mV</text>
 </plain>
 <instances>
@@ -13060,9 +13060,9 @@ Diameter = 1mm, Clearance = 3R</description>
 <description>Power</description>
 <plain>
 <text x="139.7" y="134.62" size="1.778" layer="97">0.6V</text>
-<text x="55.88" y="154.94" size="1.778" layer="97">1:4</text>
-<text x="233.68" y="35.56" size="1.778" layer="97">1:2</text>
-<text x="226.06" y="154.94" size="1.778" layer="97">1:4</text>
+<text x="55.88" y="154.94" size="1.778" layer="97">1:0.4 = 2.0V</text>
+<text x="233.68" y="35.56" size="1.778" layer="97">1:0.668 = 2V</text>
+<text x="226.06" y="154.94" size="1.778" layer="97">1:0.4 = 2.0V</text>
 </plain>
 <instances>
 <instance part="FRAME11" gate="G$1" x="0" y="0"/>
