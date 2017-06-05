@@ -122,17 +122,17 @@ enum tc_dir_t {
 //! Timer Counter Waveform Generator mode
 enum tc_wg_mode_t {
 	//! TC in normal Mode
-	TC_WG_NORMAL = TC_TC0_WGMODE_NORMAL_gc,
+	TC_WG_NORMAL = TC_WGMODE_NORMAL_gc,
 	//! TC in Frequency Generator mode
-	TC_WG_FRQ = TC_TC0_WGMODE_FRQ_gc,
+	TC_WG_FRQ = TC_WGMODE_FRQ_gc,
 	//! TC in single slope PWM mode
-	TC_WG_SS = TC_TC0_WGMODE_SS_gc,
+	TC_WG_SS = TC_WGMODE_SS_gc,
 	//! TC in dual slope Top PWM mode
-	TC_WG_DS_T = TC_TC0_WGMODE_DS_T_gc,
+	TC_WG_DS_T = TC_WGMODE_DS_T_gc,
 	//! TC in dual slope Top Bottom PWM mode
-	TC_WG_DS_TB = TC_TC0_WGMODE_DS_TB_gc,
+	TC_WG_DS_TB = TC_WGMODE_DS_TB_gc,
 	//! TC in dual slope Bottom PWM mode
-	TC_WG_DS_B = TC_TC0_WGMODE_DS_B_gc
+	TC_WG_DS_B = TC_WGMODE_DS_B_gc
 };
 
 //! TC interrupt levels
@@ -377,7 +377,7 @@ static inline void tc_set_ccd_interrupt_level(volatile void *tc,
  * \note Configuring the clock also starts the timer
  */
 static inline void tc_write_clock_source(volatile void *tc,
-		TC_TC0_CLKSEL_t TC_CLKSEL_enum)
+		TC_CLKSEL_t TC_CLKSEL_enum)
 {
 	((TC0_t *)tc)->CTRLA =
 			(((TC0_t *)tc)->CTRLA & ~TC0_CLKSEL_gm) |
@@ -390,9 +390,9 @@ static inline void tc_write_clock_source(volatile void *tc,
  * \param tc Pointer to TC module.
  * \return TC_CLKSEL_enum Clock source selection
  */
-static inline TC_TC0_CLKSEL_t tc_read_clock_source(volatile void *tc)
+static inline TC_CLKSEL_t tc_read_clock_source(volatile void *tc)
 {
-	return (TC_TC0_CLKSEL_t)(((TC0_t *)tc)->CTRLA & TC0_CLKSEL_gm);
+	return (TC_CLKSEL_t)(((TC0_t *)tc)->CTRLA & TC0_CLKSEL_gm);
 }
 
 /**
@@ -413,19 +413,19 @@ static inline void tc_set_resolution(volatile void *tc, uint32_t resolution)
 	uint32_t tc_clk_rate = sysclk_get_per_hz();
 
 	if (resolution <= (tc_clk_rate / 1024)) {
-		tc_write_clock_source(tc, TC_TC0_CLKSEL_DIV1024_gc);
+		tc_write_clock_source(tc, TC_CLKSEL_DIV1024_gc);
 	} else if (resolution <= (tc_clk_rate / 256)) {
-		tc_write_clock_source(tc, TC_TC0_CLKSEL_DIV256_gc);
+		tc_write_clock_source(tc, TC_CLKSEL_DIV256_gc);
 	} else if (resolution <= (tc_clk_rate / 64)) {
-		tc_write_clock_source(tc, TC_TC0_CLKSEL_DIV64_gc);
+		tc_write_clock_source(tc, TC_CLKSEL_DIV64_gc);
 	} else if (resolution <= (tc_clk_rate / 8)) {
-		tc_write_clock_source(tc, TC_TC0_CLKSEL_DIV8_gc);
+		tc_write_clock_source(tc, TC_CLKSEL_DIV8_gc);
 	} else if (resolution <= (tc_clk_rate / 4)) {
-		tc_write_clock_source(tc, TC_TC0_CLKSEL_DIV4_gc);
+		tc_write_clock_source(tc, TC_CLKSEL_DIV4_gc);
 	} else if (resolution <= (tc_clk_rate / 2)) {
-		tc_write_clock_source(tc, TC_TC0_CLKSEL_DIV2_gc);
+		tc_write_clock_source(tc, TC_CLKSEL_DIV2_gc);
 	} else {
-		tc_write_clock_source(tc, TC_TC0_CLKSEL_DIV1_gc);
+		tc_write_clock_source(tc, TC_CLKSEL_DIV1_gc);
 	}
 }
 
@@ -446,35 +446,35 @@ static inline uint32_t tc_get_resolution(volatile void *tc)
 {
 	uint32_t tc_clk_rate = sysclk_get_per_hz();
 	switch (tc_read_clock_source(tc)) {
-	case TC_TC0_CLKSEL_OFF_gc:
+	case TC_CLKSEL_OFF_gc:
 		tc_clk_rate = 0;
 		break;
 
-	case TC_TC0_CLKSEL_DIV1024_gc:
+	case TC_CLKSEL_DIV1024_gc:
 		tc_clk_rate /= 1024;
 		break;
 
-	case TC_TC0_CLKSEL_DIV256_gc:
+	case TC_CLKSEL_DIV256_gc:
 		tc_clk_rate /= 256;
 		break;
 
-	case TC_TC0_CLKSEL_DIV64_gc:
+	case TC_CLKSEL_DIV64_gc:
 		tc_clk_rate /= 64;
 		break;
 
-	case TC_TC0_CLKSEL_DIV8_gc:
+	case TC_CLKSEL_DIV8_gc:
 		tc_clk_rate /= 8;
 		break;
 
-	case TC_TC0_CLKSEL_DIV4_gc:
+	case TC_CLKSEL_DIV4_gc:
 		tc_clk_rate /= 4;
 		break;
 
-	case TC_TC0_CLKSEL_DIV2_gc:
+	case TC_CLKSEL_DIV2_gc:
 		tc_clk_rate /= 2;
 		break;
 
-	case TC_TC0_CLKSEL_DIV1_gc:
+	case TC_CLKSEL_DIV1_gc:
 		break;
 
 	default:
@@ -651,7 +651,7 @@ static inline void tc_clear_error(volatile void *tc)
  */
 static inline void tc_restart(volatile void *tc)
 {
-	((TC0_t *)tc)->CTRLFSET = TC_TC0_CMD_RESTART_gc;
+	((TC0_t *)tc)->CTRLFSET = TC_CMD_RESTART_gc;
 }
 
 /**
@@ -662,7 +662,7 @@ static inline void tc_restart(volatile void *tc)
  */
 static inline void tc_reset(volatile void *tc)
 {
-	((TC0_t *)tc)->CTRLFSET = TC_TC0_CMD_RESET_gc;
+	((TC0_t *)tc)->CTRLFSET = TC_CMD_RESET_gc;
 }
 
 /**
@@ -673,7 +673,7 @@ static inline void tc_reset(volatile void *tc)
  */
 static inline void tc_update(volatile void *tc)
 {
-	((TC0_t *)tc)->CTRLFSET = TC_TC0_CMD_UPDATE_gc;
+	((TC0_t *)tc)->CTRLFSET = TC_CMD_UPDATE_gc;
 }
 
 /**
@@ -755,7 +755,7 @@ static inline void tc_disable_cc_channels(volatile void *tc,
  * \param eventaction Event action capture type
  */
 static inline void tc_set_input_capture(volatile void *tc,
-		TC_TC0_EVSEL_t eventsource, TC_TC0_EVACT_t eventaction)
+		TC_EVSEL_t eventsource, TC_EVACT_t eventaction)
 {
 	((TC0_t *)tc)->CTRLD &= ~(TC0_EVSEL_gm | TC0_EVACT_gm);
 	((TC0_t *)tc)->CTRLD |= ((uint8_t)eventsource | (uint8_t)eventaction);

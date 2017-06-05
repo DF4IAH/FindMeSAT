@@ -88,10 +88,10 @@ static void tc_init(void)
 static void tc_start(void)
 {
 	/* ADC clock */
-	tc_write_clock_source(&TCC0, TC_TC0_CLKSEL_DIV1_gc);						// VCTCXO PWM start, output still is Z-state
+	tc_write_clock_source(&TCC0, TC_CLKSEL_DIV1_gc);							// VCTCXO PWM start, output still is Z-state
 
 	/* DAC clock */
-	tc_write_clock_source(&TCE1, TC_TC1_CLKSEL_DIV1_gc);						// Internal clock
+	tc_write_clock_source(&TCE1, TC_CLKSEL_DIV1_gc);							// Internal clock
 }
 
 
