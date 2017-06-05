@@ -2485,9 +2485,9 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <attribute name="NAME" x="72.517" y="33.909" size="0.6096" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="71.755" y="31.115" size="1.27" layer="28" rot="MR0"/>
 </element>
-<element name="C1001" library="rcl" package="C0603" value="10uF" x="66.04" y="36.322" smashed="yes">
-<attribute name="NAME" x="64.643" y="37.084" size="0.6096" layer="25"/>
-<attribute name="VALUE" x="65.278" y="35.941" size="0.6096" layer="27"/>
+<element name="C1001" library="rcl" package="C0805" value="10uF" x="66.265290625" y="36.922809375" smashed="yes">
+<attribute name="NAME" x="64.980934375" y="37.966440625" size="0.6096" layer="25"/>
+<attribute name="VALUE" x="65.503290625" y="36.541809375" size="0.6096" layer="27"/>
 </element>
 <element name="R1001" library="rcl" package="R0603" value="100kR" x="65.151" y="33.909" smashed="yes" rot="MR90">
 <attribute name="NAME" x="64.897" y="35.687" size="0.6096" layer="26" rot="MR90"/>
@@ -3137,7 +3137,7 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <wire x1="69.081" y1="31.12" x2="69.469" y2="32.004" width="0.1524" layer="1"/>
 <wire x1="70.27" y1="33.02" x2="69.469" y2="32.004" width="0.1524" layer="16"/>
 <via x="67.818" y="35.941" extent="1-16" drill="0.3048" shape="octagon"/>
-<wire x1="66.89" y1="36.322" x2="67.31" y2="35.941" width="0.1524" layer="1"/>
+<wire x1="67.215290625" y1="36.922809375" x2="67.31" y2="35.941" width="0.1524" layer="1"/>
 <wire x1="67.31" y1="35.941" x2="67.818" y2="35.941" width="0.1524" layer="1"/>
 <wire x1="66.46" y1="30.48" x2="66.04" y2="30.48" width="0.1524" layer="16"/>
 <wire x1="66.04" y1="30.48" x2="66.04" y2="28.79" width="0.1524" layer="16"/>
@@ -3915,7 +3915,9 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <contactref element="C1001" pad="1"/>
 <contactref element="R1002" pad="1"/>
 <contactref element="U1021" pad="3"/>
-<wire x1="65.19" y1="34.925" x2="65.19" y2="36.322" width="0.1524" layer="1"/>
+<wire x1="65.19" y1="34.925" x2="65.296075" y2="35.241196875" width="0.1524" layer="1"/>
+<wire x1="65.296075" y1="35.241196875" x2="65.296075" y2="36.922809375" width="0.1524" layer="1"/>
+<wire x1="65.296075" y1="36.922809375" x2="65.315290625" y2="36.922809375" width="0.1524" layer="1"/>
 <wire x1="65.19" y1="34.925" x2="65.19" y2="33.1352" width="0.1524" layer="1"/>
 <wire x1="65.19" y1="33.1352" x2="65.1002" y2="33.0454" width="0.1524" layer="1"/>
 <via x="65.151" y="34.798" extent="1-16" drill="0.3048" shape="octagon"/>
@@ -6571,6 +6573,8 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <approved hash="7,40,acd8ec986c982cd8"/>
 <approved hash="7,40,5b89b6dcf876a7f0"/>
 <approved hash="7,40,e67986147c7ab743"/>
+<approved hash="5,1,f31319410b127147"/>
+<approved hash="5,1,c20f3c90ee4ee03e"/>
 <approved hash="3,2,28802f4dd126d6eb"/>
 <approved hash="3,2,c2fd20e385e367fd"/>
 <approved hash="3,16,5733b5381ab8f8b3"/>
@@ -6721,21 +6725,21 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <approved hash="18,29,42c3475024cf3fa4"/>
 <approved hash="18,29,151e83641fca9748"/>
 <approved hash="18,29,96c79dcd07487cf7"/>
-<approved hash="18,29,05ca6d78c5ffbb18"/>
 <approved hash="18,29,b81b26b38a9dd6fb"/>
+<approved hash="18,29,05ca6d78c5ffbb18"/>
 <approved hash="18,29,896e6ccbfdc51966"/>
 <approved hash="18,29,4d3d8153e389e8fb"/>
-<approved hash="18,29,3920d19851b737cb"/>
 <approved hash="18,29,d5fdae9d835698ed"/>
+<approved hash="18,29,3920d19851b737cb"/>
 <approved hash="18,29,e429af934ae2a9ea"/>
-<approved hash="18,29,2c2aa7aba9dbe4e4"/>
 <approved hash="18,29,7ff35e19628409af"/>
+<approved hash="18,29,2c2aa7aba9dbe4e4"/>
 <approved hash="18,29,a45848e24c9e2122"/>
 <approved hash="18,29,9dec8f15af92d08e"/>
 <approved hash="18,29,17863142b4261df4"/>
 <approved hash="18,29,decda7e3897299fd"/>
-<approved hash="18,29,a11e99e315723589"/>
 <approved hash="18,29,a13e81c30d5235a9"/>
+<approved hash="18,29,a11e99e315723589"/>
 <approved hash="18,29,4d46dd0e251ab3ba"/>
 <approved hash="18,29,5d26cdee35faa31a"/>
 <approved hash="18,29,5916cbf635e2a12a"/>
@@ -6963,32 +6967,32 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <approved hash="5,1,7b8f5e49c16c9600"/>
 <approved hash="5,1,ffaf44f052df06f6"/>
 <approved hash="5,1,a4119588509dad65"/>
-<approved hash="5,1,5d652dac78ba0c8d"/>
 <approved hash="5,1,40bd2016204c40ef"/>
 <approved hash="5,1,584d3806384c58ff"/>
+<approved hash="5,1,5d652dac78ba0c8d"/>
 <approved hash="5,1,5598a611905e6376"/>
 <approved hash="5,1,9252362ed076bb1d"/>
 <approved hash="5,1,fba4dda09443f2c6"/>
-<approved hash="5,1,0c7a11bb9e7f1cce"/>
-<approved hash="5,1,c7aad19b1e5f971e"/>
+<approved hash="5,1,6f3911b99e7f7f8f"/>
 <approved hash="5,1,744a51d81e1ca4fe"/>
-<approved hash="5,1,71df31b790daccfb"/>
+<approved hash="5,1,0c7a11bb9e7f1cce"/>
 <approved hash="5,1,39be47968e81eede"/>
+<approved hash="5,1,71df31b790daccfb"/>
 <approved hash="5,1,8d455c70b08c3dca"/>
 <approved hash="5,1,2be9220ebd23b5c9"/>
 <approved hash="5,1,d1df7f42e0066fba"/>
 <approved hash="5,1,777e9c25222ba989"/>
-<approved hash="5,1,9fda91bb9e7f0f6e"/>
+<approved hash="5,1,533473354f9f2a3c"/>
+<approved hash="5,1,afad17cf87aef3f1"/>
 <approved hash="5,1,606f07f60ea0774e"/>
+<approved hash="5,1,268edaa3f7642f7e"/>
+<approved hash="5,1,570951581e9e87bf"/>
+<approved hash="5,1,c7aad19b1e5f971e"/>
 <approved hash="5,1,8da4444c6890fd0b"/>
 <approved hash="5,1,5f1ea6564e233995"/>
 <approved hash="5,1,8f30535dd0a79dc1"/>
 <approved hash="5,1,85d8a58a63086485"/>
-<approved hash="5,1,268edaa3f7642f7e"/>
-<approved hash="5,1,570951581e9e87bf"/>
-<approved hash="5,1,6f3911b99e7f7f8f"/>
-<approved hash="5,1,533473354f9f2a3c"/>
-<approved hash="5,1,afad17cf87aef3f1"/>
+<approved hash="5,1,9fda91bb9e7f0f6e"/>
 <approved hash="5,1,fc1f89fb7f1bf9c0"/>
 <approved hash="5,1,046279dd8f35f193"/>
 <approved hash="5,1,905e7de2b21e1a74"/>
@@ -7003,29 +7007,28 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <approved hash="5,1,bcda2ef11de8c4c1"/>
 <approved hash="5,1,e0fd9dbdd1a75776"/>
 <approved hash="5,1,696a1f2f06147c92"/>
+<approved hash="5,1,866616838400540a"/>
 <approved hash="5,1,7ef137e987947763"/>
 <approved hash="5,1,cf9312855e9ac329"/>
-<approved hash="5,1,866616838400540a"/>
-<approved hash="5,1,f4e1f8e26f4204c2"/>
 <approved hash="5,1,bce2ed921ad2db0b"/>
 <approved hash="5,1,69ed47eda399ccf0"/>
 <approved hash="5,1,38896fa278825f2a"/>
+<approved hash="5,1,f4e1f8e26f4204c2"/>
 <approved hash="5,1,8e04d2def6ac5a23"/>
 <approved hash="5,1,3f047204ad61514b"/>
-<approved hash="5,1,b9a4b23dbd4c2ed7"/>
 <approved hash="5,1,2cc6bf1b306a3bb5"/>
+<approved hash="5,1,b9a4b23dbd4c2ed7"/>
 <approved hash="5,1,6da908d25572cbe1"/>
 <approved hash="5,1,d76c28bcc60099e8"/>
 <approved hash="5,1,a7b593edda697da4"/>
 <approved hash="5,1,1aa8c7bb71e4ec52"/>
 <approved hash="5,1,90c571cc87c3c71c"/>
-<approved hash="5,1,f31319410b127147"/>
 <approved hash="5,1,4cb44c7a740ed799"/>
-<approved hash="5,1,c20f3c90ee4ee03e"/>
+<approved hash="5,1,b083b0d5961dd152"/>
 <approved hash="5,1,6bc651a70cb37e0c"/>
 <approved hash="5,1,755c547dfc701208"/>
-<approved hash="5,1,48311f6218823f52"/>
 <approved hash="5,1,845988220f4264ba"/>
+<approved hash="5,1,48311f6218823f52"/>
 <approved hash="5,1,499969f77fa602ba"/>
 <approved hash="5,1,f3609ee87c80a745"/>
 <approved hash="5,1,cd636a3638b884a2"/>
@@ -7034,8 +7037,8 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <approved hash="5,1,2c2f3a55f4789fea"/>
 <approved hash="5,1,500e22e62b86066a"/>
 <approved hash="5,1,615380e955c4a72e"/>
-<approved hash="5,1,b3e5ed54f3a62216"/>
 <approved hash="5,1,22873898cd8eb8f4"/>
+<approved hash="5,1,b3e5ed54f3a62216"/>
 <approved hash="5,1,c4351a967576b8c4"/>
 <approved hash="5,1,2d894e7a83ee3693"/>
 <approved hash="5,1,9879cf2278825f5a"/>
@@ -7044,15 +7047,15 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <approved hash="5,1,ccd8da7a5ecde531"/>
 <approved hash="5,1,e82f77604cfd99e9"/>
 <approved hash="5,1,f5345dbed073ce8f"/>
-<approved hash="5,1,65c969a24f4224aa"/>
-<approved hash="5,1,b4d1e29e2a840be1"/>
-<approved hash="5,1,5dae751e98832959"/>
-<approved hash="5,1,63dd4e4cfbaea55b"/>
-<approved hash="5,1,2ebfe23d6dea2a80"/>
-<approved hash="5,1,303317d26624c8e9"/>
 <approved hash="5,1,c07bced65c68f10f"/>
 <approved hash="5,1,ba593cfd09fe3178"/>
 <approved hash="5,1,1cb963985237d5ae"/>
+<approved hash="5,1,b4d1e29e2a840be1"/>
+<approved hash="5,1,5dae751e98832959"/>
+<approved hash="5,1,63dd4e4cfbaea55b"/>
+<approved hash="5,1,303317d26624c8e9"/>
+<approved hash="5,1,2ebfe23d6dea2a80"/>
+<approved hash="5,1,65c969a24f4224aa"/>
 <approved hash="5,1,997110cd6ee72220"/>
 <approved hash="5,1,2f1b64db37a3a153"/>
 <approved hash="5,1,d11ef95887a0e6ea"/>
@@ -7062,21 +7065,21 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <approved hash="5,1,3681dc0aeea34c83"/>
 <approved hash="5,1,f95a0cff51cc8bb8"/>
 <approved hash="5,1,21d4041ff72e273e"/>
-<approved hash="5,1,e1f4443f37eea0de"/>
 <approved hash="5,1,63f3ff4c3ec0ef4a"/>
+<approved hash="5,1,e1f4443f37eea0de"/>
 <approved hash="5,1,e5092a96a9bb0132"/>
 <approved hash="5,1,358139e2694202a2"/>
 <approved hash="5,1,8398d5de698448e8"/>
-<approved hash="5,1,821daefbe826365b"/>
 <approved hash="5,1,dfbd207ff9cabca1"/>
-<approved hash="5,1,5d205f78792012c5"/>
+<approved hash="5,1,821daefbe826365b"/>
 <approved hash="5,1,6f9b24da97abd113"/>
+<approved hash="5,1,5d205f78792012c5"/>
 <approved hash="5,1,f364248f69eabf58"/>
 <approved hash="5,1,e589440c918b8ce7"/>
-<approved hash="5,1,09105e639e83b973"/>
 <approved hash="5,1,47b876438207ceb9"/>
 <approved hash="5,1,9bc8976ffcc59118"/>
 <approved hash="5,1,18244197641b203d"/>
+<approved hash="5,1,09105e639e83b973"/>
 <approved hash="5,1,f8cbb58b72dc9153"/>
 <approved hash="5,1,0b74ab83b3198d75"/>
 <approved hash="5,1,9ae4f397e7dd6c8c"/>

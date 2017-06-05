@@ -10489,7 +10489,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="GND1002" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="C1002" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="+3V0_1001" library="df4iah_supply" deviceset="+3V0" device=""/>
-<part name="C1001" library="rcl" deviceset="C-EU" device="C0603" value="10uF"/>
+<part name="C1001" library="rcl" deviceset="C-EU" device="C0805" value="10uF"/>
 <part name="R1001" library="rcl" deviceset="R-EU_" device="R0603" value="100kR"/>
 <part name="GND1001" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="R1013" library="rcl" deviceset="R-EU_" device="R0603" value="47R"/>
@@ -11864,6 +11864,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <wire x1="109.22" y1="139.7" x2="109.22" y2="134.62" width="0.1524" layer="91"/>
 <pinref part="C251" gate="G$1" pin="1"/>
 <junction x="86.36" y="139.7"/>
+<label x="63.5" y="139.7" size="1.778" layer="95" rot="R270" xref="yes"/>
 </segment>
 </net>
 <net name="GSM_PCM_OUT" class="0">
@@ -12839,7 +12840,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <description>VCTCXO</description>
 <plain>
 <text x="35.56" y="127" size="1.778" layer="97">f_LP = 1 Hz, PWM min. 100 Hz</text>
-<text x="144.78" y="116.84" size="1.778" layer="97">580mV</text>
+<text x="144.78" y="116.84" size="1.778" layer="97">905mV</text>
 </plain>
 <instances>
 <instance part="FRAME9" gate="G$1" x="0" y="0"/>
