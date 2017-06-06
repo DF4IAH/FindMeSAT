@@ -80,9 +80,9 @@ static void tc_init(void)
 
 	/* VCTCXO PWM signal generation */
 	struct pwm_config pwm_vctcxo_cfg;
-	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_D, 500);							// Init PWM structure and enable timer
+	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 500);							// Init PWM structure and enable timer
 	pwm_start(&pwm_vctcxo_cfg, 45);												// Start PWM. Percentage with 1% granularity is to coarse, use driver access instead
-	tc_write_cc_buffer(&TCC0, TC_CCD, (uint16_t) (0.5f + 65536 * 1.5f/3.3f));	// Initial value for VCTCXO @ 1.5 V
+	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) (0.5f + 65536 * 1.5f/3.3f));	// Initial value for VCTCXO @ 1.5 V
 }
 
 static void tc_start(void)
