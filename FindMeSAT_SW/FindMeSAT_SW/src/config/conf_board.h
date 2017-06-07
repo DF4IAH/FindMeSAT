@@ -12,9 +12,9 @@
 #define CONF_BOARD_H
 
 /* USB pins are used */
-//#define CONF_BOARD_USB_PORT
+#define CONF_BOARD_USB_PORT
 
 /* Enable USB VBUS detect */
-//#define CONF_BOARD_USB_VBUS_DETECT
+#define CONF_BOARD_USB_VBUS_DETECT
 
 #endif // CONF_BOARD_H

@@ -387,6 +387,12 @@
     <OutputFileExtension>.elf</OutputFileExtension>
   </PropertyGroup>
   <ItemGroup>
+    <Compile Include="src\twi.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\twi.h">
+      <SubType>compile</SubType>
+    </Compile>
     <None Include="src\ASF\common\services\gfx_mono\docsrc\gfx_mono_overview.png">
       <SubType>compile</SubType>
     </None>

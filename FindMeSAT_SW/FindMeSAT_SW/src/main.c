@@ -34,12 +34,68 @@
  */
 #include <asf.h>
 #include "conf_dac.h"
+#include "twi.h"
 
 #include "main.h"
 
 
-static uint8_t		runmode								= (uint8_t) 0;			// global runmode
-static bool			usb_cdc_transfers_autorized		= false;
+/* GLOBAL section */
+
+uint8_t		runmode							= (uint8_t) 0;			// global runmode
+bool		usb_cdc_transfers_autorized		= false;
+
+
+twi_options_t twi1_options = {
+	.speed     = TWI1_SPEED,
+	.chip      = TWI1_MASTER_ADDR,
+//	.speed_reg = TWI_BAUD(sysclk_get_cpu_hz(), TWI1_SPEED)
+	.speed_reg = TWI_BAUD(30000000UL, TWI1_SPEED)
+};
+
+uint8_t twi1_m_data[TWI_DATA_LENGTH] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+twi_package_t twi1_packet = {
+	.addr_length = 0,
+	.chip        = TWI1_SLAVE_ADDR,
+	.buffer      = (void *)twi1_m_data,
+	.length      = TWI_DATA_LENGTH,
+	.no_wait     = false
+};
+
+
+twi_options_t twi2_options = {
+	.speed     = TWI2_SPEED,
+	.chip      = TWI2_MASTER_ADDR,
+//	.speed_reg = TWI_BAUD(sysclk_get_cpu_hz(), TWI2_SPEED)
+	.speed_reg = TWI_BAUD(30000000UL, TWI2_SPEED)
+};
+
+uint8_t twi2_m_data[TWI_DATA_LENGTH] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+twi_package_t twi2_packet = {
+	.addr_length = 0,
+	.chip        = TWI2_SLAVE_ADDR,
+	.buffer      = (void *)twi2_m_data,
+	.length      = TWI_DATA_LENGTH,
+	.no_wait     = false
+};
+
+#ifdef TWI1_SLAVE
+TWI_Slave_t		twi1_slave;
+uint8_t			twi1_recv_data[DATA_LENGTH];
+#endif
+
+#ifdef TWI2_SLAVE
+TWI_Slave_t		twi2_slave;
+uint8_t			twi2_recv_data[DATA_LENGTH];
+#endif
+
+
+/* STATIC section for this module */
 
 static uint16_t dac_io_dac0_buf[DAC_NR_OF_SAMPLES] = {
 	32768, 35325, 37784, 40050, 42036, 43666, 44877, 45623,
@@ -393,17 +449,19 @@ int main(void)
 	tc_init();
 	adc_init();
 	dac_init();
+	twi_init();
 	
 	/* All interrupt sources prepared here - IRQ activation */
 	irq_initialize_vectors();
 	cpu_irq_enable();
 	
-	board_init();		// Activates all in/out pins - transitions from Z to dedicated states
+	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
 	sleepmgr_init();	// Unlocks all sleep mode levels
 	
 	
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
+	twi_start();		// 
 
 	/* Init of USB system */
 	usb_init();			// USB device stack start function to enable stack and start USB
