@@ -39,7 +39,7 @@
 
 
 static uint8_t		runmode								= (uint8_t) 0;			// global runmode
-static bool			my_flag_autorize_cdc_transfert		= false;
+static bool			usb_cdc_transfers_autorized		= false;
 
 static uint16_t dac_io_dac0_buf[DAC_NR_OF_SAMPLES] = {
 	32768, 35325, 37784, 40050, 42036, 43666, 44877, 45623,
@@ -290,7 +290,7 @@ bool usb_callback_cdc_enable(void)
 {
 	/* USB CDC feature for serial communication */
 
-	my_flag_autorize_cdc_transfert = true;
+	usb_cdc_transfers_autorized = true;
 	return true;
 }
 
@@ -298,7 +298,7 @@ void usb_callback_cdc_disable(void)
 {
 	/* USB CDC feature for serial communication */
 
-	my_flag_autorize_cdc_transfert = false;
+	usb_cdc_transfers_autorized = false;
 }
 
 void usb_callback_config(uint8_t port, usb_cdc_line_coding_t * cfg)
@@ -345,7 +345,7 @@ static void task_dac(void)
 
 static void task_usb(void)
 {
-	if (my_flag_autorize_cdc_transfert) {
+	if (usb_cdc_transfers_autorized) {
 		//if () {
 		//	task_usb_cdc();
 		//}
