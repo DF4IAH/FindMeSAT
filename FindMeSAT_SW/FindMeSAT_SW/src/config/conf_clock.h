@@ -54,7 +54,7 @@
 
 /* Fbus = Fsys / (2 ^ BUS_div) */
 #define CONFIG_SYSCLK_PSADIV          SYSCLK_PSADIV_1
-#define CONFIG_SYSCLK_PSBCDIV         SYSCLK_PSBCDIV_1_1
+#define CONFIG_SYSCLK_PSBCDIV         SYSCLK_PSBCDIV_1_2
 
 #define CONFIG_PLL0_SOURCE            PLL_SRC_XOSC
 //#define CONFIG_PLL0_SOURCE          PLL_SRC_RC2MHZ
@@ -63,9 +63,9 @@
 /* Fpll = (Fclk * PLL_mul) / PLL_div */
 //#define CONFIG_PLL0_MUL             (24000000UL / BOARD_XOSC_HZ)
 
-/* PLL_SRC_XOSC = 20 MHz --> CONFIG_PLL0_MUL = 3 gives 60 MHz --> CONFIG_PLL0_DIV = 2 gives 30 MHz */
+/* PLL_SRC_XOSC = 20 MHz --> CONFIG_PLL0_MUL = 3 gives 60 MHz */
 #define CONFIG_PLL0_MUL             3
-#define CONFIG_PLL0_DIV             2
+#define CONFIG_PLL0_DIV             1
 
 /* External oscillator frequency range */
 /** 0.4 to 2 MHz frequency range */

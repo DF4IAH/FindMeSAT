@@ -34,12 +34,68 @@
  */
 #include <asf.h>
 #include "conf_dac.h"
+#include "twi.h"
 
 #include "main.h"
 
 
-static uint8_t		runmode								= (uint8_t) 0;			// global runmode
-static bool			my_flag_autorize_cdc_transfert		= false;
+/* GLOBAL section */
+
+uint8_t		runmode							= (uint8_t) 0;			// global runmode
+bool		usb_cdc_transfers_autorized		= false;
+
+
+twi_options_t twi1_options = {
+	.speed     = TWI1_SPEED,
+	.chip      = TWI1_MASTER_ADDR,
+//	.speed_reg = TWI_BAUD(sysclk_get_cpu_hz(), TWI1_SPEED)
+	.speed_reg = TWI_BAUD(30000000UL, TWI1_SPEED)
+};
+
+uint8_t twi1_m_data[TWI_DATA_LENGTH] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+twi_package_t twi1_packet = {
+	.addr_length = 0,
+	.chip        = TWI1_SLAVE_ADDR,
+	.buffer      = (void *)twi1_m_data,
+	.length      = TWI_DATA_LENGTH,
+	.no_wait     = false
+};
+
+
+twi_options_t twi2_options = {
+	.speed     = TWI2_SPEED,
+	.chip      = TWI2_MASTER_ADDR,
+//	.speed_reg = TWI_BAUD(sysclk_get_cpu_hz(), TWI2_SPEED)
+	.speed_reg = TWI_BAUD(30000000UL, TWI2_SPEED)
+};
+
+uint8_t twi2_m_data[TWI_DATA_LENGTH] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+twi_package_t twi2_packet = {
+	.addr_length = 0,
+	.chip        = TWI2_SLAVE_ADDR,
+	.buffer      = (void *)twi2_m_data,
+	.length      = TWI_DATA_LENGTH,
+	.no_wait     = false
+};
+
+#ifdef TWI1_SLAVE
+TWI_Slave_t		twi1_slave;
+uint8_t			twi1_recv_data[DATA_LENGTH];
+#endif
+
+#ifdef TWI2_SLAVE
+TWI_Slave_t		twi2_slave;
+uint8_t			twi2_recv_data[DATA_LENGTH];
+#endif
+
+
+/* STATIC section for this module */
 
 static uint16_t dac_io_dac0_buf[DAC_NR_OF_SAMPLES] = {
 	32768, 35325, 37784, 40050, 42036, 43666, 44877, 45623,
@@ -80,9 +136,9 @@ static void tc_init(void)
 
 	/* VCTCXO PWM signal generation */
 	struct pwm_config pwm_vctcxo_cfg;
-	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_D, 500);							// Init PWM structure and enable timer
+	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 500);							// Init PWM structure and enable timer
 	pwm_start(&pwm_vctcxo_cfg, 45);												// Start PWM. Percentage with 1% granularity is to coarse, use driver access instead
-	tc_write_cc_buffer(&TCC0, TC_CCD, (uint16_t) (0.5f + 65536 * 1.5f/3.3f));	// Initial value for VCTCXO @ 1.5 V
+	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) (0.5f + 65536 * 1.5f/3.3f));	// Initial value for VCTCXO @ 1.5 V
 }
 
 static void tc_start(void)
@@ -92,6 +148,39 @@ static void tc_start(void)
 
 	/* DAC clock */
 	tc_write_clock_source(&TCE1, TC_CLKSEL_DIV1_gc);							// Internal clock
+}
+
+
+#if 0
+static void rtc_start(void)
+{
+	PORTC_OUTSET	= 0b00100000;
+	PORTC_DIRSET	= 0b00100000;
+	
+	RTC32_CTRL		= 0;				// RTC32 disabled
+	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
+	
+	RTC32.PER		= 0x00000003;		// overflowing every 1024 Hz / (PER + 1)
+	RTC32.CNT		= 0;				// from the beginning
+	RTC32.COMP		= 0xffffffff;		// no compare
+	RTC32.INTCTRL	= 0x01;				// enable overflow interrupt of low priority
+	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
+	
+	RTC32.CTRL		= RTC32_ENABLE_bm;	// RTC32 enabled
+	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
+	
+	/* PMIC */
+	PMIC_CTRL |= PMIC_LOLVLEN_bm;
+}
+
+ISR(RTC32_OVF_vect) {
+	PORTC_OUTTGL = 0b00100000;
+}
+#endif
+
+void cb_rtc_alarm(uint32_t rtc_time)
+{
+	// nothing yet
 }
 
 
@@ -290,7 +379,7 @@ bool usb_callback_cdc_enable(void)
 {
 	/* USB CDC feature for serial communication */
 
-	my_flag_autorize_cdc_transfert = true;
+	usb_cdc_transfers_autorized = true;
 	return true;
 }
 
@@ -298,7 +387,7 @@ void usb_callback_cdc_disable(void)
 {
 	/* USB CDC feature for serial communication */
 
-	my_flag_autorize_cdc_transfert = false;
+	usb_cdc_transfers_autorized = false;
 }
 
 void usb_callback_config(uint8_t port, usb_cdc_line_coding_t * cfg)
@@ -345,7 +434,7 @@ static void task_dac(void)
 
 static void task_usb(void)
 {
-	if (my_flag_autorize_cdc_transfert) {
+	if (usb_cdc_transfers_autorized) {
 		//if () {
 		//	task_usb_cdc();
 		//}
@@ -382,6 +471,7 @@ void halt(void)
 	runmode = 0;
 }
 
+
 int main(void)
 {
 	uint8_t retcode = 0;
@@ -389,25 +479,28 @@ int main(void)
 	/* Init of sub-modules */
 	pmic_init();
 	sysclk_init();
+	sleepmgr_init();	// Unlocks all sleep mode levels
+	rtc_init();
+	rtc_set_callback(cb_rtc_alarm);
 	evsys_init();
 	tc_init();
 	adc_init();
 	dac_init();
+	twi_init();
+	
+	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
 	
 	/* All interrupt sources prepared here - IRQ activation */
 	irq_initialize_vectors();
 	cpu_irq_enable();
 	
-	board_init();		// Activates all in/out pins - transitions from Z to dedicated states
-	sleepmgr_init();	// Unlocks all sleep mode levels
-	
-	
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
-
+	twi_start();
+	//rtc_start();		// Test for RTC32
+	
 	/* Init of USB system */
 	usb_init();			// USB device stack start function to enable stack and start USB
-	
 	
 	/* The application code */
 	runmode = (uint8_t) 1;

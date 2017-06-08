@@ -65,6 +65,9 @@
 // From module: DAC - Digital to Analog Converter
 #include <dac.h>
 
+// From module: Delay routines
+#include <delay.h>
+
 // From module: GFX Monochrome - Monochrome Graphic Library
 #include <gfx_mono.h>
 
@@ -73,6 +76,9 @@
 
 // From module: Generic board support
 #include <board.h>
+
+// From module: IOPORT - General purpose I/O service
+#include <ioport.h>
 
 // From module: Interrupt management - XMEGA implementation
 #include <interrupt.h>
@@ -89,6 +95,9 @@
 // From module: Part identification macros
 #include <parts.h>
 
+// From module: RTC32 - Real Time Counter 32
+#include <rtc32.h>
+
 // From module: Sleep Controller driver
 #include <sleep.h>
 
@@ -101,6 +110,16 @@
 
 // From module: TC - Timer Counter
 #include <tc.h>
+
+// From module: TWI - Two-Wire Interface - XMEGA implementation
+#include <twi_master.h>
+#include <twi_slave.h>
+#include <xmega_twi/twi_master.h>
+#include <xmega_twi/twi_slave.h>
+
+// From module: TWI - Two-wire Master and Slave Interface
+#include <twim.h>
+#include <twis.h>
 
 // From module: USB CDC Protocol
 #include <usb_protocol_cdc.h>

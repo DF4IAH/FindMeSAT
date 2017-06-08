@@ -371,6 +371,7 @@ void udi_cdc_data_disable(void)
 	Assert(udi_cdc_nb_data_enabled != 0);
 	udi_cdc_nb_data_enabled--;
 	port = udi_cdc_nb_data_enabled;
+	(void) port;
 	UDI_CDC_DISABLE_EXT(port);
 	udi_cdc_data_running = false;
 }
