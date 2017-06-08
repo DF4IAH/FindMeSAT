@@ -168,9 +168,6 @@ static void rtc_start(void)
 	
 	RTC32.CTRL		= RTC32_ENABLE_bm;	// RTC32 enabled
 	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
-	
-	/* PMIC */
-	PMIC_CTRL |= PMIC_LOLVLEN_bm;
 }
 
 ISR(RTC32_OVF_vect) {
@@ -459,15 +456,22 @@ static void task(void)
 {
 	/* TASK when woken up */
 	task_dac();
-
+	
 	/* Handling the USB connection */
 	task_usb();
+	
+	static uint32_t last = 0;
+	uint32_t now = rtc_get_time() >> 10;
+	if (last != now) {
+		last = now;
+		printf("%06ld: FindMeSAT V1 @ USB\r\n", now);
+	}
 }
 
 void halt(void)
 {
 	/* MAIN Loop Shutdown */
-
+	
 	runmode = 0;
 }
 
@@ -501,6 +505,8 @@ int main(void)
 	
 	/* Init of USB system */
 	usb_init();			// USB device stack start function to enable stack and start USB
+	stdio_usb_init();	// stdio_usb
+	stdio_usb_enable();
 	
 	/* The application code */
 	runmode = (uint8_t) 1;
