@@ -65,6 +65,9 @@
 // From module: DAC - Digital to Analog Converter
 #include <dac.h>
 
+// From module: Delay routines
+#include <delay.h>
+
 // From module: GFX Monochrome - Monochrome Graphic Library
 #include <gfx_mono.h>
 
@@ -91,6 +94,9 @@
 
 // From module: Part identification macros
 #include <parts.h>
+
+// From module: RTC32 - Real Time Counter 32
+#include <rtc32.h>
 
 // From module: Sleep Controller driver
 #include <sleep.h>

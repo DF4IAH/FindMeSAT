@@ -151,6 +151,39 @@ static void tc_start(void)
 }
 
 
+#if 0
+static void rtc_start(void)
+{
+	PORTC_OUTSET	= 0b00100000;
+	PORTC_DIRSET	= 0b00100000;
+	
+	RTC32_CTRL		= 0;				// RTC32 disabled
+	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
+	
+	RTC32.PER		= 0x00000003;		// overflowing every 1024 Hz / (PER + 1)
+	RTC32.CNT		= 0;				// from the beginning
+	RTC32.COMP		= 0xffffffff;		// no compare
+	RTC32.INTCTRL	= 0x01;				// enable overflow interrupt of low priority
+	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
+	
+	RTC32.CTRL		= RTC32_ENABLE_bm;	// RTC32 enabled
+	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
+	
+	/* PMIC */
+	PMIC_CTRL |= PMIC_LOLVLEN_bm;
+}
+
+ISR(RTC32_OVF_vect) {
+	PORTC_OUTTGL = 0b00100000;
+}
+#endif
+
+void cb_rtc_alarm(uint32_t rtc_time)
+{
+	// nothing yet
+}
+
+
 static void adc_init(void)
 {
 	struct adc_config					adc_5v0_conf;
@@ -438,6 +471,7 @@ void halt(void)
 	runmode = 0;
 }
 
+
 int main(void)
 {
 	uint8_t retcode = 0;
@@ -445,27 +479,28 @@ int main(void)
 	/* Init of sub-modules */
 	pmic_init();
 	sysclk_init();
+	sleepmgr_init();	// Unlocks all sleep mode levels
+	rtc_init();
+	rtc_set_callback(cb_rtc_alarm);
 	evsys_init();
 	tc_init();
 	adc_init();
 	dac_init();
 	twi_init();
 	
+	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
+	
 	/* All interrupt sources prepared here - IRQ activation */
 	irq_initialize_vectors();
 	cpu_irq_enable();
 	
-	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
-	sleepmgr_init();	// Unlocks all sleep mode levels
-	
-	
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
-	twi_start();		// 
-
+	twi_start();
+	//rtc_start();		// Test for RTC32
+	
 	/* Init of USB system */
 	usb_init();			// USB device stack start function to enable stack and start USB
-	
 	
 	/* The application code */
 	runmode = (uint8_t) 1;

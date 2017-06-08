@@ -2,6 +2,8 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
+src\ASF\xmega\drivers\rtc32\rtc32.c
+
 src\twi.c
 
 src\ASF\common\boards\user_board\init.c

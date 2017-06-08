@@ -12,12 +12,13 @@
 
 /* INIT section */
 
-static void evsys_init(void);
-static void tc_init(void);
-static void tc_start(void);
-static void adc_init(void);
-static void dac_init(void);
-static void usb_init(void);
+//static void evsys_init(void);
+//static void tc_init(void);
+//static void tc_start(void);
+void cb_rtc_alarm(uint32_t rtc_time);
+//static void adc_init(void);
+//static void dac_init(void);
+//static void usb_init(void);
 
 void usb_callback_suspend_action(void);
 void usb_callback_resume_action(void);
@@ -37,9 +38,9 @@ void usb_callback_tx_empty_notify(uint8_t port);
 
 /* RUNNING section */
 
-static void task_dac(void);
-static void task_usb(void);
-static void task(void);
+//static void task_dac(void);
+//static void task_usb(void);
+//static void task(void);
 
 void halt(void);
 
