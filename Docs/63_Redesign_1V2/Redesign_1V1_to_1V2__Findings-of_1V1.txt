@@ -1,0 +1,18 @@
+==================================================
+List of Corrections to be done for  V1.1 —> V1.2
+==================================================
+
+				Update: 2017-06-09
+
+01)	Inspection of V1.0 showed that a short circuit between
+	the two internal layers GND and 3.3V renders the V1.1
+	useless due to short at the USB socket where the long-
+	holes are placed.
+
+02)	All version numbers to V1.2 —> Done.
+
+03)	Arms for the internal antennas redesigned.
+
+
+
+<EOF>

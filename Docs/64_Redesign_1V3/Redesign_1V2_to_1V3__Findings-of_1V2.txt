@@ -1,0 +1,22 @@
+==================================================
+List of Corrections to be done for  V1.2 —> V1.3
+==================================================
+
+				Update: 2017-06-09
+
+01)	Inspection of V1.2 showed that the PWM low pass filter frequency
+	is to high. Instead of 100 Hz the new frequency is set to 1 Hz.
+	For this C1001 changed from 100 nF to 10 µF. The device changed
+	from SMD0603 to SMD0805.
+
+02)	The USB-socket shows bad designed long-holes. This time these are
+	not cut out. The sockets have to be reworked before placement for
+	work-around. I suggest hand written XML code within the Eagle brd
+	file to have a correct long-hole like in some devices found in the
+	library.
+
+03)	All version numbers to V1.3 —> To be Done!
+
+
+
+<EOF>
