@@ -464,7 +464,7 @@ static void task(void)
 	uint32_t now = rtc_get_time() >> 10;
 	if (last != now) {
 		last = now;
-		printf("%06ld: FindMeSAT V1 @ USB\r\n", now);
+		printf("FindMeSAT V1 @USB: RTC32 = %06ld sec\r\n", now);
 	}
 }
 
