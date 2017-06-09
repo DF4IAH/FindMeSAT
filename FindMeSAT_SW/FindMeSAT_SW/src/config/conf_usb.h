@@ -70,7 +70,7 @@
 
 //! USB Device string definitions (Optional)
 #define  USB_DEVICE_MANUFACTURE_NAME      "DF4IAH Solutions"
-#define  USB_DEVICE_PRODUCT_NAME          "FindMeSAT V1.0"
+#define  USB_DEVICE_PRODUCT_NAME          "FindMeSAT V1"
 #define  USB_DEVICE_SERIAL_NAME           "010000"
 
 
