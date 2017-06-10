@@ -15,26 +15,73 @@
 #include <asf.h>
 
 
-#define TWI1_MASTER			TWIE
-//#define TWI1_SLAVE		TWIE
-#define TWI1_MASTER_PORT	PORTE
-#define TWI1_MASTER_ADDR	0x50
-#define TWI1_SLAVE_ADDR		0x60
-#define TWI1_SPEED			400000
+/* Smart-LCD address and command-set */
 
-#define TWI2_MASTER			TWIC
-//#define TWI2_SLAVE		TWIC
-#define TWI2_MASTER_PORT	PORTC
-#define TWI2_MASTER_ADDR	0x52
-#define TWI2_SLAVE_ADDR		0x62
-#define TWI2_SPEED			400000
+// I2C Address
+#define TWI_SMART_LCD_ADDR									0x22
+
+// unique commands of the Smart-LCD device for all modes
+#define TWI_SMART_LCD_CMD_NOOP								0x00
+#define TWI_SMART_LCD_CMD_GET_VER							0x01
+#define TWI_SMART_LCD_CMD_SET_MODE							0x02
+
+// mode 0x10 commands (Smart-LCD draw box)
+#define TWI_SMART_LCD_CMD_CLS								0x10
+#define TWI_SMART_LCD_CMD_HOME								0x11
+#define TWI_SMART_LCD_CMD_SET_CURSOR_MODE					0x14
+#define TWI_SMART_LCD_CMD_SET_POS_X_Y						0x20
+#define TWI_SMART_LCD_CMD_SET_POS_X							0x21
+#define TWI_SMART_LCD_CMD_SET_POS_Y							0x22
+#define TWI_SMART_LCD_CMD_WRITE								0x30
+#define TWI_SMART_LCD_CMD_DRAW_DOT							0x34
+#define TWI_SMART_LCD_CMD_DRAW_LINE							0x36
+#define TWI_SMART_LCD_CMD_DRAW_RECT							0x38
+#define TWI_SMART_LCD_CMD_DRAW_RECT_FILLED					0x3A
+#define TWI_SMART_LCD_CMD_DRAW_CIRCLE						0x3A
+#define TWI_SMART_LCD_CMD_DRAW_CIRCLE_FILLES				0x3C
+#define TWI_SMART_LCD_CMD_MOVE_BLOCK_DX_DY					0x40
+
+// mode 0x20 commands (10 MHz-Ref-Osc)
+#define TWI_SMART_LCD_CMD_SHOW_CLK_STATE					0x80
+#define TWI_SMART_LCD_CMD_SHOW_YEAR_MON_DAY					0x81
+#define TWI_SMART_LCD_CMD_SHOW_HR_MIN_SEC					0x82
+#define TWI_SMART_LCD_CMD_SHOW_PPB							0x83
+
+#define TWI_SMART_LCD_CMD_SHOW_TCXO_PWM						0x84
+#define TWI_SMART_LCD_CMD_SHOW_TCXO_VC						0x85
+
+#define TWI_SMART_LCD_CMD_SHOW_SATS							0x88
+#define TWI_SMART_LCD_CMD_SHOW_DOP							0x89
+#define TWI_SMART_LCD_CMD_SHOW_POS_STATE					0x8A
+#define TWI_SMART_LCD_CMD_SHOW_POS_LAT						0x8B
+#define TWI_SMART_LCD_CMD_SHOW_POS_LON						0x8C
+#define TWI_SMART_LCD_CMD_SHOW_POS_HEIGHT					0x8D
 
 
-#define TWI_DATA_LENGTH		TWIS_SEND_BUFFER_SIZE
+#define TWI1_MASTER											TWIE
+//#define TWI1_SLAVE										TWIE
+#define TWI1_MASTER_PORT									PORTE
+#define TWI1_MASTER_ADDR									0x10
+#define TWI1_SLAVE_ADDR										0x12
+#define TWI1_SPEED											400000
+
+#define TWI2_MASTER											TWIC
+//#define TWI2_SLAVE										TWIC
+#define TWI2_MASTER_PORT									PORTC
+#define TWI2_MASTER_ADDR									0x20
+#define TWI2_SLAVE_ADDR										TWI_SMART_LCD_ADDR
+#define TWI2_SPEED											400000
+
+#define TWI_DATA_LENGTH										TWIS_SEND_BUFFER_SIZE
 
 
 void twi_init(void);
 void twi_start(void);
+void start_twi_onboard(void);
+void start_twi_lcd(void);
+
+void task_twi_onboard(uint32_t now, uint32_t last);
+void task_twi_lcd(uint32_t now, uint32_t last);
 
 
 #endif /* TWI_H_ */
