@@ -44,12 +44,17 @@
 uint8_t		runmode							= (uint8_t) 0;			// global runmode
 bool		usb_cdc_transfers_autorized		= false;
 
+uint8_t		g_twi1_9axis_versio				= 0;
+uint8_t		g_twi1_baro_version				= 0;
+uint8_t		g_twi1_hygro_versio				= 0;
+uint8_t		g_twi2_lcd_version				= 0;
+
 
 twi_options_t twi1_options = {
 	.speed     = TWI1_SPEED,
-	.chip      = TWI1_MASTER_ADDR,
-//	.speed_reg = TWI_BAUD(sysclk_get_cpu_hz(), TWI1_SPEED)
-	.speed_reg = TWI_BAUD(30000000UL, TWI1_SPEED)
+//	.speed_reg = TWI_BAUD(sysclk_get_cpu_hz(), TWI1_SPEED),
+	.speed_reg = TWI_BAUD((BOARD_XOSC_HZ * CONFIG_PLL0_MUL) / 2, TWI1_SPEED),
+	.chip      = TWI1_MASTER_ADDR
 };
 
 uint8_t twi1_m_data[TWI_DATA_LENGTH] = {
@@ -57,19 +62,16 @@ uint8_t twi1_m_data[TWI_DATA_LENGTH] = {
 };
 
 twi_package_t twi1_packet = {
-	.addr_length = 0,
-	.chip        = TWI1_SLAVE_ADDR,
 	.buffer      = (void *)twi1_m_data,
-	.length      = TWI_DATA_LENGTH,
 	.no_wait     = false
 };
 
 
 twi_options_t twi2_options = {
 	.speed     = TWI2_SPEED,
-	.chip      = TWI2_MASTER_ADDR,
-//	.speed_reg = TWI_BAUD(sysclk_get_cpu_hz(), TWI2_SPEED)
-	.speed_reg = TWI_BAUD(30000000UL, TWI2_SPEED)
+//	.speed_reg = TWI_BAUD(sysclk_get_cpu_hz(), TWI2_SPEED),
+	.speed_reg = TWI_BAUD((BOARD_XOSC_HZ * CONFIG_PLL0_MUL) / 2, TWI2_SPEED),
+	.chip      = TWI2_MASTER_ADDR
 };
 
 uint8_t twi2_m_data[TWI_DATA_LENGTH] = {
@@ -77,10 +79,8 @@ uint8_t twi2_m_data[TWI_DATA_LENGTH] = {
 };
 
 twi_package_t twi2_packet = {
-	.addr_length = 0,
 	.chip        = TWI2_SLAVE_ADDR,
 	.buffer      = (void *)twi2_m_data,
-	.length      = TWI_DATA_LENGTH,
 	.no_wait     = false
 };
 
@@ -432,40 +432,65 @@ static void task_dac(void)
 static void task_usb(void)
 {
 	if (usb_cdc_transfers_autorized) {
+#if 0
+		// Dedicated handling
+	
 		//if () {
 		//	task_usb_cdc();
 		//}
-
+	
 		// Waits and gets a value on CDC line
 		// int udi_cdc_getc(void);
-
+	
 		// Reads a RAM buffer on CDC line
 		// iram_size_t udi_cdc_read_buf(int* buf, iram_size_t size);
-
+	
 		// Puts a byte on CDC line
 		// int udi_cdc_putc(int value);
-
+	
 		// Writes a RAM buffer on CDC line
 		// iram_size_t udi_cdc_write_buf(const int* buf, iram_size_t size);	}
 		
 		// Handling ...
+#else
+		// Already done by stdio redirection to the USB CDC device:
+		
+		// stdio_usb_init();
+		// stdio_usb_enable();
+#endif
 	}
+}
+
+static void task_twi(uint32_t now, uint32_t last)
+{
+	/* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
+	task_twi_onboard(now, last);
+	
+	/* TWI2 - LCD Port */
+	task_twi_lcd(now, last);
 }
 
 static void task(void)
 {
+	static uint32_t last = 0;
+	uint32_t now = rtc_get_time();
+	
 	/* TASK when woken up */
 	task_dac();
 	
 	/* Handling the USB connection */
 	task_usb();
 	
-	static uint32_t last = 0;
-	uint32_t now = rtc_get_time() >> 10;
-	if (last != now) {
-		last = now;
-		printf("%06ld: FindMeSAT V1 @ USB\r\n", now);
+	/* Handle TWI1 and TWI2 communications */
+	task_twi(now, last);
+	
+	/* DEBUGGING USB */
+	uint32_t now_sec = now >> 10;
+	if ((last >> 10) != now_sec) {
+		printf("FindMeSAT V1 @USB: RTC32 = %06ld sec\r\n", now_sec);
 	}
+	
+	last = now;
 }
 
 void halt(void)

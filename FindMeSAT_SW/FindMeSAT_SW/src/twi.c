@@ -12,6 +12,9 @@
 #include "twi.h"
 
 
+extern uint8_t			g_twi2_lcd_version;
+
+
 extern twi_options_t	twi1_options;
 extern uint8_t			twi1_m_data[TWI_DATA_LENGTH];
 extern twi_package_t	twi1_packet;
@@ -108,6 +111,62 @@ void twi_start(void) {
 	twi_master_enable(&TWI2_MASTER);
 #endif
 #endif
+
+	/* Start each TWI channel devices */
+	start_twi_onboard();
+	start_twi_lcd();
+}
+
+
+/* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
+void start_twi_onboard()
+{
+	
+}
+
+/* TWI2 - LCD Port */
+void start_twi_lcd()
+{
+	/* Read the version number */
+	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_VER;
+	twi2_packet.addr_length = 1;
+	twi2_packet.length = 1;
+	twi_master_read(&TWI2_MASTER, &twi2_packet);
+	g_twi2_lcd_version = twi2_m_data[0];
+	
+	if (g_twi2_lcd_version >= 0x11) {
+		/* Select "Smart-LCD draw box" mode
+		 * that includes a clear screen     */
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_MODE;
+		twi2_m_data[0] = 0x10;
+		twi2_packet.length = 1;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+	}
+	
+#if 1
+	/* Show PWM in % when mode 0x20 is selected */
+	if (g_twi2_lcd_version == 0x10) {
+	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SHOW_TCXO_PWM;
+	twi2_m_data[0] = 1;
+	twi2_m_data[1] = 128;
+	twi2_packet.length = 2;
+	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	}
+#endif
+}
+
+
+/* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
+void task_twi_onboard(uint32_t now, uint32_t last)
+{
+	
+}
+
+/* TWI2 - LCD Port */	
+void task_twi_lcd(uint32_t now, uint32_t last)
+{
+	
+
 }
 
 
@@ -115,16 +174,6 @@ void twi_start(void) {
 /* for example, only */
 static void send_and_recv_twi1()
 {
-	twi_init();
-	irq_initialize_vectors();
-	twi_start();
-	
-	
-	cpu_irq_enable();
-	
-	
-	// main loop starts here
-	
 	twi_master_write(&TWI1_MASTER, &packet);
 	
 	do {
