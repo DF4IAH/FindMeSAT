@@ -17,7 +17,7 @@
 
 /* Smart-LCD address and command-set */
 
-// I2C Address
+// I2C address of the Smart-LCD device
 #define TWI_SMART_LCD_ADDR									0x22
 
 // unique commands of the Smart-LCD device for all modes
@@ -27,19 +27,14 @@
 
 // mode 0x10 commands (Smart-LCD draw box)
 #define TWI_SMART_LCD_CMD_CLS								0x10
-#define TWI_SMART_LCD_CMD_HOME								0x11
-#define TWI_SMART_LCD_CMD_SET_CURSOR_MODE					0x14
+#define TWI_SMART_LCD_CMD_SET_PIXEL_TYPE					0x14
 #define TWI_SMART_LCD_CMD_SET_POS_X_Y						0x20
-#define TWI_SMART_LCD_CMD_SET_POS_X							0x21
-#define TWI_SMART_LCD_CMD_SET_POS_Y							0x22
 #define TWI_SMART_LCD_CMD_WRITE								0x30
-#define TWI_SMART_LCD_CMD_DRAW_DOT							0x34
-#define TWI_SMART_LCD_CMD_DRAW_LINE							0x36
-#define TWI_SMART_LCD_CMD_DRAW_RECT							0x38
-#define TWI_SMART_LCD_CMD_DRAW_RECT_FILLED					0x3A
-#define TWI_SMART_LCD_CMD_DRAW_CIRCLE						0x3A
-#define TWI_SMART_LCD_CMD_DRAW_CIRCLE_FILLES				0x3C
-#define TWI_SMART_LCD_CMD_MOVE_BLOCK_DX_DY					0x40
+#define TWI_SMART_LCD_CMD_DRAW_LINE							0x32
+#define TWI_SMART_LCD_CMD_DRAW_RECT							0x34
+#define TWI_SMART_LCD_CMD_DRAW_FILLED_RECT					0x36
+#define TWI_SMART_LCD_CMD_DRAW_CIRC							0x38
+#define TWI_SMART_LCD_CMD_DRAW_FILLED_CIRC					0x3A
 
 // mode 0x20 commands (10 MHz-Ref-Osc)
 #define TWI_SMART_LCD_CMD_SHOW_CLK_STATE					0x80
