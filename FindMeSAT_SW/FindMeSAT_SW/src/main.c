@@ -525,14 +525,15 @@ int main(void)
 	
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
-	twi_start();
-	//rtc_start();		// Test for RTC32
 	
 	/* Init of USB system */
 	usb_init();			// USB device stack start function to enable stack and start USB
 	stdio_usb_init();	// stdio_usb
 	stdio_usb_enable();
 	
+	twi_start();
+	//rtc_start();		// Test for RTC32
+
 	/* The application code */
 	runmode = (uint8_t) 1;
     while (runmode) {

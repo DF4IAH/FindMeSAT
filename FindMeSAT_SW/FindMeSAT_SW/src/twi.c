@@ -113,7 +113,7 @@ void twi_start(void) {
 #endif
 
 	// Give Smart-LCD some time to be ready
-	delay_ms(300);
+	delay_ms(500);
 
 	/* Start each TWI channel devices */
 	start_twi_onboard();
@@ -124,38 +124,37 @@ void twi_start(void) {
 /* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
 void start_twi_onboard()
 {
-	
+
 }
 
 /* TWI2 - LCD Port */
 void start_twi_lcd()
 {
 	/* Read the version number */
+	printf("DBG001\r\n");
 	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_VER;
 	twi2_packet.addr_length = 1;
 	twi2_packet.length = 1;
 	twi_master_read(&TWI2_MASTER, &twi2_packet);
 	g_twi2_lcd_version = twi2_m_data[0];
-	
+	printf("DBG002\r\n");
+
 	if (g_twi2_lcd_version >= 0x11) {
 		/* Select "Smart-LCD draw box" mode
 		 * that includes a clear screen     */
+		printf("DBG011\r\n");
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_MODE;
 		twi2_m_data[0] = 0x10;
 		twi2_packet.length = 1;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		printf("DBG012\r\n");
+		
+		/* delay until ready */
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_VER;
+		twi2_packet.length = 1;
+		twi_master_read(&TWI2_MASTER, &twi2_packet);
+		printf("DBG013\r\n");
 	}
-	
-#if 1
-	/* Show PWM in % when mode 0x20 is selected */
-	if (g_twi2_lcd_version == 0x10) {
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SHOW_TCXO_PWM;
-	twi2_m_data[0] = 1;
-	twi2_m_data[1] = 128;
-	twi2_packet.length = 2;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
-	}
-#endif
 }
 
 
@@ -168,19 +167,58 @@ void task_twi_onboard(uint32_t now, uint32_t last)
 /* TWI2 - LCD Port */	
 void task_twi_lcd(uint32_t now, uint32_t last)
 {
-	
-
-}
-
+	if (g_twi2_lcd_version >= 0x11) {
+		printf("DBG021\r\n");
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
+		twi2_m_data[0] = GFX_PIXEL_SET;
+		twi2_packet.length = 1;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		printf("DBG022\r\n");
+		
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_POS_X_Y;
+		twi2_m_data[0] = 32;
+		twi2_m_data[1] = 16;
+		twi2_packet.length = 2;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		printf("DBG023\r\n");
+		
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_LINE;
+		twi2_m_data[0] = 150;
+		twi2_m_data[1] = 50;
+		twi2_packet.length = 2;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		printf("DBG024\r\n");
 
 #if 0
-/* for example, only */
-static void send_and_recv_twi1()
-{
-	twi_master_write(&TWI1_MASTER, &packet);
-	
-	do {
-		// Nothing
-	} while(twi1_slave.result != TWIS_RESULT_OK);
-}
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_FILLED_RECT;
+		twi2_m_data[0] = 32;
+		twi2_m_data[1] = 32;
+		twi2_packet.length = 2;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		printf("DBG025\r\n");
+
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
+		twi2_packet.length = 5;
+		twi2_m_data[0] = 4;
+		twi2_m_data[1] = 0x41;
+		twi2_m_data[2] = 0x42;
+		twi2_m_data[3] = 0x43;
+		twi2_m_data[4] = 0x44;
+		twi2_packet.length = twi2_m_data[0] + 1;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		printf("DBG026\r\n");
 #endif
+
+	} else if (g_twi2_lcd_version == 0x10) {
+		/* Show PWM in % when version is V1.0 and mode==0x20 selected */
+#if 1
+		printf("DBG091\r\n");
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SHOW_TCXO_PWM;
+		twi2_m_data[0] = 1;
+		twi2_m_data[1] = 128;
+		twi2_packet.length = 2;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		printf("DBG092\r\n");
+#endif
+	}
+}
