@@ -773,10 +773,10 @@ static inline void twi_master_enable(TWI_t *twi)
 #endif
 
 	// Give Smart-LCD some time to be ready
-	delay_ms(500);
-     492:	61 ea       	ldi	r22, 0xA1	; 161
-     494:	75 e2       	ldi	r23, 0x25	; 37
-     496:	86 e2       	ldi	r24, 0x26	; 38
+	delay_s(2);
+     492:	61 e8       	ldi	r22, 0x81	; 129
+     494:	76 e9       	ldi	r23, 0x96	; 150
+     496:	88 e9       	ldi	r24, 0x98	; 152
      498:	90 e0       	ldi	r25, 0x00	; 0
 
 	/* Start each TWI channel devices */

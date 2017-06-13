@@ -113,7 +113,7 @@ void twi_start(void) {
 #endif
 
 	// Give Smart-LCD some time to be ready
-	delay_ms(500);
+	delay_s(2);
 
 	/* Start each TWI channel devices */
 	start_twi_onboard();
