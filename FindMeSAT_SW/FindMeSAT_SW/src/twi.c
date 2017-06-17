@@ -63,6 +63,28 @@ ISR(TWIC_TWIS_vect) {
 #endif
 
 
+static void twi_waitUntilReady(void)
+{
+	uint8_t isBusy;
+
+	/* Read the BUSY flag */
+	//printf("DBG901\r\n");
+	do {
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_STATE;
+		twi2_packet.addr_length = 1;
+		twi2_packet.length = 1;
+		twi_master_read(&TWI2_MASTER, &twi2_packet);
+		isBusy = twi2_m_data[0] & 0x01;
+		if (!isBusy)
+			break;
+
+		//printf("DBG902\r\n");
+		delay_ms(10);
+	} while (true);
+	//printf("DBG909\r\n");
+}
+
+
 void twi_init(void) {
 #ifdef TWI1_MASTER
 	TWI1_MASTER_PORT.PIN0CTRL = PORT_OPC_WIREDANDPULL_gc;  // SDA1
@@ -120,7 +142,6 @@ void twi_start(void) {
 	start_twi_lcd();
 }
 
-
 /* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
 void start_twi_onboard()
 {
@@ -131,29 +152,32 @@ void start_twi_onboard()
 void start_twi_lcd()
 {
 	/* Read the version number */
-	printf("DBG001\r\n");
+	//printf("DBG001\r\n");
 	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_VER;
 	twi2_packet.addr_length = 1;
 	twi2_packet.length = 1;
 	twi_master_read(&TWI2_MASTER, &twi2_packet);
 	g_twi2_lcd_version = twi2_m_data[0];
-	printf("DBG002\r\n");
+	//printf("DBG002\r\n");
 
 	if (g_twi2_lcd_version >= 0x11) {
 		/* Select "Smart-LCD draw box" mode
 		 * that includes a clear screen     */
-		printf("DBG011\r\n");
+		//printf("DBG011\r\n");
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_MODE;
 		twi2_m_data[0] = 0x10;
 		twi2_packet.length = 1;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		printf("DBG012\r\n");
-		
-		/* delay until ready */
-		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_VER;
+		//printf("DBG012\r\n");
+
+		//printf("DBG021\r\n");
+		twi_waitUntilReady();
+		//printf("DBG022\r\n");
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
+		twi2_m_data[0] = GFX_PIXEL_SET;
 		twi2_packet.length = 1;
-		twi_master_read(&TWI2_MASTER, &twi2_packet);
-		printf("DBG013\r\n");
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		//printf("DBG029\r\n");
 	}
 }
 
@@ -168,37 +192,43 @@ void task_twi_onboard(uint32_t now, uint32_t last)
 void task_twi_lcd(uint32_t now, uint32_t last)
 {
 	if (g_twi2_lcd_version >= 0x11) {
-		printf("DBG021\r\n");
-		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
-		twi2_m_data[0] = GFX_PIXEL_SET;
-		twi2_packet.length = 1;
-		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		printf("DBG022\r\n");
-		
+		static uint8_t ofs = 0;
+
+		//printf("DBG111\r\n");
+		twi_waitUntilReady();
+		//printf("DBG112\r\n");
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_POS_X_Y;
-		twi2_m_data[0] = 32;
-		twi2_m_data[1] = 16;
+		twi2_m_data[0] =  0 + ofs;
+		twi2_m_data[1] = 16 + ofs;
 		twi2_packet.length = 2;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		printf("DBG023\r\n");
-		
+		//printf("DBG119\r\n");
+
+		//printf("DBG121\r\n");
+		twi_waitUntilReady();
+		//printf("DBG122\r\n");
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_LINE;
-		twi2_m_data[0] = 150;
-		twi2_m_data[1] = 50;
+		twi2_m_data[0] = 150 + ofs;
+		twi2_m_data[1] =  60 + ofs;
 		twi2_packet.length = 2;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		printf("DBG024\r\n");
+		//printf("DBG129\r\n");
 
 #if 0
+		//printf("DBG131\r\n");
+		twi_waitUntilReady();
+		//printf("DBG132\r\n");
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_FILLED_RECT;
-		twi2_m_data[0] = 32;
-		twi2_m_data[1] = 32;
+		twi2_m_data[0] = 8;
+		twi2_m_data[1] = 8;
 		twi2_packet.length = 2;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		printf("DBG025\r\n");
+		//printf("DBG139\r\n");
 
+		//printf("DBG141\r\n");
+		twi_waitUntilReady();
+		//printf("DBG142\r\n");
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
-		twi2_packet.length = 5;
 		twi2_m_data[0] = 4;
 		twi2_m_data[1] = 0x41;
 		twi2_m_data[2] = 0x42;
@@ -206,19 +236,33 @@ void task_twi_lcd(uint32_t now, uint32_t last)
 		twi2_m_data[4] = 0x44;
 		twi2_packet.length = twi2_m_data[0] + 1;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		printf("DBG026\r\n");
+		//printf("DBG149\r\n");
 #endif
 
+		if (++ofs > 64) {
+			ofs = 0;
+
+			//printf("DBG151\r\n");
+			twi_waitUntilReady();
+			//printf("DBG152\r\n");
+			twi2_packet.addr[0] = TWI_SMART_LCD_CMD_CLS;
+			twi2_packet.length = 0;
+			twi_master_write(&TWI2_MASTER, &twi2_packet);
+			//printf("DBG159\r\n");
+		}
+
 	} else if (g_twi2_lcd_version == 0x10) {
-		/* Show PWM in % when version is V1.0 and mode==0x20 selected */
 #if 1
-		printf("DBG091\r\n");
+		/* Show PWM in % when version is V1.0 and mode==0x20 selected */
+		//printf("DBG501\r\n");
+		twi_waitUntilReady();
+		//printf("DBG502\r\n");
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SHOW_TCXO_PWM;
 		twi2_m_data[0] = 1;
 		twi2_m_data[1] = 128;
 		twi2_packet.length = 2;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		printf("DBG092\r\n");
+		//printf("DBG509\r\n");
 #endif
 	}
 }

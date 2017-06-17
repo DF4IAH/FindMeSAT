@@ -484,11 +484,13 @@ static void task(void)
 	/* Handle TWI1 and TWI2 communications */
 	task_twi(now, last);
 	
+#if 0
 	/* DEBUGGING USB */
 	uint32_t now_sec = now >> 10;
 	if ((last >> 10) != now_sec) {
-		printf("FindMeSAT V1 @USB: RTC32 = %06ld sec\r\n", now_sec);
+		printf("%c\r\nFindMeSAT V1 @USB: RTC32 = %06ld sec\r\n", 0x0c, now_sec);
 	}
+#endif
 	
 	last = now;
 }
