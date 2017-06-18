@@ -63,6 +63,36 @@ ISR(TWIC_TWIS_vect) {
 #endif
 
 
+static void twi_waitUntilReady(void)
+{
+	status_code_t status;
+	uint8_t isBusy;
+	uint8_t isValid;
+
+	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_STATE;
+	twi2_packet.addr_length = 1;
+
+	//printf("DBG901\r\n");
+	/* Wait until not BUSY */
+	do {
+		twi2_packet.length = 1;
+		status = twi_master_read(&TWI2_MASTER, &twi2_packet);
+		isValid = twi2_m_data[0] & 0x80;
+		isBusy  = twi2_m_data[0] & 0x01;
+
+		if ((status != STATUS_OK) || !isValid) {
+			delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+		} else {
+			if (isBusy && isValid) {
+				delay_us(TWI_SMART_LCD_DEVICE_BUSY_DELAY_MIN_US);
+			}
+		}
+		//printf("DBG902\r\n");
+	} while ((status != STATUS_OK) || !isValid || isBusy);
+	//printf("DBG909\r\n");
+}
+
+
 void twi_init(void) {
 #ifdef TWI1_MASTER
 	TWI1_MASTER_PORT.PIN0CTRL = PORT_OPC_WIREDANDPULL_gc;  // SDA1
@@ -112,16 +142,18 @@ void twi_start(void) {
 #endif
 #endif
 
+	// Give Smart-LCD some time being up and ready
+	delay_s(2);
+
 	/* Start each TWI channel devices */
 	start_twi_onboard();
 	start_twi_lcd();
 }
 
-
 /* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
 void start_twi_onboard()
 {
-	
+
 }
 
 /* TWI2 - LCD Port */
@@ -133,7 +165,7 @@ void start_twi_lcd()
 	twi2_packet.length = 1;
 	twi_master_read(&TWI2_MASTER, &twi2_packet);
 	g_twi2_lcd_version = twi2_m_data[0];
-	
+
 	if (g_twi2_lcd_version >= 0x11) {
 		/* Select "Smart-LCD draw box" mode
 		 * that includes a clear screen     */
@@ -141,43 +173,108 @@ void start_twi_lcd()
 		twi2_m_data[0] = 0x10;
 		twi2_packet.length = 1;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+
+		twi_waitUntilReady();
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
+		twi2_m_data[0] = GFX_PIXEL_SET;
+		twi2_packet.length = 1;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
-	
-#if 1
-	/* Show PWM in % when mode 0x20 is selected */
-	if (g_twi2_lcd_version == 0x10) {
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SHOW_TCXO_PWM;
-	twi2_m_data[0] = 1;
-	twi2_m_data[1] = 128;
-	twi2_packet.length = 2;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
-	}
-#endif
 }
 
 
 /* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
 void task_twi_onboard(uint32_t now, uint32_t last)
 {
-	
+
 }
 
-/* TWI2 - LCD Port */	
+/* TWI2 - LCD Port */
 void task_twi_lcd(uint32_t now, uint32_t last)
 {
-	
+	if (g_twi2_lcd_version >= 0x11) {
+		static uint8_t ofs = 0;
 
-}
-
+		twi_waitUntilReady();
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_POS_X_Y;
+		twi2_m_data[0] = 16 + ofs;
+		twi2_m_data[1] = 16 + ofs;
+		twi2_packet.length = 2;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
 #if 0
-/* for example, only */
-static void send_and_recv_twi1()
-{
-	twi_master_write(&TWI1_MASTER, &packet);
-	
-	do {
-		// Nothing
-	} while(twi1_slave.result != TWIS_RESULT_OK);
-}
+		twi_waitUntilReady();
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_LINE;
+		twi2_m_data[0] = 150 + ofs;
+		twi2_m_data[1] =  60 + ofs;
+		twi2_packet.length = 2;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 #endif
+
+#if 0
+		twi_waitUntilReady();
+# if 1
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_RECT;
+# else
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_FILLED_RECT;
+# endif
+		twi2_m_data[0] = 150;
+		twi2_m_data[1] =  60;
+		twi2_packet.length = 2;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+#endif
+
+#if 1
+		twi_waitUntilReady();
+# if 1
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_CIRC;
+# else
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_FILLED_CIRC;
+# endif
+		twi2_m_data[0] = 20;
+		twi2_packet.length = 2;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+#endif
+
+#if 0
+		twi_waitUntilReady();
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
+		twi2_m_data[0] = 4;
+		twi2_m_data[1] = 0x41;
+		twi2_m_data[2] = 0x42;
+		twi2_m_data[3] = 0x43;
+		twi2_m_data[4] = 0x44;
+		twi2_packet.length = twi2_m_data[0] + 1;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+#endif
+
+		if (++ofs > 64) {
+			ofs = 0;
+
+			twi_waitUntilReady();
+			twi2_packet.addr[0] = TWI_SMART_LCD_CMD_CLS;
+			twi2_packet.length = 0;
+			twi_master_write(&TWI2_MASTER, &twi2_packet);
+			delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+		}
+
+	} else if (g_twi2_lcd_version == 0x10) {
+#if 1
+		/* Show PWM in % when version is V1.0 and mode==0x20 selected */
+		twi_waitUntilReady();
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SHOW_TCXO_PWM;
+		twi2_m_data[0] = 1;
+		twi2_m_data[1] = 128;
+		twi2_packet.length = 2;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		delay_us(TWI_SMART_LCD_DEVICE_TCXOPWM_DELAY_MIN_US);
+#endif
+	}
+}

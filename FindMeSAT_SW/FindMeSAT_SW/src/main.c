@@ -156,16 +156,16 @@ static void rtc_start(void)
 {
 	PORTC_OUTSET	= 0b00100000;
 	PORTC_DIRSET	= 0b00100000;
-	
+
 	RTC32_CTRL		= 0;				// RTC32 disabled
 	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
-	
+
 	RTC32.PER		= 0x00000003;		// overflowing every 1024 Hz / (PER + 1)
 	RTC32.CNT		= 0;				// from the beginning
 	RTC32.COMP		= 0xffffffff;		// no compare
 	RTC32.INTCTRL	= 0x01;				// enable overflow interrupt of low priority
 	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
-	
+
 	RTC32.CTRL		= RTC32_ENABLE_bm;	// RTC32 enabled
 	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
 }
@@ -338,7 +338,7 @@ void usb_callback_suspend_action(void)
 
 	// Disable hardware component to reduce power consumption
 	// Reduce power consumption in suspend mode (max. 2.5mA on VBUS)
-	
+
 }
 
 void usb_callback_resume_action(void)
@@ -346,7 +346,7 @@ void usb_callback_resume_action(void)
 	/* USB BUS powered: suspend / resume operations */
 
 	// Re-enable hardware component
-	
+
 }
 
 void usb_callback_remotewakeup_enable(void)
@@ -354,7 +354,7 @@ void usb_callback_remotewakeup_enable(void)
 	/* USB wake-up remote host feature */
 
 	// Enable application wakeup events (e.g. enable GPIO interrupt)
-	
+
 }
 
 void usb_callback_remotewakeup_disable(void)
@@ -362,7 +362,7 @@ void usb_callback_remotewakeup_disable(void)
 	/* USB wake-up remote host feature */
 
 	// Disable application wakeup events (e.g. disable GPIO interrupt)
-	
+
 }
 
 void usb_send_wakeup_event(void)
@@ -389,27 +389,27 @@ void usb_callback_cdc_disable(void)
 
 void usb_callback_config(uint8_t port, usb_cdc_line_coding_t * cfg)
 {
-		
+
 }
 
 void usb_callback_cdc_set_dtr(uint8_t port, bool b_enable)
 {
-	
+
 }
 
 void usb_callback_cdc_set_rts(uint8_t port, bool b_enable)
 {
-	
+
 }
 
 void usb_callback_rx_notify(uint8_t port)
 {
-	
+
 }
 
 void usb_callback_tx_empty_notify(uint8_t port)
 {
-	
+
 }
 
 
@@ -419,7 +419,7 @@ void usb_callback_tx_empty_notify(uint8_t port)
 static void task_dac(void)
 {
 	static int idx_dacX = 0;
-	
+
 	if (dac_channel_is_ready(&DAC_IO_DAC0, DAC_CH0 | DAC_CH1)) {
 		dac_set_channel_value(&DAC_IO_DAC0, DAC_IO_DAC0_CHANNEL, dac_io_dac0_buf[idx_dacX]);
 		dac_set_channel_value(&DAC_IO_DAC1, DAC_IO_DAC1_CHANNEL, dac_io_dac1_buf[idx_dacX]);
@@ -434,27 +434,27 @@ static void task_usb(void)
 	if (usb_cdc_transfers_autorized) {
 #if 0
 		// Dedicated handling
-	
+
 		//if () {
 		//	task_usb_cdc();
 		//}
-	
+
 		// Waits and gets a value on CDC line
 		// int udi_cdc_getc(void);
-	
+
 		// Reads a RAM buffer on CDC line
 		// iram_size_t udi_cdc_read_buf(int* buf, iram_size_t size);
-	
+
 		// Puts a byte on CDC line
 		// int udi_cdc_putc(int value);
-	
+
 		// Writes a RAM buffer on CDC line
 		// iram_size_t udi_cdc_write_buf(const int* buf, iram_size_t size);	}
-		
+
 		// Handling ...
 #else
 		// Already done by stdio redirection to the USB CDC device:
-		
+
 		// stdio_usb_init();
 		// stdio_usb_enable();
 #endif
@@ -465,7 +465,7 @@ static void task_twi(uint32_t now, uint32_t last)
 {
 	/* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
 	task_twi_onboard(now, last);
-	
+
 	/* TWI2 - LCD Port */
 	task_twi_lcd(now, last);
 }
@@ -474,29 +474,31 @@ static void task(void)
 {
 	static uint32_t last = 0;
 	uint32_t now = rtc_get_time();
-	
+
 	/* TASK when woken up */
 	task_dac();
-	
+
 	/* Handling the USB connection */
 	task_usb();
-	
+
 	/* Handle TWI1 and TWI2 communications */
 	task_twi(now, last);
-	
+
+#if 0
 	/* DEBUGGING USB */
 	uint32_t now_sec = now >> 10;
 	if ((last >> 10) != now_sec) {
-		printf("FindMeSAT V1 @USB: RTC32 = %06ld sec\r\n", now_sec);
+		printf("%c\r\nFindMeSAT V1 @USB: RTC32 = %06ld sec\r\n", 0x0c, now_sec);
 	}
-	
+#endif
+
 	last = now;
 }
 
 void halt(void)
 {
 	/* MAIN Loop Shutdown */
-	
+
 	runmode = 0;
 }
 
@@ -504,7 +506,7 @@ void halt(void)
 int main(void)
 {
 	uint8_t retcode = 0;
-	
+
 	/* Init of sub-modules */
 	pmic_init();
 	sysclk_init();
@@ -516,32 +518,35 @@ int main(void)
 	adc_init();
 	dac_init();
 	twi_init();
-	
+
 	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
-	
+
 	/* All interrupt sources prepared here - IRQ activation */
 	irq_initialize_vectors();
 	cpu_irq_enable();
-	
+
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
-	twi_start();
-	//rtc_start();		// Test for RTC32
-	
+
 	/* Init of USB system */
 	usb_init();			// USB device stack start function to enable stack and start USB
+#if 1
 	stdio_usb_init();	// stdio_usb
 	stdio_usb_enable();
-	
+#endif
+
+	twi_start();
+	//rtc_start();		// Test for RTC32
+
 	/* The application code */
 	runmode = (uint8_t) 1;
     while (runmode) {
 		task();
 		sleepmgr_enter_sleep();
     }
-	
+
 	cpu_irq_disable();
 	sleepmgr_enter_sleep();
-	
+
 	return retcode;
 }
