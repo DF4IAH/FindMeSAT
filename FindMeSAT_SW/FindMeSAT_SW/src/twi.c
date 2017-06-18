@@ -65,22 +65,30 @@ ISR(TWIC_TWIS_vect) {
 
 static void twi_waitUntilReady(void)
 {
+	status_code_t status;
 	uint8_t isBusy;
+	uint8_t isValid;
 
-	/* Read the BUSY flag */
+	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_STATE;
+	twi2_packet.addr_length = 1;
+
 	//printf("DBG901\r\n");
+	/* Wait until not BUSY */
 	do {
-		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_STATE;
-		twi2_packet.addr_length = 1;
 		twi2_packet.length = 1;
-		twi_master_read(&TWI2_MASTER, &twi2_packet);
-		isBusy = twi2_m_data[0] & 0x01;
-		if (!isBusy)
-			break;
+		status = twi_master_read(&TWI2_MASTER, &twi2_packet);
+		isValid = twi2_m_data[0] & 0x80;
+		isBusy  = twi2_m_data[0] & 0x01;
 
+		if ((status != STATUS_OK) || !isValid) {
+			delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+		} else {
+			if (isBusy && isValid) {
+				delay_us(TWI_SMART_LCD_DEVICE_BUSY_DELAY_MIN_US);
+			}
+		}
 		//printf("DBG902\r\n");
-		delay_ms(10);
-	} while (true);
+	} while ((status != STATUS_OK) || !isValid || isBusy);
 	//printf("DBG909\r\n");
 }
 
@@ -134,7 +142,7 @@ void twi_start(void) {
 #endif
 #endif
 
-	// Give Smart-LCD some time to be ready
+	// Give Smart-LCD some time being up and ready
 	delay_s(2);
 
 	/* Start each TWI channel devices */
@@ -152,32 +160,27 @@ void start_twi_onboard()
 void start_twi_lcd()
 {
 	/* Read the version number */
-	//printf("DBG001\r\n");
 	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_VER;
 	twi2_packet.addr_length = 1;
 	twi2_packet.length = 1;
 	twi_master_read(&TWI2_MASTER, &twi2_packet);
 	g_twi2_lcd_version = twi2_m_data[0];
-	//printf("DBG002\r\n");
 
 	if (g_twi2_lcd_version >= 0x11) {
 		/* Select "Smart-LCD draw box" mode
 		 * that includes a clear screen     */
-		//printf("DBG011\r\n");
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_MODE;
 		twi2_m_data[0] = 0x10;
 		twi2_packet.length = 1;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		//printf("DBG012\r\n");
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
-		//printf("DBG021\r\n");
 		twi_waitUntilReady();
-		//printf("DBG022\r\n");
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
 		twi2_m_data[0] = GFX_PIXEL_SET;
 		twi2_packet.length = 1;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		//printf("DBG029\r\n");
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
 
@@ -185,49 +188,62 @@ void start_twi_lcd()
 /* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
 void task_twi_onboard(uint32_t now, uint32_t last)
 {
-	
+
 }
 
-/* TWI2 - LCD Port */	
+/* TWI2 - LCD Port */
 void task_twi_lcd(uint32_t now, uint32_t last)
 {
 	if (g_twi2_lcd_version >= 0x11) {
 		static uint8_t ofs = 0;
 
-		//printf("DBG111\r\n");
 		twi_waitUntilReady();
-		//printf("DBG112\r\n");
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_POS_X_Y;
-		twi2_m_data[0] =  0 + ofs;
+		twi2_m_data[0] = 16 + ofs;
 		twi2_m_data[1] = 16 + ofs;
 		twi2_packet.length = 2;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		//printf("DBG119\r\n");
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
-		//printf("DBG121\r\n");
+#if 0
 		twi_waitUntilReady();
-		//printf("DBG122\r\n");
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_LINE;
 		twi2_m_data[0] = 150 + ofs;
 		twi2_m_data[1] =  60 + ofs;
 		twi2_packet.length = 2;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		//printf("DBG129\r\n");
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+#endif
 
 #if 0
-		//printf("DBG131\r\n");
 		twi_waitUntilReady();
-		//printf("DBG132\r\n");
+# if 1
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_RECT;
+# else
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_FILLED_RECT;
-		twi2_m_data[0] = 8;
-		twi2_m_data[1] = 8;
+# endif
+		twi2_m_data[0] = 150;
+		twi2_m_data[1] =  60;
 		twi2_packet.length = 2;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		//printf("DBG139\r\n");
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+#endif
 
-		//printf("DBG141\r\n");
+#if 1
 		twi_waitUntilReady();
-		//printf("DBG142\r\n");
+# if 1
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_CIRC;
+# else
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_FILLED_CIRC;
+# endif
+		twi2_m_data[0] = 20;
+		twi2_packet.length = 2;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+#endif
+
+#if 0
+		twi_waitUntilReady();
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
 		twi2_m_data[0] = 4;
 		twi2_m_data[1] = 0x41;
@@ -236,33 +252,29 @@ void task_twi_lcd(uint32_t now, uint32_t last)
 		twi2_m_data[4] = 0x44;
 		twi2_packet.length = twi2_m_data[0] + 1;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		//printf("DBG149\r\n");
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 #endif
 
 		if (++ofs > 64) {
 			ofs = 0;
 
-			//printf("DBG151\r\n");
 			twi_waitUntilReady();
-			//printf("DBG152\r\n");
 			twi2_packet.addr[0] = TWI_SMART_LCD_CMD_CLS;
 			twi2_packet.length = 0;
 			twi_master_write(&TWI2_MASTER, &twi2_packet);
-			//printf("DBG159\r\n");
+			delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 		}
 
 	} else if (g_twi2_lcd_version == 0x10) {
 #if 1
 		/* Show PWM in % when version is V1.0 and mode==0x20 selected */
-		//printf("DBG501\r\n");
 		twi_waitUntilReady();
-		//printf("DBG502\r\n");
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SHOW_TCXO_PWM;
 		twi2_m_data[0] = 1;
 		twi2_m_data[1] = 128;
 		twi2_packet.length = 2;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
-		//printf("DBG509\r\n");
+		delay_us(TWI_SMART_LCD_DEVICE_TCXOPWM_DELAY_MIN_US);
 #endif
 	}
 }
