@@ -205,7 +205,7 @@ void task_twi_lcd(uint32_t now, uint32_t last)
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
-#if 0
+#if 1
 		twi_waitUntilReady();
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_LINE;
 		twi2_m_data[0] = 150 + ofs;
@@ -215,15 +215,15 @@ void task_twi_lcd(uint32_t now, uint32_t last)
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 #endif
 
-#if 0
+#if 1
 		twi_waitUntilReady();
 # if 1
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_RECT;
 # else
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_FILLED_RECT;
 # endif
-		twi2_m_data[0] = 150;
-		twi2_m_data[1] =  60;
+		twi2_m_data[0] = 30;
+		twi2_m_data[1] =  30;
 		twi2_packet.length = 2;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
@@ -237,19 +237,27 @@ void task_twi_lcd(uint32_t now, uint32_t last)
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_FILLED_CIRC;
 # endif
 		twi2_m_data[0] = 20;
-		twi2_packet.length = 2;
+		twi2_packet.length = 1;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 #endif
 
-#if 0
+#if 1
+		twi_waitUntilReady();
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_POS_X_Y;
+		twi2_m_data[0] = 116 + ofs;
+		twi2_m_data[1] =  16 + ofs;
+		twi2_packet.length = 2;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+
 		twi_waitUntilReady();
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
 		twi2_m_data[0] = 4;
-		twi2_m_data[1] = 0x41;
-		twi2_m_data[2] = 0x42;
-		twi2_m_data[3] = 0x43;
-		twi2_m_data[4] = 0x44;
+		twi2_m_data[1] = 'A';
+		twi2_m_data[2] = 'B';
+		twi2_m_data[3] = 'C';
+		twi2_m_data[4] = 'D';
 		twi2_packet.length = twi2_m_data[0] + 1;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
