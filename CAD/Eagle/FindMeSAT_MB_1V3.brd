@@ -6,7 +6,7 @@
 <setting alwaysvectorfont="yes"/>
 <setting verticaltext="up"/>
 </settings>
-<grid distance="1.27" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="0.003125" altunitdist="mic" altunit="mm"/>
+<grid distance="1.27" unitdist="mm" unit="mm" style="lines" multiple="1" display="yes" altdistance="0.127" altunitdist="mm" altunit="mm"/>
 <layers>
 <layer number="1" name="Top" color="4" fill="1" visible="yes" active="yes"/>
 <layer number="2" name="Route2" color="13" fill="1" visible="yes" active="yes"/>
@@ -36,11 +36,11 @@
 <layer number="36" name="bGlue" color="7" fill="5" visible="no" active="yes"/>
 <layer number="37" name="tTest" color="7" fill="1" visible="no" active="yes"/>
 <layer number="38" name="bTest" color="7" fill="1" visible="no" active="yes"/>
-<layer number="39" name="tKeepout" color="4" fill="11" visible="no" active="yes"/>
-<layer number="40" name="bKeepout" color="1" fill="11" visible="no" active="yes"/>
-<layer number="41" name="tRestrict" color="4" fill="10" visible="no" active="yes"/>
-<layer number="42" name="bRestrict" color="1" fill="10" visible="no" active="yes"/>
-<layer number="43" name="vRestrict" color="2" fill="10" visible="no" active="yes"/>
+<layer number="39" name="tKeepout" color="4" fill="11" visible="yes" active="yes"/>
+<layer number="40" name="bKeepout" color="1" fill="11" visible="yes" active="yes"/>
+<layer number="41" name="tRestrict" color="4" fill="10" visible="yes" active="yes"/>
+<layer number="42" name="bRestrict" color="1" fill="10" visible="yes" active="yes"/>
+<layer number="43" name="vRestrict" color="2" fill="10" visible="yes" active="yes"/>
 <layer number="44" name="Drills" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="45" name="Holes" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="46" name="Milling" color="3" fill="1" visible="yes" active="yes"/>
@@ -567,7 +567,7 @@ Molex 90130 series</description>
 <wire x1="1.27" y1="-4.445" x2="1.27" y2="-5.08" width="0.254" layer="21"/>
 </package>
 <package name="2X03">
-<description>&lt;b&gt;PIN HEADER&lt;/b&gt;</description>
+<description>&lt;b&gt;Header 2X3 2.54mm&lt;/b&gt;</description>
 <wire x1="-3.81" y1="-1.905" x2="-3.175" y2="-2.54" width="0.1524" layer="21"/>
 <wire x1="-1.905" y1="-2.54" x2="-1.27" y2="-1.905" width="0.1524" layer="21"/>
 <wire x1="-1.27" y1="-1.905" x2="-0.635" y2="-2.54" width="0.1524" layer="21"/>
@@ -605,44 +605,12 @@ Molex 90130 series</description>
 <rectangle x1="2.286" y1="1.016" x2="2.794" y2="1.524" layer="51"/>
 <rectangle x1="2.286" y1="-1.524" x2="2.794" y2="-1.016" layer="51"/>
 </package>
-<package name="2X05">
-<description>&lt;b&gt;PIN HEADER&lt;/b&gt;</description>
-<wire x1="-6.35" y1="-1.905" x2="-5.715" y2="-2.54" width="0.1524" layer="21"/>
-<wire x1="-4.445" y1="-2.54" x2="-3.81" y2="-1.905" width="0.1524" layer="21"/>
-<wire x1="-3.81" y1="-1.905" x2="-3.175" y2="-2.54" width="0.1524" layer="21"/>
-<wire x1="-1.905" y1="-2.54" x2="-1.27" y2="-1.905" width="0.1524" layer="21"/>
-<wire x1="-1.27" y1="-1.905" x2="-0.635" y2="-2.54" width="0.1524" layer="21"/>
-<wire x1="0.635" y1="-2.54" x2="1.27" y2="-1.905" width="0.1524" layer="21"/>
-<wire x1="1.27" y1="-1.905" x2="1.905" y2="-2.54" width="0.1524" layer="21"/>
-<wire x1="3.175" y1="-2.54" x2="3.81" y2="-1.905" width="0.1524" layer="21"/>
-<wire x1="-6.35" y1="-1.905" x2="-6.35" y2="1.905" width="0.1524" layer="21"/>
-<wire x1="-6.35" y1="1.905" x2="-5.715" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="-5.715" y1="2.54" x2="-4.445" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="-4.445" y1="2.54" x2="-3.81" y2="1.905" width="0.1524" layer="21"/>
-<wire x1="-3.81" y1="1.905" x2="-3.175" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="-3.175" y1="2.54" x2="-1.905" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="-1.905" y1="2.54" x2="-1.27" y2="1.905" width="0.1524" layer="21"/>
-<wire x1="-1.27" y1="1.905" x2="-0.635" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="-0.635" y1="2.54" x2="0.635" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="0.635" y1="2.54" x2="1.27" y2="1.905" width="0.1524" layer="21"/>
-<wire x1="1.27" y1="1.905" x2="1.905" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="1.905" y1="2.54" x2="3.175" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="3.175" y1="2.54" x2="3.81" y2="1.905" width="0.1524" layer="21"/>
-<wire x1="-3.81" y1="1.905" x2="-3.81" y2="-1.905" width="0.1524" layer="21"/>
-<wire x1="-1.27" y1="1.905" x2="-1.27" y2="-1.905" width="0.1524" layer="21"/>
-<wire x1="1.27" y1="1.905" x2="1.27" y2="-1.905" width="0.1524" layer="21"/>
-<wire x1="3.81" y1="1.905" x2="3.81" y2="-1.905" width="0.1524" layer="21"/>
-<wire x1="1.905" y1="-2.54" x2="3.175" y2="-2.54" width="0.1524" layer="21"/>
-<wire x1="-0.635" y1="-2.54" x2="0.635" y2="-2.54" width="0.1524" layer="21"/>
-<wire x1="-3.175" y1="-2.54" x2="-1.905" y2="-2.54" width="0.1524" layer="21"/>
-<wire x1="-5.715" y1="-2.54" x2="-4.445" y2="-2.54" width="0.1524" layer="21"/>
-<wire x1="3.81" y1="-1.905" x2="4.445" y2="-2.54" width="0.1524" layer="21"/>
-<wire x1="5.715" y1="-2.54" x2="6.35" y2="-1.905" width="0.1524" layer="21"/>
-<wire x1="3.81" y1="1.905" x2="4.445" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="4.445" y1="2.54" x2="5.715" y2="2.54" width="0.1524" layer="21"/>
-<wire x1="5.715" y1="2.54" x2="6.35" y2="1.905" width="0.1524" layer="21"/>
-<wire x1="6.35" y1="1.905" x2="6.35" y2="-1.905" width="0.1524" layer="21"/>
-<wire x1="4.445" y1="-2.54" x2="5.715" y2="-2.54" width="0.1524" layer="21"/>
+<package name="AVR-JTAG-10">
+<description>&lt;b&gt;PIN HEADER&lt;/b&gt;&lt;p&gt; JTAG 10 Pin, 0.1" Straight</description>
+<wire x1="-6.35" y1="2.54" x2="6.35" y2="2.54" width="0.254" layer="21"/>
+<wire x1="6.35" y1="2.54" x2="6.35" y2="-2.54" width="0.254" layer="21"/>
+<wire x1="6.35" y1="-2.54" x2="-6.35" y2="-2.54" width="0.254" layer="21"/>
+<wire x1="-6.35" y1="-2.54" x2="-6.35" y2="2.54" width="0.254" layer="21"/>
 <pad name="1" x="-5.08" y="-1.27" drill="1.016" shape="square"/>
 <pad name="2" x="-5.08" y="1.27" drill="1.016" shape="octagon"/>
 <pad name="3" x="-2.54" y="-1.27" drill="1.016" shape="octagon"/>
@@ -653,8 +621,8 @@ Molex 90130 series</description>
 <pad name="8" x="2.54" y="1.27" drill="1.016" shape="octagon"/>
 <pad name="9" x="5.08" y="-1.27" drill="1.016" shape="octagon"/>
 <pad name="10" x="5.08" y="1.27" drill="1.016" shape="octagon"/>
-<text x="-6.35" y="3.175" size="1.27" layer="25" ratio="10">&gt;NAME</text>
-<text x="-6.35" y="-4.445" size="1.27" layer="27">&gt;VALUE</text>
+<text x="-6.35" y="-4.445" size="1.27" layer="25" ratio="10">&gt;NAME</text>
+<text x="-6.35" y="3.175" size="1.27" layer="27" ratio="10">&gt;VALUE</text>
 <rectangle x1="-5.334" y1="-1.524" x2="-4.826" y2="-1.016" layer="51"/>
 <rectangle x1="-5.334" y1="1.016" x2="-4.826" y2="1.524" layer="51"/>
 <rectangle x1="-2.794" y1="1.016" x2="-2.286" y2="1.524" layer="51"/>
@@ -882,7 +850,7 @@ MANUFACTURER: SAMTEC</description>
 <text x="-5.6642" y="-6.3754" size="2.0828" layer="27" ratio="10" rot="SR0">&gt;VALUE</text>
 </package>
 <package name="1X02">
-<description>&lt;b&gt;PIN HEADER&lt;/b&gt;</description>
+<description>&lt;b&gt;Header 1X2 2.54mm&lt;/b&gt;</description>
 <wire x1="-1.27" y1="-0.635" x2="-0.635" y2="-1.27" width="0.1524" layer="21"/>
 <wire x1="0.635" y1="-1.27" x2="1.27" y2="-0.635" width="0.1524" layer="21"/>
 <wire x1="-1.27" y1="-0.635" x2="-1.27" y2="3.175" width="0.1524" layer="21"/>
@@ -2569,7 +2537,7 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <attribute name="NAME" x="61.722" y="34.798" size="0.6096" layer="25"/>
 <attribute name="VALUE" x="65.786" y="34.544" size="0.6096" layer="27"/>
 </element>
-<element name="X111" library="df4iah_connector" package="2X05" value="AVR-JTAG-10" x="58.42" y="9.017" smashed="yes" rot="R90">
+<element name="X111" library="df4iah_connector" package="AVR-JTAG-10" value="AVR-JTAG-10" x="58.42" y="9.017" smashed="yes" rot="R90">
 <attribute name="NAME" x="62.103" y="5.715" size="0.6096" layer="25" ratio="10" rot="R90"/>
 <attribute name="VALUE" x="62.357" y="7.747" size="0.8128" layer="27" ratio="20" rot="R90"/>
 </element>
@@ -6501,78 +6469,15 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <approved hash="5,15,2f295b03228d64f7"/>
 <approved hash="5,15,7bb5bac44ebd6389"/>
 <approved hash="5,16,7efa62097fe6ead7"/>
-<approved hash="7,39,44006f7a40e630e4"/>
-<approved hash="7,39,ffcc38343856ffae"/>
-<approved hash="7,39,3518d487a0731a94"/>
-<approved hash="7,39,fff83800385bffa3"/>
-<approved hash="7,39,68805b7bcba79ea4"/>
-<approved hash="7,39,be4c18341856be2e"/>
-<approved hash="7,39,64804f7231ae20a4"/>
-<approved hash="7,39,0118f8060e3291d4"/>
-<approved hash="7,39,1518f40fb03b6bd4"/>
-<approved hash="7,39,be781800185bbe23"/>
-<approved hash="7,39,48005b73b86fce64"/>
-<approved hash="7,39,7ecc7a347a597ea1"/>
-<approved hash="7,39,44006f4a26565064"/>
-<approved hash="7,39,0118d88e5efae214"/>
-<approved hash="7,39,7ef87a007a547eac"/>
-<approved hash="7,39,3518d4b7c0c37c14"/>
-<approved hash="7,39,4118bb39a88d7554"/>
-<approved hash="7,39,2b801b442f183824"/>
-<approved hash="7,39,667aa6b926b9e67a"/>
-<approved hash="7,39,ad2ef657280523cc"/>
-<approved hash="7,39,0865cf254f248864"/>
-<approved hash="7,39,61cd3f8abf8ae1cd"/>
-<approved hash="7,39,f7a4b664366477a4"/>
-<approved hash="7,39,c6fb86bb06bb46fb"/>
-<approved hash="7,39,3d8cfbcc7bccbd8c"/>
-<approved hash="7,39,839076e876d283aa"/>
-<approved hash="7,39,4312739788abd5d6"/>
-<approved hash="7,39,835c762477c982b1"/>
-<approved hash="7,39,050a3feca8d8ffc6"/>
-<approved hash="7,39,af0c6e4bee4b2f0c"/>
-<approved hash="7,39,b50a5863e1973986"/>
-<approved hash="7,39,33dc162417c93231"/>
-<approved hash="7,39,490a5e67f0938c86"/>
-<approved hash="7,39,2492c3984ee49c96"/>
-<approved hash="7,39,331016e816d2332a"/>
-<approved hash="7,39,22923f9cfbe08d96"/>
 <approved hash="7,39,f44d5c3000db50c3"/>
-<approved hash="7,39,99ced9f1a7f1e7ce"/>
 <approved hash="7,39,bfe36f88b9ff91f1"/>
-<approved hash="7,39,99fbd9e6a7e6e7fb"/>
 <approved hash="7,39,74fcdf7d4390903c"/>
 <approved hash="7,39,cafe140614c0ca38"/>
-<approved hash="7,39,4d22e34bb7a76b20"/>
 <approved hash="7,39,195f596da76de75f"/>
 <approved hash="7,39,bf72eca67a94516d"/>
 <approved hash="7,39,19cb59eea7eee7cb"/>
 <approved hash="7,39,9411230eb712e2d5"/>
-<approved hash="7,39,490abc9a2f2ec446"/>
-<approved hash="7,39,c0123fe1b35d5256"/>
 <approved hash="7,39,b3fe640664c0b338"/>
-<approved hash="7,39,a0ea64b5e4b620e9"/>
-<approved hash="7,39,4fba8c7a0c7dcfbd"/>
-<approved hash="7,39,23a9e3696368a3a8"/>
-<approved hash="7,39,5b89b6dcf876a7f0"/>
-<approved hash="7,39,e67986147c7ab743"/>
-<approved hash="7,40,ecfbaebb2ebb6cfb"/>
-<approved hash="7,40,b68cf74f774f368c"/>
-<approved hash="7,40,534312039203d343"/>
-<approved hash="7,40,9eb25ef2def21eb2"/>
-<approved hash="7,40,3f437e02fe02bf43"/>
-<approved hash="7,40,f2b232f3b2f372b2"/>
-<approved hash="7,40,7b79bbba3bbafb79"/>
-<approved hash="7,40,210ee24e624ea10e"/>
-<approved hash="7,40,a66a653d1be52366"/>
-<approved hash="7,40,a7976a9995a0a291"/>
-<approved hash="7,40,082a681269f60a3c"/>
-<approved hash="7,40,b1e7f127712731e7"/>
-<approved hash="7,40,23456382e382a345"/>
-<approved hash="7,40,779d385ab85af79d"/>
-<approved hash="7,40,acd8ec986c982cd8"/>
-<approved hash="7,40,5b89b6dcf876a7f0"/>
-<approved hash="7,40,e67986147c7ab743"/>
 <approved hash="5,1,f31319410b127147"/>
 <approved hash="5,1,c20f3c90ee4ee03e"/>
 <approved hash="3,2,28802f4dd126d6eb"/>
@@ -6718,15 +6623,83 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <approved hash="3,1,6311110607c06a95"/>
 <approved hash="3,1,207eda80da9d2063"/>
 <approved hash="3,1,5d5df3a3f3d45d2a"/>
+<approved hash="7,39,44006f7a40e630e4"/>
+<approved hash="7,39,ffcc38343856ffae"/>
+<approved hash="7,39,3518d487a0731a94"/>
+<approved hash="7,39,fff83800385bffa3"/>
+<approved hash="7,39,68805b7bcba79ea4"/>
+<approved hash="7,39,be4c18341856be2e"/>
+<approved hash="7,39,64804f7231ae20a4"/>
+<approved hash="7,39,0118f8060e3291d4"/>
+<approved hash="7,39,1518f40fb03b6bd4"/>
+<approved hash="7,39,be781800185bbe23"/>
+<approved hash="7,39,48005b73b86fce64"/>
+<approved hash="7,39,7ecc7a347a597ea1"/>
+<approved hash="7,39,44006f4a26565064"/>
+<approved hash="7,39,0118d88e5efae214"/>
+<approved hash="7,39,7ef87a007a547eac"/>
+<approved hash="7,39,3518d4b7c0c37c14"/>
+<approved hash="7,39,4118bb39a88d7554"/>
+<approved hash="7,39,2b801b442f183824"/>
+<approved hash="7,39,667aa6b926b9e67a"/>
+<approved hash="7,39,ad2ef657280523cc"/>
+<approved hash="7,39,0865cf254f248864"/>
+<approved hash="7,39,61cd3f8abf8ae1cd"/>
+<approved hash="7,39,f7a4b664366477a4"/>
+<approved hash="7,39,c6fb86bb06bb46fb"/>
+<approved hash="7,39,3d8cfbcc7bccbd8c"/>
+<approved hash="7,39,4312739788abd5d6"/>
+<approved hash="7,39,839076e876d283aa"/>
+<approved hash="7,39,835c762477c982b1"/>
+<approved hash="7,39,050a3feca8d8ffc6"/>
+<approved hash="7,39,af0c6e4bee4b2f0c"/>
+<approved hash="7,39,b50a5863e1973986"/>
+<approved hash="7,39,490a5e67f0938c86"/>
+<approved hash="7,39,33dc162417c93231"/>
+<approved hash="7,39,2492c3984ee49c96"/>
+<approved hash="7,39,331016e816d2332a"/>
+<approved hash="7,39,22923f9cfbe08d96"/>
+<approved hash="7,39,87b24b7e3b58e794"/>
+<approved hash="7,39,6840ad8c9eaa7a66"/>
+<approved hash="7,39,5fe71fa69fa6dfe7"/>
+<approved hash="7,39,2240e68ca5aa4066"/>
+<approved hash="7,39,c94d880d080d494d"/>
+<approved hash="7,39,99ced9f1a7f1e7ce"/>
+<approved hash="7,39,4d22e34bb7a76b20"/>
+<approved hash="7,39,99fbd9e6a7e6e7fb"/>
+<approved hash="7,39,c0123fe1b35d5256"/>
+<approved hash="7,39,490abc9a2f2ec446"/>
+<approved hash="7,39,a0ea64b5e4b620e9"/>
+<approved hash="7,39,4fba8c7a0c7dcfbd"/>
+<approved hash="7,39,23a9e3696368a3a8"/>
+<approved hash="7,39,5b89b6dcf876a7f0"/>
+<approved hash="7,39,e67986147c7ab743"/>
+<approved hash="7,40,ecfbaebb2ebb6cfb"/>
+<approved hash="7,40,b68cf74f774f368c"/>
+<approved hash="7,40,534312039203d343"/>
+<approved hash="7,40,9eb25ef2def21eb2"/>
+<approved hash="7,40,3f437e02fe02bf43"/>
+<approved hash="7,40,f2b232f3b2f372b2"/>
+<approved hash="7,40,7b79bbba3bbafb79"/>
+<approved hash="7,40,210ee24e624ea10e"/>
+<approved hash="7,40,a66a653d1be52366"/>
+<approved hash="7,40,a7976a9995a0a291"/>
+<approved hash="7,40,082a681269f60a3c"/>
+<approved hash="7,40,b1e7f127712731e7"/>
+<approved hash="7,40,23456382e382a345"/>
+<approved hash="7,40,779d385ab85af79d"/>
+<approved hash="7,40,acd8ec986c982cd8"/>
+<approved hash="7,40,5b89b6dcf876a7f0"/>
+<approved hash="7,40,e67986147c7ab743"/>
 <approved hash="18,29,23483152c4fdd6e7"/>
-<approved hash="18,29,42c6efe70c7fbfa6"/>
 <approved hash="18,29,151a649379c716b6"/>
+<approved hash="18,29,42c6efe70c7fbfa6"/>
 <approved hash="18,29,089c035dff80f441"/>
-<approved hash="18,29,42c3475024cf3fa4"/>
 <approved hash="18,29,151e83641fca9748"/>
+<approved hash="18,29,42c3475024cf3fa4"/>
+<approved hash="18,29,05ca6d78c5ffbb18"/>
 <approved hash="18,29,96c79dcd07487cf7"/>
 <approved hash="18,29,b81b26b38a9dd6fb"/>
-<approved hash="18,29,05ca6d78c5ffbb18"/>
 <approved hash="18,29,896e6ccbfdc51966"/>
 <approved hash="18,29,4d3d8153e389e8fb"/>
 <approved hash="18,29,d5fdae9d835698ed"/>
@@ -6738,17 +6711,17 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <approved hash="18,29,9dec8f15af92d08e"/>
 <approved hash="18,29,17863142b4261df4"/>
 <approved hash="18,29,decda7e3897299fd"/>
-<approved hash="18,29,a13e81c30d5235a9"/>
 <approved hash="18,29,a11e99e315723589"/>
+<approved hash="18,29,a13e81c30d5235a9"/>
 <approved hash="18,29,4d46dd0e251ab3ba"/>
 <approved hash="18,29,5d26cdee35faa31a"/>
-<approved hash="18,29,5916cbf635e2a12a"/>
 <approved hash="18,29,49b6db162502b14a"/>
+<approved hash="18,29,5916cbf635e2a12a"/>
 <approved hash="18,29,c1ce2133ada25559"/>
 <approved hash="18,29,c1ee3913b5825579"/>
 <approved hash="18,29,4be44425b8f8b739"/>
-<approved hash="18,29,43c35aa83fb74b24"/>
 <approved hash="18,29,091e839c6ab28dc8"/>
+<approved hash="18,29,43c35aa83fb74b24"/>
 <approved hash="5,1,0428ccddf36ffbbc"/>
 <approved hash="5,1,dcdf91b00972397f"/>
 <approved hash="5,1,b448a666599c48cc"/>
