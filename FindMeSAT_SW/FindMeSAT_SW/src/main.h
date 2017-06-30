@@ -9,10 +9,18 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
+typedef enum ADC_CH0_SCAN_ENUM {
+	ADC_CH0_SCAN_3V0 = 0,									// PIN = PA0, ADC0
+	ADC_CH0_SCAN_VCTCXO,									// PIN = PA1, ADC1
+	ADC_CH0_SCAN_5V0,										// PIN = PA2, ADC2
+	ADC_CH0_SCAN_VBAT,										// PIN = PA3, ADC3
+} ADC_CH0_SCAN_t;
+
 
 /* INIT section */
 
 void cb_rtc_alarm(uint32_t rtc_time);
+void cb_adc(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
 
 void usb_callback_suspend_action(void);
 void usb_callback_resume_action(void);
