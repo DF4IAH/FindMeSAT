@@ -55,14 +55,17 @@
 
 
 /* ADCA Channels 0-3 */
-#define ADC_3V0_VCTCXO_5V0_VBAT		ADCA
-#define ADC_3V0_VCTCXO_5V0_VBAT_CH	ADC_CH0
+#define ADC_VCTCXO_5V0_VBAT		ADCA
+#define ADC_VCTCXO_5V0_VBAT_CH	ADC_CH0
 
-#define ADC_IO_ADC4					ADCA
-#define ADC_IO_ADC4_CH				ADC_CH1
+#define ADC_IO_ADC4				ADCA
+#define ADC_IO_ADC4_CH			ADC_CH1
 
-#define ADC_IO_ADC5					ADCA
-#define ADC_IO_ADC5_CH				ADC_CH2
+#define ADC_IO_ADC5				ADCA
+#define ADC_IO_ADC5_CH			ADC_CH2
+
+#define ADC_TEMP				ADCA
+#define ADC_TEMP_CH				ADC_CH3
 
 
 /* ADCB Channels 0-3 */
