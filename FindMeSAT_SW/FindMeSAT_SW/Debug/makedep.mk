@@ -2,6 +2,8 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
+src\ASF\common\services\calendar\calendar.c
+
 src\ASF\xmega\drivers\rtc32\rtc32.c
 
 src\twi.c

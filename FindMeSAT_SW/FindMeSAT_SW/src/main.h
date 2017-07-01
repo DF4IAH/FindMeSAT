@@ -10,9 +10,25 @@
 #define MAIN_H_
 
 
+#define C_VCC_3V0_VOLTS			3.000f
+#define C_VCC_3V3_VOLTS			3.318f
+#define C_VCC_5V0_VOLTS			4.850f
+#define C_PWM_3V3_VOLTS			3.234f
+#define C_VCTCXO_VOLTS			1.500f
+
+
+typedef enum ADC_CH0_SCAN_ENUM {
+	ADC_CH0_SCAN_3V0 = 255,									// PIN = PA0, ADC0 - used as AREFA
+	ADC_CH0_SCAN_VCTCXO = 0,								// PIN = PA1, ADC1
+	ADC_CH0_SCAN_5V0,										// PIN = PA2, ADC2
+	ADC_CH0_SCAN_VBAT,										// PIN = PA3, ADC3
+} ADC_CH0_SCAN_t;
+
+
 /* INIT section */
 
 void cb_rtc_alarm(uint32_t rtc_time);
+void cb_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
 
 void usb_callback_suspend_action(void);
 void usb_callback_resume_action(void);
