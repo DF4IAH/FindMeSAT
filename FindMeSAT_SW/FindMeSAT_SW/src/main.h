@@ -10,11 +10,24 @@
 #define MAIN_H_
 
 
-#define C_VCC_3V0_VOLTS			3.000f
+#define C_0DEGC_K				273.15f
+
+#define C_ADC_STEPS				8192
+#define C_ADC_SUM_CNT			256
+#define C_ADC_SUM_SHIFT			7
+
+#define C_ADC_0V0_DELTA			190
 #define C_VCC_3V3_VOLTS			3.318f
-#define C_VCC_5V0_VOLTS			4.850f
-#define C_PWM_3V3_VOLTS			3.234f
-#define C_VCTCXO_VOLTS			1.500f
+#define C_VCC_3V0_AREF_VOLTS	3.000f
+
+#define C_VCTCXO_PWM_HI_VOLTS	3.253f
+#define C_VCTCXO_DEFAULT_VOLTS	1.500f
+#define C_VCTCXO_DELTA_VOLTS	0.047f
+
+#define C_VCC_5V0_VOLTS			4.810f
+#define C_VCC_5V0_MULT			2.50248756f
+#define C_VCC_VBAT_MULT			2.50248756f
+#define C_TEMPSENSE_MULT		0.00175993f
 
 
 typedef enum ADC_CH0_SCAN_ENUM {

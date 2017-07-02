@@ -56,12 +56,24 @@ struct adc_channel_config	g_adcch_io_adc4_conf				= { 0 };
 struct adc_channel_config	g_adcch_io_adc5_conf				= { 0 };
 struct adc_channel_config	g_adcch_temp_conf					= { 0 };
 
-uint16_t					g_adc_vctcxo_cur					= 0;
-uint16_t					g_adc_5v0_cur						= 0;
-uint16_t					g_adc_vbat_cur						= 0;
-uint16_t					g_adc_io_adc4_cur					= 0;
-uint16_t					g_adc_io_adc5_cur					= 0;
-uint16_t					g_adc_temp_cur						= 0;
+int32_t						g_adc_vctcxo_cur					= 0;
+int32_t						g_adc_vctcxo_sum					= 0;
+uint16_t					g_adc_vctcxo_cnt					= 0;
+int32_t						g_adc_5v0_cur						= 0;
+int32_t						g_adc_5v0_sum						= 0;
+uint16_t					g_adc_5v0_cnt						= 0;
+int32_t						g_adc_vbat_cur						= 0;
+int32_t						g_adc_vbat_sum						= 0;
+uint16_t					g_adc_vbat_cnt						= 0;
+int32_t						g_adc_io_adc4_cur					= 0;
+int32_t						g_adc_io_adc4_sum					= 0;
+uint16_t					g_adc_io_adc4_cnt					= 0;
+int32_t						g_adc_io_adc5_cur					= 0;
+int32_t						g_adc_io_adc5_sum					= 0;
+uint16_t					g_adc_io_adc5_cnt					= 0;
+int32_t						g_adc_temp_cur						= 0;
+int32_t						g_adc_temp_sum						= 0;
+uint16_t					g_adc_temp_cnt						= 0;
 
 
 struct dac_config			g_dac_io_dac0_conf					= { 0 };
@@ -160,9 +172,9 @@ static void tc_init(void)
 {
 	/* TCC0: VCTCXO PWM signal generation and ADCA CH0 */
 	struct pwm_config pwm_vctcxo_cfg;
-	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 500);							// Init PWM structure and enable timer
+	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2560);						// Init PWM structure and enable timer
 	pwm_start(&pwm_vctcxo_cfg, 45);												// Start PWM. Percentage with 1% granularity is to coarse, use driver access instead
-	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) (0.5f + pwm_vctcxo_cfg.period * C_VCTCXO_VOLTS / C_PWM_3V3_VOLTS));	// Initial value for VCTCXO
+	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) (0.5f + pwm_vctcxo_cfg.period * C_VCTCXO_DEFAULT_VOLTS / C_VCTCXO_PWM_HI_VOLTS));	// Initial value for VCTCXO
 
 	/* TCE1: DAC clock */
 	tc_enable(&TCE1);
@@ -295,31 +307,56 @@ static void adc_start(void)
 
 void cb_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 {
-	volatile uint8_t scan_ofs_next = (ADCA_CH0_SCAN >> 4);
+	uint8_t scan_ofs_next = (ADCA_CH0_SCAN >> 4);
+	int16_t val = res - C_ADC_0V0_DELTA;
 
 	if ((ch_mask & ADC_VCTCXO_5V0_VBAT_CH)) {
 		switch (scan_ofs_next) {
 			case ADC_CH0_SCAN_5V0:
-			g_adc_vctcxo_cur = res;
+				g_adc_vctcxo_sum += val;
+				if (++g_adc_vctcxo_cnt >= C_ADC_SUM_CNT) {
+					g_adc_vctcxo_cur = (g_adc_vctcxo_sum >> C_ADC_SUM_SHIFT);
+					g_adc_vctcxo_sum = g_adc_vctcxo_cnt = 0;
+				}
 			break;
 
 			case ADC_CH0_SCAN_VBAT:
-			g_adc_5v0_cur = res;
+				g_adc_5v0_sum += val;
+				if (++g_adc_5v0_cnt >= C_ADC_SUM_CNT) {
+					g_adc_5v0_cur = (g_adc_5v0_sum >> C_ADC_SUM_SHIFT);
+					g_adc_5v0_sum = g_adc_5v0_cnt = 0;
+				}
 			break;
 
 			case ADC_CH0_SCAN_VCTCXO:
-			g_adc_vbat_cur = res;
+				g_adc_vbat_sum += val;
+				if (++g_adc_vbat_cnt >= C_ADC_SUM_CNT) {
+					g_adc_vbat_cur = (g_adc_vbat_sum >> C_ADC_SUM_SHIFT);
+					g_adc_vbat_sum = g_adc_vbat_cnt = 0;
+				}
 			break;
 		}
 
 	} else if (ch_mask & ADC_IO_ADC4_CH) {
-		g_adc_io_adc4_cur = res;
+		g_adc_io_adc4_sum += val;
+		if (++g_adc_io_adc4_cnt >= C_ADC_SUM_CNT) {
+			g_adc_io_adc4_cur = (g_adc_io_adc4_sum >> C_ADC_SUM_SHIFT);
+			g_adc_io_adc4_sum = g_adc_io_adc4_cnt = 0;
+		}
 
 	} else if (ch_mask & ADC_IO_ADC5_CH) {
-		g_adc_io_adc5_cur = res;
+		g_adc_io_adc5_sum += val;
+		if (++g_adc_io_adc5_cnt >= C_ADC_SUM_CNT) {
+			g_adc_io_adc5_cur = (g_adc_io_adc5_sum >> C_ADC_SUM_SHIFT);
+			g_adc_io_adc5_sum = g_adc_io_adc5_cnt = 0;
+		}
 
 	} else if (ch_mask & ADC_TEMP_CH) {
-		g_adc_temp_cur = res;
+		g_adc_temp_sum += val;
+		if (++g_adc_temp_cnt >= C_ADC_SUM_CNT) {
+			g_adc_temp_cur = (g_adc_temp_sum >> C_ADC_SUM_SHIFT);
+			g_adc_temp_sum = g_adc_temp_cnt = 0;
+		}
 	}
 }
 
@@ -466,12 +503,15 @@ static void task_dac(void)
 static void task_adc(uint32_t now, uint32_t last)
 {
 	static uint32_t adc_last = 0;
-	uint16_t l_adc_vctcxo_cur,
+	int32_t l_adc_vctcxo_cur,
 			 l_adc_5v0_cur,
 			 l_adc_vbat_cur,
 			 l_adc_io_adc4_cur,
 			 l_adc_io_adc5_cur,
 			 l_adc_temp_cur;
+	float	 l_temp;
+	uint16_t l_temp_i;
+	uint8_t	 l_temp_f;
 
 	if ((now - adc_last) >= 512) {
 		adc_last = now;
@@ -485,8 +525,12 @@ static void task_adc(uint32_t now, uint32_t last)
 		l_adc_temp_cur = g_adc_temp_cur;
 		cpu_irq_restore(flags);
 
-		printf("time = %5ld: vctcxo=%04d, 5v0=%04d, vbat=%04d, adc4=%04d, adc5=%04d, temp=%04d\r\n",
-			now >> 10, l_adc_vctcxo_cur, l_adc_5v0_cur, l_adc_vbat_cur, l_adc_io_adc4_cur, l_adc_io_adc5_cur, l_adc_temp_cur);
+		l_temp = (((l_adc_temp_cur / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS) / C_TEMPSENSE_MULT) - C_0DEGC_K;
+		l_temp_i = (uint16_t)l_temp;
+		l_temp_f = (uint8_t)(10 * (l_temp - l_temp_i));
+
+		printf("time = %5ld: vctcxo=%04ld, 5v0=%04ld, vbat=%04ld, adc4=%04ld, adc5=%04ld, temp=%04ld = %d.%dC\r\n",
+			now >> 10, l_adc_vctcxo_cur, l_adc_5v0_cur, l_adc_vbat_cur, l_adc_io_adc4_cur, l_adc_io_adc5_cur, l_adc_temp_cur, l_temp_i, l_temp_f);
 	}
 }
 
