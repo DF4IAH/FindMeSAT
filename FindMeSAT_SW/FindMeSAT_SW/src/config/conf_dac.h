@@ -10,13 +10,11 @@
 #define CONF_DAC_H_
 
 
-#define DAC_IO_DAC0				DACB
-#define DAC_IO_DAC0_CHANNEL		DAC_CH0
+#define DAC_DAC					DACB
+#define DAC_DAC0_CH				DAC_CH0
+#define DAC_DAC1_CH				DAC_CH1
 
-#define DAC_IO_DAC1				DACB
-#define DAC_IO_DAC1_CHANNEL		DAC_CH1
-
-#define DAC_RATE_OF_CONV		48000
+#define DAC_RATE_OF_CONV		48000UL
 #define DAC_NR_OF_SAMPLES		32
 
 

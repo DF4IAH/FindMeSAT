@@ -56,17 +56,26 @@ struct adc_channel_config	g_adcch_io_adc4_conf				= { 0 };
 struct adc_channel_config	g_adcch_io_adc5_conf				= { 0 };
 struct adc_channel_config	g_adcch_temp_conf					= { 0 };
 
-uint16_t					g_adc_vctcxo_cur					= 0;
-uint16_t					g_adc_5v0_cur						= 0;
-uint16_t					g_adc_vbat_cur						= 0;
-uint16_t					g_adc_io_adc4_cur					= 0;
-uint16_t					g_adc_io_adc5_cur					= 0;
-uint16_t					g_adc_temp_cur						= 0;
+int32_t						g_adc_vctcxo_cur					= 0;
+int32_t						g_adc_vctcxo_sum					= 0;
+uint16_t					g_adc_vctcxo_cnt					= 0;
+int32_t						g_adc_5v0_cur						= 0;
+int32_t						g_adc_5v0_sum						= 0;
+uint16_t					g_adc_5v0_cnt						= 0;
+int32_t						g_adc_vbat_cur						= 0;
+int32_t						g_adc_vbat_sum						= 0;
+uint16_t					g_adc_vbat_cnt						= 0;
+int32_t						g_adc_io_adc4_cur					= 0;
+int32_t						g_adc_io_adc4_sum					= 0;
+uint16_t					g_adc_io_adc4_cnt					= 0;
+int32_t						g_adc_io_adc5_cur					= 0;
+int32_t						g_adc_io_adc5_sum					= 0;
+uint16_t					g_adc_io_adc5_cnt					= 0;
+int32_t						g_adc_temp_cur						= 0;
+int32_t						g_adc_temp_sum						= 0;
+uint16_t					g_adc_temp_cnt						= 0;
 
-
-struct dac_config			g_dac_io_dac0_conf					= { 0 };
-struct dac_config			g_dac_io_dac1_conf					= { 0 };
-
+struct dac_config			g_dac_conf							= { 0 };
 
 char						g_prepare_buf[48]					= "";
 
@@ -118,19 +127,22 @@ uint8_t			twi2_recv_data[DATA_LENGTH];
 
 /* STATIC section for this module */
 
-static uint16_t dac_io_dac0_buf[DAC_NR_OF_SAMPLES] = {
+static uint16_t dac_io_dac0_buf[DAC_NR_OF_SAMPLES]	= {
 	32768, 35325, 37784, 40050, 42036, 43666, 44877, 45623,
 	45875, 45623, 44877, 43666, 42036, 40050, 37784, 35325,
 	32768, 30211, 27752, 25486, 23500, 21870, 20659, 19913,
 	19661, 19913, 20659, 21870, 23500, 25486, 27752, 30211,
 };
 
-static uint16_t dac_io_dac1_buf[DAC_NR_OF_SAMPLES] = {
+static uint16_t dac_io_dac1_buf[DAC_NR_OF_SAMPLES]	= {
 	32768, 35325, 37784, 40050, 42036, 43666, 44877, 45623,
 	45875, 45623, 44877, 43666, 42036, 40050, 37784, 35325,
 	32768, 30211, 27752, 25486, 23500, 21870, 20659, 19913,
 	19661, 19913, 20659, 21870, 23500, 25486, 27752, 30211,
 };
+
+static uint8_t	g_dac_buf_idx						= 0;
+
 
 
 
@@ -151,7 +163,7 @@ static void evsys_init(void)
 	EVSYS.CH3CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH3 no digital filtering
 
 	/* DAC - event 7 */
-	EVSYS.CH7MUX = EVSYS_CHMUX_TCE1_OVF_gc;										// TCE1 overflow goes to EVSYS CH7
+	EVSYS.CH7MUX  = EVSYS_CHMUX_TCE1_OVF_gc;									// TCE1 overflow goes to EVSYS CH7
 	EVSYS.CH7CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH7 no digital filtering
 }
 
@@ -160,20 +172,20 @@ static void tc_init(void)
 {
 	/* TCC0: VCTCXO PWM signal generation and ADCA CH0 */
 	struct pwm_config pwm_vctcxo_cfg;
-	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 500);							// Init PWM structure and enable timer
+	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2560);						// Init PWM structure and enable timer
 	pwm_start(&pwm_vctcxo_cfg, 45);												// Start PWM. Percentage with 1% granularity is to coarse, use driver access instead
-	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) (0.5f + pwm_vctcxo_cfg.period * C_VCTCXO_VOLTS / C_PWM_3V3_VOLTS));	// Initial value for VCTCXO
+	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) (0.5f + pwm_vctcxo_cfg.period * C_VCTCXO_DEFAULT_VOLTS / C_VCTCXO_PWM_HI_VOLTS));	// Initial value for VCTCXO
 
 	/* TCE1: DAC clock */
 	tc_enable(&TCE1);
 	tc_set_wgm(&TCE1, TC_WG_NORMAL);											// Internal clock for DAC convertion
-	tc_write_period(&TCE1, (sysclk_get_per_hz() / DAC_RATE_OF_CONV) - 1);		// DAC clock 48 kHz for audio play-back
+	tc_write_period(&TCE1, (sysclk_get_per_hz() / DAC_RATE_OF_CONV) - 1);		// DAC clock of 48 kHz for audio play-back
 }
 
 static void tc_start(void)
 {
 	/* ADC clock */
-	tc_write_clock_source(&TCC0, TC_CLKSEL_DIV1_gc);
+	tc_write_clock_source(&TCC0, TC_CLKSEL_DIV1_gc);							// VCTCXO PWM start, output still is Z-state
 
 //	tc_write_clock_source(&TCC1, TC_CLKSEL_DIV1_gc);
 //	tc_write_clock_source(&TCD0, TC_CLKSEL_DIV1_gc);
@@ -181,8 +193,7 @@ static void tc_start(void)
 //	tc_write_clock_source(&TCE0, TC_CLKSEL_DIV1_gc);
 
 	/* DAC clock */
-	tc_write_clock_source(&TCE1, TC_CLKSEL_DIV1_gc);							// VCTCXO PWM start, output still is Z-state
-																				// ??? Internal clock
+	tc_write_clock_source(&TCE1, TC_CLKSEL_DIV1_gc);
 
 //	tc_write_clock_source(&TCF0, TC_CLKSEL_DIV1_gc);
 //	tc_write_clock_source(&TCF1, TC_CLKSEL_DIV1_gc);
@@ -238,13 +249,13 @@ static void adc_init(void)
 	adcch_read_configuration(&ADC_TEMP, ADC_TEMP_CH,						&g_adcch_temp_conf);
 
 	/* ADC-clock request */
-	adc_set_clock_rate(&g_adc_a_conf, 768000UL);												// at LEAST 16x oversampling of 48kHz for audio
+	adc_set_clock_rate(&g_adc_a_conf, 48000UL << 4);											// 16x oversampling of 48kHz audio
 
 	/* Enable internal ADC-A input for temperature measurement */
 	adc_enable_internal_input(&g_adc_a_conf,		ADC_INT_TEMPSENSE | ADC_INT_BANDGAP);
 
 	/* Current limitation */
-	adc_set_current_limit(&g_adc_a_conf,			ADC_CURRENT_LIMIT_MED);
+	adc_set_current_limit(&g_adc_a_conf,			ADC_CURRENT_LIMIT_LOW);
 
 	/* ADC impedance */
 	adc_set_gain_impedance_mode(&g_adc_a_conf,		ADC_GAIN_HIGHIMPEDANCE);
@@ -295,64 +306,90 @@ static void adc_start(void)
 
 void cb_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 {
-	volatile uint8_t scan_ofs_next = (ADCA_CH0_SCAN >> 4);
+	uint8_t scan_ofs_next = (ADCA_CH0_SCAN >> 4);
+	int16_t val = res - C_ADC_0V0_DELTA;
 
 	if ((ch_mask & ADC_VCTCXO_5V0_VBAT_CH)) {
 		switch (scan_ofs_next) {
 			case ADC_CH0_SCAN_5V0:
-			g_adc_vctcxo_cur = res;
+				g_adc_vctcxo_sum += val;
+				if (++g_adc_vctcxo_cnt >= C_ADC_SUM_CNT) {
+					g_adc_vctcxo_cur = (g_adc_vctcxo_sum >> C_ADC_SUM_SHIFT);
+					g_adc_vctcxo_sum = g_adc_vctcxo_cnt = 0;
+				}
 			break;
 
 			case ADC_CH0_SCAN_VBAT:
-			g_adc_5v0_cur = res;
+				g_adc_5v0_sum += val;
+				if (++g_adc_5v0_cnt >= C_ADC_SUM_CNT) {
+					g_adc_5v0_cur = (g_adc_5v0_sum >> C_ADC_SUM_SHIFT);
+					g_adc_5v0_sum = g_adc_5v0_cnt = 0;
+				}
 			break;
 
 			case ADC_CH0_SCAN_VCTCXO:
-			g_adc_vbat_cur = res;
+				g_adc_vbat_sum += val;
+				if (++g_adc_vbat_cnt >= C_ADC_SUM_CNT) {
+					g_adc_vbat_cur = (g_adc_vbat_sum >> C_ADC_SUM_SHIFT);
+					g_adc_vbat_sum = g_adc_vbat_cnt = 0;
+				}
 			break;
 		}
 
 	} else if (ch_mask & ADC_IO_ADC4_CH) {
-		g_adc_io_adc4_cur = res;
+		g_adc_io_adc4_sum += val;
+		if (++g_adc_io_adc4_cnt >= C_ADC_SUM_CNT) {
+			g_adc_io_adc4_cur = (g_adc_io_adc4_sum >> C_ADC_SUM_SHIFT);
+			g_adc_io_adc4_sum = g_adc_io_adc4_cnt = 0;
+		}
 
 	} else if (ch_mask & ADC_IO_ADC5_CH) {
-		g_adc_io_adc5_cur = res;
+		g_adc_io_adc5_sum += val;
+		if (++g_adc_io_adc5_cnt >= C_ADC_SUM_CNT) {
+			g_adc_io_adc5_cur = (g_adc_io_adc5_sum >> C_ADC_SUM_SHIFT);
+			g_adc_io_adc5_sum = g_adc_io_adc5_cnt = 0;
+		}
 
 	} else if (ch_mask & ADC_TEMP_CH) {
-		g_adc_temp_cur = res;
+		g_adc_temp_sum += val;
+		if (++g_adc_temp_cnt >= C_ADC_SUM_CNT) {
+			g_adc_temp_cur = (g_adc_temp_sum >> C_ADC_SUM_SHIFT);
+			g_adc_temp_sum = g_adc_temp_cnt = 0;
+		}
 	}
 }
 
 
 static void dac_init(void)
 {
-#if 0
-    dac_read_configuration(&DAC_IO_DAC0, &g_dac_io_dac0_conf);
-    dac_read_configuration(&DAC_IO_DAC1, &g_dac_io_dac1_conf);
+	sysclk_enable_module(SYSCLK_PORT_B, SYSCLK_DAC);
 
-    dac_set_conversion_parameters(&g_dac_io_dac0_conf, DAC_REF_BANDGAP, DAC_ADJ_LEFT);
-    dac_set_conversion_parameters(&g_dac_io_dac1_conf, DAC_REF_BANDGAP, DAC_ADJ_LEFT);
-
-    dac_set_active_channel(&g_dac_io_dac0_conf, DAC_IO_DAC0_CHANNEL, 0);
-    dac_set_active_channel(&g_dac_io_dac1_conf, DAC_IO_DAC1_CHANNEL, 0);
-
-    dac_set_conversion_trigger(&g_dac_io_dac0_conf, DAC_IO_DAC0_CHANNEL, 6);
-    dac_set_conversion_trigger(&g_dac_io_dac1_conf, DAC_IO_DAC1_CHANNEL, 6);
-
-    #ifdef XMEGA_DAC_VERSION_1
-    dac_set_conversion_interval(&g_dac_io_dac0_conf, 2);
-    dac_set_conversion_interval(&g_dac_io_dac1_conf, 2);
-    #endif
-
-    dac_write_configuration(&DAC_IO_DAC0, &g_dac_io_dac0_conf);
-    dac_write_configuration(&DAC_IO_DAC1, &g_dac_io_dac1_conf);
-#endif
+    dac_read_configuration(&DAC_DAC, &g_dac_conf);
+    dac_set_conversion_parameters(&g_dac_conf, DAC_REF_BANDGAP, DAC_ADJ_LEFT);
+    dac_set_active_channel(&g_dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 0);
+    dac_set_conversion_trigger(&g_dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 7);
+    dac_write_configuration(&DAC_DAC, &g_dac_conf);
 }
 
 static void dac_start(void)
 {
-	//dac_enable(&DACB);
+	dac_enable(&DACB);
+
+	tc_set_overflow_interrupt_callback(&TCE1, cb_tce1_ovfl);					// Set CB for TCE1 overflows
+	TCE1_INTCTRLA = TC_ERRINTLVL_OFF_gc | TC_OVFINTLVL_MED_gc;					// Enable interrupt for TCE1 overflows
+	TCE1_INTCTRLB = 0;
 }
+
+void cb_tce1_ovfl(void)
+{  // DAC data flow
+	dac_set_channel_value(&DAC_DAC, DAC_DAC1_CH, dac_io_dac1_buf[g_dac_buf_idx]);
+	dac_set_channel_value(&DAC_DAC, DAC_DAC0_CH, dac_io_dac0_buf[g_dac_buf_idx]);
+
+	if (++g_dac_buf_idx >= DAC_NR_OF_SAMPLES) {
+		g_dac_buf_idx = 0;
+	}
+}
+
 
 static void usb_init(void)
 {
@@ -450,28 +487,21 @@ void usb_callback_tx_empty_notify(uint8_t port)
 
 static void task_dac(void)
 {
-	static int idx_dacX = 0;
-
-#if 0
-	if (dac_channel_is_ready(&DAC_IO_DAC0, DAC_CH0 | DAC_CH1)) {
-		dac_set_channel_value(&DAC_IO_DAC0, DAC_IO_DAC0_CHANNEL, dac_io_dac0_buf[idx_dacX]);
-		dac_set_channel_value(&DAC_IO_DAC1, DAC_IO_DAC1_CHANNEL, dac_io_dac1_buf[idx_dacX]);
-		
-		idx_dacX++;
-		idx_dacX %= DAC_NR_OF_SAMPLES;
-	}
-#endif
+	// TODO: change sound pattern
 }
 
 static void task_adc(uint32_t now, uint32_t last)
 {
 	static uint32_t adc_last = 0;
-	uint16_t l_adc_vctcxo_cur,
+	int32_t l_adc_vctcxo_cur,
 			 l_adc_5v0_cur,
 			 l_adc_vbat_cur,
 			 l_adc_io_adc4_cur,
 			 l_adc_io_adc5_cur,
 			 l_adc_temp_cur;
+	float	 l_temp;
+	uint16_t l_temp_i;
+	uint8_t	 l_temp_f;
 
 	if ((now - adc_last) >= 512) {
 		adc_last = now;
@@ -485,8 +515,12 @@ static void task_adc(uint32_t now, uint32_t last)
 		l_adc_temp_cur = g_adc_temp_cur;
 		cpu_irq_restore(flags);
 
-		printf("time = %5ld: vctcxo=%04d, 5v0=%04d, vbat=%04d, adc4=%04d, adc5=%04d, temp=%04d\r\n",
-			now >> 10, l_adc_vctcxo_cur, l_adc_5v0_cur, l_adc_vbat_cur, l_adc_io_adc4_cur, l_adc_io_adc5_cur, l_adc_temp_cur);
+		l_temp = (((l_adc_temp_cur / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS) / C_TEMPSENSE_MULT) - C_0DEGC_K;
+		l_temp_i = (uint16_t)l_temp;
+		l_temp_f = (uint8_t)(10 * (l_temp - l_temp_i));
+
+		printf("time = %5ld: vctcxo=%04ld, 5v0=%04ld, vbat=%04ld, adc4=%04ld, adc5=%04ld, temp=%04ld = %d.%dC\r\n",
+			now >> 10, l_adc_vctcxo_cur, l_adc_5v0_cur, l_adc_vbat_cur, l_adc_io_adc4_cur, l_adc_io_adc5_cur, l_adc_temp_cur, l_temp_i, l_temp_f);
 	}
 }
 
@@ -594,12 +628,14 @@ int main(void)
 
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
+	dac_start();		// Start DA convertions
+	adc_start();		// Start AD convertions
 
 	/* Init of USB system */
 	usb_init();			// USB device stack start function to enable stack and start USB
+
+	/* Start TWI channels */
 	twi_start();		// Start TWI
-	adc_start();		// Start AD convertions
-	dac_start();		// Start DA convertions
 
 	/* The application code */
 	runmode = 1;
