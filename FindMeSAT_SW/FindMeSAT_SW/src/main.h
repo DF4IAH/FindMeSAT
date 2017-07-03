@@ -42,6 +42,7 @@ typedef enum ADC_CH0_SCAN_ENUM {
 
 void cb_rtc_alarm(uint32_t rtc_time);
 void cb_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
+void cb_tce1_ovfl(void);
 
 void usb_callback_suspend_action(void);
 void usb_callback_resume_action(void);
