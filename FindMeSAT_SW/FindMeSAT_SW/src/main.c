@@ -75,7 +75,6 @@ int32_t						g_adc_temp_cur						= 0;
 int32_t						g_adc_temp_sum						= 0;
 uint16_t					g_adc_temp_cnt						= 0;
 
-
 struct dac_config			g_dac_conf							= { 0 };
 
 char						g_prepare_buf[48]					= "";
@@ -629,12 +628,14 @@ int main(void)
 
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
+	dac_start();		// Start DA convertions
+	adc_start();		// Start AD convertions
 
 	/* Init of USB system */
 	usb_init();			// USB device stack start function to enable stack and start USB
+
+	/* Start TWI channels */
 	twi_start();		// Start TWI
-	adc_start();		// Start AD convertions
-	dac_start();		// Start DA convertions
 
 	/* The application code */
 	runmode = 1;
