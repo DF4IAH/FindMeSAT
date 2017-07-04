@@ -185,13 +185,13 @@ void start_twi_lcd()
 
 
 /* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
-void task_twi_onboard(uint32_t now, uint32_t last)
+void task_twi_onboard(uint32_t now)
 {
 
 }
 
 /* TWI2 - LCD Port */
-void task_twi_lcd(uint32_t now, uint32_t last)
+void task_twi_lcd(uint32_t now)
 {
 	if (g_twi2_lcd_version >= 0x11) {
 		static uint8_t ofs = 0;

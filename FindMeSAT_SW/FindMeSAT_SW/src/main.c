@@ -33,7 +33,9 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 #include <asf.h>
+
 #include "conf_dac.h"
+#include "dds.h"
 #include "twi.h"
 
 #include "main.h"
@@ -127,6 +129,13 @@ uint8_t			twi2_recv_data[DATA_LENGTH];
 
 /* STATIC section for this module */
 
+#if 1
+
+uint16_t dac_io_dac0_buf[2][DAC_NR_OF_SAMPLES] = { 0 };
+uint16_t dac_io_dac1_buf[2][DAC_NR_OF_SAMPLES] = { 0 };
+
+#else
+
 static uint16_t dac_io_dac0_buf[DAC_NR_OF_SAMPLES]	= {
 	32768, 35325, 37784, 40050, 42036, 43666, 44877, 45623,
 	45875, 45623, 44877, 43666, 42036, 40050, 37784, 35325,
@@ -141,8 +150,9 @@ static uint16_t dac_io_dac1_buf[DAC_NR_OF_SAMPLES]	= {
 	19661, 19913, 20659, 21870, 23500, 25486, 27752, 30211,
 };
 
-static uint8_t	g_dac_buf_idx						= 0;
+#endif
 
+static uint8_t	g_dac_buf_idx						= 0;	// Needed when buffer is filled within ISR()
 
 
 
@@ -365,7 +375,7 @@ static void dac_init(void)
 	sysclk_enable_module(SYSCLK_PORT_B, SYSCLK_DAC);
 
     dac_read_configuration(&DAC_DAC, &g_dac_conf);
-    dac_set_conversion_parameters(&g_dac_conf, DAC_REF_BANDGAP, DAC_ADJ_LEFT);
+    dac_set_conversion_parameters(&g_dac_conf, DAC_REF_AREFA, DAC_ADJ_LEFT);
     dac_set_active_channel(&g_dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 0);
     dac_set_conversion_trigger(&g_dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 7);
     dac_write_configuration(&DAC_DAC, &g_dac_conf);
@@ -382,8 +392,8 @@ static void dac_start(void)
 
 void cb_tce1_ovfl(void)
 {  // DAC data flow
-	dac_set_channel_value(&DAC_DAC, DAC_DAC1_CH, dac_io_dac1_buf[g_dac_buf_idx]);
-	dac_set_channel_value(&DAC_DAC, DAC_DAC0_CH, dac_io_dac0_buf[g_dac_buf_idx]);
+	dac_set_channel_value(&DAC_DAC, DAC_DAC1_CH, dac_io_dac1_buf[0][g_dac_buf_idx]);
+	dac_set_channel_value(&DAC_DAC, DAC_DAC0_CH, dac_io_dac0_buf[0][g_dac_buf_idx]);
 
 	if (++g_dac_buf_idx >= DAC_NR_OF_SAMPLES) {
 		g_dac_buf_idx = 0;
@@ -485,12 +495,21 @@ void usb_callback_tx_empty_notify(uint8_t port)
 
 /* RUNNING section */
 
-static void task_dac(void)
+static void task_dac(uint32_t now)
 {
 	// TODO: change sound pattern
+
+	for (uint8_t idx = 0; idx < DAC_NR_OF_SAMPLES; ++idx) {
+		uint16_t val = PGM_READ_WORD(&(PM_SINE[idx]));
+
+		dac_io_dac0_buf[0][idx] = val;
+		dac_io_dac0_buf[1][idx] = val;
+		dac_io_dac1_buf[0][idx] = val;
+		dac_io_dac1_buf[1][idx] = val;
+	}
 }
 
-static void task_adc(uint32_t now, uint32_t last)
+static void task_adc(uint32_t now)
 {
 	static uint32_t adc_last = 0;
 	int32_t l_adc_vctcxo_cur,
@@ -556,29 +575,28 @@ static void task_usb(void)
 	}
 }
 
-static void task_twi(uint32_t now, uint32_t last)
+static void task_twi(uint32_t now)
 {
 	/* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
-	task_twi_onboard(now, last);
+	task_twi_onboard(now);
 
 	/* TWI2 - LCD Port */
-	task_twi_lcd(now, last);
+	task_twi_lcd(now);
 }
 
 static void task(void)
 {
-	static uint32_t last = 0;
 	uint32_t now = rtc_get_time();
 
 	/* TASK when woken up */
-	task_dac();
-	task_adc(now, last);
+	task_dac(now);
+	task_adc(now);
 
 	/* Handling the USB connection */
 	task_usb();
 
 	/* Handle TWI1 and TWI2 communications */
-	task_twi(now, last);
+	task_twi(now);
 
 #if 0
 	/* DEBUGGING USB */
@@ -587,8 +605,6 @@ static void task(void)
 		printf("%c\r\nFindMeSAT V1 @USB: RTC32 = %06ld sec\r\n", 0x0c, now_sec);
 	}
 #endif
-
-	last = now;
 }
 
 void halt(void)
@@ -602,6 +618,18 @@ void halt(void)
 int main(void)
 {
 	uint8_t retcode = 0;
+
+	volatile uint16_t x11 = get_interpolated_sine(0x0000, true);
+	volatile uint16_t x12 = get_interpolated_sine(0x0010, true);
+	volatile uint16_t x13 = get_interpolated_sine(0x0020, true);
+	volatile uint16_t x14 = get_interpolated_sine(0x0030, true);
+
+	volatile uint16_t x21 = get_interpolated_sine(0x0040, true);
+	volatile uint16_t x22 = get_interpolated_sine(0x0048, true);
+	volatile uint16_t x23 = get_interpolated_sine(0x0050, true);
+
+	return 1;
+
 
 	/* Init of interrupt system */
 	irq_initialize_vectors();

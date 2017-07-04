@@ -81,8 +81,8 @@ void twi_start(void);
 void start_twi_onboard(void);
 void start_twi_lcd(void);
 
-void task_twi_onboard(uint32_t now, uint32_t last);
-void task_twi_lcd(uint32_t now, uint32_t last);
+void task_twi_onboard(uint32_t now);
+void task_twi_lcd(uint32_t now);
 
 
 #endif /* TWI_H_ */
