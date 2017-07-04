@@ -4,7 +4,13 @@
 
 src\ASF\common\services\calendar\calendar.c
 
+src\ASF\common\services\hugemem\avr8\avr8_hugemem.c
+
+src\ASF\xmega\drivers\dma\dma.c
+
 src\ASF\xmega\drivers\rtc32\rtc32.c
+
+src\dds.c
 
 src\twi.c
 

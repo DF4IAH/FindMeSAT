@@ -68,6 +68,9 @@
 // From module: DAC - Digital to Analog Converter
 #include <dac.h>
 
+// From module: DMA - Direct Memory Access
+#include <dma.h>
+
 // From module: Delay routines
 #include <delay.h>
 
@@ -79,6 +82,9 @@
 
 // From module: Generic board support
 #include <board.h>
+
+// From module: Huge Memory Interface
+#include <hugemem.h>
 
 // From module: IOPORT - General purpose I/O service
 #include <ioport.h>
