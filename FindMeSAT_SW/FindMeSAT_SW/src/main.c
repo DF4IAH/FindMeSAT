@@ -78,8 +78,11 @@ int32_t						g_adc_temp_sum						= 0;
 uint16_t					g_adc_temp_cnt						= 0;
 
 struct dac_config			g_dac_conf							= { 0 };
+uint32_t					g_dds_inc							= 0UL;
+uint32_t					g_dds_reg							= 0UL;
 
 char						g_prepare_buf[48]					= "";
+
 
 
 twi_options_t twi1_options = {
@@ -189,7 +192,7 @@ static void tc_init(void)
 	/* TCE1: DAC clock */
 	tc_enable(&TCE1);
 	tc_set_wgm(&TCE1, TC_WG_NORMAL);											// Internal clock for DAC convertion
-	tc_write_period(&TCE1, (sysclk_get_per_hz() / DAC_RATE_OF_CONV) - 1);		// DAC clock of 48 kHz for audio play-back
+	tc_write_period(&TCE1, (sysclk_get_per_hz() / DAC_RATE_OF_CONV) - 1);		// DAC clock of 100 kHz for DDS (Direct Digital Synthesis)
 }
 
 static void tc_start(void)
@@ -390,13 +393,35 @@ static void dac_start(void)
 	TCE1_INTCTRLB = 0;
 }
 
+/* Forward declaration */
+static void calc_next_frame(void);
+
 void cb_tce1_ovfl(void)
 {  // DAC data flow
-	dac_set_channel_value(&DAC_DAC, DAC_DAC1_CH, dac_io_dac1_buf[0][g_dac_buf_idx]);
 	dac_set_channel_value(&DAC_DAC, DAC_DAC0_CH, dac_io_dac0_buf[0][g_dac_buf_idx]);
+	dac_set_channel_value(&DAC_DAC, DAC_DAC1_CH, dac_io_dac1_buf[0][g_dac_buf_idx]);
 
 	if (++g_dac_buf_idx >= DAC_NR_OF_SAMPLES) {
 		g_dac_buf_idx = 0;
+
+		cpu_irq_enable();
+		calc_next_frame();
+	}
+}
+
+static void calc_next_frame(void)
+{
+	/* Filling the DAC sound data FIFO */
+	for (uint8_t idx = 0; idx < DAC_NR_OF_SAMPLES; ++idx, g_dds_reg += g_dds_inc) {
+		uint16_t l_I = g_dds_reg >> 16;
+		uint16_t val_I = get_interpolated_sine(l_I, true);
+		dac_io_dac0_buf[0][idx] = val_I;
+		//dac_io_dac0_buf[1][idx] = val_I;
+
+		uint16_t l_Q = l_I + 0x4000;
+		uint16_t val_Q = get_interpolated_sine(l_Q, true);
+		dac_io_dac1_buf[0][idx] = val_Q;
+		//dac_io_dac1_buf[1][idx] = val_Q;
 	}
 }
 
@@ -497,16 +522,9 @@ void usb_callback_tx_empty_notify(uint8_t port)
 
 static void task_dac(uint32_t now)
 {
-	// TODO: change sound pattern
-
-	for (uint8_t idx = 0; idx < DAC_NR_OF_SAMPLES; ++idx) {
-		uint16_t val = PGM_READ_WORD(&(PM_SINE[idx]));
-
-		dac_io_dac0_buf[0][idx] = val;
-		dac_io_dac0_buf[1][idx] = val;
-		dac_io_dac1_buf[0][idx] = val;
-		dac_io_dac1_buf[1][idx] = val;
-	}
+	/* DDS setting */
+	const uint32_t dds_freq_mHz = 1000000UL;  // 1 kHz
+	g_dds_inc = (uint32_t) (((uint64_t)dds_freq_mHz * UINT32_MAX) / (DAC_RATE_OF_CONV * 500UL));
 }
 
 static void task_adc(uint32_t now)
@@ -618,18 +636,6 @@ void halt(void)
 int main(void)
 {
 	uint8_t retcode = 0;
-
-	volatile uint16_t x11 = get_interpolated_sine(0x0000, true);
-	volatile uint16_t x12 = get_interpolated_sine(0x0010, true);
-	volatile uint16_t x13 = get_interpolated_sine(0x0020, true);
-	volatile uint16_t x14 = get_interpolated_sine(0x0030, true);
-
-	volatile uint16_t x21 = get_interpolated_sine(0x0040, true);
-	volatile uint16_t x22 = get_interpolated_sine(0x0048, true);
-	volatile uint16_t x23 = get_interpolated_sine(0x0050, true);
-
-	return 1;
-
 
 	/* Init of interrupt system */
 	irq_initialize_vectors();
