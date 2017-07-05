@@ -375,8 +375,6 @@ void cb_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 
 static void dac_init(void)
 {
-	sysclk_enable_module(SYSCLK_PORT_B, SYSCLK_DAC);
-
     dac_read_configuration(&DAC_DAC, &g_dac_conf);
     dac_set_conversion_parameters(&g_dac_conf, DAC_REF_AREFA, DAC_ADJ_LEFT);
     dac_set_active_channel(&g_dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 0);
