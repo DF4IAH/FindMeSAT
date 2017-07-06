@@ -33,7 +33,9 @@
  * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
  */
 #include <asf.h>
+
 #include "conf_dac.h"
+#include "dds.h"
 #include "twi.h"
 
 #include "main.h"
@@ -76,8 +78,15 @@ int32_t						g_adc_temp_sum						= 0;
 uint16_t					g_adc_temp_cnt						= 0;
 
 struct dac_config			g_dac_conf							= { 0 };
+uint32_t					g_dds0_freq_mHz						= 1000000UL;	// 1 kHz
+uint32_t					g_dds0_inc							= 0UL;
+uint32_t					g_dds0_reg							= 0UL;			// Sine
+uint32_t					g_dds1_freq_mHz						= 1000000UL;	// 1 kHz
+uint32_t					g_dds1_inc							= 0UL;
+uint32_t					g_dds1_reg							= 0x62800000UL;	// Cosine, bad trick! - TODO: combine DMA buffers
 
 char						g_prepare_buf[48]					= "";
+
 
 
 twi_options_t twi1_options = {
@@ -127,22 +136,14 @@ uint8_t			twi2_recv_data[DATA_LENGTH];
 
 /* STATIC section for this module */
 
-static uint16_t dac_io_dac0_buf[DAC_NR_OF_SAMPLES]	= {
-	32768, 35325, 37784, 40050, 42036, 43666, 44877, 45623,
-	45875, 45623, 44877, 43666, 42036, 40050, 37784, 35325,
-	32768, 30211, 27752, 25486, 23500, 21870, 20659, 19913,
-	19661, 19913, 20659, 21870, 23500, 25486, 27752, 30211,
-};
+uint16_t dac_io_dac0_buf[2][DAC_NR_OF_SAMPLES]		= { 0 };
+uint16_t dac_io_dac1_buf[2][DAC_NR_OF_SAMPLES]		= { 0 };
+uint8_t	 g_dac_buf_idx								= 0;						// Needed when buffer is filled within ISR()
 
-static uint16_t dac_io_dac1_buf[DAC_NR_OF_SAMPLES]	= {
-	32768, 35325, 37784, 40050, 42036, 43666, 44877, 45623,
-	45875, 45623, 44877, 43666, 42036, 40050, 37784, 35325,
-	32768, 30211, 27752, 25486, 23500, 21870, 20659, 19913,
-	19661, 19913, 20659, 21870, 23500, 25486, 27752, 30211,
-};
-
-static uint8_t	g_dac_buf_idx						= 0;
-
+static struct dma_channel_config dmach_dma0_conf	= { 0 };
+static struct dma_channel_config dmach_dma1_conf	= { 0 };
+static struct dma_channel_config dmach_dma2_conf	= { 0 };
+static struct dma_channel_config dmach_dma3_conf	= { 0 };
 
 
 
@@ -179,7 +180,7 @@ static void tc_init(void)
 	/* TCE1: DAC clock */
 	tc_enable(&TCE1);
 	tc_set_wgm(&TCE1, TC_WG_NORMAL);											// Internal clock for DAC convertion
-	tc_write_period(&TCE1, (sysclk_get_per_hz() / DAC_RATE_OF_CONV) - 1);		// DAC clock of 48 kHz for audio play-back
+	tc_write_period(&TCE1, (sysclk_get_per_hz() / DAC_RATE_OF_CONV) - 1);		// DAC clock of 100 kHz for DDS (Direct Digital Synthesis)
 }
 
 static void tc_start(void)
@@ -360,33 +361,171 @@ void cb_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 }
 
 
+/* Forward declarations for DAC and DMA section */
+static void task_dac(uint32_t now);
+static void isr_calc_next_frame(uint16_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds_reg_p, uint32_t* dds_inc_p);
+static void cb_dma_dac_ch0_A(enum dma_channel_status status);
+static void cb_dma_dac_ch0_B(enum dma_channel_status status);
+static void cb_dma_dac_ch1_A(enum dma_channel_status status);
+static void cb_dma_dac_ch1_B(enum dma_channel_status status);
+
+static void dma_init(void)
+{
+	memset(&dmach_dma0_conf, 0, sizeof(dmach_dma0_conf));	// DACB channel 0 - linked with dma1
+	memset(&dmach_dma1_conf, 0, sizeof(dmach_dma1_conf));	// DACB channel 0 - linked with dma0
+	memset(&dmach_dma2_conf, 0, sizeof(dmach_dma2_conf));	// DACB channel 1 - linked with dma3
+	memset(&dmach_dma3_conf, 0, sizeof(dmach_dma3_conf));	// DACB channel 1 - linked with dma2
+
+	dma_channel_set_burst_length(&dmach_dma0_conf, DMA_CH_BURSTLEN_2BYTE_gc);
+	dma_channel_set_burst_length(&dmach_dma1_conf, DMA_CH_BURSTLEN_2BYTE_gc);
+	dma_channel_set_burst_length(&dmach_dma2_conf, DMA_CH_BURSTLEN_2BYTE_gc);
+	dma_channel_set_burst_length(&dmach_dma3_conf, DMA_CH_BURSTLEN_2BYTE_gc);
+
+	dma_channel_set_transfer_count(&dmach_dma0_conf, DAC_NR_OF_SAMPLES * sizeof(uint16_t));
+	dma_channel_set_transfer_count(&dmach_dma1_conf, DAC_NR_OF_SAMPLES * sizeof(uint16_t));
+	dma_channel_set_transfer_count(&dmach_dma2_conf, DAC_NR_OF_SAMPLES * sizeof(uint16_t));
+	dma_channel_set_transfer_count(&dmach_dma3_conf, DAC_NR_OF_SAMPLES * sizeof(uint16_t));
+
+	dma_channel_set_src_reload_mode(&dmach_dma0_conf, DMA_CH_SRCRELOAD_TRANSACTION_gc);
+	dma_channel_set_src_dir_mode(&dmach_dma0_conf, DMA_CH_SRCDIR_INC_gc);
+	dma_channel_set_source_address(&dmach_dma0_conf, (uint16_t)(uintptr_t) &dac_io_dac0_buf[0][0]);
+	dma_channel_set_dest_reload_mode(&dmach_dma0_conf, DMA_CH_DESTRELOAD_BURST_gc);
+	dma_channel_set_dest_dir_mode(&dmach_dma0_conf, DMA_CH_DESTDIR_INC_gc);
+	dma_channel_set_destination_address(&dmach_dma0_conf, (uint16_t)(uintptr_t) &DACB_CH0DATA);
+
+	dma_channel_set_src_reload_mode(&dmach_dma1_conf, DMA_CH_SRCRELOAD_TRANSACTION_gc);
+	dma_channel_set_src_dir_mode(&dmach_dma1_conf, DMA_CH_SRCDIR_INC_gc);
+	dma_channel_set_source_address(&dmach_dma1_conf, (uint16_t)(uintptr_t) &dac_io_dac0_buf[1][0]);
+	dma_channel_set_dest_reload_mode(&dmach_dma1_conf, DMA_CH_DESTRELOAD_BURST_gc);
+	dma_channel_set_dest_dir_mode(&dmach_dma1_conf, DMA_CH_DESTDIR_INC_gc);
+	dma_channel_set_destination_address(&dmach_dma1_conf, (uint16_t)(uintptr_t) &DACB_CH0DATA);
+
+	dma_channel_set_src_reload_mode(&dmach_dma2_conf, DMA_CH_SRCRELOAD_TRANSACTION_gc);
+	dma_channel_set_src_dir_mode(&dmach_dma2_conf, DMA_CH_SRCDIR_INC_gc);
+	dma_channel_set_source_address(&dmach_dma2_conf, (uint16_t)(uintptr_t) &dac_io_dac1_buf[0][0]);
+	dma_channel_set_dest_reload_mode(&dmach_dma2_conf, DMA_CH_DESTRELOAD_BURST_gc);
+	dma_channel_set_dest_dir_mode(&dmach_dma2_conf, DMA_CH_DESTDIR_INC_gc);
+	dma_channel_set_destination_address(&dmach_dma2_conf, (uint16_t)(uintptr_t) &DACB_CH1DATA);
+
+	dma_channel_set_src_reload_mode(&dmach_dma3_conf, DMA_CH_SRCRELOAD_TRANSACTION_gc);
+	dma_channel_set_src_dir_mode(&dmach_dma3_conf, DMA_CH_SRCDIR_INC_gc);
+	dma_channel_set_source_address(&dmach_dma3_conf, (uint16_t)(uintptr_t) &dac_io_dac1_buf[1][0]);
+	dma_channel_set_dest_reload_mode(&dmach_dma3_conf, DMA_CH_DESTRELOAD_BURST_gc);
+	dma_channel_set_dest_dir_mode(&dmach_dma3_conf, DMA_CH_DESTDIR_INC_gc);
+	dma_channel_set_destination_address(&dmach_dma3_conf, (uint16_t)(uintptr_t) &DACB_CH1DATA);
+
+	dma_channel_set_trigger_source(&dmach_dma0_conf, DMA_CH_TRIGSRC_DACB_CH0_gc);
+	dma_channel_set_single_shot(&dmach_dma0_conf);
+
+	dma_channel_set_trigger_source(&dmach_dma1_conf, DMA_CH_TRIGSRC_DACB_CH0_gc);
+	dma_channel_set_single_shot(&dmach_dma1_conf);
+
+	dma_channel_set_trigger_source(&dmach_dma2_conf, DMA_CH_TRIGSRC_DACB_CH1_gc);
+	dma_channel_set_single_shot(&dmach_dma2_conf);
+
+	dma_channel_set_trigger_source(&dmach_dma3_conf, DMA_CH_TRIGSRC_DACB_CH1_gc);
+	dma_channel_set_single_shot(&dmach_dma3_conf);
+
+	task_dac(rtc_get_time());
+}
+
+static void dma_start(void)
+{
+	dma_enable();
+
+	dma_set_callback(DMA_CHANNEL_DACB_CH0_A, cb_dma_dac_ch0_A);
+	dma_channel_set_interrupt_level(&dmach_dma0_conf, DMA_INT_LVL_MED);
+
+	dma_set_callback(DMA_CHANNEL_DACB_CH0_B, cb_dma_dac_ch0_B);
+	dma_channel_set_interrupt_level(&dmach_dma1_conf, DMA_INT_LVL_MED);
+
+	dma_set_callback(DMA_CHANNEL_DACB_CH1_A, cb_dma_dac_ch1_A);
+	dma_channel_set_interrupt_level(&dmach_dma2_conf, DMA_INT_LVL_MED);
+
+	dma_set_callback(DMA_CHANNEL_DACB_CH1_B, cb_dma_dac_ch1_B);
+	dma_channel_set_interrupt_level(&dmach_dma3_conf, DMA_INT_LVL_MED);
+
+	dma_set_priority_mode(DMA_PRIMODE_RR0123_gc);
+	dma_set_double_buffer_mode(DMA_DBUFMODE_CH01CH23_gc);
+
+	dma_channel_write_config(DMA_CHANNEL_DACB_CH0_A, &dmach_dma0_conf);
+	dma_channel_write_config(DMA_CHANNEL_DACB_CH0_B, &dmach_dma1_conf);
+	dma_channel_write_config(DMA_CHANNEL_DACB_CH1_A, &dmach_dma2_conf);
+	dma_channel_write_config(DMA_CHANNEL_DACB_CH1_B, &dmach_dma3_conf);
+}
+
 static void dac_init(void)
 {
-	sysclk_enable_module(SYSCLK_PORT_B, SYSCLK_DAC);
-
     dac_read_configuration(&DAC_DAC, &g_dac_conf);
-    dac_set_conversion_parameters(&g_dac_conf, DAC_REF_BANDGAP, DAC_ADJ_LEFT);
+    dac_set_conversion_parameters(&g_dac_conf, DAC_REF_AREFA, DAC_ADJ_LEFT);
     dac_set_active_channel(&g_dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 0);
     dac_set_conversion_trigger(&g_dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 7);
     dac_write_configuration(&DAC_DAC, &g_dac_conf);
+
+	dma_init();
 }
 
 static void dac_start(void)
 {
 	dac_enable(&DACB);
 
-	tc_set_overflow_interrupt_callback(&TCE1, cb_tce1_ovfl);					// Set CB for TCE1 overflows
-	TCE1_INTCTRLA = TC_ERRINTLVL_OFF_gc | TC_OVFINTLVL_MED_gc;					// Enable interrupt for TCE1 overflows
-	TCE1_INTCTRLB = 0;
+	/* Connect the DMA to the DAC periphery */
+	dma_start();
+
+	/* IRQ disabled section */
+	{
+		irqflags_t flags = cpu_irq_save();
+
+		/* Prepare DMA blocks */
+		isr_calc_next_frame(&dac_io_dac0_buf[0][0], &g_dds0_reg, &g_dds0_inc);
+		isr_calc_next_frame(&dac_io_dac1_buf[0][0], &g_dds1_reg, &g_dds1_inc);
+
+		/* DMA channels activation */
+		dma_channel_enable(DMA_CHANNEL_DACB_CH0_A);
+		dma_channel_enable(DMA_CHANNEL_DACB_CH1_A);
+
+		cpu_irq_restore(flags);
+	}
 }
 
-void cb_tce1_ovfl(void)
-{  // DAC data flow
-	dac_set_channel_value(&DAC_DAC, DAC_DAC1_CH, dac_io_dac1_buf[g_dac_buf_idx]);
-	dac_set_channel_value(&DAC_DAC, DAC_DAC0_CH, dac_io_dac0_buf[g_dac_buf_idx]);
+static void cb_dma_dac_ch0_A(enum dma_channel_status status)
+{
+	dma_channel_enable(DMA_CHANNEL_DACB_CH0_B);
 
-	if (++g_dac_buf_idx >= DAC_NR_OF_SAMPLES) {
-		g_dac_buf_idx = 0;
+	cpu_irq_enable();
+	isr_calc_next_frame(&dac_io_dac0_buf[0][0], &g_dds0_reg, &g_dds0_inc);
+}
+
+static void cb_dma_dac_ch0_B(enum dma_channel_status status)
+{
+	dma_channel_enable(DMA_CHANNEL_DACB_CH0_A);
+
+	cpu_irq_enable();
+	isr_calc_next_frame(&dac_io_dac0_buf[1][0], &g_dds0_reg, &g_dds0_inc);
+}
+
+static void cb_dma_dac_ch1_A(enum dma_channel_status status)
+{
+	dma_channel_enable(DMA_CHANNEL_DACB_CH1_B);
+
+	cpu_irq_enable();
+	isr_calc_next_frame(&dac_io_dac1_buf[0][0], &g_dds1_reg, &g_dds1_inc);
+}
+
+static void cb_dma_dac_ch1_B(enum dma_channel_status status)
+{
+	dma_channel_enable(DMA_CHANNEL_DACB_CH1_A);
+
+	cpu_irq_enable();
+	isr_calc_next_frame(&dac_io_dac1_buf[1][0], &g_dds1_reg, &g_dds1_inc);
+}
+
+static void isr_calc_next_frame(uint16_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds_reg_p, uint32_t* dds_inc_p)
+{
+	/* Filling the DMA block for a connected DAC channel */
+	for (uint8_t idx = 0; idx < DAC_NR_OF_SAMPLES; ++idx, *dds_reg_p += *dds_inc_p) {
+		uint16_t phase = *dds_reg_p >> 16;
+		buf[idx] = get_interpolated_sine(phase);
 	}
 }
 
@@ -485,12 +624,32 @@ void usb_callback_tx_empty_notify(uint8_t port)
 
 /* RUNNING section */
 
-static void task_dac(void)
+static void task_dac(uint32_t now)
 {
-	// TODO: change sound pattern
+	static uint32_t s_dds0_freq_mHz = 0UL;
+	static uint32_t s_dds1_freq_mHz = 0UL;
+	uint32_t l_dds0_freq_mHz, l_dds1_freq_mHz;
+
+	irqflags_t flags = cpu_irq_save();
+	l_dds0_freq_mHz = g_dds0_freq_mHz;
+	l_dds1_freq_mHz = g_dds1_freq_mHz;
+	cpu_irq_restore(flags);
+
+	if ((l_dds0_freq_mHz != s_dds0_freq_mHz) || (l_dds1_freq_mHz != s_dds1_freq_mHz)) {
+		/* DDS increment calculation */
+		uint32_t l_dds0_inc = (uint32_t) (((uint64_t)g_dds0_freq_mHz * UINT32_MAX) / (DAC_RATE_OF_CONV * 1000UL));
+		uint32_t l_dds1_inc = (uint32_t) (((uint64_t)g_dds1_freq_mHz * UINT32_MAX) / (DAC_RATE_OF_CONV * 1000UL));
+		s_dds0_freq_mHz = l_dds0_freq_mHz;
+		s_dds1_freq_mHz = l_dds1_freq_mHz;
+
+		flags = cpu_irq_save();
+		g_dds0_inc = l_dds0_inc;
+		g_dds1_inc = l_dds1_inc;
+		cpu_irq_restore(flags);
+	}
 }
 
-static void task_adc(uint32_t now, uint32_t last)
+static void task_adc(uint32_t now)
 {
 	static uint32_t adc_last = 0;
 	int32_t l_adc_vctcxo_cur,
@@ -556,29 +715,28 @@ static void task_usb(void)
 	}
 }
 
-static void task_twi(uint32_t now, uint32_t last)
+static void task_twi(uint32_t now)
 {
 	/* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
-	task_twi_onboard(now, last);
+	task_twi_onboard(now);
 
 	/* TWI2 - LCD Port */
-	task_twi_lcd(now, last);
+	task_twi_lcd(now);
 }
 
 static void task(void)
 {
-	static uint32_t last = 0;
 	uint32_t now = rtc_get_time();
 
 	/* TASK when woken up */
-	task_dac();
-	task_adc(now, last);
+	task_dac(now);
+	task_adc(now);
 
 	/* Handling the USB connection */
 	task_usb();
 
 	/* Handle TWI1 and TWI2 communications */
-	task_twi(now, last);
+	task_twi(now);
 
 #if 0
 	/* DEBUGGING USB */
@@ -587,8 +745,6 @@ static void task(void)
 		printf("%c\r\nFindMeSAT V1 @USB: RTC32 = %06ld sec\r\n", 0x0c, now_sec);
 	}
 #endif
-
-	last = now;
 }
 
 void halt(void)
