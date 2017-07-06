@@ -77,14 +77,6 @@ int32_t						g_adc_temp_cur						= 0;
 int32_t						g_adc_temp_sum						= 0;
 uint16_t					g_adc_temp_cnt						= 0;
 
-struct dac_config			g_dac_conf							= { 0 };
-uint32_t					g_dds0_freq_mHz						= 1000000UL;	// 1 kHz
-uint32_t					g_dds0_inc							= 0UL;
-uint32_t					g_dds0_reg							= 0UL;			// Sine
-uint32_t					g_dds1_freq_mHz						= 1000000UL;	// 1 kHz
-uint32_t					g_dds1_inc							= 0UL;
-uint32_t					g_dds1_reg							= 0x62800000UL;	// Cosine, bad trick! - TODO: combine DMA buffers
-
 char						g_prepare_buf[48]					= "";
 
 
@@ -136,15 +128,19 @@ uint8_t			twi2_recv_data[DATA_LENGTH];
 
 /* STATIC section for this module */
 
-uint16_t dac_io_dac0_buf[2][DAC_NR_OF_SAMPLES]		= { 0 };
-uint16_t dac_io_dac1_buf[2][DAC_NR_OF_SAMPLES]		= { 0 };
-uint8_t	 g_dac_buf_idx								= 0;						// Needed when buffer is filled within ISR()
+static struct dac_config			dac_conf				= { 0 };
 
-static struct dma_channel_config dmach_dma0_conf	= { 0 };
-static struct dma_channel_config dmach_dma1_conf	= { 0 };
-static struct dma_channel_config dmach_dma2_conf	= { 0 };
-static struct dma_channel_config dmach_dma3_conf	= { 0 };
+static dma_dac_buf_t dac_io_dac0_buf[2][DAC_NR_OF_SAMPLES]	= { 0 };
 
+static struct dma_channel_config	dmach_dma0_conf			= { 0 };
+static struct dma_channel_config	dmach_dma1_conf			= { 0 };
+
+static uint32_t						dds0_freq_mHz			= 2000000UL;		// 2 kHz
+static uint32_t						dds0_inc				= 0UL;
+static uint32_t						dds0_reg				= 0UL;				// Sine
+static uint32_t						dds1_freq_mHz			= 4000010UL;		// 4 kHz
+static uint32_t						dds1_inc				= 0UL;
+static uint32_t						dds1_reg				= 0x40000000UL;		// Cosine
 
 
 /* INIT section */
@@ -363,56 +359,34 @@ void cb_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 
 /* Forward declarations for DAC and DMA section */
 static void task_dac(uint32_t now);
-static void isr_calc_next_frame(uint16_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds_reg_p, uint32_t* dds_inc_p);
+static void isr_calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0_reg_p, uint32_t* dds0_inc_p, uint32_t* dds1_reg_p, uint32_t* dds1_inc_p);
 static void cb_dma_dac_ch0_A(enum dma_channel_status status);
 static void cb_dma_dac_ch0_B(enum dma_channel_status status);
-static void cb_dma_dac_ch1_A(enum dma_channel_status status);
-static void cb_dma_dac_ch1_B(enum dma_channel_status status);
 
 static void dma_init(void)
 {
 	memset(&dmach_dma0_conf, 0, sizeof(dmach_dma0_conf));	// DACB channel 0 - linked with dma1
 	memset(&dmach_dma1_conf, 0, sizeof(dmach_dma1_conf));	// DACB channel 0 - linked with dma0
-	memset(&dmach_dma2_conf, 0, sizeof(dmach_dma2_conf));	// DACB channel 1 - linked with dma3
-	memset(&dmach_dma3_conf, 0, sizeof(dmach_dma3_conf));	// DACB channel 1 - linked with dma2
 
-	dma_channel_set_burst_length(&dmach_dma0_conf, DMA_CH_BURSTLEN_2BYTE_gc);
-	dma_channel_set_burst_length(&dmach_dma1_conf, DMA_CH_BURSTLEN_2BYTE_gc);
-	dma_channel_set_burst_length(&dmach_dma2_conf, DMA_CH_BURSTLEN_2BYTE_gc);
-	dma_channel_set_burst_length(&dmach_dma3_conf, DMA_CH_BURSTLEN_2BYTE_gc);
+	dma_channel_set_burst_length(&dmach_dma0_conf, DMA_CH_BURSTLEN_4BYTE_gc);
+	dma_channel_set_burst_length(&dmach_dma1_conf, DMA_CH_BURSTLEN_4BYTE_gc);
 
-	dma_channel_set_transfer_count(&dmach_dma0_conf, DAC_NR_OF_SAMPLES * sizeof(uint16_t));
-	dma_channel_set_transfer_count(&dmach_dma1_conf, DAC_NR_OF_SAMPLES * sizeof(uint16_t));
-	dma_channel_set_transfer_count(&dmach_dma2_conf, DAC_NR_OF_SAMPLES * sizeof(uint16_t));
-	dma_channel_set_transfer_count(&dmach_dma3_conf, DAC_NR_OF_SAMPLES * sizeof(uint16_t));
+	dma_channel_set_transfer_count(&dmach_dma0_conf, DAC_NR_OF_SAMPLES * sizeof(dma_dac_buf_t));
+	dma_channel_set_transfer_count(&dmach_dma1_conf, DAC_NR_OF_SAMPLES * sizeof(dma_dac_buf_t));
 
 	dma_channel_set_src_reload_mode(&dmach_dma0_conf, DMA_CH_SRCRELOAD_TRANSACTION_gc);
 	dma_channel_set_src_dir_mode(&dmach_dma0_conf, DMA_CH_SRCDIR_INC_gc);
 	dma_channel_set_source_address(&dmach_dma0_conf, (uint16_t)(uintptr_t) &dac_io_dac0_buf[0][0]);
 	dma_channel_set_dest_reload_mode(&dmach_dma0_conf, DMA_CH_DESTRELOAD_BURST_gc);
 	dma_channel_set_dest_dir_mode(&dmach_dma0_conf, DMA_CH_DESTDIR_INC_gc);
-	dma_channel_set_destination_address(&dmach_dma0_conf, (uint16_t)(uintptr_t) &DACB_CH0DATA);
+	dma_channel_set_destination_address(&dmach_dma0_conf, (uint16_t)(uintptr_t) &DACB_CH0DATA);		// Access to CH0 and CH1
 
 	dma_channel_set_src_reload_mode(&dmach_dma1_conf, DMA_CH_SRCRELOAD_TRANSACTION_gc);
 	dma_channel_set_src_dir_mode(&dmach_dma1_conf, DMA_CH_SRCDIR_INC_gc);
 	dma_channel_set_source_address(&dmach_dma1_conf, (uint16_t)(uintptr_t) &dac_io_dac0_buf[1][0]);
 	dma_channel_set_dest_reload_mode(&dmach_dma1_conf, DMA_CH_DESTRELOAD_BURST_gc);
 	dma_channel_set_dest_dir_mode(&dmach_dma1_conf, DMA_CH_DESTDIR_INC_gc);
-	dma_channel_set_destination_address(&dmach_dma1_conf, (uint16_t)(uintptr_t) &DACB_CH0DATA);
-
-	dma_channel_set_src_reload_mode(&dmach_dma2_conf, DMA_CH_SRCRELOAD_TRANSACTION_gc);
-	dma_channel_set_src_dir_mode(&dmach_dma2_conf, DMA_CH_SRCDIR_INC_gc);
-	dma_channel_set_source_address(&dmach_dma2_conf, (uint16_t)(uintptr_t) &dac_io_dac1_buf[0][0]);
-	dma_channel_set_dest_reload_mode(&dmach_dma2_conf, DMA_CH_DESTRELOAD_BURST_gc);
-	dma_channel_set_dest_dir_mode(&dmach_dma2_conf, DMA_CH_DESTDIR_INC_gc);
-	dma_channel_set_destination_address(&dmach_dma2_conf, (uint16_t)(uintptr_t) &DACB_CH1DATA);
-
-	dma_channel_set_src_reload_mode(&dmach_dma3_conf, DMA_CH_SRCRELOAD_TRANSACTION_gc);
-	dma_channel_set_src_dir_mode(&dmach_dma3_conf, DMA_CH_SRCDIR_INC_gc);
-	dma_channel_set_source_address(&dmach_dma3_conf, (uint16_t)(uintptr_t) &dac_io_dac1_buf[1][0]);
-	dma_channel_set_dest_reload_mode(&dmach_dma3_conf, DMA_CH_DESTRELOAD_BURST_gc);
-	dma_channel_set_dest_dir_mode(&dmach_dma3_conf, DMA_CH_DESTDIR_INC_gc);
-	dma_channel_set_destination_address(&dmach_dma3_conf, (uint16_t)(uintptr_t) &DACB_CH1DATA);
+	dma_channel_set_destination_address(&dmach_dma1_conf, (uint16_t)(uintptr_t) &DACB_CH0DATA);		// Access to CH0 and CH1
 
 	dma_channel_set_trigger_source(&dmach_dma0_conf, DMA_CH_TRIGSRC_DACB_CH0_gc);
 	dma_channel_set_single_shot(&dmach_dma0_conf);
@@ -420,13 +394,7 @@ static void dma_init(void)
 	dma_channel_set_trigger_source(&dmach_dma1_conf, DMA_CH_TRIGSRC_DACB_CH0_gc);
 	dma_channel_set_single_shot(&dmach_dma1_conf);
 
-	dma_channel_set_trigger_source(&dmach_dma2_conf, DMA_CH_TRIGSRC_DACB_CH1_gc);
-	dma_channel_set_single_shot(&dmach_dma2_conf);
-
-	dma_channel_set_trigger_source(&dmach_dma3_conf, DMA_CH_TRIGSRC_DACB_CH1_gc);
-	dma_channel_set_single_shot(&dmach_dma3_conf);
-
-	task_dac(rtc_get_time());
+	task_dac(rtc_get_time());																		// Calculate DDS increments
 }
 
 static void dma_start(void)
@@ -439,28 +407,20 @@ static void dma_start(void)
 	dma_set_callback(DMA_CHANNEL_DACB_CH0_B, cb_dma_dac_ch0_B);
 	dma_channel_set_interrupt_level(&dmach_dma1_conf, DMA_INT_LVL_MED);
 
-	dma_set_callback(DMA_CHANNEL_DACB_CH1_A, cb_dma_dac_ch1_A);
-	dma_channel_set_interrupt_level(&dmach_dma2_conf, DMA_INT_LVL_MED);
-
-	dma_set_callback(DMA_CHANNEL_DACB_CH1_B, cb_dma_dac_ch1_B);
-	dma_channel_set_interrupt_level(&dmach_dma3_conf, DMA_INT_LVL_MED);
-
-	dma_set_priority_mode(DMA_PRIMODE_RR0123_gc);
-	dma_set_double_buffer_mode(DMA_DBUFMODE_CH01CH23_gc);
+	dma_set_priority_mode(DMA_PRIMODE_CH01RR23_gc);
+	dma_set_double_buffer_mode(DMA_DBUFMODE_CH01_gc);
 
 	dma_channel_write_config(DMA_CHANNEL_DACB_CH0_A, &dmach_dma0_conf);
 	dma_channel_write_config(DMA_CHANNEL_DACB_CH0_B, &dmach_dma1_conf);
-	dma_channel_write_config(DMA_CHANNEL_DACB_CH1_A, &dmach_dma2_conf);
-	dma_channel_write_config(DMA_CHANNEL_DACB_CH1_B, &dmach_dma3_conf);
 }
 
 static void dac_init(void)
 {
-    dac_read_configuration(&DAC_DAC, &g_dac_conf);
-    dac_set_conversion_parameters(&g_dac_conf, DAC_REF_AREFA, DAC_ADJ_LEFT);
-    dac_set_active_channel(&g_dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 0);
-    dac_set_conversion_trigger(&g_dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 7);
-    dac_write_configuration(&DAC_DAC, &g_dac_conf);
+    dac_read_configuration(&DAC_DAC, &dac_conf);
+    dac_set_conversion_parameters(&dac_conf, DAC_REF_AREFA, DAC_ADJ_LEFT);
+    dac_set_active_channel(&dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 0);
+    dac_set_conversion_trigger(&dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 7);
+    dac_write_configuration(&DAC_DAC, &dac_conf);
 
 	dma_init();
 }
@@ -477,12 +437,10 @@ static void dac_start(void)
 		irqflags_t flags = cpu_irq_save();
 
 		/* Prepare DMA blocks */
-		isr_calc_next_frame(&dac_io_dac0_buf[0][0], &g_dds0_reg, &g_dds0_inc);
-		isr_calc_next_frame(&dac_io_dac1_buf[0][0], &g_dds1_reg, &g_dds1_inc);
+		isr_calc_next_frame(&dac_io_dac0_buf[0][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
 
 		/* DMA channels activation */
 		dma_channel_enable(DMA_CHANNEL_DACB_CH0_A);
-		dma_channel_enable(DMA_CHANNEL_DACB_CH1_A);
 
 		cpu_irq_restore(flags);
 	}
@@ -493,7 +451,7 @@ static void cb_dma_dac_ch0_A(enum dma_channel_status status)
 	dma_channel_enable(DMA_CHANNEL_DACB_CH0_B);
 
 	cpu_irq_enable();
-	isr_calc_next_frame(&dac_io_dac0_buf[0][0], &g_dds0_reg, &g_dds0_inc);
+	isr_calc_next_frame(&dac_io_dac0_buf[0][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
 }
 
 static void cb_dma_dac_ch0_B(enum dma_channel_status status)
@@ -501,31 +459,18 @@ static void cb_dma_dac_ch0_B(enum dma_channel_status status)
 	dma_channel_enable(DMA_CHANNEL_DACB_CH0_A);
 
 	cpu_irq_enable();
-	isr_calc_next_frame(&dac_io_dac0_buf[1][0], &g_dds0_reg, &g_dds0_inc);
+	isr_calc_next_frame(&dac_io_dac0_buf[1][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
 }
 
-static void cb_dma_dac_ch1_A(enum dma_channel_status status)
+static void isr_calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0_reg_p, uint32_t* dds0_inc_p, uint32_t* dds1_reg_p, uint32_t* dds1_inc_p)
 {
-	dma_channel_enable(DMA_CHANNEL_DACB_CH1_B);
+	/* Filling the DMA block for a dual connected DAC channel */
+	for (uint8_t idx = 0; idx < DAC_NR_OF_SAMPLES; ++idx, *dds0_reg_p += *dds0_inc_p, *dds1_reg_p += *dds1_inc_p) {
+		uint16_t dds0_phase = *dds0_reg_p >> 16;
+		buf[idx].ch0 = get_interpolated_sine(dds0_phase);
 
-	cpu_irq_enable();
-	isr_calc_next_frame(&dac_io_dac1_buf[0][0], &g_dds1_reg, &g_dds1_inc);
-}
-
-static void cb_dma_dac_ch1_B(enum dma_channel_status status)
-{
-	dma_channel_enable(DMA_CHANNEL_DACB_CH1_A);
-
-	cpu_irq_enable();
-	isr_calc_next_frame(&dac_io_dac1_buf[1][0], &g_dds1_reg, &g_dds1_inc);
-}
-
-static void isr_calc_next_frame(uint16_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds_reg_p, uint32_t* dds_inc_p)
-{
-	/* Filling the DMA block for a connected DAC channel */
-	for (uint8_t idx = 0; idx < DAC_NR_OF_SAMPLES; ++idx, *dds_reg_p += *dds_inc_p) {
-		uint16_t phase = *dds_reg_p >> 16;
-		buf[idx] = get_interpolated_sine(phase);
+		uint16_t dds1_phase = *dds1_reg_p >> 16;
+		buf[idx].ch1 = get_interpolated_sine(dds1_phase);
 	}
 }
 
@@ -631,20 +576,20 @@ static void task_dac(uint32_t now)
 	uint32_t l_dds0_freq_mHz, l_dds1_freq_mHz;
 
 	irqflags_t flags = cpu_irq_save();
-	l_dds0_freq_mHz = g_dds0_freq_mHz;
-	l_dds1_freq_mHz = g_dds1_freq_mHz;
+	l_dds0_freq_mHz = dds0_freq_mHz;
+	l_dds1_freq_mHz = dds1_freq_mHz;
 	cpu_irq_restore(flags);
 
 	if ((l_dds0_freq_mHz != s_dds0_freq_mHz) || (l_dds1_freq_mHz != s_dds1_freq_mHz)) {
 		/* DDS increment calculation */
-		uint32_t l_dds0_inc = (uint32_t) (((uint64_t)g_dds0_freq_mHz * UINT32_MAX) / (DAC_RATE_OF_CONV * 1000UL));
-		uint32_t l_dds1_inc = (uint32_t) (((uint64_t)g_dds1_freq_mHz * UINT32_MAX) / (DAC_RATE_OF_CONV * 1000UL));
+		uint32_t l_dds0_inc = (uint32_t) (((uint64_t)dds0_freq_mHz * UINT32_MAX) / (DAC_RATE_OF_CONV * 1000UL));
+		uint32_t l_dds1_inc = (uint32_t) (((uint64_t)dds1_freq_mHz * UINT32_MAX) / (DAC_RATE_OF_CONV * 1000UL));
 		s_dds0_freq_mHz = l_dds0_freq_mHz;
 		s_dds1_freq_mHz = l_dds1_freq_mHz;
 
 		flags = cpu_irq_save();
-		g_dds0_inc = l_dds0_inc;
-		g_dds1_inc = l_dds1_inc;
+		dds0_inc = l_dds0_inc;
+		dds1_inc = l_dds1_inc;
 		cpu_irq_restore(flags);
 	}
 }
