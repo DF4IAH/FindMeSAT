@@ -40,9 +40,14 @@ typedef enum ADC_CH0_SCAN_ENUM {
 typedef enum DMA_CHANNEL_ENUM {
 	DMA_CHANNEL_DACB_CH0_A = 0,
 	DMA_CHANNEL_DACB_CH0_B,
-	DMA_CHANNEL_DACB_CH1_A,
-	DMA_CHANNEL_DACB_CH1_B,
 } DMA_CHANNEL_ENUM_t;
+
+
+typedef struct dma_dac_buf_s {
+	uint16_t	ch0;
+	uint16_t	ch1;
+} dma_dac_buf_t;
+
 
 
 /* INIT section */
