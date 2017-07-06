@@ -17,7 +17,7 @@
 uint16_t PROGMEM_T PM_SINE[PM_SINE_COUNT];
 
 
-uint16_t get_interpolated_sine(uint16_t phase, uint8_t noise);
+uint16_t get_interpolated_sine(uint16_t phase);
 
 
 #endif /* DDS_H_ */

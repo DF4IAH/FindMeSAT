@@ -542,31 +542,12 @@ PROGMEM_DECLARE(uint16_t, PM_SINE[PM_SINE_COUNT]);
 
 
 /* Linear interpolation with noise */
-uint16_t get_interpolated_sine(uint16_t phase, uint8_t noise)
+uint16_t get_interpolated_sine(uint16_t phase)
 {
-	/* Randomizer */
-	static uint32_t rnd1 = 0b11001001001101100110110010010011UL;
-	static uint32_t rnd2 = 0xffffffffUL;
-	rnd2 ^= rnd1;
-	rnd1  = (rnd2 << 3) ^ (rnd2 >> 1) ^ 0b11010111010111101011001110111011UL;
-
 	/* Interpolate result */
-	uint16_t left_x       = phase >> 4;
-	int16_t  left_y       = (int16_t)PGM_READ_WORD(&(PM_SINE[left_x])) - 0x8000;
-	uint16_t rght_x       = left_x + 1;
-	int16_t  rght_y       = (int16_t)PGM_READ_WORD(&(PM_SINE[rght_x])) - 0x8000;
-	int16_t  prob         = phase & 0x0f;					// phase_frac
-	int16_t  delta_frac_y = (int16_t) (((rght_y - left_y) * prob) >> 4);
-	int16_t  val          = left_y + delta_frac_y;
-
-	if (noise) {
-		/* Adding randomized noise to suppress artifacts */
-		prob <<= 4;											// probability := phase_frac
-		int16_t mult = (int16_t) (rnd1 & 0xff);
-		prob *= mult;
-		return 0x8000U + (((prob >= 0x4000) && (val < 0x7fff)) ?  ((uint16_t)val + 1U) : (uint16_t)val);
-	} else {
-
-		return 0x8000U + (uint16_t)val;
-	}
+	int16_t left_y = (int16_t)PGM_READ_WORD(&(PM_SINE[ phase       >> 4])) - 0x8000;
+	int16_t rght_y = (int16_t)PGM_READ_WORD(&(PM_SINE[(phase + 16) >> 4])) - 0x8000;
+	int16_t delta_frac_y = (int16_t) (((rght_y - left_y) * (phase & 0x0f)) >> 4);
+	int16_t val = left_y + delta_frac_y;
+	return 0x8000U + (uint16_t)val;
 }
