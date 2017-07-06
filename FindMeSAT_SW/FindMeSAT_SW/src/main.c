@@ -78,11 +78,12 @@ int32_t						g_adc_temp_sum						= 0;
 uint16_t					g_adc_temp_cnt						= 0;
 
 struct dac_config			g_dac_conf							= { 0 };
-uint32_t					g_dds_freq_mHz						= 1000000UL;  // 1 kHz
+uint32_t					g_dds0_freq_mHz						= 1000000UL;	// 1 kHz
 uint32_t					g_dds0_inc							= 0UL;
-uint32_t					g_dds0_reg							= 0UL;
+uint32_t					g_dds0_reg							= 0UL;			// Sine
+uint32_t					g_dds1_freq_mHz						= 1000000UL;	// 1 kHz
 uint32_t					g_dds1_inc							= 0UL;
-uint32_t					g_dds1_reg							= 0x40000000UL;
+uint32_t					g_dds1_reg							= 0x62800000UL;	// Cosine, bad trick! - TODO: combine DMA buffers
 
 char						g_prepare_buf[48]					= "";
 
@@ -433,16 +434,16 @@ static void dma_start(void)
 	dma_enable();
 
 	dma_set_callback(DMA_CHANNEL_DACB_CH0_A, cb_dma_dac_ch0_A);
-	dma_channel_set_interrupt_level(&dmach_dma0_conf, DMA_INT_LVL_LO);
+	dma_channel_set_interrupt_level(&dmach_dma0_conf, DMA_INT_LVL_MED);
 
 	dma_set_callback(DMA_CHANNEL_DACB_CH0_B, cb_dma_dac_ch0_B);
-	dma_channel_set_interrupt_level(&dmach_dma1_conf, DMA_INT_LVL_LO);
+	dma_channel_set_interrupt_level(&dmach_dma1_conf, DMA_INT_LVL_MED);
 
 	dma_set_callback(DMA_CHANNEL_DACB_CH1_A, cb_dma_dac_ch1_A);
-	dma_channel_set_interrupt_level(&dmach_dma2_conf, DMA_INT_LVL_LO);
+	dma_channel_set_interrupt_level(&dmach_dma2_conf, DMA_INT_LVL_MED);
 
 	dma_set_callback(DMA_CHANNEL_DACB_CH1_B, cb_dma_dac_ch1_B);
-	dma_channel_set_interrupt_level(&dmach_dma3_conf, DMA_INT_LVL_LO);
+	dma_channel_set_interrupt_level(&dmach_dma3_conf, DMA_INT_LVL_MED);
 
 	dma_set_priority_mode(DMA_PRIMODE_RR0123_gc);
 	dma_set_double_buffer_mode(DMA_DBUFMODE_CH01CH23_gc);
@@ -471,31 +472,51 @@ static void dac_start(void)
 	/* Connect the DMA to the DAC periphery */
 	dma_start();
 
-	dma_channel_enable(DMA_CHANNEL_DACB_CH0_A);
-	dma_channel_enable(DMA_CHANNEL_DACB_CH1_A);
+	/* IRQ disabled section */
+	{
+		irqflags_t flags = cpu_irq_save();
+
+		/* Prepare DMA blocks */
+		isr_calc_next_frame(&dac_io_dac0_buf[0][0], &g_dds0_reg, &g_dds0_inc);
+		isr_calc_next_frame(&dac_io_dac1_buf[0][0], &g_dds1_reg, &g_dds1_inc);
+
+		/* DMA channels activation */
+		dma_channel_enable(DMA_CHANNEL_DACB_CH0_A);
+		dma_channel_enable(DMA_CHANNEL_DACB_CH1_A);
+
+		cpu_irq_restore(flags);
+	}
 }
 
 static void cb_dma_dac_ch0_A(enum dma_channel_status status)
 {
 	dma_channel_enable(DMA_CHANNEL_DACB_CH0_B);
+
+	cpu_irq_enable();
 	isr_calc_next_frame(&dac_io_dac0_buf[0][0], &g_dds0_reg, &g_dds0_inc);
 }
 
 static void cb_dma_dac_ch0_B(enum dma_channel_status status)
 {
 	dma_channel_enable(DMA_CHANNEL_DACB_CH0_A);
+
+	cpu_irq_enable();
 	isr_calc_next_frame(&dac_io_dac0_buf[1][0], &g_dds0_reg, &g_dds0_inc);
 }
 
 static void cb_dma_dac_ch1_A(enum dma_channel_status status)
 {
 	dma_channel_enable(DMA_CHANNEL_DACB_CH1_B);
+
+	cpu_irq_enable();
 	isr_calc_next_frame(&dac_io_dac1_buf[0][0], &g_dds1_reg, &g_dds1_inc);
 }
 
 static void cb_dma_dac_ch1_B(enum dma_channel_status status)
 {
 	dma_channel_enable(DMA_CHANNEL_DACB_CH1_A);
+
+	cpu_irq_enable();
 	isr_calc_next_frame(&dac_io_dac1_buf[1][0], &g_dds1_reg, &g_dds1_inc);
 }
 
@@ -605,20 +626,25 @@ void usb_callback_tx_empty_notify(uint8_t port)
 
 static void task_dac(uint32_t now)
 {
-	static uint32_t s_dds_freq_mHz = 0UL;
+	static uint32_t s_dds0_freq_mHz = 0UL;
+	static uint32_t s_dds1_freq_mHz = 0UL;
+	uint32_t l_dds0_freq_mHz, l_dds1_freq_mHz;
 
 	irqflags_t flags = cpu_irq_save();
-	uint32_t l_dds_freq_mHz = g_dds_freq_mHz;
+	l_dds0_freq_mHz = g_dds0_freq_mHz;
+	l_dds1_freq_mHz = g_dds1_freq_mHz;
 	cpu_irq_restore(flags);
 
-	if (l_dds_freq_mHz != s_dds_freq_mHz) {
+	if ((l_dds0_freq_mHz != s_dds0_freq_mHz) || (l_dds1_freq_mHz != s_dds1_freq_mHz)) {
 		/* DDS increment calculation */
-		uint32_t l_dds_inc = (uint32_t) (((uint64_t)g_dds_freq_mHz * UINT32_MAX) / (DAC_RATE_OF_CONV * 1000UL));
-		s_dds_freq_mHz = l_dds_freq_mHz;
+		uint32_t l_dds0_inc = (uint32_t) (((uint64_t)g_dds0_freq_mHz * UINT32_MAX) / (DAC_RATE_OF_CONV * 1000UL));
+		uint32_t l_dds1_inc = (uint32_t) (((uint64_t)g_dds1_freq_mHz * UINT32_MAX) / (DAC_RATE_OF_CONV * 1000UL));
+		s_dds0_freq_mHz = l_dds0_freq_mHz;
+		s_dds1_freq_mHz = l_dds1_freq_mHz;
 
 		flags = cpu_irq_save();
-		g_dds0_inc = l_dds_inc;
-		g_dds1_inc = l_dds_inc;
+		g_dds0_inc = l_dds0_inc;
+		g_dds1_inc = l_dds1_inc;
 		cpu_irq_restore(flags);
 	}
 }

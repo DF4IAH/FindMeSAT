@@ -545,9 +545,13 @@ PROGMEM_DECLARE(uint16_t, PM_SINE[PM_SINE_COUNT]);
 uint16_t get_interpolated_sine(uint16_t phase)
 {
 	/* Interpolate result */
-	int16_t left_y = (int16_t)PGM_READ_WORD(&(PM_SINE[ phase       >> 4])) - 0x8000;
-	int16_t rght_y = (int16_t)PGM_READ_WORD(&(PM_SINE[(phase + 16) >> 4])) - 0x8000;
-	int16_t delta_frac_y = (int16_t) (((rght_y - left_y) * (phase & 0x0f)) >> 4);
-	int16_t val = left_y + delta_frac_y;
+	uint16_t left_x       = phase >> 4;												// left side
+	int16_t  left_y       = (int16_t)PGM_READ_WORD(&(PM_SINE[left_x])) - 0x8000;
+	uint16_t rght_x       = (phase + 16) >> 4;										// right side
+	int16_t  rght_y       = (int16_t)PGM_READ_WORD(&(PM_SINE[rght_x])) - 0x8000;
+	int16_t  prob         = phase & 0x0f;											// phase fraction
+	int16_t  delta_frac_y = (int16_t) (((rght_y - left_y) * prob) >> 4);			// interpolation
+	int16_t  val          = left_y + delta_frac_y;
+
 	return 0x8000U + (uint16_t)val;
 }
