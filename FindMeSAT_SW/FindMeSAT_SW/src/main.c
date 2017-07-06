@@ -135,12 +135,12 @@ static dma_dac_buf_t dac_io_dac0_buf[2][DAC_NR_OF_SAMPLES]	= { 0 };
 static struct dma_channel_config	dmach_dma0_conf			= { 0 };
 static struct dma_channel_config	dmach_dma1_conf			= { 0 };
 
-static uint32_t						dds0_freq_mHz			= 1000000UL;	// 1 kHz
+static uint32_t						dds0_freq_mHz			= 2000000UL;		// 2 kHz
 static uint32_t						dds0_inc				= 0UL;
-static uint32_t						dds0_reg				= 0UL;			// Sine
-static uint32_t						dds1_freq_mHz			= 1000000UL;	// 1 kHz
+static uint32_t						dds0_reg				= 0UL;				// Sine
+static uint32_t						dds1_freq_mHz			= 4000010UL;		// 4 kHz
 static uint32_t						dds1_inc				= 0UL;
-static uint32_t						dds1_reg				= 0x40000000UL;	// Cosine
+static uint32_t						dds1_reg				= 0x40000000UL;		// Cosine
 
 
 /* INIT section */
