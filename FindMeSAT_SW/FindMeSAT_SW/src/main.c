@@ -46,9 +46,11 @@
 uint8_t						runmode								= 0;
 bool						usb_cdc_transfers_autorized			= false;
 
-uint8_t						g_twi1_9axis_version				= 0;
+uint8_t						g_twi1_gsm_version					= 0;
+uint8_t						g_twi1_gyro_1_version				= 0;
+uint8_t						g_twi1_gyro_2_version				= 0;
 uint8_t						g_twi1_baro_version					= 0;
-uint8_t						g_twi1_hygro_version				= 0;
+uint8_t						g_twi1_hygro_status				= 0;
 uint8_t						g_twi2_lcd_version					= 0;
 
 
@@ -491,6 +493,9 @@ static void usb_init(void)
 #if 1
 	stdio_usb_init();	// Init and enable stdio_usb
 	stdio_usb_enable();
+	delay_ms(100);
+
+	printf("%c\r\nFindMeSAT - USB logging started...\r\n\r\n", 0x0c);
 #endif
 }
 
