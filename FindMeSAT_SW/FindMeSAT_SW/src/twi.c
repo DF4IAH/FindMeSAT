@@ -12,6 +12,11 @@
 #include "twi.h"
 
 
+extern uint8_t			g_twi1_gsm_version;
+extern uint8_t			g_twi1_gyro_1_version;
+extern uint8_t			g_twi1_gyro_2_version;
+extern uint8_t			g_twi1_baro_version;
+extern uint8_t			g_twi1_hygro_status;
 extern uint8_t			g_twi2_lcd_version;
 
 
@@ -63,7 +68,7 @@ ISR(TWIC_TWIS_vect) {
 #endif
 
 
-static void twi_waitUntilReady(void)
+static void twi2_waitUntilReady(void)
 {
 	status_code_t status;
 	uint8_t isBusy;
@@ -149,10 +154,123 @@ void twi_start(void) {
 	start_twi_lcd();
 }
 
-/* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
+/* TWI1 - GSM, Gyro, Baro, Hygro devices */
 void start_twi_onboard()
 {
+	status_code_t sc;
 
+#if 0
+	/*
+	 * No documentation for I2C slave mode found, yet.
+	 */
+	/* Device GSM/BT/GPS SIM808 - I2C address: 0xXX */
+	printf("\r\nTWI-onboard: GSM/BT/GPS SIM808 - I2C address: 0x%02X\r\n", TWI1_SLAVE_GSM_ADDR);
+	g_twi1_gsm_version = 0;
+	//
+	twi1_packet.chip = TWI1_SLAVE_GSM_ADDR;
+	twi1_packet.addr[0] = TWI1_SLAVE_GSM_REG_1_DEVICE_ID;
+	twi1_packet.addr_length = 1;
+	twi1_packet.length = 1;
+	sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	if (sc == STATUS_OK) {
+		g_twi1_gsm_version = twi1_m_data[0];
+		printf("TWI-onboard: GSM/BT/GPS SIM808 -     version: 0x%02X\r\n", g_twi1_gsm_version);
+	} else {
+		printf("TWI-onboard:  ... device not on board.\r\n");
+	}
+#endif
+
+	/* Device Gyro MPU-9250 - I2C address: 0x68, 0x0C (or 0x0D or 0x0E or 0x0F) */
+	printf("\r\nTWI-onboard: Gyro MPU-9250 - I2C address: 0x%02X, 0x%02X\r\n", TWI1_SLAVE_GYRO_ADDR_1, TWI1_SLAVE_GYRO_ADDR_2);
+	g_twi1_gyro_1_version = 0;
+	g_twi1_gyro_2_version = 0;
+	//
+	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_RESET;
+	twi1_packet.addr_length = 1;
+	twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_RESET;
+	twi1_packet.length = 1;
+	sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+	//
+	if (sc == STATUS_OK) {
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_RESET;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_RESET;
+		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc == STATUS_OK) {
+			delay_ms(10);
+			//
+			twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+			twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_WHOAMI;
+			twi1_packet.addr_length = 1;
+			twi1_packet.length = 1;
+			sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+			if (sc == STATUS_OK) {
+				g_twi1_gyro_1_version = twi1_m_data[0];
+				//
+				twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+				twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_DEVICE_ID;
+				sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+				if (sc == STATUS_OK) {
+					g_twi1_gyro_2_version = twi1_m_data[0];
+				}
+			}
+			printf("TWI-onboard: Gyro MPU-9250 -     version: 0x%02X, 0x%02X\r\n", g_twi1_gyro_1_version, g_twi1_gyro_2_version);
+		}
+	} else {
+		printf("TWI-onboard:  ... device not on board.\r\n");
+	}
+
+	/* Device Baro MS560702BA03-50 - I2C address: 0x76 */
+	printf("\r\nTWI-onboard: Baro MS560702BA03-50 - I2C address: 0x%02X\r\n", TWI1_SLAVE_BARO_ADDR);
+	g_twi1_baro_version = 0;
+	//
+	twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
+	twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_RESET;
+	twi1_packet.addr_length = 1;
+	twi1_packet.length = 0;
+	sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+	if (sc == STATUS_OK) {
+		delay_ms(3);
+		//
+		twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_VERSION;
+		twi1_packet.length = 2;
+		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		if (sc == STATUS_OK) {
+			g_twi1_baro_version = ((twi1_m_data[0] << 8) | twi1_m_data[1]) >> 4;
+			printf("TWI-onboard: Baro MS560702BA03-50 -     version: 0x%04X\r\n", g_twi1_baro_version);
+		}
+	} else {
+		printf("TWI-onboard:  ... device not on board.\r\n");
+	}
+
+	/* Device Hygro SHT31-DIS - I2C address: 0x44 */
+	printf("\r\nTWI-onboard: Hygro SHT31-DIS - I2C address: 0x%02X\r\n", TWI1_SLAVE_HYGRO_ADDR);
+	g_twi1_hygro_status = 0;
+	//
+	twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
+	twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_RESET_HI;
+	twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_RESET_LO;
+	twi1_packet.addr_length = 2;
+	twi1_packet.length = 0;
+	sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+	if (sc == STATUS_OK) {
+		delay_ms(1);
+		//
+		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_STATUS_HI;
+		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_STATUS_LO;
+		twi1_packet.length = 2;
+		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		if (sc == STATUS_OK) {
+			g_twi1_hygro_status = (twi1_m_data[0] << 8) | twi1_m_data[1];
+			printf("TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n", g_twi1_hygro_status);
+		}
+	} else {
+		printf("TWI-onboard:  ... device not on board.\r\n");
+	}
+	printf("-----------\r\n\r\n");
 }
 
 /* TWI2 - LCD Port */
@@ -174,7 +292,7 @@ void start_twi_lcd()
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
-		twi_waitUntilReady();
+		twi2_waitUntilReady();
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
 		twi2_m_data[0] = GFX_PIXEL_SET;
 		twi2_packet.length = 1;
@@ -196,7 +314,7 @@ void task_twi_lcd(uint32_t now)
 	if (g_twi2_lcd_version >= 0x11) {
 		static uint8_t ofs = 0;
 
-		twi_waitUntilReady();
+		twi2_waitUntilReady();
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_POS_X_Y;
 		twi2_m_data[0] = 16 + ofs;
 		twi2_m_data[1] = 16 + ofs;
@@ -205,7 +323,7 @@ void task_twi_lcd(uint32_t now)
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
 #if 1
-		twi_waitUntilReady();
+		twi2_waitUntilReady();
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_LINE;
 		twi2_m_data[0] = 150 + ofs;
 		twi2_m_data[1] =  60 + ofs;
@@ -215,7 +333,7 @@ void task_twi_lcd(uint32_t now)
 #endif
 
 #if 1
-		twi_waitUntilReady();
+		twi2_waitUntilReady();
 # if 1
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_RECT;
 # else
@@ -229,7 +347,7 @@ void task_twi_lcd(uint32_t now)
 #endif
 
 #if 1
-		twi_waitUntilReady();
+		twi2_waitUntilReady();
 # if 1
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_CIRC;
 # else
@@ -242,7 +360,7 @@ void task_twi_lcd(uint32_t now)
 #endif
 
 #if 1
-		twi_waitUntilReady();
+		twi2_waitUntilReady();
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_POS_X_Y;
 		twi2_m_data[0] = 116 + ofs;
 		twi2_m_data[1] =  16 + ofs;
@@ -250,7 +368,7 @@ void task_twi_lcd(uint32_t now)
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
-		twi_waitUntilReady();
+		twi2_waitUntilReady();
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
 		twi2_m_data[0] = 4;
 		twi2_m_data[1] = 'A';
@@ -265,7 +383,7 @@ void task_twi_lcd(uint32_t now)
 		if (++ofs > 64) {
 			ofs = 0;
 
-			twi_waitUntilReady();
+			twi2_waitUntilReady();
 			twi2_packet.addr[0] = TWI_SMART_LCD_CMD_CLS;
 			twi2_packet.length = 0;
 			twi_master_write(&TWI2_MASTER, &twi2_packet);
@@ -275,7 +393,7 @@ void task_twi_lcd(uint32_t now)
 	} else if (g_twi2_lcd_version == 0x10) {
 #if 1
 		/* Show PWM in % when version is V1.0 and mode==0x20 selected */
-		twi_waitUntilReady();
+		twi2_waitUntilReady();
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SHOW_TCXO_PWM;
 		twi2_m_data[0] = 1;
 		twi2_m_data[1] = 128;

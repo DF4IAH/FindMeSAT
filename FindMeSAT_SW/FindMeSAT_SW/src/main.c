@@ -46,9 +46,11 @@
 uint8_t						runmode								= 0;
 bool						usb_cdc_transfers_autorized			= false;
 
-uint8_t						g_twi1_9axis_version				= 0;
+uint8_t						g_twi1_gsm_version					= 0;
+uint8_t						g_twi1_gyro_1_version				= 0;
+uint8_t						g_twi1_gyro_2_version				= 0;
 uint8_t						g_twi1_baro_version					= 0;
-uint8_t						g_twi1_hygro_version				= 0;
+uint8_t						g_twi1_hygro_status				= 0;
 uint8_t						g_twi2_lcd_version					= 0;
 
 
@@ -420,7 +422,7 @@ static void dma_start(void)
 static void dac_init(void)
 {
     dac_read_configuration(&DAC_DAC, &dac_conf);
-    dac_set_conversion_parameters(&dac_conf, DAC_REF_AREFA, DAC_ADJ_LEFT);
+    dac_set_conversion_parameters(&dac_conf, DAC_REF_BANDGAP, DAC_ADJ_LEFT);
     dac_set_active_channel(&dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 0);
     dac_set_conversion_trigger(&dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 7);
     dac_write_configuration(&DAC_DAC, &dac_conf);
@@ -491,6 +493,12 @@ static void usb_init(void)
 #if 1
 	stdio_usb_init();	// Init and enable stdio_usb
 	stdio_usb_enable();
+	delay_ms(125);
+
+	printf("%c\r\n", 0x0c);
+	printf("===============================\r\n");
+	printf("FindMeSAT - USB logging started\r\n");
+	printf("===============================\r\n\r\n");
 #endif
 }
 

@@ -66,6 +66,29 @@
 #define TWI1_SLAVE_ADDR										0x12
 #define TWI1_SPEED											400000
 
+//#define TWI1_SLAVE_GSM_ADDR								0x00
+//#define TWI1_SLAVE_GSM_REG_1_DEVICE_ID					0x00
+
+#define TWI1_SLAVE_GYRO_ADDR_1								0x68
+#define TWI1_SLAVE_GYRO_REG_1_RESET							0x6B
+#define TWI1_SLAVE_GYRO_DTA_1_RESET							0x81
+#define TWI1_SLAVE_GYRO_REG_1_WHOAMI						0x75
+#define TWI1_SLAVE_GYRO_ADDR_2								0x0C
+#define TWI1_SLAVE_GYRO_REG_2_RESET							0x0A
+#define TWI1_SLAVE_GYRO_DTA_2_RESET							0x1F
+#define TWI1_SLAVE_GYRO_REG_2_DEVICE_ID						0x00
+
+#define TWI1_SLAVE_BARO_ADDR								0x76
+#define TWI1_SLAVE_BARO_REG_RESET							0x1E
+#define TWI1_SLAVE_BARO_REG_VERSION							0x57
+
+#define TWI1_SLAVE_HYGRO_ADDR								0x44
+#define TWI1_SLAVE_HYGRO_REG_RESET_HI						0x30
+#define TWI1_SLAVE_HYGRO_REG_RESET_LO						0xA2
+#define TWI1_SLAVE_HYGRO_REG_STATUS_HI						0xF3
+#define TWI1_SLAVE_HYGRO_REG_STATUS_LO						0x2D
+
+
 #define TWI2_MASTER											TWIC
 //#define TWI2_SLAVE										TWIC
 #define TWI2_MASTER_PORT									PORTC
