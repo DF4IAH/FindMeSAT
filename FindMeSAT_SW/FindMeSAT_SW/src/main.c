@@ -493,7 +493,7 @@ static void usb_init(void)
 #if 1
 	stdio_usb_init();	// Init and enable stdio_usb
 	stdio_usb_enable();
-	delay_ms(250);
+	delay_ms(125);
 
 	printf("%c\r\nFindMeSAT - USB logging started...\r\n\r\n", 0x0c);
 #endif
