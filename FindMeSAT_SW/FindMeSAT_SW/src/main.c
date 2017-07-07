@@ -293,6 +293,9 @@ static void adc_init(void)
 	adcch_write_configuration(&ADC_IO_ADC4, ADC_IO_ADC4_CH,					&g_adcch_io_adc4_conf);
 	adcch_write_configuration(&ADC_IO_ADC5, ADC_IO_ADC5_CH,					&g_adcch_io_adc5_conf);
 	adcch_write_configuration(&ADC_TEMP, ADC_TEMP_CH,						&g_adcch_temp_conf);
+
+	/* Get production signature for calibration */
+	ADCB_CAL = adc_get_calibration_data(ADC_CAL_ADCB);
 }
 
 static void adc_start(void)
@@ -421,6 +424,12 @@ static void dac_init(void)
     dac_set_active_channel(&dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 0);
     dac_set_conversion_trigger(&dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 7);
     dac_write_configuration(&DAC_DAC, &dac_conf);
+
+	/* Get production signature for calibration */
+	DACB_CH0OFFSETCAL	= dac_get_calibration_data(DAC_CAL_DACB0_OFFSET);
+	DACB_CH0GAINCAL		= dac_get_calibration_data(DAC_CAL_DACB0_GAIN);
+	DACB_CH1OFFSETCAL	= dac_get_calibration_data(DAC_CAL_DACB1_OFFSET);
+	DACB_CH1GAINCAL		= dac_get_calibration_data(DAC_CAL_DACB1_GAIN);
 
 	dma_init();
 }
@@ -723,6 +732,8 @@ int main(void)
 	twi_init();			// I2C / TWI
 
 	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
+
+	nvm_init(INT_FLASH);
 
 	/* All interrupt sources & PMIC are prepared until here - IRQ activation follows */
 	cpu_irq_enable();

@@ -2,6 +2,8 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
+src\ASF\common\drivers\nvm\xmega\xmega_nvm.c
+
 src\ASF\common\services\calendar\calendar.c
 
 src\ASF\common\services\hugemem\avr8\avr8_hugemem.c
