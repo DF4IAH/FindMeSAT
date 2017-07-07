@@ -422,7 +422,7 @@ static void dma_start(void)
 static void dac_init(void)
 {
     dac_read_configuration(&DAC_DAC, &dac_conf);
-    dac_set_conversion_parameters(&dac_conf, DAC_REF_AREFA, DAC_ADJ_LEFT);
+    dac_set_conversion_parameters(&dac_conf, DAC_REF_BANDGAP, DAC_ADJ_LEFT);
     dac_set_active_channel(&dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 0);
     dac_set_conversion_trigger(&dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 7);
     dac_write_configuration(&DAC_DAC, &dac_conf);
