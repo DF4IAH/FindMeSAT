@@ -175,6 +175,8 @@ void start_twi_onboard()
 	if (sc == STATUS_OK) {
 		g_twi1_gsm_version = twi1_m_data[0];
 		printf("TWI-onboard: GSM/BT/GPS SIM808 -     version: 0x%02X\r\n", g_twi1_gsm_version);
+	} else {
+		printf("TWI-onboard:  ... device not on board.\r\n");
 	}
 #endif
 
@@ -217,6 +219,8 @@ void start_twi_onboard()
 			}
 			printf("TWI-onboard: Gyro MPU-9250 -     version: 0x%02X, 0x%02X\r\n", g_twi1_gyro_1_version, g_twi1_gyro_2_version);
 		}
+	} else {
+		printf("TWI-onboard:  ... device not on board.\r\n");
 	}
 
 	/* Device Baro MS560702BA03-50 - I2C address: 0x76 */
@@ -238,6 +242,8 @@ void start_twi_onboard()
 			g_twi1_baro_version = ((twi1_m_data[0] << 8) | twi1_m_data[1]) >> 4;
 			printf("TWI-onboard: Baro MS560702BA03-50 -     version: 0x%04X\r\n", g_twi1_baro_version);
 		}
+	} else {
+		printf("TWI-onboard:  ... device not on board.\r\n");
 	}
 
 	/* Device Hygro SHT31-DIS - I2C address: 0x44 */
@@ -261,6 +267,8 @@ void start_twi_onboard()
 			g_twi1_hygro_status = (twi1_m_data[0] << 8) | twi1_m_data[1];
 			printf("TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n", g_twi1_hygro_status);
 		}
+	} else {
+		printf("TWI-onboard:  ... device not on board.\r\n");
 	}
 	printf("-----------\r\n\r\n");
 }
