@@ -495,7 +495,10 @@ static void usb_init(void)
 	stdio_usb_enable();
 	delay_ms(125);
 
-	printf("%c\r\nFindMeSAT - USB logging started...\r\n\r\n", 0x0c);
+	printf("%c\r\n", 0x0c);
+	printf("===============================\r\n");
+	printf("FindMeSAT - USB logging started\r\n");
+	printf("===============================\r\n\r\n");
 #endif
 }
 
