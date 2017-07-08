@@ -46,11 +46,24 @@
 uint8_t						runmode								= 0;
 bool						usb_cdc_transfers_autorized			= false;
 
+bool						g_twi1_gsm_valid					= false;
 uint8_t						g_twi1_gsm_version					= 0;
+
+bool						g_twi1_gyro_valid					= false;
 uint8_t						g_twi1_gyro_1_version				= 0;
 uint8_t						g_twi1_gyro_2_version				= 0;
-uint8_t						g_twi1_baro_version					= 0;
-uint8_t						g_twi1_hygro_status				= 0;
+
+bool						g_twi1_baro_valid					= false;
+uint16_t					g_twi1_baro_version					= 0;
+uint16_t					g_twi1_baro_c[C_TWI1_BARO_C_CNT]	= { 0 };
+uint32_t					g_twi1_baro_d1						= 0UL;
+uint32_t					g_twi1_baro_d2						= 0UL;
+int32_t						g_twi1_baro_temp_100				= 0L;
+int32_t						g_twi1_baro_p_100					= 0L;
+
+bool						g_twi1_hygro_valid					= false;
+uint8_t						g_twi1_hygro_status					= 0;
+
 uint8_t						g_twi2_lcd_version					= 0;
 
 
@@ -58,6 +71,8 @@ struct adc_config			g_adc_a_conf						= { 0 };
 struct adc_channel_config	g_adcch_vctcxo_5v0_vbat_conf		= { 0 };
 struct adc_channel_config	g_adcch_io_adc4_conf				= { 0 };
 struct adc_channel_config	g_adcch_io_adc5_conf				= { 0 };
+
+struct adc_config			g_adc_b_conf						= { 0 };
 struct adc_channel_config	g_adcch_temp_conf					= { 0 };
 
 int32_t						g_adc_vctcxo_cur					= 0;
@@ -78,6 +93,12 @@ uint16_t					g_adc_io_adc5_cnt					= 0;
 int32_t						g_adc_temp_cur						= 0;
 int32_t						g_adc_temp_sum						= 0;
 uint16_t					g_adc_temp_cnt						= 0;
+int16_t						g_adc_vctcxo_volt_1000				= 0;
+int16_t						g_adc_5v0_volt_1000					= 0;
+int16_t						g_adc_vbat_volt_1000				= 0;
+int16_t						g_adc_io_adc4_volt_1000				= 0;
+int16_t						g_adc_io_adc5_volt_1000				= 0;
+int16_t						g_adc_temp_deg_100					= 0;
 
 char						g_prepare_buf[48]					= "";
 
@@ -132,8 +153,6 @@ uint8_t			twi2_recv_data[DATA_LENGTH];
 
 static struct dac_config			dac_conf				= { 0 };
 
-static dma_dac_buf_t dac_io_dac0_buf[2][DAC_NR_OF_SAMPLES]	= { 0 };
-
 static struct dma_channel_config	dmach_dma0_conf			= { 0 };
 static struct dma_channel_config	dmach_dma1_conf			= { 0 };
 
@@ -143,6 +162,29 @@ static uint32_t						dds0_reg				= 0UL;				// Sine
 static uint32_t						dds1_freq_mHz			= 4000010UL;		// 4 kHz
 static uint32_t						dds1_inc				= 0UL;
 static uint32_t						dds1_reg				= 0x40000000UL;		// Cosine
+
+static dma_dac_buf_t dac_io_dac0_buf[2][DAC_NR_OF_SAMPLES]	= { 0 };
+
+
+/* UTILS section */
+
+static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0_reg_p, uint32_t* dds0_inc_p, uint32_t* dds1_reg_p, uint32_t* dds1_inc_p)
+{
+	/* Filling the DMA block for a dual connected DAC channel */
+	for (uint8_t idx = 0; idx < DAC_NR_OF_SAMPLES; ++idx, *dds0_reg_p += *dds0_inc_p, *dds1_reg_p += *dds1_inc_p) {
+		uint16_t dds0_phase = *dds0_reg_p >> 16;
+		buf[idx].ch0 = get_interpolated_sine(dds0_phase);
+
+		uint16_t dds1_phase = *dds1_reg_p >> 16;
+		buf[idx].ch1 = get_interpolated_sine(dds1_phase);
+	}
+}
+
+void halt(void)
+{
+	/* MAIN Loop Shutdown */
+	runmode = 0;
+}
 
 
 /* INIT section */
@@ -161,18 +203,22 @@ static void evsys_init(void)
 	EVSYS.CH3MUX  = EVSYS_CHMUX_TCC0_CCC_gc;									// TCC0 CC-C goes to EVSYS CH3
 	EVSYS.CH3CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH3 no digital filtering
 
-	/* DAC - event 7 */
-	EVSYS.CH7MUX  = EVSYS_CHMUX_TCE1_OVF_gc;									// TCE1 overflow goes to EVSYS CH7
-	EVSYS.CH7CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH7 no digital filtering
+	/* DAC - event 4 */
+	EVSYS.CH4MUX  = EVSYS_CHMUX_TCE1_OVF_gc;									// TCE1 overflow goes to EVSYS CH4
+	EVSYS.CH4CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH4 no digital filtering
 }
 
 
+/* Forward declarations for TC section */
+static void service_10ms(uint32_t now);
+static void service_500ms(uint32_t now);
+
 static void tc_init(void)
 {
-	/* TCC0: VCTCXO PWM signal generation and ADCA CH0 */
+	/* TCC0: VCTCXO PWM signal generation and ADCA & ADCB */
 	struct pwm_config pwm_vctcxo_cfg;
-	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2560);						// Init PWM structure and enable timer
-	pwm_start(&pwm_vctcxo_cfg, 45);												// Start PWM. Percentage with 1% granularity is to coarse, use driver access instead
+	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2560);						// Init PWM structure and enable timer - running with 2560 Hz
+	pwm_start(&pwm_vctcxo_cfg, 45);												// Start PWM here. Percentage with 1% granularity is to coarse, use driver access instead
 	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) (0.5f + pwm_vctcxo_cfg.period * C_VCTCXO_DEFAULT_VOLTS / C_VCTCXO_PWM_HI_VOLTS));	// Initial value for VCTCXO
 
 	/* TCE1: DAC clock */
@@ -185,6 +231,8 @@ static void tc_start(void)
 {
 	/* ADC clock */
 	tc_write_clock_source(&TCC0, TC_CLKSEL_DIV1_gc);							// VCTCXO PWM start, output still is Z-state
+	tc_set_overflow_interrupt_callback(&TCC0, isr_tcc0_ovfl);
+	tc_set_overflow_interrupt_level(&TCC0, TC_INT_LVL_LO);
 
 //	tc_write_clock_source(&TCC1, TC_CLKSEL_DIV1_gc);
 //	tc_write_clock_source(&TCD0, TC_CLKSEL_DIV1_gc);
@@ -198,39 +246,55 @@ static void tc_start(void)
 //	tc_write_clock_source(&TCF1, TC_CLKSEL_DIV1_gc);
 }
 
+void isr_tcc0_ovfl(void)
+{	// This ISR is called 2560 per second
+	static uint32_t	last_10ms  = 0UL;
+	static uint32_t	last_500ms = 0UL;
 
-#if 0
+	/* Time downscaling */
+	uint32_t now = rtc_get_time();
+
+	/* Section with enabled interrupt follows */
+	cpu_irq_enable();
+
+	/* Group, which needs to be called about 100x per second */
+	if (((now - last_10ms) >= 10) || (now < last_10ms)) {
+		last_10ms = now;
+		service_10ms(now);
+	}
+
+	/* Group, which needs to be called about 2x per second */
+	if (((now - last_500ms) >= 512) || (now < last_500ms)) {
+		last_500ms = now;
+		service_500ms(now);
+	}
+}
+
+static void service_10ms(uint32_t now)
+{
+	service_10ms_twi1_onboard(now);
+}
+
+static void service_500ms(uint32_t now)
+{
+	service_500ms_twi1_onboard(now);
+}
+
+
 static void rtc_start(void)
 {
-	PORTC_OUTSET	= 0b00100000;
-	PORTC_DIRSET	= 0b00100000;
-
-	RTC32_CTRL		= 0;				// RTC32 disabled
-	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
-
-	RTC32.PER		= 0x00000003;		// overflowing every 1024 Hz / (PER + 1)
-	RTC32.CNT		= 0;				// from the beginning
-	RTC32.COMP		= 0xffffffff;		// no compare
-	RTC32.INTCTRL	= 0x01;				// enable overflow interrupt of low priority
-	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
-
-	RTC32.CTRL		= RTC32_ENABLE_bm;	// RTC32 enabled
-	while (RTC32.SYNCCTRL & RTC32_SYNCBUSY_bm);
+	rtc_set_callback(isr_rtc_alarm);
 }
 
-ISR(RTC32_OVF_vect) {
-	PORTC_OUTTGL = 0b00100000;
-}
-#endif
-
-void cb_rtc_alarm(uint32_t rtc_time)
+void isr_rtc_alarm(uint32_t rtc_time)
 {	// Alarm call-back with the current time
 	// nothing implemented yet...
 }
 
+
 static void adc_init(void)
 {
-	/* Disable input pins */
+	/* Disable digital circuits of ADC pins */
 	PORTA_PIN0CTRL |= PORT_ISC_INPUT_DISABLE_gc;
 	PORTA_PIN1CTRL |= PORT_ISC_INPUT_DISABLE_gc;
 	PORTA_PIN2CTRL |= PORT_ISC_INPUT_DISABLE_gc;
@@ -245,19 +309,24 @@ static void adc_init(void)
 	adcch_read_configuration(&ADC_VCTCXO_5V0_VBAT, ADC_VCTCXO_5V0_VBAT_CH,	&g_adcch_vctcxo_5v0_vbat_conf);
 	adcch_read_configuration(&ADC_IO_ADC4, ADC_IO_ADC4_CH,					&g_adcch_io_adc4_conf);
 	adcch_read_configuration(&ADC_IO_ADC5, ADC_IO_ADC5_CH,					&g_adcch_io_adc5_conf);
+	adc_read_configuration(&ADC_TEMP,										&g_adc_b_conf);
 	adcch_read_configuration(&ADC_TEMP, ADC_TEMP_CH,						&g_adcch_temp_conf);
 
 	/* ADC-clock request */
-	adc_set_clock_rate(&g_adc_a_conf, 48000UL << 4);											// 16x oversampling of 48kHz audio
+	adc_set_clock_rate(&g_adc_a_conf, 1000000UL);												// External signals: 100kHz .. 2000kHz
+	adc_set_clock_rate(&g_adc_b_conf,  115000UL);												// Internal signals: 100kHz ..  125kHz
 
-	/* Enable internal ADC-A input for temperature measurement */
-	adc_enable_internal_input(&g_adc_a_conf,		ADC_INT_TEMPSENSE | ADC_INT_BANDGAP);
+	/* Enable internal ADC-B input for temperature measurement */
+	adc_disable_internal_input(&g_adc_a_conf,		ADC_INT_TEMPSENSE | ADC_INT_BANDGAP);
+	adc_enable_internal_input(&g_adc_b_conf,		ADC_INT_TEMPSENSE | ADC_INT_BANDGAP);
 
 	/* Current limitation */
 	adc_set_current_limit(&g_adc_a_conf,			ADC_CURRENT_LIMIT_LOW);
+	adc_set_current_limit(&g_adc_b_conf,			ADC_CURRENT_LIMIT_HIGH);
 
 	/* ADC impedance */
 	adc_set_gain_impedance_mode(&g_adc_a_conf,		ADC_GAIN_HIGHIMPEDANCE);
+	adc_set_gain_impedance_mode(&g_adc_b_conf,		ADC_GAIN_HIGHIMPEDANCE);
 
 	/* PIN assignment */
 	adcch_set_input(&g_adcch_vctcxo_5v0_vbat_conf,	ADCCH_POS_PIN1,			ADCCH_NEG_NONE, 1);
@@ -266,16 +335,19 @@ static void adc_init(void)
 	adcch_set_input(&g_adcch_temp_conf,				ADCCH_POS_TEMPSENSE,	ADCCH_NEG_NONE, 1);
 
 	/* Convertion and reference */
-	adc_set_conversion_parameters(&g_adc_a_conf,	ADC_SIGN_OFF, ADC_RES_12, ADC_REF_AREFA);	// ADC-A: ADC0 (Pin 62 3V0 as reference pin
+	adc_set_conversion_parameters(&g_adc_a_conf,	ADC_SIGN_OFF, ADC_RES_12, ADC_REF_AREFA);	// ADC-A: ADC0 (Pin 62 3V0 as reference pin)
+	adc_set_conversion_parameters(&g_adc_b_conf,	ADC_SIGN_OFF, ADC_RES_12, ADC_REF_BANDGAP);	// ADC-B: bandgap diode (1V0)
 
 	/* PIN scan on ADC-channel 0 */
 	adcch_set_pin_scan(&g_adcch_vctcxo_5v0_vbat_conf, 0, 2);									// ADC-A: scan between ADC1 .. ADC3
 
 	/* Trigger */
-	adc_set_conversion_trigger(&g_adc_a_conf, ADC_TRIG_EVENT_SINGLE, 4, 0);
+	adc_set_conversion_trigger(&g_adc_a_conf, ADC_TRIG_EVENT_SINGLE, 3, 1);
+	adc_set_conversion_trigger(&g_adc_b_conf, ADC_TRIG_EVENT_SINGLE, 1, 0);
 
 	/* Interrupt service routine */
-	adc_set_callback(&ADCA, cb_adc_a);
+	adc_set_callback(&ADCA, isr_adc_a);
+	adc_set_callback(&ADCB, isr_adc_b);
 
 	/* Interrupt type */
 	adcch_set_interrupt_mode(&g_adcch_vctcxo_5v0_vbat_conf,	ADCCH_MODE_COMPLETE);
@@ -291,12 +363,14 @@ static void adc_init(void)
 
 	/* Execute the new settings */
 	adc_write_configuration(&ADCA,											&g_adc_a_conf);
-	adcch_write_configuration(&ADC_VCTCXO_5V0_VBAT, ADC_VCTCXO_5V0_VBAT_CH,	&g_adcch_vctcxo_5v0_vbat_conf);
-	adcch_write_configuration(&ADC_IO_ADC4, ADC_IO_ADC4_CH,					&g_adcch_io_adc4_conf);
-	adcch_write_configuration(&ADC_IO_ADC5, ADC_IO_ADC5_CH,					&g_adcch_io_adc5_conf);
-	adcch_write_configuration(&ADC_TEMP, ADC_TEMP_CH,						&g_adcch_temp_conf);
+	adcch_write_configuration(&ADC_VCTCXO_5V0_VBAT,	ADC_VCTCXO_5V0_VBAT_CH,	&g_adcch_vctcxo_5v0_vbat_conf);
+	adcch_write_configuration(&ADC_IO_ADC4,			ADC_IO_ADC4_CH,			&g_adcch_io_adc4_conf);
+	adcch_write_configuration(&ADC_IO_ADC5,			ADC_IO_ADC5_CH,			&g_adcch_io_adc5_conf);
+	adc_write_configuration(&ADCB,											&g_adc_b_conf);
+	adcch_write_configuration(&ADC_TEMP,			ADC_TEMP_CH,			&g_adcch_temp_conf);
 
 	/* Get production signature for calibration */
+	ADCA_CAL = adc_get_calibration_data(ADC_CAL_ADCA);
 	ADCB_CAL = adc_get_calibration_data(ADC_CAL_ADCB);
 }
 
@@ -304,9 +378,10 @@ static void adc_start(void)
 {
 	/* Power up after configurations are being set */
 	adc_enable(&ADCA);
+	adc_enable(&ADCB);
 }
 
-void cb_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
+void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 {
 	uint8_t scan_ofs_next = (ADCA_CH0_SCAN >> 4);
 	int16_t val = res - C_ADC_0V0_DELTA;
@@ -351,8 +426,14 @@ void cb_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 			g_adc_io_adc5_cur = (g_adc_io_adc5_sum >> C_ADC_SUM_SHIFT);
 			g_adc_io_adc5_sum = g_adc_io_adc5_cnt = 0;
 		}
+	}
+}
 
-	} else if (ch_mask & ADC_TEMP_CH) {
+void isr_adc_b(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
+{
+	int16_t val = res - C_ADC_0V0_DELTA;
+
+	if (ch_mask & ADC_TEMP_CH) {
 		g_adc_temp_sum += val;
 		if (++g_adc_temp_cnt >= C_ADC_SUM_CNT) {
 			g_adc_temp_cur = (g_adc_temp_sum >> C_ADC_SUM_SHIFT);
@@ -363,10 +444,50 @@ void cb_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 
 
 /* Forward declarations for DAC and DMA section */
+static void dma_init(void);
+static void dma_start(void);
+static void isr_dma_dac_ch0_A(enum dma_channel_status status);
+static void isr_dma_dac_ch0_B(enum dma_channel_status status);
 static void task_dac(uint32_t now);
-static void isr_calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0_reg_p, uint32_t* dds0_inc_p, uint32_t* dds1_reg_p, uint32_t* dds1_inc_p);
-static void cb_dma_dac_ch0_A(enum dma_channel_status status);
-static void cb_dma_dac_ch0_B(enum dma_channel_status status);
+
+static void dac_init(void)
+{
+	dac_read_configuration(&DAC_DAC, &dac_conf);
+	dac_set_conversion_parameters(&dac_conf, DAC_REF_BANDGAP, DAC_ADJ_LEFT);
+	dac_set_active_channel(&dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 0);
+	dac_set_conversion_trigger(&dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 4);
+	dac_write_configuration(&DAC_DAC, &dac_conf);
+
+	/* Get production signature for calibration */
+	DACB_CH0OFFSETCAL	= dac_get_calibration_data(DAC_CAL_DACB0_OFFSET);
+	DACB_CH0GAINCAL		= dac_get_calibration_data(DAC_CAL_DACB0_GAIN);
+	DACB_CH1OFFSETCAL	= dac_get_calibration_data(DAC_CAL_DACB1_OFFSET);
+	DACB_CH1GAINCAL		= dac_get_calibration_data(DAC_CAL_DACB1_GAIN);
+
+	dma_init();
+}
+
+static void dac_start(void)
+{
+	dac_enable(&DACB);
+
+	/* Connect the DMA to the DAC periphery */
+	dma_start();
+
+	/* IRQ disabled section */
+	{
+		irqflags_t flags = cpu_irq_save();
+
+		/* Prepare DMA blocks */
+		calc_next_frame(&dac_io_dac0_buf[0][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
+		calc_next_frame(&dac_io_dac0_buf[1][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
+
+		/* DMA channels activation */
+		dma_channel_enable(DMA_CHANNEL_DACB_CH0_A);
+
+		cpu_irq_restore(flags);
+	}
+}
 
 static void dma_init(void)
 {
@@ -406,10 +527,10 @@ static void dma_start(void)
 {
 	dma_enable();
 
-	dma_set_callback(DMA_CHANNEL_DACB_CH0_A, cb_dma_dac_ch0_A);
+	dma_set_callback(DMA_CHANNEL_DACB_CH0_A, isr_dma_dac_ch0_A);
 	dma_channel_set_interrupt_level(&dmach_dma0_conf, DMA_INT_LVL_MED);
 
-	dma_set_callback(DMA_CHANNEL_DACB_CH0_B, cb_dma_dac_ch0_B);
+	dma_set_callback(DMA_CHANNEL_DACB_CH0_B, isr_dma_dac_ch0_B);
 	dma_channel_set_interrupt_level(&dmach_dma1_conf, DMA_INT_LVL_MED);
 
 	dma_set_priority_mode(DMA_PRIMODE_CH01RR23_gc);
@@ -419,70 +540,20 @@ static void dma_start(void)
 	dma_channel_write_config(DMA_CHANNEL_DACB_CH0_B, &dmach_dma1_conf);
 }
 
-static void dac_init(void)
-{
-    dac_read_configuration(&DAC_DAC, &dac_conf);
-    dac_set_conversion_parameters(&dac_conf, DAC_REF_BANDGAP, DAC_ADJ_LEFT);
-    dac_set_active_channel(&dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 0);
-    dac_set_conversion_trigger(&dac_conf, DAC_DAC1_CH | DAC_DAC0_CH, 7);
-    dac_write_configuration(&DAC_DAC, &dac_conf);
-
-	/* Get production signature for calibration */
-	DACB_CH0OFFSETCAL	= dac_get_calibration_data(DAC_CAL_DACB0_OFFSET);
-	DACB_CH0GAINCAL		= dac_get_calibration_data(DAC_CAL_DACB0_GAIN);
-	DACB_CH1OFFSETCAL	= dac_get_calibration_data(DAC_CAL_DACB1_OFFSET);
-	DACB_CH1GAINCAL		= dac_get_calibration_data(DAC_CAL_DACB1_GAIN);
-
-	dma_init();
-}
-
-static void dac_start(void)
-{
-	dac_enable(&DACB);
-
-	/* Connect the DMA to the DAC periphery */
-	dma_start();
-
-	/* IRQ disabled section */
-	{
-		irqflags_t flags = cpu_irq_save();
-
-		/* Prepare DMA blocks */
-		isr_calc_next_frame(&dac_io_dac0_buf[0][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
-
-		/* DMA channels activation */
-		dma_channel_enable(DMA_CHANNEL_DACB_CH0_A);
-
-		cpu_irq_restore(flags);
-	}
-}
-
-static void cb_dma_dac_ch0_A(enum dma_channel_status status)
+static void isr_dma_dac_ch0_A(enum dma_channel_status status)
 {
 	dma_channel_enable(DMA_CHANNEL_DACB_CH0_B);
 
 	cpu_irq_enable();
-	isr_calc_next_frame(&dac_io_dac0_buf[0][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
+	calc_next_frame(&dac_io_dac0_buf[0][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
 }
 
-static void cb_dma_dac_ch0_B(enum dma_channel_status status)
+static void isr_dma_dac_ch0_B(enum dma_channel_status status)
 {
 	dma_channel_enable(DMA_CHANNEL_DACB_CH0_A);
 
 	cpu_irq_enable();
-	isr_calc_next_frame(&dac_io_dac0_buf[1][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
-}
-
-static void isr_calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0_reg_p, uint32_t* dds0_inc_p, uint32_t* dds1_reg_p, uint32_t* dds1_inc_p)
-{
-	/* Filling the DMA block for a dual connected DAC channel */
-	for (uint8_t idx = 0; idx < DAC_NR_OF_SAMPLES; ++idx, *dds0_reg_p += *dds0_inc_p, *dds1_reg_p += *dds1_inc_p) {
-		uint16_t dds0_phase = *dds0_reg_p >> 16;
-		buf[idx].ch0 = get_interpolated_sine(dds0_phase);
-
-		uint16_t dds1_phase = *dds1_reg_p >> 16;
-		buf[idx].ch1 = get_interpolated_sine(dds1_phase);
-	}
+	calc_next_frame(&dac_io_dac0_buf[1][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
 }
 
 
@@ -493,7 +564,7 @@ static void usb_init(void)
 #if 1
 	stdio_usb_init();	// Init and enable stdio_usb
 	stdio_usb_enable();
-	delay_ms(125);
+	delay_ms(140);
 
 	printf("%c\r\n", 0x0c);
 	printf("===============================\r\n");
@@ -587,7 +658,7 @@ void usb_callback_tx_empty_notify(uint8_t port)
 /* RUNNING section */
 
 static void task_dac(uint32_t now)
-{
+{	/* Calculation of the DDS increments */
 	static uint32_t s_dds0_freq_mHz = 0UL;
 	static uint32_t s_dds1_freq_mHz = 0UL;
 	uint32_t l_dds0_freq_mHz, l_dds1_freq_mHz;
@@ -612,37 +683,47 @@ static void task_dac(uint32_t now)
 }
 
 static void task_adc(uint32_t now)
-{
+{	/* Calculations of the ADC values for the presentation layer */
 	static uint32_t adc_last = 0;
-	int32_t l_adc_vctcxo_cur,
-			 l_adc_5v0_cur,
-			 l_adc_vbat_cur,
-			 l_adc_io_adc4_cur,
-			 l_adc_io_adc5_cur,
-			 l_adc_temp_cur;
-	float	 l_temp;
-	uint16_t l_temp_i;
-	uint8_t	 l_temp_f;
 
-	if ((now - adc_last) >= 512) {
+	if ((now - adc_last) >= 512 || (now < adc_last)) {
 		adc_last = now;
 
 		irqflags_t flags = cpu_irq_save();
-		l_adc_vctcxo_cur = g_adc_vctcxo_cur;
-		l_adc_5v0_cur = g_adc_5v0_cur;
-		l_adc_vbat_cur = g_adc_vbat_cur;
-		l_adc_io_adc4_cur = g_adc_io_adc4_cur;
-		l_adc_io_adc5_cur = g_adc_io_adc5_cur;
-		l_adc_temp_cur = g_adc_temp_cur;
+		int32_t l_adc_vctcxo_cur	= g_adc_vctcxo_cur;
+		int32_t l_adc_5v0_cur		= g_adc_5v0_cur;
+		int32_t l_adc_vbat_cur		= g_adc_vbat_cur;
+		int32_t l_adc_io_adc4_cur	= g_adc_io_adc4_cur;
+		int32_t l_adc_io_adc5_cur	= g_adc_io_adc5_cur;
+		int32_t l_adc_temp_cur		= g_adc_temp_cur;
 		cpu_irq_restore(flags);
 
-		l_temp = (((l_adc_temp_cur / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS) / C_TEMPSENSE_MULT) - C_0DEGC_K;
-		l_temp_i = (uint16_t)l_temp;
-		l_temp_f = (uint8_t)(10 * (l_temp - l_temp_i));
+		int16_t l_adc_vctcxo_volt_1000	= (uint16_t) (((( 1000 * l_adc_vctcxo_cur ) / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS                    )  - 1000 * C_VCTCXO_DELTA_VOLTS);
+		int16_t l_adc_5v0_volt_1000		= (uint16_t) (((  1000 * l_adc_5v0_cur    ) / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS * C_VCC_5V0_MULT   );
+		int16_t l_adc_vbat_volt_1000	= (uint16_t) (((  1000 * l_adc_vbat_cur   ) / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS * C_VCC_VBAT_MULT  );
+		int16_t l_adc_io_adc4_volt_1000	= (uint16_t) (((  1000 * l_adc_io_adc4_cur) / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS                    );
+		int16_t l_adc_io_adc5_volt_1000	= (uint16_t) (((  1000 * l_adc_io_adc5_cur) / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS                    );
+		int16_t l_adc_temp_deg_100		= (uint16_t) ((((  100 * l_adc_temp_cur   ) / ((float)C_ADC_STEPS))                        * C_TEMPSENSE_MULT )  -  100 * C_0DEGC_K);
 
-		printf("time = %5ld: vctcxo=%04ld, 5v0=%04ld, vbat=%04ld, adc4=%04ld, adc5=%04ld, temp=%04ld = %d.%dC\r\n",
-			now >> 10, l_adc_vctcxo_cur, l_adc_5v0_cur, l_adc_vbat_cur, l_adc_io_adc4_cur, l_adc_io_adc5_cur, l_adc_temp_cur, l_temp_i, l_temp_f);
+		flags = cpu_irq_save();
+		g_adc_vctcxo_volt_1000	= l_adc_vctcxo_volt_1000;
+		g_adc_5v0_volt_1000		= l_adc_5v0_volt_1000;
+		g_adc_vbat_volt_1000	= l_adc_vbat_volt_1000;
+		g_adc_io_adc4_volt_1000	= l_adc_io_adc4_volt_1000;
+		g_adc_io_adc5_volt_1000	= l_adc_io_adc5_volt_1000;
+		g_adc_temp_deg_100		= l_adc_temp_deg_100;
+		cpu_irq_restore(flags);
 	}
+}
+
+static void task_twi(uint32_t now)
+{	/* Calculations for the presentation layer and display */
+
+	/* TWI1 - SIM808, Hygro, Gyro, Baro devices */
+	task_twi1_onboard(now);
+
+	/* TWI2 - LCD Port */
+	task_twi2_lcd(now);
 }
 
 static void task_usb(void)
@@ -677,43 +758,15 @@ static void task_usb(void)
 	}
 }
 
-static void task_twi(uint32_t now)
-{
-	/* TWI1 - Gyro, Baro, Hygro, SIM808 devices */
-	task_twi_onboard(now);
-
-	/* TWI2 - LCD Port */
-	task_twi_lcd(now);
-}
-
 static void task(void)
 {
 	uint32_t now = rtc_get_time();
 
-	/* TASK when woken up */
+	/* TASK when woken up and all ISRs are done */
 	task_dac(now);
 	task_adc(now);
-
-	/* Handling the USB connection */
-	task_usb();
-
-	/* Handle TWI1 and TWI2 communications */
-	task_twi(now);
-
-#if 0
-	/* DEBUGGING USB */
-	uint32_t now_sec = now >> 10;
-	if ((last >> 10) != now_sec) {
-		printf("%c\r\nFindMeSAT V1 @USB: RTC32 = %06ld sec\r\n", 0x0c, now_sec);
-	}
-#endif
-}
-
-void halt(void)
-{
-	/* MAIN Loop Shutdown */
-
-	runmode = 0;
+	task_twi(now);											// Handle TWI1 and TWI2 communications
+	task_usb();												// Handling the USB connection
 }
 
 
@@ -731,7 +784,8 @@ int main(void)
 	sleepmgr_init();	// Unlocks all sleep mode levels
 
 	rtc_init();
-	rtc_set_callback(cb_rtc_alarm);
+	rtc_start();
+	//rtc_set_callback(cb_rtc_alarm);
 
 	evsys_init();		// Event system
 	tc_init();			// Timers

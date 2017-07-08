@@ -10,6 +10,8 @@
 #define MAIN_H_
 
 
+#define C_TWI1_BARO_C_CNT		8
+
 #define C_0DEGC_K				273.15f
 
 #define C_ADC_STEPS				8192
@@ -24,10 +26,10 @@
 #define C_VCTCXO_DEFAULT_VOLTS	1.500f
 #define C_VCTCXO_DELTA_VOLTS	0.047f
 
-#define C_VCC_5V0_VOLTS			4.810f
-#define C_VCC_5V0_MULT			2.50248756f
-#define C_VCC_VBAT_MULT			2.50248756f
-#define C_TEMPSENSE_MULT		0.00175993f
+#define C_VCC_5V0_VOLTS			4.890f
+#define C_VCC_5V0_MULT			2.41948528f
+#define C_VCC_VBAT_MULT			2.42614048f
+#define C_TEMPSENSE_MULT		629.20f
 
 
 typedef enum ADC_CH0_SCAN_ENUM {
@@ -49,20 +51,18 @@ typedef struct dma_dac_buf_s {
 } dma_dac_buf_t;
 
 
+void halt(void);
 
-/* INIT section */
-
-void cb_rtc_alarm(uint32_t rtc_time);
-void cb_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
-void cb_tce1_ovfl(void);
+void isr_tcc0_ovfl(void);
+void isr_rtc_alarm(uint32_t rtc_time);
+void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
+void isr_adc_b(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
 
 void usb_callback_suspend_action(void);
 void usb_callback_resume_action(void);
-
 void usb_callback_remotewakeup_enable(void);
 void usb_callback_remotewakeup_disable(void);
 void usb_send_wakeup_event(void);
-
 bool usb_callback_cdc_enable(void);
 void usb_callback_cdc_disable(void);
 void usb_callback_config(uint8_t port, usb_cdc_line_coding_t * cfg);
@@ -70,11 +70,6 @@ void usb_callback_cdc_set_dtr(uint8_t port, bool b_enable);
 void usb_callback_cdc_set_rts(uint8_t port, bool b_enable);
 void usb_callback_rx_notify(uint8_t port);
 void usb_callback_tx_empty_notify(uint8_t port);
-
-
-/* RUNNING section */
-
-void halt(void);
 
 int main(void);
 

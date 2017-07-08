@@ -64,8 +64,9 @@
 #define ADC_IO_ADC5				ADCA
 #define ADC_IO_ADC5_CH			ADC_CH2
 
-#define ADC_TEMP				ADCA
-#define ADC_TEMP_CH				ADC_CH3
+
+#define ADC_TEMP				ADCB
+#define ADC_TEMP_CH				ADC_CH0
 
 
 /* ADCB Channels 0-3 */
