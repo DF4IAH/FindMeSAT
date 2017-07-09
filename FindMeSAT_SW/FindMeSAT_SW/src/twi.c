@@ -696,16 +696,16 @@ void task_twi2_lcd(uint32_t now)
 			}
 
 			/* ADC_TEMP */
-			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_temp_deg_100 / 100,     (l_adc_temp_deg_100 / 10) % 10, "%2d.%01d");
+			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_temp_deg_100 / 100,     (l_adc_temp_deg_100 / 10) % 10,   "%2d.%01d");
 
 			/* ADC_5V0 */
-			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_5v0_volt_1000 / 1000,    l_adc_5v0_volt_1000 % 1000,    "%1d.%03d");
+			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_5v0_volt_1000 / 1000,    l_adc_5v0_volt_1000 % 1000,      "%1d.%03d");
 
 			/* ADC_VBAT */
-			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_vbat_volt_1000 / 1000,   l_adc_vbat_volt_1000 % 1000,   "%1d.%03d");
+			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_vbat_volt_1000 / 1000,   l_adc_vbat_volt_1000 % 1000,     "%1d.%03d");
 
 			/* ADC_VCTCXO */
-			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_vctcxo_volt_1000 / 1000, l_adc_vctcxo_volt_1000 % 1000, "%1d.%03d");
+			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_vctcxo_volt_1000 / 1000, l_adc_vctcxo_volt_1000 % 1000,   "%1d.%03d");
 
 			/* ADC_IO_ADC4 */
 			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_io_adc4_volt_1000 / 1000, l_adc_io_adc4_volt_1000 % 1000, "%1d.%03d");
