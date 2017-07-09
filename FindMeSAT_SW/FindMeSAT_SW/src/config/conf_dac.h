@@ -15,7 +15,7 @@
 #define DAC_DAC1_CH				DAC_CH1
 
 #define DAC_RATE_OF_CONV		100000UL
-#define DAC_NR_OF_SAMPLES		32
+#define DAC_NR_OF_SAMPLES		64
 
 
 #endif /* CONF_DAC_H_ */

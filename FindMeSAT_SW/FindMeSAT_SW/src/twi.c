@@ -739,7 +739,7 @@ void task_twi2_lcd(uint32_t now)
 		//static uint8_t s_ofs = 0;
 
 		/* Show current measurement data on the LCD */
-		if (((now - s_lcd_last) >= 1024) || (now < s_lcd_last)) {
+		if (((now - s_lcd_last) >= 512) || (now < s_lcd_last)) {
 			const uint8_t col_left = 6 * 10;
 			uint8_t line = 2;
 

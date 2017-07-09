@@ -554,10 +554,10 @@ static void dma_start(void)
 	dma_enable();
 
 	dma_set_callback(DMA_CHANNEL_DACB_CH0_A, isr_dma_dac_ch0_A);
-	dma_channel_set_interrupt_level(&dmach_dma0_conf, DMA_INT_LVL_HI);
+	dma_channel_set_interrupt_level(&dmach_dma0_conf, DMA_INT_LVL_MED);
 
 	dma_set_callback(DMA_CHANNEL_DACB_CH0_B, isr_dma_dac_ch0_B);
-	dma_channel_set_interrupt_level(&dmach_dma1_conf, DMA_INT_LVL_HI);
+	dma_channel_set_interrupt_level(&dmach_dma1_conf, DMA_INT_LVL_MED);
 
 	dma_set_priority_mode(DMA_PRIMODE_CH01RR23_gc);
 	dma_set_double_buffer_mode(DMA_DBUFMODE_CH01_gc);
