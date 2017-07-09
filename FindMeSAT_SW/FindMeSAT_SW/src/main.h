@@ -51,6 +51,7 @@ typedef struct dma_dac_buf_s {
 } dma_dac_buf_t;
 
 
+void sleep_ms(uint16_t ms);
 void halt(void);
 
 void isr_tcc0_ovfl(void);

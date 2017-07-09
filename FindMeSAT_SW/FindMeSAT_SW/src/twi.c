@@ -122,7 +122,7 @@ static void twi2_waitUntilReady(void)
 
 
 #if 0
-static void twi1_gsm_init(void)
+static void init_twi1_gsm(void)
 {
 	status_code_t sc;
 
@@ -146,7 +146,7 @@ static void twi1_gsm_init(void)
 }
 #endif
 
-static void twi1_hygro_init(void)
+static void init_twi1_hygro(void)
 {
 	status_code_t sc;
 
@@ -176,7 +176,7 @@ static void twi1_hygro_init(void)
 	}
 }
 
-static void twi1_gyro_init(void)
+static void init_twi1_gyro(void)
 {
 	status_code_t sc;
 
@@ -224,12 +224,11 @@ static void twi1_gyro_init(void)
 	}
 }
 
-static void twi1_baro_init(void)
+static void init_twi1_baro(void)
 {
 	status_code_t sc;
 
 	printf("\r\nTWI-onboard: Baro MS560702BA03-50 - I2C address: 0x%02X\r\n", TWI1_SLAVE_BARO_ADDR);
-
 	twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
 	twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_RESET;
 	twi1_packet.addr_length = 1;
@@ -242,8 +241,8 @@ static void twi1_baro_init(void)
 		twi1_packet.length = 2;
 		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
 		if (sc == STATUS_OK) {
-			g_twi1_baro_version = ((twi1_m_data[0] << 8) | twi1_m_data[1]) >> 4;
-			printf("TWI-onboard: Baro MS560702BA03-50 -     version: 0x%04X\r\n", g_twi1_baro_version);
+			g_twi1_baro_version = (((uint16_t)twi1_m_data[0] << 8) | (uint16_t)twi1_m_data[1]) >> 4;
+			printf("TWI-onboard: Baro MS560702BA03-50 -     serial#: %d\r\n", g_twi1_baro_version);
 		} else {
 			printf("TWI-onboard:  BAD reading serial/CRC word.\r\n");
 		}
@@ -257,7 +256,7 @@ static void twi1_baro_init(void)
 				g_twi1_baro_c[adr] = (twi1_m_data[0] << 8) | twi1_m_data[1];
 				if (adr == C_TWI1_BARO_C_CNT - 1) {
 					g_twi1_baro_valid = true;
-					printf("TWI-onboard:  INIT success-\r\n");
+					printf("TWI-onboard:  INIT success.\r\n");
 				}
 			} else {
 				printf("TWI-onboard:  BAD reading PROM address %d.\r\n", adr);
@@ -273,16 +272,16 @@ static void twi1_baro_init(void)
 static void start_twi1_onboard(void)
 {
 	/* Device GSM/BT/GPS SIM808 - I2C address: 0xXX */
-	//twi1_gsm_init();
+	//init_twi1_gsm();
 
 	/* Device Hygro SHT31-DIS - I2C address: 0x44 */
-	twi1_hygro_init();
+	init_twi1_hygro();
 
 	/* Device Gyro MPU-9250 - I2C address: 0x68, 0x0C (or 0x0D or 0x0E or 0x0F) */
-	twi1_gyro_init();
+	init_twi1_gyro();
 
 	/* Device Baro MS560702BA03-50 - I2C address: 0x76 */
-	twi1_baro_init();
+	init_twi1_baro();
 
 	printf("-----------\r\n\r\n");
 }
@@ -373,72 +372,125 @@ void twi_start(void) {
 }
 
 
-static void service_twi1_hygro(uint32_t now)
+static void isr_twi1_hygro(uint32_t now, bool sync)
 {
 }
 
-static void service_twi1_gyro(uint32_t now)
+static void isr_twi1_gyro(uint32_t now, bool sync)
 {
 }
 
-static void service_twi1_baro(uint32_t now)
+static void isr_twi1_baro(uint32_t now, bool sync)
 {
-	uint32_t l_twi1_baro_d1 = 0UL;
-	uint32_t l_twi1_baro_d2 = 0UL;
+	static uint8_t  s_step = 100;
+	static uint32_t s_twi1_baro_d1 = 0UL;
+	static uint32_t s_twi1_baro_d2 = 0UL;
 
-	twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
-	twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_CONV_D1_4096;
-	twi1_packet.addr_length = 1;
-	twi1_packet.length = 0;
-	status_code_t sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
-	if (sc == STATUS_OK) {
-		delay_ms(10);
-
-		twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_ADC_READ;
-		twi1_packet.length = 3;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
-		if (sc == STATUS_OK) {
-			l_twi1_baro_d1 = ((uint32_t)twi1_m_data[0] << 16) | ((uint32_t)twi1_m_data[1] << 8) | twi1_m_data[2];
-		}
+	/* Restart a new cycle if ready */
+	if (sync && (s_step >= 100)) {
+		s_step = 0;
 	}
 
-	twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_CONV_D2_4096;
-	twi1_packet.length = 0;
-	sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
-	if (sc == STATUS_OK) {
-		delay_ms(10);
+	switch (s_step) {
+		case 0:
+			/* Request D1 */
+			twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
+			twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_CONV_D1_4096;
+			twi1_packet.addr_length = 1;
+			twi1_packet.length = 0;
+			status_code_t sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+			if (sc == STATUS_OK) {
+				s_step = 1;
+				return;
+			}
 
-		twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_ADC_READ;
-		twi1_packet.length = 3;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
-		if (sc == STATUS_OK) {
-			l_twi1_baro_d2 = ((uint32_t)twi1_m_data[0] << 16) | ((uint32_t)twi1_m_data[1] << 8) | twi1_m_data[2];
-		}
+			s_step = 200;										// Failed, stay until new sync triggers
+			return;
+		break;
+
+		case 21:
+			/* Get data */
+			twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_ADC_READ;
+			twi1_packet.length = 3;
+			sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+			if (sc == STATUS_OK) {
+				s_twi1_baro_d1 = ((uint32_t)twi1_m_data[0] << 16) | ((uint32_t)twi1_m_data[1] << 8) | twi1_m_data[2];
+
+				/* Request D2 */
+				twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_CONV_D2_4096;
+				twi1_packet.length = 0;
+				sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+				if (sc == STATUS_OK) {
+					s_step = 22;
+					return;
+				}
+			}
+
+			s_step = 211;										// Failed, stay until new sync triggers
+			return;
+		break;
+
+		case 43:
+			twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_ADC_READ;
+			twi1_packet.length = 3;
+			sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+			if (sc == STATUS_OK) {
+				s_twi1_baro_d2 = ((uint32_t)twi1_m_data[0] << 16) | ((uint32_t)twi1_m_data[1] << 8) | twi1_m_data[2];
+
+				irqflags_t flags = cpu_irq_save();
+				g_twi1_baro_d1 = s_twi1_baro_d1;
+				g_twi1_baro_d2 = s_twi1_baro_d2;
+				cpu_irq_restore(flags);
+
+				s_step = 123;									// Success, stay until new sync triggers
+				return;
+			}
+
+			s_step = 223;										// Failed, stay until new sync triggers
+			return;
+		break;
+
+		default:
+			/* Delay step of 0.5 ms */
+			if (s_step < 100) {
+				s_step++;
+			}
 	}
-
-	irqflags_t flags = cpu_irq_save();
-	g_twi1_baro_d1 = l_twi1_baro_d1;
-	g_twi1_baro_d2 = l_twi1_baro_d2;
-	cpu_irq_restore(flags);
 }
 
 /* 10ms TWI1 - Gyro device */
-void service_10ms_twi1_onboard(uint32_t now)
+void isr_10ms_twi1_onboard(uint32_t now)
 {	/* Service time slot */
 	if (g_twi1_gyro_valid) {
-		service_twi1_gyro(now);
+		isr_twi1_gyro(now, true);
 	}
 }
 
 /* 500ms TWI1 - Baro, Hygro devices */
-void service_500ms_twi1_onboard(uint32_t now)
+void isr_500ms_twi1_onboard(uint32_t now)
 {	/* Service time slot */
 	if (g_twi1_hygro_valid) {
-		service_twi1_hygro(now);
+		isr_twi1_hygro(now, true);
 	}
 
 	if (g_twi1_baro_valid) {
-		service_twi1_baro(now);
+		isr_twi1_baro(now, true);
+	}
+}
+
+/* 2560 cycles per second */
+void isr_sparetime_twi1_onboard(uint32_t now)
+{
+	if (g_twi1_hygro_valid) {
+		isr_twi1_hygro(now, false);
+	}
+
+	if (g_twi1_gyro_valid) {
+		isr_twi1_gyro(now, false);
+	}
+
+	if (g_twi1_baro_valid) {
+		isr_twi1_baro(now, false);
 	}
 }
 
@@ -463,20 +515,11 @@ static void task_twi1_baro(uint32_t now)
 
 	/* Calculate and present Baro and Temp values when a different measurement has arrived */
 	if ((l_twi1_baro_d1 != s_twi1_baro_d1) || (l_twi1_baro_d2 != s_twi1_baro_d2)) {
-		uint16_t l_twi1_baro_c[C_TWI1_BARO_C_CNT];
-		uint8_t adr, cnt;
-
-		flags = cpu_irq_save();
-		for (adr = 1, cnt = C_TWI1_BARO_C_CNT - 2; cnt; --cnt, ++adr) {
-			l_twi1_baro_c[adr] = g_twi1_baro_c[adr];
-		}
-		cpu_irq_restore(flags);
-
-		int32_t dT = (int32_t)l_twi1_baro_d2 - ((int32_t)l_twi1_baro_c[5] << 8);
-		int32_t temp_p20 = (dT * l_twi1_baro_c[6]) >> 23;
+		int32_t dT = (int32_t)l_twi1_baro_d2 - ((int32_t)g_twi1_baro_c[5] << 8);
+		int32_t temp_p20 = (int32_t)(((int64_t)dT * g_twi1_baro_c[6]) >> 23);
 		int32_t temp = temp_p20 + 2000L;
-		int64_t off  = ((int64_t)l_twi1_baro_c[2] << 17) + (((int64_t)l_twi1_baro_c[4] * dT) >> 6);
-		int64_t sens = ((int64_t)l_twi1_baro_c[1] << 16) + (((int64_t)l_twi1_baro_c[3] * dT) >> 7);
+		int64_t off  = ((int64_t)g_twi1_baro_c[2] << 17) + (((int64_t)g_twi1_baro_c[4] * dT) >> 6);
+		int64_t sens = ((int64_t)g_twi1_baro_c[1] << 16) + (((int64_t)g_twi1_baro_c[3] * dT) >> 7);
 
 		/* Low temp and very low temp corrections */
 		if (temp < 2000L) {
@@ -488,18 +531,18 @@ static void task_twi1_baro(uint32_t now)
 			if (temp < -1500L) {
 				int32_t temp_m15 = temp + 1500L;
 				int32_t temp_m15_2 = temp_m15 * temp_m15;
-				off2 += 15 * temp_m15_2;
-				sens2 += 8 * temp_m15_2;
+				off2  += 15 * temp_m15_2;
+				sens2 +=  8 * temp_m15_2;
 			}
 			temp -= t2;
 			off  -= off2;
 			sens -= sens2;
 		}
-		int32_t p = (int32_t)(((l_twi1_baro_d1 * sens) >> 21) - off) >> 15;
+		int32_t p = (int32_t)((((l_twi1_baro_d1 * sens) >> 21) - off) >> 15);
 
 		flags = cpu_irq_save();
 		g_twi1_baro_temp_100 = temp;
-		g_twi1_baro_p_100 = p;
+		g_twi1_baro_p_100    = p;
 		cpu_irq_restore(flags);
 	}
 }
@@ -507,15 +550,21 @@ static void task_twi1_baro(uint32_t now)
 /* TWI1 - onboard devices */
 void task_twi1_onboard(uint32_t now)
 {
-	if (g_twi1_hygro_valid) {
+	irqflags_t flags = cpu_irq_save();
+	bool l_twi1_hygro_valid	= g_twi1_hygro_valid;
+	bool l_twi1_gyro_valid	= g_twi1_gyro_valid;
+	bool l_twi1_baro_valid	= g_twi1_baro_valid;
+	cpu_irq_restore(flags);
+
+	if (l_twi1_hygro_valid) {
 		task_twi1_hygro(now);
 	}
 
-	if (g_twi1_gyro_valid) {
+	if (l_twi1_gyro_valid) {
 		task_twi1_gyro(now);
 	}
 
-	if (g_twi1_baro_valid) {
+	if (l_twi1_baro_valid) {
 		task_twi1_baro(now);
 	}
 }
@@ -637,6 +686,10 @@ static void task_twi2_lcd_header(void)
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Vvctcxo =");
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Vioadc4 =");
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Vioadc5 =");
+	line++;
+
+	task_twi2_lcd_str(6 *  0, (line++) * 10, "Ba_Temp =");
+	task_twi2_lcd_str(6 *  0, (line++) * 10, "Ba_Pres =");
 
 	/* Left measurement units */
 	line = 2;
@@ -646,6 +699,10 @@ static void task_twi2_lcd_header(void)
 	task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
 	task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
 	task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
+	line++;
+
+	task_twi2_lcd_str(6 * 16, (line++) * 10, "C");
+	task_twi2_lcd_str(6 * 18, (line++) * 10, "hPa");
 }
 
 static void task_twi2_lcd_print_format_uint16(uint8_t x, uint8_t y, int16_t adc_i, int16_t adc_f, const char* fmt)
@@ -660,21 +717,33 @@ static void task_twi2_lcd_print_format_uint16(uint8_t x, uint8_t y, int16_t adc_
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
+static void task_twi2_lcd_print_format_uint32(uint8_t x, uint8_t y, int32_t adc_i, int32_t adc_f, const char* fmt)
+{
+	task_twi2_lcd_pos_xy(x, y);
+
+	twi2_waitUntilReady();
+	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
+	twi2_m_data[0] = sprintf((char*)&(twi2_m_data[1]), fmt, adc_i, adc_f);
+	twi2_packet.length = twi2_m_data[0] + 1;
+	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+}
+
 /* TWI2 - LCD Port */
 void task_twi2_lcd(uint32_t now)
 {
-	static uint16_t lcd_entry_cnt = 0U;
-	static uint32_t lcd_last = 0UL;
+	static uint16_t s_lcd_entry_cnt = 0U;
+	static uint32_t s_lcd_last = 0UL;
 
 	if (g_twi2_lcd_version >= 0x11) {
-		//static uint8_t ofs = 0;
+		//static uint8_t s_ofs = 0;
 
 		/* Show current measurement data on the LCD */
-		if (((now - lcd_last) >= 512) || (now < lcd_last)) {
+		if (((now - s_lcd_last) >= 1024) || (now < s_lcd_last)) {
 			const uint8_t col_left = 6 * 10;
 			uint8_t line = 2;
 
-			lcd_last = now;
+			s_lcd_last = now;
 
 			/* Get up-to-date global data */
 			irqflags_t flags = cpu_irq_save();
@@ -684,14 +753,16 @@ void task_twi2_lcd(uint32_t now)
 			int16_t l_adc_temp_deg_100		= g_adc_temp_deg_100;
 			int16_t l_adc_io_adc4_volt_1000	= g_adc_io_adc4_volt_1000;
 			int16_t l_adc_io_adc5_volt_1000	= g_adc_io_adc5_volt_1000;
+			int32_t l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
+			int32_t l_twi1_baro_p_100		= g_twi1_baro_p_100;
 			cpu_irq_restore(flags);
 
 			/* Repaint all items when starting and at some interval */
-			if (!(lcd_entry_cnt++)) {
+			if (!(s_lcd_entry_cnt++)) {
 				task_twi2_lcd_header();
 			#if 1
-			} else if (lcd_entry_cnt >= 120) {
-				lcd_entry_cnt = 0;
+			} else if (s_lcd_entry_cnt >= 120) {
+				s_lcd_entry_cnt = 0;
 			#endif
 			}
 
@@ -712,18 +783,25 @@ void task_twi2_lcd(uint32_t now)
 
 			/* ADC_IO_ADC5 */
 			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_io_adc5_volt_1000 / 1000, l_adc_io_adc5_volt_1000 % 1000, "%1d.%03d");
+			line++;
+
+			/* Baro_Temp */
+			task_twi2_lcd_print_format_uint32(col_left, (line++) * 10, l_twi1_baro_temp_100 / 100,     l_twi1_baro_temp_100 % 100,     "%-2ld.%02ld");
+
+			/* Baro_P */
+			task_twi2_lcd_print_format_uint32(col_left, (line++) * 10, l_twi1_baro_p_100 / 100,        l_twi1_baro_p_100 % 100,        "%4ld.%02ld");
 		}
 
 		#if 0
 		/* Old code for gfx test */
 		{
-			task_twi2_lcd_line( 16 + ofs, 16 + ofs, 150 + ofs, 60 + ofs);
-			task_twi2_lcd_rect(150 + ofs, 60 + ofs, 30, 30);
-			task_twi2_lcd_circ(150 + ofs, 60 + ofs, 20);
-			task_twi2_lcd_str (116 + ofs, 16 + ofs, "ABCD");
+			task_twi2_lcd_line( 16 + s_ofs, 16 + s_ofs, 150 + s_ofs, 60 + s_ofs);
+			task_twi2_lcd_rect(150 + s_ofs, 60 + s_ofs, 30, 30);
+			task_twi2_lcd_circ(150 + s_ofs, 60 + s_ofs, 20);
+			task_twi2_lcd_str (116 + s_ofs, 16 + s_ofs, "ABCD");
 
-			if (++ofs > 64) {
-				ofs = 0;
+			if (++s_ofs > 64) {
+				s_ofs = 0;
 				task_twi2_lcd_cls();
 			}
 		}
