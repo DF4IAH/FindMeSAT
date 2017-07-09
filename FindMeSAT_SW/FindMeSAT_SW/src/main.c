@@ -41,6 +41,11 @@
 #include "main.h"
 
 
+/* SETTINGS */
+
+#define USE_DAC
+
+
 /* GLOBAL section */
 
 uint8_t						runmode								= 0;
@@ -811,7 +816,9 @@ int main(void)
 	evsys_init();		// Event system
 	tc_init();			// Timers
 	adc_init();			// ADC
+#ifdef USE_DAC
 	dac_init();			// DAC
+#endif
 	twi_init();			// I2C / TWI
 
 	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
@@ -823,7 +830,9 @@ int main(void)
 
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
+#ifdef USE_DAC
 	dac_start();		// Start DA convertions
+#endif
 	adc_start();		// Start AD convertions
 
 	/* Init of USB system */
