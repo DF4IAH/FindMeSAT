@@ -41,6 +41,11 @@
 #include "main.h"
 
 
+/* SETTINGS */
+
+#define USE_DAC
+
+
 /* GLOBAL section */
 
 uint8_t						runmode								= 0;
@@ -117,7 +122,7 @@ uint8_t twi1_m_data[TWI_DATA_LENGTH] = {
 
 twi_package_t twi1_packet = {
 	.buffer      = (void *)twi1_m_data,
-	.no_wait     = false
+	.no_wait     = true
 };
 
 
@@ -135,7 +140,7 @@ uint8_t twi2_m_data[TWI_DATA_LENGTH] = {
 twi_package_t twi2_packet = {
 	.chip        = TWI2_SLAVE_ADDR,
 	.buffer      = (void *)twi2_m_data,
-	.no_wait     = false
+	.no_wait     = true
 };
 
 #ifdef TWI1_SLAVE
@@ -180,6 +185,17 @@ static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0
 	}
 }
 
+void sleep_ms(uint16_t ms)
+{
+	uint32_t tm_end = rtc_get_time() + (((uint32_t)ms << 10) / 1000);
+
+	sleep_enable();
+	do {
+		sleep_cpu();
+	} while (rtc_get_time() >= tm_end);
+	sleep_disable();
+}
+
 void halt(void)
 {
 	/* MAIN Loop Shutdown */
@@ -210,8 +226,9 @@ static void evsys_init(void)
 
 
 /* Forward declarations for TC section */
-static void service_10ms(uint32_t now);
-static void service_500ms(uint32_t now);
+static void isr_10ms(uint32_t now);
+static void isr_500ms(uint32_t now);
+static void isr_sparetime(uint32_t now);
 
 static void tc_init(void)
 {
@@ -254,30 +271,39 @@ void isr_tcc0_ovfl(void)
 	/* Time downscaling */
 	uint32_t now = rtc_get_time();
 
-	/* Section with enabled interrupt follows */
-	cpu_irq_enable();
+	/* Clear IF bit to allow interrupt enabled section */
+	TCC0_INTFLAGS = TC0_OVFIF_bm;
 
 	/* Group, which needs to be called about 100x per second */
 	if (((now - last_10ms) >= 10) || (now < last_10ms)) {
 		last_10ms = now;
-		service_10ms(now);
+		isr_10ms(now);
+		return;
 	}
 
 	/* Group, which needs to be called about 2x per second */
 	if (((now - last_500ms) >= 512) || (now < last_500ms)) {
 		last_500ms = now;
-		service_500ms(now);
+		isr_500ms(now);
+		return;
 	}
+
+	isr_sparetime(now);
 }
 
-static void service_10ms(uint32_t now)
+static void isr_10ms(uint32_t now)
 {
-	service_10ms_twi1_onboard(now);
+	isr_10ms_twi1_onboard(now);
 }
 
-static void service_500ms(uint32_t now)
+static void isr_500ms(uint32_t now)
 {
-	service_500ms_twi1_onboard(now);
+	isr_500ms_twi1_onboard(now);
+}
+
+static void isr_sparetime(uint32_t now)
+{
+	isr_sparetime_twi1_onboard(now);
 }
 
 
@@ -726,9 +752,12 @@ static void task_twi(uint32_t now)
 	task_twi2_lcd(now);
 }
 
-static void task_usb(void)
+static void task_usb(uint32_t now)
 {
 	if (usb_cdc_transfers_autorized) {
+		static uint32_t usb_last = 0UL;
+		irqflags_t flags = 0;
+
 #if 0
 		// Dedicated handling
 
@@ -755,6 +784,27 @@ static void task_usb(void)
 		// stdio_usb_init();
 		// stdio_usb_enable();
 #endif
+
+		/* Monitoring at the USB serial terminal */
+		if (((now - usb_last) >= 512) || (now < usb_last)) {
+			usb_last = now;
+
+			flags = cpu_irq_save();
+			int16_t l_adc_vctcxo_volt_1000	= g_adc_vctcxo_volt_1000;
+			int16_t l_adc_5v0_volt_1000		= g_adc_5v0_volt_1000;
+			int16_t l_adc_vbat_volt_1000	= g_adc_vbat_volt_1000;
+			int16_t l_adc_io_adc4_volt_1000	= g_adc_io_adc4_volt_1000;
+			int16_t l_adc_io_adc5_volt_1000	= g_adc_io_adc5_volt_1000;
+			int16_t l_adc_temp_deg_100		= g_adc_temp_deg_100;
+			int32_t l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
+			int32_t l_twi1_baro_p_100		= g_twi1_baro_p_100;
+			cpu_irq_restore(flags);
+
+			printf("Time = %5ld: U_vctcxo=%4d mV, U_5v0=%4d mV, U_vbat=%4d mV, U_io_adc4=%4d mV, U_io_adc5=%4d mV, mP_Temp=%-2d.%02dC,\tBaro_Temp=%-2ld.%02ld C, Baro_P=%04ld.%02ld hPa\r\n",
+			now >> 10,
+			l_adc_vctcxo_volt_1000, l_adc_5v0_volt_1000, l_adc_vbat_volt_1000, l_adc_io_adc4_volt_1000, l_adc_io_adc5_volt_1000, l_adc_temp_deg_100 / 100, l_adc_temp_deg_100 % 100,
+			l_twi1_baro_temp_100 / 100, l_twi1_baro_temp_100 % 100, l_twi1_baro_p_100 / 100, l_twi1_baro_p_100 % 100);
+		}
 	}
 }
 
@@ -766,7 +816,7 @@ static void task(void)
 	task_dac(now);
 	task_adc(now);
 	task_twi(now);											// Handle TWI1 and TWI2 communications
-	task_usb();												// Handling the USB connection
+	task_usb(now);												// Handling the USB connection
 }
 
 
@@ -790,7 +840,9 @@ int main(void)
 	evsys_init();		// Event system
 	tc_init();			// Timers
 	adc_init();			// ADC
+#ifdef USE_DAC
 	dac_init();			// DAC
+#endif
 	twi_init();			// I2C / TWI
 
 	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
@@ -802,7 +854,9 @@ int main(void)
 
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
+#ifdef USE_DAC
 	dac_start();		// Start DA convertions
+#endif
 	adc_start();		// Start AD convertions
 
 	/* Init of USB system */

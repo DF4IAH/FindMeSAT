@@ -80,7 +80,7 @@
 
 #define TWI1_SLAVE_BARO_ADDR								0x76
 #define TWI1_SLAVE_BARO_REG_RESET							0x1E
-#define TWI1_SLAVE_BARO_REG_VERSION							0x57
+#define TWI1_SLAVE_BARO_REG_VERSION							0xAE
 #define TWI1_SLAVE_BARO_REG_PROM							0xA0
 #define TWI1_SLAVE_BARO_REG_CONV_D1_256						0x40
 #define TWI1_SLAVE_BARO_REG_CONV_D1_512						0x42
@@ -107,16 +107,17 @@
 #define TWI2_MASTER_ADDR									0x20
 #define TWI2_SLAVE_ADDR										TWI_SMART_LCD_ADDR
 #define TWI2_SPEED											400000
+#define TWI2_STR_MAXLEN										6
 
 #define TWI_DATA_LENGTH										TWIS_SEND_BUFFER_SIZE
-
 
 
 void twi_init(void);
 void twi_start(void);
 
-void service_10ms_twi1_onboard(uint32_t now);
-void service_500ms_twi1_onboard(uint32_t now);
+void isr_10ms_twi1_onboard(uint32_t now);
+void isr_500ms_twi1_onboard(uint32_t now);
+void isr_sparetime_twi1_onboard(uint32_t now);
 
 void task_twi1_onboard(uint32_t now);
 void task_twi2_lcd(uint32_t now);
