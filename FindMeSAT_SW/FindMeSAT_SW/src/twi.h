@@ -107,9 +107,9 @@
 #define TWI2_MASTER_ADDR									0x20
 #define TWI2_SLAVE_ADDR										TWI_SMART_LCD_ADDR
 #define TWI2_SPEED											400000
+#define TWI2_STR_MAXLEN										6
 
 #define TWI_DATA_LENGTH										TWIS_SEND_BUFFER_SIZE
-
 
 
 void twi_init(void);

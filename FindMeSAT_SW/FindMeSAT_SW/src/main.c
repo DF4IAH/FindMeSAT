@@ -726,9 +726,12 @@ static void task_twi(uint32_t now)
 	task_twi2_lcd(now);
 }
 
-static void task_usb(void)
+static void task_usb(uint32_t now)
 {
 	if (usb_cdc_transfers_autorized) {
+		static uint32_t usb_last = 0UL;
+		irqflags_t flags = 0;
+
 #if 0
 		// Dedicated handling
 
@@ -755,6 +758,24 @@ static void task_usb(void)
 		// stdio_usb_init();
 		// stdio_usb_enable();
 #endif
+
+		/* Monitoring at the USB serial terminal */
+		if (((now - usb_last) >= 512) || (now < usb_last)) {
+			usb_last = now;
+
+			flags = cpu_irq_save();
+			int16_t l_adc_vctcxo_volt_1000	= g_adc_vctcxo_volt_1000;
+			int16_t l_adc_5v0_volt_1000		= g_adc_5v0_volt_1000;
+			int16_t l_adc_vbat_volt_1000	= g_adc_vbat_volt_1000;
+			int16_t l_adc_io_adc4_volt_1000	= g_adc_io_adc4_volt_1000;
+			int16_t l_adc_io_adc5_volt_1000	= g_adc_io_adc5_volt_1000;
+			int16_t l_adc_temp_deg_100		= g_adc_temp_deg_100;
+			int32_t l_adc_temp_cur			= g_adc_temp_cur;
+			cpu_irq_restore(flags);
+
+			printf("time = %5ld: vctcxo=%4d mV, 5v0=%4d mV, vbat=%4d mV, adc4=%4d mV, adc5=%4d mV, temp=%-2d.%02dC (ADC_cur=%ld)\r\n", now >> 10,
+			l_adc_vctcxo_volt_1000, l_adc_5v0_volt_1000, l_adc_vbat_volt_1000, l_adc_io_adc4_volt_1000, l_adc_io_adc5_volt_1000, l_adc_temp_deg_100 / 100, l_adc_temp_deg_100 % 100, l_adc_temp_cur);
+		}
 	}
 }
 
@@ -766,7 +787,7 @@ static void task(void)
 	task_dac(now);
 	task_adc(now);
 	task_twi(now);											// Handle TWI1 and TWI2 communications
-	task_usb();												// Handling the USB connection
+	task_usb(now);												// Handling the USB connection
 }
 
 
