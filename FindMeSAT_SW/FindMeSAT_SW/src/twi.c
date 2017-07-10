@@ -39,6 +39,10 @@ extern int32_t			g_twi1_baro_p_100;
 
 extern bool				g_twi1_hygro_valid;
 extern uint8_t			g_twi1_hygro_status;
+extern uint16_t			g_twi1_hygro_S_T;
+extern uint16_t			g_twi1_hygro_S_RH;
+extern int16_t			g_twi1_hygro_T_100;
+extern int16_t			g_twi1_hygro_RH_100;
 
 extern uint8_t			g_twi2_lcd_version;
 
@@ -152,7 +156,7 @@ static void init_twi1_hygro(void)
 
 	printf("\r\nTWI-onboard: Hygro SHT31-DIS - I2C address: 0x%02X\r\n", TWI1_SLAVE_HYGRO_ADDR);
 	g_twi1_hygro_status = 0;
-	//
+
 	twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
 	twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_RESET_HI;
 	twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_RESET_LO;
@@ -161,7 +165,7 @@ static void init_twi1_hygro(void)
 	sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
 	if (sc == STATUS_OK) {
 		delay_ms(1);
-		//
+
 		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_STATUS_HI;
 		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_STATUS_LO;
 		twi1_packet.length = 2;
@@ -170,6 +174,11 @@ static void init_twi1_hygro(void)
 			g_twi1_hygro_status = (twi1_m_data[0] << 8) | twi1_m_data[1];
 			g_twi1_hygro_valid = true;
 			printf("TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n", g_twi1_hygro_status);
+
+			/* Start cyclic measurements with 2 MPS @ high repeatability */
+			twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_PERIODIC_2MPS_HIPREC_HI;
+			twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_PERIODIC_2MPS_HIPREC_LO;
+			twi_master_write(&TWI1_MASTER, &twi1_packet);
 		}
 	} else {
 		printf("TWI-onboard:  ... device not on board.\r\n");
@@ -374,6 +383,17 @@ void twi_start(void) {
 
 static void isr_twi1_hygro(uint32_t now, bool sync)
 {
+	/* Read cyclic measurement data */
+	twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
+	twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_FETCH_DATA_HI;
+	twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_FETCH_DATA_LO;
+	twi1_packet.addr_length = 2;
+	twi1_packet.length = 5;
+	status_code_t sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	if (sc == STATUS_OK) {
+		g_twi1_hygro_S_T	= ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
+		g_twi1_hygro_S_RH	= ((uint16_t)twi1_m_data[3] << 8) | twi1_m_data[4];
+	}
 }
 
 static void isr_twi1_gyro(uint32_t now, bool sync)
@@ -497,6 +517,31 @@ void isr_sparetime_twi1_onboard(uint32_t now)
 
 static void task_twi1_hygro(uint32_t now)
 {	// Calculations for the presentation layer
+	static uint16_t s_twi1_hygro_S_T	= 0UL;
+	static uint16_t s_twi1_hygro_S_RH	= 0UL;
+
+	irqflags_t flags = cpu_irq_save();
+	uint16_t l_twi1_hygro_S_T	= g_twi1_hygro_S_T;
+	uint16_t l_twi1_hygro_S_RH	= g_twi1_hygro_S_RH;
+	cpu_irq_restore(flags);
+
+	/* Calculate and present Temp value when a different measurement has arrived */
+	if (l_twi1_hygro_S_T != s_twi1_hygro_S_T) {
+		int16_t temp = (int16_t)((((int32_t)l_twi1_hygro_S_T  * 175) / 0xFFFF) - 45);
+
+		flags = cpu_irq_save();
+		g_twi1_hygro_T_100 = temp;
+		cpu_irq_restore(flags);
+	}
+
+	/* Calculate and present Hygro value when a different measurement has arrived */
+	if (l_twi1_hygro_S_RH != s_twi1_hygro_S_RH) {
+		int16_t rh = (int16_t)( ((int32_t)l_twi1_hygro_S_RH * 100) / 0xFFFF);
+
+		flags = cpu_irq_save();
+		g_twi1_hygro_RH_100 = rh;
+		cpu_irq_restore(flags);
+	}
 }
 
 static void task_twi1_gyro(uint32_t now)
@@ -690,6 +735,8 @@ static void task_twi2_lcd_header(void)
 
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Ba_Temp =");
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Ba_Pres =");
+	task_twi2_lcd_str(6 *  0, (line++) * 10, "Hy_Temp =");
+	task_twi2_lcd_str(6 *  0, (line++) * 10, "Hy_RelH =");
 
 	/* Left measurement units */
 	line = 2;
@@ -703,6 +750,8 @@ static void task_twi2_lcd_header(void)
 
 	task_twi2_lcd_str(6 * 16, (line++) * 10, "C");
 	task_twi2_lcd_str(6 * 18, (line++) * 10, "hPa");
+	task_twi2_lcd_str(6 * 16, (line++) * 10, "C");
+	task_twi2_lcd_str(6 * 16, (line++) * 10, "%");
 }
 
 static void task_twi2_lcd_print_format_uint16(uint8_t x, uint8_t y, int16_t adc_i, int16_t adc_f, const char* fmt)
@@ -739,7 +788,7 @@ void task_twi2_lcd(uint32_t now)
 		//static uint8_t s_ofs = 0;
 
 		/* Show current measurement data on the LCD */
-		if (((now - s_lcd_last) >= 512) || (now < s_lcd_last)) {
+		if (((now - s_lcd_last) >= 1024) || (now < s_lcd_last)) {
 			const uint8_t col_left = 6 * 10;
 			uint8_t line = 2;
 
@@ -755,6 +804,8 @@ void task_twi2_lcd(uint32_t now)
 			int16_t l_adc_io_adc5_volt_1000	= g_adc_io_adc5_volt_1000;
 			int32_t l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
 			int32_t l_twi1_baro_p_100		= g_twi1_baro_p_100;
+			int16_t l_twi1_hygro_T_100		= g_twi1_hygro_T_100;
+			int16_t l_twi1_hygro_RH_100		= g_twi1_hygro_RH_100;
 			cpu_irq_restore(flags);
 
 			/* Repaint all items when starting and at some interval */
@@ -767,7 +818,7 @@ void task_twi2_lcd(uint32_t now)
 			}
 
 			/* ADC_TEMP */
-			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_temp_deg_100 / 100,      (l_adc_temp_deg_100 / 10) % 10,  "%2d.%01d");
+			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_temp_deg_100 / 100,      (l_adc_temp_deg_100 / 10) % 10,  "%02d.%01d");
 
 			/* ADC_5V0 */
 			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_5v0_volt_1000 / 1000,     l_adc_5v0_volt_1000 % 1000,     "%1d.%03d");
@@ -786,10 +837,16 @@ void task_twi2_lcd(uint32_t now)
 			line++;
 
 			/* Baro_Temp */
-			task_twi2_lcd_print_format_uint32(col_left, (line++) * 10, l_twi1_baro_temp_100 / 100,     l_twi1_baro_temp_100 % 100,     "%-2ld.%02ld");
+			task_twi2_lcd_print_format_uint32(col_left, (line++) * 10, l_twi1_baro_temp_100 / 100,     l_twi1_baro_temp_100 % 100,     "%02ld.%02ld");
 
 			/* Baro_P */
-			task_twi2_lcd_print_format_uint32(col_left, (line++) * 10, l_twi1_baro_p_100 / 100,        l_twi1_baro_p_100 % 100,        "%4ld.%02ld");
+			task_twi2_lcd_print_format_uint32(col_left, (line++) * 10, l_twi1_baro_p_100 / 100,        l_twi1_baro_p_100 % 100,        "%04ld.%02ld");
+
+			/* Hygro_Temp */
+			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_twi1_hygro_T_100 / 100,       l_twi1_hygro_T_100 % 100,       "%02d.%02d");
+
+			/* Hygro_RH */
+			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_twi1_hygro_RH_100 / 100,      l_twi1_hygro_RH_100 % 100,      "%02d.%02d");
 		}
 
 		#if 0

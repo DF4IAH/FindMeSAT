@@ -68,6 +68,10 @@ int32_t						g_twi1_baro_p_100					= 0L;
 
 bool						g_twi1_hygro_valid					= false;
 uint8_t						g_twi1_hygro_status					= 0;
+uint16_t					g_twi1_hygro_S_T					= 0;
+uint16_t					g_twi1_hygro_S_RH					= 0;
+int16_t						g_twi1_hygro_T_100					= 0;
+int16_t						g_twi1_hygro_RH_100					= 0;
 
 uint8_t						g_twi2_lcd_version					= 0;
 
@@ -798,12 +802,15 @@ static void task_usb(uint32_t now)
 			int16_t l_adc_temp_deg_100		= g_adc_temp_deg_100;
 			int32_t l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
 			int32_t l_twi1_baro_p_100		= g_twi1_baro_p_100;
+			int16_t l_twi1_hygro_T_100		= g_twi1_hygro_T_100;
+			int16_t l_twi1_hygro_RH_100		= g_twi1_hygro_RH_100;
 			cpu_irq_restore(flags);
 
-			printf("Time = %5ld: U_vctcxo=%4d mV, U_5v0=%4d mV, U_vbat=%4d mV, U_io_adc4=%4d mV, U_io_adc5=%4d mV, mP_Temp=%-2d.%02dC,\tBaro_Temp=%-2ld.%02ld C, Baro_P=%04ld.%02ld hPa\r\n",
+			printf("Time = %5ld: U_vctcxo=%4d mV, U_5v0=%4d mV, U_vbat=%4d mV, U_io_adc4=%4d mV, U_io_adc5=%4d mV, mP_Temp=%02d.%02dC,\tBaro_Temp=%02ld.%02ld C, Baro_P=%4ld.%02ld hPa,\tHygro_Temp=%02d.%02d C, Hygro_RelH=%02d.%02d %%\r\n",
 			now >> 10,
 			l_adc_vctcxo_volt_1000, l_adc_5v0_volt_1000, l_adc_vbat_volt_1000, l_adc_io_adc4_volt_1000, l_adc_io_adc5_volt_1000, l_adc_temp_deg_100 / 100, l_adc_temp_deg_100 % 100,
-			l_twi1_baro_temp_100 / 100, l_twi1_baro_temp_100 % 100, l_twi1_baro_p_100 / 100, l_twi1_baro_p_100 % 100);
+			l_twi1_baro_temp_100 / 100, l_twi1_baro_temp_100 % 100, l_twi1_baro_p_100 / 100, l_twi1_baro_p_100 % 100,
+			l_twi1_hygro_T_100 / 100, l_twi1_hygro_T_100 % 100, l_twi1_hygro_RH_100 / 100, l_twi1_hygro_RH_100 % 100);
 		}
 	}
 }
