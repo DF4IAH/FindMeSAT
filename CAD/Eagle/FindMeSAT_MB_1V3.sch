@@ -10559,7 +10559,6 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="R1112" library="rcl" deviceset="R-EU_" device="R0603" value="6.04kR"/>
 <part name="R1111" library="rcl" deviceset="R-EU_" device="R0603" value="4.02kR"/>
 <part name="GND1112" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R1141" library="rcl" deviceset="R-EU_" device="R0603" value="4.02kR"/>
 <part name="GND1141" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="U1021" library="df4iah_opamp" deviceset="OPA354" device=""/>
 <part name="GND1021" library="df4iah_supply" deviceset="GND" device=""/>
@@ -10662,6 +10661,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="FM1203" library="df4iah_fiducial" deviceset="FIDUCIAL_MARK_1MM" device=""/>
 <part name="FM1204" library="df4iah_fiducial" deviceset="FIDUCIAL_MARK_1MM" device=""/>
 <part name="GND651" library="df4iah_supply" deviceset="GND" device=""/>
+<part name="C1141" library="rcl" deviceset="C-EU" device="C0603" value="100pF"/>
 </parts>
 <sheets>
 <sheet>
@@ -10915,7 +10915,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="27.686" y="127" size="1.778" layer="95" rot="R90"/>
 </segment>
 </net>
-<net name="AD_3V0" class="0">
+<net name="AREFA" class="0">
 <segment>
 <wire x1="88.9" y1="139.7" x2="83.82" y2="139.7" width="0.1524" layer="91"/>
 <label x="83.82" y="139.7" size="1.778" layer="95" rot="R180" xref="yes"/>
@@ -12225,10 +12225,6 @@ Diameter = 1mm, Clearance = 3R</description>
 <junction x="142.24" y="99.06"/>
 <junction x="182.88" y="111.76"/>
 <junction x="124.46" y="111.76"/>
-<wire x1="142.24" y1="93.98" x2="142.24" y2="88.9" width="0.1524" layer="91"/>
-<pinref part="U501" gate="G$1" pin="!RESET"/>
-<wire x1="142.24" y1="88.9" x2="137.16" y2="88.9" width="0.1524" layer="91"/>
-<junction x="142.24" y="93.98"/>
 </segment>
 </net>
 <net name="+3V3" class="7">
@@ -13079,7 +13075,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <plain>
 <text x="139.7" y="134.62" size="1.778" layer="97">0.6V</text>
 <text x="55.88" y="154.94" size="1.778" layer="97">1:0.4 = 2.0V</text>
-<text x="233.68" y="35.56" size="1.778" layer="97">1:0.668 = 2V</text>
+<text x="233.68" y="35.56" size="1.778" layer="97">AREF for ADCA</text>
 <text x="226.06" y="154.94" size="1.778" layer="97">1:0.4 = 2.0V</text>
 </plain>
 <instances>
@@ -13141,11 +13137,14 @@ Diameter = 1mm, Clearance = 3R</description>
 <instance part="R1112" gate="G$1" x="40.64" y="129.54" rot="R90"/>
 <instance part="R1111" gate="G$1" x="40.64" y="109.22" rot="R90"/>
 <instance part="GND1112" gate="1" x="40.64" y="99.06"/>
-<instance part="R1141" gate="G$1" x="215.9" y="38.1" rot="R90"/>
 <instance part="GND1141" gate="1" x="215.9" y="27.94"/>
 <instance part="R1132" gate="G$1" x="175.26" y="162.56"/>
 <instance part="R1131" gate="G$1" x="193.04" y="162.56"/>
 <instance part="GND1131" gate="1" x="203.2" y="157.48"/>
+<instance part="C1141" gate="G$1" x="215.9" y="38.1" smashed="yes">
+<attribute name="NAME" x="212.979" y="32.004" size="1.778" layer="95" rot="R90"/>
+<attribute name="VALUE" x="220.599" y="32.004" size="1.778" layer="96" rot="R90"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -13245,15 +13244,15 @@ Diameter = 1mm, Clearance = 3R</description>
 <wire x1="40.64" y1="101.6" x2="40.64" y2="104.14" width="0.1524" layer="91"/>
 </segment>
 <segment>
-<pinref part="GND1141" gate="1" pin="GND"/>
-<pinref part="R1141" gate="G$1" pin="1"/>
-<wire x1="215.9" y1="30.48" x2="215.9" y2="33.02" width="0.1524" layer="91"/>
-</segment>
-<segment>
 <pinref part="R1131" gate="G$1" pin="2"/>
 <wire x1="198.12" y1="162.56" x2="203.2" y2="162.56" width="0.1524" layer="91"/>
 <wire x1="203.2" y1="162.56" x2="203.2" y2="160.02" width="0.1524" layer="91"/>
 <pinref part="GND1131" gate="1" pin="GND"/>
+</segment>
+<segment>
+<pinref part="GND1141" gate="1" pin="GND"/>
+<pinref part="C1141" gate="G$1" pin="2"/>
+<wire x1="215.9" y1="30.48" x2="215.9" y2="33.02" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="EN" class="0">
@@ -13418,16 +13417,17 @@ Diameter = 1mm, Clearance = 3R</description>
 <junction x="40.64" y="121.92"/>
 </segment>
 </net>
-<net name="AD_3V0" class="0">
+<net name="AREFA" class="0">
 <segment>
-<wire x1="220.98" y1="43.18" x2="220.98" y2="33.02" width="0.1524" layer="91"/>
-<wire x1="220.98" y1="33.02" x2="231.14" y2="33.02" width="0.1524" layer="91"/>
+<wire x1="223.52" y1="43.18" x2="223.52" y2="33.02" width="0.1524" layer="91"/>
+<wire x1="223.52" y1="33.02" x2="231.14" y2="33.02" width="0.1524" layer="91"/>
 <label x="231.14" y="33.02" size="1.778" layer="97" xref="yes"/>
 <pinref part="R1142" gate="G$1" pin="1"/>
-<pinref part="R1141" gate="G$1" pin="2"/>
 <wire x1="215.9" y1="43.18" x2="215.9" y2="45.72" width="0.1524" layer="91"/>
-<wire x1="220.98" y1="43.18" x2="215.9" y2="43.18" width="0.1524" layer="91"/>
+<wire x1="223.52" y1="43.18" x2="215.9" y2="43.18" width="0.1524" layer="91"/>
 <junction x="215.9" y="43.18"/>
+<pinref part="C1141" gate="G$1" pin="1"/>
+<wire x1="215.9" y1="43.18" x2="215.9" y2="40.64" width="0.1524" layer="91"/>
 </segment>
 </net>
 <net name="AD_VBAT" class="0">
