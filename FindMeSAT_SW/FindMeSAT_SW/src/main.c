@@ -51,6 +51,8 @@
 uint8_t						runmode								= 0;
 bool						usb_cdc_transfers_autorized			= false;
 
+uint32_t					g_rtc_alarm							= 0UL;
+
 bool						g_twi1_gsm_valid					= false;
 uint8_t						g_twi1_gsm_version					= 0;
 
@@ -191,12 +193,31 @@ static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0
 
 void sleep_ms(uint16_t ms)
 {
-	uint32_t tm_end = rtc_get_time() + (((uint32_t)ms << 10) / 1000);
+	/* Sanity checks */
+	if (ms < 2) {
+		ms = 2;																	// Minimal value to use to work properly
+	} else if (ms > 30000U) {
+		ms = 30000U;
+	}
+
+	/* Set time to wake up */
+	uint32_t l_rtc_alarm = rtc_get_time();
+	l_rtc_alarm += ((uint32_t)ms << 10) / 1000;
+	uint32_t l_rtc_alarm_current;
+
+	irqflags_t flags = cpu_irq_save();
+	g_rtc_alarm = l_rtc_alarm;
+	cpu_irq_restore(flags);
+	rtc_set_alarm(l_rtc_alarm);
 
 	sleep_enable();
 	do {
 		sleep_cpu();
-	} while (rtc_get_time() >= tm_end);
+
+		flags = cpu_irq_save();
+		l_rtc_alarm_current = g_rtc_alarm;
+		cpu_irq_restore(flags);
+	} while (rtc_get_time() >= l_rtc_alarm || !l_rtc_alarm_current);
 	sleep_disable();
 }
 
@@ -318,7 +339,8 @@ static void rtc_start(void)
 
 void isr_rtc_alarm(uint32_t rtc_time)
 {	// Alarm call-back with the current time
-	// nothing implemented yet...
+	// important to wake-up from sleep state - done
+	g_rtc_alarm = 0;
 }
 
 

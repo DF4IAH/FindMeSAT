@@ -135,7 +135,7 @@ static void init_twi1_gsm(void)
 	*/
 	printf("\r\nTWI-onboard: GSM/BT/GPS SIM808 - I2C address: 0x%02X\r\n", TWI1_SLAVE_GSM_ADDR);
 	g_twi1_gsm_version = 0;
-	//
+
 	twi1_packet.chip = TWI1_SLAVE_GSM_ADDR;
 	twi1_packet.addr[0] = TWI1_SLAVE_GSM_REG_1_DEVICE_ID;
 	twi1_packet.addr_length = 1;
@@ -145,7 +145,7 @@ static void init_twi1_gsm(void)
 		g_twi1_gsm_version = twi1_m_data[0];
 		printf("TWI-onboard: GSM/BT/GPS SIM808 -     version: 0x%02X\r\n", g_twi1_gsm_version);
 	} else {
-		printf("TWI-onboard:  ... device not on board.\r\n");
+		printf("TWI-onboard:  ... device not on board. (sc=%d)\r\n", sc);
 	}
 }
 #endif
@@ -158,30 +158,45 @@ static void init_twi1_hygro(void)
 	g_twi1_hygro_status = 0;
 
 	twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
-	twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_RESET_HI;
-	twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_RESET_LO;
+	twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_BREAK_HI;
+	twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_BREAK_LO;
 	twi1_packet.addr_length = 2;
 	twi1_packet.length = 0;
 	sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
 	if (sc == STATUS_OK) {
-		delay_ms(1);
+		delay_ms(2);
 
-		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_STATUS_HI;
-		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_STATUS_LO;
-		twi1_packet.length = 2;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_RESET_HI;
+		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_RESET_LO;
+		twi1_packet.addr_length = 2;
+		twi1_packet.length = 0;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
 		if (sc == STATUS_OK) {
-			g_twi1_hygro_status = (twi1_m_data[0] << 8) | twi1_m_data[1];
-			g_twi1_hygro_valid = true;
-			printf("TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n", g_twi1_hygro_status);
+			delay_ms(2);
 
-			/* Start cyclic measurements with 2 MPS @ high repeatability */
-			twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_PERIODIC_2MPS_HIPREC_HI;
-			twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_PERIODIC_2MPS_HIPREC_LO;
-			twi_master_write(&TWI1_MASTER, &twi1_packet);
+			twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_STATUS_HI;
+			twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_STATUS_LO;
+			twi1_packet.addr_length = 2;
+			twi1_packet.length = 2;
+			sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+			if (sc == STATUS_OK) {
+				g_twi1_hygro_status = (twi1_m_data[0] << 8) | twi1_m_data[1];
+				printf("TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n", g_twi1_hygro_status);
+
+				/* Start cyclic measurements with 2 MPS @ high repeatability */
+				twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_PERIODIC_2MPS_HIPREC_HI;
+				twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_PERIODIC_2MPS_HIPREC_LO;
+				twi1_packet.addr_length = 2;
+				twi1_packet.length = 0;
+				sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+				if (sc == STATUS_OK) {
+					g_twi1_hygro_valid = true;
+					printf("TWI-onboard:  INIT success.\r\n");
+				}
+			}
 		}
 	} else {
-		printf("TWI-onboard:  ... device not on board.\r\n");
+		printf("TWI-onboard:  ... device not on board. (sc=%d)\r\n", sc);
 	}
 }
 
@@ -192,14 +207,13 @@ static void init_twi1_gyro(void)
 	printf("\r\nTWI-onboard: Gyro MPU-9250 - I2C address: 0x%02X, 0x%02X\r\n", TWI1_SLAVE_GYRO_ADDR_1, TWI1_SLAVE_GYRO_ADDR_2);
 	g_twi1_gyro_1_version = 0;
 	g_twi1_gyro_2_version = 0;
-	//
+
 	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
 	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_RESET;
 	twi1_packet.addr_length = 1;
 	twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_RESET;
 	twi1_packet.length = 1;
 	sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
-	//
 	if (sc == STATUS_OK) {
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
 		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_RESET;
@@ -209,7 +223,7 @@ static void init_twi1_gyro(void)
 		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
 		if (sc == STATUS_OK) {
 			delay_ms(10);
-			//
+
 			twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
 			twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_WHOAMI;
 			twi1_packet.addr_length = 1;
@@ -217,7 +231,7 @@ static void init_twi1_gyro(void)
 			sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
 			if (sc == STATUS_OK) {
 				g_twi1_gyro_1_version = twi1_m_data[0];
-				//
+
 				twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
 				twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_DEVICE_ID;
 				sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
@@ -229,7 +243,7 @@ static void init_twi1_gyro(void)
 			}
 		}
 	} else {
-		printf("TWI-onboard:  ... device not on board.\r\n");
+		printf("TWI-onboard:  ... device not on board. (sc=%d)\r\n", sc);
 	}
 }
 
@@ -247,13 +261,14 @@ static void init_twi1_baro(void)
 		delay_ms(3);
 
 		twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_VERSION;
+		twi1_packet.addr_length = 1;
 		twi1_packet.length = 2;
 		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
 		if (sc == STATUS_OK) {
 			g_twi1_baro_version = (((uint16_t)twi1_m_data[0] << 8) | (uint16_t)twi1_m_data[1]) >> 4;
 			printf("TWI-onboard: Baro MS560702BA03-50 -     serial#: %d\r\n", g_twi1_baro_version);
 		} else {
-			printf("TWI-onboard:  BAD reading serial/CRC word.\r\n");
+			printf("TWI-onboard:  BAD reading serial/CRC word. (sc=%d)\r\n", sc);
 		}
 
 		for (int adr = 1; adr < C_TWI1_BARO_C_CNT; ++adr) {
@@ -268,12 +283,12 @@ static void init_twi1_baro(void)
 					printf("TWI-onboard:  INIT success.\r\n");
 				}
 			} else {
-				printf("TWI-onboard:  BAD reading PROM address %d.\r\n", adr);
+				printf("TWI-onboard:  BAD reading PROM address %d. (sc=%d)\r\n", adr, sc);
 				break;
 			}
 		}
 	} else {
-		printf("TWI-onboard:  ... device not on board.\r\n");
+		printf("TWI-onboard:  ... device not on board. (sc=%d)\r\n", sc);
 	}
 }
 
@@ -383,6 +398,10 @@ void twi_start(void) {
 
 static void isr_twi1_hygro(uint32_t now, bool sync)
 {
+	if (!sync) {
+		return;
+	}
+
 	/* Read cyclic measurement data */
 	twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
 	twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_FETCH_DATA_HI;
@@ -527,19 +546,19 @@ static void task_twi1_hygro(uint32_t now)
 
 	/* Calculate and present Temp value when a different measurement has arrived */
 	if (l_twi1_hygro_S_T != s_twi1_hygro_S_T) {
-		int16_t temp = (int16_t)((((int32_t)l_twi1_hygro_S_T  * 175) / 0xFFFF) - 45);
+		int16_t temp_100 = (int16_t)((((int32_t)l_twi1_hygro_S_T  * 17500) / 0xFFFF) - 4500);
 
 		flags = cpu_irq_save();
-		g_twi1_hygro_T_100 = temp;
+		g_twi1_hygro_T_100 = temp_100;
 		cpu_irq_restore(flags);
 	}
 
 	/* Calculate and present Hygro value when a different measurement has arrived */
 	if (l_twi1_hygro_S_RH != s_twi1_hygro_S_RH) {
-		int16_t rh = (int16_t)( ((int32_t)l_twi1_hygro_S_RH * 100) / 0xFFFF);
+		int16_t rh_100 = (int16_t)( ((int32_t)l_twi1_hygro_S_RH * 10000) / 0xFFFF);
 
 		flags = cpu_irq_save();
-		g_twi1_hygro_RH_100 = rh;
+		g_twi1_hygro_RH_100 = rh_100;
 		cpu_irq_restore(flags);
 	}
 }
