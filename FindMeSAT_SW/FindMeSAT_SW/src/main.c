@@ -51,6 +51,8 @@
 uint8_t						runmode								= 0;
 bool						usb_cdc_transfers_autorized			= false;
 
+uint32_t					g_rtc_alarm							= 0UL;
+
 bool						g_twi1_gsm_valid					= false;
 uint8_t						g_twi1_gsm_version					= 0;
 
@@ -68,6 +70,10 @@ int32_t						g_twi1_baro_p_100					= 0L;
 
 bool						g_twi1_hygro_valid					= false;
 uint8_t						g_twi1_hygro_status					= 0;
+uint16_t					g_twi1_hygro_S_T					= 0;
+uint16_t					g_twi1_hygro_S_RH					= 0;
+int16_t						g_twi1_hygro_T_100					= 0;
+int16_t						g_twi1_hygro_RH_100					= 0;
 
 uint8_t						g_twi2_lcd_version					= 0;
 
@@ -187,12 +193,31 @@ static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0
 
 void sleep_ms(uint16_t ms)
 {
-	uint32_t tm_end = rtc_get_time() + (((uint32_t)ms << 10) / 1000);
+	/* Sanity checks */
+	if (ms < 2) {
+		ms = 2;																	// Minimal value to use to work properly
+	} else if (ms > 30000U) {
+		ms = 30000U;
+	}
+
+	/* Set time to wake up */
+	uint32_t l_rtc_alarm = rtc_get_time();
+	l_rtc_alarm += ((uint32_t)ms << 10) / 1000;
+	uint32_t l_rtc_alarm_current;
+
+	irqflags_t flags = cpu_irq_save();
+	g_rtc_alarm = l_rtc_alarm;
+	cpu_irq_restore(flags);
+	rtc_set_alarm(l_rtc_alarm);
 
 	sleep_enable();
 	do {
 		sleep_cpu();
-	} while (rtc_get_time() >= tm_end);
+
+		flags = cpu_irq_save();
+		l_rtc_alarm_current = g_rtc_alarm;
+		cpu_irq_restore(flags);
+	} while (rtc_get_time() >= l_rtc_alarm || !l_rtc_alarm_current);
 	sleep_disable();
 }
 
@@ -314,7 +339,8 @@ static void rtc_start(void)
 
 void isr_rtc_alarm(uint32_t rtc_time)
 {	// Alarm call-back with the current time
-	// nothing implemented yet...
+	// important to wake-up from sleep state - done
+	g_rtc_alarm = 0;
 }
 
 
@@ -798,12 +824,15 @@ static void task_usb(uint32_t now)
 			int16_t l_adc_temp_deg_100		= g_adc_temp_deg_100;
 			int32_t l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
 			int32_t l_twi1_baro_p_100		= g_twi1_baro_p_100;
+			int16_t l_twi1_hygro_T_100		= g_twi1_hygro_T_100;
+			int16_t l_twi1_hygro_RH_100		= g_twi1_hygro_RH_100;
 			cpu_irq_restore(flags);
 
-			printf("Time = %5ld: U_vctcxo=%4d mV, U_5v0=%4d mV, U_vbat=%4d mV, U_io_adc4=%4d mV, U_io_adc5=%4d mV, mP_Temp=%-2d.%02dC,\tBaro_Temp=%-2ld.%02ld C, Baro_P=%04ld.%02ld hPa\r\n",
+			printf("Time = %5ld: U_vctcxo=%4d mV, U_5v0=%4d mV, U_vbat=%4d mV, U_io_adc4=%4d mV, U_io_adc5=%4d mV, mP_Temp=%02d.%02dC,\tBaro_Temp=%02ld.%02ld C, Baro_P=%4ld.%02ld hPa,\tHygro_Temp=%02d.%02d C, Hygro_RelH=%02d.%02d %%\r\n",
 			now >> 10,
 			l_adc_vctcxo_volt_1000, l_adc_5v0_volt_1000, l_adc_vbat_volt_1000, l_adc_io_adc4_volt_1000, l_adc_io_adc5_volt_1000, l_adc_temp_deg_100 / 100, l_adc_temp_deg_100 % 100,
-			l_twi1_baro_temp_100 / 100, l_twi1_baro_temp_100 % 100, l_twi1_baro_p_100 / 100, l_twi1_baro_p_100 % 100);
+			l_twi1_baro_temp_100 / 100, l_twi1_baro_temp_100 % 100, l_twi1_baro_p_100 / 100, l_twi1_baro_p_100 % 100,
+			l_twi1_hygro_T_100 / 100, l_twi1_hygro_T_100 % 100, l_twi1_hygro_RH_100 / 100, l_twi1_hygro_RH_100 % 100);
 		}
 	}
 }
