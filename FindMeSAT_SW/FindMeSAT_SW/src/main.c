@@ -48,7 +48,7 @@
 
 /* GLOBAL section */
 
-uint8_t						runmode								= 0;
+WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 bool						usb_cdc_transfers_autorized			= false;
 
 uint32_t					g_rtc_alarm							= 0UL;
@@ -224,7 +224,9 @@ void sleep_ms(uint16_t ms)
 void halt(void)
 {
 	/* MAIN Loop Shutdown */
-	runmode = 0;
+	irqflags_t flags = cpu_irq_save();
+	g_workmode = WORKMODE_END;
+	cpu_irq_restore(flags);
 }
 
 
@@ -299,21 +301,23 @@ void isr_tcc0_ovfl(void)
 	/* Clear IF bit to allow interrupt enabled section */
 	TCC0_INTFLAGS = TC0_OVFIF_bm;
 
-	/* Group, which needs to be called about 100x per second */
-	if (((now - last_10ms) >= 10) || (now < last_10ms)) {
-		last_10ms = now;
-		isr_10ms(now);
-		return;
-	}
+	if (g_workmode == WORKMODE_RUN) {
+		/* Group, which needs to be called about 100x per second */
+		if (((now - last_10ms) >= 10) || (now < last_10ms)) {
+			last_10ms = now;
+			isr_10ms(now);
+			return;
+		}
 
-	/* Group, which needs to be called about 2x per second */
-	if (((now - last_500ms) >= 512) || (now < last_500ms)) {
-		last_500ms = now;
-		isr_500ms(now);
-		return;
-	}
+		/* Group, which needs to be called about 2x per second */
+		if (((now - last_500ms) >= 512) || (now < last_500ms)) {
+			last_500ms = now;
+			isr_500ms(now);
+			return;
+		}
 
-	isr_sparetime(now);
+		isr_sparetime(now);
+	}
 }
 
 static void isr_10ms(uint32_t now)
@@ -839,13 +843,19 @@ static void task_usb(uint32_t now)
 
 static void task(void)
 {
-	uint32_t now = rtc_get_time();
+	irqflags_t flags = cpu_irq_save();
+	WORKMODE_ENUM_t l_workmode = g_workmode;
+	cpu_irq_restore(flags);
 
-	/* TASK when woken up and all ISRs are done */
-	task_dac(now);
-	task_adc(now);
-	task_twi(now);											// Handle TWI1 and TWI2 communications
-	task_usb(now);												// Handling the USB connection
+	if (l_workmode == WORKMODE_RUN) {
+		uint32_t now = rtc_get_time();
+
+		/* TASK when woken up and all ISRs are done */
+		task_dac(now);
+		task_adc(now);
+		task_twi(now);										// Handle TWI1 and TWI2 communications
+		task_usb(now);										// Handling the USB connection
+	}
 }
 
 
@@ -854,6 +864,7 @@ int main(void)
 	uint8_t retcode = 0;
 
 	/* Init of interrupt system */
+	g_workmode = WORKMODE_INIT;
 	irq_initialize_vectors();
 	pmic_init();
 	pmic_set_scheduling(PMIC_SCH_FIXED_PRIORITY);
@@ -895,10 +906,17 @@ int main(void)
 	twi_start();		// Start TWI
 
 	/* The application code */
-	runmode = 1;
-    while (runmode) {
+	irqflags_t flags = cpu_irq_save();
+	WORKMODE_ENUM_t l_workmode = g_workmode = WORKMODE_RUN;
+	cpu_irq_restore(flags);
+
+    while (l_workmode) {
 		task();
 		sleepmgr_enter_sleep();
+
+		flags = cpu_irq_save();
+		l_workmode = g_workmode;
+		cpu_irq_restore(flags);
     }
 
 	cpu_irq_disable();
