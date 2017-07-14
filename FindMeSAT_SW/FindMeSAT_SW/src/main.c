@@ -82,6 +82,7 @@ struct adc_config			g_adc_a_conf						= { 0 };
 struct adc_channel_config	g_adcch_vctcxo_5v0_vbat_conf		= { 0 };
 struct adc_channel_config	g_adcch_io_adc4_conf				= { 0 };
 struct adc_channel_config	g_adcch_io_adc5_conf				= { 0 };
+struct adc_channel_config	g_adcch_silence_conf				= { 0 };
 
 struct adc_config			g_adc_b_conf						= { 0 };
 struct adc_channel_config	g_adcch_temp_conf					= { 0 };
@@ -101,6 +102,9 @@ uint16_t					g_adc_io_adc4_cnt					= 0;
 int32_t						g_adc_io_adc5_cur					= 0;
 int32_t						g_adc_io_adc5_sum					= 0;
 uint16_t					g_adc_io_adc5_cnt					= 0;
+int32_t						g_adc_silence_cur					= 0;
+int32_t						g_adc_silence_sum					= 0;
+uint16_t					g_adc_silence_cnt					= 0;
 int32_t						g_adc_temp_cur						= 0;
 int32_t						g_adc_temp_sum						= 0;
 uint16_t					g_adc_temp_cnt						= 0;
@@ -109,6 +113,7 @@ int16_t						g_adc_5v0_volt_1000					= 0;
 int16_t						g_adc_vbat_volt_1000				= 0;
 int16_t						g_adc_io_adc4_volt_1000				= 0;
 int16_t						g_adc_io_adc5_volt_1000				= 0;
+int16_t						g_adc_silence_volt_1000				= 0;
 int16_t						g_adc_temp_deg_100					= 0;
 
 char						g_prepare_buf[48]					= "";
@@ -365,6 +370,7 @@ static void adc_init(void)
 	adcch_read_configuration(&ADC_VCTCXO_5V0_VBAT, ADC_VCTCXO_5V0_VBAT_CH,	&g_adcch_vctcxo_5v0_vbat_conf);
 	adcch_read_configuration(&ADC_IO_ADC4, ADC_IO_ADC4_CH,					&g_adcch_io_adc4_conf);
 	adcch_read_configuration(&ADC_IO_ADC5, ADC_IO_ADC5_CH,					&g_adcch_io_adc5_conf);
+	adcch_read_configuration(&ADC_SILENCE, ADC_SILENCE_CH,					&g_adcch_silence_conf);
 	adc_read_configuration(&ADC_TEMP,										&g_adc_b_conf);
 	adcch_read_configuration(&ADC_TEMP, ADC_TEMP_CH,						&g_adcch_temp_conf);
 
@@ -373,8 +379,9 @@ static void adc_init(void)
 	adc_set_clock_rate(&g_adc_b_conf,  115000UL);												// Internal signals: 100kHz ..  125kHz
 
 	/* Enable internal ADC-B input for temperature measurement */
-	adc_disable_internal_input(&g_adc_a_conf,		ADC_INT_TEMPSENSE | ADC_INT_BANDGAP);
-	adc_enable_internal_input(&g_adc_b_conf,		ADC_INT_TEMPSENSE | ADC_INT_BANDGAP);
+	adc_disable_internal_input(&g_adc_a_conf,		ADC_INT_TEMPSENSE				   );
+	adc_enable_internal_input (&g_adc_a_conf,							ADC_INT_BANDGAP);
+	adc_enable_internal_input (&g_adc_b_conf,		ADC_INT_TEMPSENSE | ADC_INT_BANDGAP);
 
 	/* Current limitation */
 	adc_set_current_limit(&g_adc_a_conf,			ADC_CURRENT_LIMIT_LOW);
@@ -388,6 +395,7 @@ static void adc_init(void)
 	adcch_set_input(&g_adcch_vctcxo_5v0_vbat_conf,	ADCCH_POS_PIN1,			ADCCH_NEG_NONE, 1);
 	adcch_set_input(&g_adcch_io_adc4_conf,			ADCCH_POS_PIN4,			ADCCH_NEG_NONE, 1);
 	adcch_set_input(&g_adcch_io_adc5_conf,			ADCCH_POS_PIN5,			ADCCH_NEG_NONE, 1);
+	adcch_set_input(&g_adcch_silence_conf,			ADCCH_POS_BANDGAP,		ADCCH_NEG_NONE, 1);
 	adcch_set_input(&g_adcch_temp_conf,				ADCCH_POS_TEMPSENSE,	ADCCH_NEG_NONE, 1);
 
 	/* Convertion and reference */
@@ -398,7 +406,7 @@ static void adc_init(void)
 	adcch_set_pin_scan(&g_adcch_vctcxo_5v0_vbat_conf, 0, 2);									// ADC-A: scan between ADC1 .. ADC3
 
 	/* Trigger */
-	adc_set_conversion_trigger(&g_adc_a_conf, ADC_TRIG_EVENT_SINGLE, 3, 1);
+	adc_set_conversion_trigger(&g_adc_a_conf, ADC_TRIG_EVENT_SINGLE, 4, 1);
 	adc_set_conversion_trigger(&g_adc_b_conf, ADC_TRIG_EVENT_SINGLE, 1, 0);
 
 	/* Interrupt service routine */
@@ -409,12 +417,14 @@ static void adc_init(void)
 	adcch_set_interrupt_mode(&g_adcch_vctcxo_5v0_vbat_conf,	ADCCH_MODE_COMPLETE);
 	adcch_set_interrupt_mode(&g_adcch_io_adc4_conf,			ADCCH_MODE_COMPLETE);
 	adcch_set_interrupt_mode(&g_adcch_io_adc5_conf,			ADCCH_MODE_COMPLETE);
+	adcch_set_interrupt_mode(&g_adcch_silence_conf,			ADCCH_MODE_COMPLETE);
 	adcch_set_interrupt_mode(&g_adcch_temp_conf,			ADCCH_MODE_COMPLETE);
 
 	/* Interrupt enable */
 	adcch_enable_interrupt(&g_adcch_vctcxo_5v0_vbat_conf);
 	adcch_enable_interrupt(&g_adcch_io_adc4_conf);
 	adcch_enable_interrupt(&g_adcch_io_adc5_conf);
+	adcch_enable_interrupt(&g_adcch_silence_conf);
 	adcch_enable_interrupt(&g_adcch_temp_conf);
 
 	/* Execute the new settings */
@@ -422,6 +432,7 @@ static void adc_init(void)
 	adcch_write_configuration(&ADC_VCTCXO_5V0_VBAT,	ADC_VCTCXO_5V0_VBAT_CH,	&g_adcch_vctcxo_5v0_vbat_conf);
 	adcch_write_configuration(&ADC_IO_ADC4,			ADC_IO_ADC4_CH,			&g_adcch_io_adc4_conf);
 	adcch_write_configuration(&ADC_IO_ADC5,			ADC_IO_ADC5_CH,			&g_adcch_io_adc5_conf);
+	adcch_write_configuration(&ADC_SILENCE,			ADC_SILENCE_CH,			&g_adcch_silence_conf);
 	adc_write_configuration(&ADCB,											&g_adc_b_conf);
 	adcch_write_configuration(&ADC_TEMP,			ADC_TEMP_CH,			&g_adcch_temp_conf);
 
@@ -481,6 +492,13 @@ void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 		if (++g_adc_io_adc5_cnt >= C_ADC_SUM_CNT) {
 			g_adc_io_adc5_cur = (g_adc_io_adc5_sum >> C_ADC_SUM_SHIFT);
 			g_adc_io_adc5_sum = g_adc_io_adc5_cnt = 0;
+		}
+
+	} else if (ch_mask & ADC_SILENCE_CH) {
+		g_adc_silence_sum += val;
+		if (++g_adc_silence_cnt >= C_ADC_SUM_CNT) {
+			g_adc_silence_cur = (g_adc_silence_sum >> C_ADC_SUM_SHIFT);
+			g_adc_silence_sum = g_adc_silence_cnt = 0;
 		}
 	}
 }
@@ -751,15 +769,17 @@ static void task_adc(uint32_t now)
 		int32_t l_adc_vbat_cur		= g_adc_vbat_cur;
 		int32_t l_adc_io_adc4_cur	= g_adc_io_adc4_cur;
 		int32_t l_adc_io_adc5_cur	= g_adc_io_adc5_cur;
+		int32_t l_adc_silence_cur	= g_adc_silence_cur;
 		int32_t l_adc_temp_cur		= g_adc_temp_cur;
 		cpu_irq_restore(flags);
 
-		int16_t l_adc_vctcxo_volt_1000	= (uint16_t) (((( 1000 * l_adc_vctcxo_cur ) / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS                    )  - 1000 * C_VCTCXO_DELTA_VOLTS);
-		int16_t l_adc_5v0_volt_1000		= (uint16_t) (((  1000 * l_adc_5v0_cur    ) / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS * C_VCC_5V0_MULT   );
-		int16_t l_adc_vbat_volt_1000	= (uint16_t) (((  1000 * l_adc_vbat_cur   ) / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS * C_VCC_VBAT_MULT  );
-		int16_t l_adc_io_adc4_volt_1000	= (uint16_t) (((  1000 * l_adc_io_adc4_cur) / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS                    );
-		int16_t l_adc_io_adc5_volt_1000	= (uint16_t) (((  1000 * l_adc_io_adc5_cur) / ((float)C_ADC_STEPS)) * C_VCC_3V0_AREF_VOLTS                    );
-		int16_t l_adc_temp_deg_100		= (uint16_t) ((((  100 * l_adc_temp_cur   ) / ((float)C_ADC_STEPS))                        * C_TEMPSENSE_MULT )  -  100 * C_0DEGC_K);
+		int16_t l_adc_vctcxo_volt_1000	= (uint16_t) (((( 1000L * l_adc_vctcxo_cur  * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS))  - 1000 * C_VCTCXO_DELTA_VOLTS);
+		int16_t l_adc_5v0_volt_1000		= (uint16_t) (((  1000L * l_adc_5v0_cur     * C_VCC_3V0_AREF_VOLTS * C_VCC_5V0_MULT  ) / C_ADC_STEPS));
+		int16_t l_adc_vbat_volt_1000	= (uint16_t) (((  1000L * l_adc_vbat_cur    * C_VCC_3V0_AREF_VOLTS * C_VCC_VBAT_MULT ) / C_ADC_STEPS));
+		int16_t l_adc_io_adc4_volt_1000	= (uint16_t) (((  1000L * l_adc_io_adc4_cur * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS));
+		int16_t l_adc_io_adc5_volt_1000	= (uint16_t) (((  1000L * l_adc_io_adc5_cur * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS));
+		int16_t l_adc_silence_volt_1000	= (uint16_t) (((  1000L * l_adc_silence_cur * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS));
+		int16_t l_adc_temp_deg_100		= (uint16_t) ((((  100L * l_adc_temp_cur                           * C_TEMPSENSE_MULT) / C_ADC_STEPS))  -  100 * C_0DEGC_K);
 
 		flags = cpu_irq_save();
 		g_adc_vctcxo_volt_1000	= l_adc_vctcxo_volt_1000;
@@ -767,6 +787,7 @@ static void task_adc(uint32_t now)
 		g_adc_vbat_volt_1000	= l_adc_vbat_volt_1000;
 		g_adc_io_adc4_volt_1000	= l_adc_io_adc4_volt_1000;
 		g_adc_io_adc5_volt_1000	= l_adc_io_adc5_volt_1000;
+		g_adc_silence_volt_1000	= l_adc_silence_volt_1000;
 		g_adc_temp_deg_100		= l_adc_temp_deg_100;
 		cpu_irq_restore(flags);
 	}
@@ -825,6 +846,7 @@ static void task_usb(uint32_t now)
 			int16_t l_adc_vbat_volt_1000	= g_adc_vbat_volt_1000;
 			int16_t l_adc_io_adc4_volt_1000	= g_adc_io_adc4_volt_1000;
 			int16_t l_adc_io_adc5_volt_1000	= g_adc_io_adc5_volt_1000;
+			int16_t l_adc_silence_volt_1000	= g_adc_silence_volt_1000;
 			int16_t l_adc_temp_deg_100		= g_adc_temp_deg_100;
 			int32_t l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
 			int32_t l_twi1_baro_p_100		= g_twi1_baro_p_100;
@@ -832,9 +854,9 @@ static void task_usb(uint32_t now)
 			int16_t l_twi1_hygro_RH_100		= g_twi1_hygro_RH_100;
 			cpu_irq_restore(flags);
 
-			printf("Time = %5ld: U_vctcxo=%4d mV, U_5v0=%4d mV, U_vbat=%4d mV, U_io_adc4=%4d mV, U_io_adc5=%4d mV, mP_Temp=%02d.%02dC,\tBaro_Temp=%02ld.%02ld C, Baro_P=%4ld.%02ld hPa,\tHygro_Temp=%02d.%02d C, Hygro_RelH=%02d.%02d %%\r\n",
+			printf("Time = %5ld: U_vctcxo=%4d mV, U_5v0=%4d mV, U_vbat=%4d mV, U_io_adc4=%4d mV, U_io_adc5=%4d mV, U_silence=%4d mV, mP_Temp=%02d.%02dC,\tBaro_Temp=%02ld.%02ld C, Baro_P=%4ld.%02ld hPa,\tHygro_Temp=%02d.%02d C, Hygro_RelH=%02d.%02d %%\r\n",
 			now >> 10,
-			l_adc_vctcxo_volt_1000, l_adc_5v0_volt_1000, l_adc_vbat_volt_1000, l_adc_io_adc4_volt_1000, l_adc_io_adc5_volt_1000, l_adc_temp_deg_100 / 100, l_adc_temp_deg_100 % 100,
+			l_adc_vctcxo_volt_1000, l_adc_5v0_volt_1000, l_adc_vbat_volt_1000, l_adc_io_adc4_volt_1000, l_adc_io_adc5_volt_1000, l_adc_silence_volt_1000, l_adc_temp_deg_100 / 100, l_adc_temp_deg_100 % 100,
 			l_twi1_baro_temp_100 / 100, l_twi1_baro_temp_100 % 100, l_twi1_baro_p_100 / 100, l_twi1_baro_p_100 % 100,
 			l_twi1_hygro_T_100 / 100, l_twi1_hygro_T_100 % 100, l_twi1_hygro_RH_100 / 100, l_twi1_hygro_RH_100 % 100);
 		}
