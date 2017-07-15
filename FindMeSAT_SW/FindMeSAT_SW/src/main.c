@@ -87,26 +87,26 @@ struct adc_channel_config	g_adcch_silence_conf				= { 0 };
 struct adc_config			g_adc_b_conf						= { 0 };
 struct adc_channel_config	g_adcch_temp_conf					= { 0 };
 
-int32_t						g_adc_vctcxo_cur					= 0;
-int32_t						g_adc_vctcxo_sum					= 0;
+uint32_t					g_adc_vctcxo_cur					= 0;
+uint32_t					g_adc_vctcxo_sum					= 0;
 uint16_t					g_adc_vctcxo_cnt					= 0;
-int32_t						g_adc_5v0_cur						= 0;
-int32_t						g_adc_5v0_sum						= 0;
+uint32_t					g_adc_5v0_cur						= 0;
+uint32_t					g_adc_5v0_sum						= 0;
 uint16_t					g_adc_5v0_cnt						= 0;
-int32_t						g_adc_vbat_cur						= 0;
-int32_t						g_adc_vbat_sum						= 0;
+uint32_t					g_adc_vbat_cur						= 0;
+uint32_t					g_adc_vbat_sum						= 0;
 uint16_t					g_adc_vbat_cnt						= 0;
-int32_t						g_adc_io_adc4_cur					= 0;
-int32_t						g_adc_io_adc4_sum					= 0;
+uint32_t					g_adc_io_adc4_cur					= 0;
+uint32_t					g_adc_io_adc4_sum					= 0;
 uint16_t					g_adc_io_adc4_cnt					= 0;
-int32_t						g_adc_io_adc5_cur					= 0;
-int32_t						g_adc_io_adc5_sum					= 0;
+uint32_t					g_adc_io_adc5_cur					= 0;
+uint32_t					g_adc_io_adc5_sum					= 0;
 uint16_t					g_adc_io_adc5_cnt					= 0;
-int32_t						g_adc_silence_cur					= 0;
-int32_t						g_adc_silence_sum					= 0;
+uint32_t					g_adc_silence_cur					= 0;
+uint32_t					g_adc_silence_sum					= 0;
 uint16_t					g_adc_silence_cnt					= 0;
-int32_t						g_adc_temp_cur						= 0;
-int32_t						g_adc_temp_sum						= 0;
+uint32_t					g_adc_temp_cur						= 0;
+uint32_t					g_adc_temp_sum						= 0;
 uint16_t					g_adc_temp_cnt						= 0;
 int16_t						g_adc_vctcxo_volt_1000				= 0;
 int16_t						g_adc_5v0_volt_1000					= 0;
@@ -266,7 +266,7 @@ static void tc_init(void)
 {
 	/* TCC0: VCTCXO PWM signal generation and ADCA & ADCB */
 	struct pwm_config pwm_vctcxo_cfg;
-	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2560);						// Init PWM structure and enable timer - running with 2560 Hz
+	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2048);						// Init PWM structure and enable timer - running with 2048 Hz --> 2 Hz averaged data
 	pwm_start(&pwm_vctcxo_cfg, 45);												// Start PWM here. Percentage with 1% granularity is to coarse, use driver access instead
 	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) (0.5f + pwm_vctcxo_cfg.period * C_VCTCXO_DEFAULT_VOLTS / C_VCTCXO_PWM_HI_VOLTS));	// Initial value for VCTCXO
 
@@ -384,7 +384,7 @@ static void adc_init(void)
 	adc_enable_internal_input (&g_adc_b_conf,		ADC_INT_TEMPSENSE | ADC_INT_BANDGAP);
 
 	/* Current limitation */
-	adc_set_current_limit(&g_adc_a_conf,			ADC_CURRENT_LIMIT_LOW);
+	adc_set_current_limit(&g_adc_a_conf,			ADC_CURRENT_LIMIT_MED);
 	adc_set_current_limit(&g_adc_b_conf,			ADC_CURRENT_LIMIT_HIGH);
 
 	/* ADC impedance */
@@ -458,7 +458,7 @@ void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 			case ADC_CH0_SCAN_5V0:
 				g_adc_vctcxo_sum += val;
 				if (++g_adc_vctcxo_cnt >= C_ADC_SUM_CNT) {
-					g_adc_vctcxo_cur = (g_adc_vctcxo_sum >> C_ADC_SUM_SHIFT);
+					g_adc_vctcxo_cur = g_adc_vctcxo_sum;
 					g_adc_vctcxo_sum = g_adc_vctcxo_cnt = 0;
 				}
 			break;
@@ -466,7 +466,7 @@ void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 			case ADC_CH0_SCAN_VBAT:
 				g_adc_5v0_sum += val;
 				if (++g_adc_5v0_cnt >= C_ADC_SUM_CNT) {
-					g_adc_5v0_cur = (g_adc_5v0_sum >> C_ADC_SUM_SHIFT);
+					g_adc_5v0_cur = g_adc_5v0_sum;
 					g_adc_5v0_sum = g_adc_5v0_cnt = 0;
 				}
 			break;
@@ -474,7 +474,7 @@ void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 			case ADC_CH0_SCAN_VCTCXO:
 				g_adc_vbat_sum += val;
 				if (++g_adc_vbat_cnt >= C_ADC_SUM_CNT) {
-					g_adc_vbat_cur = (g_adc_vbat_sum >> C_ADC_SUM_SHIFT);
+					g_adc_vbat_cur = g_adc_vbat_sum;
 					g_adc_vbat_sum = g_adc_vbat_cnt = 0;
 				}
 			break;
@@ -483,21 +483,21 @@ void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 	} else if (ch_mask & ADC_IO_ADC4_CH) {
 		g_adc_io_adc4_sum += val;
 		if (++g_adc_io_adc4_cnt >= C_ADC_SUM_CNT) {
-			g_adc_io_adc4_cur = (g_adc_io_adc4_sum >> C_ADC_SUM_SHIFT);
+			g_adc_io_adc4_cur = g_adc_io_adc4_sum;
 			g_adc_io_adc4_sum = g_adc_io_adc4_cnt = 0;
 		}
 
 	} else if (ch_mask & ADC_IO_ADC5_CH) {
 		g_adc_io_adc5_sum += val;
 		if (++g_adc_io_adc5_cnt >= C_ADC_SUM_CNT) {
-			g_adc_io_adc5_cur = (g_adc_io_adc5_sum >> C_ADC_SUM_SHIFT);
+			g_adc_io_adc5_cur = g_adc_io_adc5_sum;
 			g_adc_io_adc5_sum = g_adc_io_adc5_cnt = 0;
 		}
 
 	} else if (ch_mask & ADC_SILENCE_CH) {
 		g_adc_silence_sum += val;
 		if (++g_adc_silence_cnt >= C_ADC_SUM_CNT) {
-			g_adc_silence_cur = (g_adc_silence_sum >> C_ADC_SUM_SHIFT);
+			g_adc_silence_cur = g_adc_silence_sum;
 			g_adc_silence_sum = g_adc_silence_cnt = 0;
 		}
 	}
@@ -510,7 +510,7 @@ void isr_adc_b(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 	if (ch_mask & ADC_TEMP_CH) {
 		g_adc_temp_sum += val;
 		if (++g_adc_temp_cnt >= C_ADC_SUM_CNT) {
-			g_adc_temp_cur = (g_adc_temp_sum >> C_ADC_SUM_SHIFT);
+			g_adc_temp_cur = g_adc_temp_sum;
 			g_adc_temp_sum = g_adc_temp_cnt = 0;
 		}
 	}
@@ -764,22 +764,22 @@ static void task_adc(uint32_t now)
 		adc_last = now;
 
 		irqflags_t flags = cpu_irq_save();
-		int32_t l_adc_vctcxo_cur	= g_adc_vctcxo_cur;
-		int32_t l_adc_5v0_cur		= g_adc_5v0_cur;
-		int32_t l_adc_vbat_cur		= g_adc_vbat_cur;
-		int32_t l_adc_io_adc4_cur	= g_adc_io_adc4_cur;
-		int32_t l_adc_io_adc5_cur	= g_adc_io_adc5_cur;
-		int32_t l_adc_silence_cur	= g_adc_silence_cur;
-		int32_t l_adc_temp_cur		= g_adc_temp_cur;
+		uint32_t l_adc_vctcxo_cur	= g_adc_vctcxo_cur;
+		uint32_t l_adc_5v0_cur		= g_adc_5v0_cur;
+		uint32_t l_adc_vbat_cur		= g_adc_vbat_cur;
+		uint32_t l_adc_io_adc4_cur	= g_adc_io_adc4_cur;
+		uint32_t l_adc_io_adc5_cur	= g_adc_io_adc5_cur;
+		uint32_t l_adc_silence_cur	= g_adc_silence_cur;
+		uint32_t l_adc_temp_cur		= g_adc_temp_cur;
 		cpu_irq_restore(flags);
 
-		int16_t l_adc_vctcxo_volt_1000	= (uint16_t) (((( 1000L * l_adc_vctcxo_cur  * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS))  - 1000 * C_VCTCXO_DELTA_VOLTS);
-		int16_t l_adc_5v0_volt_1000		= (uint16_t) (((  1000L * l_adc_5v0_cur     * C_VCC_3V0_AREF_VOLTS * C_VCC_5V0_MULT  ) / C_ADC_STEPS));
-		int16_t l_adc_vbat_volt_1000	= (uint16_t) (((  1000L * l_adc_vbat_cur    * C_VCC_3V0_AREF_VOLTS * C_VCC_VBAT_MULT ) / C_ADC_STEPS));
-		int16_t l_adc_io_adc4_volt_1000	= (uint16_t) (((  1000L * l_adc_io_adc4_cur * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS));
-		int16_t l_adc_io_adc5_volt_1000	= (uint16_t) (((  1000L * l_adc_io_adc5_cur * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS));
-		int16_t l_adc_silence_volt_1000	= (uint16_t) (((  1000L * l_adc_silence_cur * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS));
-		int16_t l_adc_temp_deg_100		= (uint16_t) ((((  100L * l_adc_temp_cur                           * C_TEMPSENSE_MULT) / C_ADC_STEPS))  -  100 * C_0DEGC_K);
+		int16_t l_adc_vctcxo_volt_1000	= (int16_t) (((( 1000UL * l_adc_vctcxo_cur  * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS))  - 1000 * C_VCTCXO_DELTA_VOLTS);
+		int16_t l_adc_5v0_volt_1000		= (int16_t) (((  1000UL * l_adc_5v0_cur     * C_VCC_3V0_AREF_VOLTS * C_VCC_5V0_MULT  ) / C_ADC_STEPS));
+		int16_t l_adc_vbat_volt_1000	= (int16_t) (((  1000UL * l_adc_vbat_cur    * C_VCC_3V0_AREF_VOLTS * C_VCC_VBAT_MULT ) / C_ADC_STEPS));
+		int16_t l_adc_io_adc4_volt_1000	= (int16_t) (((  1000UL * l_adc_io_adc4_cur * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS));
+		int16_t l_adc_io_adc5_volt_1000	= (int16_t) (((  1000UL * l_adc_io_adc5_cur * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS));
+		int16_t l_adc_silence_volt_1000	= (int16_t) (((  1000UL * l_adc_silence_cur * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS));
+		int16_t l_adc_temp_deg_100		= (int16_t) ((((  100UL * l_adc_temp_cur                           * C_TEMPSENSE_MULT) / C_ADC_STEPS))  -  100 * C_0DEGC_K);
 
 		flags = cpu_irq_save();
 		g_adc_vctcxo_volt_1000	= l_adc_vctcxo_volt_1000;

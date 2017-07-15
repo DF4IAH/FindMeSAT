@@ -14,9 +14,8 @@
 
 #define C_0DEGC_K				273.15f
 
-#define C_ADC_STEPS				8192
+#define C_ADC_STEPS				0x00100000UL
 #define C_ADC_SUM_CNT			256
-#define C_ADC_SUM_SHIFT			7
 
 #define C_ADC_0V0_DELTA			190
 #define C_VCC_3V3_VOLTS			3.318f
