@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <math.h>
 
-#define MAX_SIN_STEP 50
+#define MAX_SIN_STEP 52
 
 
 int main(int argc, char* argv[])
