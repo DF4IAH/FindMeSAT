@@ -14,13 +14,12 @@
 
 #define C_0DEGC_K				273.15f
 
-#define C_ADC_STEPS				8192
+#define C_ADC_STEPS				0x00100000UL
 #define C_ADC_SUM_CNT			256
-#define C_ADC_SUM_SHIFT			7
 
 #define C_ADC_0V0_DELTA			190
 #define C_VCC_3V3_VOLTS			3.318f
-#define C_VCC_3V0_AREF_VOLTS	3.000f
+#define C_VCC_3V0_AREF_VOLTS	3
 
 #define C_VCTCXO_PWM_HI_VOLTS	3.253f
 #define C_VCTCXO_DEFAULT_VOLTS	1.500f

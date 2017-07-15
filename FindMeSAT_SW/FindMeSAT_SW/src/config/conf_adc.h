@@ -64,6 +64,9 @@
 #define ADC_IO_ADC5				ADCA
 #define ADC_IO_ADC5_CH			ADC_CH2
 
+#define ADC_SILENCE				ADCA
+#define ADC_SILENCE_CH			ADC_CH3
+
 
 #define ADC_TEMP				ADCB
 #define ADC_TEMP_CH				ADC_CH0

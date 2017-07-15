@@ -20,6 +20,7 @@ extern int16_t			g_adc_5v0_volt_1000;
 extern int16_t			g_adc_vbat_volt_1000;
 extern int16_t			g_adc_io_adc4_volt_1000;
 extern int16_t			g_adc_io_adc5_volt_1000;
+extern int16_t			g_adc_silence_volt_1000;
 extern int16_t			g_adc_temp_deg_100;
 
 extern bool				g_twi1_gsm_valid;
@@ -778,6 +779,7 @@ static void task_twi2_lcd_header(void)
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Vvctcxo =");
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Vioadc4 =");
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Vioadc5 =");
+	//task_twi2_lcd_str(6 *  0, (line++) * 10, "Vsilen. =");
 	line++;
 
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Ba_Temp =");
@@ -793,6 +795,7 @@ static void task_twi2_lcd_header(void)
 	task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
 	task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
 	task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
+	//task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
 	line++;
 
 	task_twi2_lcd_str(6 * 16, (line++) * 10, "C");
@@ -849,6 +852,7 @@ void task_twi2_lcd(uint32_t now)
 			int16_t l_adc_temp_deg_100		= g_adc_temp_deg_100;
 			int16_t l_adc_io_adc4_volt_1000	= g_adc_io_adc4_volt_1000;
 			int16_t l_adc_io_adc5_volt_1000	= g_adc_io_adc5_volt_1000;
+			//int16_t l_adc_silence_volt_1000	= g_adc_silence_volt_1000;
 			int32_t l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
 			int32_t l_twi1_baro_p_100		= g_twi1_baro_p_100;
 			int16_t l_twi1_hygro_T_100		= g_twi1_hygro_T_100;
@@ -881,6 +885,9 @@ void task_twi2_lcd(uint32_t now)
 
 			/* ADC_IO_ADC5 */
 			task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_io_adc5_volt_1000 / 1000, l_adc_io_adc5_volt_1000 % 1000, "%1d.%03d");
+
+			/* ADC_SILENCE */
+			//task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_silence_volt_1000 / 1000, l_adc_silence_volt_1000 % 1000, "%1d.%03d");
 			line++;
 
 			/* Baro_Temp */
