@@ -232,6 +232,18 @@ static void init_twi1_gyro(void)
 			printf("TWI-onboard: Gyro MPU-9250   -   'reset 1' bad response\r\n");
 			break;
 		}
+		delay_ms(10);
+
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_SERIAL_IF;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_SERIAL_IF__BYPASS_EN;
+		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			printf("TWI-onboard: Gyro MPU-9250   -   'bypass_en' bad response\r\n");
+			break;
+		}
 
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
 		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_RESET;
