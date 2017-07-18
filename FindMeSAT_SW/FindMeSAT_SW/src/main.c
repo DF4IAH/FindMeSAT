@@ -58,20 +58,41 @@ uint8_t						g_twi1_gsm_version					= 0;
 
 bool						g_twi1_gyro_valid					= false;
 uint8_t						g_twi1_gyro_1_version				= 0;
+int16_t						g_twi1_gyro_1_temp					= 0;
+int16_t						g_twi1_gyro_1_temp_RTofs			= 0;
+int16_t						g_twi1_gyro_1_temp_sens				= 413;
+int16_t						g_twi1_gyro_1_temp_deg_100			= 0;
+int16_t						g_twi1_gyro_1_accel_x				= 0;
+int16_t						g_twi1_gyro_1_accel_y				= 0;
+int16_t						g_twi1_gyro_1_accel_z				= 0;
+int16_t						g_twi1_gyro_1_accel_ofsx			= ((int16_t) (-46626L / 16));  // 16LSB / OFS
+int16_t						g_twi1_gyro_1_accel_ofsy			= ((int16_t) (+41105L / 16));  // 16LSB / OFS
+int16_t						g_twi1_gyro_1_accel_ofsz			= ((int16_t) (+77260L / 16));  // 16LSB / OFS
+int16_t						g_twi1_gyro_1_accel_x_mg			= 0;
+int16_t						g_twi1_gyro_1_accel_y_mg			= 0;
+int16_t						g_twi1_gyro_1_accel_z_mg			= 0;
+int16_t						g_twi1_gyro_1_gyro_x				= 0;
+int16_t						g_twi1_gyro_1_gyro_y				= 0;
+int16_t						g_twi1_gyro_1_gyro_z				= 0;
+int16_t						g_twi1_gyro_1_gyro_ofsx				= ( -46 / 4);  // 4LSB / OFS
+int16_t						g_twi1_gyro_1_gyro_ofsy				= ( -94 / 4);  // 4LSB / OFS
+int16_t						g_twi1_gyro_1_gyro_ofsz				= (+136 / 4);  // 4LSB / OFS
+int32_t						g_twi1_gyro_1_gyro_x_mdps			= 0;
+int32_t						g_twi1_gyro_1_gyro_y_mdps			= 0;
+int32_t						g_twi1_gyro_1_gyro_z_mdps			= 0;
 uint8_t						g_twi1_gyro_2_version				= 0;
-int16_t						g_twi1_gyro_temp					= 0;
-int16_t						g_twi1_gyro_accel_x					= 0;
-int16_t						g_twi1_gyro_accel_y					= 0;
-int16_t						g_twi1_gyro_accel_z					= 0;
-int16_t						g_twi1_gyro_gyro_x					= 0;
-int16_t						g_twi1_gyro_gyro_y					= 0;
-int16_t						g_twi1_gyro_gyro_z					= 0;
-int16_t						g_twi1_gyro_mag_x					= 0;
-int16_t						g_twi1_gyro_mag_y					= 0;
-int16_t						g_twi1_gyro_mag_z					= 0;
-float						g_twi1_gyro_2_asax					= 0.;
-float						g_twi1_gyro_2_asay					= 0.;
-float						g_twi1_gyro_2_asaz					= 0.;
+int8_t						g_twi1_gyro_2_asax					= 0;
+int8_t						g_twi1_gyro_2_asay					= 0;
+int8_t						g_twi1_gyro_2_asaz					= 0;
+int16_t						g_twi1_gyro_2_ofsx					=   +46;  // 1LSB / OFS
+int16_t						g_twi1_gyro_2_ofsy					=  +152;  // 1LSB / OFS
+int16_t						g_twi1_gyro_2_ofsz					=  -254;  // 1LSB / OFS
+int16_t						g_twi1_gyro_2_mag_x					= 0;
+int16_t						g_twi1_gyro_2_mag_y					= 0;
+int16_t						g_twi1_gyro_2_mag_z					= 0;
+int32_t						g_twi1_gyro_2_mag_x_nT				= 0;
+int32_t						g_twi1_gyro_2_mag_y_nT				= 0;
+int32_t						g_twi1_gyro_2_mag_z_nT				= 0;
 
 bool						g_twi1_baro_valid					= false;
 uint16_t					g_twi1_baro_version					= 0;
@@ -196,6 +217,26 @@ static dma_dac_buf_t dac_io_dac0_buf[2][DAC_NR_OF_SAMPLES]	= { 0 };
 
 
 /* UTILS section */
+
+static char sgn_of(long x) {
+	return x >= 0 ?  '+' : '-';
+}
+
+static int16_t abs_int16(int16_t x) {
+	if (x >= 0) {
+		return x;
+	} else {
+		return -x;
+	}
+}
+
+static int32_t abs_int32(int32_t x) {
+	if (x >= 0) {
+		return x;
+	} else {
+		return -x;
+	}
+}
 
 static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0_reg_p, uint32_t* dds0_inc_p, uint32_t* dds1_reg_p, uint32_t* dds1_inc_p)
 {
@@ -854,24 +895,61 @@ static void task_usb(uint32_t now)
 			usb_last = now;
 
 			flags = cpu_irq_save();
-			int16_t l_adc_vctcxo_volt_1000	= g_adc_vctcxo_volt_1000;
-			int16_t l_adc_5v0_volt_1000		= g_adc_5v0_volt_1000;
-			int16_t l_adc_vbat_volt_1000	= g_adc_vbat_volt_1000;
-			int16_t l_adc_io_adc4_volt_1000	= g_adc_io_adc4_volt_1000;
-			int16_t l_adc_io_adc5_volt_1000	= g_adc_io_adc5_volt_1000;
-			int16_t l_adc_silence_volt_1000	= g_adc_silence_volt_1000;
-			int16_t l_adc_temp_deg_100		= g_adc_temp_deg_100;
-			int32_t l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
-			int32_t l_twi1_baro_p_100		= g_twi1_baro_p_100;
-			int16_t l_twi1_hygro_T_100		= g_twi1_hygro_T_100;
-			int16_t l_twi1_hygro_RH_100		= g_twi1_hygro_RH_100;
+			int16_t l_adc_vctcxo_volt_1000		= g_adc_vctcxo_volt_1000;
+			int16_t l_adc_5v0_volt_1000			= g_adc_5v0_volt_1000;
+			int16_t l_adc_vbat_volt_1000		= g_adc_vbat_volt_1000;
+			int16_t l_adc_io_adc4_volt_1000		= g_adc_io_adc4_volt_1000;
+			int16_t l_adc_io_adc5_volt_1000		= g_adc_io_adc5_volt_1000;
+			int16_t l_adc_silence_volt_1000		= g_adc_silence_volt_1000;
+			int16_t l_adc_temp_deg_100			= g_adc_temp_deg_100;
+			int32_t l_twi1_baro_temp_100		= g_twi1_baro_temp_100;
+			int32_t l_twi1_baro_p_100			= g_twi1_baro_p_100;
+			int16_t l_twi1_hygro_T_100			= g_twi1_hygro_T_100;
+			int16_t l_twi1_hygro_RH_100			= g_twi1_hygro_RH_100;
+			int16_t	l_twi1_gyro_1_accel_x		= g_twi1_gyro_1_accel_x;
+			int16_t	l_twi1_gyro_1_accel_y		= g_twi1_gyro_1_accel_y;
+			int16_t	l_twi1_gyro_1_accel_z		= g_twi1_gyro_1_accel_z;
+			int16_t	l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
+			int16_t	l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
+			int16_t	l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
+			int16_t l_twi1_gyro_1_gyro_x		= g_twi1_gyro_1_gyro_x;
+			int16_t l_twi1_gyro_1_gyro_y		= g_twi1_gyro_1_gyro_y;
+			int16_t l_twi1_gyro_1_gyro_z		= g_twi1_gyro_1_gyro_z;
+			int32_t	l_twi1_gyro_1_gyro_x_mdps	= g_twi1_gyro_1_gyro_x_mdps;
+			int32_t	l_twi1_gyro_1_gyro_y_mdps	= g_twi1_gyro_1_gyro_y_mdps;
+			int32_t	l_twi1_gyro_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
+			int16_t	l_twi1_gyro_1_temp			= g_twi1_gyro_1_temp;
+			int16_t	l_twi1_gyro_1_temp_deg_100	= g_twi1_gyro_1_temp_deg_100;
+			int16_t l_twi1_gyro_2_mag_x			= g_twi1_gyro_2_mag_x;
+			int16_t l_twi1_gyro_2_mag_y			= g_twi1_gyro_2_mag_y;
+			int16_t l_twi1_gyro_2_mag_z			= g_twi1_gyro_2_mag_z;
+			int32_t	l_twi1_gyro_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
+			int32_t	l_twi1_gyro_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
+			int32_t	l_twi1_gyro_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
 			cpu_irq_restore(flags);
 
-			printf("Time = %5ld: U_vctcxo=%4d mV, U_5v0=%4d mV, U_vbat=%4d mV, U_io_adc4=%4d mV, U_io_adc5=%4d mV, U_silence=%4d mV, mP_Temp=%02d.%02dC,\tBaro_Temp=%02ld.%02ld C, Baro_P=%4ld.%02ld hPa,\tHygro_Temp=%02d.%02d C, Hygro_RelH=%02d.%02d %%\r\n",
+			printf("Time = %06ld: Uvco=%4d mV, U5v=%4d mV, Ubat=%4d mV, Uadc4=%4d mV, Uadc5=%4d mV, Usil=%4d mV, mP_Temp=%c%02d.%02dC\t \t" \
+			"Baro_Temp=%c%02ld.%02ldC, Baro_P=%4ld.%02ldhPa\t \t" \
+			"Hygro_Temp=%c%02d.%02dC, Hygro_RelH=%02d.%02d%%\r\n",
 			now >> 10,
-			l_adc_vctcxo_volt_1000, l_adc_5v0_volt_1000, l_adc_vbat_volt_1000, l_adc_io_adc4_volt_1000, l_adc_io_adc5_volt_1000, l_adc_silence_volt_1000, l_adc_temp_deg_100 / 100, l_adc_temp_deg_100 % 100,
-			l_twi1_baro_temp_100 / 100, l_twi1_baro_temp_100 % 100, l_twi1_baro_p_100 / 100, l_twi1_baro_p_100 % 100,
-			l_twi1_hygro_T_100 / 100, l_twi1_hygro_T_100 % 100, l_twi1_hygro_RH_100 / 100, l_twi1_hygro_RH_100 % 100);
+			l_adc_vctcxo_volt_1000, l_adc_5v0_volt_1000, l_adc_vbat_volt_1000, l_adc_io_adc4_volt_1000, l_adc_io_adc5_volt_1000, l_adc_silence_volt_1000, sgn_of(l_adc_temp_deg_100), abs_int16(l_adc_temp_deg_100) / 100, abs_int16(l_adc_temp_deg_100) % 100,
+			sgn_of(l_twi1_baro_temp_100), abs_int32(l_twi1_baro_temp_100) / 100, abs_int32(l_twi1_baro_temp_100) % 100, l_twi1_baro_p_100 / 100, l_twi1_baro_p_100 % 100,
+			sgn_of(l_twi1_hygro_T_100), abs_int16(l_twi1_hygro_T_100) / 100, abs_int16(l_twi1_hygro_T_100) % 100, l_twi1_hygro_RH_100 / 100, l_twi1_hygro_RH_100 % 100);
+
+			printf("\tAx=%c%01d.%03dg (%+06d), Ay=%c%01d.%03dg (%+06d), Az=%c%01d.%03dg (%+06d)\t \t" \
+			"Gx=%c%03ld.%03lddps (%+06d), Gy=%c%03ld.%03lddps (%+06d), Gz=%c%03ld.%03lddps (%06d)\t \t" \
+			"Mx=%c%03ld.%03lduT (%+06d), My=%c%03ld.%03lduT (%+06d), Mz=%c%03ld.%03lduT (%+06d)\t \t" \
+			"Gyro_Temp=%c%02d.%02dC (%+06d)\r\n\r\n",
+			sgn_of(l_twi1_gyro_1_accel_x_mg),   abs_int16(l_twi1_gyro_1_accel_x_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_x_mg)   % 1000, l_twi1_gyro_1_accel_x,
+			sgn_of(l_twi1_gyro_1_accel_y_mg),   abs_int16(l_twi1_gyro_1_accel_y_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_y_mg)   % 1000, l_twi1_gyro_1_accel_y,
+			sgn_of(l_twi1_gyro_1_accel_z_mg),   abs_int16(l_twi1_gyro_1_accel_z_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_z_mg)   % 1000, l_twi1_gyro_1_accel_z,
+			sgn_of(l_twi1_gyro_1_gyro_x_mdps),  abs_int32(l_twi1_gyro_1_gyro_x_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_x_mdps)  % 1000, l_twi1_gyro_1_gyro_x,
+			sgn_of(l_twi1_gyro_1_gyro_y_mdps),  abs_int32(l_twi1_gyro_1_gyro_y_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_y_mdps)  % 1000, l_twi1_gyro_1_gyro_y,
+			sgn_of(l_twi1_gyro_1_gyro_z_mdps),  abs_int32(l_twi1_gyro_1_gyro_z_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_z_mdps)  % 1000, l_twi1_gyro_1_gyro_z,
+			sgn_of(l_twi1_gyro_2_mag_x_nT),     abs_int32(l_twi1_gyro_2_mag_x_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_x_nT)     % 1000, l_twi1_gyro_2_mag_x,
+			sgn_of(l_twi1_gyro_2_mag_y_nT),     abs_int32(l_twi1_gyro_2_mag_y_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_y_nT)     % 1000, l_twi1_gyro_2_mag_y,
+			sgn_of(l_twi1_gyro_2_mag_z_nT),     abs_int32(l_twi1_gyro_2_mag_z_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_z_nT)     % 1000, l_twi1_gyro_2_mag_z,
+			sgn_of(l_twi1_gyro_1_temp_deg_100), abs_int16(l_twi1_gyro_1_temp_deg_100) /  100, abs_int16(l_twi1_gyro_1_temp_deg_100) %  100, l_twi1_gyro_1_temp);
 		}
 	}
 }

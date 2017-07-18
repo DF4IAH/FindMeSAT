@@ -28,20 +28,42 @@ extern uint8_t			g_twi1_gsm_version;
 
 extern bool				g_twi1_gyro_valid;
 extern uint8_t			g_twi1_gyro_1_version;
+extern int16_t			g_twi1_gyro_1_temp;
+extern int16_t			g_twi1_gyro_1_temp_RTofs;
+extern int16_t			g_twi1_gyro_1_temp_sens;
+extern int16_t			g_twi1_gyro_1_temp_deg_100;
+extern int16_t			g_twi1_gyro_1_accel_x;
+extern int16_t			g_twi1_gyro_1_accel_y;
+extern int16_t			g_twi1_gyro_1_accel_z;
+extern int16_t			g_twi1_gyro_1_accel_ofsx;
+extern int16_t			g_twi1_gyro_1_accel_ofsy;
+extern int16_t			g_twi1_gyro_1_accel_ofsz;
+extern int16_t			g_twi1_gyro_1_accel_x_mg;
+extern int16_t			g_twi1_gyro_1_accel_y_mg;
+extern int16_t			g_twi1_gyro_1_accel_z_mg;
+extern int16_t			g_twi1_gyro_1_gyro_x;
+extern int16_t			g_twi1_gyro_1_gyro_y;
+extern int16_t			g_twi1_gyro_1_gyro_z;
+extern int16_t			g_twi1_gyro_1_gyro_ofsx;
+extern int16_t			g_twi1_gyro_1_gyro_ofsy;
+extern int16_t			g_twi1_gyro_1_gyro_ofsz;
+extern int32_t			g_twi1_gyro_1_gyro_x_mdps;
+extern int32_t			g_twi1_gyro_1_gyro_y_mdps;
+extern int32_t			g_twi1_gyro_1_gyro_z_mdps;
 extern uint8_t			g_twi1_gyro_2_version;
-extern int16_t			g_twi1_gyro_temp;
-extern int16_t			g_twi1_gyro_accel_x;
-extern int16_t			g_twi1_gyro_accel_y;
-extern int16_t			g_twi1_gyro_accel_z;
-extern int16_t			g_twi1_gyro_gyro_x;
-extern int16_t			g_twi1_gyro_gyro_y;
-extern int16_t			g_twi1_gyro_gyro_z;
-extern int16_t			g_twi1_gyro_mag_x;
-extern int16_t			g_twi1_gyro_mag_y;
-extern int16_t			g_twi1_gyro_mag_z;
-extern float			g_twi1_gyro_2_asax;
-extern float			g_twi1_gyro_2_asay;
-extern float			g_twi1_gyro_2_asaz;
+extern int8_t			g_twi1_gyro_2_asax;
+extern int8_t			g_twi1_gyro_2_asay;
+extern int8_t			g_twi1_gyro_2_asaz;
+extern int16_t			g_twi1_gyro_2_ofsx;
+extern int16_t			g_twi1_gyro_2_ofsy;
+extern int16_t			g_twi1_gyro_2_ofsz;
+extern int16_t			g_twi1_gyro_2_mag_x;
+extern int16_t			g_twi1_gyro_2_mag_y;
+extern int16_t			g_twi1_gyro_2_mag_z;
+extern int32_t			g_twi1_gyro_2_mag_x_nT;
+extern int32_t			g_twi1_gyro_2_mag_y_nT;
+extern int32_t			g_twi1_gyro_2_mag_z_nT;
+
 
 extern bool				g_twi1_baro_valid;
 extern uint16_t			g_twi1_baro_version;
@@ -110,9 +132,34 @@ ISR(TWIC_TWIS_vect) {
 
 
 inline
-static float calc_gyro2_asa_2_float(int8_t asa)
+static int16_t calc_gyro1_accel_raw2mg(int16_t raw)
 {
-	return (((int16_t)asa - 128) + 256) / 256.f;
+	return ((1000L * TWI1_SLAVE_GYRO_DTA_1_ACCEL_CONFIG__02G)		* raw) >> 15;
+}
+
+inline
+static int32_t calc_gyro1_gyro_raw2mdps(int16_t raw)
+{
+	return ((1000L * TWI1_SLAVE_GYRO_DTA_1_GYRO_CONFIG__0250DPS)	* raw) >> 15;
+}
+
+inline
+static int16_t calc_gyro1_temp_raw2C100(int16_t raw)
+{
+	return (int16_t) (((100L * (int32_t)(raw - g_twi1_gyro_1_temp_RTofs)) / (int32_t)g_twi1_gyro_1_temp_sens) + 2100);
+}
+
+inline
+static int32_t calc_gyro2_correct_mag_2_nT(int16_t raw, int8_t asa)
+{
+	if (raw >= 0) {
+		//                                       asa decoding
+		//                                                     rounding
+		//                                                          /256
+		return (((int32_t)raw * 1000 * ((int32_t)asa + 128)) + 128) >> 8;
+	} else {
+		return (((int32_t)raw * 1000 * ((int32_t)asa + 128)) - 128) >> 8;
+	}
 }
 
 static void twi2_waitUntilReady(void)
@@ -321,9 +368,9 @@ static void init_twi1_gyro(void)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		g_twi1_gyro_2_asax = calc_gyro2_asa_2_float(twi1_m_data[0]);
-		g_twi1_gyro_2_asay = calc_gyro2_asa_2_float(twi1_m_data[1]);
-		g_twi1_gyro_2_asaz = calc_gyro2_asa_2_float(twi1_m_data[2]);
+		g_twi1_gyro_2_asax = twi1_m_data[0];
+		g_twi1_gyro_2_asay = twi1_m_data[1];
+		g_twi1_gyro_2_asaz = twi1_m_data[2];
 
 		/* Magnetometer: mode change via power-down mode */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
@@ -343,6 +390,50 @@ static void init_twi1_gyro(void)
 		twi1_packet.addr_length = 1;
 		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_16B_RUN_8HZ_VAL;
 		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+
+		/* MPU-9250 6 axis: set gyro offset values */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_GYRO_XG_OFFSET_H;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = (uint8_t) (g_twi1_gyro_1_gyro_ofsx >> 8);
+		twi1_m_data[1] = (uint8_t) (g_twi1_gyro_1_gyro_ofsx & 0xFF);
+		twi1_m_data[2] = (uint8_t) (g_twi1_gyro_1_gyro_ofsy >> 8);
+		twi1_m_data[3] = (uint8_t) (g_twi1_gyro_1_gyro_ofsy & 0xFF);
+		twi1_m_data[4] = (uint8_t) (g_twi1_gyro_1_gyro_ofsz >> 8);
+		twi1_m_data[5] = (uint8_t) (g_twi1_gyro_1_gyro_ofsz & 0xFF);
+		twi1_packet.length = 6;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+
+		/* MPU-9250 6 axis: set accel offset values */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_XA_OFFSET_H;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsx & 0x7F80) >> 7);
+		twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsx &   0x7F) << 1);
+		twi1_packet.length = 2;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_YA_OFFSET_H;
+		twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsy & 0x7F80) >> 7);
+		twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsy &   0x7F) << 1);
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ZA_OFFSET_H;
+		twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsz & 0x7F80) >> 7);
+		twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsz &   0x7F) << 1);
 		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
@@ -402,6 +493,7 @@ static void init_twi1_gyro(void)
 		if (sc != STATUS_OK) {
 			break;
 		}
+		delay_ms(10);
 
 		printf("TWI-onboard:  INIT success.\r\n");
 		return;
@@ -598,10 +690,10 @@ static void isr_twi1_gyro(uint32_t now, bool sync)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		g_twi1_gyro_accel_x = ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
-		g_twi1_gyro_accel_y = ((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3];
-		g_twi1_gyro_accel_z = ((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5];
-		g_twi1_gyro_temp	= ((uint16_t)twi1_m_data[6] << 8) | twi1_m_data[7];
+		g_twi1_gyro_1_accel_x = ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
+		g_twi1_gyro_1_accel_y = ((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3];
+		g_twi1_gyro_1_accel_z = ((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5];
+		g_twi1_gyro_1_temp    = ((uint16_t)twi1_m_data[6] << 8) | twi1_m_data[7];
 
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
 		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_GYRO_XOUT_H;
@@ -611,9 +703,9 @@ static void isr_twi1_gyro(uint32_t now, bool sync)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		g_twi1_gyro_gyro_x	= ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
-		g_twi1_gyro_gyro_y	= ((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3];
-		g_twi1_gyro_gyro_z	= ((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5];
+		g_twi1_gyro_1_gyro_x = ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
+		g_twi1_gyro_1_gyro_y = ((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3];
+		g_twi1_gyro_1_gyro_z = ((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5];
 
 		/* Magnetometer: check if new data is available */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
@@ -637,9 +729,9 @@ static void isr_twi1_gyro(uint32_t now, bool sync)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		g_twi1_gyro_mag_x	= (int16_t) ((((uint16_t)twi1_m_data[1]) << 8) | twi1_m_data[0]);
-		g_twi1_gyro_mag_y	= (int16_t) ((((uint16_t)twi1_m_data[3]) << 8) | twi1_m_data[2]);
-		g_twi1_gyro_mag_z	= (int16_t) ((((uint16_t)twi1_m_data[5]) << 8) | twi1_m_data[4]);
+		g_twi1_gyro_2_mag_x = ((int16_t) ((((uint16_t)twi1_m_data[1]) << 8) | twi1_m_data[0])) + g_twi1_gyro_2_ofsx;
+		g_twi1_gyro_2_mag_y = ((int16_t) ((((uint16_t)twi1_m_data[3]) << 8) | twi1_m_data[2])) + g_twi1_gyro_2_ofsy;
+		g_twi1_gyro_2_mag_z = ((int16_t) ((((uint16_t)twi1_m_data[5]) << 8) | twi1_m_data[4])) + g_twi1_gyro_2_ofsz;
 
 		/* Magnetometer: check for data validity and release cycle */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
@@ -650,9 +742,9 @@ static void isr_twi1_gyro(uint32_t now, bool sync)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		if (!(twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST2__HOFL)) {
+		if (twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST2__HOFL) {
 			/* Data of Magnetometer AK8963 overflowed */
-			g_twi1_gyro_mag_z = g_twi1_gyro_mag_y = g_twi1_gyro_mag_x = 0;
+			g_twi1_gyro_2_mag_z = g_twi1_gyro_2_mag_y = g_twi1_gyro_2_mag_x = 0;
 			break;
 		}
 	} while (false);
@@ -805,6 +897,42 @@ static void task_twi1_hygro(uint32_t now)
 
 static void task_twi1_gyro(uint32_t now)
 {	// Calculations for the presentation layer
+	irqflags_t flags = cpu_irq_save();
+	int16_t	l_twi1_gyro_1_accel_x	= g_twi1_gyro_1_accel_x;
+	int16_t	l_twi1_gyro_1_accel_y	= g_twi1_gyro_1_accel_y;
+	int16_t	l_twi1_gyro_1_accel_z	= g_twi1_gyro_1_accel_z;
+	int16_t l_twi1_gyro_1_gyro_x	= g_twi1_gyro_1_gyro_x;
+	int16_t l_twi1_gyro_1_gyro_y	= g_twi1_gyro_1_gyro_y;
+	int16_t l_twi1_gyro_1_gyro_z	= g_twi1_gyro_1_gyro_z;
+	int16_t	l_twi1_gyro_1_temp		= g_twi1_gyro_1_temp;
+	int16_t l_twi1_gyro_2_mag_x		= g_twi1_gyro_2_mag_x;
+	int16_t l_twi1_gyro_2_mag_y		= g_twi1_gyro_2_mag_y;
+	int16_t l_twi1_gyro_2_mag_z		= g_twi1_gyro_2_mag_z;
+	cpu_irq_restore(flags);
+
+	int16_t l_twi1_gyro_1_accel_x_mg	= calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_x);
+	int16_t l_twi1_gyro_1_accel_y_mg	= calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_y);
+	int16_t l_twi1_gyro_1_accel_z_mg	= calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_z);
+	int32_t l_twi1_gyro_1_gyro_x_mdps	= calc_gyro1_gyro_raw2mdps(l_twi1_gyro_1_gyro_x);
+	int32_t l_twi1_gyro_1_gyro_y_mdps	= calc_gyro1_gyro_raw2mdps(l_twi1_gyro_1_gyro_y);
+	int32_t l_twi1_gyro_1_gyro_z_mdps	= calc_gyro1_gyro_raw2mdps(l_twi1_gyro_1_gyro_z);
+	int32_t l_twi1_gyro_2_mag_x_nT		= calc_gyro2_correct_mag_2_nT(l_twi1_gyro_2_mag_x, g_twi1_gyro_2_asax);
+	int32_t l_twi1_gyro_2_mag_y_nT		= calc_gyro2_correct_mag_2_nT(l_twi1_gyro_2_mag_y, g_twi1_gyro_2_asay);
+	int32_t l_twi1_gyro_2_mag_z_nT		= calc_gyro2_correct_mag_2_nT(l_twi1_gyro_2_mag_z, g_twi1_gyro_2_asaz);
+	int16_t	l_twi1_gyro_1_temp_deg_100	= calc_gyro1_temp_raw2C100(l_twi1_gyro_1_temp);
+
+	flags = cpu_irq_save();
+	g_twi1_gyro_1_accel_x_mg	= l_twi1_gyro_1_accel_x_mg;
+	g_twi1_gyro_1_accel_y_mg	= l_twi1_gyro_1_accel_y_mg;
+	g_twi1_gyro_1_accel_z_mg	= l_twi1_gyro_1_accel_z_mg;
+	g_twi1_gyro_1_gyro_x_mdps	= l_twi1_gyro_1_gyro_x_mdps;
+	g_twi1_gyro_1_gyro_y_mdps	= l_twi1_gyro_1_gyro_y_mdps;
+	g_twi1_gyro_1_gyro_z_mdps	= l_twi1_gyro_1_gyro_z_mdps;
+	g_twi1_gyro_2_mag_x_nT		= l_twi1_gyro_2_mag_x_nT;
+	g_twi1_gyro_2_mag_y_nT		= l_twi1_gyro_2_mag_y_nT;
+	g_twi1_gyro_2_mag_z_nT		= l_twi1_gyro_2_mag_z_nT;
+	g_twi1_gyro_1_temp_deg_100	= l_twi1_gyro_1_temp_deg_100;
+	cpu_irq_restore(flags);
 }
 
 static void task_twi1_baro(uint32_t now)
