@@ -29,6 +29,19 @@ extern uint8_t			g_twi1_gsm_version;
 extern bool				g_twi1_gyro_valid;
 extern uint8_t			g_twi1_gyro_1_version;
 extern uint8_t			g_twi1_gyro_2_version;
+extern int16_t			g_twi1_gyro_temp;
+extern int16_t			g_twi1_gyro_accel_x;
+extern int16_t			g_twi1_gyro_accel_y;
+extern int16_t			g_twi1_gyro_accel_z;
+extern int16_t			g_twi1_gyro_gyro_x;
+extern int16_t			g_twi1_gyro_gyro_y;
+extern int16_t			g_twi1_gyro_gyro_z;
+extern int16_t			g_twi1_gyro_mag_x;
+extern int16_t			g_twi1_gyro_mag_y;
+extern int16_t			g_twi1_gyro_mag_z;
+extern float			g_twi1_gyro_2_asax;
+extern float			g_twi1_gyro_2_asay;
+extern float			g_twi1_gyro_2_asaz;
 
 extern bool				g_twi1_baro_valid;
 extern uint16_t			g_twi1_baro_version;
@@ -95,6 +108,12 @@ ISR(TWIC_TWIS_vect) {
 }
 #endif
 
+
+inline
+static float calc_gyro2_asa_2_float(int8_t asa)
+{
+	return (((int16_t)asa - 128) + 256) / 256.f;
+}
 
 static void twi2_waitUntilReady(void)
 {
@@ -171,37 +190,37 @@ static void init_twi1_hygro(void)
 		}
 		delay_ms(2);
 
+		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
 		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_RESET_HI;
 		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_RESET_LO;
 		twi1_packet.addr_length = 2;
 		twi1_packet.length = 0;
 		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
 		if (sc != STATUS_OK) {
-			printf("TWI-onboard: Hygro SHT31-DIS -   'reset' bad response\r\n");
 			break;
 		}
 		delay_ms(2);
 
+		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
 		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_STATUS_HI;
 		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_STATUS_LO;
 		twi1_packet.addr_length = 2;
 		twi1_packet.length = 2;
 		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
 		if (sc != STATUS_OK) {
-			printf("TWI-onboard: Hygro SHT31-DIS -   'status' bad response\r\n");
 			break;
 		}
 		g_twi1_hygro_status = (twi1_m_data[0] << 8) | twi1_m_data[1];
 		printf("TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n", g_twi1_hygro_status);
 
 		/* Start cyclic measurements with 2 MPS @ high repeatability */
+		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
 		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_PERIODIC_2MPS_HIPREC_HI;
 		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_PERIODIC_2MPS_HIPREC_LO;
 		twi1_packet.addr_length = 2;
 		twi1_packet.length = 0;
 		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
 		if (sc != STATUS_OK) {
-			printf("TWI-onboard: Hygro SHT31-DIS -   'periodic' bad response\r\n");
 			break;
 		}
 
@@ -222,10 +241,11 @@ static void init_twi1_gyro(void)
 	g_twi1_gyro_2_version = 0;
 
 	do {
+		/* MPU-9250 6 axis: RESET */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_RESET;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_PWR_MGMT_1;
 		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_RESET;
+		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_PWR_MGMT_1__HRESET | TWI1_SLAVE_GYRO_DTA_1_PWR_MGMT_1__CLKSEL_VAL;
 		twi1_packet.length = 1;
 		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
 		if (sc != STATUS_OK) {
@@ -234,51 +254,156 @@ static void init_twi1_gyro(void)
 		}
 		delay_ms(10);
 
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_SERIAL_IF;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_SERIAL_IF__BYPASS_EN;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
-		if (sc != STATUS_OK) {
-			printf("TWI-onboard: Gyro MPU-9250   -   'bypass_en' bad response\r\n");
-			break;
-		}
-
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_RESET;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_RESET;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
-		if (sc != STATUS_OK) {
-			printf("TWI-onboard: Gyro MPU-9250   -   'reset 2' bad response\r\n");
-			break;
-		}
-		delay_ms(10);
-
+		/* MPU-9250 6 axis: read Who Am I control value */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
 		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_WHOAMI;
 		twi1_packet.addr_length = 1;
 		twi1_packet.length = 1;
 		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
 		if (sc != STATUS_OK) {
-			printf("TWI-onboard: Gyro MPU-9250   -   'whoami 1' bad response\r\n");
 			break;
 		}
 		g_twi1_gyro_1_version = twi1_m_data[0];
 
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_DEVICE_ID;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		/* MPU-9250 6 axis: I2C bypass on to access the Magnetometer chip */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_INT_PIN_CFG;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_INT_PIN_CFG__BYPASS_EN;
+		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
 		if (sc != STATUS_OK) {
-			printf("TWI-onboard: Gyro MPU-9250   -   'device-id 2' bad response\r\n");
 			break;
 		}
 
+		/* Magnetometer: soft reset */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_CNTL2;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL2__SRST;
+		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+		delay_ms(10);
+
+		/* Magnetometer: read Device ID */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_WIA;
+		twi1_packet.addr_length = 1;
+		twi1_packet.length = 1;
+		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
 		g_twi1_gyro_2_version = twi1_m_data[0];
 		g_twi1_gyro_valid = true;
 		printf("TWI-onboard: Gyro MPU-9250 -     version: 0x%02X, 0x%02X\r\n", g_twi1_gyro_1_version, g_twi1_gyro_2_version);
+
+		/* Magnetometer: 16 bit access and prepare for PROM access */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_CNTL1;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_PROM_VAL;
+		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+
+		/* Magnetometer: read correction data for X, Y and Z */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ASAX;
+		twi1_packet.addr_length = 1;
+		twi1_packet.length = 3;
+		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+		g_twi1_gyro_2_asax = calc_gyro2_asa_2_float(twi1_m_data[0]);
+		g_twi1_gyro_2_asay = calc_gyro2_asa_2_float(twi1_m_data[1]);
+		g_twi1_gyro_2_asaz = calc_gyro2_asa_2_float(twi1_m_data[2]);
+
+		/* Magnetometer: mode change via power-down mode */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_CNTL1;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_16B_POWER_DOWN;
+		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+		delay_ms(10);
+
+		/* Magnetometer: mode change for 16bit and run all axis at 8 Hz */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_CNTL1;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_16B_RUN_8HZ_VAL;
+		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+
+		/* MPU-9250 6 axis: FIFO frequency = 10 Hz */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_SMPLRT_DIV;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = 99;
+		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+
+		/* MPU-9250 6 axis: Bandwidth = 5 Hz, Fs = 1 kHz */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_CONFIG;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = 6;
+		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+
+		/* MPU-9250 6 axis: Bandwidth = 5 Hz, Fs = 1 kHz */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ACCEL_CONFIG2;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = 6;
+		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+
+		/* MPU-9250 6 axis: Wake On Motion interrupt = 0.1 g (1 LSB = 4 mg) */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_WOM_THR;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = 25;
+		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+
+		/* MPU-9250 6 axis: RESET all internal data paths */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_USER_CTRL;
+		twi1_packet.addr_length = 1;
+		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_USER_CTRL__SIG_COND_RST;  // | TWI1_SLAVE_GYRO_DTA_1_USER_CTRL__FIFO_EN;
+		twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+
+		printf("TWI-onboard:  INIT success.\r\n");
 		return;
 	} while(false);
 
@@ -302,6 +427,7 @@ static void init_twi1_baro(void)
 		}
 		delay_ms(3);
 
+		twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
 		twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_VERSION;
 		twi1_packet.addr_length = 1;
 		twi1_packet.length = 2;
@@ -314,12 +440,13 @@ static void init_twi1_baro(void)
 		printf("TWI-onboard: Baro MS560702BA03-50 -     serial#: %d\r\n", g_twi1_baro_version);
 
 		for (int adr = 1; adr < C_TWI1_BARO_C_CNT; ++adr) {
+			twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
 			twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_PROM | (adr << 1);
 			twi1_packet.addr_length = 1;
 			twi1_packet.length = 2;
 			sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
 			if (sc != STATUS_OK) {
-				printf("TWI-onboard:  BAD reading PROM address %d. (sc=%d)\r\n", adr, sc);
+				//printf("TWI-onboard:  BAD reading PROM address %d. (sc=%d)\r\n", adr, sc);
 				break;
 			}
 			g_twi1_baro_c[adr] = (twi1_m_data[0] << 8) | twi1_m_data[1];
@@ -458,6 +585,77 @@ static void isr_twi1_hygro(uint32_t now, bool sync)
 
 static void isr_twi1_gyro(uint32_t now, bool sync)
 {
+	if (!sync) {
+		return;
+	}
+
+	do {
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ACCEL_XOUT_H;		// Big endian
+		twi1_packet.addr_length = 1;
+		twi1_packet.length = 8;
+		status_code_t sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+		g_twi1_gyro_accel_x = ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
+		g_twi1_gyro_accel_y = ((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3];
+		g_twi1_gyro_accel_z = ((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5];
+		g_twi1_gyro_temp	= ((uint16_t)twi1_m_data[6] << 8) | twi1_m_data[7];
+
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_GYRO_XOUT_H;
+		twi1_packet.addr_length = 1;
+		twi1_packet.length = 6;
+		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+		g_twi1_gyro_gyro_x	= ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
+		g_twi1_gyro_gyro_y	= ((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3];
+		g_twi1_gyro_gyro_z	= ((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5];
+
+		/* Magnetometer: check if new data is available */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ST1;
+		twi1_packet.addr_length = 1;
+		twi1_packet.length = 1;
+		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+		if (!(twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST1__DRDY)) {
+			/* Data of Magnetometer AK8963 not ready yet */
+			break;
+		}
+
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_HX_L;			// Little endian
+		twi1_packet.addr_length = 1;
+		twi1_packet.length = 6;
+		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+		g_twi1_gyro_mag_x	= (int16_t) ((((uint16_t)twi1_m_data[1]) << 8) | twi1_m_data[0]);
+		g_twi1_gyro_mag_y	= (int16_t) ((((uint16_t)twi1_m_data[3]) << 8) | twi1_m_data[2]);
+		g_twi1_gyro_mag_z	= (int16_t) ((((uint16_t)twi1_m_data[5]) << 8) | twi1_m_data[4]);
+
+		/* Magnetometer: check for data validity and release cycle */
+		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ST2;
+		twi1_packet.addr_length = 1;
+		twi1_packet.length = 1;
+		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		if (sc != STATUS_OK) {
+			break;
+		}
+		if (!(twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST2__HOFL)) {
+			/* Data of Magnetometer AK8963 overflowed */
+			g_twi1_gyro_mag_z = g_twi1_gyro_mag_y = g_twi1_gyro_mag_x = 0;
+			break;
+		}
+	} while (false);
 }
 
 static void isr_twi1_baro(uint32_t now, bool sync)
@@ -541,9 +739,6 @@ static void isr_twi1_baro(uint32_t now, bool sync)
 /* 10ms TWI1 - Gyro device */
 void isr_10ms_twi1_onboard(uint32_t now)
 {	/* Service time slot */
-	if (g_twi1_gyro_valid) {
-		isr_twi1_gyro(now, true);
-	}
 }
 
 /* 500ms TWI1 - Baro, Hygro devices */
@@ -551,6 +746,10 @@ void isr_500ms_twi1_onboard(uint32_t now)
 {	/* Service time slot */
 	if (g_twi1_hygro_valid) {
 		isr_twi1_hygro(now, true);
+	}
+
+	if (g_twi1_gyro_valid) {
+		isr_twi1_gyro(now, true);
 	}
 
 	if (g_twi1_baro_valid) {
