@@ -41,13 +41,9 @@
 #include "main.h"
 
 
-/* SETTINGS */
-
-#define USE_DAC
-
-
 /* GLOBAL section */
 
+bool						g_dac_enabled						= false;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 bool						usb_cdc_transfers_autorized			= false;
 
@@ -65,18 +61,21 @@ int16_t						g_twi1_gyro_1_temp_deg_100			= 0;
 int16_t						g_twi1_gyro_1_accel_x				= 0;
 int16_t						g_twi1_gyro_1_accel_y				= 0;
 int16_t						g_twi1_gyro_1_accel_z				= 0;
-int16_t						g_twi1_gyro_1_accel_ofsx			= ((int16_t) (-46626L / 16));  // 16LSB / OFS
-int16_t						g_twi1_gyro_1_accel_ofsy			= ((int16_t) (+41105L / 16));  // 16LSB / OFS
-int16_t						g_twi1_gyro_1_accel_ofsz			= ((int16_t) (+77260L / 16));  // 16LSB / OFS
+int16_t						g_twi1_gyro_1_accel_ofsx			= ((int16_t) (-46672L / 16));	// 16LSB / OFS
+int16_t						g_twi1_gyro_1_accel_ofsy			= ((int16_t) (+41120L / 16));	// 16LSB / OFS
+int16_t						g_twi1_gyro_1_accel_ofsz			= ((int16_t) (+76672L / 16));	// 16LSB / OFS
+int16_t						g_twi1_gyro_1_accel_factx			=  9980;						// X = Xchip * factx / 10000
+int16_t						g_twi1_gyro_1_accel_facty			=  9975;						// Y = Ychip * facty / 10000
+int16_t						g_twi1_gyro_1_accel_factz			=  9950;						// Z = Zchip * factz / 10000
 int16_t						g_twi1_gyro_1_accel_x_mg			= 0;
 int16_t						g_twi1_gyro_1_accel_y_mg			= 0;
 int16_t						g_twi1_gyro_1_accel_z_mg			= 0;
 int16_t						g_twi1_gyro_1_gyro_x				= 0;
 int16_t						g_twi1_gyro_1_gyro_y				= 0;
 int16_t						g_twi1_gyro_1_gyro_z				= 0;
-int16_t						g_twi1_gyro_1_gyro_ofsx				= ( -46 / 4);  // 4LSB / OFS
-int16_t						g_twi1_gyro_1_gyro_ofsy				= ( -94 / 4);  // 4LSB / OFS
-int16_t						g_twi1_gyro_1_gyro_ofsz				= (+136 / 4);  // 4LSB / OFS
+int16_t						g_twi1_gyro_1_gyro_ofsx				= ( -32 / 4);					//  4LSB / OFS
+int16_t						g_twi1_gyro_1_gyro_ofsy				= ( -80 / 4);					//  4LSB / OFS
+int16_t						g_twi1_gyro_1_gyro_ofsz				= (+148 / 4);					//  4LSB / OFS
 int32_t						g_twi1_gyro_1_gyro_x_mdps			= 0;
 int32_t						g_twi1_gyro_1_gyro_y_mdps			= 0;
 int32_t						g_twi1_gyro_1_gyro_z_mdps			= 0;
@@ -84,12 +83,15 @@ uint8_t						g_twi1_gyro_2_version				= 0;
 int8_t						g_twi1_gyro_2_asax					= 0;
 int8_t						g_twi1_gyro_2_asay					= 0;
 int8_t						g_twi1_gyro_2_asaz					= 0;
-int16_t						g_twi1_gyro_2_ofsx					=   +46;  // 1LSB / OFS
-int16_t						g_twi1_gyro_2_ofsy					=  +152;  // 1LSB / OFS
-int16_t						g_twi1_gyro_2_ofsz					=  -254;  // 1LSB / OFS
+int16_t						g_twi1_gyro_2_ofsx					=  +37;							//  1LSB / OFS
+int16_t						g_twi1_gyro_2_ofsy					= +156;							//  1LSB / OFS
+int16_t						g_twi1_gyro_2_ofsz					= -217;							//  1LSB / OFS
 int16_t						g_twi1_gyro_2_mag_x					= 0;
 int16_t						g_twi1_gyro_2_mag_y					= 0;
 int16_t						g_twi1_gyro_2_mag_z					= 0;
+int16_t						g_twi1_gyro_2_mag_factx				=  9250;						// X = Xchip * factx / 10000
+int16_t						g_twi1_gyro_2_mag_facty				=  9250;						// Y = Ychip * facty / 10000
+int16_t						g_twi1_gyro_2_mag_factz				= 14440;						// Z = Zchip * factz / 10000
 int32_t						g_twi1_gyro_2_mag_x_nT				= 0;
 int32_t						g_twi1_gyro_2_mag_y_nT				= 0;
 int32_t						g_twi1_gyro_2_mag_z_nT				= 0;
@@ -993,9 +995,9 @@ int main(void)
 	evsys_init();		// Event system
 	tc_init();			// Timers
 	adc_init();			// ADC
-#ifdef USE_DAC
-	dac_init();			// DAC
-#endif
+	if (g_dac_enabled) {
+		dac_init();		// DAC
+	}
 	twi_init();			// I2C / TWI
 
 	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
@@ -1007,9 +1009,9 @@ int main(void)
 
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
-#ifdef USE_DAC
-	dac_start();		// Start DA convertions
-#endif
+	if (g_dac_enabled) {
+		dac_start();	// Start DA convertions
+	}
 	adc_start();		// Start AD convertions
 
 	/* Init of USB system */
