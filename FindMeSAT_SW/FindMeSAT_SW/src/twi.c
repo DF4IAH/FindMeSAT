@@ -1200,7 +1200,7 @@ void task_twi2_lcd(uint32_t now)
 		//static uint8_t s_ofs = 0;
 
 		/* Show current measurement data on the LCD */
-		if (((now - s_lcd_last) >= 128) || (now < s_lcd_last)) {
+		if (((now - s_lcd_last) >= 512) || (now < s_lcd_last)) {
 			const uint8_t col_left = 6 * 10;
 			uint8_t line = 2;
 
@@ -1234,14 +1234,152 @@ void task_twi2_lcd(uint32_t now)
 			if (!(s_lcd_entry_cnt++)) {
 				task_twi2_lcd_header();
 			#if 1
-//			} else if (s_lcd_entry_cnt >= (240 * 8)) {
-			} else if (s_lcd_entry_cnt >= ( 10 * 8)) {
+			} else if (s_lcd_entry_cnt >= (300 * 2)) {  // Repaint after five minutes
 				s_lcd_entry_cnt = 0;
 			#endif
 			}
 
+			/* Gfx update twice a second */
+			{
+				/* Mag lines */
+				{
+					const uint8_t plot_intensity_center_x = 115;
+					const uint8_t plot_intensity_center_y =  72;
+					const uint8_t plot_mag_center_x = 150;
+					const uint8_t plot_mag_center_y =  40;
+					static float  s_length = 0.f;
+					static int8_t s_p1x = 0;
+					static int8_t s_p1y = 0;
+					static int8_t s_p2x = 0;
+					static int8_t s_p2y = 0;
+					static int8_t s_p3x = 0;
+					static int8_t s_p3y = 0;
+
+					/* Removing old lines first */
+					task_twi2_lcd_rect(plot_intensity_center_x - 1,	plot_intensity_center_y - s_length / 3000.f, 3, s_length / 3000.f, true, 0);
+					task_twi2_lcd_line(plot_mag_center_x,			plot_mag_center_y,			plot_mag_center_x + s_p1x, plot_mag_center_y + s_p1y, 0);
+					task_twi2_lcd_line(plot_mag_center_x + s_p1x,	plot_mag_center_y + s_p1y,	plot_mag_center_x + s_p2x, plot_mag_center_y + s_p2y, 0);
+					task_twi2_lcd_line(plot_mag_center_x + s_p2x,	plot_mag_center_y + s_p2y,	plot_mag_center_x + s_p3x, plot_mag_center_y + s_p3y, 0);
+
+					/* Draw center point */
+					task_twi2_lcd_circ(plot_mag_center_x, plot_mag_center_y, 1, true, 1);
+
+					/* Draw new lines */
+					{
+						float l_length = pow(pow(l_twi1_gyro_2_mag_x_nT, 2.0) + pow(l_twi1_gyro_2_mag_y_nT, 2.0) + pow(l_twi1_gyro_2_mag_z_nT, 2.0), 0.5);
+						if (!l_length) {
+							l_length = 1.f;
+						}
+
+						float l_twi1_gyro_2_mag_x_norm = l_twi1_gyro_2_mag_x_nT / l_length;
+						float l_twi1_gyro_2_mag_y_norm = l_twi1_gyro_2_mag_y_nT / l_length;
+						float l_twi1_gyro_2_mag_z_norm = l_twi1_gyro_2_mag_z_nT / l_length;
+						uint8_t p1x =       (l_twi1_gyro_2_mag_x_norm * 12.5);
+						uint8_t p1y =      -(l_twi1_gyro_2_mag_x_norm * 12.5);
+						uint8_t p2x = p1x + (l_twi1_gyro_2_mag_y_norm * 25);
+						uint8_t p2y = p1y;
+						uint8_t p3x = p2x;
+						uint8_t p3y = p2y + (l_twi1_gyro_2_mag_z_norm * 25);
+
+						// Saturation at 100µT
+						if (l_length > 100000.f) {
+							l_length = 100000.f;
+						}
+
+						task_twi2_lcd_circ(plot_intensity_center_x,		plot_intensity_center_y,	2, false, 1);
+						task_twi2_lcd_rect(plot_intensity_center_x - 1,	plot_intensity_center_y - l_length / 3000.f, 3, l_length / 3000.f, true, 1);
+						task_twi2_lcd_line(plot_mag_center_x,			plot_mag_center_y,			plot_mag_center_x + p1x, plot_mag_center_y + p1y, 1);
+						task_twi2_lcd_line(plot_mag_center_x + p1x,		plot_mag_center_y + p1y,	plot_mag_center_x + p2x, plot_mag_center_y + p2y, 1);
+						task_twi2_lcd_line(plot_mag_center_x + p2x,		plot_mag_center_y + p2y,	plot_mag_center_x + p3x, plot_mag_center_y + p3y, 1);
+
+						/* Store new set */
+						s_length = l_length;
+						s_p1x = p1x;
+						s_p1y = p1y;
+						s_p2x = p2x;
+						s_p2y = p2y;
+						s_p3x = p3x;
+						s_p3y = p3y;
+					}
+				}
+
+				/* Accel lines */
+				{
+					const uint8_t plot_accel_center_x = 210;
+					const uint8_t plot_accel_center_y =  40;
+					static int8_t s_p1x = 0;
+					static int8_t s_p1y = 0;
+					static int8_t s_p2x = 0;
+					static int8_t s_p2y = 0;
+					static int8_t s_p3x = 0;
+					static int8_t s_p3y = 0;
+
+					/* Removing old lines first */
+					{
+						task_twi2_lcd_line(plot_accel_center_x,			plot_accel_center_y,			plot_accel_center_x + s_p1x, plot_accel_center_y + s_p1y, 0);
+						task_twi2_lcd_line(plot_accel_center_x + s_p1x,	plot_accel_center_y + s_p1y,	plot_accel_center_x + s_p2x, plot_accel_center_y + s_p2y, 0);
+						task_twi2_lcd_line(plot_accel_center_x + s_p2x,	plot_accel_center_y + s_p2y,	plot_accel_center_x + s_p3x, plot_accel_center_y + s_p3y, 0);
+					}
+
+					/* Center point */
+					task_twi2_lcd_circ(plot_accel_center_x, plot_accel_center_y, 1, true, 1);
+
+					/* Draw new lines */
+					{
+						uint8_t p1x =      -(l_twi1_gyro_1_accel_y_mg / 80);
+						uint8_t p1y =       (l_twi1_gyro_1_accel_y_mg / 80);
+						uint8_t p2x = p1x - (l_twi1_gyro_1_accel_x_mg / 40);
+						uint8_t p2y = p1y;
+						uint8_t p3x = p2x;
+						uint8_t p3y = p2y + (l_twi1_gyro_1_accel_z_mg / 40);
+
+						task_twi2_lcd_line(plot_accel_center_x,			plot_accel_center_y,		plot_accel_center_x + p1x, plot_accel_center_y + p1y, 1);
+						task_twi2_lcd_line(plot_accel_center_x + p1x,	plot_accel_center_y + p1y,	plot_accel_center_x + p2x, plot_accel_center_y + p2y, 1);
+						task_twi2_lcd_line(plot_accel_center_x + p2x,	plot_accel_center_y + p2y,	plot_accel_center_x + p3x, plot_accel_center_y + p3y, 1);
+
+						/* Store new set */
+						s_p1x = p1x;
+						s_p1y = p1y;
+						s_p2x = p2x;
+						s_p2y = p2y;
+						s_p3x = p3x;
+						s_p3y = p3y;
+					}
+				}
+
+				/* Gyro lines */
+				{
+					const uint8_t plot_gyro_center_x_X	= 150;
+					const uint8_t plot_gyro_center_x_Y	= 150 + 30;
+					const uint8_t plot_gyro_center_x_Z	= 150 + 60;
+					const uint8_t plot_gyro_center_y	= 100;
+					const uint8_t plot_gyro_radius		= 12;
+					static float s_rads_x = 0.f;
+					static float s_rads_y = 0.f;
+					static float s_rads_z = 0.f;
+					float rads_x = (l_twi1_gyro_1_gyro_x_mdps * M_PI) / 180000.f;
+					float rads_y = (l_twi1_gyro_1_gyro_y_mdps * M_PI) / 180000.f;
+					float rads_z = (l_twi1_gyro_1_gyro_z_mdps * M_PI) / 180000.f;
+
+					/* Remove old lines */
+					task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - plot_gyro_radius * sin(s_rads_x), plot_gyro_center_y - plot_gyro_radius * cos(s_rads_x), 0);
+					task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + plot_gyro_radius * sin(s_rads_y), plot_gyro_center_y - plot_gyro_radius * cos(s_rads_y), 0);
+					task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - plot_gyro_radius * sin(s_rads_z), plot_gyro_center_y - plot_gyro_radius * cos(s_rads_z), 0);
+
+					/* Draw new lines */
+					task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - plot_gyro_radius * sin(rads_x), plot_gyro_center_y - plot_gyro_radius * cos(rads_x), 1);
+					task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + plot_gyro_radius * sin(rads_y), plot_gyro_center_y - plot_gyro_radius * cos(rads_y), 1);
+					task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - plot_gyro_radius * sin(rads_z), plot_gyro_center_y - plot_gyro_radius * cos(rads_z), 1);
+
+					/* Store new set */
+					s_rads_x = rads_x;
+					s_rads_y = rads_y;
+					s_rads_z = rads_z;
+				}
+			}
+
 			/* Text update each second */
-			if (!(s_lcd_entry_cnt % 8)) {
+			if (!(s_lcd_entry_cnt % 2)) {
 				/* ADC_TEMP */
 				task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_temp_deg_100 / 100,      (l_adc_temp_deg_100 / 10) % 10,  "%02d.%01d");
 
@@ -1275,101 +1413,6 @@ void task_twi2_lcd(uint32_t now)
 
 				/* Hygro_RH */
 				task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_twi1_hygro_RH_100 / 100,      l_twi1_hygro_RH_100 % 100,      "%02d.%02d");
-			}
-
-			/* Gfx update twice a second */
-			if (!(s_lcd_entry_cnt % 4)) {
-				/* Magnet lines */
-				{
-					const uint8_t plot_mag_center_x = 150;
-					const uint8_t plot_mag_center_y =  40;
-					static int32_t s_twi1_gyro_2_mag_x_nT = 0;
-					static int32_t s_twi1_gyro_2_mag_y_nT = 0;
-					static int32_t s_twi1_gyro_2_mag_z_nT = 0;
-
-					/* Removing old lines first */
-					task_twi2_lcd_line(plot_mag_center_x, plot_mag_center_y, plot_mag_center_x + (s_twi1_gyro_2_mag_x_nT / 4000),	plot_mag_center_y - (s_twi1_gyro_2_mag_x_nT / 4000),	0);
-					task_twi2_lcd_line(plot_mag_center_x, plot_mag_center_y, plot_mag_center_x + (s_twi1_gyro_2_mag_y_nT / 2000),	plot_mag_center_y,										0);
-					task_twi2_lcd_line(plot_mag_center_x, plot_mag_center_y, plot_mag_center_x,										plot_mag_center_y + (s_twi1_gyro_2_mag_z_nT / 2000),	0);
-
-					/* Center point */
-					task_twi2_lcd_circ(plot_mag_center_x, plot_mag_center_y, 1, true, 1);
-
-					/* Draw new lines */
-					task_twi2_lcd_line(plot_mag_center_x, plot_mag_center_y, plot_mag_center_x + (l_twi1_gyro_2_mag_x_nT / 4000),	plot_mag_center_y - (l_twi1_gyro_2_mag_x_nT / 4000),	1);
-					task_twi2_lcd_line(plot_mag_center_x, plot_mag_center_y, plot_mag_center_x + (l_twi1_gyro_2_mag_y_nT / 2000),	plot_mag_center_y,										1);
-					task_twi2_lcd_line(plot_mag_center_x, plot_mag_center_y, plot_mag_center_x,										plot_mag_center_y + (l_twi1_gyro_2_mag_z_nT / 2000),	1);
-
-					/* Store new set */
-					s_twi1_gyro_2_mag_x_nT = l_twi1_gyro_2_mag_x_nT;
-					s_twi1_gyro_2_mag_y_nT = l_twi1_gyro_2_mag_y_nT;
-					s_twi1_gyro_2_mag_z_nT = l_twi1_gyro_2_mag_z_nT;
-				}
-
-				/* Accel lines */
-				{
-					const uint8_t plot_accel_center_x = 210;
-					const uint8_t plot_accel_center_y =  40;
-					static int32_t s_twi1_gyro_1_accel_x_mg = 0;
-					static int32_t s_twi1_gyro_1_accel_y_mg = 0;
-					static int32_t s_twi1_gyro_1_accel_z_mg = 0;
-
-					/* Removing old lines first */
-					{
-						uint8_t p0x = plot_accel_center_x;
-						uint8_t p0y = plot_accel_center_y;
-						uint8_t p1x = p0x - (s_twi1_gyro_1_accel_y_mg / 80);
-						uint8_t p1y = p0y + (s_twi1_gyro_1_accel_y_mg / 80);
-						uint8_t p2x = p1x - (s_twi1_gyro_1_accel_x_mg / 40);
-						uint8_t p2y = p1y;
-						uint8_t p3x = p2x;
-						uint8_t p3y = p2y + (s_twi1_gyro_1_accel_z_mg / 40);
-
-						task_twi2_lcd_line(p0x, p0y, p1x, p1y, 0);
-						task_twi2_lcd_line(p1x, p1y, p2x, p2y, 0);
-						task_twi2_lcd_line(p2x, p2y, p3x, p3y, 0);
-					}
-
-					/* Center point */
-					task_twi2_lcd_circ(plot_accel_center_x, plot_accel_center_y, 1, true, 1);
-
-					/* Draw new lines */
-					{
-						uint8_t p0x = plot_accel_center_x;
-						uint8_t p0y = plot_accel_center_y;
-						uint8_t p1x = p0x - (l_twi1_gyro_1_accel_y_mg / 80);
-						uint8_t p1y = p0y + (l_twi1_gyro_1_accel_y_mg / 80);
-						uint8_t p2x = p1x - (l_twi1_gyro_1_accel_x_mg / 40);
-						uint8_t p2y = p1y;
-						uint8_t p3x = p2x;
-						uint8_t p3y = p2y + (l_twi1_gyro_1_accel_z_mg / 40);
-
-						task_twi2_lcd_line(p0x, p0y, p1x, p1y, 1);
-						task_twi2_lcd_line(p1x, p1y, p2x, p2y, 1);
-						task_twi2_lcd_line(p2x, p2y, p3x, p3y, 1);
-					}
-
-					/* Store new set */
-					s_twi1_gyro_1_accel_x_mg = l_twi1_gyro_1_accel_x_mg;
-					s_twi1_gyro_1_accel_y_mg = l_twi1_gyro_1_accel_y_mg;
-					s_twi1_gyro_1_accel_z_mg = l_twi1_gyro_1_accel_z_mg;
-				}
-
-				/* Gyro lines */
-				{
-					const uint8_t plot_gyro_center_x_X	= 150;
-					const uint8_t plot_gyro_center_x_Y	= 150 + 30;
-					const uint8_t plot_gyro_center_x_Z	= 150 + 60;
-					const uint8_t plot_gyro_center_y	= 100;
-					const uint8_t plot_gyro_radius		= 12;
-					float rads_x = (l_twi1_gyro_1_gyro_x_mdps * M_PI) / 180000.f;
-					float rads_y = (l_twi1_gyro_1_gyro_y_mdps * M_PI) / 180000.f;
-					float rads_z = (l_twi1_gyro_1_gyro_z_mdps * M_PI) / 180000.f;
-
-					task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - plot_gyro_radius * sin(rads_x), plot_gyro_center_y - plot_gyro_radius * cos(rads_x), 1);
-					task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + plot_gyro_radius * sin(rads_y), plot_gyro_center_y - plot_gyro_radius * cos(rads_y), 1);
-					task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - plot_gyro_radius * sin(rads_z), plot_gyro_center_y - plot_gyro_radius * cos(rads_z), 1);
-				}
 			}
 		}
 
