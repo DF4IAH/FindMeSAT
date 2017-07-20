@@ -45,6 +45,7 @@
 
 bool						g_adc_enabled						= true;
 bool						g_dac_enabled						= true;
+bool						g_usb_stdout_enabled				= false;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 bool						usb_cdc_transfers_autorized			= false;
 
@@ -692,16 +693,16 @@ static void usb_init(void)
 {
 	udc_start();
 
-#if 1
-	stdio_usb_init();	// Init and enable stdio_usb
-	stdio_usb_enable();
-	delay_ms(140);
+	if (g_usb_stdout_enabled) {
+		stdio_usb_init();	// Init and enable stdio_usb
+		stdio_usb_enable();
+		delay_ms(140);
 
-	printf("%c\r\n", 0x0c);
-	printf("===============================\r\n");
-	printf("FindMeSAT - USB logging started\r\n");
-	printf("===============================\r\n\r\n");
-#endif
+		printf("%c\r\n", 0x0c);
+		printf("===============================\r\n");
+		printf("FindMeSAT - USB logging started\r\n");
+		printf("===============================\r\n\r\n");
+	}
 }
 
 void usb_callback_suspend_action(void)

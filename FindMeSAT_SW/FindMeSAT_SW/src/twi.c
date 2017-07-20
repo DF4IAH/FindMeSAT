@@ -16,8 +16,6 @@
 
 
 extern bool				g_adc_enabled;
-extern bool				g_dac_enabled;
-
 extern int32_t			g_adc_temp_cur;
 extern int16_t			g_adc_vctcxo_volt_1000;
 extern int16_t			g_adc_5v0_volt_1000;
