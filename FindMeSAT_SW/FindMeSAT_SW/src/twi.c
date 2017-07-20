@@ -15,6 +15,9 @@
 #include "main.h"
 
 
+extern bool				g_adc_enabled;
+extern bool				g_dac_enabled;
+
 extern int32_t			g_adc_temp_cur;
 extern int16_t			g_adc_vctcxo_volt_1000;
 extern int16_t			g_adc_5v0_volt_1000;
@@ -1120,32 +1123,40 @@ static void task_twi2_lcd_header(void)
 	/* Header line separator */
 	task_twi2_lcd_line(0, 11, 239, 11, 1);
 
-	/* Left measurement names */
-	line = 2;
-	task_twi2_lcd_str(6 *  0, (line++) * 10, "mP Temp =");
-	task_twi2_lcd_str(6 *  3, (line++) * 10,    "Vusb =");
-	task_twi2_lcd_str(6 *  3, (line++) * 10,    "Vbat =");
-	task_twi2_lcd_str(6 *  0, (line++) * 10, "Vvctcxo =");
-	task_twi2_lcd_str(6 *  0, (line++) * 10, "Vioadc4 =");
-	task_twi2_lcd_str(6 *  0, (line++) * 10, "Vioadc5 =");
-	//task_twi2_lcd_str(6 *  0, (line++) * 10, "Vsilen. =");
-	line++;
+	if (g_adc_enabled) {
+		/* Left measurement names */
+		line = 2;
+		task_twi2_lcd_str(6 *  0, (line++) * 10, "mP Temp =");
+		task_twi2_lcd_str(6 *  3, (line++) * 10,    "Vusb =");
+		task_twi2_lcd_str(6 *  3, (line++) * 10,    "Vbat =");
+		task_twi2_lcd_str(6 *  0, (line++) * 10, "Vvctcxo =");
+		task_twi2_lcd_str(6 *  0, (line++) * 10, "Vioadc4 =");
+		task_twi2_lcd_str(6 *  0, (line++) * 10, "Vioadc5 =");
+		//task_twi2_lcd_str(6 *  0, (line++) * 10, "Vsilen. =");
+		line++;
+	} else {
+		line = 9;
+	}
 
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Ba_Temp =");
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Ba_Pres =");
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Hy_Temp =");
 	task_twi2_lcd_str(6 *  0, (line++) * 10, "Hy_RelH =");
 
-	/* Left measurement units */
-	line = 2;
-	task_twi2_lcd_str(6 * 16, (line++) * 10, "C");
-	task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
-	task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
-	task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
-	task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
-	task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
-	//task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
-	line++;
+	if (g_adc_enabled) {
+		/* Left measurement units */
+		line = 2;
+		task_twi2_lcd_str(6 * 16, (line++) * 10, "C");
+		task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
+		task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
+		task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
+		task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
+		task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
+		//task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
+		line++;
+	} else {
+		line = 9;
+	}
 
 	task_twi2_lcd_str(6 * 16, (line++) * 10, "C");
 	task_twi2_lcd_str(6 * 18, (line++) * 10, "hPa");
@@ -1163,6 +1174,16 @@ static void task_twi2_lcd_header(void)
 		task_twi2_lcd_circ(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_radius, false, 1);
 		task_twi2_lcd_circ(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_radius, false, 1);
 		task_twi2_lcd_circ(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_radius, false, 1);
+
+		task_twi2_lcd_str(plot_gyro_center_x_X - 4, plot_gyro_center_y + plot_gyro_radius + 4, "Gx");
+		task_twi2_lcd_str(plot_gyro_center_x_Y - 4, plot_gyro_center_y + plot_gyro_radius + 4, "Gy");
+		task_twi2_lcd_str(plot_gyro_center_x_Z - 4, plot_gyro_center_y + plot_gyro_radius + 4, "Gz");
+	}
+
+	/* Magnetic & Accel */
+	{
+		task_twi2_lcd_str(113, 72, "Magnetics");
+		task_twi2_lcd_str(196, 72, "Accel.");
 	}
 }
 
@@ -1244,7 +1265,7 @@ void task_twi2_lcd(uint32_t now)
 				/* Mag lines */
 				{
 					const uint8_t plot_intensity_center_x = 115;
-					const uint8_t plot_intensity_center_y =  72;
+					const uint8_t plot_intensity_center_y =  64;
 					const uint8_t plot_mag_center_x = 150;
 					const uint8_t plot_mag_center_y =  40;
 					static float  s_length = 0.f;
@@ -1380,27 +1401,31 @@ void task_twi2_lcd(uint32_t now)
 
 			/* Text update each second */
 			if (!(s_lcd_entry_cnt % 2)) {
-				/* ADC_TEMP */
-				task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_temp_deg_100 / 100,      (l_adc_temp_deg_100 / 10) % 10,  "%02d.%01d");
+				if (g_adc_enabled) {
+					/* ADC_TEMP */
+					task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_temp_deg_100 / 100,      (l_adc_temp_deg_100 / 10) % 10,  "%02d.%01d");
 
-				/* ADC_5V0 */
-				task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_5v0_volt_1000 / 1000,     l_adc_5v0_volt_1000 % 1000,     "%1d.%03d");
+					/* ADC_5V0 */
+					task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_5v0_volt_1000 / 1000,     l_adc_5v0_volt_1000 % 1000,     "%1d.%03d");
 
-				/* ADC_VBAT */
-				task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_vbat_volt_1000 / 1000,    l_adc_vbat_volt_1000 % 1000,    "%1d.%03d");
+					/* ADC_VBAT */
+					task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_vbat_volt_1000 / 1000,    l_adc_vbat_volt_1000 % 1000,    "%1d.%03d");
 
-				/* ADC_VCTCXO */
-				task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_vctcxo_volt_1000 / 1000,  l_adc_vctcxo_volt_1000 % 1000,  "%1d.%03d");
+					/* ADC_VCTCXO */
+					task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_vctcxo_volt_1000 / 1000,  l_adc_vctcxo_volt_1000 % 1000,  "%1d.%03d");
 
-				/* ADC_IO_ADC4 */
-				task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_io_adc4_volt_1000 / 1000, l_adc_io_adc4_volt_1000 % 1000, "%1d.%03d");
+					/* ADC_IO_ADC4 */
+					task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_io_adc4_volt_1000 / 1000, l_adc_io_adc4_volt_1000 % 1000, "%1d.%03d");
 
-				/* ADC_IO_ADC5 */
-				task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_io_adc5_volt_1000 / 1000, l_adc_io_adc5_volt_1000 % 1000, "%1d.%03d");
+					/* ADC_IO_ADC5 */
+					task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_io_adc5_volt_1000 / 1000, l_adc_io_adc5_volt_1000 % 1000, "%1d.%03d");
 
-				/* ADC_SILENCE */
-				//task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_silence_volt_1000 / 1000, l_adc_silence_volt_1000 % 1000, "%1d.%03d");
-				line++;
+					/* ADC_SILENCE */
+					//task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_silence_volt_1000 / 1000, l_adc_silence_volt_1000 % 1000, "%1d.%03d");
+					line++;
+				} else {
+					line = 9;
+				}
 
 				/* Baro_Temp */
 				task_twi2_lcd_print_format_uint32(col_left, (line++) * 10, l_twi1_baro_temp_100 / 100,     l_twi1_baro_temp_100 % 100,     "%02ld.%02ld");
@@ -1415,21 +1440,6 @@ void task_twi2_lcd(uint32_t now)
 				task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_twi1_hygro_RH_100 / 100,      l_twi1_hygro_RH_100 % 100,      "%02d.%02d");
 			}
 		}
-
-		#if 0
-		/* Old code for gfx test */
-		{
-			task_twi2_lcd_line( 16 + s_ofs, 16 + s_ofs, 150 + s_ofs, 60 + s_ofs);
-			task_twi2_lcd_rect(150 + s_ofs, 60 + s_ofs, 30, 30);
-			task_twi2_lcd_circ(150 + s_ofs, 60 + s_ofs, 20);
-			task_twi2_lcd_str (116 + s_ofs, 16 + s_ofs, "ABCD");
-
-			if (++s_ofs > 64) {
-				s_ofs = 0;
-				task_twi2_lcd_cls();
-			}
-		}
-		#endif
 
 	} else if (g_twi2_lcd_version == 0x10) {
 		/* Show PWM in % when version is V1.0 and mode==0x20 selected */

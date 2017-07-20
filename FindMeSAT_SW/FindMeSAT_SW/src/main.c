@@ -43,7 +43,8 @@
 
 /* GLOBAL section */
 
-bool						g_dac_enabled						= false;
+bool						g_adc_enabled						= true;
+bool						g_dac_enabled						= true;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 bool						usb_cdc_transfers_autorized			= false;
 
@@ -994,7 +995,9 @@ int main(void)
 
 	evsys_init();		// Event system
 	tc_init();			// Timers
-	adc_init();			// ADC
+	if (g_adc_enabled) {
+		adc_init();		// ADC
+	}
 	if (g_dac_enabled) {
 		dac_init();		// DAC
 	}
@@ -1012,7 +1015,9 @@ int main(void)
 	if (g_dac_enabled) {
 		dac_start();	// Start DA convertions
 	}
-	adc_start();		// Start AD convertions
+	if (g_adc_enabled) {
+		adc_start();	// Start AD convertions
+	}
 
 	/* Init of USB system */
 	usb_init();			// USB device stack start function to enable stack and start USB
