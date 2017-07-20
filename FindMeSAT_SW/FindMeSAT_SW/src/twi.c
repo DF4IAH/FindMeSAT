@@ -1070,8 +1070,8 @@ static void task_twi2_lcd_line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, u
 	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_LINE;
 	twi2_m_data[0] = x2;
 	twi2_m_data[1] = y2;
-	//twi2_m_data[2] = color;
-	twi2_packet.length = 2;
+	twi2_m_data[2] = color;
+	twi2_packet.length = 3;
 	twi_master_write(&TWI2_MASTER, &twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
@@ -1084,8 +1084,8 @@ static void task_twi2_lcd_rect(uint8_t x, uint8_t y, uint8_t width, uint8_t heig
 	twi2_packet.addr[0] = filled ?  TWI_SMART_LCD_CMD_DRAW_FILLED_RECT : TWI_SMART_LCD_CMD_DRAW_RECT;
 	twi2_m_data[0] = width;
 	twi2_m_data[1] = height;
-	//twi2_m_data[2] = color;
-	twi2_packet.length = 2;
+	twi2_m_data[2] = color;
+	twi2_packet.length = 3;
 	twi_master_write(&TWI2_MASTER, &twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
@@ -1097,8 +1097,8 @@ static void task_twi2_lcd_circ(uint8_t x, uint8_t y, uint8_t radius, bool filled
 	twi2_waitUntilReady();
 	twi2_packet.addr[0] = filled ?  TWI_SMART_LCD_CMD_DRAW_FILLED_CIRC : TWI_SMART_LCD_CMD_DRAW_CIRC;
 	twi2_m_data[0] = radius;
-	//twi2_m_data[1] = color;
-	twi2_packet.length = 1;
+	twi2_m_data[1] = color;
+	twi2_packet.length = 2;
 	twi_master_write(&TWI2_MASTER, &twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
@@ -1283,8 +1283,6 @@ void task_twi2_lcd(uint32_t now)
 				{
 					const uint8_t plot_mag_center_x = 150;
 					const uint8_t plot_mag_center_y =  40;
-
-					#if 0
 					static int32_t s_twi1_gyro_2_mag_x_nT = 0;
 					static int32_t s_twi1_gyro_2_mag_y_nT = 0;
 					static int32_t s_twi1_gyro_2_mag_z_nT = 0;
@@ -1293,7 +1291,6 @@ void task_twi2_lcd(uint32_t now)
 					task_twi2_lcd_line(plot_mag_center_x, plot_mag_center_y, plot_mag_center_x + (s_twi1_gyro_2_mag_x_nT / 4000),	plot_mag_center_y - (s_twi1_gyro_2_mag_x_nT / 4000),	0);
 					task_twi2_lcd_line(plot_mag_center_x, plot_mag_center_y, plot_mag_center_x + (s_twi1_gyro_2_mag_y_nT / 2000),	plot_mag_center_y,										0);
 					task_twi2_lcd_line(plot_mag_center_x, plot_mag_center_y, plot_mag_center_x,										plot_mag_center_y + (s_twi1_gyro_2_mag_z_nT / 2000),	0);
-					#endif
 
 					/* Center point */
 					task_twi2_lcd_circ(plot_mag_center_x, plot_mag_center_y, 1, true, 1);
@@ -1303,20 +1300,16 @@ void task_twi2_lcd(uint32_t now)
 					task_twi2_lcd_line(plot_mag_center_x, plot_mag_center_y, plot_mag_center_x + (l_twi1_gyro_2_mag_y_nT / 2000),	plot_mag_center_y,										1);
 					task_twi2_lcd_line(plot_mag_center_x, plot_mag_center_y, plot_mag_center_x,										plot_mag_center_y + (l_twi1_gyro_2_mag_z_nT / 2000),	1);
 
-					#if 0
 					/* Store new set */
 					s_twi1_gyro_2_mag_x_nT = l_twi1_gyro_2_mag_x_nT;
 					s_twi1_gyro_2_mag_y_nT = l_twi1_gyro_2_mag_y_nT;
 					s_twi1_gyro_2_mag_z_nT = l_twi1_gyro_2_mag_z_nT;
-					#endif
 				}
 
 				/* Accel lines */
 				{
 					const uint8_t plot_accel_center_x = 210;
 					const uint8_t plot_accel_center_y =  40;
-
-					#if 0
 					static int32_t s_twi1_gyro_1_accel_x_mg = 0;
 					static int32_t s_twi1_gyro_1_accel_y_mg = 0;
 					static int32_t s_twi1_gyro_1_accel_z_mg = 0;
@@ -1330,13 +1323,12 @@ void task_twi2_lcd(uint32_t now)
 						uint8_t p2x = p1x - (s_twi1_gyro_1_accel_x_mg / 40);
 						uint8_t p2y = p1y;
 						uint8_t p3x = p2x;
-						uint8_t p3y = p3y + (s_twi1_gyro_1_accel_z_mg / 40);
+						uint8_t p3y = p2y + (s_twi1_gyro_1_accel_z_mg / 40);
 
 						task_twi2_lcd_line(p0x, p0y, p1x, p1y, 0);
 						task_twi2_lcd_line(p1x, p1y, p2x, p2y, 0);
 						task_twi2_lcd_line(p2x, p2y, p3x, p3y, 0);
 					}
-					#endif
 
 					/* Center point */
 					task_twi2_lcd_circ(plot_accel_center_x, plot_accel_center_y, 1, true, 1);
@@ -1357,12 +1349,10 @@ void task_twi2_lcd(uint32_t now)
 						task_twi2_lcd_line(p2x, p2y, p3x, p3y, 1);
 					}
 
-					#if 0
 					/* Store new set */
 					s_twi1_gyro_1_accel_x_mg = l_twi1_gyro_1_accel_x_mg;
 					s_twi1_gyro_1_accel_y_mg = l_twi1_gyro_1_accel_y_mg;
 					s_twi1_gyro_1_accel_z_mg = l_twi1_gyro_1_accel_z_mg;
-					#endif
 				}
 
 				/* Gyro lines */
@@ -1371,17 +1361,10 @@ void task_twi2_lcd(uint32_t now)
 					const uint8_t plot_gyro_center_x_Y	= 150 + 30;
 					const uint8_t plot_gyro_center_x_Z	= 150 + 60;
 					const uint8_t plot_gyro_center_y	= 100;
-					const uint8_t plot_gyro_radius		= 14;
+					const uint8_t plot_gyro_radius		= 12;
 					float rads_x = (l_twi1_gyro_1_gyro_x_mdps * M_PI) / 180000.f;
 					float rads_y = (l_twi1_gyro_1_gyro_y_mdps * M_PI) / 180000.f;
 					float rads_z = (l_twi1_gyro_1_gyro_z_mdps * M_PI) / 180000.f;
-
-					#if 0
-					/* Plot circles */
-					task_twi2_lcd_circ(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_radius, false, 1);
-					task_twi2_lcd_circ(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_radius, false, 1);
-					task_twi2_lcd_circ(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_radius, false, 1);
-					#endif
 
 					task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - plot_gyro_radius * sin(rads_x), plot_gyro_center_y - plot_gyro_radius * cos(rads_x), 1);
 					task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + plot_gyro_radius * sin(rads_y), plot_gyro_center_y - plot_gyro_radius * cos(rads_y), 1);
