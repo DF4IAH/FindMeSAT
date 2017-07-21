@@ -148,7 +148,7 @@ static int16_t calc_gyro1_accel_raw2mg(int16_t raw, int16_t factor)
 inline
 static int32_t calc_gyro1_gyro_raw2mdps(int16_t raw)
 {
-	return ((1000L * TWI1_SLAVE_GYRO_DTA_1_GYRO_CONFIG__0250DPS) * (int32_t)raw) >> 15;
+	return (int32_t) (((1000L * TWI1_SLAVE_GYRO_DTA_1_GYRO_CONFIG__0250DPS) * (int64_t)raw) >> 15);
 }
 
 inline
@@ -905,42 +905,62 @@ static void task_twi1_hygro(uint32_t now)
 
 static void task_twi1_gyro(uint32_t now)
 {	// Calculations for the presentation layer
-	irqflags_t flags = cpu_irq_save();
-	int16_t	l_twi1_gyro_1_accel_x	= g_twi1_gyro_1_accel_x;
-	int16_t	l_twi1_gyro_1_accel_y	= g_twi1_gyro_1_accel_y;
-	int16_t	l_twi1_gyro_1_accel_z	= g_twi1_gyro_1_accel_z;
-	int16_t l_twi1_gyro_1_gyro_x	= g_twi1_gyro_1_gyro_x;
-	int16_t l_twi1_gyro_1_gyro_y	= g_twi1_gyro_1_gyro_y;
-	int16_t l_twi1_gyro_1_gyro_z	= g_twi1_gyro_1_gyro_z;
-	int16_t	l_twi1_gyro_1_temp		= g_twi1_gyro_1_temp;
-	int16_t l_twi1_gyro_2_mag_x		= g_twi1_gyro_2_mag_x;
-	int16_t l_twi1_gyro_2_mag_y		= g_twi1_gyro_2_mag_y;
-	int16_t l_twi1_gyro_2_mag_z		= g_twi1_gyro_2_mag_z;
-	cpu_irq_restore(flags);
+	{
+		irqflags_t flags = cpu_irq_save();
+		int16_t	l_twi1_gyro_1_accel_x	= g_twi1_gyro_1_accel_x;
+		int16_t	l_twi1_gyro_1_accel_y	= g_twi1_gyro_1_accel_y;
+		int16_t	l_twi1_gyro_1_accel_z	= g_twi1_gyro_1_accel_z;
+		cpu_irq_restore(flags);
 
-	int16_t l_twi1_gyro_1_accel_x_mg	= calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_x, g_twi1_gyro_1_accel_factx);
-	int16_t l_twi1_gyro_1_accel_y_mg	= calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_y, g_twi1_gyro_1_accel_facty);
-	int16_t l_twi1_gyro_1_accel_z_mg	= calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_z, g_twi1_gyro_1_accel_factz);
-	int32_t l_twi1_gyro_1_gyro_x_mdps	= calc_gyro1_gyro_raw2mdps(l_twi1_gyro_1_gyro_x);
-	int32_t l_twi1_gyro_1_gyro_y_mdps	= calc_gyro1_gyro_raw2mdps(l_twi1_gyro_1_gyro_y);
-	int32_t l_twi1_gyro_1_gyro_z_mdps	= calc_gyro1_gyro_raw2mdps(l_twi1_gyro_1_gyro_z);
-	int32_t l_twi1_gyro_2_mag_x_nT		= calc_gyro2_correct_mag_2_nT(l_twi1_gyro_2_mag_x, g_twi1_gyro_2_asax, g_twi1_gyro_2_mag_factx);
-	int32_t l_twi1_gyro_2_mag_y_nT		= calc_gyro2_correct_mag_2_nT(l_twi1_gyro_2_mag_y, g_twi1_gyro_2_asay, g_twi1_gyro_2_mag_facty);
-	int32_t l_twi1_gyro_2_mag_z_nT		= calc_gyro2_correct_mag_2_nT(l_twi1_gyro_2_mag_z, g_twi1_gyro_2_asaz, g_twi1_gyro_2_mag_factz);
-	int16_t	l_twi1_gyro_1_temp_deg_100	= calc_gyro1_temp_raw2C100(l_twi1_gyro_1_temp);
+		int16_t l_twi1_gyro_1_accel_x_mg	= calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_x, g_twi1_gyro_1_accel_factx);
+		int16_t l_twi1_gyro_1_accel_y_mg	= calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_y, g_twi1_gyro_1_accel_facty);
+		int16_t l_twi1_gyro_1_accel_z_mg	= calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_z, g_twi1_gyro_1_accel_factz);
 
-	flags = cpu_irq_save();
-	g_twi1_gyro_1_accel_x_mg	= l_twi1_gyro_1_accel_x_mg;
-	g_twi1_gyro_1_accel_y_mg	= l_twi1_gyro_1_accel_y_mg;
-	g_twi1_gyro_1_accel_z_mg	= l_twi1_gyro_1_accel_z_mg;
-	g_twi1_gyro_1_gyro_x_mdps	= l_twi1_gyro_1_gyro_x_mdps;
-	g_twi1_gyro_1_gyro_y_mdps	= l_twi1_gyro_1_gyro_y_mdps;
-	g_twi1_gyro_1_gyro_z_mdps	= l_twi1_gyro_1_gyro_z_mdps;
-	g_twi1_gyro_2_mag_x_nT		= l_twi1_gyro_2_mag_x_nT;
-	g_twi1_gyro_2_mag_y_nT		= l_twi1_gyro_2_mag_y_nT;
-	g_twi1_gyro_2_mag_z_nT		= l_twi1_gyro_2_mag_z_nT;
-	g_twi1_gyro_1_temp_deg_100	= l_twi1_gyro_1_temp_deg_100;
-	cpu_irq_restore(flags);
+		flags = cpu_irq_save();
+		g_twi1_gyro_1_accel_x_mg	= l_twi1_gyro_1_accel_x_mg;
+		g_twi1_gyro_1_accel_y_mg	= l_twi1_gyro_1_accel_y_mg;
+		g_twi1_gyro_1_accel_z_mg	= l_twi1_gyro_1_accel_z_mg;
+		cpu_irq_restore(flags);
+	}
+
+	{
+		irqflags_t flags = cpu_irq_save();
+		int16_t l_twi1_gyro_1_gyro_x	= g_twi1_gyro_1_gyro_x;
+		int16_t l_twi1_gyro_1_gyro_y	= g_twi1_gyro_1_gyro_y;
+		int16_t l_twi1_gyro_1_gyro_z	= g_twi1_gyro_1_gyro_z;
+		cpu_irq_restore(flags);
+
+		int32_t l_twi1_gyro_1_gyro_x_mdps	= calc_gyro1_gyro_raw2mdps(l_twi1_gyro_1_gyro_x);
+		int32_t l_twi1_gyro_1_gyro_y_mdps	= calc_gyro1_gyro_raw2mdps(l_twi1_gyro_1_gyro_y);
+		int32_t l_twi1_gyro_1_gyro_z_mdps	= calc_gyro1_gyro_raw2mdps(l_twi1_gyro_1_gyro_z);
+
+		flags = cpu_irq_save();
+		g_twi1_gyro_1_gyro_x_mdps	= l_twi1_gyro_1_gyro_x_mdps;
+		g_twi1_gyro_1_gyro_y_mdps	= l_twi1_gyro_1_gyro_y_mdps;
+		g_twi1_gyro_1_gyro_z_mdps	= l_twi1_gyro_1_gyro_z_mdps;
+		cpu_irq_restore(flags);
+	}
+
+	{
+		irqflags_t flags = cpu_irq_save();
+		int16_t l_twi1_gyro_2_mag_x		= g_twi1_gyro_2_mag_x;
+		int16_t l_twi1_gyro_2_mag_y		= g_twi1_gyro_2_mag_y;
+		int16_t l_twi1_gyro_2_mag_z		= g_twi1_gyro_2_mag_z;
+		int16_t	l_twi1_gyro_1_temp		= g_twi1_gyro_1_temp;
+		cpu_irq_restore(flags);
+
+		int32_t l_twi1_gyro_2_mag_x_nT		= calc_gyro2_correct_mag_2_nT(l_twi1_gyro_2_mag_x, g_twi1_gyro_2_asax, g_twi1_gyro_2_mag_factx);
+		int32_t l_twi1_gyro_2_mag_y_nT		= calc_gyro2_correct_mag_2_nT(l_twi1_gyro_2_mag_y, g_twi1_gyro_2_asay, g_twi1_gyro_2_mag_facty);
+		int32_t l_twi1_gyro_2_mag_z_nT		= calc_gyro2_correct_mag_2_nT(l_twi1_gyro_2_mag_z, g_twi1_gyro_2_asaz, g_twi1_gyro_2_mag_factz);
+		int16_t	l_twi1_gyro_1_temp_deg_100	= calc_gyro1_temp_raw2C100(l_twi1_gyro_1_temp);
+
+		flags = cpu_irq_save();
+		g_twi1_gyro_2_mag_x_nT		= l_twi1_gyro_2_mag_x_nT;
+		g_twi1_gyro_2_mag_y_nT		= l_twi1_gyro_2_mag_y_nT;
+		g_twi1_gyro_2_mag_z_nT		= l_twi1_gyro_2_mag_z_nT;
+		g_twi1_gyro_1_temp_deg_100	= l_twi1_gyro_1_temp_deg_100;
+		cpu_irq_restore(flags);
+	}
 }
 
 static void task_twi1_baro(uint32_t now)
@@ -1233,7 +1253,7 @@ void task_twi2_lcd(uint32_t now)
 			if (!(s_lcd_entry_cnt++)) {
 				task_twi2_lcd_header();
 			#if 1
-			} else if (s_lcd_entry_cnt >= (300 * 2)) {  // Repaint after five minutes
+			} else if (s_lcd_entry_cnt >= (300 * 8)) {  // Repaint after five minutes
 				s_lcd_entry_cnt = 0;
 			#endif
 			}
@@ -1378,19 +1398,19 @@ void task_twi2_lcd(uint32_t now)
 					int32_t l_twi1_gyro_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
 					cpu_irq_restore(flags);
 
-					float rads_x = (l_twi1_gyro_1_gyro_x_mdps * M_PI) / 180000.f;
-					float rads_y = (l_twi1_gyro_1_gyro_y_mdps * M_PI) / 180000.f;
-					float rads_z = (l_twi1_gyro_1_gyro_z_mdps * M_PI) / 180000.f;
+					float rads_x = ((float)l_twi1_gyro_1_gyro_x_mdps * M_PI) / 180000.f;
+					float rads_y = ((float)l_twi1_gyro_1_gyro_y_mdps * M_PI) / 180000.f;
+					float rads_z = ((float)l_twi1_gyro_1_gyro_z_mdps * M_PI) / 180000.f;
 
 					/* Remove old lines */
-					task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - plot_gyro_radius * sin(s_rads_x), plot_gyro_center_y - plot_gyro_radius * cos(s_rads_x), 0);
-					task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + plot_gyro_radius * sin(s_rads_y), plot_gyro_center_y - plot_gyro_radius * cos(s_rads_y), 0);
-					task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - plot_gyro_radius * sin(s_rads_z), plot_gyro_center_y - plot_gyro_radius * cos(s_rads_z), 0);
+					task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - (int8_t)(plot_gyro_radius * sin(s_rads_x)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_x)), 0);
+					task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + (int8_t)(plot_gyro_radius * sin(s_rads_y)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_y)), 0);
+					task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - (int8_t)(plot_gyro_radius * sin(s_rads_z)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_z)), 0);
 
 					/* Draw new lines */
-					task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - plot_gyro_radius * sin(rads_x), plot_gyro_center_y - plot_gyro_radius * cos(rads_x), 1);
-					task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + plot_gyro_radius * sin(rads_y), plot_gyro_center_y - plot_gyro_radius * cos(rads_y), 1);
-					task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - plot_gyro_radius * sin(rads_z), plot_gyro_center_y - plot_gyro_radius * cos(rads_z), 1);
+					task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - (int8_t)(plot_gyro_radius * sin(  rads_x)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_x)), 1);
+					task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + (int8_t)(plot_gyro_radius * sin(  rads_y)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_y)), 1);
+					task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - (int8_t)(plot_gyro_radius * sin(  rads_z)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_z)), 1);
 
 					/* Store new set */
 					s_rads_x = rads_x;
