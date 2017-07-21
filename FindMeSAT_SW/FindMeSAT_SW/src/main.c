@@ -354,7 +354,7 @@ static void tc_start(void)
 }
 
 void isr_tcc0_ovfl(void)
-{	// This ISR is called 2560 per second
+{	// This ISR is called 2048 per second
 	static uint32_t	last_10ms  = 0UL;
 	static uint32_t	last_500ms = 0UL;
 

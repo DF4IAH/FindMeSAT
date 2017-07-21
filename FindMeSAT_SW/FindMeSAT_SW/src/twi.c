@@ -1214,40 +1214,20 @@ void task_twi2_lcd(uint32_t now)
 {
 	static uint16_t s_lcd_entry_cnt =  0U;
 	static uint32_t s_lcd_last		= 0UL;
+	irqflags_t flags = 0;
 
 	if (g_twi2_lcd_version >= 0x11) {
 		//static uint8_t s_ofs = 0;
 
-		/* Show current measurement data on the LCD */
-		if (((now - s_lcd_last) >= 512) || (now < s_lcd_last)) {
+		/* Show current measurement data on the LCD - 8 times per second */
+		if (((now - s_lcd_last) >= 128) || (now < s_lcd_last)) {
 			const uint8_t col_left = 6 * 10;
-			uint8_t line = 2;
+			static uint8_t s_line = 2;
 
-			s_lcd_last = now;
-
-			/* Get up-to-date global data */
-			irqflags_t flags = cpu_irq_save();
-			int16_t l_adc_vctcxo_volt_1000		= g_adc_vctcxo_volt_1000;
-			int16_t l_adc_5v0_volt_1000			= g_adc_5v0_volt_1000;
-			int16_t l_adc_vbat_volt_1000		= g_adc_vbat_volt_1000;
-			int16_t l_adc_temp_deg_100			= g_adc_temp_deg_100;
-			int16_t l_adc_io_adc4_volt_1000		= g_adc_io_adc4_volt_1000;
-			int16_t l_adc_io_adc5_volt_1000		= g_adc_io_adc5_volt_1000;
-			//int16_t l_adc_silence_volt_1000	= g_adc_silence_volt_1000;
-			int32_t l_twi1_baro_temp_100		= g_twi1_baro_temp_100;
-			int32_t l_twi1_baro_p_100			= g_twi1_baro_p_100;
-			int16_t l_twi1_hygro_T_100			= g_twi1_hygro_T_100;
-			int16_t l_twi1_hygro_RH_100			= g_twi1_hygro_RH_100;
-			int16_t l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
-			int16_t l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
-			int16_t l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
-			int32_t l_twi1_gyro_1_gyro_x_mdps	= g_twi1_gyro_1_gyro_x_mdps;
-			int32_t l_twi1_gyro_1_gyro_y_mdps	= g_twi1_gyro_1_gyro_y_mdps;
-			int32_t l_twi1_gyro_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
-			int32_t l_twi1_gyro_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
-			int32_t l_twi1_gyro_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
-			int32_t l_twi1_gyro_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
-			cpu_irq_restore(flags);
+			/* Each second go to the home position */
+			if (!(s_lcd_entry_cnt % 8)) {
+				s_line = 2;
+			}
 
 			/* Repaint all items when starting and at some interval */
 			if (!(s_lcd_entry_cnt++)) {
@@ -1258,8 +1238,8 @@ void task_twi2_lcd(uint32_t now)
 			#endif
 			}
 
-			/* Gfx update twice a second */
-			{
+			/* Update Gfx twice a second */
+			if (!(s_lcd_entry_cnt % 4)) {
 				/* Mag lines */
 				{
 					const uint8_t plot_intensity_center_x = 115;
@@ -1273,6 +1253,13 @@ void task_twi2_lcd(uint32_t now)
 					static int8_t s_p2y = 0;
 					static int8_t s_p3x = 0;
 					static int8_t s_p3y = 0;
+
+					/* Get up-to-date global data */
+					flags = cpu_irq_save();
+					int32_t l_twi1_gyro_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
+					int32_t l_twi1_gyro_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
+					int32_t l_twi1_gyro_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
+					cpu_irq_restore(flags);
 
 					/* Removing old lines first */
 					task_twi2_lcd_rect(plot_intensity_center_x - 1,	plot_intensity_center_y - s_length / 3000.f, 3, s_length / 3000.f, true, 0);
@@ -1333,6 +1320,13 @@ void task_twi2_lcd(uint32_t now)
 					static int8_t s_p3x = 0;
 					static int8_t s_p3y = 0;
 
+					/* Get up-to-date global data */
+					flags = cpu_irq_save();
+					int16_t l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
+					int16_t l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
+					int16_t l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
+					cpu_irq_restore(flags);
+
 					/* Removing old lines first */
 					{
 						task_twi2_lcd_line(plot_accel_center_x,			plot_accel_center_y,			plot_accel_center_x + s_p1x, plot_accel_center_y + s_p1y, 0);
@@ -1376,6 +1370,14 @@ void task_twi2_lcd(uint32_t now)
 					static float s_rads_x = 0.f;
 					static float s_rads_y = 0.f;
 					static float s_rads_z = 0.f;
+
+					/* Get up-to-date global data */
+					flags = cpu_irq_save();
+					int32_t l_twi1_gyro_1_gyro_x_mdps	= g_twi1_gyro_1_gyro_x_mdps;
+					int32_t l_twi1_gyro_1_gyro_y_mdps	= g_twi1_gyro_1_gyro_y_mdps;
+					int32_t l_twi1_gyro_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
+					cpu_irq_restore(flags);
+
 					float rads_x = (l_twi1_gyro_1_gyro_x_mdps * M_PI) / 180000.f;
 					float rads_y = (l_twi1_gyro_1_gyro_y_mdps * M_PI) / 180000.f;
 					float rads_z = (l_twi1_gyro_1_gyro_z_mdps * M_PI) / 180000.f;
@@ -1397,46 +1399,93 @@ void task_twi2_lcd(uint32_t now)
 				}
 			}
 
-			/* Text update each second */
-			if (!(s_lcd_entry_cnt % 2)) {
-				if (g_adc_enabled) {
+			/* Update same text line each second when no Gfx data is drawn */
+			if (g_adc_enabled) {
+				if ((s_lcd_entry_cnt % 8) == 1) {
+					/* Get up-to-date global data */
+					flags = cpu_irq_save();
+					int16_t l_adc_temp_deg_100			= g_adc_temp_deg_100;
+					int16_t l_adc_5v0_volt_1000			= g_adc_5v0_volt_1000;
+					cpu_irq_restore(flags);
+
 					/* ADC_TEMP */
-					task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_temp_deg_100 / 100,      (l_adc_temp_deg_100 / 10) % 10,  "%02d.%01d");
+					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_temp_deg_100 / 100,      (l_adc_temp_deg_100 / 10) % 10,  "%02d.%01d");
 
 					/* ADC_5V0 */
-					task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_5v0_volt_1000 / 1000,     l_adc_5v0_volt_1000 % 1000,     "%1d.%03d");
+					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_5v0_volt_1000 / 1000,     l_adc_5v0_volt_1000 % 1000,     "%1d.%03d");
+
+				} else if ((s_lcd_entry_cnt % 8) == 2) {
+					/* Get up-to-date global data */
+					flags = cpu_irq_save();
+					int16_t l_adc_vbat_volt_1000		= g_adc_vbat_volt_1000;
+					int16_t l_adc_vctcxo_volt_1000		= g_adc_vctcxo_volt_1000;
+					cpu_irq_restore(flags);
 
 					/* ADC_VBAT */
-					task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_vbat_volt_1000 / 1000,    l_adc_vbat_volt_1000 % 1000,    "%1d.%03d");
+					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_vbat_volt_1000 / 1000,    l_adc_vbat_volt_1000 % 1000,    "%1d.%03d");
 
 					/* ADC_VCTCXO */
-					task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_vctcxo_volt_1000 / 1000,  l_adc_vctcxo_volt_1000 % 1000,  "%1d.%03d");
+					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_vctcxo_volt_1000 / 1000,  l_adc_vctcxo_volt_1000 % 1000,  "%1d.%03d");
+
+				} else if ((s_lcd_entry_cnt % 8) == 3) {
+					/* Get up-to-date global data */
+					flags = cpu_irq_save();
+					int16_t l_adc_io_adc4_volt_1000		= g_adc_io_adc4_volt_1000;
+					int16_t l_adc_io_adc5_volt_1000		= g_adc_io_adc5_volt_1000;
+					cpu_irq_restore(flags);
 
 					/* ADC_IO_ADC4 */
-					task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_io_adc4_volt_1000 / 1000, l_adc_io_adc4_volt_1000 % 1000, "%1d.%03d");
+					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_io_adc4_volt_1000 / 1000, l_adc_io_adc4_volt_1000 % 1000, "%1d.%03d");
 
 					/* ADC_IO_ADC5 */
-					task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_io_adc5_volt_1000 / 1000, l_adc_io_adc5_volt_1000 % 1000, "%1d.%03d");
+					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_io_adc5_volt_1000 / 1000, l_adc_io_adc5_volt_1000 % 1000, "%1d.%03d");
+
+				} else if ((s_lcd_entry_cnt % 8) == 5) {
+					#if 0
+					flags = cpu_irq_save();
+					int16_t l_adc_silence_volt_1000	= g_adc_silence_volt_1000;
+					cpu_irq_restore(flags);
 
 					/* ADC_SILENCE */
-					//task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_adc_silence_volt_1000 / 1000, l_adc_silence_volt_1000 % 1000, "%1d.%03d");
-					line++;
-				} else {
-					line = 9;
+					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_silence_volt_1000 / 1000, l_adc_silence_volt_1000 % 1000, "%1d.%03d");
+					#else
+					s_line++;
+					#endif
 				}
 
+			} else {
+				s_line = 9;
+			}
+
+			if ((s_lcd_entry_cnt % 8) == 6) {
+				/* Get up-to-date global data */
+				flags = cpu_irq_save();
+				int32_t l_twi1_baro_temp_100		= g_twi1_baro_temp_100;
+				int32_t l_twi1_baro_p_100			= g_twi1_baro_p_100;
+				cpu_irq_restore(flags);
+
 				/* Baro_Temp */
-				task_twi2_lcd_print_format_uint32(col_left, (line++) * 10, l_twi1_baro_temp_100 / 100,     l_twi1_baro_temp_100 % 100,     "%02ld.%02ld");
+				task_twi2_lcd_print_format_uint32(col_left, (s_line++) * 10, l_twi1_baro_temp_100 / 100,     l_twi1_baro_temp_100 % 100,     "%02ld.%02ld");
 
 				/* Baro_P */
-				task_twi2_lcd_print_format_uint32(col_left, (line++) * 10, l_twi1_baro_p_100 / 100,        l_twi1_baro_p_100 % 100,        "%04ld.%02ld");
+				task_twi2_lcd_print_format_uint32(col_left, (s_line++) * 10, l_twi1_baro_p_100 / 100,        l_twi1_baro_p_100 % 100,        "%04ld.%02ld");
+
+			} else if ((s_lcd_entry_cnt % 8) == 7) {
+				/* Get up-to-date global data */
+				flags = cpu_irq_save();
+				int16_t l_twi1_hygro_T_100			= g_twi1_hygro_T_100;
+				int16_t l_twi1_hygro_RH_100			= g_twi1_hygro_RH_100;
+				cpu_irq_restore(flags);
 
 				/* Hygro_Temp */
-				task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_twi1_hygro_T_100 / 100,       l_twi1_hygro_T_100 % 100,       "%02d.%02d");
+				task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_twi1_hygro_T_100 / 100,       l_twi1_hygro_T_100 % 100,       "%02d.%02d");
 
 				/* Hygro_RH */
-				task_twi2_lcd_print_format_uint16(col_left, (line++) * 10, l_twi1_hygro_RH_100 / 100,      l_twi1_hygro_RH_100 % 100,      "%02d.%02d");
+				task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_twi1_hygro_RH_100 / 100,      l_twi1_hygro_RH_100 % 100,      "%02d.%02d");
 			}
+
+			/* Store last time */
+			s_lcd_last = now;
 		}
 
 	} else if (g_twi2_lcd_version == 0x10) {
