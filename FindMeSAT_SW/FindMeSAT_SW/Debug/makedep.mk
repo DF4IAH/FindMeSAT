@@ -14,6 +14,8 @@ src\ASF\xmega\drivers\rtc32\rtc32.c
 
 src\dds.c
 
+src\interpreter.c
+
 src\twi.c
 
 src\ASF\common\boards\user_board\init.c

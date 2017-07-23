@@ -37,6 +37,7 @@
 #include "conf_dac.h"
 #include "dds.h"
 #include "twi.h"
+#include "interpreter.h"
 
 #include "main.h"
 
@@ -45,9 +46,12 @@
 
 bool						g_adc_enabled						= true;
 bool						g_dac_enabled						= true;
-bool						g_usb_stdout_enabled				= false;
+bool						g_usb_cdc_stdout_enabled			= false;
+bool						g_usb_cdc_printStatusLines			= false;
+bool						g_usb_cdc_rx_received				= false;
+bool						g_usb_cdc_transfers_autorized		= false;
+bool						g_usb_cdc_access_blocked			= false;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
-bool						usb_cdc_transfers_autorized			= false;
 
 uint32_t					g_rtc_alarm							= 0UL;
 
@@ -114,6 +118,7 @@ int16_t						g_twi1_hygro_T_100					= 0;
 int16_t						g_twi1_hygro_RH_100					= 0;
 
 uint8_t						g_twi2_lcd_version					= 0;
+bool						g_twi2_lcd_repaint					= false;
 
 
 struct adc_config			g_adc_a_conf						= { 0 };
@@ -154,7 +159,7 @@ int16_t						g_adc_io_adc5_volt_1000				= 0;
 int16_t						g_adc_silence_volt_1000				= 0;
 int16_t						g_adc_temp_deg_100					= 0;
 
-char						g_prepare_buf[48]					= "";
+char						g_prepare_buf[C_TX_BUF_SIZE]		= "";
 
 
 
@@ -220,7 +225,102 @@ static uint32_t						dds1_reg				= 0x40000000UL;		// Cosine
 static dma_dac_buf_t dac_io_dac0_buf[2][DAC_NR_OF_SAMPLES]	= { 0 };
 
 
+/* Forward declarations */
+
+static void tc_init(void);
+static void tc_start(void);
+
+static void adc_init(void);
+static void adc_start(void);
+static void adc_stop(void);
+
+static void dac_init(void);
+static void dac_start(void);
+static void dac_stop(void);
+
+static void isr_10ms(uint32_t now);
+static void isr_500ms(uint32_t now);
+static void isr_sparetime(uint32_t now);
+
+static void dma_init(void);
+static void dma_start(void);
+static void isr_dma_dac_ch0_A(enum dma_channel_status status);
+static void isr_dma_dac_ch0_B(enum dma_channel_status status);
+
+static void task_dac(uint32_t now);
+static void task_usb(uint32_t now);
+
+
 /* UTILS section */
+
+void adc_app_enable(bool enable)
+{
+	irqflags_t flags = cpu_irq_save();
+	bool l_adc_enabled = g_adc_enabled;
+	cpu_irq_restore(flags);
+
+	if (l_adc_enabled != enable) {
+		if (enable) {
+			tc_init();
+			adc_init();
+
+			tc_start();
+			adc_start();
+
+		} else {
+			adc_stop();
+		}
+
+		flags = cpu_irq_save();
+		g_adc_enabled = enable;
+		g_twi2_lcd_repaint = true;
+		cpu_irq_restore(flags);
+	}
+}
+
+void dac_app_enable(bool enable)
+{
+	irqflags_t flags = cpu_irq_save();
+	bool l_dac_enabled = g_dac_enabled;
+	cpu_irq_restore(flags);
+
+	if (l_dac_enabled != enable) {
+		if (enable) {
+			flags = cpu_irq_save();
+			dds0_freq_mHz	= 2000000UL;		// 2 kHz
+			dds0_reg		= 0UL;				// Sine
+			dds1_freq_mHz	= 4000010UL;		// 4 kHz
+			dds1_reg		= 0x40000000UL;		// Cosine
+			cpu_irq_restore(flags);
+
+			dac_init();
+			tc_start();
+			dac_start();
+
+		} else {
+			dac_stop();
+		}
+
+		flags = cpu_irq_save();
+		g_dac_enabled = enable;
+		cpu_irq_restore(flags);
+	}
+}
+
+void printStatusLines_enable(bool enable)
+{
+	irqflags_t flags = cpu_irq_save();
+	g_usb_cdc_printStatusLines = enable;
+	cpu_irq_restore(flags);
+}
+
+void halt(void)
+{
+	/* MAIN Loop Shutdown */
+	irqflags_t flags = cpu_irq_save();
+	g_workmode = WORKMODE_END;
+	cpu_irq_restore(flags);
+}
 
 static char sgn_of(long x) {
 	return x >= 0 ?  '+' : '-';
@@ -284,14 +384,6 @@ void sleep_ms(uint16_t ms)
 	sleep_disable();
 }
 
-void halt(void)
-{
-	/* MAIN Loop Shutdown */
-	irqflags_t flags = cpu_irq_save();
-	g_workmode = WORKMODE_END;
-	cpu_irq_restore(flags);
-}
-
 
 /* INIT section */
 
@@ -314,11 +406,6 @@ static void evsys_init(void)
 	EVSYS.CH4CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH4 no digital filtering
 }
 
-
-/* Forward declarations for TC section */
-static void isr_10ms(uint32_t now);
-static void isr_500ms(uint32_t now);
-static void isr_sparetime(uint32_t now);
 
 static void tc_init(void)
 {
@@ -354,7 +441,7 @@ static void tc_start(void)
 }
 
 void isr_tcc0_ovfl(void)
-{	// This ISR is called 2560 per second
+{	// This ISR is called 2048 per second
 	static uint32_t	last_10ms  = 0UL;
 	static uint32_t	last_500ms = 0UL;
 
@@ -501,9 +588,14 @@ static void adc_init(void)
 
 static void adc_start(void)
 {
-	/* Power up after configurations are being set */
 	adc_enable(&ADCA);
 	adc_enable(&ADCB);
+}
+
+static void adc_stop(void)
+{
+	adc_disable(&ADCA);
+	adc_disable(&ADCB);
 }
 
 void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
@@ -575,13 +667,6 @@ void isr_adc_b(ADC_t* adc, uint8_t ch_mask, adc_result_t res)
 }
 
 
-/* Forward declarations for DAC and DMA section */
-static void dma_init(void);
-static void dma_start(void);
-static void isr_dma_dac_ch0_A(enum dma_channel_status status);
-static void isr_dma_dac_ch0_B(enum dma_channel_status status);
-static void task_dac(uint32_t now);
-
 static void dac_init(void)
 {
 	dac_read_configuration(&DAC_DAC, &dac_conf);
@@ -621,10 +706,17 @@ static void dac_start(void)
 	}
 }
 
+static void dac_stop(void)
+{
+	dma_disable();
+	dac_disable(&DACB);
+}
+
+
 static void dma_init(void)
 {
 	memset(&dmach_dma0_conf, 0, sizeof(dmach_dma0_conf));	// DACB channel 0 - linked with dma1
-	memset(&dmach_dma1_conf, 0, sizeof(dmach_dma1_conf));	// DACB channel 0 - linked with dma0
+	memset(&dmach_dma1_conf, 0, sizeof(dmach_dma1_conf));	// DACB channel 1 - linked with dma0
 
 	dma_channel_set_burst_length(&dmach_dma0_conf, DMA_CH_BURSTLEN_4BYTE_gc);
 	dma_channel_set_burst_length(&dmach_dma1_conf, DMA_CH_BURSTLEN_4BYTE_gc);
@@ -689,20 +781,34 @@ static void isr_dma_dac_ch0_B(enum dma_channel_status status)
 }
 
 
+const char					PM_USBINIT_HEADER_01[]				= "\r\n\r\n\r\n";
+const char					PM_USBINIT_HEADER_02[]				= "%c\r\n===============================\r\n";
+const char					PM_USBINIT_HEADER_03[]				= "FindMeSAT - USB logging started\r\n";
+const char					PM_USBINIT_HEADER_04[]				= "===============================\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_01[]);
+PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_02[]);
+PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_03[]);
+PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_04[]);
+
 static void usb_init(void)
 {
-	udc_start();
-
-	if (g_usb_stdout_enabled) {
-		stdio_usb_init();	// Init and enable stdio_usb
+	stdio_usb_init();	// Init and enable stdio_usb
+	if (g_usb_cdc_stdout_enabled) {
 		stdio_usb_enable();
-		delay_ms(140);
-
-		printf("%c\r\n", 0x0c);
-		printf("===============================\r\n");
-		printf("FindMeSAT - USB logging started\r\n");
-		printf("===============================\r\n\r\n");
 	}
+	delay_ms(500);
+
+	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_01);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_02, 0x0c);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_03);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_04);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 }
 
 void usb_callback_suspend_action(void)
@@ -711,7 +817,12 @@ void usb_callback_suspend_action(void)
 
 	// Disable hardware component to reduce power consumption
 	// Reduce power consumption in suspend mode (max. 2.5mA on VBUS)
+#if 0
+#endif
 
+	irqflags_t flags = cpu_irq_save();
+	g_workmode = WORKMODE_SUSPENDED;
+	cpu_irq_restore(flags);
 }
 
 void usb_callback_resume_action(void)
@@ -719,7 +830,39 @@ void usb_callback_resume_action(void)
 	/* USB BUS powered: suspend / resume operations */
 
 	// Re-enable hardware component
+#if 0
+	cpu_irq_disable();
 
+	evsys_init();		// Event system
+	tc_init();			// Timers
+	if (g_adc_enabled) {
+		adc_init();		// ADC
+	}
+	if (g_dac_enabled) {
+		dac_init();		// DAC
+	}
+	twi_init();			// I2C / TWI
+
+	/* All interrupt sources & PMIC are prepared until here - IRQ activation follows */
+	cpu_irq_enable();
+
+	/* Start of sub-modules */
+	tc_start();			// All clocks and PWM timers start here
+	if (g_dac_enabled) {
+		dac_start();	// Start DA convertions
+	}
+	if (g_adc_enabled) {
+		adc_start();	// Start AD convertions
+	}
+
+	/* Start TWI channels */
+	twi_start();		// Start TWI
+#endif
+
+	/* The application code */
+	irqflags_t flags = cpu_irq_save();
+	g_workmode = WORKMODE_RUN;
+	cpu_irq_restore(flags);
 }
 
 void usb_callback_remotewakeup_enable(void)
@@ -749,7 +892,7 @@ bool usb_callback_cdc_enable(void)
 {
 	/* USB CDC feature for serial communication */
 
-	usb_cdc_transfers_autorized = true;
+	g_usb_cdc_transfers_autorized = true;
 	return true;
 }
 
@@ -757,7 +900,7 @@ void usb_callback_cdc_disable(void)
 {
 	/* USB CDC feature for serial communication */
 
-	usb_cdc_transfers_autorized = false;
+	g_usb_cdc_transfers_autorized = false;
 }
 
 void usb_callback_config(uint8_t port, usb_cdc_line_coding_t * cfg)
@@ -777,17 +920,17 @@ void usb_callback_cdc_set_rts(uint8_t port, bool b_enable)
 
 void usb_callback_rx_notify(uint8_t port)
 {
-
+	g_usb_cdc_rx_received = true;
 }
 
 void usb_callback_tx_empty_notify(uint8_t port)
 {
-
+	g_usb_cdc_access_blocked = false;
 }
 
 
 
-/* RUNNING section */
+/* The LOOP section */
 
 static void task_dac(uint32_t now)
 {	/* Calculation of the DDS increments */
@@ -861,99 +1004,162 @@ static void task_twi(uint32_t now)
 	task_twi2_lcd(now);
 }
 
+
+const char					PM_INFO_PART_L1P1A[]				= "Time = %06ld: Uvco=%4d mV, U5v=%4d mV, Ubat=%4d mV, ";
+const char					PM_INFO_PART_L1P1B[]				= "Uadc4=%4d mV, Uadc5=%4d mV, Usil=%4d mV, ";
+const char					PM_INFO_PART_L1P1C[]				= "mP_Temp=%c%02d.%02dC\t \t";
+const char					PM_INFO_PART_L1P2[]					= "Baro_Temp=%c%02ld.%02ldC, Baro_P=%4ld.%02ldhPa\t \t";
+const char					PM_INFO_PART_L1P3[]					= "Hygro_Temp=%c%02d.%02dC, Hygro_RelH=%02d.%02d%%\r\n";
+const char					PM_INFO_PART_L2P1A[]				= "\tAx=%c%01d.%03dg (%+06d), Ay=%c%01d.%03dg (%+06d), ";
+const char					PM_INFO_PART_L2P1B[]				= "Az=%c%01d.%03dg (%+06d)\t \t";
+const char					PM_INFO_PART_L2P2A[]				= "Gx=%c%03ld.%03lddps (%+06d), Gy=%c%03ld.%03lddps (%+06d), ";
+const char					PM_INFO_PART_L2P2B[]				= "Gz=%c%03ld.%03lddps (%06d)\t \t";
+const char					PM_INFO_PART_L2P3A[]				= "Mx=%c%03ld.%03lduT (%+06d), My=%c%03ld.%03lduT (%+06d), ";
+const char					PM_INFO_PART_L2P3B[]				= "Mz=%c%03ld.%03lduT (%+06d)\t \t";
+const char					PM_INFO_PART_L2P4[]					= "Gyro_Temp=%c%02d.%02dC (%+06d)\r\n\r\n";
+
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1B[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1C[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P2[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P3[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P1A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P1B[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P2A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P2B[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3B[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P4[]);
+
 static void task_usb(uint32_t now)
 {
-	if (usb_cdc_transfers_autorized) {
+	/* Monitoring at the USB serial terminal */
+	if (g_usb_cdc_transfers_autorized) {
 		static uint32_t usb_last = 0UL;
-		irqflags_t flags = 0;
 
-#if 0
-		// Dedicated handling
+		irqflags_t flags = cpu_irq_save();
+		bool l_usb_cdc_rx_received		= g_usb_cdc_rx_received;
+		bool l_usb_cdc_printStatusLines	= g_usb_cdc_printStatusLines;
+		cpu_irq_restore(flags);
 
-		//if () {
-		//	task_usb_cdc();
-		//}
+		/* Get command lines from the USB host */
+		if (l_usb_cdc_rx_received) {
+			iram_size_t cdc_rx_len = udi_cdc_get_nb_received_data();
+			if (cdc_rx_len) {
+				char cdc_rx_buf[cdc_rx_len];
 
-		// Waits and gets a value on CDC line
-		// int udi_cdc_getc(void);
+				udi_cdc_read_no_polling(cdc_rx_buf, cdc_rx_len);
 
-		// Reads a RAM buffer on CDC line
-		// iram_size_t udi_cdc_read_buf(int* buf, iram_size_t size);
+				/* Echo back when not monitoring information are enabled */
+				if (!l_usb_cdc_printStatusLines) {
+					udi_write_tx_buf(cdc_rx_buf, cdc_rx_len, true);
+				}
 
-		// Puts a byte on CDC line
-		// int udi_cdc_putc(int value);
+				/* Call the interpreter */
+				interpreter_doProcess(cdc_rx_buf, cdc_rx_len);
 
-		// Writes a RAM buffer on CDC line
-		// iram_size_t udi_cdc_write_buf(const int* buf, iram_size_t size);	}
-
-		// Handling ...
-#else
-		// Already done by stdio redirection to the USB CDC device:
-
-		// stdio_usb_init();
-		// stdio_usb_enable();
-#endif
-
-		/* Monitoring at the USB serial terminal */
-		if (((now - usb_last) >= 512) || (now < usb_last)) {
-			usb_last = now;
+				/* Check for more available data */
+				cdc_rx_len = udi_cdc_get_nb_received_data();
+			}
 
 			flags = cpu_irq_save();
-			int16_t l_adc_vctcxo_volt_1000		= g_adc_vctcxo_volt_1000;
-			int16_t l_adc_5v0_volt_1000			= g_adc_5v0_volt_1000;
-			int16_t l_adc_vbat_volt_1000		= g_adc_vbat_volt_1000;
-			int16_t l_adc_io_adc4_volt_1000		= g_adc_io_adc4_volt_1000;
-			int16_t l_adc_io_adc5_volt_1000		= g_adc_io_adc5_volt_1000;
-			int16_t l_adc_silence_volt_1000		= g_adc_silence_volt_1000;
-			int16_t l_adc_temp_deg_100			= g_adc_temp_deg_100;
-			int32_t l_twi1_baro_temp_100		= g_twi1_baro_temp_100;
-			int32_t l_twi1_baro_p_100			= g_twi1_baro_p_100;
-			int16_t l_twi1_hygro_T_100			= g_twi1_hygro_T_100;
-			int16_t l_twi1_hygro_RH_100			= g_twi1_hygro_RH_100;
-			int16_t	l_twi1_gyro_1_accel_x		= g_twi1_gyro_1_accel_x;
-			int16_t	l_twi1_gyro_1_accel_y		= g_twi1_gyro_1_accel_y;
-			int16_t	l_twi1_gyro_1_accel_z		= g_twi1_gyro_1_accel_z;
-			int16_t	l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
-			int16_t	l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
-			int16_t	l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
-			int16_t l_twi1_gyro_1_gyro_x		= g_twi1_gyro_1_gyro_x;
-			int16_t l_twi1_gyro_1_gyro_y		= g_twi1_gyro_1_gyro_y;
-			int16_t l_twi1_gyro_1_gyro_z		= g_twi1_gyro_1_gyro_z;
-			int32_t	l_twi1_gyro_1_gyro_x_mdps	= g_twi1_gyro_1_gyro_x_mdps;
-			int32_t	l_twi1_gyro_1_gyro_y_mdps	= g_twi1_gyro_1_gyro_y_mdps;
-			int32_t	l_twi1_gyro_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
-			int16_t	l_twi1_gyro_1_temp			= g_twi1_gyro_1_temp;
-			int16_t	l_twi1_gyro_1_temp_deg_100	= g_twi1_gyro_1_temp_deg_100;
-			int16_t l_twi1_gyro_2_mag_x			= g_twi1_gyro_2_mag_x;
-			int16_t l_twi1_gyro_2_mag_y			= g_twi1_gyro_2_mag_y;
-			int16_t l_twi1_gyro_2_mag_z			= g_twi1_gyro_2_mag_z;
-			int32_t	l_twi1_gyro_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
-			int32_t	l_twi1_gyro_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
-			int32_t	l_twi1_gyro_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
+			g_usb_cdc_rx_received = false;
 			cpu_irq_restore(flags);
+		}
 
-			printf("Time = %06ld: Uvco=%4d mV, U5v=%4d mV, Ubat=%4d mV, Uadc4=%4d mV, Uadc5=%4d mV, Usil=%4d mV, mP_Temp=%c%02d.%02dC\t \t" \
-			"Baro_Temp=%c%02ld.%02ldC, Baro_P=%4ld.%02ldhPa\t \t" \
-			"Hygro_Temp=%c%02d.%02dC, Hygro_RelH=%02d.%02d%%\r\n",
-			now >> 10,
-			l_adc_vctcxo_volt_1000, l_adc_5v0_volt_1000, l_adc_vbat_volt_1000, l_adc_io_adc4_volt_1000, l_adc_io_adc5_volt_1000, l_adc_silence_volt_1000, sgn_of(l_adc_temp_deg_100), abs_int16(l_adc_temp_deg_100) / 100, abs_int16(l_adc_temp_deg_100) % 100,
-			sgn_of(l_twi1_baro_temp_100), abs_int32(l_twi1_baro_temp_100) / 100, abs_int32(l_twi1_baro_temp_100) % 100, l_twi1_baro_p_100 / 100, l_twi1_baro_p_100 % 100,
-			sgn_of(l_twi1_hygro_T_100), abs_int16(l_twi1_hygro_T_100) / 100, abs_int16(l_twi1_hygro_T_100) % 100, l_twi1_hygro_RH_100 / 100, l_twi1_hygro_RH_100 % 100);
+		/* Status output when requested */
+		if (g_usb_cdc_printStatusLines) {
+			if (((now - usb_last) >= 512) || (now < usb_last)) {
+				irqflags_t flags = cpu_irq_save();
+				int16_t l_adc_vctcxo_volt_1000		= g_adc_vctcxo_volt_1000;
+				int16_t l_adc_5v0_volt_1000			= g_adc_5v0_volt_1000;
+				int16_t l_adc_vbat_volt_1000		= g_adc_vbat_volt_1000;
+				int16_t l_adc_io_adc4_volt_1000		= g_adc_io_adc4_volt_1000;
+				int16_t l_adc_io_adc5_volt_1000		= g_adc_io_adc5_volt_1000;
+				int16_t l_adc_silence_volt_1000		= g_adc_silence_volt_1000;
+				int16_t l_adc_temp_deg_100			= g_adc_temp_deg_100;
+				int32_t l_twi1_baro_temp_100		= g_twi1_baro_temp_100;
+				int32_t l_twi1_baro_p_100			= g_twi1_baro_p_100;
+				int16_t l_twi1_hygro_T_100			= g_twi1_hygro_T_100;
+				int16_t l_twi1_hygro_RH_100			= g_twi1_hygro_RH_100;
+				int16_t	l_twi1_gyro_1_accel_x		= g_twi1_gyro_1_accel_x;
+				int16_t	l_twi1_gyro_1_accel_y		= g_twi1_gyro_1_accel_y;
+				int16_t	l_twi1_gyro_1_accel_z		= g_twi1_gyro_1_accel_z;
+				int16_t	l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
+				int16_t	l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
+				int16_t	l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
+				int16_t l_twi1_gyro_1_gyro_x		= g_twi1_gyro_1_gyro_x;
+				int16_t l_twi1_gyro_1_gyro_y		= g_twi1_gyro_1_gyro_y;
+				int16_t l_twi1_gyro_1_gyro_z		= g_twi1_gyro_1_gyro_z;
+				int32_t	l_twi1_gyro_1_gyro_x_mdps	= g_twi1_gyro_1_gyro_x_mdps;
+				int32_t	l_twi1_gyro_1_gyro_y_mdps	= g_twi1_gyro_1_gyro_y_mdps;
+				int32_t	l_twi1_gyro_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
+				int16_t	l_twi1_gyro_1_temp			= g_twi1_gyro_1_temp;
+				int16_t	l_twi1_gyro_1_temp_deg_100	= g_twi1_gyro_1_temp_deg_100;
+				int16_t l_twi1_gyro_2_mag_x			= g_twi1_gyro_2_mag_x;
+				int16_t l_twi1_gyro_2_mag_y			= g_twi1_gyro_2_mag_y;
+				int16_t l_twi1_gyro_2_mag_z			= g_twi1_gyro_2_mag_z;
+				int32_t	l_twi1_gyro_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
+				int32_t	l_twi1_gyro_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
+				int32_t	l_twi1_gyro_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
+				cpu_irq_restore(flags);
 
-			printf("\tAx=%c%01d.%03dg (%+06d), Ay=%c%01d.%03dg (%+06d), Az=%c%01d.%03dg (%+06d)\t \t" \
-			"Gx=%c%03ld.%03lddps (%+06d), Gy=%c%03ld.%03lddps (%+06d), Gz=%c%03ld.%03lddps (%06d)\t \t" \
-			"Mx=%c%03ld.%03lduT (%+06d), My=%c%03ld.%03lduT (%+06d), Mz=%c%03ld.%03lduT (%+06d)\t \t" \
-			"Gyro_Temp=%c%02d.%02dC (%+06d)\r\n\r\n",
-			sgn_of(l_twi1_gyro_1_accel_x_mg),   abs_int16(l_twi1_gyro_1_accel_x_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_x_mg)   % 1000, l_twi1_gyro_1_accel_x,
-			sgn_of(l_twi1_gyro_1_accel_y_mg),   abs_int16(l_twi1_gyro_1_accel_y_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_y_mg)   % 1000, l_twi1_gyro_1_accel_y,
-			sgn_of(l_twi1_gyro_1_accel_z_mg),   abs_int16(l_twi1_gyro_1_accel_z_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_z_mg)   % 1000, l_twi1_gyro_1_accel_z,
-			sgn_of(l_twi1_gyro_1_gyro_x_mdps),  abs_int32(l_twi1_gyro_1_gyro_x_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_x_mdps)  % 1000, l_twi1_gyro_1_gyro_x,
-			sgn_of(l_twi1_gyro_1_gyro_y_mdps),  abs_int32(l_twi1_gyro_1_gyro_y_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_y_mdps)  % 1000, l_twi1_gyro_1_gyro_y,
-			sgn_of(l_twi1_gyro_1_gyro_z_mdps),  abs_int32(l_twi1_gyro_1_gyro_z_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_z_mdps)  % 1000, l_twi1_gyro_1_gyro_z,
-			sgn_of(l_twi1_gyro_2_mag_x_nT),     abs_int32(l_twi1_gyro_2_mag_x_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_x_nT)     % 1000, l_twi1_gyro_2_mag_x,
-			sgn_of(l_twi1_gyro_2_mag_y_nT),     abs_int32(l_twi1_gyro_2_mag_y_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_y_nT)     % 1000, l_twi1_gyro_2_mag_y,
-			sgn_of(l_twi1_gyro_2_mag_z_nT),     abs_int32(l_twi1_gyro_2_mag_z_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_z_nT)     % 1000, l_twi1_gyro_2_mag_z,
-			sgn_of(l_twi1_gyro_1_temp_deg_100), abs_int16(l_twi1_gyro_1_temp_deg_100) /  100, abs_int16(l_twi1_gyro_1_temp_deg_100) %  100, l_twi1_gyro_1_temp);
+				int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P1A,
+				now >> 10,
+				l_adc_vctcxo_volt_1000, l_adc_5v0_volt_1000, l_adc_vbat_volt_1000);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P1B,
+				l_adc_io_adc4_volt_1000, l_adc_io_adc5_volt_1000, l_adc_silence_volt_1000);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P1C,
+				sgn_of(l_adc_temp_deg_100), abs_int16(l_adc_temp_deg_100) / 100, abs_int16(l_adc_temp_deg_100) % 100);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P2,
+				sgn_of(l_twi1_baro_temp_100), abs_int32(l_twi1_baro_temp_100) / 100, abs_int32(l_twi1_baro_temp_100) % 100, l_twi1_baro_p_100 / 100, l_twi1_baro_p_100 % 100);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P3,
+				sgn_of(l_twi1_hygro_T_100), abs_int16(l_twi1_hygro_T_100) / 100, abs_int16(l_twi1_hygro_T_100) % 100, l_twi1_hygro_RH_100 / 100, l_twi1_hygro_RH_100 % 100);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P1A,
+				sgn_of(l_twi1_gyro_1_accel_x_mg),   abs_int16(l_twi1_gyro_1_accel_x_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_x_mg)   % 1000, l_twi1_gyro_1_accel_x,
+				sgn_of(l_twi1_gyro_1_accel_y_mg),   abs_int16(l_twi1_gyro_1_accel_y_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_y_mg)   % 1000, l_twi1_gyro_1_accel_y);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P1B,
+				sgn_of(l_twi1_gyro_1_accel_z_mg),   abs_int16(l_twi1_gyro_1_accel_z_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_z_mg)   % 1000, l_twi1_gyro_1_accel_z);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P2A,
+				sgn_of(l_twi1_gyro_1_gyro_x_mdps),  abs_int32(l_twi1_gyro_1_gyro_x_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_x_mdps)  % 1000, l_twi1_gyro_1_gyro_x,
+				sgn_of(l_twi1_gyro_1_gyro_y_mdps),  abs_int32(l_twi1_gyro_1_gyro_y_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_y_mdps)  % 1000, l_twi1_gyro_1_gyro_y);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P2B,
+				sgn_of(l_twi1_gyro_1_gyro_z_mdps),  abs_int32(l_twi1_gyro_1_gyro_z_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_z_mdps)  % 1000, l_twi1_gyro_1_gyro_z);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P3A,
+				sgn_of(l_twi1_gyro_2_mag_x_nT),     abs_int32(l_twi1_gyro_2_mag_x_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_x_nT)     % 1000, l_twi1_gyro_2_mag_x,
+				sgn_of(l_twi1_gyro_2_mag_y_nT),     abs_int32(l_twi1_gyro_2_mag_y_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_y_nT)     % 1000, l_twi1_gyro_2_mag_y);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P3B,
+				sgn_of(l_twi1_gyro_2_mag_z_nT),     abs_int32(l_twi1_gyro_2_mag_z_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_z_nT)     % 1000, l_twi1_gyro_2_mag_z);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P4,
+				sgn_of(l_twi1_gyro_1_temp_deg_100), abs_int16(l_twi1_gyro_1_temp_deg_100) /  100, abs_int16(l_twi1_gyro_1_temp_deg_100) %  100, l_twi1_gyro_1_temp);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				/* Store last time of status line */
+				usb_last = now;
+			}
 		}
 	}
 }
@@ -1025,6 +1231,9 @@ int main(void)
 
 	/* Start TWI channels */
 	twi_start();		// Start TWI
+
+	/* Show help page of command set */
+	printHelp();
 
 	/* The application code */
 	irqflags_t flags = cpu_irq_save();

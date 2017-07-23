@@ -100,6 +100,7 @@ C_SRCS +=  \
 ../src/ASF/xmega/drivers/dma/dma.c \
 ../src/ASF/xmega/drivers/rtc32/rtc32.c \
 ../src/dds.c \
+../src/interpreter.c \
 ../src/twi.c \
 ../src/ASF/common/boards/user_board/init.c \
 ../src/ASF/common/services/gfx_mono/gfx_mono_framebuffer.c \
@@ -143,6 +144,7 @@ src/ASF/common/services/hugemem/avr8/avr8_hugemem.o \
 src/ASF/xmega/drivers/dma/dma.o \
 src/ASF/xmega/drivers/rtc32/rtc32.o \
 src/dds.o \
+src/interpreter.o \
 src/twi.o \
 src/ASF/common/boards/user_board/init.o \
 src/ASF/common/services/gfx_mono/gfx_mono_framebuffer.o \
@@ -179,6 +181,7 @@ src/ASF/common/services/hugemem/avr8/avr8_hugemem.o \
 src/ASF/xmega/drivers/dma/dma.o \
 src/ASF/xmega/drivers/rtc32/rtc32.o \
 src/dds.o \
+src/interpreter.o \
 src/twi.o \
 src/ASF/common/boards/user_board/init.o \
 src/ASF/common/services/gfx_mono/gfx_mono_framebuffer.o \
@@ -215,6 +218,7 @@ src/ASF/common/services/hugemem/avr8/avr8_hugemem.d \
 src/ASF/xmega/drivers/dma/dma.d \
 src/ASF/xmega/drivers/rtc32/rtc32.d \
 src/dds.d \
+src/interpreter.d \
 src/twi.d \
 src/ASF/common/boards/user_board/init.d \
 src/ASF/common/services/gfx_mono/gfx_mono_framebuffer.d \
@@ -251,6 +255,7 @@ src/ASF/common/services/hugemem/avr8/avr8_hugemem.d \
 src/ASF/xmega/drivers/dma/dma.d \
 src/ASF/xmega/drivers/rtc32/rtc32.d \
 src/dds.d \
+src/interpreter.d \
 src/twi.d \
 src/ASF/common/boards/user_board/init.d \
 src/ASF/common/services/gfx_mono/gfx_mono_framebuffer.d \
@@ -294,6 +299,8 @@ LINKER_SCRIPT_DEP+=
 
 
 # AVR32/GNU C Compiler
+
+
 
 
 
