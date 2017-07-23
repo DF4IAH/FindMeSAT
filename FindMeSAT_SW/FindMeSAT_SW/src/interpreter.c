@@ -29,6 +29,7 @@ extern bool					g_adc_enabled;
 extern bool					g_dac_enabled;
 extern bool					g_usb_cdc_printStatusLines;
 extern bool					g_usb_cdc_rx_received;
+extern bool					g_usb_cdc_access_blocked;
 extern char					g_prepare_buf[C_TX_BUF_SIZE];
 
 static char					s_rx_cmdLine_buf[C_RX_CMDLINE_BUF_SIZE]	= "";
@@ -38,12 +39,23 @@ static uint8_t				s_rx_cmdLine_idx						= 0;
 static bool udi_write_tx_char(int chr, bool stripControl)
 {
 	if (stripControl) {
-		/* Drop control character and return putc() success */
+		/* Drop control character and report putc() success */
 		if ((chr < 0x20) || (chr >= 0x80)) {
 			return true;
 		}
 	}
-	return (bool) udi_cdc_putc(chr);
+
+	if (!g_usb_cdc_access_blocked) {  // atomic operation
+		if (udi_cdc_is_tx_ready()) {
+			udi_cdc_putc(chr);
+			return true;
+
+		} else {
+			g_usb_cdc_access_blocked = true;
+			return false;
+		}
+	}
+	return false;
 }
 
 uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl)
@@ -52,12 +64,7 @@ uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl)
 
 	/* Write out each character - avoiding to use the block write function */
 	while (ret < len) {
-		uint8_t repeat_cnt = 10;
-
-		while((!udi_write_tx_char(*(buf + ret), stripControl)) && --repeat_cnt) {
-			delay_ms(10);
-		}
-		if (!repeat_cnt) {
+		if (!udi_write_tx_char(*(buf + ret), stripControl)) {
 			return ret;
 		}
 		++ret;

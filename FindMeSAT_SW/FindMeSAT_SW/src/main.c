@@ -50,6 +50,7 @@ bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines			= false;
 bool						g_usb_cdc_rx_received				= false;
 bool						g_usb_cdc_transfers_autorized		= false;
+bool						g_usb_cdc_access_blocked			= false;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 
 uint32_t					g_rtc_alarm							= 0UL;
@@ -286,22 +287,13 @@ void dac_app_enable(bool enable)
 	if (l_dac_enabled != enable) {
 		if (enable) {
 			flags = cpu_irq_save();
-			dds0_freq_mHz	= 1UL;
-			dds1_freq_mHz	= 1UL;
-			cpu_irq_restore(flags);
-			task_dac(rtc_get_time());			// Reset entries
-
-			flags = cpu_irq_save();
 			dds0_freq_mHz	= 2000000UL;		// 2 kHz
 			dds0_reg		= 0UL;				// Sine
 			dds1_freq_mHz	= 4000010UL;		// 4 kHz
-			dds1_reg		= 0x40000000UL;
+			dds1_reg		= 0x40000000UL;		// Cosine
 			cpu_irq_restore(flags);
-			task_dac(rtc_get_time());			// DDS increment calculations
 
-			tc_init();
 			dac_init();
-
 			tc_start();
 			dac_start();
 
@@ -716,6 +708,7 @@ static void dac_start(void)
 
 static void dac_stop(void)
 {
+	dma_disable();
 	dac_disable(&DACB);
 }
 
@@ -723,7 +716,7 @@ static void dac_stop(void)
 static void dma_init(void)
 {
 	memset(&dmach_dma0_conf, 0, sizeof(dmach_dma0_conf));	// DACB channel 0 - linked with dma1
-	memset(&dmach_dma1_conf, 0, sizeof(dmach_dma1_conf));	// DACB channel 0 - linked with dma0
+	memset(&dmach_dma1_conf, 0, sizeof(dmach_dma1_conf));	// DACB channel 1 - linked with dma0
 
 	dma_channel_set_burst_length(&dmach_dma0_conf, DMA_CH_BURSTLEN_4BYTE_gc);
 	dma_channel_set_burst_length(&dmach_dma1_conf, DMA_CH_BURSTLEN_4BYTE_gc);
@@ -932,7 +925,7 @@ void usb_callback_rx_notify(uint8_t port)
 
 void usb_callback_tx_empty_notify(uint8_t port)
 {
-
+	g_usb_cdc_access_blocked = false;
 }
 
 
