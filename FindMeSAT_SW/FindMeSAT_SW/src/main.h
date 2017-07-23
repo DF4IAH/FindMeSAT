@@ -9,6 +9,8 @@
 #ifndef MAIN_H_
 #define MAIN_H_
 
+#include <asf.h>
+
 
 #define C_TWI1_BARO_C_CNT		8
 
@@ -35,6 +37,7 @@ typedef enum WORKMODE_ENUM {
 	WORKMODE_OFF = 0,
 	WORKMODE_INIT,
 	WORKMODE_RUN,
+	WORKMODE_SUSPENDED,
 	WORKMODE_END,
 } WORKMODE_ENUM_t;
 
@@ -57,8 +60,12 @@ typedef struct dma_dac_buf_s {
 } dma_dac_buf_t;
 
 
-void sleep_ms(uint16_t ms);
+void adc_app_enable(bool enable);
+void dac_app_enable(bool enable);
+void printStatusLines_enable(bool enable);
 void halt(void);
+
+void sleep_ms(uint16_t ms);
 
 void isr_tcc0_ovfl(void);
 void isr_rtc_alarm(uint32_t rtc_time);
