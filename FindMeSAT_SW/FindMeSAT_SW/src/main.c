@@ -45,7 +45,7 @@
 /* GLOBAL section */
 
 bool						g_adc_enabled						= true;
-bool						g_dac_enabled						= true;
+bool						g_dac_enabled						= false;
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines			= false;
 bool						g_usb_cdc_rx_received				= false;
@@ -305,6 +305,33 @@ void dac_app_enable(bool enable)
 		g_dac_enabled = enable;
 		cpu_irq_restore(flags);
 	}
+}
+
+void dds_update(uint32_t dds0_mhz, uint32_t dds1_mhz, uint32_t phase)
+{
+	uint32_t phase_reg = (uint32_t) ((0x40000000UL / 90) * phase);
+
+	irqflags_t flags = cpu_irq_save();
+
+	/* Update only when mHz value for DDS0 is given */
+	if (dds0_mhz) {
+		dds0_freq_mHz = dds0_mhz;
+	}
+
+	/* Update only when mHz value for DDS1 is given */
+	if (dds1_mhz) {
+		dds1_freq_mHz = dds1_mhz;
+	}
+
+	/* Set the phase between two starting oscillators */
+	if (dds0_mhz && dds1_mhz) {
+		dds0_reg = 0UL;
+		dds1_reg = phase_reg;
+	}
+	cpu_irq_restore(flags);
+
+	/* Calculate new increment values */
+	task_dac(rtc_get_time());
 }
 
 void printStatusLines_enable(bool enable)
