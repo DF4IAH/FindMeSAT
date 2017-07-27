@@ -1332,7 +1332,7 @@ void task_twi2_lcd(uint32_t now)
 				g_twi2_lcd_repaint = false;
 				cpu_irq_restore(flags);
 
-			#if 1
+			#if 0
 			} else if (s_lcd_entry_cnt >= (60 * 8)) {  // Repaint after one minute
 				s_lcd_entry_cnt = 0;
 			#endif

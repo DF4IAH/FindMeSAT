@@ -10,8 +10,8 @@
 #define INTERPRETER_H_
 
 
-#define C_RX_CMDLINE_BUF_SIZE			256
-#define C_TX_BUF_SIZE					64
+#define C_RX_CMDLINE_BUF_SIZE										256
+#define C_TX_BUF_SIZE												64
 
 
 uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl);
