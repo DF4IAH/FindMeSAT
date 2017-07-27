@@ -314,6 +314,13 @@
 #define TWI_DATA_LENGTH												TWIS_SEND_BUFFER_SIZE
 
 
+void twi2_waitUntilReady(void);
+
+void twi2_set_leds(uint8_t leds);
+void twi2_set_ledbl(uint8_t mode, uint8_t pwm_p100);
+void twi2_set_bias(uint8_t bias);
+void twi2_set_beep(uint8_t pitch_10hz, uint8_t len_10ms);
+
 void twi_init(void);
 void twi_start(void);
 

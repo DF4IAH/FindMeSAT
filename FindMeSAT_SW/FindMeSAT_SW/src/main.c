@@ -1074,6 +1074,8 @@ static void task_usb(uint32_t now)
 			if (cdc_rx_len) {
 				char cdc_rx_buf[cdc_rx_len];
 
+				twi2_set_beep(176, 1);  // Click sound
+
 				udi_cdc_read_no_polling(cdc_rx_buf, cdc_rx_len);
 
 				/* Echo back when not monitoring information are enabled */
@@ -1261,6 +1263,9 @@ int main(void)
 	/* Show help page of command set */
 	printHelp();
 
+	/* Show green LED */
+	twi2_set_leds(0x02);
+
 	/* The application code */
 	irqflags_t flags = cpu_irq_save();
 	WORKMODE_ENUM_t l_workmode = g_workmode = WORKMODE_RUN;
@@ -1268,12 +1273,15 @@ int main(void)
 
     while (l_workmode) {
 		task();
+
 		sleepmgr_enter_sleep();
 
 		flags = cpu_irq_save();
 		l_workmode = g_workmode;
 		cpu_irq_restore(flags);
     }
+
+	twi2_set_leds(0x00);  // LEDs: off
 
 	cpu_irq_disable();
 	sleepmgr_enter_sleep();

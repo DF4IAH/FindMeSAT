@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												170
-#define VERSION_LOW													727
+#define VERSION_LOW													728
 
 
 #define C_TWI1_BARO_C_CNT											8

@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "main.h"
+#include "twi.h"
 
 #include "interpreter.h"
 
@@ -178,6 +179,8 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 		} else {
 			int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_UNKNOWN_01);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+			twi2_set_beep(100, 10);  // Bad sound
 		}
 	}
 
