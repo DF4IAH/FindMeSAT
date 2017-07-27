@@ -67,7 +67,7 @@ typedef struct dma_dac_buf_s {
 
 void adc_app_enable(bool enable);
 void dac_app_enable(bool enable);
-void dds_update(uint32_t dds0_mhz, uint32_t dds1_mhz, uint32_t phase);
+void dds_update(int32_t dds0_mhz, int32_t dds1_mhz, int32_t phase);
 void printStatusLines_enable(bool enable);
 void halt(void);
 

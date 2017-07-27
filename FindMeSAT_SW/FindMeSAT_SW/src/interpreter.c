@@ -161,9 +161,9 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			dac_app_enable(val);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_dds, sizeof(PM_IP_CMD_dds) - 1)) {
-			long val_a = 0;
-			long val_b = 0;
-			long val_c = 90;
+			long val_a = -1;
+			long val_b = -1;
+			long val_c = -1;
 			sscanf_P((char*)cmdLine_buf + (sizeof(PM_IP_CMD_dds) - 1), PM_IP_CMD_3LONGARG, &val_a, &val_b, &val_c);
 			dds_update(val_a, val_b, val_c);
 

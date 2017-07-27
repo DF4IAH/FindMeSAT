@@ -307,27 +307,26 @@ void dac_app_enable(bool enable)
 	}
 }
 
-void dds_update(uint32_t dds0_mhz, uint32_t dds1_mhz, uint32_t phase)
+void dds_update(int32_t dds0_mhz, int32_t dds1_mhz, int32_t phase)
 {
-	uint32_t phase_reg = (uint32_t) ((0x40000000UL / 90) * phase);
-
 	irqflags_t flags = cpu_irq_save();
 
 	/* Update only when mHz value for DDS0 is given */
-	if (dds0_mhz) {
+	if (dds0_mhz >= 0) {
 		dds0_freq_mHz = dds0_mhz;
 	}
 
 	/* Update only when mHz value for DDS1 is given */
-	if (dds1_mhz) {
+	if (dds1_mhz >= 0) {
 		dds1_freq_mHz = dds1_mhz;
 	}
 
 	/* Set the phase between two starting oscillators */
-	if (dds0_mhz && dds1_mhz) {
+	if (phase >= 0) {
 		dds0_reg = 0UL;
-		dds1_reg = phase_reg;
+		dds1_reg = (0x40000000UL / 90) * (uint32_t)phase;
 	}
+
 	cpu_irq_restore(flags);
 
 	/* Calculate new increment values */
