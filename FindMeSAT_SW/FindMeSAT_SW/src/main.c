@@ -45,7 +45,7 @@
 /* GLOBAL section */
 
 bool						g_adc_enabled						= true;
-bool						g_dac_enabled						= true;
+bool						g_dac_enabled						= false;
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines			= false;
 bool						g_usb_cdc_rx_received				= false;
@@ -305,6 +305,32 @@ void dac_app_enable(bool enable)
 		g_dac_enabled = enable;
 		cpu_irq_restore(flags);
 	}
+}
+
+void dds_update(int32_t dds0_mhz, int32_t dds1_mhz, int32_t phase)
+{
+	irqflags_t flags = cpu_irq_save();
+
+	/* Update only when mHz value for DDS0 is given */
+	if (dds0_mhz >= 0) {
+		dds0_freq_mHz = dds0_mhz;
+	}
+
+	/* Update only when mHz value for DDS1 is given */
+	if (dds1_mhz >= 0) {
+		dds1_freq_mHz = dds1_mhz;
+	}
+
+	/* Set the phase between two starting oscillators */
+	if (phase >= 0) {
+		dds0_reg = 0UL;
+		dds1_reg = (0x40000000UL / 90) * (uint32_t)phase;
+	}
+
+	cpu_irq_restore(flags);
+
+	/* Calculate new increment values */
+	task_dac(rtc_get_time());
 }
 
 void printStatusLines_enable(bool enable)
@@ -1048,6 +1074,8 @@ static void task_usb(uint32_t now)
 			if (cdc_rx_len) {
 				char cdc_rx_buf[cdc_rx_len];
 
+				twi2_set_beep(176, 1);  // Click sound
+
 				udi_cdc_read_no_polling(cdc_rx_buf, cdc_rx_len);
 
 				/* Echo back when not monitoring information are enabled */
@@ -1235,6 +1263,9 @@ int main(void)
 	/* Show help page of command set */
 	printHelp();
 
+	/* Show green LED */
+	twi2_set_leds(0x02);
+
 	/* The application code */
 	irqflags_t flags = cpu_irq_save();
 	WORKMODE_ENUM_t l_workmode = g_workmode = WORKMODE_RUN;
@@ -1242,12 +1273,15 @@ int main(void)
 
     while (l_workmode) {
 		task();
+
 		sleepmgr_enter_sleep();
 
 		flags = cpu_irq_save();
 		l_workmode = g_workmode;
 		cpu_irq_restore(flags);
     }
+
+	twi2_set_leds(0x00);  // LEDs: off
 
 	cpu_irq_disable();
 	sleepmgr_enter_sleep();

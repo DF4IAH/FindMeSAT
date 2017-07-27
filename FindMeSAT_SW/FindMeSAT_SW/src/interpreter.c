@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "main.h"
+#include "twi.h"
 
 #include "interpreter.h"
 
@@ -76,15 +77,19 @@ uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl)
 const char					PM_HELP_01[]							= "\r\n\r\n\r\n************\r\n* COMMANDS *\r\n************\r\n\r\n";
 const char					PM_HELP_02[]							= "adc=\t\t0: turn ADCA and ADCB off, 1: turn ADCA and ADCB on\r\n";
 const char					PM_HELP_03[]							= "dac=\t\t0: turn DACB off, 1: turn DACB on\r\n";
-const char					PM_HELP_04[]							= "help\t\tThis information page about all available commands\r\n";
-const char					PM_HELP_05[]							= "info=\t\t0: OFF, 1: ON\r\n";
+const char					PM_HELP_04A[]							= "dds=a,b,c\ta: DDS0 frequency mHz, b: DDS1 mHz, ";
+const char					PM_HELP_04B[]							= "c: starting phase of DDS1-DDS0 deg\r\n";
+const char					PM_HELP_05[]							= "help\t\tThis information page about all available commands\r\n";
+const char					PM_HELP_06[]							= "info=\t\t0: OFF, 1: ON\r\n";
 const char					PM_IP_CMD_NewLine[]						= "\r\n";
 const char					PM_IP_CMD_CmdLine[]						= "\r\n> ";
 PROGMEM_DECLARE(const char, PM_HELP_01[]);
 PROGMEM_DECLARE(const char, PM_HELP_02[]);
 PROGMEM_DECLARE(const char, PM_HELP_03[]);
-PROGMEM_DECLARE(const char, PM_HELP_04[]);
+PROGMEM_DECLARE(const char, PM_HELP_04A[]);
+PROGMEM_DECLARE(const char, PM_HELP_04B[]);
 PROGMEM_DECLARE(const char, PM_HELP_05[]);
+PROGMEM_DECLARE(const char, PM_HELP_06[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_NewLine[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_CmdLine[]);
 
@@ -101,10 +106,16 @@ void printHelp(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_03);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_04);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_04A);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_04B);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_05);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_06);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_IP_CMD_NewLine);
@@ -121,16 +132,20 @@ void printHelp(void)
 
 const char					PM_IP_CMD_adc[]							= "adc=";
 const char					PM_IP_CMD_dac[]							= "dac=";
+const char					PM_IP_CMD_dds[]							= "dds=";
 const char					PM_IP_CMD_info[]						= "info=";
 const char					PM_IP_CMD_help[]						= "help";
 const char					PM_UNKNOWN_01[]							= "\r\n??? unknown command - for assistance enter  help\r\n";
 const char					PM_IP_CMD_1INTARG[]						= "%d";
+const char					PM_IP_CMD_3LONGARG[]					= "%ld,%ld,%ld";
 PROGMEM_DECLARE(const char, PM_IP_CMD_adc[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_dac[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_dds[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_info[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_help[]);
 PROGMEM_DECLARE(const char, PM_UNKNOWN_01[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_1INTARG[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_3LONGARG[]);
 
 static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 {
@@ -146,6 +161,13 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			sscanf_P((char*)cmdLine_buf + (sizeof(PM_IP_CMD_dac) - 1), PM_IP_CMD_1INTARG, &val);
 			dac_app_enable(val);
 
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_dds, sizeof(PM_IP_CMD_dds) - 1)) {
+			long val_a = -1;
+			long val_b = -1;
+			long val_c = -1;
+			sscanf_P((char*)cmdLine_buf + (sizeof(PM_IP_CMD_dds) - 1), PM_IP_CMD_3LONGARG, &val_a, &val_b, &val_c);
+			dds_update(val_a, val_b, val_c);
+
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_info, sizeof(PM_IP_CMD_info) - 1)) {
 			int val = 0;
 			sscanf_P((char*)cmdLine_buf + (sizeof(PM_IP_CMD_info) - 1), PM_IP_CMD_1INTARG, &val);
@@ -157,6 +179,8 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 		} else {
 			int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_UNKNOWN_01);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+			twi2_set_beep(100, 10);  // Bad sound
 		}
 	}
 

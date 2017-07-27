@@ -175,7 +175,7 @@ static int32_t calc_gyro2_correct_mag_2_nT(int16_t raw, int8_t asa, int16_t fact
 	}
 }
 
-static void twi2_waitUntilReady(void)
+void twi2_waitUntilReady(void)
 {
 	status_code_t status;
 	uint8_t isBusy;
@@ -199,6 +199,50 @@ static void twi2_waitUntilReady(void)
 			}
 		}
 	} while ((status != STATUS_OK) || !isValid || isBusy);
+}
+
+
+void twi2_set_leds(uint8_t leds)
+{
+	/* Show green LED */
+	twi2_waitUntilReady();
+	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_LEDS;
+	twi2_m_data[0] = leds & 0x03;
+	twi2_packet.length = 1;
+	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+}
+
+void twi2_set_ledbl(uint8_t mode, uint8_t pwm_p100)
+{
+	twi2_waitUntilReady();
+	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_BACKLIGHT;
+	twi2_m_data[0] = mode;
+	twi2_m_data[1] = pwm_p100;
+	twi2_packet.length = 2;
+	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+}
+
+void twi2_set_bias(uint8_t bias)
+{
+	twi2_waitUntilReady();
+	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_CONTRAST;
+	twi2_m_data[0] = bias;
+	twi2_packet.length = 1;
+	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+}
+
+void twi2_set_beep(uint8_t pitch_10hz, uint8_t len_10ms)
+{
+	twi2_waitUntilReady();
+	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_BEEP;
+	twi2_m_data[0] = len_10ms;
+	twi2_m_data[1] = pitch_10hz;
+	twi2_packet.length = 2;
+	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
 
@@ -675,6 +719,37 @@ static void start_twi2_lcd(void)
 		twi2_packet.length = 1;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+
+		/* Show red LED */
+		twi2_set_leds(0x01);
+
+		/* Do the first beep for a sequence */
+		twi2_set_beep(44, 25);  // 440 Hz, 250 ms
+		delay_ms(10);
+
+		/* Ramp down backlight */
+		for (int lum = 254; lum >= 2; lum -= 2) {
+			twi2_set_ledbl(0, lum);
+			delay_ms(1);
+		}
+
+		/* Do the second beep for a sequence */
+		twi2_set_beep(88, 25);  // 880 Hz, 250 ms
+		delay_ms(10);
+
+		/* Ramp down backlight */
+		for (int lum = 1; lum <= 253; lum += 2) {
+			twi2_set_ledbl(0, lum);
+			delay_ms(1);
+		}
+
+#if 0
+		/* Switch on backlight to 50% brightness */
+		twi2_set_ledbl(0, 50);
+
+		/* Set optimum contrast voltage */
+		twi2_set_bias(22);
+#endif
 	}
 }
 
@@ -1332,7 +1407,7 @@ void task_twi2_lcd(uint32_t now)
 				g_twi2_lcd_repaint = false;
 				cpu_irq_restore(flags);
 
-			#if 1
+			#if 0
 			} else if (s_lcd_entry_cnt >= (60 * 8)) {  // Repaint after one minute
 				s_lcd_entry_cnt = 0;
 			#endif
@@ -1458,6 +1533,18 @@ void task_twi2_lcd(uint32_t now)
 						s_p3x = p3x;
 						s_p3y = p3y;
 					}
+
+					/* Calculate the luminance (sunshine on the surface) */
+					{
+						int32_t lum = 1000 + l_twi1_gyro_1_accel_z_mg;
+						if (lum < 0) {
+							lum = 0;
+						} else if (lum > 2000) {
+							lum = 2000;
+						}
+
+						twi2_set_ledbl(0, (uint8_t)(lum * 255 / 2000));
+					}
 				}
 
 				/* Gyro lines */
@@ -1496,6 +1583,22 @@ void task_twi2_lcd(uint32_t now)
 					s_rads_x = rads_x;
 					s_rads_y = rads_y;
 					s_rads_z = rads_z;
+
+					/* Calculate speed of rotation */
+#if 0
+					float speed = pow((l_twi1_gyro_1_gyro_x_mdps * l_twi1_gyro_1_gyro_x_mdps) + (l_twi1_gyro_1_gyro_y_mdps * l_twi1_gyro_1_gyro_y_mdps) + (l_twi1_gyro_1_gyro_z_mdps * l_twi1_gyro_1_gyro_z_mdps), 0.5);
+					if (speed > 500.f) {
+						twi2_set_beep(18 + (uint8_t)(speed / 500.f), 10);
+					}
+#else
+					int32_t speed = l_twi1_gyro_1_gyro_x_mdps + l_twi1_gyro_1_gyro_y_mdps + l_twi1_gyro_1_gyro_z_mdps;
+					if (speed < 0) {
+						speed = -speed;
+					}
+					if (speed > 300) {
+						twi2_set_beep(18 + (uint8_t)(speed / 700), 10);
+					}
+#endif
 				}
 			}
 

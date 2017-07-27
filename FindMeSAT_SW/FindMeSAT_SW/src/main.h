@@ -12,25 +12,30 @@
 #include <asf.h>
 
 
-#define C_TWI1_BARO_C_CNT		8
+/* VERSION: YYM, MDD */
+#define VERSION_HIGH												170
+#define VERSION_LOW													728
 
-#define C_0DEGC_K				273.15f
 
-#define C_ADC_STEPS				0x00100000UL
-#define C_ADC_SUM_CNT			256
+#define C_TWI1_BARO_C_CNT											8
 
-#define C_ADC_0V0_DELTA			190
-#define C_VCC_3V3_VOLTS			3.318f
-#define C_VCC_3V0_AREF_VOLTS	3
+#define C_0DEGC_K													273.15f
 
-#define C_VCTCXO_PWM_HI_VOLTS	3.253f
-#define C_VCTCXO_DEFAULT_VOLTS	1.500f
-#define C_VCTCXO_DELTA_VOLTS	0.047f
+#define C_ADC_STEPS													0x00100000UL
+#define C_ADC_SUM_CNT												256
 
-#define C_VCC_5V0_VOLTS			4.890f
-#define C_VCC_5V0_MULT			2.41948528f
-#define C_VCC_VBAT_MULT			2.42614048f
-#define C_TEMPSENSE_MULT		629.20f
+#define C_ADC_0V0_DELTA												190
+#define C_VCC_3V3_VOLTS												3.318f
+#define C_VCC_3V0_AREF_VOLTS										3
+
+#define C_VCTCXO_PWM_HI_VOLTS										3.253f
+#define C_VCTCXO_DEFAULT_VOLTS										1.500f
+#define C_VCTCXO_DELTA_VOLTS										0.047f
+
+#define C_VCC_5V0_VOLTS												4.890f
+#define C_VCC_5V0_MULT												2.41948528f
+#define C_VCC_VBAT_MULT												2.42614048f
+#define C_TEMPSENSE_MULT											629.20f
 
 
 typedef enum WORKMODE_ENUM {
@@ -42,10 +47,10 @@ typedef enum WORKMODE_ENUM {
 } WORKMODE_ENUM_t;
 
 typedef enum ADC_CH0_SCAN_ENUM {
-	ADC_CH0_SCAN_3V0 = 255,									// PIN = PA0, ADC0 - used as AREFA
-	ADC_CH0_SCAN_VCTCXO = 0,								// PIN = PA1, ADC1
-	ADC_CH0_SCAN_5V0,										// PIN = PA2, ADC2
-	ADC_CH0_SCAN_VBAT,										// PIN = PA3, ADC3
+	ADC_CH0_SCAN_3V0 = 255,											// PIN = PA0, ADC0 - used as AREFA
+	ADC_CH0_SCAN_VCTCXO = 0,										// PIN = PA1, ADC1
+	ADC_CH0_SCAN_5V0,												// PIN = PA2, ADC2
+	ADC_CH0_SCAN_VBAT,												// PIN = PA3, ADC3
 } ADC_CH0_SCAN_t;
 
 typedef enum DMA_CHANNEL_ENUM {
@@ -62,6 +67,7 @@ typedef struct dma_dac_buf_s {
 
 void adc_app_enable(bool enable);
 void dac_app_enable(bool enable);
+void dds_update(int32_t dds0_mhz, int32_t dds1_mhz, int32_t phase);
 void printStatusLines_enable(bool enable);
 void halt(void);
 
