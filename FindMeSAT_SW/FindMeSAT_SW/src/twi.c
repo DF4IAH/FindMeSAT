@@ -743,7 +743,7 @@ static void start_twi2_lcd(void)
 			delay_ms(1);
 		}
 
-#if 0
+#if 1
 		/* Switch on backlight to 50% brightness */
 		twi2_set_ledbl(0, 50);
 
@@ -1352,29 +1352,53 @@ static void task_twi2_lcd_header(void)
 	}
 }
 
-static void task_twi2_lcd_print_format_uint16(uint8_t x, uint8_t y, int16_t adc_i, int16_t adc_f, const char* fmt)
+#if 0
+static void task_twi2_lcd_print_format_uint16_P(uint8_t x, uint8_t y, int16_t adc_i, int16_t adc_f, const char* fmt_P)
 {
 	task_twi2_lcd_pos_xy(x, y);
 
 	twi2_waitUntilReady();
 	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
-	twi2_m_data[0] = sprintf((char*)&(twi2_m_data[1]), fmt, adc_i, adc_f);
+	twi2_m_data[0] = sprintf_P((char*)&(twi2_m_data[1]), fmt, adc_i, adc_f);
 	twi2_packet.length = twi2_m_data[0] + 1;
 	twi_master_write(&TWI2_MASTER, &twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
-static void task_twi2_lcd_print_format_uint32(uint8_t x, uint8_t y, int32_t adc_i, int32_t adc_f, const char* fmt)
+static void task_twi2_lcd_print_format_uint32_P(uint8_t x, uint8_t y, int32_t adc_i, int32_t adc_f, const char* fmt_P)
 {
 	task_twi2_lcd_pos_xy(x, y);
 
 	twi2_waitUntilReady();
 	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
-	twi2_m_data[0] = sprintf((char*)&(twi2_m_data[1]), fmt, adc_i, adc_f);
+	twi2_m_data[0] = sprintf_P((char*)&(twi2_m_data[1]), fmt, adc_i, adc_f);
 	twi2_packet.length = twi2_m_data[0] + 1;
 	twi_master_write(&TWI2_MASTER, &twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
+#endif
+
+static void task_twi2_lcd_print_format_float_P(uint8_t x, uint8_t y, float adc, const char* fmt_P)
+{
+	task_twi2_lcd_pos_xy(x, y);
+
+	twi2_waitUntilReady();
+	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
+	twi2_m_data[0] = sprintf_P((char*)&(twi2_m_data[1]), fmt_P, adc);
+	twi2_packet.length = twi2_m_data[0] + 1;
+	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+}
+
+
+const char					PM_FORMAT_05F2[]			= "%05.2f";
+const char					PM_FORMAT_07F2[]			= "%07.2f";
+const char					PM_FORMAT_4F1[]				= "%4.1f";
+const char					PM_FORMAT_5F3[]				= "%5.3f";
+PROGMEM_DECLARE(const char, PM_FORMAT_05F2[]);
+PROGMEM_DECLARE(const char, PM_FORMAT_07F2[]);
+PROGMEM_DECLARE(const char, PM_FORMAT_4F1[]);
+PROGMEM_DECLARE(const char, PM_FORMAT_5F3[]);
 
 /* TWI2 - LCD Port */
 void task_twi2_lcd(uint32_t now)
@@ -1595,7 +1619,7 @@ void task_twi2_lcd(uint32_t now)
 					if (speed < 0) {
 						speed = -speed;
 					}
-					if (speed > 300) {
+					if (speed > 400) {
 						twi2_set_beep(18 + (uint8_t)(speed / 700), 10);
 					}
 #endif
@@ -1612,10 +1636,10 @@ void task_twi2_lcd(uint32_t now)
 					cpu_irq_restore(flags);
 
 					/* ADC_TEMP */
-					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_temp_deg_100 / 100,      (l_adc_temp_deg_100 / 10) % 10,  "%02d.%01d");
+					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_temp_deg_100 / 100.f, PM_FORMAT_4F1);
 
 					/* ADC_5V0 */
-					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_5v0_volt_1000 / 1000,     l_adc_5v0_volt_1000 % 1000,     "%1d.%03d");
+					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_5v0_volt_1000 / 1000.f, PM_FORMAT_5F3);
 
 				} else if ((s_lcd_entry_cnt % 8) == 2) {
 					/* Get up-to-date global data */
@@ -1625,10 +1649,10 @@ void task_twi2_lcd(uint32_t now)
 					cpu_irq_restore(flags);
 
 					/* ADC_VBAT */
-					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_vbat_volt_1000 / 1000,    l_adc_vbat_volt_1000 % 1000,    "%1d.%03d");
+					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_vbat_volt_1000 / 1000.f, PM_FORMAT_5F3);
 
 					/* ADC_VCTCXO */
-					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_vctcxo_volt_1000 / 1000,  l_adc_vctcxo_volt_1000 % 1000,  "%1d.%03d");
+					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_vctcxo_volt_1000 / 1000.f, PM_FORMAT_5F3);
 
 				} else if ((s_lcd_entry_cnt % 8) == 3) {
 					/* Get up-to-date global data */
@@ -1638,10 +1662,10 @@ void task_twi2_lcd(uint32_t now)
 					cpu_irq_restore(flags);
 
 					/* ADC_IO_ADC4 */
-					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_io_adc4_volt_1000 / 1000, l_adc_io_adc4_volt_1000 % 1000, "%1d.%03d");
+					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_io_adc4_volt_1000 / 1000.f, PM_FORMAT_5F3);
 
 					/* ADC_IO_ADC5 */
-					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_io_adc5_volt_1000 / 1000, l_adc_io_adc5_volt_1000 % 1000, "%1d.%03d");
+					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_io_adc5_volt_1000 / 1000.f, PM_FORMAT_5F3);
 
 				} else if ((s_lcd_entry_cnt % 8) == 5) {
 					#if 0
@@ -1650,7 +1674,7 @@ void task_twi2_lcd(uint32_t now)
 					cpu_irq_restore(flags);
 
 					/* ADC_SILENCE */
-					task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_adc_silence_volt_1000 / 1000, l_adc_silence_volt_1000 % 1000, "%1d.%03d");
+					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_silence_volt_1000 / 1000.f, PM_FORMAT_5F3);
 					#else
 					s_line++;
 					#endif
@@ -1667,10 +1691,10 @@ void task_twi2_lcd(uint32_t now)
 				s_line = 9;
 
 				/* Baro_Temp */
-				task_twi2_lcd_print_format_uint32(col_left, (s_line++) * 10, l_twi1_baro_temp_100 / 100,     l_twi1_baro_temp_100 % 100,     "%02ld.%02ld");
+				task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_twi1_baro_temp_100 / 100.f, PM_FORMAT_05F2);
 
 				/* Baro_P */
-				task_twi2_lcd_print_format_uint32(col_left, (s_line++) * 10, l_twi1_baro_p_100 / 100,        l_twi1_baro_p_100 % 100,        "%04ld.%02ld");
+				task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_twi1_baro_p_100 / 100.f, PM_FORMAT_07F2);
 
 			} else if ((s_lcd_entry_cnt % 8) == 7) {
 				/* Get up-to-date global data */
@@ -1680,10 +1704,10 @@ void task_twi2_lcd(uint32_t now)
 				cpu_irq_restore(flags);
 
 				/* Hygro_Temp */
-				task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_twi1_hygro_T_100 / 100,       l_twi1_hygro_T_100 % 100,       "%02d.%02d");
+				task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_twi1_hygro_T_100 / 100.f, PM_FORMAT_05F2);
 
 				/* Hygro_RH */
-				task_twi2_lcd_print_format_uint16(col_left, (s_line++) * 10, l_twi1_hygro_RH_100 / 100,      l_twi1_hygro_RH_100 % 100,      "%02d.%02d");
+				task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_twi1_hygro_RH_100 / 100.f, PM_FORMAT_05F2);
 			}
 
 			/* Store last time */
