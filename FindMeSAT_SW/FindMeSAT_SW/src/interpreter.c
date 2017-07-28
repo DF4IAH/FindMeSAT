@@ -136,42 +136,40 @@ const char					PM_IP_CMD_dds[]							= "dds=";
 const char					PM_IP_CMD_info[]						= "info=";
 const char					PM_IP_CMD_help[]						= "help";
 const char					PM_UNKNOWN_01[]							= "\r\n??? unknown command - for assistance enter  help\r\n";
-const char					PM_IP_CMD_1INTARG[]						= "%d";
-const char					PM_IP_CMD_3LONGARG[]					= "%ld,%ld,%ld";
 PROGMEM_DECLARE(const char, PM_IP_CMD_adc[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_dac[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_dds[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_info[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_help[]);
 PROGMEM_DECLARE(const char, PM_UNKNOWN_01[]);
-PROGMEM_DECLARE(const char, PM_IP_CMD_1INTARG[]);
-PROGMEM_DECLARE(const char, PM_IP_CMD_3LONGARG[]);
 
 static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 {
 	/* Process command */
 	{
 		if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_adc, sizeof(PM_IP_CMD_adc) - 1)) {
-			int val = 0;
-			sscanf_P((char*)cmdLine_buf + (sizeof(PM_IP_CMD_adc) - 1), PM_IP_CMD_1INTARG, &val);
-			adc_app_enable(val);
+			int val[1] = { 0 };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_adc) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
+				adc_app_enable(val[0]);
+			}
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_dac, sizeof(PM_IP_CMD_dac) - 1)) {
-			int val = 0;
-			sscanf_P((char*)cmdLine_buf + (sizeof(PM_IP_CMD_dac) - 1), PM_IP_CMD_1INTARG, &val);
-			dac_app_enable(val);
+			int val[1] = { 0 };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_dac) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
+				dac_app_enable(val[0]);
+			}
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_dds, sizeof(PM_IP_CMD_dds) - 1)) {
-			long val_a = -1;
-			long val_b = -1;
-			long val_c = -1;
-			sscanf_P((char*)cmdLine_buf + (sizeof(PM_IP_CMD_dds) - 1), PM_IP_CMD_3LONGARG, &val_a, &val_b, &val_c);
-			dds_update(val_a, val_b, val_c);
+			float val[3] = { -1.f, -1.f, -1.f };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_dds) - 1), MY_STRING_TO_VAR_FLOAT | (MY_STRING_TO_VAR_FLOAT << 2) | (MY_STRING_TO_VAR_FLOAT << 4), &(val[0]), NULL, NULL)) {
+				dds_update(val[0], val[1], val[2]);
+			}
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_info, sizeof(PM_IP_CMD_info) - 1)) {
-			int val = 0;
-			sscanf_P((char*)cmdLine_buf + (sizeof(PM_IP_CMD_info) - 1), PM_IP_CMD_1INTARG, &val);
-			printStatusLines_enable(val);
+			int val[1] = { 0 };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_info) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
+				printStatusLines_enable(val[0]);
+			}
 
 		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_help, sizeof(PM_IP_CMD_help) - 1)) {
 			printHelp();

@@ -253,6 +253,55 @@ static void task_usb(uint32_t now);
 
 /* UTILS section */
 
+int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[])
+{
+	int ret = 0;
+	int idx = 0;
+
+	uint8_t mode = format & 0x03;
+	while (mode) {
+		char* item = str + idx;
+
+		switch (mode) {
+			case MY_STRING_TO_VAR_FLOAT:
+			if (out_f) {
+				*(out_f++) = atof(item);
+				++ret;
+			}
+			break;
+
+			case MY_STRING_TO_VAR_LONG:
+			if (out_l) {
+				*(out_l++) = atol(item);
+				++ret;
+			}
+			break;
+
+			case MY_STRING_TO_VAR_INT:
+			if (out_i) {
+				*(out_i++) = atoi(item);
+				++ret;
+			}
+			break;
+
+			default:
+				return ret;
+		}
+
+		/* forward to next string position */
+		char* next = strchr(item, ',');
+		if (!next) {
+			break;
+		}
+		idx += 1 + next - item;
+
+		format >>= 2;
+		mode = format & 0x03;
+	}
+
+	return ret;
+}
+
 void adc_app_enable(bool enable)
 {
 	irqflags_t flags = cpu_irq_save();
@@ -307,24 +356,44 @@ void dac_app_enable(bool enable)
 	}
 }
 
-void dds_update(int32_t dds0_mhz, int32_t dds1_mhz, int32_t phase)
+void dds_update(float dds0_hz, float dds1_hz, float phase)
 {
-	irqflags_t flags = cpu_irq_save();
+	uint32_t l_dds0_freq_mHz = 0UL;
+	uint32_t l_dds1_freq_mHz = 0UL;
+	uint32_t l_dds1_reg = 0UL;
 
 	/* Update only when mHz value for DDS0 is given */
-	if (dds0_mhz >= 0) {
-		dds0_freq_mHz = dds0_mhz;
+	if (dds0_hz >= 0.f) {
+		l_dds0_freq_mHz = (uint32_t) (dds0_hz * 1000.f);
 	}
 
 	/* Update only when mHz value for DDS1 is given */
-	if (dds1_mhz >= 0) {
-		dds1_freq_mHz = dds1_mhz;
+	if (dds1_hz >= 0.f) {
+		l_dds1_freq_mHz = (uint32_t) (dds1_hz * 1000.f);
 	}
 
 	/* Set the phase between two starting oscillators */
-	if (phase >= 0) {
+	if (phase >= 0.f) {
+		l_dds1_reg = (uint32_t) (0x40000000UL * (phase / 90.f));
+	}
+
+
+	irqflags_t flags = cpu_irq_save();
+
+	/* Update only when mHz value for DDS0 is given */
+	if (dds0_hz >= 0.f) {
+		dds0_freq_mHz = l_dds0_freq_mHz;
+	}
+
+	/* Update only when mHz value for DDS1 is given */
+	if (dds1_hz >= 0.f) {
+		dds1_freq_mHz = l_dds1_freq_mHz;
+	}
+
+	/* Set the phase between two starting oscillators */
+	if (phase >= 0.f) {
 		dds0_reg = 0UL;
-		dds1_reg = (0x40000000UL / 90) * (uint32_t)phase;
+		dds1_reg = l_dds1_reg;
 	}
 
 	cpu_irq_restore(flags);
