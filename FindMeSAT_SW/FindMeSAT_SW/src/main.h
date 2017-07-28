@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												170
-#define VERSION_LOW													728
+#define VERSION_LOW													729
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -75,9 +75,14 @@ typedef struct dma_dac_buf_s {
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
 
 void adc_app_enable(bool enable);
+void backlight_mode_pwm(int16_t mode_pwm);
+void bias_update(uint8_t bias);
 void dac_app_enable(bool enable);
 void dds_update(float dds0_hz, float dds1_hz, float phase);
+void errorBeep_enable(bool enable);
 void printStatusLines_enable(bool enable);
+void keyBeep_enable(bool enable);
+void pitchTone_mode(uint8_t mode);
 void halt(void);
 
 void sleep_ms(uint16_t ms);

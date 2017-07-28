@@ -26,6 +26,9 @@ extern int16_t			g_adc_io_adc4_volt_1000;
 extern int16_t			g_adc_io_adc5_volt_1000;
 extern int16_t			g_adc_silence_volt_1000;
 extern int16_t			g_adc_temp_deg_100;
+extern int16_t			g_backlight_mode_pwm;
+extern uint8_t			g_bias_pm;
+extern uint8_t			g_pitch_tone_mode;
 
 extern bool				g_twi1_gsm_valid;
 extern uint8_t			g_twi1_gsm_version;
@@ -723,12 +726,15 @@ static void start_twi2_lcd(void)
 		/* Show red LED */
 		twi2_set_leds(0x01);
 
+		/* Set optimum contrast voltage */
+		twi2_set_bias(g_bias_pm);
+
 		/* Do the first beep for a sequence */
 		twi2_set_beep(44, 25);  // 440 Hz, 250 ms
 		delay_ms(10);
 
 		/* Ramp down backlight */
-		for (int lum = 254; lum >= 2; lum -= 2) {
+		for (int lum = 128; lum >= 2; lum -= 2) {
 			twi2_set_ledbl(0, lum);
 			delay_ms(1);
 		}
@@ -737,19 +743,12 @@ static void start_twi2_lcd(void)
 		twi2_set_beep(88, 25);  // 880 Hz, 250 ms
 		delay_ms(10);
 
-		/* Ramp down backlight */
-		for (int lum = 1; lum <= 253; lum += 2) {
+		/* Ramp up backlight */
+		for (int lum = 0; lum <= 128; lum += 2) {
 			twi2_set_ledbl(0, lum);
 			delay_ms(1);
 		}
-
-#if 1
-		/* Switch on backlight to 50% brightness */
-		twi2_set_ledbl(0, 50);
-
-		/* Set optimum contrast voltage */
-		twi2_set_bias(22);
-#endif
+		// g_backlight_mode_pwm = 128;
 	}
 }
 
@@ -1524,6 +1523,7 @@ void task_twi2_lcd(uint32_t now)
 					int16_t l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
 					int16_t l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
 					int16_t l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
+					int16_t l_backlight_mode_pwm		= g_backlight_mode_pwm;
 					cpu_irq_restore(flags);
 
 					/* Removing old lines first */
@@ -1559,7 +1559,7 @@ void task_twi2_lcd(uint32_t now)
 					}
 
 					/* Calculate the luminance (sunshine on the surface) */
-					{
+					if (l_backlight_mode_pwm == -2) {
 						int32_t lum = 1000 + l_twi1_gyro_1_accel_z_mg;
 						if (lum < 0) {
 							lum = 0;
@@ -1609,20 +1609,50 @@ void task_twi2_lcd(uint32_t now)
 					s_rads_z = rads_z;
 
 					/* Calculate speed of rotation */
+					if (g_pitch_tone_mode == 1) {
 #if 0
-					float speed = pow((l_twi1_gyro_1_gyro_x_mdps * l_twi1_gyro_1_gyro_x_mdps) + (l_twi1_gyro_1_gyro_y_mdps * l_twi1_gyro_1_gyro_y_mdps) + (l_twi1_gyro_1_gyro_z_mdps * l_twi1_gyro_1_gyro_z_mdps), 0.5);
-					if (speed > 500.f) {
-						twi2_set_beep(18 + (uint8_t)(speed / 500.f), 10);
-					}
+						float speed = pow((l_twi1_gyro_1_gyro_x_mdps * l_twi1_gyro_1_gyro_x_mdps) + (l_twi1_gyro_1_gyro_y_mdps * l_twi1_gyro_1_gyro_y_mdps) + (l_twi1_gyro_1_gyro_z_mdps * l_twi1_gyro_1_gyro_z_mdps), 0.5);
+						if (speed > 500.f) {
+							twi2_set_beep(18 + (uint8_t)(speed / 500.f), 10);
+						}
 #else
-					int32_t speed = l_twi1_gyro_1_gyro_x_mdps + l_twi1_gyro_1_gyro_y_mdps + l_twi1_gyro_1_gyro_z_mdps;
-					if (speed < 0) {
-						speed = -speed;
-					}
-					if (speed > 400) {
-						twi2_set_beep(18 + (uint8_t)(speed / 700), 10);
-					}
+						int32_t speed = l_twi1_gyro_1_gyro_x_mdps + l_twi1_gyro_1_gyro_y_mdps + l_twi1_gyro_1_gyro_z_mdps;
+						if (speed < 0) {
+							speed = -speed;
+						}
+						if (speed > 400) {
+							twi2_set_beep(18 + (uint8_t)(speed / 700), 10);
+						}
 #endif
+					}
+				}
+
+				/* Calculate variometer */
+				{
+					static uint32_t s_twi1_baro_p_100 = 100000UL;
+
+					/* Get up-to-date global data */
+					flags = cpu_irq_save();
+					int32_t l_twi1_baro_p_100 = g_twi1_baro_p_100;
+					cpu_irq_restore(flags);
+
+					/* Calculate variometer tone */
+					if (g_pitch_tone_mode == 2) {
+						int32_t vario = g_twi1_baro_p_100 - s_twi1_baro_p_100;
+						uint32_t pitch = 100 - vario;
+
+						if (pitch < 10) {
+							pitch = 10;
+						} else if (pitch > 255) {
+							pitch = 255;
+						}
+
+						twi2_set_beep(pitch, 10);
+						delay_ms(5);
+					}
+
+					/* Update static value */
+					s_twi1_baro_p_100 = l_twi1_baro_p_100;
 				}
 			}
 

@@ -45,12 +45,17 @@
 /* GLOBAL section */
 
 bool						g_adc_enabled						= true;
+int16_t						g_backlight_mode_pwm				= -2;		// -2: SPECIAL
+uint8_t						g_bias_pm							= 22;
 bool						g_dac_enabled						= false;
+bool						g_errorBeep_enable					= true;
+bool						g_keyBeep_enable					= true;
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines			= false;
 bool						g_usb_cdc_rx_received				= false;
 bool						g_usb_cdc_transfers_autorized		= false;
 bool						g_usb_cdc_access_blocked			= false;
+uint8_t						g_pitch_tone_mode					= 1;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 
 uint32_t					g_rtc_alarm							= 0UL;
@@ -302,6 +307,7 @@ int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int o
 	return ret;
 }
 
+
 void adc_app_enable(bool enable)
 {
 	irqflags_t flags = cpu_irq_save();
@@ -320,11 +326,42 @@ void adc_app_enable(bool enable)
 			adc_stop();
 		}
 
-		flags = cpu_irq_save();
-		g_adc_enabled = enable;
-		g_twi2_lcd_repaint = true;
-		cpu_irq_restore(flags);
+		/* each of it is atomic */
+		{
+			g_adc_enabled = enable;
+			g_twi2_lcd_repaint = true;
+		}
 	}
+}
+
+void backlight_mode_pwm(int16_t mode_pwm)
+{
+	uint8_t l_pwm = mode_pwm & 0xff;
+
+	irqflags_t flags = cpu_irq_save();
+	g_backlight_mode_pwm = mode_pwm;
+	cpu_irq_restore(flags);
+
+	switch (mode_pwm) {
+		case -2:
+			;
+		break;
+
+		case -1:
+			twi2_set_ledbl(1, 0);
+		break;
+
+		default:
+			twi2_set_ledbl(0, l_pwm);
+	}
+}
+
+void bias_update(uint8_t bias)
+{
+	uint8_t l_bias_pm = bias & 0x3f;
+
+	g_bias_pm = l_bias_pm & 0x3f;
+	twi2_set_bias(l_bias_pm);
 }
 
 void dac_app_enable(bool enable)
@@ -350,9 +387,10 @@ void dac_app_enable(bool enable)
 			dac_stop();
 		}
 
-		flags = cpu_irq_save();
-		g_dac_enabled = enable;
-		cpu_irq_restore(flags);
+		/* atomic */
+		{
+			g_dac_enabled = enable;
+		}
 	}
 }
 
@@ -402,20 +440,47 @@ void dds_update(float dds0_hz, float dds1_hz, float phase)
 	task_dac(rtc_get_time());
 }
 
+void errorBeep_enable(bool enable)
+{
+	/* atomic */
+	{
+		g_errorBeep_enable = enable;
+	}
+}
+
 void printStatusLines_enable(bool enable)
 {
-	irqflags_t flags = cpu_irq_save();
-	g_usb_cdc_printStatusLines = enable;
-	cpu_irq_restore(flags);
+	/* atomic */
+	{
+		g_usb_cdc_printStatusLines = enable;
+	}
+}
+
+void keyBeep_enable(bool enable)
+{
+	/* atomic */
+	{
+		g_keyBeep_enable = enable;
+	}
+}
+
+void pitchTone_mode(uint8_t mode)
+{
+	/* atomic */
+	{
+		g_pitch_tone_mode = mode;
+	}
 }
 
 void halt(void)
 {
 	/* MAIN Loop Shutdown */
-	irqflags_t flags = cpu_irq_save();
-	g_workmode = WORKMODE_END;
-	cpu_irq_restore(flags);
+	/* atomic */
+	{
+		g_workmode = WORKMODE_END;
+	}
 }
+
 
 static char sgn_of(long x) {
 	return x >= 0 ?  '+' : '-';
@@ -891,7 +956,7 @@ static void usb_init(void)
 	if (g_usb_cdc_stdout_enabled) {
 		stdio_usb_enable();
 	}
-	delay_ms(500);
+	delay_ms(750);
 
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_01);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -904,6 +969,8 @@ static void usb_init(void)
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_04);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+	delay_ms(250);
 }
 
 void usb_callback_suspend_action(void)
@@ -1132,10 +1199,9 @@ static void task_usb(uint32_t now)
 	if (g_usb_cdc_transfers_autorized) {
 		static uint32_t usb_last = 0UL;
 
-		irqflags_t flags = cpu_irq_save();
+		/* each of them are atomic */
 		bool l_usb_cdc_rx_received		= g_usb_cdc_rx_received;
 		bool l_usb_cdc_printStatusLines	= g_usb_cdc_printStatusLines;
-		cpu_irq_restore(flags);
 
 		/* Get command lines from the USB host */
 		if (l_usb_cdc_rx_received) {
@@ -1143,7 +1209,10 @@ static void task_usb(uint32_t now)
 			if (cdc_rx_len) {
 				char cdc_rx_buf[cdc_rx_len];
 
-				twi2_set_beep(176, 1);  // Click sound
+				if (g_keyBeep_enable) {
+					twi2_set_beep(176, 1);  // Click sound
+					delay_ms(5);
+				}
 
 				udi_cdc_read_no_polling(cdc_rx_buf, cdc_rx_len);
 
@@ -1159,9 +1228,10 @@ static void task_usb(uint32_t now)
 				cdc_rx_len = udi_cdc_get_nb_received_data();
 			}
 
-			flags = cpu_irq_save();
-			g_usb_cdc_rx_received = false;
-			cpu_irq_restore(flags);
+			/* atomic */
+			{
+				g_usb_cdc_rx_received = false;
+			}
 		}
 
 		/* Status output when requested */
