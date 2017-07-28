@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												170
-#define VERSION_LOW													728
+#define VERSION_LOW													729
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -38,6 +38,13 @@
 #define C_TEMPSENSE_MULT											629.20f
 
 
+typedef enum MY_STRING_TO_VAR_ENUM {
+	MY_STRING_TO_VAR_MOOP = 0,
+	MY_STRING_TO_VAR_FLOAT,
+	MY_STRING_TO_VAR_LONG,
+	MY_STRING_TO_VAR_INT
+} MY_STRING_TO_VAR_ENUM_t;
+
 typedef enum WORKMODE_ENUM {
 	WORKMODE_OFF = 0,
 	WORKMODE_INIT,
@@ -51,7 +58,7 @@ typedef enum ADC_CH0_SCAN_ENUM {
 	ADC_CH0_SCAN_VCTCXO = 0,										// PIN = PA1, ADC1
 	ADC_CH0_SCAN_5V0,												// PIN = PA2, ADC2
 	ADC_CH0_SCAN_VBAT,												// PIN = PA3, ADC3
-} ADC_CH0_SCAN_t;
+} ADC_CH0_SCAN_ENUM_t;
 
 typedef enum DMA_CHANNEL_ENUM {
 	DMA_CHANNEL_DACB_CH0_A = 0,
@@ -65,10 +72,17 @@ typedef struct dma_dac_buf_s {
 } dma_dac_buf_t;
 
 
+int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
+
 void adc_app_enable(bool enable);
+void backlight_mode_pwm(int16_t mode_pwm);
+void bias_update(uint8_t bias);
 void dac_app_enable(bool enable);
-void dds_update(int32_t dds0_mhz, int32_t dds1_mhz, int32_t phase);
+void dds_update(float dds0_hz, float dds1_hz, float phase);
+void errorBeep_enable(bool enable);
 void printStatusLines_enable(bool enable);
+void keyBeep_enable(bool enable);
+void pitchTone_mode(uint8_t mode);
 void halt(void);
 
 void sleep_ms(uint16_t ms);
