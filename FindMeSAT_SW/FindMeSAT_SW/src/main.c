@@ -482,6 +482,7 @@ void halt(void)
 }
 
 
+#if 0
 static char sgn_of(long x) {
 	return x >= 0 ?  '+' : '-';
 }
@@ -501,6 +502,7 @@ static int32_t abs_int32(int32_t x) {
 		return -x;
 	}
 }
+#endif
 
 static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0_reg_p, uint32_t* dds0_inc_p, uint32_t* dds1_reg_p, uint32_t* dds1_inc_p)
 {
@@ -1169,16 +1171,16 @@ static void task_twi(uint32_t now)
 
 const char					PM_INFO_PART_L1P1A[]				= "Time = %06ld: Uvco=%4d mV, U5v=%4d mV, Ubat=%4d mV, ";
 const char					PM_INFO_PART_L1P1B[]				= "Uadc4=%4d mV, Uadc5=%4d mV, Usil=%4d mV, ";
-const char					PM_INFO_PART_L1P1C[]				= "mP_Temp=%c%02d.%02dC\t \t";
-const char					PM_INFO_PART_L1P2[]					= "Baro_Temp=%c%02ld.%02ldC, Baro_P=%4ld.%02ldhPa\t \t";
-const char					PM_INFO_PART_L1P3[]					= "Hygro_Temp=%c%02d.%02dC, Hygro_RelH=%02d.%02d%%\r\n";
-const char					PM_INFO_PART_L2P1A[]				= "\tAx=%c%01d.%03dg (%+06d), Ay=%c%01d.%03dg (%+06d), ";
-const char					PM_INFO_PART_L2P1B[]				= "Az=%c%01d.%03dg (%+06d)\t \t";
-const char					PM_INFO_PART_L2P2A[]				= "Gx=%c%03ld.%03lddps (%+06d), Gy=%c%03ld.%03lddps (%+06d), ";
-const char					PM_INFO_PART_L2P2B[]				= "Gz=%c%03ld.%03lddps (%06d)\t \t";
-const char					PM_INFO_PART_L2P3A[]				= "Mx=%c%03ld.%03lduT (%+06d), My=%c%03ld.%03lduT (%+06d), ";
-const char					PM_INFO_PART_L2P3B[]				= "Mz=%c%03ld.%03lduT (%+06d)\t \t";
-const char					PM_INFO_PART_L2P4[]					= "Gyro_Temp=%c%02d.%02dC (%+06d)\r\n\r\n";
+const char					PM_INFO_PART_L1P1C[]				= "mP_Temp=%+06.2fC\t \t";
+const char					PM_INFO_PART_L1P2[]					= "Baro_Temp=%+06.2fC, Baro_P=%7.2fhPa\t \t";
+const char					PM_INFO_PART_L1P3[]					= "Hygro_Temp=%+06.2fC, Hygro_RelH=%05.2f%%\r\n";
+const char					PM_INFO_PART_L2P1A[]				= "\tAx=%+05.3fg (%+06d), Ay=%+05.3fg (%+06d), ";
+const char					PM_INFO_PART_L2P1B[]				= "Az=%+05.3fg (%+06d)\t \t";
+const char					PM_INFO_PART_L2P2A[]				= "Gx=%+07.2fdps (%+06d), Gy=%+07.2fdps (%+06d), ";
+const char					PM_INFO_PART_L2P2B[]				= "Gz=%+07.2fdps (%06d)\t \t";
+const char					PM_INFO_PART_L2P3A[]				= "Mx=%+07.3fuT (%+06d), My=%+07.3fuT (%+06d), ";
+const char					PM_INFO_PART_L2P3B[]				= "Mz=%+07.3fuT (%+06d)\t \t";
+const char					PM_INFO_PART_L2P4[]					= "Gyro_Temp=%+06.2fC (%+06d)\r\n\r\n";
 
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1B[]);
@@ -1281,47 +1283,47 @@ static void task_usb(uint32_t now)
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P1C,
-				sgn_of(l_adc_temp_deg_100), abs_int16(l_adc_temp_deg_100) / 100, abs_int16(l_adc_temp_deg_100) % 100);
+				l_adc_temp_deg_100 / 100.f);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P2,
-				sgn_of(l_twi1_baro_temp_100), abs_int32(l_twi1_baro_temp_100) / 100, abs_int32(l_twi1_baro_temp_100) % 100, l_twi1_baro_p_100 / 100, l_twi1_baro_p_100 % 100);
+				l_twi1_baro_temp_100 / 100.f, l_twi1_baro_p_100 / 100.f);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P3,
-				sgn_of(l_twi1_hygro_T_100), abs_int16(l_twi1_hygro_T_100) / 100, abs_int16(l_twi1_hygro_T_100) % 100, l_twi1_hygro_RH_100 / 100, l_twi1_hygro_RH_100 % 100);
+				l_twi1_hygro_T_100 / 100.f, l_twi1_hygro_RH_100 / 100.f);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P1A,
-				sgn_of(l_twi1_gyro_1_accel_x_mg),   abs_int16(l_twi1_gyro_1_accel_x_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_x_mg)   % 1000, l_twi1_gyro_1_accel_x,
-				sgn_of(l_twi1_gyro_1_accel_y_mg),   abs_int16(l_twi1_gyro_1_accel_y_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_y_mg)   % 1000, l_twi1_gyro_1_accel_y);
+				l_twi1_gyro_1_accel_x_mg / 1000.f, l_twi1_gyro_1_accel_x,
+				l_twi1_gyro_1_accel_y_mg / 1000.f, l_twi1_gyro_1_accel_y);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P1B,
-				sgn_of(l_twi1_gyro_1_accel_z_mg),   abs_int16(l_twi1_gyro_1_accel_z_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_z_mg)   % 1000, l_twi1_gyro_1_accel_z);
+				l_twi1_gyro_1_accel_z_mg / 1000.f, l_twi1_gyro_1_accel_z);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P2A,
-				sgn_of(l_twi1_gyro_1_gyro_x_mdps),  abs_int32(l_twi1_gyro_1_gyro_x_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_x_mdps)  % 1000, l_twi1_gyro_1_gyro_x,
-				sgn_of(l_twi1_gyro_1_gyro_y_mdps),  abs_int32(l_twi1_gyro_1_gyro_y_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_y_mdps)  % 1000, l_twi1_gyro_1_gyro_y);
+				l_twi1_gyro_1_gyro_x_mdps / 1000.f, l_twi1_gyro_1_gyro_x,
+				l_twi1_gyro_1_gyro_y_mdps / 1000.f, l_twi1_gyro_1_gyro_y);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P2B,
-				sgn_of(l_twi1_gyro_1_gyro_z_mdps),  abs_int32(l_twi1_gyro_1_gyro_z_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_z_mdps)  % 1000, l_twi1_gyro_1_gyro_z);
+				l_twi1_gyro_1_gyro_z_mdps / 1000.f, l_twi1_gyro_1_gyro_z);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P3A,
-				sgn_of(l_twi1_gyro_2_mag_x_nT),     abs_int32(l_twi1_gyro_2_mag_x_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_x_nT)     % 1000, l_twi1_gyro_2_mag_x,
-				sgn_of(l_twi1_gyro_2_mag_y_nT),     abs_int32(l_twi1_gyro_2_mag_y_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_y_nT)     % 1000, l_twi1_gyro_2_mag_y);
+				l_twi1_gyro_2_mag_x_nT / 1000.f, l_twi1_gyro_2_mag_x,
+				l_twi1_gyro_2_mag_y_nT / 1000.f, l_twi1_gyro_2_mag_y);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P3B,
-				sgn_of(l_twi1_gyro_2_mag_z_nT),     abs_int32(l_twi1_gyro_2_mag_z_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_z_nT)     % 1000, l_twi1_gyro_2_mag_z);
+				l_twi1_gyro_2_mag_z_nT / 1000.f, l_twi1_gyro_2_mag_z);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P4,
-				sgn_of(l_twi1_gyro_1_temp_deg_100), abs_int16(l_twi1_gyro_1_temp_deg_100) /  100, abs_int16(l_twi1_gyro_1_temp_deg_100) %  100, l_twi1_gyro_1_temp);
+				l_twi1_gyro_1_temp_deg_100 / 100.f, l_twi1_gyro_1_temp);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				/* Store last time of status line */
