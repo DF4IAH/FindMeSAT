@@ -1351,32 +1351,6 @@ static void task_twi2_lcd_header(void)
 	}
 }
 
-#if 0
-static void task_twi2_lcd_print_format_uint16_P(uint8_t x, uint8_t y, int16_t adc_i, int16_t adc_f, const char* fmt_P)
-{
-	task_twi2_lcd_pos_xy(x, y);
-
-	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
-	twi2_m_data[0] = sprintf_P((char*)&(twi2_m_data[1]), fmt, adc_i, adc_f);
-	twi2_packet.length = twi2_m_data[0] + 1;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
-	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
-}
-
-static void task_twi2_lcd_print_format_uint32_P(uint8_t x, uint8_t y, int32_t adc_i, int32_t adc_f, const char* fmt_P)
-{
-	task_twi2_lcd_pos_xy(x, y);
-
-	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
-	twi2_m_data[0] = sprintf_P((char*)&(twi2_m_data[1]), fmt, adc_i, adc_f);
-	twi2_packet.length = twi2_m_data[0] + 1;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
-	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
-}
-#endif
-
 static void task_twi2_lcd_print_format_float_P(uint8_t x, uint8_t y, float adc, const char* fmt_P)
 {
 	task_twi2_lcd_pos_xy(x, y);

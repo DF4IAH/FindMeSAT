@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												170
-#define VERSION_LOW													729
+#define VERSION_LOW													730
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -36,6 +36,17 @@
 #define C_VCC_5V0_MULT												2.41948528f
 #define C_VCC_VBAT_MULT												2.42614048f
 #define C_TEMPSENSE_MULT											629.20f
+
+#define C_SCH_SLOT_CNT												32
+
+
+typedef struct sched_entry {
+	uint32_t	wakeTime;
+	void*		callback;
+
+	uint8_t		occupied	: 1;
+	uint8_t		reserved1	: 7;
+} sched_entry_t;
 
 
 typedef enum MY_STRING_TO_VAR_ENUM {
@@ -72,6 +83,9 @@ typedef struct dma_dac_buf_s {
 } dma_dac_buf_t;
 
 
+typedef void(*sched_callback)(uint32_t listTime);
+
+
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
 
 void adc_app_enable(bool enable);
@@ -85,7 +99,12 @@ void keyBeep_enable(bool enable);
 void pitchTone_mode(uint8_t mode);
 void halt(void);
 
-void sleep_ms(uint16_t ms);
+bool sched_getLock(uint8_t* lockVar);
+void sched_freeLock(uint8_t* lockVar);
+void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay);
+void sched_pop(uint32_t wakeNow);
+void yield_ms(uint16_t ms);
+void yield_ms_cb(uint32_t listTime);
 
 void isr_tcc0_ovfl(void);
 void isr_rtc_alarm(uint32_t rtc_time);

@@ -79,32 +79,32 @@ uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl)
 }
 
 
-const char					PM_HELP_01[]							= "\r\n\r\n\r\n************\r\n* COMMANDS *\r\n************\r\n\r\n";
-const char					PM_HELP_02[]							= "adc=\t\t0: turn ADCA and ADCB off, 1: turn ADCA and ADCB on\r\n";
-const char					PM_HELP_03[]							= "bias=\t\t0-63: bias voltage for LCD contrast\r\n";
-const char					PM_HELP_04[]							= "bl=\t\t0-255: backlight PWM, -1: AUTO, -2: SPECIAL\r\n";
-const char					PM_HELP_05[]							= "dac=\t\t0: turn DACB off, 1: turn DACB on\r\n";
-const char					PM_HELP_06A[]							= "dds=a,b,c\ta: DDS0 frequency mHz, b: DDS1 mHz, ";
-const char					PM_HELP_06B[]							= "c: starting phase of DDS1-DDS0 deg\r\n";
-const char					PM_HELP_07[]							= "eb=\t\t0: error beep OFF, 1: ON\r\n";
-const char					PM_HELP_08[]							= "help\t\tThis information page about all available commands\r\n";
-const char					PM_HELP_09[]							= "info=\t\t0: OFF, 1: ON\r\n";
-const char					PM_HELP_10[]							= "kb=\t\t0: key beep OFF, 1: ON\r\n";
-const char					PM_HELP_11[]							= "pt=\t\t0: pitch tone OFF, 1: turn speed, 2: variometer\r\n";
+const char					PM_HELP_HDR[]							= "\r\n\r\n\r\n************\r\n* COMMANDS *\r\n************\r\n\r\n";
+const char					PM_HELP_ADC[]							= "adc=\t\t0: turn ADCA and ADCB off, 1: turn ADCA and ADCB on\r\n";
+const char					PM_HELP_BIAS[]							= "bias=\t\t0-63: bias voltage for LCD contrast\r\n";
+const char					PM_HELP_BL[]							= "bl=\t\t0-255: backlight PWM, -1: AUTO, -2: SPECIAL\r\n";
+const char					PM_HELP_DAC[]							= "dac=\t\t0: turn DACB off, 1: turn DACB on\r\n";
+const char					PM_HELP_DDS_1[]							= "dds=a,b,c\ta: DDS0 frequency mHz, b: DDS1 mHz, ";
+const char					PM_HELP_DDS_2[]							= "c: starting phase of DDS1-DDS0 deg\r\n";
+const char					PM_HELP_EB[]							= "eb=\t\t0: error beep OFF, 1: ON\r\n";
+const char					PM_HELP_HELP[]							= "help\t\tThis information page about all available commands\r\n";
+const char					PM_HELP_INFO[]							= "info=\t\t0: OFF, 1: ON\r\n";
+const char					PM_HELP_KB[]							= "kb=\t\t0: key beep OFF, 1: ON\r\n";
+const char					PM_HELP_PT[]							= "pt=\t\t0: pitch tone OFF, 1: turn speed, 2: variometer\r\n";
 const char					PM_IP_CMD_NewLine[]						= "\r\n";
 const char					PM_IP_CMD_CmdLine[]						= "\r\n> ";
-PROGMEM_DECLARE(const char, PM_HELP_01[]);
-PROGMEM_DECLARE(const char, PM_HELP_02[]);
-PROGMEM_DECLARE(const char, PM_HELP_03[]);
-PROGMEM_DECLARE(const char, PM_HELP_04[]);
-PROGMEM_DECLARE(const char, PM_HELP_05[]);
-PROGMEM_DECLARE(const char, PM_HELP_06A[]);
-PROGMEM_DECLARE(const char, PM_HELP_06B[]);
-PROGMEM_DECLARE(const char, PM_HELP_07[]);
-PROGMEM_DECLARE(const char, PM_HELP_08[]);
-PROGMEM_DECLARE(const char, PM_HELP_09[]);
-PROGMEM_DECLARE(const char, PM_HELP_10[]);
-PROGMEM_DECLARE(const char, PM_HELP_11[]);
+PROGMEM_DECLARE(const char, PM_HELP_HDR[]);
+PROGMEM_DECLARE(const char, PM_HELP_ADC[]);
+PROGMEM_DECLARE(const char, PM_HELP_BIAS[]);
+PROGMEM_DECLARE(const char, PM_HELP_BL[]);
+PROGMEM_DECLARE(const char, PM_HELP_DAC[]);
+PROGMEM_DECLARE(const char, PM_HELP_DDS_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_DDS_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_EB[]);
+PROGMEM_DECLARE(const char, PM_HELP_HELP[]);
+PROGMEM_DECLARE(const char, PM_HELP_INFO[]);
+PROGMEM_DECLARE(const char, PM_HELP_KB[]);
+PROGMEM_DECLARE(const char, PM_HELP_PT[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_NewLine[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_CmdLine[]);
 
@@ -112,40 +112,40 @@ void printHelp(void)
 {
 	static bool again = false;
 
-	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_01);
+	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_HDR);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_02);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_ADC);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_03);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_BIAS);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_04);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_BL);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_05);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DAC);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_06A);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DDS_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_06B);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DDS_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_07);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_EB);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_08);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_HELP);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_09);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_INFO);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_10);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_KB);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_11);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_PT);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_IP_CMD_NewLine);
