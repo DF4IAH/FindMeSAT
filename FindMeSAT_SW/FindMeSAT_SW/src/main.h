@@ -99,8 +99,8 @@ void keyBeep_enable(bool enable);
 void pitchTone_mode(uint8_t mode);
 void halt(void);
 
-bool sched_getLock(uint8_t* lockVar);
-void sched_freeLock(uint8_t* lockVar);
+bool sched_getLock(volatile uint8_t* lockVar);
+void sched_freeLock(volatile uint8_t* lockVar);
 void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay);
 void sched_pop(uint32_t wakeNow);
 void yield_ms(uint16_t ms);

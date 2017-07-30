@@ -499,12 +499,14 @@ static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0
 
 /* Simple scheduler concept */
 
-bool sched_getLock(uint8_t* lockVar)
+bool sched_getLock(volatile uint8_t* lockVar)
 {
 	bool status = false;
-	irqflags_t flags = cpu_irq_save();
+	irqflags_t flags;
 
-	++(*lockVar);
+	flags = cpu_irq_save();
+
+	++*lockVar;
 	if (*lockVar == 1) {														// No use before
 		status = true;
 	} else {
@@ -515,7 +517,7 @@ bool sched_getLock(uint8_t* lockVar)
 	return status;
 }
 
-void sched_freeLock(uint8_t* lockVar)
+void sched_freeLock(volatile uint8_t* lockVar)
 {
 	irqflags_t flags = cpu_irq_save();
 	*lockVar = 0;
@@ -552,7 +554,7 @@ void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay)
 			g_sched_data[idx].occupied = true;
 			g_sched_data[idx].callback = cb;
 			g_sched_data[idx].wakeTime = wakeTime;
-			slot = idx;
+			slot = idx + 1;
 			dataEntryStored = true;
 			break;
 		}
@@ -581,6 +583,7 @@ void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay)
 
 			/* Fill in new item */
 			g_sched_sort[pos] = slot;
+			break;
 		}
 	}
 
@@ -667,12 +670,6 @@ void yield_ms(uint16_t ms)
 void yield_ms_cb(uint32_t listTime)
 {
 	irqflags_t flags;
-
-#if 0
-	if () {
-		return;
-	}
-#endif
 
 	/* Time delay completed */
 	flags = cpu_irq_save();
@@ -1484,6 +1481,51 @@ static void task(void)
 }
 
 
+static void cb_test1(uint32_t retTime)
+{
+	sprintf(g_prepare_buf, "Done 1\n: time=%ld", retTime);
+}
+
+static void cb_test2(uint32_t retTime)
+{
+	sprintf(g_prepare_buf, "Done 2\n: time=%ld", retTime);
+}
+
+static void cb_test3(uint32_t retTime)
+{
+	sprintf(g_prepare_buf, "Done 3\n: time=%ld", retTime);
+}
+
+static void test_code(void)
+{
+#if 0
+	/* 1 - lock tester */
+	{
+		volatile bool r = false;
+
+		r = sched_getLock(&g_sched_lock);
+		r = sched_getLock(&g_sched_lock);
+		sched_freeLock(&g_sched_lock);
+		r = sched_getLock(&g_sched_lock);
+		sched_freeLock(&g_sched_lock);
+		sched_freeLock(&g_sched_lock);
+		printf("r=%d", r);
+	}
+#endif
+
+#if 1
+	/* 2 - store ready tasks */
+	{
+		sched_push(cb_test1, 100, true);
+		sched_push(cb_test2, 300, true);
+		sched_push(cb_test3, 200, true);
+
+		yield_ms(250);
+		yield_ms(0);
+	}
+#endif
+}
+
 int main(void)
 {
 	uint8_t retcode = 0;
@@ -1500,7 +1542,6 @@ int main(void)
 
 	rtc_init();
 	rtc_start();
-	//rtc_set_callback(cb_rtc_alarm);
 
 	evsys_init();		// Event system
 	tc_init();			// Timers
@@ -1518,6 +1559,10 @@ int main(void)
 
 	/* All interrupt sources & PMIC are prepared until here - IRQ activation follows */
 	cpu_irq_enable();
+
+	/* Test code */
+	test_code();
+	return -1;
 
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
