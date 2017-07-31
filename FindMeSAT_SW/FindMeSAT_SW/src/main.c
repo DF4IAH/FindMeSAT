@@ -607,17 +607,17 @@ void sched_pop(uint32_t wakeNow)
 		return;
 	}
 
-	/* Drop all old entries  */
+	/* Process each entry until now  */
 	uint32_t alarmTime = g_sched_data[idx - 1].wakeTime;
 	while (alarmTime <= wakeNow) {
 		/* Get callback */
 		sched_callback cb = g_sched_data[idx - 1].callback;
 
-		/* Remove entry */
+		/* Free entry */
 		g_sched_data[idx - 1].occupied = false;
 
-		/* Move all entries down by one */
-		for (int mvidx = 0; mvidx < (C_SCH_SLOT_CNT - 2); ++mvidx) {
+		/* Move all items down by one */
+		for (int mvidx = 0; mvidx < (C_SCH_SLOT_CNT - 1); ++mvidx) {
 			g_sched_sort[mvidx] = g_sched_sort[mvidx + 1];
 		}
 
@@ -635,7 +635,6 @@ void sched_pop(uint32_t wakeNow)
 			if (!(g_sched_data[idx - 1].occupied)) {
 				return;
 			}
-
 			alarmTime = g_sched_data[idx - 1].wakeTime;
 		}
 	}
@@ -1521,7 +1520,10 @@ static void test_code(void)
 		sched_push(cb_test3, 200, true);
 
 		yield_ms(250);
+		sprintf(g_prepare_buf, "Test 250 done");
+
 		yield_ms(0);
+		sprintf(g_prepare_buf, "Test 250+0 done");
 	}
 #endif
 }
