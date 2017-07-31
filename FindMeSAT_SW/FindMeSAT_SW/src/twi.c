@@ -316,7 +316,7 @@ static void init_twi1_hygro(void)
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 			break;
 		}
-		delay_ms(2);
+		yield_ms(2);
 
 		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
 		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_RESET_HI;
@@ -327,7 +327,7 @@ static void init_twi1_hygro(void)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		delay_ms(2);
+		yield_ms(2);
 
 		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
 		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_STATUS_HI;
@@ -397,7 +397,7 @@ static void init_twi1_gyro(void)
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 			break;
 		}
-		delay_ms(10);
+		yield_ms(10);
 
 		/* MPU-9250 6 axis: read Who Am I control value */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
@@ -431,7 +431,7 @@ static void init_twi1_gyro(void)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		delay_ms(10);
+		yield_ms(10);
 
 		/* Magnetometer: read Device ID */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
@@ -481,7 +481,7 @@ static void init_twi1_gyro(void)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		delay_ms(10);
+		yield_ms(10);
 
 		/* Magnetometer: mode change for 16bit and run all axis at 8 Hz */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
@@ -592,7 +592,7 @@ static void init_twi1_gyro(void)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		delay_ms(10);
+		yield_ms(10);
 
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_GYRO_04);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -633,7 +633,7 @@ static void init_twi1_baro(void)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		delay_ms(3);
+		yield_ms(3);
 
 		twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
 		twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_VERSION;
@@ -731,22 +731,22 @@ static void start_twi2_lcd(void)
 
 		/* Do the first beep for a sequence */
 		twi2_set_beep(44, 25);  // 440 Hz, 250 ms
-		delay_ms(10);
+		yield_ms(10);
 
 		/* Ramp down backlight */
 		for (int lum = 128; lum >= 2; lum -= 2) {
 			twi2_set_ledbl(0, lum);
-			delay_ms(1);
+			yield_ms(1);
 		}
 
 		/* Do the second beep for a sequence */
 		twi2_set_beep(88, 25);  // 880 Hz, 250 ms
-		delay_ms(10);
+		yield_ms(10);
 
 		/* Ramp up backlight */
 		for (int lum = 0; lum <= 128; lum += 2) {
 			twi2_set_ledbl(0, lum);
-			delay_ms(1);
+			yield_ms(1);
 		}
 		// g_backlight_mode_pwm = 128;
 	}
@@ -805,7 +805,7 @@ void twi_start(void) {
 	/* Start each TWI channel devices */
 	start_twi1_onboard();
 
-	delay_ms(250);											// Give Smart-LCD some time being up and ready
+	yield_ms(250);											// Give Smart-LCD some time being up and ready
 	start_twi2_lcd();
 }
 
@@ -1351,32 +1351,6 @@ static void task_twi2_lcd_header(void)
 	}
 }
 
-#if 0
-static void task_twi2_lcd_print_format_uint16_P(uint8_t x, uint8_t y, int16_t adc_i, int16_t adc_f, const char* fmt_P)
-{
-	task_twi2_lcd_pos_xy(x, y);
-
-	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
-	twi2_m_data[0] = sprintf_P((char*)&(twi2_m_data[1]), fmt, adc_i, adc_f);
-	twi2_packet.length = twi2_m_data[0] + 1;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
-	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
-}
-
-static void task_twi2_lcd_print_format_uint32_P(uint8_t x, uint8_t y, int32_t adc_i, int32_t adc_f, const char* fmt_P)
-{
-	task_twi2_lcd_pos_xy(x, y);
-
-	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
-	twi2_m_data[0] = sprintf_P((char*)&(twi2_m_data[1]), fmt, adc_i, adc_f);
-	twi2_packet.length = twi2_m_data[0] + 1;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
-	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
-}
-#endif
-
 static void task_twi2_lcd_print_format_float_P(uint8_t x, uint8_t y, float adc, const char* fmt_P)
 {
 	task_twi2_lcd_pos_xy(x, y);
@@ -1648,7 +1622,7 @@ void task_twi2_lcd(uint32_t now)
 						}
 
 						twi2_set_beep(pitch, 10);
-						delay_ms(5);
+						yield_ms(5);
 					}
 
 					/* Update static value */

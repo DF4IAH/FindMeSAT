@@ -45,11 +45,11 @@
 /* GLOBAL section */
 
 bool						g_adc_enabled						= true;
-int16_t						g_backlight_mode_pwm				= -2;		// -2: SPECIAL
+int16_t						g_backlight_mode_pwm				= 50;		// -2: SPECIAL
 uint8_t						g_bias_pm							= 22;
 bool						g_dac_enabled						= false;
 bool						g_errorBeep_enable					= true;
-bool						g_keyBeep_enable					= true;
+bool						g_keyBeep_enable					= false;
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines			= false;
 bool						g_usb_cdc_rx_received				= false;
@@ -57,8 +57,6 @@ bool						g_usb_cdc_transfers_autorized		= false;
 bool						g_usb_cdc_access_blocked			= false;
 uint8_t						g_pitch_tone_mode					= 1;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
-
-uint32_t					g_rtc_alarm							= 0UL;
 
 bool						g_twi1_gsm_valid					= false;
 uint8_t						g_twi1_gsm_version					= 0;
@@ -166,6 +164,10 @@ int16_t						g_adc_temp_deg_100					= 0;
 
 char						g_prepare_buf[C_TX_BUF_SIZE]		= "";
 
+uint8_t						g_sched_lock						= 0;
+bool						g_sched_yield						= false;
+sched_entry_t				g_sched_data[C_SCH_SLOT_CNT]		= { 0 };
+uint8_t						g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
 
 
 twi_options_t twi1_options = {
@@ -482,26 +484,6 @@ void halt(void)
 }
 
 
-static char sgn_of(long x) {
-	return x >= 0 ?  '+' : '-';
-}
-
-static int16_t abs_int16(int16_t x) {
-	if (x >= 0) {
-		return x;
-	} else {
-		return -x;
-	}
-}
-
-static int32_t abs_int32(int32_t x) {
-	if (x >= 0) {
-		return x;
-	} else {
-		return -x;
-	}
-}
-
 static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0_reg_p, uint32_t* dds0_inc_p, uint32_t* dds1_reg_p, uint32_t* dds1_inc_p)
 {
 	/* Filling the DMA block for a dual connected DAC channel */
@@ -514,34 +496,188 @@ static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0
 	}
 }
 
-void sleep_ms(uint16_t ms)
+
+/* Simple scheduler concept */
+
+bool sched_getLock(volatile uint8_t* lockVar)
 {
-	/* Sanity checks */
-	if (ms < 2) {
-		ms = 2;																	// Minimal value to use to work properly
-	} else if (ms > 30000U) {
-		ms = 30000U;
+	bool status = false;
+	irqflags_t flags;
+
+	flags = cpu_irq_save();
+
+	++*lockVar;
+	if (*lockVar == 1) {														// No use before
+		status = true;
+	} else {
+		--(*lockVar);
 	}
 
-	/* Set time to wake up */
-	uint32_t l_rtc_alarm = rtc_get_time();
-	l_rtc_alarm += ((uint32_t)ms << 10) / 1000;
-	uint32_t l_rtc_alarm_current;
-
-	irqflags_t flags = cpu_irq_save();
-	g_rtc_alarm = l_rtc_alarm;
 	cpu_irq_restore(flags);
-	rtc_set_alarm(l_rtc_alarm);
+	return status;
+}
 
-	sleep_enable();
+void sched_freeLock(volatile uint8_t* lockVar)
+{
+	irqflags_t flags = cpu_irq_save();
+	*lockVar = 0;
+	cpu_irq_restore(flags);
+}
+
+void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay)
+{
+	const uint32_t pushTime = rtc_get_time();
+
+	if (isDelay) {
+		/* Sanity checks */
+		if (wakeTime < 2) {
+			wakeTime = 2;														// Min value to use to work properly
+		} else if (wakeTime > 30000U) {
+			wakeTime = ((30000U << 10) / 1000);									// Max value 30 sec
+		} else {
+			wakeTime = ((wakeTime << 10) / 1000);								// Time correction for 1024 ticks per second
+		}
+
+		/* Absolute time ticks */
+		wakeTime += pushTime;
+	}
+
+	/* Lock access to the scheduler entries */
+	while (!sched_getLock(&g_sched_lock))
+		;
+
+	/* Get next free slot */
+	bool dataEntryStored = false;
+	uint8_t slot = 0;
+	for (int idx = 0; idx < C_SCH_SLOT_CNT; ++idx) {
+		if (!(g_sched_data[idx].occupied)) {
+			g_sched_data[idx].occupied = true;
+			g_sched_data[idx].callback = cb;
+			g_sched_data[idx].wakeTime = wakeTime;
+			slot = idx + 1;
+			dataEntryStored = true;
+			break;
+		}
+	}
+
+	if (!dataEntryStored) {
+		return;  // should not happen
+	}
+
+	/* Bind to sort list */
+	for (int pos = 0; pos < C_SCH_SLOT_CNT; ++pos) {
+		uint8_t idx = g_sched_sort[pos];
+		if (!idx) {
+			/* Fill in after last entry */
+			g_sched_sort[pos] = slot;
+			break;
+		}
+		--idx;
+
+		/* Place new item in front of that entry */
+		if (g_sched_data[idx].occupied && (wakeTime < g_sched_data[idx].wakeTime)) {
+			/* Move all entries of position list one up to give space for our new entry */
+			for (int mvidx = C_SCH_SLOT_CNT - 2; pos <= mvidx; --mvidx) {
+				g_sched_sort[mvidx + 1] = g_sched_sort[mvidx];
+			}
+
+			/* Fill in new item */
+			g_sched_sort[pos] = slot;
+			break;
+		}
+	}
+
+	/* Get next time for wake-up */
+	uint32_t alarmTime = g_sched_data[g_sched_sort[0] - 1].wakeTime;
+
+	/* Release lock */
+	sched_freeLock(&g_sched_lock);
+
+	/* Set next time to wake up */
+	uint32_t checkLimit = rtc_get_time() + 2;
+	if (alarmTime < checkLimit) {
+		alarmTime = checkLimit;
+	}
+	rtc_set_alarm(alarmTime);
+}
+
+void sched_pop(uint32_t wakeNow)
+{
+	uint8_t idx = g_sched_sort[0];
+	if (!idx) {
+		return;
+	}
+	if (!(g_sched_data[idx - 1].occupied)) {
+		return;
+	}
+
+	/* Process each entry until now  */
+	uint32_t alarmTime = g_sched_data[idx - 1].wakeTime;
+	while (alarmTime <= wakeNow) {
+		/* Get callback */
+		sched_callback cb = g_sched_data[idx - 1].callback;
+
+		/* Free entry */
+		g_sched_data[idx - 1].occupied = false;
+
+		/* Move all items down by one */
+		for (int mvidx = 0; mvidx < (C_SCH_SLOT_CNT - 1); ++mvidx) {
+			g_sched_sort[mvidx] = g_sched_sort[mvidx + 1];
+		}
+
+		/* Call the CB function */
+		if (cb) {
+			cb(alarmTime);
+		}
+
+		/* Get the next alarm time */
+		{
+			idx = g_sched_sort[0];
+			if (!idx) {
+				return;
+			}
+			if (!(g_sched_data[idx - 1].occupied)) {
+				return;
+			}
+			alarmTime = g_sched_data[idx - 1].wakeTime;
+		}
+	}
+
+	/* Set next time to wake up */
+	rtc_set_alarm(alarmTime);
+}
+
+void yield_ms(uint16_t ms)
+{
+	bool l_sched_yield;
+	irqflags_t flags;
+
+	sched_push(yield_ms_cb, ms, true);
+
+	flags = cpu_irq_save();
+	g_sched_yield = l_sched_yield = true;
+	cpu_irq_restore(flags);
+
+	/* Continued sleep until our callback is done */
 	do {
-		sleep_cpu();
+		/* Enter sleep mode */
+		sleepmgr_enter_sleep();
 
+		/* Woke up for any reason */
 		flags = cpu_irq_save();
-		l_rtc_alarm_current = g_rtc_alarm;
+		l_sched_yield = g_sched_yield;
 		cpu_irq_restore(flags);
-	} while (rtc_get_time() >= l_rtc_alarm || !l_rtc_alarm_current);
-	sleep_disable();
+	} while (l_sched_yield);
+}
+
+void yield_ms_cb(uint32_t listTime)
+{
+	irqflags_t flags;
+
+	/* Time delay completed */
+	flags = cpu_irq_save();
+	g_sched_yield = false;
+	cpu_irq_restore(flags);
 }
 
 
@@ -638,6 +774,12 @@ static void isr_10ms(uint32_t now)
 static void isr_500ms(uint32_t now)
 {
 	isr_500ms_twi1_onboard(now);
+
+	/* Kick RTC32 */
+	{
+		uint32_t kickTime = rtc_get_time() + 2;
+		rtc_set_alarm(kickTime);
+	}
 }
 
 static void isr_sparetime(uint32_t now)
@@ -653,8 +795,7 @@ static void rtc_start(void)
 
 void isr_rtc_alarm(uint32_t rtc_time)
 {	// Alarm call-back with the current time
-	// important to wake-up from sleep state - done
-	g_rtc_alarm = 0;
+	sched_pop(rtc_time);
 }
 
 
@@ -956,7 +1097,7 @@ static void usb_init(void)
 	if (g_usb_cdc_stdout_enabled) {
 		stdio_usb_enable();
 	}
-	delay_ms(750);
+	yield_ms(750);
 
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_01);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -970,7 +1111,7 @@ static void usb_init(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_04);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	delay_ms(250);
+	yield_ms(250);
 }
 
 void usb_callback_suspend_action(void)
@@ -1169,16 +1310,16 @@ static void task_twi(uint32_t now)
 
 const char					PM_INFO_PART_L1P1A[]				= "Time = %06ld: Uvco=%4d mV, U5v=%4d mV, Ubat=%4d mV, ";
 const char					PM_INFO_PART_L1P1B[]				= "Uadc4=%4d mV, Uadc5=%4d mV, Usil=%4d mV, ";
-const char					PM_INFO_PART_L1P1C[]				= "mP_Temp=%c%02d.%02dC\t \t";
-const char					PM_INFO_PART_L1P2[]					= "Baro_Temp=%c%02ld.%02ldC, Baro_P=%4ld.%02ldhPa\t \t";
-const char					PM_INFO_PART_L1P3[]					= "Hygro_Temp=%c%02d.%02dC, Hygro_RelH=%02d.%02d%%\r\n";
-const char					PM_INFO_PART_L2P1A[]				= "\tAx=%c%01d.%03dg (%+06d), Ay=%c%01d.%03dg (%+06d), ";
-const char					PM_INFO_PART_L2P1B[]				= "Az=%c%01d.%03dg (%+06d)\t \t";
-const char					PM_INFO_PART_L2P2A[]				= "Gx=%c%03ld.%03lddps (%+06d), Gy=%c%03ld.%03lddps (%+06d), ";
-const char					PM_INFO_PART_L2P2B[]				= "Gz=%c%03ld.%03lddps (%06d)\t \t";
-const char					PM_INFO_PART_L2P3A[]				= "Mx=%c%03ld.%03lduT (%+06d), My=%c%03ld.%03lduT (%+06d), ";
-const char					PM_INFO_PART_L2P3B[]				= "Mz=%c%03ld.%03lduT (%+06d)\t \t";
-const char					PM_INFO_PART_L2P4[]					= "Gyro_Temp=%c%02d.%02dC (%+06d)\r\n\r\n";
+const char					PM_INFO_PART_L1P1C[]				= "mP_Temp=%+06.2fC\t \t";
+const char					PM_INFO_PART_L1P2[]					= "Baro_Temp=%+06.2fC, Baro_P=%7.2fhPa\t \t";
+const char					PM_INFO_PART_L1P3[]					= "Hygro_Temp=%+06.2fC, Hygro_RelH=%05.2f%%\r\n";
+const char					PM_INFO_PART_L2P1A[]				= "\tAx=%+05.3fg (%+06d), Ay=%+05.3fg (%+06d), ";
+const char					PM_INFO_PART_L2P1B[]				= "Az=%+05.3fg (%+06d)\t \t";
+const char					PM_INFO_PART_L2P2A[]				= "Gx=%+07.2fdps (%+06d), Gy=%+07.2fdps (%+06d), ";
+const char					PM_INFO_PART_L2P2B[]				= "Gz=%+07.2fdps (%06d)\t \t";
+const char					PM_INFO_PART_L2P3A[]				= "Mx=%+07.3fuT (%+06d), My=%+07.3fuT (%+06d), ";
+const char					PM_INFO_PART_L2P3B[]				= "Mz=%+07.3fuT (%+06d)\t \t";
+const char					PM_INFO_PART_L2P4[]					= "Gyro_Temp=%+06.2fC (%+06d)\r\n\r\n";
 
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1B[]);
@@ -1211,7 +1352,7 @@ static void task_usb(uint32_t now)
 
 				if (g_keyBeep_enable) {
 					twi2_set_beep(176, 1);  // Click sound
-					delay_ms(5);
+					yield_ms(5);
 				}
 
 				udi_cdc_read_no_polling(cdc_rx_buf, cdc_rx_len);
@@ -1281,47 +1422,47 @@ static void task_usb(uint32_t now)
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P1C,
-				sgn_of(l_adc_temp_deg_100), abs_int16(l_adc_temp_deg_100) / 100, abs_int16(l_adc_temp_deg_100) % 100);
+				l_adc_temp_deg_100 / 100.f);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P2,
-				sgn_of(l_twi1_baro_temp_100), abs_int32(l_twi1_baro_temp_100) / 100, abs_int32(l_twi1_baro_temp_100) % 100, l_twi1_baro_p_100 / 100, l_twi1_baro_p_100 % 100);
+				l_twi1_baro_temp_100 / 100.f, l_twi1_baro_p_100 / 100.f);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P3,
-				sgn_of(l_twi1_hygro_T_100), abs_int16(l_twi1_hygro_T_100) / 100, abs_int16(l_twi1_hygro_T_100) % 100, l_twi1_hygro_RH_100 / 100, l_twi1_hygro_RH_100 % 100);
+				l_twi1_hygro_T_100 / 100.f, l_twi1_hygro_RH_100 / 100.f);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P1A,
-				sgn_of(l_twi1_gyro_1_accel_x_mg),   abs_int16(l_twi1_gyro_1_accel_x_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_x_mg)   % 1000, l_twi1_gyro_1_accel_x,
-				sgn_of(l_twi1_gyro_1_accel_y_mg),   abs_int16(l_twi1_gyro_1_accel_y_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_y_mg)   % 1000, l_twi1_gyro_1_accel_y);
+				l_twi1_gyro_1_accel_x_mg / 1000.f, l_twi1_gyro_1_accel_x,
+				l_twi1_gyro_1_accel_y_mg / 1000.f, l_twi1_gyro_1_accel_y);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P1B,
-				sgn_of(l_twi1_gyro_1_accel_z_mg),   abs_int16(l_twi1_gyro_1_accel_z_mg)   / 1000, abs_int16(l_twi1_gyro_1_accel_z_mg)   % 1000, l_twi1_gyro_1_accel_z);
+				l_twi1_gyro_1_accel_z_mg / 1000.f, l_twi1_gyro_1_accel_z);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P2A,
-				sgn_of(l_twi1_gyro_1_gyro_x_mdps),  abs_int32(l_twi1_gyro_1_gyro_x_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_x_mdps)  % 1000, l_twi1_gyro_1_gyro_x,
-				sgn_of(l_twi1_gyro_1_gyro_y_mdps),  abs_int32(l_twi1_gyro_1_gyro_y_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_y_mdps)  % 1000, l_twi1_gyro_1_gyro_y);
+				l_twi1_gyro_1_gyro_x_mdps / 1000.f, l_twi1_gyro_1_gyro_x,
+				l_twi1_gyro_1_gyro_y_mdps / 1000.f, l_twi1_gyro_1_gyro_y);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P2B,
-				sgn_of(l_twi1_gyro_1_gyro_z_mdps),  abs_int32(l_twi1_gyro_1_gyro_z_mdps)  / 1000, abs_int32(l_twi1_gyro_1_gyro_z_mdps)  % 1000, l_twi1_gyro_1_gyro_z);
+				l_twi1_gyro_1_gyro_z_mdps / 1000.f, l_twi1_gyro_1_gyro_z);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P3A,
-				sgn_of(l_twi1_gyro_2_mag_x_nT),     abs_int32(l_twi1_gyro_2_mag_x_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_x_nT)     % 1000, l_twi1_gyro_2_mag_x,
-				sgn_of(l_twi1_gyro_2_mag_y_nT),     abs_int32(l_twi1_gyro_2_mag_y_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_y_nT)     % 1000, l_twi1_gyro_2_mag_y);
+				l_twi1_gyro_2_mag_x_nT / 1000.f, l_twi1_gyro_2_mag_x,
+				l_twi1_gyro_2_mag_y_nT / 1000.f, l_twi1_gyro_2_mag_y);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P3B,
-				sgn_of(l_twi1_gyro_2_mag_z_nT),     abs_int32(l_twi1_gyro_2_mag_z_nT)     / 1000, abs_int32(l_twi1_gyro_2_mag_z_nT)     % 1000, l_twi1_gyro_2_mag_z);
+				l_twi1_gyro_2_mag_z_nT / 1000.f, l_twi1_gyro_2_mag_z);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L2P4,
-				sgn_of(l_twi1_gyro_1_temp_deg_100), abs_int16(l_twi1_gyro_1_temp_deg_100) /  100, abs_int16(l_twi1_gyro_1_temp_deg_100) %  100, l_twi1_gyro_1_temp);
+				l_twi1_gyro_1_temp_deg_100 / 100.f, l_twi1_gyro_1_temp);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				/* Store last time of status line */
@@ -1365,7 +1506,6 @@ int main(void)
 
 	rtc_init();
 	rtc_start();
-	//rtc_set_callback(cb_rtc_alarm);
 
 	evsys_init();		// Event system
 	tc_init();			// Timers
@@ -1403,7 +1543,7 @@ int main(void)
 	printHelp();
 
 	/* Show green LED */
-	twi2_set_leds(0x02);
+	//twi2_set_leds(0x02);
 
 	/* The application code */
 	irqflags_t flags = cpu_irq_save();
@@ -1413,7 +1553,9 @@ int main(void)
     while (l_workmode) {
 		task();
 
-		sleepmgr_enter_sleep();
+		twi2_set_leds(0x01);
+		yield_ms(0);
+		twi2_set_leds(0x00);
 
 		flags = cpu_irq_save();
 		l_workmode = g_workmode;
