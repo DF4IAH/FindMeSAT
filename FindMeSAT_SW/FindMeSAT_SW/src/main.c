@@ -1097,7 +1097,7 @@ static void usb_init(void)
 	if (g_usb_cdc_stdout_enabled) {
 		stdio_usb_enable();
 	}
-	delay_ms(750);
+	yield_ms(750);
 
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_01);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -1111,7 +1111,7 @@ static void usb_init(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_04);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	delay_ms(250);
+	yield_ms(250);
 }
 
 void usb_callback_suspend_action(void)
@@ -1352,7 +1352,7 @@ static void task_usb(uint32_t now)
 
 				if (g_keyBeep_enable) {
 					twi2_set_beep(176, 1);  // Click sound
-					delay_ms(5);
+					yield_ms(5);
 				}
 
 				udi_cdc_read_no_polling(cdc_rx_buf, cdc_rx_len);
@@ -1489,52 +1489,6 @@ static void task(void)
 	}
 }
 
-
-#if 0
-static void cb_test1(uint32_t retTime)
-{
-	sprintf(g_prepare_buf, "Done 1\n: time=%ld", retTime);
-}
-
-static void cb_test2(uint32_t retTime)
-{
-	sprintf(g_prepare_buf, "Done 2\n: time=%ld", retTime);
-}
-
-static void cb_test3(uint32_t retTime)
-{
-	sprintf(g_prepare_buf, "Done 3\n: time=%ld", retTime);
-}
-
-static void test_code(void)
-{
-	/* 1 - lock tester */
-	{
-		volatile bool r = false;
-
-		r = sched_getLock(&g_sched_lock);
-		r = sched_getLock(&g_sched_lock);
-		sched_freeLock(&g_sched_lock);
-		r = sched_getLock(&g_sched_lock);
-		sched_freeLock(&g_sched_lock);
-		sched_freeLock(&g_sched_lock);
-		printf("r=%d", r);
-	}
-
-	/* 2 - store ready tasks */
-	{
-		sched_push(cb_test1, 100, true);
-		sched_push(cb_test2, 300, true);
-		sched_push(cb_test3, 200, true);
-
-		yield_ms(250);
-		sprintf(g_prepare_buf, "Test 250 done");
-
-		yield_ms(0);
-		sprintf(g_prepare_buf, "Test 250+0 done");
-	}
-}
-#endif
 
 int main(void)
 {
