@@ -250,7 +250,7 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 
 			if (g_errorBeep_enable) {
 				twi2_set_beep(100, 10);  // Bad sound
-				delay_ms(50);
+				yield_ms(50);
 			}
 		}
 	}
