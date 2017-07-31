@@ -594,6 +594,10 @@ void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay)
 	sched_freeLock(&g_sched_lock);
 
 	/* Set next time to wake up */
+	uint32_t checkLimit = rtc_get_time() + 2;
+	if (alarmTime < checkLimit) {
+		alarmTime = checkLimit;
+	}
 	rtc_set_alarm(alarmTime);
 }
 
@@ -770,6 +774,12 @@ static void isr_10ms(uint32_t now)
 static void isr_500ms(uint32_t now)
 {
 	isr_500ms_twi1_onboard(now);
+
+	/* Kick RTC32 */
+	{
+		uint32_t kickTime = rtc_get_time() + 2;
+		rtc_set_alarm(kickTime);
+	}
 }
 
 static void isr_sparetime(uint32_t now)
@@ -1480,6 +1490,7 @@ static void task(void)
 }
 
 
+#if 0
 static void cb_test1(uint32_t retTime)
 {
 	sprintf(g_prepare_buf, "Done 1\n: time=%ld", retTime);
@@ -1497,7 +1508,6 @@ static void cb_test3(uint32_t retTime)
 
 static void test_code(void)
 {
-#if 0
 	/* 1 - lock tester */
 	{
 		volatile bool r = false;
@@ -1510,9 +1520,7 @@ static void test_code(void)
 		sched_freeLock(&g_sched_lock);
 		printf("r=%d", r);
 	}
-#endif
 
-#if 1
 	/* 2 - store ready tasks */
 	{
 		sched_push(cb_test1, 100, true);
@@ -1525,8 +1533,8 @@ static void test_code(void)
 		yield_ms(0);
 		sprintf(g_prepare_buf, "Test 250+0 done");
 	}
-#endif
 }
+#endif
 
 int main(void)
 {
@@ -1562,10 +1570,6 @@ int main(void)
 	/* All interrupt sources & PMIC are prepared until here - IRQ activation follows */
 	cpu_irq_enable();
 
-	/* Test code */
-	test_code();
-	return -1;
-
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
 	if (g_dac_enabled) {
@@ -1585,7 +1589,7 @@ int main(void)
 	printHelp();
 
 	/* Show green LED */
-	twi2_set_leds(0x02);
+	//twi2_set_leds(0x02);
 
 	/* The application code */
 	irqflags_t flags = cpu_irq_save();
@@ -1595,7 +1599,9 @@ int main(void)
     while (l_workmode) {
 		task();
 
-		yield_ms(10);
+		twi2_set_leds(0x01);
+		yield_ms(0);
+		twi2_set_leds(0x00);
 
 		flags = cpu_irq_save();
 		l_workmode = g_workmode;
