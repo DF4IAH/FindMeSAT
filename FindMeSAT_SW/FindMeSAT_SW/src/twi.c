@@ -117,6 +117,14 @@ extern uint8_t			twi2_recv_data[TWI_DATA_LENGTH];
 #endif
 
 
+/* Forward declarations */
+
+static void task_twi1_hygro(uint32_t now);
+static void task_twi1_gyro(uint32_t now);
+static void task_twi1_baro(uint32_t now);
+
+
+/* Functions */
 
 #ifdef TWI1_SLAVE
 static void twi1_slave_process(void) {
@@ -205,6 +213,8 @@ void twi2_waitUntilReady(void)
 }
 
 
+/* Setters for the interpreter */
+
 void twi2_set_leds(uint8_t leds)
 {
 	/* Show green LED */
@@ -248,6 +258,8 @@ void twi2_set_beep(uint8_t pitch_10hz, uint8_t len_10ms)
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
+
+/* INIT functions */
 
 #if 0
 const char					PM_TWI1_INIT_GSM_01[]				= "\r\nTWI-onboard: GSM/BT/GPS SIM808 - I2C address: 0x%02X\r\n";
@@ -812,6 +824,7 @@ void twi_start(void) {
 
 static void isr_twi1_hygro(uint32_t now, bool sync)
 {
+	/* No spare-time handling in use */
 	if (!sync) {
 		return;
 	}
@@ -831,6 +844,7 @@ static void isr_twi1_hygro(uint32_t now, bool sync)
 
 static void isr_twi1_gyro(uint32_t now, bool sync)
 {
+	/* No spare-time handling in use */
 	if (!sync) {
 		return;
 	}
@@ -906,9 +920,11 @@ static void isr_twi1_gyro(uint32_t now, bool sync)
 
 static void isr_twi1_baro(uint32_t now, bool sync)
 {
-	static uint8_t  s_step = 100;
+	static uint8_t  s_step = 100;								// FSM: stopped mode
 	static uint32_t s_twi1_baro_d1 = 0UL;
 	static uint32_t s_twi1_baro_d2 = 0UL;
+
+	/* Spare-time handling is in use: finite state machine (FSM) follows */
 
 	/* Restart a new cycle if ready */
 	if (sync && (s_step >= 100)) {
@@ -982,9 +998,12 @@ static void isr_twi1_baro(uint32_t now, bool sync)
 	}
 }
 
+
 /* 10ms TWI1 - Gyro device */
 void isr_10ms_twi1_onboard(uint32_t now)
 {	/* Service time slot */
+
+	// not in use yet
 }
 
 /* 500ms TWI1 - Baro, Hygro devices */
@@ -992,20 +1011,25 @@ void isr_500ms_twi1_onboard(uint32_t now)
 {	/* Service time slot */
 	if (g_twi1_hygro_valid) {
 		isr_twi1_hygro(now, true);
+		sched_push(task_twi1_hygro, 10, true);
 	}
 
 	if (g_twi1_gyro_valid) {
 		isr_twi1_gyro(now, true);
+		sched_push(task_twi1_gyro, 10, true);
 	}
 
 	if (g_twi1_baro_valid) {
 		isr_twi1_baro(now, true);
+		sched_push(task_twi1_baro, 50, true);
 	}
 }
 
 /* 2560 cycles per second */
 void isr_sparetime_twi1_onboard(uint32_t now)
 {
+#if 0
+	// not in use yet
 	if (g_twi1_hygro_valid) {
 		isr_twi1_hygro(now, false);
 	}
@@ -1013,6 +1037,7 @@ void isr_sparetime_twi1_onboard(uint32_t now)
 	if (g_twi1_gyro_valid) {
 		isr_twi1_gyro(now, false);
 	}
+#endif
 
 	if (g_twi1_baro_valid) {
 		isr_twi1_baro(now, false);
@@ -1156,6 +1181,9 @@ static void task_twi1_baro(uint32_t now)
 /* TWI1 - onboard devices */
 void task_twi1_onboard(uint32_t now)
 {
+#if 0
+	// now to be called by the scheduler by  isr_500ms_twi1_onboard()
+
 	irqflags_t flags = cpu_irq_save();
 	bool l_twi1_hygro_valid	= g_twi1_hygro_valid;
 	bool l_twi1_gyro_valid	= g_twi1_gyro_valid;
@@ -1173,6 +1201,7 @@ void task_twi1_onboard(uint32_t now)
 	if (l_twi1_baro_valid) {
 		task_twi1_baro(now);
 	}
+#endif
 }
 
 

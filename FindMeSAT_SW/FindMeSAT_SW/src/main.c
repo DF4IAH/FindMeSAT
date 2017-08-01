@@ -1300,10 +1300,15 @@ static void task_adc(uint32_t now)
 static void task_twi(uint32_t now)
 {	/* Calculations for the presentation layer and display */
 
+#if 0
+	// now to be called by the scheduler by  isr_500ms_twi1_onboard()
+
 	/* TWI1 - SIM808, Hygro, Gyro, Baro devices */
 	task_twi1_onboard(now);
+#endif
 
 	/* TWI2 - LCD Port */
+	yield_ms(100);
 	task_twi2_lcd(now);
 }
 
