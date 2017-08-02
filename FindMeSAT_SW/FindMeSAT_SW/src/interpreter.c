@@ -249,8 +249,8 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 			if (g_errorBeep_enable) {
-				twi2_set_beep(100, 10);  // Bad sound
-				yield_ms(50);
+//				twi2_set_beep(100, 10);  // Bad sound
+//				yield_ms(125);
 			}
 		}
 	}
@@ -263,40 +263,43 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 void interpreter_doProcess(char rx_buf[], iram_size_t rx_len)
 {
 	/* Sanity checks */
-	if (!rx_buf || !rx_len) {
+	if (!rx_buf || !rx_len || (rx_len >= (C_RX_CMDLINE_BUF_SIZE - 1))) {
 		return;
 	}
 
+	/* Look for line termination */
 	char* pos = memchr(rx_buf, '\r', rx_len);
 
-	/* Stash new data into static cmdLine buffer */
-	if (!pos) {
-		if ((s_rx_cmdLine_idx + rx_len) > C_RX_CMDLINE_BUF_SIZE) {
-			/* Over sized - drop all buffered data and use this chunk as new begin */
-			memcpy(s_rx_cmdLine_buf, rx_buf, rx_len);
-			s_rx_cmdLine_idx = rx_len;
+	/* Clipping */
+	if ((s_rx_cmdLine_idx + rx_len) >= C_RX_CMDLINE_BUF_SIZE) {
+		/* Over sized - clip incoming data on the buffer size limit */
+		rx_len = (C_RX_CMDLINE_BUF_SIZE - 1) - s_rx_cmdLine_idx;
 
-		} else {
-			/* Add new chunk to buffer */
-			memcpy(s_rx_cmdLine_buf + s_rx_cmdLine_idx, rx_buf, rx_len);
-			s_rx_cmdLine_idx += rx_len;
+		/* Adjust pos if the line ending exists */
+		if (pos) {
+			pos = rx_buf + rx_len;
 		}
+	}
 
-	} else {
-		uint8_t pos_len = (pos - rx_buf) + 1;
+	/* Add new chunk to buffer */
+	uint8_t pos_len = pos ?  ((pos - rx_buf) + 1) : rx_len;
+	memcpy(s_rx_cmdLine_buf + s_rx_cmdLine_idx, rx_buf, pos_len);
+	s_rx_cmdLine_idx += pos_len;
 
-		/* Add current chunk to the line buffer */
-		memcpy(s_rx_cmdLine_buf + s_rx_cmdLine_idx, rx_buf, pos_len);
-		s_rx_cmdLine_idx += pos_len;
-
+	/* Execute line */
+	if (pos) {
 		/* Feed interpreter with line data */
 		executeCmdLine(s_rx_cmdLine_buf, s_rx_cmdLine_idx);
 		s_rx_cmdLine_idx = 0;
+
+#if 0
+		// not in use
 
 		/* Attach trailing data to the buffer */
 		if (rx_len > pos_len) {
 			memcpy(s_rx_cmdLine_buf, pos + 1, rx_len - pos_len);
 			s_rx_cmdLine_idx = rx_len - pos_len;
 		}
+#endif
 	}
 }

@@ -822,7 +822,7 @@ void twi_start(void) {
 }
 
 
-static void isr_twi1_hygro(uint32_t now, bool sync)
+static void service_twi1_hygro(uint32_t now, bool sync)
 {
 	/* No spare-time handling in use */
 	if (!sync) {
@@ -842,7 +842,7 @@ static void isr_twi1_hygro(uint32_t now, bool sync)
 	}
 }
 
-static void isr_twi1_gyro(uint32_t now, bool sync)
+static void service_twi1_gyro(uint32_t now, bool sync)
 {
 	/* No spare-time handling in use */
 	if (!sync) {
@@ -918,7 +918,7 @@ static void isr_twi1_gyro(uint32_t now, bool sync)
 	} while (false);
 }
 
-static void isr_twi1_baro(uint32_t now, bool sync)
+static void service_twi1_baro(uint32_t now, bool sync)
 {
 	static uint8_t  s_step = 100;								// FSM: stopped mode
 	static uint32_t s_twi1_baro_d1 = 0UL;
@@ -1002,45 +1002,48 @@ static void isr_twi1_baro(uint32_t now, bool sync)
 /* 10ms TWI1 - Gyro device */
 void isr_10ms_twi1_onboard(uint32_t now)
 {	/* Service time slot */
-
 	// not in use yet
 }
 
 /* 500ms TWI1 - Baro, Hygro devices */
 void isr_500ms_twi1_onboard(uint32_t now)
 {	/* Service time slot */
+	cpu_irq_enable();
+
 	if (g_twi1_hygro_valid) {
-		isr_twi1_hygro(now, true);
-		sched_push(task_twi1_hygro, 10, true);
+		service_twi1_hygro(now, true);
+		//sched_push(task_twi1_hygro, 10, true);
 	}
 
 	if (g_twi1_gyro_valid) {
-		isr_twi1_gyro(now, true);
-		sched_push(task_twi1_gyro, 10, true);
+		service_twi1_gyro(now, true);
+		//sched_push(task_twi1_gyro, 10, true);
 	}
 
 	if (g_twi1_baro_valid) {
-		isr_twi1_baro(now, true);
-		sched_push(task_twi1_baro, 50, true);
+		service_twi1_baro(now, true);
+		//sched_push(task_twi1_baro, 50, true);
 	}
 }
 
 /* 2560 cycles per second */
 void isr_sparetime_twi1_onboard(uint32_t now)
 {
+	cpu_irq_enable();
+
 #if 0
 	// not in use yet
 	if (g_twi1_hygro_valid) {
-		isr_twi1_hygro(now, false);
+		service_twi1_hygro(now, false);
 	}
 
 	if (g_twi1_gyro_valid) {
-		isr_twi1_gyro(now, false);
+		service_twi1_gyro(now, false);
 	}
 #endif
 
 	if (g_twi1_baro_valid) {
-		isr_twi1_baro(now, false);
+		service_twi1_baro(now, false);
 	}
 }
 

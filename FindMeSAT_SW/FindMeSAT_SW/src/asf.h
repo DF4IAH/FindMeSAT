@@ -74,6 +74,9 @@
 // From module: Delay routines
 #include <delay.h>
 
+// From module: FIFO - First-In-First-Out circular buffer
+#include <fifo.h>
+
 // From module: GFX Monochrome - Monochrome Graphic Library
 #include <gfx_mono.h>
 

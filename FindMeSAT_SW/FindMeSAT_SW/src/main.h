@@ -37,16 +37,23 @@
 #define C_VCC_VBAT_MULT												2.42614048f
 #define C_TEMPSENSE_MULT											629.20f
 
+
+/* FIFO */
+#define FIFO_SCHED_BUFFER_LENGTH									32
+
+
+/* SCHEDULER */
 #define C_SCH_SLOT_CNT												32
 
-
 typedef struct sched_entry {
-	uint32_t	wakeTime;
-	void*		callback;
+	uint32_t			wakeTime;
+	void*				callback;
 
-	uint8_t		occupied	: 1;
-	uint8_t		reserved1	: 7;
+	uint8_t				occupied		: 1;
+	uint8_t				reserved1		: 7;
 } sched_entry_t;
+
+typedef void(*sched_callback)(uint32_t listTime);
 
 
 typedef enum MY_STRING_TO_VAR_ENUM {
@@ -81,9 +88,6 @@ typedef struct dma_dac_buf_s {
 	uint16_t	ch0;
 	uint16_t	ch1;
 } dma_dac_buf_t;
-
-
-typedef void(*sched_callback)(uint32_t listTime);
 
 
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);

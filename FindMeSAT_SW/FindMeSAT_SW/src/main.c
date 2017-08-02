@@ -164,8 +164,13 @@ int16_t						g_adc_temp_deg_100					= 0;
 
 char						g_prepare_buf[C_TX_BUF_SIZE]		= "";
 
+fifo_desc_t					fifo_sched_desc;
+uint32_t					fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH];
+
 uint8_t						g_sched_lock						= 0;
+uint8_t						g_interpreter_lock					= 0;
 bool						g_sched_yield						= false;
+bool						g_sched_pop_again					= false;
 sched_entry_t				g_sched_data[C_SCH_SLOT_CNT]		= { 0 };
 uint8_t						g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
 
@@ -253,6 +258,8 @@ static void dma_init(void);
 static void dma_start(void);
 static void isr_dma_dac_ch0_A(enum dma_channel_status status);
 static void isr_dma_dac_ch0_B(enum dma_channel_status status);
+
+static void usb_rx_process(uint32_t wakeTime);
 
 static void task_dac(uint32_t now);
 static void task_usb(uint32_t now);
@@ -502,18 +509,15 @@ static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0
 bool sched_getLock(volatile uint8_t* lockVar)
 {
 	bool status = false;
-	irqflags_t flags;
 
-	flags = cpu_irq_save();
-
-	++*lockVar;
-	if (*lockVar == 1) {														// No use before
+	irqflags_t flags = cpu_irq_save();
+	if (++*lockVar == 1) {														// No use before
 		status = true;
 	} else {
-		--(*lockVar);
+		--*lockVar;
 	}
-
 	cpu_irq_restore(flags);
+
 	return status;
 }
 
@@ -524,9 +528,20 @@ void sched_freeLock(volatile uint8_t* lockVar)
 	cpu_irq_restore(flags);
 }
 
+static void sched_set_alarm(uint32_t alarmTime)
+{
+	/* Set next time to wake up */
+	uint32_t checkTime = rtc_get_time() + 2;
+	if (alarmTime < checkTime) {
+		alarmTime = checkTime;
+	}
+	rtc_set_alarm(alarmTime);
+}
+
 void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay)
 {
 	const uint32_t pushTime = rtc_get_time();
+	uint32_t alarmTime = 0UL;
 
 	if (isDelay) {
 		/* Sanity checks */
@@ -542,9 +557,15 @@ void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay)
 		wakeTime += pushTime;
 	}
 
+	irqflags_t flags = cpu_irq_save();
+
 	/* Lock access to the scheduler entries */
-	while (!sched_getLock(&g_sched_lock))
-		;
+	if (!sched_getLock(&g_sched_lock)) {
+		// Push entry to the stack due to blocked access
+		fifo_push_uint32(&fifo_sched_desc, wakeTime);
+		fifo_push_uint16(&fifo_sched_desc, (uint16_t) cb);
+		return;
+	}
 
 	/* Get next free slot */
 	bool dataEntryStored = false;
@@ -561,7 +582,7 @@ void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay)
 	}
 
 	if (!dataEntryStored) {
-		return;  // should not happen
+		goto sched_push_out;  // should not happen
 	}
 
 	/* Bind to sort list */
@@ -588,32 +609,62 @@ void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay)
 	}
 
 	/* Get next time for wake-up */
-	uint32_t alarmTime = g_sched_data[g_sched_sort[0] - 1].wakeTime;
+	alarmTime = g_sched_data[g_sched_sort[0] - 1].wakeTime;
 
+sched_push_out:
 	/* Release lock */
 	sched_freeLock(&g_sched_lock);
 
-	/* Set next time to wake up */
-	uint32_t checkLimit = rtc_get_time() + 2;
-	if (alarmTime < checkLimit) {
-		alarmTime = checkLimit;
+	/* Pop back all FIFO entries */
+	while (!fifo_is_empty(&fifo_sched_desc)) {
+		uint16_t cb_uint = 0U;
+		wakeTime = cb_uint;
+
+		fifo_pull_uint32(&fifo_sched_desc, &wakeTime);
+		fifo_pull_uint16(&fifo_sched_desc, &cb_uint);
+
+		if (cb_uint && wakeTime) {
+			sched_push((void*) cb_uint, wakeTime, false);
+		} else {
+			// Fatal error
+			nop();
+		}
 	}
-	rtc_set_alarm(alarmTime);
+
+	cpu_irq_restore(flags);
+
+	/* Set next time to wake up */
+	if (alarmTime) {
+		sched_set_alarm(alarmTime);
+	}
 }
 
 void sched_pop(uint32_t wakeNow)
 {
-	uint8_t idx = g_sched_sort[0];
-	if (!idx) {
-		return;
-	}
-	if (!(g_sched_data[idx - 1].occupied)) {
+	uint32_t alarmTime = 0UL;
+
+	irqflags_t flags = cpu_irq_save();
+
+	if (!sched_getLock(&g_sched_lock)) {
+		/* Locked by another one, so let us be called later */
+		g_sched_pop_again = true;
+		cpu_irq_restore(flags);
 		return;
 	}
 
+	uint8_t idx = g_sched_sort[0];
+	if (!idx) {
+		/* No jobs at the scheduler */
+		goto sched_pop_out;
+	}
+	if (!(g_sched_data[idx - 1].occupied)) {
+		/* Sanity failed */
+		goto sched_pop_out;
+	}
+
 	/* Process each entry until now  */
-	uint32_t alarmTime = g_sched_data[idx - 1].wakeTime;
-	while (alarmTime <= wakeNow) {
+	alarmTime = g_sched_data[idx - 1].wakeTime;
+	while (alarmTime <= rtc_get_time()) {
 		/* Get callback */
 		sched_callback cb = g_sched_data[idx - 1].callback;
 
@@ -624,60 +675,76 @@ void sched_pop(uint32_t wakeNow)
 		for (int mvidx = 0; mvidx < (C_SCH_SLOT_CNT - 1); ++mvidx) {
 			g_sched_sort[mvidx] = g_sched_sort[mvidx + 1];
 		}
+		g_sched_sort[C_SCH_SLOT_CNT - 1] = 0;	// clear top-most index
 
 		/* Call the CB function */
 		if (cb) {
+			/* To be called in IRQ enabled context ("usercontext") */
+			cpu_irq_enable();
 			cb(alarmTime);
+			cpu_irq_disable();
 		}
 
 		/* Get the next alarm time */
 		{
 			idx = g_sched_sort[0];
 			if (!idx) {
-				return;
+				/* No jobs at the scheduler */
+				goto sched_pop_out;
 			}
 			if (!(g_sched_data[idx - 1].occupied)) {
-				return;
+				/* Sanity failed */
+				goto sched_pop_out;
 			}
 			alarmTime = g_sched_data[idx - 1].wakeTime;
 		}
 	}
 
+sched_pop_out:
+	sched_freeLock(&g_sched_lock);
+
+	cpu_irq_restore(flags);
+
+	/* Restart due to another guest rang the door bell */
+	if (g_sched_pop_again) {
+		g_sched_pop_again = false;
+		sched_pop(wakeNow);
+	}
+
 	/* Set next time to wake up */
-	rtc_set_alarm(alarmTime);
+	if (alarmTime) {
+		sched_set_alarm(alarmTime);
+	}
 }
 
 void yield_ms(uint16_t ms)
 {
-	bool l_sched_yield;
-	irqflags_t flags;
+	irqflags_t flags = cpu_irq_save();
+	cpu_irq_enable();
 
+#if 0
+	/* Push ourself to the scheduler */
 	sched_push(yield_ms_cb, ms, true);
 
-	flags = cpu_irq_save();
-	g_sched_yield = l_sched_yield = true;
-	cpu_irq_restore(flags);
+	/* A yield job is on the scheduler */
+	g_sched_yield = true;
 
 	/* Continued sleep until our callback is done */
 	do {
 		/* Enter sleep mode */
-		sleepmgr_enter_sleep();
+		//sleepmgr_enter_sleep();
 
-		/* Woke up for any reason */
-		flags = cpu_irq_save();
-		l_sched_yield = g_sched_yield;
-		cpu_irq_restore(flags);
-	} while (l_sched_yield);
+		/* Woke up for any reason - check if we were called */
+	} while (g_sched_yield);
+#else
+	delay_ms(ms);
+#endif
+	cpu_irq_restore(flags);
 }
 
 void yield_ms_cb(uint32_t listTime)
 {
-	irqflags_t flags;
-
-	/* Time delay completed */
-	flags = cpu_irq_save();
 	g_sched_yield = false;
-	cpu_irq_restore(flags);
 }
 
 
@@ -776,10 +843,7 @@ static void isr_500ms(uint32_t now)
 	isr_500ms_twi1_onboard(now);
 
 	/* Kick RTC32 */
-	{
-		uint32_t kickTime = rtc_get_time() + 2;
-		rtc_set_alarm(kickTime);
-	}
+	rtc_set_alarm(rtc_get_time() + 2);
 }
 
 static void isr_sparetime(uint32_t now)
@@ -795,6 +859,7 @@ static void rtc_start(void)
 
 void isr_rtc_alarm(uint32_t rtc_time)
 {	// Alarm call-back with the current time
+	cpu_irq_enable();
 	sched_pop(rtc_time);
 }
 
@@ -1224,6 +1289,10 @@ void usb_callback_cdc_set_rts(uint8_t port, bool b_enable)
 void usb_callback_rx_notify(uint8_t port)
 {
 	g_usb_cdc_rx_received = true;
+
+	/* Lets process the scheduler */
+	cpu_irq_enable();
+	sched_push(usb_rx_process, 0, true);
 }
 
 void usb_callback_tx_empty_notify(uint8_t port)
@@ -1231,6 +1300,53 @@ void usb_callback_tx_empty_notify(uint8_t port)
 	g_usb_cdc_access_blocked = false;
 }
 
+
+static void usb_rx_process(uint32_t thisTime)
+{
+	if (g_usb_cdc_transfers_autorized) {
+		irqflags_t flags = cpu_irq_save();
+
+		/* Single thread only */
+		if (!sched_getLock(&g_interpreter_lock)) {
+			cpu_irq_restore(flags);
+			return;
+		}
+
+		/* Get command lines from the USB host */
+		if (g_usb_cdc_rx_received) {
+			iram_size_t cdc_rx_len = udi_cdc_get_nb_received_data();
+			while (cdc_rx_len) {
+				char cdc_rx_buf[cdc_rx_len];
+
+				if (g_keyBeep_enable) {
+					twi2_set_beep(176, 1);  // Click sound
+					yield_ms(5);
+				}
+
+				udi_cdc_read_no_polling(cdc_rx_buf, cdc_rx_len);
+
+				/* Echo back when not monitoring information are enabled */
+				if (!g_usb_cdc_printStatusLines) {
+					udi_write_tx_buf(cdc_rx_buf, cdc_rx_len, true);
+				}
+
+				/* Call the interpreter */
+				cpu_irq_enable();
+				interpreter_doProcess(cdc_rx_buf, cdc_rx_len);
+				cpu_irq_disable();
+
+				/* Check for more available data */
+				cdc_rx_len = udi_cdc_get_nb_received_data();
+			}
+			g_usb_cdc_rx_received = false;
+		}
+
+		/* Release this lock */
+		sched_freeLock(&g_interpreter_lock);
+
+		cpu_irq_restore(flags);
+	}
+}
 
 
 /* The LOOP section */
@@ -1339,46 +1455,15 @@ PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3B[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P4[]);
 
+
 static void task_usb(uint32_t now)
 {
 	/* Monitoring at the USB serial terminal */
 	if (g_usb_cdc_transfers_autorized) {
 		static uint32_t usb_last = 0UL;
 
-		/* each of them are atomic */
-		bool l_usb_cdc_rx_received		= g_usb_cdc_rx_received;
-		bool l_usb_cdc_printStatusLines	= g_usb_cdc_printStatusLines;
-
 		/* Get command lines from the USB host */
-		if (l_usb_cdc_rx_received) {
-			iram_size_t cdc_rx_len = udi_cdc_get_nb_received_data();
-			if (cdc_rx_len) {
-				char cdc_rx_buf[cdc_rx_len];
-
-				if (g_keyBeep_enable) {
-					twi2_set_beep(176, 1);  // Click sound
-					yield_ms(5);
-				}
-
-				udi_cdc_read_no_polling(cdc_rx_buf, cdc_rx_len);
-
-				/* Echo back when not monitoring information are enabled */
-				if (!l_usb_cdc_printStatusLines) {
-					udi_write_tx_buf(cdc_rx_buf, cdc_rx_len, true);
-				}
-
-				/* Call the interpreter */
-				interpreter_doProcess(cdc_rx_buf, cdc_rx_len);
-
-				/* Check for more available data */
-				cdc_rx_len = udi_cdc_get_nb_received_data();
-			}
-
-			/* atomic */
-			{
-				g_usb_cdc_rx_received = false;
-			}
-		}
+		usb_rx_process(now);
 
 		/* Status output when requested */
 		if (g_usb_cdc_printStatusLines) {
@@ -1479,11 +1564,7 @@ static void task_usb(uint32_t now)
 
 static void task(void)
 {
-	irqflags_t flags = cpu_irq_save();
-	WORKMODE_ENUM_t l_workmode = g_workmode;
-	cpu_irq_restore(flags);
-
-	if (l_workmode == WORKMODE_RUN) {
+	if (g_workmode == WORKMODE_RUN) {
 		uint32_t now = rtc_get_time();
 
 		/* TASK when woken up and all ISRs are done */
@@ -1498,6 +1579,9 @@ static void task(void)
 int main(void)
 {
 	uint8_t retcode = 0;
+
+	/* Init the FIFO buffers */
+	fifo_init(&fifo_sched_desc, fifo_sched_buffer, FIFO_SCHED_BUFFER_LENGTH);
 
 	/* Init of interrupt system */
 	g_workmode = WORKMODE_INIT;
