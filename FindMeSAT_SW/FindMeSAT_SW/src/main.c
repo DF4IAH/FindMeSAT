@@ -1476,8 +1476,7 @@ static void task_adc(uint32_t now)
 
 static void task_twi(uint32_t now)
 {	/* Calculations for the presentation layer and display */
-
-#if 0
+#if 1
 	// now to be called by the scheduler by  isr_500ms_twi1_onboard()
 
 	/* TWI1 - SIM808, Hygro, Gyro, Baro devices */
@@ -1734,6 +1733,7 @@ int main(void)
 	//twi2_set_leds(0x02);
 
 	/* The application code */
+	g_twi2_lcd_repaint = true;
 	g_workmode = WORKMODE_RUN;
     while (g_workmode) {
 		task();
