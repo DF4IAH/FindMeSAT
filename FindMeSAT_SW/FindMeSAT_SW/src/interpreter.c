@@ -42,118 +42,111 @@ static char					s_rx_cmdLine_buf[C_RX_CMDLINE_BUF_SIZE]	= "";
 static uint8_t				s_rx_cmdLine_idx						= 0;
 
 
-static bool udi_write_tx_char(int chr, bool stripControl)
-{
-	if (stripControl) {
-		/* Drop control character and report putc() success */
-		if ((chr < 0x20) || (chr >= 0x80)) {
-			return true;
-		}
-	}
-
-	if (!g_usb_cdc_access_blocked) {  // atomic operation
-		if (udi_cdc_is_tx_ready()) {
-			udi_cdc_putc(chr);
-			return true;
-
-		} else {
-			g_usb_cdc_access_blocked = true;
-			return false;
-		}
-	}
-	return false;
-}
-
-uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl)
-{
-	uint8_t ret = 0;
-
-	/* Write out each character - avoiding to use the block write function */
-	while (ret < len) {
-		if (!udi_write_tx_char(*(buf + ret), stripControl)) {
-			return ret;
-		}
-		++ret;
-	}
-	return ret;
-}
-
-
-const char					PM_HELP_HDR[]							= "\r\n\r\n\r\n************\r\n* COMMANDS *\r\n************\r\n\r\n";
-const char					PM_HELP_ADC[]							= "adc=\t\t0: turn ADCA and ADCB off, 1: turn ADCA and ADCB on\r\n";
-const char					PM_HELP_BIAS[]							= "bias=\t\t0-63: bias voltage for LCD contrast\r\n";
-const char					PM_HELP_BL[]							= "bl=\t\t0-255: backlight PWM, -1: AUTO, -2: SPECIAL\r\n";
-const char					PM_HELP_DAC[]							= "dac=\t\t0: turn DACB off, 1: turn DACB on\r\n";
-const char					PM_HELP_DDS_1[]							= "dds=a,b,c\ta: DDS0 frequency mHz, b: DDS1 mHz, ";
-const char					PM_HELP_DDS_2[]							= "c: starting phase of DDS1-DDS0 deg\r\n";
-const char					PM_HELP_EB[]							= "eb=\t\t0: error beep OFF, 1: ON\r\n";
-const char					PM_HELP_HELP[]							= "help\t\tThis information page about all available commands\r\n";
-const char					PM_HELP_INFO[]							= "info=\t\t0: OFF, 1: ON\r\n";
-const char					PM_HELP_KB[]							= "kb=\t\t0: key beep OFF, 1: ON\r\n";
-const char					PM_HELP_PT[]							= "pt=\t\t0: pitch tone OFF, 1: turn speed, 2: variometer\r\n";
+const char					PM_HELP_HDR_1[]							= "\r\n\r\n\r\n************\r\n";
+const char					PM_HELP_HDR_2[]							= "* COMMANDS *\r\n************\r\n\r\n";
+const char					PM_HELP_ADC_1[]							= "adc=\t\t0: turn ADCA and ADCB off, ";
+const char					PM_HELP_ADC_2[]							= "1: turn ADCA and ADCB on\r\n";
+const char					PM_HELP_BIAS_1[]						= "bias=\t\t0-63: bias voltage ";
+const char					PM_HELP_BIAS_2[]						= "for LCD contrast\r\n";
+const char					PM_HELP_BL_1[]							= "bl=\t\t0-255: backlight PWM, ";
+const char					PM_HELP_BL_2[]							= "-1: AUTO, -2: SPECIAL\r\n";
+const char					PM_HELP_DAC_1[]							= "dac=\t\t0: turn DACB off, ";
+const char					PM_HELP_DAC_2[]							= "1: turn DACB on\r\n";
+const char					PM_HELP_DDS_1[]							= "dds=a,b,c\ta: DDS0 frequency mHz, ";
+const char					PM_HELP_DDS_2[]							= "b: DDS1 mHz, ";
+const char					PM_HELP_DDS_3[]							= "c: starting phase of DDS1-DDS0 deg\r\n";
+const char					PM_HELP_EB_1[]							= "eb=\t\t0: error beep OFF, 1: ON\r\n";
+const char					PM_HELP_HELP_1[]						= "help\t\tThis information page ";
+const char					PM_HELP_HELP_2[]						= "about all available commands\r\n";
+const char					PM_HELP_INFO_1[]						= "info=\t\t0: OFF, 1: ON\r\n";
+const char					PM_HELP_KB_1[]							= "kb=\t\t0: key beep OFF, 1: ON\r\n";
+const char					PM_HELP_PT_1[]							= "pt=\t\t0: pitch tone OFF, ";
+const char					PM_HELP_PT_2[]							= "1: turn speed, 2: variometer\r\n";
 const char					PM_IP_CMD_NewLine[]						= "\r\n";
 const char					PM_IP_CMD_CmdLine[]						= "\r\n> ";
-PROGMEM_DECLARE(const char, PM_HELP_HDR[]);
-PROGMEM_DECLARE(const char, PM_HELP_ADC[]);
-PROGMEM_DECLARE(const char, PM_HELP_BIAS[]);
-PROGMEM_DECLARE(const char, PM_HELP_BL[]);
-PROGMEM_DECLARE(const char, PM_HELP_DAC[]);
+PROGMEM_DECLARE(const char, PM_HELP_HDR_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_HDR_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_ADC_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_ADC_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_BIAS_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_BIAS_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_BL_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_BL_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_DAC_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_DAC_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_DDS_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_DDS_2[]);
-PROGMEM_DECLARE(const char, PM_HELP_EB[]);
-PROGMEM_DECLARE(const char, PM_HELP_HELP[]);
-PROGMEM_DECLARE(const char, PM_HELP_INFO[]);
-PROGMEM_DECLARE(const char, PM_HELP_KB[]);
-PROGMEM_DECLARE(const char, PM_HELP_PT[]);
+PROGMEM_DECLARE(const char, PM_HELP_DDS_3[]);
+PROGMEM_DECLARE(const char, PM_HELP_EB_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_HELP_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_HELP_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_INFO_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_KB_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_PT_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_PT_2[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_NewLine[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_CmdLine[]);
 
 void printHelp(void)
 {
-	static bool again = false;
+	static bool s_again = false;
 
-	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_HDR);
+	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_HDR_1);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_HDR_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_ADC);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_ADC_1);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_ADC_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_BIAS);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_BIAS_1);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_BIAS_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_BL);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_BL_1);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_BL_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DAC);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DAC_1);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DAC_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DDS_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DDS_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_EB);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DDS_3);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_HELP);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_EB_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_INFO);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_HELP_1);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_HELP_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_KB);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_INFO_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_PT);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_KB_1);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_PT_1);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_PT_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_IP_CMD_NewLine);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	if (!again) {
-		again = true;
-
+	if (!s_again) {
+		s_again = true;
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_IP_CMD_CmdLine);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 	}
@@ -223,10 +216,19 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 				errorBeep_enable(val[0]);
 			}
 
+		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_help, sizeof(PM_IP_CMD_help) - 1)) {
+			printHelp();
+
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_info, sizeof(PM_IP_CMD_info) - 1)) {
 			int val[1] = { 0 };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_info) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
 				printStatusLines_enable(val[0]);
+			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_kb, sizeof(PM_IP_CMD_kb) - 1)) {
+			int val[1] = { 0 };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_kb) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
+				keyBeep_enable(val[0]);
 			}
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_pt, sizeof(PM_IP_CMD_pt) - 1)) {
@@ -235,22 +237,13 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 				pitchTone_mode(val[0]);
 			}
 
-		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_help, sizeof(PM_IP_CMD_help) - 1)) {
-			printHelp();
-
-		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_kb, sizeof(PM_IP_CMD_kb) - 1)) {
-			int val[1] = { 0 };
-			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_kb) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
-				keyBeep_enable(val[0]);
-			}
-
 		} else {
 			int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_UNKNOWN_01);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 			if (g_errorBeep_enable) {
 				twi2_set_beep(100, 10);  // Bad sound
-				yield_ms(50);
+				yield_ms(125);
 			}
 		}
 	}
@@ -263,40 +256,33 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 void interpreter_doProcess(char rx_buf[], iram_size_t rx_len)
 {
 	/* Sanity checks */
-	if (!rx_buf || !rx_len) {
+	if (!rx_buf || !rx_len || (rx_len >= (C_RX_CMDLINE_BUF_SIZE - 1))) {
 		return;
 	}
 
+	/* Look for line termination */
 	char* pos = memchr(rx_buf, '\r', rx_len);
 
-	/* Stash new data into static cmdLine buffer */
-	if (!pos) {
-		if ((s_rx_cmdLine_idx + rx_len) > C_RX_CMDLINE_BUF_SIZE) {
-			/* Over sized - drop all buffered data and use this chunk as new begin */
-			memcpy(s_rx_cmdLine_buf, rx_buf, rx_len);
-			s_rx_cmdLine_idx = rx_len;
+	/* Clipping */
+	if ((s_rx_cmdLine_idx + rx_len) >= C_RX_CMDLINE_BUF_SIZE) {
+		/* Over sized - clip incoming data on the buffer size limit */
+		rx_len = (C_RX_CMDLINE_BUF_SIZE - 1) - s_rx_cmdLine_idx;
 
-		} else {
-			/* Add new chunk to buffer */
-			memcpy(s_rx_cmdLine_buf + s_rx_cmdLine_idx, rx_buf, rx_len);
-			s_rx_cmdLine_idx += rx_len;
+		/* Adjust pos if the line ending exists */
+		if (pos) {
+			pos = rx_buf + rx_len;
 		}
+	}
 
-	} else {
-		uint8_t pos_len = (pos - rx_buf) + 1;
+	/* Add new chunk to buffer */
+	uint8_t pos_len = pos ?  ((pos - rx_buf) + 1) : rx_len;
+	memcpy(s_rx_cmdLine_buf + s_rx_cmdLine_idx, rx_buf, pos_len);
+	s_rx_cmdLine_idx += pos_len;
 
-		/* Add current chunk to the line buffer */
-		memcpy(s_rx_cmdLine_buf + s_rx_cmdLine_idx, rx_buf, pos_len);
-		s_rx_cmdLine_idx += pos_len;
-
+	/* Execute line */
+	if (pos) {
 		/* Feed interpreter with line data */
 		executeCmdLine(s_rx_cmdLine_buf, s_rx_cmdLine_idx);
 		s_rx_cmdLine_idx = 0;
-
-		/* Attach trailing data to the buffer */
-		if (rx_len > pos_len) {
-			memcpy(s_rx_cmdLine_buf, pos + 1, rx_len - pos_len);
-			s_rx_cmdLine_idx = rx_len - pos_len;
-		}
 	}
 }

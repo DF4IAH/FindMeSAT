@@ -14,8 +14,10 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												170
-#define VERSION_LOW													730
+#define VERSION_LOW													807
 
+
+#define C_USB_LINE_DELAY_MS											2
 
 #define C_TWI1_BARO_C_CNT											8
 
@@ -37,16 +39,33 @@
 #define C_VCC_VBAT_MULT												2.42614048f
 #define C_TEMPSENSE_MULT											629.20f
 
+
+/* FIFO */
+#define FIFO_SCHED_BUFFER_LENGTH									32
+
+
+/* SCHEDULER */
 #define C_SCH_SLOT_CNT												32
 
 
-typedef struct sched_entry {
-	uint32_t	wakeTime;
-	void*		callback;
+typedef enum SCHED_ENTRY_CB_TYPE_ENUM {
+	SCHED_ENTRY_CB_TYPE__LISTTIME = 0,
+	SCHED_ENTRY_CB_TYPE__LISTTIME_ISSYNC,
+} SCHED_ENTRY_CB_TYPE_ENUM_t;
 
-	uint8_t		occupied	: 1;
-	uint8_t		reserved1	: 7;
+typedef struct sched_entry {
+	uint32_t			wakeTime;
+	void*				callback;
+
+	uint8_t				occupied		: 1;
+	uint8_t				isIntDis		: 1;
+	uint8_t				isSync			: 1;
+	uint8_t				cbType			: 2;
+	uint8_t				reserved1		: 3;
 } sched_entry_t;
+
+typedef void(*sched_callback_type0)(uint32_t listTime);
+typedef void(*sched_callback_type1)(uint32_t listTime, bool isSync);
 
 
 typedef enum MY_STRING_TO_VAR_ENUM {
@@ -83,9 +102,6 @@ typedef struct dma_dac_buf_s {
 } dma_dac_buf_t;
 
 
-typedef void(*sched_callback)(uint32_t listTime);
-
-
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
 
 void adc_app_enable(bool enable);
@@ -101,7 +117,8 @@ void halt(void);
 
 bool sched_getLock(volatile uint8_t* lockVar);
 void sched_freeLock(volatile uint8_t* lockVar);
-void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay);
+void sched_doSleep(void);
+void sched_push(void* cb, SCHED_ENTRY_CB_TYPE_ENUM_t cbType, uint32_t wakeTime, bool isDelay, bool isIntDis, bool isSync);
 void sched_pop(uint32_t wakeNow);
 void yield_ms(uint16_t ms);
 void yield_ms_cb(uint32_t listTime);
@@ -111,6 +128,7 @@ void isr_rtc_alarm(uint32_t rtc_time);
 void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
 void isr_adc_b(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
 
+uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl);
 void usb_callback_suspend_action(void);
 void usb_callback_resume_action(void);
 void usb_callback_remotewakeup_enable(void);

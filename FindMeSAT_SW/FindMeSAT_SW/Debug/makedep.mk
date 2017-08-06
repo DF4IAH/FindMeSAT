@@ -6,6 +6,8 @@ src\ASF\common\drivers\nvm\xmega\xmega_nvm.c
 
 src\ASF\common\services\calendar\calendar.c
 
+src\ASF\common\services\fifo\fifo.c
+
 src\ASF\common\services\hugemem\avr8\avr8_hugemem.c
 
 src\ASF\xmega\drivers\dma\dma.c

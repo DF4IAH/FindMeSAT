@@ -86,6 +86,7 @@ extern uint32_t			g_twi1_baro_d2;
 extern int32_t			g_twi1_baro_temp_100;
 extern int32_t			g_twi1_baro_p_100;
 
+extern uint8_t			g_twi1_lock;
 extern bool				g_twi1_hygro_valid;
 extern uint8_t			g_twi1_hygro_status;
 extern uint16_t			g_twi1_hygro_S_T;
@@ -117,6 +118,14 @@ extern uint8_t			twi2_recv_data[TWI_DATA_LENGTH];
 #endif
 
 
+/* Forward declarations */
+
+static void task_twi1_hygro(uint32_t now);
+static void task_twi1_gyro(uint32_t now);
+static void task_twi1_baro(uint32_t now);
+
+
+/* Functions */
 
 #ifdef TWI1_SLAVE
 static void twi1_slave_process(void) {
@@ -205,6 +214,8 @@ void twi2_waitUntilReady(void)
 }
 
 
+/* Setters for the interpreter */
+
 void twi2_set_leds(uint8_t leds)
 {
 	/* Show green LED */
@@ -248,6 +259,8 @@ void twi2_set_beep(uint8_t pitch_10hz, uint8_t len_10ms)
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
+
+/* INIT functions */
 
 #if 0
 const char					PM_TWI1_INIT_GSM_01[]				= "\r\nTWI-onboard: GSM/BT/GPS SIM808 - I2C address: 0x%02X\r\n";
@@ -305,6 +318,7 @@ static void init_twi1_hygro(void)
 	g_twi1_hygro_status = 0;
 
 	do {
+		/* SHT31-DIS hygro: stop any running jobs */
 		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
 		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_BREAK_HI;
 		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_BREAK_LO;
@@ -316,8 +330,9 @@ static void init_twi1_hygro(void)
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 			break;
 		}
-		yield_ms(2);
+		delay_ms(2);
 
+		/* SHT31-DIS hygro: reset */
 		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
 		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_RESET_HI;
 		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_RESET_LO;
@@ -327,8 +342,9 @@ static void init_twi1_hygro(void)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		yield_ms(2);
+		delay_ms(2);
 
+		/* SHT31-DIS hygro: return current status */
 		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
 		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_STATUS_HI;
 		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_STATUS_LO;
@@ -342,10 +358,10 @@ static void init_twi1_hygro(void)
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_HYGRO_03, g_twi1_hygro_status);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-		/* Start cyclic measurements with 2 MPS @ high repeatability */
+		/* SHT31-DIS hygro: start next measurement */
 		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
-		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_PERIODIC_2MPS_HIPREC_HI;
-		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_PERIODIC_2MPS_HIPREC_LO;
+		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_HI;
+		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_LO;
 		twi1_packet.addr_length = 2;
 		twi1_packet.length = 0;
 		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
@@ -397,7 +413,7 @@ static void init_twi1_gyro(void)
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 			break;
 		}
-		yield_ms(10);
+		delay_ms(10);
 
 		/* MPU-9250 6 axis: read Who Am I control value */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
@@ -431,7 +447,7 @@ static void init_twi1_gyro(void)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		yield_ms(10);
+		delay_ms(10);
 
 		/* Magnetometer: read Device ID */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
@@ -481,7 +497,7 @@ static void init_twi1_gyro(void)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		yield_ms(10);
+		delay_ms(10);
 
 		/* Magnetometer: mode change for 16bit and run all axis at 8 Hz */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
@@ -592,7 +608,7 @@ static void init_twi1_gyro(void)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		yield_ms(10);
+		delay_ms(10);
 
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_GYRO_04);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -625,6 +641,7 @@ static void init_twi1_baro(void)
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	do {
+		/* MS560702BA03-50 Baro: RESET all internal data paths */
 		twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
 		twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_RESET;
 		twi1_packet.addr_length = 1;
@@ -633,8 +650,9 @@ static void init_twi1_baro(void)
 		if (sc != STATUS_OK) {
 			break;
 		}
-		yield_ms(3);
+		delay_ms(3);
 
+		/* MS560702BA03-50 Baro: get version information */
 		twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
 		twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_VERSION;
 		twi1_packet.addr_length = 1;
@@ -649,6 +667,7 @@ static void init_twi1_baro(void)
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_BARO_03, g_twi1_baro_version);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
+		/* MS560702BA03-50 Baro: get correction data from the PROM */
 		for (int adr = 1; adr < C_TWI1_BARO_C_CNT; ++adr) {
 			twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
 			twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_PROM | (adr << 1);
@@ -716,6 +735,13 @@ static void start_twi2_lcd(void)
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
+		/* Reset the LCD to bring it up in case of a bad POR */
+		twi2_waitUntilReady();
+		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_RESET;
+		twi2_packet.length = 0;
+		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		delay_ms(50);
+
 		twi2_waitUntilReady();
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
 		twi2_m_data[0] = GFX_PIXEL_SET;
@@ -723,30 +749,30 @@ static void start_twi2_lcd(void)
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
-		/* Show red LED */
-		twi2_set_leds(0x01);
+		/* LED yellow */
+		twi2_set_leds(0x03);
 
 		/* Set optimum contrast voltage */
 		twi2_set_bias(g_bias_pm);
 
 		/* Do the first beep for a sequence */
 		twi2_set_beep(44, 25);  // 440 Hz, 250 ms
-		yield_ms(10);
+		delay_ms(300);
 
 		/* Ramp down backlight */
 		for (int lum = 128; lum >= 2; lum -= 2) {
 			twi2_set_ledbl(0, lum);
-			yield_ms(1);
+			delay_ms(1);
 		}
 
 		/* Do the second beep for a sequence */
 		twi2_set_beep(88, 25);  // 880 Hz, 250 ms
-		yield_ms(10);
+		delay_ms(300);
 
 		/* Ramp up backlight */
 		for (int lum = 0; lum <= 128; lum += 2) {
 			twi2_set_ledbl(0, lum);
-			yield_ms(1);
+			delay_ms(1);
 		}
 		// g_backlight_mode_pwm = 128;
 	}
@@ -805,18 +831,26 @@ void twi_start(void) {
 	/* Start each TWI channel devices */
 	start_twi1_onboard();
 
-	yield_ms(250);											// Give Smart-LCD some time being up and ready
+	delay_ms(250);											// Give Smart-LCD some time being up and ready
 	start_twi2_lcd();
 }
 
 
-static void isr_twi1_hygro(uint32_t now, bool sync)
+static bool service_twi1_hygro(uint32_t now, bool sync)
 {
+	/* Real time usage: < 1 ms */
+
+	/* No spare-time handling in use */
 	if (!sync) {
-		return;
+		return false;
 	}
 
-	/* Read cyclic measurement data */
+	/* Our friend Baro takes the bus */
+	if (g_twi1_lock) {
+		return false;
+	}
+
+	/* Read current measurement data */
 	twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
 	twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_FETCH_DATA_HI;
 	twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_FETCH_DATA_LO;
@@ -827,92 +861,116 @@ static void isr_twi1_hygro(uint32_t now, bool sync)
 		g_twi1_hygro_S_T	= ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
 		g_twi1_hygro_S_RH	= ((uint16_t)twi1_m_data[3] << 8) | twi1_m_data[4];
 	}
+
+	/* Start next measurement - available 15ms later */
+	twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
+	twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_HI;
+	twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_LO;
+	twi1_packet.addr_length = 2;
+	twi1_packet.length = 0;
+	sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+	if (sc == STATUS_OK) {
+		return true;
+	}
+	return false;
 }
 
-static void isr_twi1_gyro(uint32_t now, bool sync)
+static bool service_twi1_gyro(uint32_t now, bool sync)
 {
+	/* Real time usage: abt. 1 ms */
+
+	/* No spare-time handling in use */
 	if (!sync) {
-		return;
+		return false;
 	}
 
-	do {
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ACCEL_XOUT_H;		// Big endian
-		twi1_packet.addr_length = 1;
-		twi1_packet.length = 8;
-		status_code_t sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
-		if (sc != STATUS_OK) {
-			break;
-		}
-		g_twi1_gyro_1_accel_x = ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
-		g_twi1_gyro_1_accel_y = ((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3];
-		g_twi1_gyro_1_accel_z = ((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5];
-		g_twi1_gyro_1_temp    = ((uint16_t)twi1_m_data[6] << 8) | twi1_m_data[7];
+	/* Our friend Baro takes the bus */
+	if (g_twi1_lock) {
+		return false;
+	}
 
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_GYRO_XOUT_H;
-		twi1_packet.addr_length = 1;
-		twi1_packet.length = 6;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
-		if (sc != STATUS_OK) {
-			break;
-		}
-		g_twi1_gyro_1_gyro_x = ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
-		g_twi1_gyro_1_gyro_y = ((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3];
-		g_twi1_gyro_1_gyro_z = ((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5];
+	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ACCEL_XOUT_H;		// Big endian
+	twi1_packet.addr_length = 1;
+	twi1_packet.length = 8;
+	status_code_t sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	if (sc != STATUS_OK) {
+		return false;
+	}
+	g_twi1_gyro_1_accel_x = ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
+	g_twi1_gyro_1_accel_y = ((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3];
+	g_twi1_gyro_1_accel_z = ((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5];
+	g_twi1_gyro_1_temp    = ((uint16_t)twi1_m_data[6] << 8) | twi1_m_data[7];
 
-		/* Magnetometer: check if new data is available */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ST1;
-		twi1_packet.addr_length = 1;
-		twi1_packet.length = 1;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
-		if (sc != STATUS_OK) {
-			break;
-		}
-		if (!(twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST1__DRDY)) {
-			/* Data of Magnetometer AK8963 not ready yet */
-			break;
-		}
+	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_GYRO_XOUT_H;
+	twi1_packet.addr_length = 1;
+	twi1_packet.length = 6;
+	sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	if (sc != STATUS_OK) {
+		return false;
+	}
+	g_twi1_gyro_1_gyro_x = ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
+	g_twi1_gyro_1_gyro_y = ((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3];
+	g_twi1_gyro_1_gyro_z = ((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5];
 
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_HX_L;			// Little endian
-		twi1_packet.addr_length = 1;
-		twi1_packet.length = 6;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
-		if (sc != STATUS_OK) {
-			break;
-		}
-		g_twi1_gyro_2_mag_x = ((int16_t) ((((uint16_t)twi1_m_data[1]) << 8) | twi1_m_data[0])) + g_twi1_gyro_2_ofsx;
-		g_twi1_gyro_2_mag_y = ((int16_t) ((((uint16_t)twi1_m_data[3]) << 8) | twi1_m_data[2])) + g_twi1_gyro_2_ofsy;
-		g_twi1_gyro_2_mag_z = ((int16_t) ((((uint16_t)twi1_m_data[5]) << 8) | twi1_m_data[4])) + g_twi1_gyro_2_ofsz;
+	/* Magnetometer: check if new data is available */
+	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ST1;
+	twi1_packet.addr_length = 1;
+	twi1_packet.length = 1;
+	sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	if (sc != STATUS_OK) {
+		return false;
+	}
+	if (!(twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST1__DRDY)) {
+		/* Data of Magnetometer AK8963 not ready yet */
+		return false;
+	}
 
-		/* Magnetometer: check for data validity and release cycle */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ST2;
-		twi1_packet.addr_length = 1;
-		twi1_packet.length = 1;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
-		if (sc != STATUS_OK) {
-			break;
-		}
-		if (twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST2__HOFL) {
-			/* Data of Magnetometer AK8963 overflowed */
-			g_twi1_gyro_2_mag_z = g_twi1_gyro_2_mag_y = g_twi1_gyro_2_mag_x = 0;
-			break;
-		}
-	} while (false);
+	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_HX_L;			// Little endian
+	twi1_packet.addr_length = 1;
+	twi1_packet.length = 6;
+	sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	if (sc != STATUS_OK) {
+		return false;
+	}
+	g_twi1_gyro_2_mag_x = ((int16_t) ((((uint16_t)twi1_m_data[1]) << 8) | twi1_m_data[0])) + g_twi1_gyro_2_ofsx;
+	g_twi1_gyro_2_mag_y = ((int16_t) ((((uint16_t)twi1_m_data[3]) << 8) | twi1_m_data[2])) + g_twi1_gyro_2_ofsy;
+	g_twi1_gyro_2_mag_z = ((int16_t) ((((uint16_t)twi1_m_data[5]) << 8) | twi1_m_data[4])) + g_twi1_gyro_2_ofsz;
+
+	/* Magnetometer: check for data validity and release cycle */
+	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ST2;
+	twi1_packet.addr_length = 1;
+	twi1_packet.length = 1;
+	sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	if (sc != STATUS_OK) {
+		return false;
+	}
+	if (twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST2__HOFL) {
+		/* Data of Magnetometer AK8963 overflowed */
+		g_twi1_gyro_2_mag_z = g_twi1_gyro_2_mag_y = g_twi1_gyro_2_mag_x = 0;
+		return true;	// Even overflowed data is correct information
+	}
+	return true;
 }
 
-static void isr_twi1_baro(uint32_t now, bool sync)
+static bool service_twi1_baro(uint32_t now, bool sync)
 {
-	static uint8_t  s_step = 100;
+	/* Real time usage: abt. 22 ms */
+
+	static uint8_t  s_step = 100;								// FSM: stopped mode
 	static uint32_t s_twi1_baro_d1 = 0UL;
 	static uint32_t s_twi1_baro_d2 = 0UL;
+
+	/* Spare-time handling is in use: finite state machine (FSM) follows */
 
 	/* Restart a new cycle if ready */
 	if (sync && (s_step >= 100)) {
 		s_step = 0;
+		g_twi1_lock = true;
 	}
 
 	switch (s_step) {
@@ -925,11 +983,11 @@ static void isr_twi1_baro(uint32_t now, bool sync)
 			status_code_t sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
 			if (sc == STATUS_OK) {
 				s_step = 1;
-				return;
+				return false;
 			}
 
 			s_step = 200;										// Failed, stay until new sync triggers
-			return;
+			return false;
 		break;
 
 		case 21:
@@ -946,12 +1004,12 @@ static void isr_twi1_baro(uint32_t now, bool sync)
 				sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
 				if (sc == STATUS_OK) {
 					s_step = 22;
-					return;
+					return false;
 				}
 			}
 
 			s_step = 211;										// Failed, stay until new sync triggers
-			return;
+			return false;
 		break;
 
 		case 43:
@@ -961,61 +1019,80 @@ static void isr_twi1_baro(uint32_t now, bool sync)
 			if (sc == STATUS_OK) {
 				s_twi1_baro_d2 = ((uint32_t)twi1_m_data[0] << 16) | ((uint32_t)twi1_m_data[1] << 8) | twi1_m_data[2];
 
-				irqflags_t flags = cpu_irq_save();
-				g_twi1_baro_d1 = s_twi1_baro_d1;
-				g_twi1_baro_d2 = s_twi1_baro_d2;
-				cpu_irq_restore(flags);
+				/* Setting the global values */
+				{
+					irqflags_t flags				= cpu_irq_save();
+					g_twi1_baro_d1					= s_twi1_baro_d1;
+					g_twi1_baro_d2					= s_twi1_baro_d2;
+					cpu_irq_restore(flags);
+				}
 
 				s_step = 123;									// Success, stay until new sync triggers
-				return;
+				g_twi1_lock = false;
+				return true;
 			}
 
 			s_step = 223;										// Failed, stay until new sync triggers
-			return;
+			return false;
 		break;
 
 		default:
 			/* Delay step of 0.5 ms */
 			if (s_step < 100) {
 				s_step++;
+
+			} else {
+				g_twi1_lock = false;
 			}
 	}
+	return false;
 }
+
 
 /* 10ms TWI1 - Gyro device */
 void isr_10ms_twi1_onboard(uint32_t now)
 {	/* Service time slot */
+	// not in use yet
+}
+
+/* 100ms TWI1 - Gyro device */
+void isr_100ms_twi1_onboard(uint32_t now)
+{	/* Service time slot */
+	cpu_irq_enable();
+
+	if (g_twi1_gyro_valid) {
+		if (service_twi1_gyro(now, true)) {
+			sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
+		}
+	}
 }
 
 /* 500ms TWI1 - Baro, Hygro devices */
 void isr_500ms_twi1_onboard(uint32_t now)
 {	/* Service time slot */
-	if (g_twi1_hygro_valid) {
-		isr_twi1_hygro(now, true);
-	}
+	cpu_irq_enable();
 
-	if (g_twi1_gyro_valid) {
-		isr_twi1_gyro(now, true);
+	if (g_twi1_hygro_valid) {
+		if (service_twi1_hygro(now, true)) {
+			sched_push(task_twi1_hygro, SCHED_ENTRY_CB_TYPE__LISTTIME, 70, true, false, false);
+		}
 	}
 
 	if (g_twi1_baro_valid) {
-		isr_twi1_baro(now, true);
+		service_twi1_baro(now, true);
 	}
 }
 
 /* 2560 cycles per second */
 void isr_sparetime_twi1_onboard(uint32_t now)
-{
-	if (g_twi1_hygro_valid) {
-		isr_twi1_hygro(now, false);
-	}
-
-	if (g_twi1_gyro_valid) {
-		isr_twi1_gyro(now, false);
-	}
+{	/* Service time slot */
+	cpu_irq_enable();
 
 	if (g_twi1_baro_valid) {
-		isr_twi1_baro(now, false);
+		if (service_twi1_baro(now, false)) {
+			/* Every 500ms */
+			sched_push(task_twi1_baro, SCHED_ENTRY_CB_TYPE__LISTTIME, 70, true, false, false);
+		}
 	}
 }
 
@@ -1024,88 +1101,123 @@ static void task_twi1_hygro(uint32_t now)
 {	// Calculations for the presentation layer
 	static uint16_t s_twi1_hygro_S_T	= 0UL;
 	static uint16_t s_twi1_hygro_S_RH	= 0UL;
+	uint16_t l_twi1_hygro_S_T, l_twi1_hygro_S_RH;
 
-	irqflags_t flags = cpu_irq_save();
-	uint16_t l_twi1_hygro_S_T	= g_twi1_hygro_S_T;
-	uint16_t l_twi1_hygro_S_RH	= g_twi1_hygro_S_RH;
-	cpu_irq_restore(flags);
+	/* Getting the global values */
+	{
+		irqflags_t flags							= cpu_irq_save();
+		l_twi1_hygro_S_T							= g_twi1_hygro_S_T;
+		l_twi1_hygro_S_RH							= g_twi1_hygro_S_RH;
+		cpu_irq_restore(flags);
+	}
 
 	/* Calculate and present Temp value when a different measurement has arrived */
 	if (l_twi1_hygro_S_T != s_twi1_hygro_S_T) {
 		int16_t temp_100 = (int16_t)((((int32_t)l_twi1_hygro_S_T  * 17500) / 0xFFFF) - 4500);
 
-		flags = cpu_irq_save();
-		g_twi1_hygro_T_100 = temp_100;
-		cpu_irq_restore(flags);
+		/* Setting the global value */
+		{
+			irqflags_t flags						= cpu_irq_save();
+			g_twi1_hygro_T_100						= temp_100;
+			cpu_irq_restore(flags);
+		}
 	}
 
 	/* Calculate and present Hygro value when a different measurement has arrived */
 	if (l_twi1_hygro_S_RH != s_twi1_hygro_S_RH) {
 		int16_t rh_100 = (int16_t)( ((int32_t)l_twi1_hygro_S_RH * 10000) / 0xFFFF);
 
-		flags = cpu_irq_save();
-		g_twi1_hygro_RH_100 = rh_100;
-		cpu_irq_restore(flags);
+		/* Setting the global value */
+		{
+			irqflags_t flags						= cpu_irq_save();
+			g_twi1_hygro_RH_100						= rh_100;
+			cpu_irq_restore(flags);
+		}
 	}
 }
 
 static void task_twi1_gyro(uint32_t now)
 {	// Calculations for the presentation layer
 	{
-		irqflags_t flags = cpu_irq_save();
-		int16_t	l_twi1_gyro_1_accel_x	= g_twi1_gyro_1_accel_x;
-		int16_t	l_twi1_gyro_1_accel_y	= g_twi1_gyro_1_accel_y;
-		int16_t	l_twi1_gyro_1_accel_z	= g_twi1_gyro_1_accel_z;
-		cpu_irq_restore(flags);
+		int16_t l_twi1_gyro_1_accel_x, l_twi1_gyro_1_accel_y, l_twi1_gyro_1_accel_z;
+
+		/* Getting the global values */
+		{
+			irqflags_t flags						= cpu_irq_save();
+			l_twi1_gyro_1_accel_x					= g_twi1_gyro_1_accel_x;
+			l_twi1_gyro_1_accel_y					= g_twi1_gyro_1_accel_y;
+			l_twi1_gyro_1_accel_z					= g_twi1_gyro_1_accel_z;
+			cpu_irq_restore(flags);
+		}
 
 		int16_t l_twi1_gyro_1_accel_x_mg	= calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_x, g_twi1_gyro_1_accel_factx);
 		int16_t l_twi1_gyro_1_accel_y_mg	= calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_y, g_twi1_gyro_1_accel_facty);
 		int16_t l_twi1_gyro_1_accel_z_mg	= calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_z, g_twi1_gyro_1_accel_factz);
 
-		flags = cpu_irq_save();
-		g_twi1_gyro_1_accel_x_mg	= l_twi1_gyro_1_accel_x_mg;
-		g_twi1_gyro_1_accel_y_mg	= l_twi1_gyro_1_accel_y_mg;
-		g_twi1_gyro_1_accel_z_mg	= l_twi1_gyro_1_accel_z_mg;
-		cpu_irq_restore(flags);
+		/* Setting the global values */
+		{
+			irqflags_t flags						= cpu_irq_save();
+			g_twi1_gyro_1_accel_x_mg				= l_twi1_gyro_1_accel_x_mg;
+			g_twi1_gyro_1_accel_y_mg				= l_twi1_gyro_1_accel_y_mg;
+			g_twi1_gyro_1_accel_z_mg				= l_twi1_gyro_1_accel_z_mg;
+			cpu_irq_restore(flags);
+		}
 	}
 
 	{
-		irqflags_t flags = cpu_irq_save();
-		int16_t l_twi1_gyro_1_gyro_x	= g_twi1_gyro_1_gyro_x;
-		int16_t l_twi1_gyro_1_gyro_y	= g_twi1_gyro_1_gyro_y;
-		int16_t l_twi1_gyro_1_gyro_z	= g_twi1_gyro_1_gyro_z;
-		cpu_irq_restore(flags);
+		int16_t l_twi1_gyro_1_gyro_x, l_twi1_gyro_1_gyro_y, l_twi1_gyro_1_gyro_z;
+
+		/* Getting the global values */
+		{
+			irqflags_t flags						= cpu_irq_save();
+			l_twi1_gyro_1_gyro_x					= g_twi1_gyro_1_gyro_x;
+			l_twi1_gyro_1_gyro_y					= g_twi1_gyro_1_gyro_y;
+			l_twi1_gyro_1_gyro_z					= g_twi1_gyro_1_gyro_z;
+			cpu_irq_restore(flags);
+		}
 
 		int32_t l_twi1_gyro_1_gyro_x_mdps	= calc_gyro1_gyro_raw2mdps(l_twi1_gyro_1_gyro_x);
 		int32_t l_twi1_gyro_1_gyro_y_mdps	= calc_gyro1_gyro_raw2mdps(l_twi1_gyro_1_gyro_y);
 		int32_t l_twi1_gyro_1_gyro_z_mdps	= calc_gyro1_gyro_raw2mdps(l_twi1_gyro_1_gyro_z);
 
-		flags = cpu_irq_save();
-		g_twi1_gyro_1_gyro_x_mdps	= l_twi1_gyro_1_gyro_x_mdps;
-		g_twi1_gyro_1_gyro_y_mdps	= l_twi1_gyro_1_gyro_y_mdps;
-		g_twi1_gyro_1_gyro_z_mdps	= l_twi1_gyro_1_gyro_z_mdps;
-		cpu_irq_restore(flags);
+		/* Setting the global values */
+		{
+			irqflags_t flags						= cpu_irq_save();
+			g_twi1_gyro_1_gyro_x_mdps				= l_twi1_gyro_1_gyro_x_mdps;
+			g_twi1_gyro_1_gyro_y_mdps				= l_twi1_gyro_1_gyro_y_mdps;
+			g_twi1_gyro_1_gyro_z_mdps				= l_twi1_gyro_1_gyro_z_mdps;
+			cpu_irq_restore(flags);
+		}
 	}
 
 	{
-		irqflags_t flags = cpu_irq_save();
-		int16_t l_twi1_gyro_2_mag_x		= g_twi1_gyro_2_mag_x;
-		int16_t l_twi1_gyro_2_mag_y		= g_twi1_gyro_2_mag_y;
-		int16_t l_twi1_gyro_2_mag_z		= g_twi1_gyro_2_mag_z;
-		int16_t	l_twi1_gyro_1_temp		= g_twi1_gyro_1_temp;
-		cpu_irq_restore(flags);
+		int16_t l_twi1_gyro_2_mag_x, l_twi1_gyro_2_mag_y, l_twi1_gyro_2_mag_z;
+		int16_t l_twi1_gyro_1_temp;
+
+		/* Getting the global values */
+		{
+			irqflags_t flags						= cpu_irq_save();
+			l_twi1_gyro_2_mag_x						= g_twi1_gyro_2_mag_x;
+			l_twi1_gyro_2_mag_y						= g_twi1_gyro_2_mag_y;
+			l_twi1_gyro_2_mag_z						= g_twi1_gyro_2_mag_z;
+			l_twi1_gyro_1_temp						= g_twi1_gyro_1_temp;
+			cpu_irq_restore(flags);
+		}
 
 		int32_t l_twi1_gyro_2_mag_x_nT		= calc_gyro2_correct_mag_2_nT(l_twi1_gyro_2_mag_x, g_twi1_gyro_2_asax, g_twi1_gyro_2_mag_factx);
 		int32_t l_twi1_gyro_2_mag_y_nT		= calc_gyro2_correct_mag_2_nT(l_twi1_gyro_2_mag_y, g_twi1_gyro_2_asay, g_twi1_gyro_2_mag_facty);
 		int32_t l_twi1_gyro_2_mag_z_nT		= calc_gyro2_correct_mag_2_nT(l_twi1_gyro_2_mag_z, g_twi1_gyro_2_asaz, g_twi1_gyro_2_mag_factz);
 		int16_t	l_twi1_gyro_1_temp_deg_100	= calc_gyro1_temp_raw2C100(l_twi1_gyro_1_temp);
 
-		flags = cpu_irq_save();
-		g_twi1_gyro_2_mag_x_nT		= l_twi1_gyro_2_mag_x_nT;
-		g_twi1_gyro_2_mag_y_nT		= l_twi1_gyro_2_mag_y_nT;
-		g_twi1_gyro_2_mag_z_nT		= l_twi1_gyro_2_mag_z_nT;
-		g_twi1_gyro_1_temp_deg_100	= l_twi1_gyro_1_temp_deg_100;
-		cpu_irq_restore(flags);
+		/* Setting the global values */
+		{
+			irqflags_t flags						= cpu_irq_save();
+			g_twi1_gyro_2_mag_x_nT					= l_twi1_gyro_2_mag_x_nT;
+			g_twi1_gyro_2_mag_y_nT					= l_twi1_gyro_2_mag_y_nT;
+			g_twi1_gyro_2_mag_z_nT					= l_twi1_gyro_2_mag_z_nT;
+			g_twi1_gyro_1_temp_deg_100				= l_twi1_gyro_1_temp_deg_100;
+			cpu_irq_restore(flags);
+		}
 	}
 }
 
@@ -1113,11 +1225,15 @@ static void task_twi1_baro(uint32_t now)
 {	// Calculations for the presentation layer
 	static uint32_t s_twi1_baro_d1 = 0UL;
 	static uint32_t s_twi1_baro_d2 = 0UL;
+	uint32_t l_twi1_baro_d1, l_twi1_baro_d2;
 
-	irqflags_t flags = cpu_irq_save();
-	uint32_t l_twi1_baro_d1 = g_twi1_baro_d1;
-	uint32_t l_twi1_baro_d2 = g_twi1_baro_d2;
-	cpu_irq_restore(flags);
+	/* Getting the global values */
+	{
+		irqflags_t flags							= cpu_irq_save();
+		l_twi1_baro_d1								= g_twi1_baro_d1;
+		l_twi1_baro_d2								= g_twi1_baro_d2;
+		cpu_irq_restore(flags);
+	}
 
 	/* Calculate and present Baro and Temp values when a different measurement has arrived */
 	if ((l_twi1_baro_d1 != s_twi1_baro_d1) || (l_twi1_baro_d2 != s_twi1_baro_d2)) {
@@ -1146,35 +1262,46 @@ static void task_twi1_baro(uint32_t now)
 		}
 		int32_t p = (int32_t)((((l_twi1_baro_d1 * sens) >> 21) - off) >> 15);
 
-		flags = cpu_irq_save();
-		g_twi1_baro_temp_100 = temp;
-		g_twi1_baro_p_100    = p;
-		cpu_irq_restore(flags);
+		/* Setting the global values */
+		{
+			irqflags_t flags						= cpu_irq_save();
+			g_twi1_baro_temp_100					= temp;
+			g_twi1_baro_p_100						= p;
+			cpu_irq_restore(flags);
+		}
 	}
 }
 
 /* TWI1 - onboard devices */
+// hint: not called anymore, now done by  isr_500ms_twi1_onboard()
+#if 0
 void task_twi1_onboard(uint32_t now)
 {
-	irqflags_t flags = cpu_irq_save();
-	bool l_twi1_hygro_valid	= g_twi1_hygro_valid;
-	bool l_twi1_gyro_valid	= g_twi1_gyro_valid;
-	bool l_twi1_baro_valid	= g_twi1_baro_valid;
-	cpu_irq_restore(flags);
-
-	if (l_twi1_hygro_valid) {
+	if (g_twi1_hygro_valid) {
 		task_twi1_hygro(now);
 	}
 
-	if (l_twi1_gyro_valid) {
+	if (g_twi1_gyro_valid) {
 		task_twi1_gyro(now);
 	}
 
-	if (l_twi1_baro_valid) {
+	if (g_twi1_baro_valid) {
 		task_twi1_baro(now);
 	}
 }
+#endif
 
+
+#if 0
+static void task_twi2_lcd_reset(void)
+{
+	twi2_waitUntilReady();
+	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_RESET;
+	twi2_packet.length = 0;
+	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	delay_ms(50);
+}
+#endif
 
 static void task_twi2_lcd_cls(void)
 {
@@ -1373,349 +1500,502 @@ PROGMEM_DECLARE(const char, PM_FORMAT_07F2[]);
 PROGMEM_DECLARE(const char, PM_FORMAT_4F1[]);
 PROGMEM_DECLARE(const char, PM_FORMAT_5F3[]);
 
+
 /* TWI2 - LCD Port */
+void task_twi2_lcd__cpu1(uint8_t col_left)
+{
+	static int16_t s_adc_temp_deg_100 = 0;
+	static int16_t s_adc_5v0_volt_1000 = 0;
+	int16_t l_adc_temp_deg_100;
+	int16_t l_adc_5v0_volt_1000;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_adc_temp_deg_100			= g_adc_temp_deg_100;
+		l_adc_5v0_volt_1000			= g_adc_5v0_volt_1000;
+		cpu_irq_restore(flags);
+	}
+
+	if (s_adc_temp_deg_100 != l_adc_temp_deg_100) {
+		s_adc_temp_deg_100 = l_adc_temp_deg_100;
+
+		/* ADC_TEMP */
+		task_twi2_lcd_print_format_float_P(col_left,  2 * 10, l_adc_temp_deg_100 / 100.f, PM_FORMAT_4F1);
+	}
+
+	if (s_adc_5v0_volt_1000 != l_adc_5v0_volt_1000) {
+		s_adc_5v0_volt_1000 = l_adc_5v0_volt_1000;
+
+		/* ADC_5V0 */
+		task_twi2_lcd_print_format_float_P(col_left,  3 * 10, l_adc_5v0_volt_1000 / 1000.f, PM_FORMAT_5F3);
+	}
+}
+
+void task_twi2_lcd__cpu2(uint8_t col_left)
+{
+	static int16_t s_adc_vbat_volt_1000 = 0;
+	static int16_t s_adc_vctcxo_volt_1000 = 0;
+	int16_t l_adc_vbat_volt_1000;
+	int16_t l_adc_vctcxo_volt_1000;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_adc_vbat_volt_1000		= g_adc_vbat_volt_1000;
+		l_adc_vctcxo_volt_1000		= g_adc_vctcxo_volt_1000;
+		cpu_irq_restore(flags);
+	}
+
+	if (s_adc_vbat_volt_1000 != l_adc_vbat_volt_1000) {
+		s_adc_vbat_volt_1000 = l_adc_vbat_volt_1000;
+
+		/* ADC_VBAT */
+		task_twi2_lcd_print_format_float_P(col_left,  4 * 10, l_adc_vbat_volt_1000 / 1000.f, PM_FORMAT_5F3);
+	}
+
+	if (s_adc_vctcxo_volt_1000 != l_adc_vctcxo_volt_1000) {
+		s_adc_vctcxo_volt_1000 = l_adc_vctcxo_volt_1000;
+
+		/* ADC_VCTCXO */
+		task_twi2_lcd_print_format_float_P(col_left,  5 * 10, l_adc_vctcxo_volt_1000 / 1000.f, PM_FORMAT_5F3);
+	}
+}
+
+void task_twi2_lcd__cpu3(uint8_t col_left)
+{
+	static int16_t s_adc_io_adc4_volt_1000 = 0;
+	static int16_t s_adc_io_adc5_volt_1000 = 0;
+	int16_t l_adc_io_adc4_volt_1000;
+	int16_t l_adc_io_adc5_volt_1000;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_adc_io_adc4_volt_1000		= g_adc_io_adc4_volt_1000;
+		l_adc_io_adc5_volt_1000		= g_adc_io_adc5_volt_1000;
+		cpu_irq_restore(flags);
+	}
+
+	if (s_adc_io_adc4_volt_1000 != l_adc_io_adc4_volt_1000) {
+		s_adc_io_adc4_volt_1000 = l_adc_io_adc4_volt_1000;
+
+		/* ADC_IO_ADC4 */
+		task_twi2_lcd_print_format_float_P(col_left,  6 * 10, l_adc_io_adc4_volt_1000 / 1000.f, PM_FORMAT_5F3);
+	}
+
+	if (s_adc_io_adc5_volt_1000 != l_adc_io_adc5_volt_1000) {
+		s_adc_io_adc5_volt_1000 = l_adc_io_adc5_volt_1000;
+
+		/* ADC_IO_ADC5 */
+		task_twi2_lcd_print_format_float_P(col_left,  7 * 10, l_adc_io_adc5_volt_1000 / 1000.f, PM_FORMAT_5F3);
+	}
+
+#if 0
+	static int16_t s_adc_silence_volt_1000 = 0;
+	int16_t l_adc_silence_volt_1000;
+
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_adc_silence_volt_1000		= g_adc_silence_volt_1000;
+		cpu_irq_restore(flags);
+	}
+
+	if (s_adc_silence_volt_1000 != l_adc_silence_volt_1000) {
+		s_adc_silence_volt_1000 = l_adc_silence_volt_1000;
+
+		/* ADC_SILENCE */
+		task_twi2_lcd_print_format_float_P(col_left,  8 * 10, l_adc_silence_volt_1000 / 1000.f, PM_FORMAT_5F3);
+	}
+#endif
+}
+
+void task_twi2_lcd__hygro(uint8_t col_left)
+{
+	static int16_t s_twi1_hygro_T_100 = 0;
+	static int16_t s_twi1_hygro_RH_100 = 0;
+	int16_t l_twi1_hygro_T_100;
+	int16_t l_twi1_hygro_RH_100;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags				= cpu_irq_save();
+		l_twi1_hygro_T_100				= g_twi1_hygro_T_100;
+		l_twi1_hygro_RH_100				= g_twi1_hygro_RH_100;
+		cpu_irq_restore(flags);
+	}
+
+	if (s_twi1_hygro_T_100 != l_twi1_hygro_T_100) {
+		s_twi1_hygro_T_100 = l_twi1_hygro_T_100;
+
+		/* Hygro_Temp */
+		task_twi2_lcd_print_format_float_P(col_left, 11 * 10, l_twi1_hygro_T_100 / 100.f, PM_FORMAT_05F2);
+	}
+
+	if (s_twi1_hygro_RH_100 != l_twi1_hygro_RH_100) {
+		s_twi1_hygro_RH_100 = l_twi1_hygro_RH_100;
+
+		/* Hygro_RH */
+		task_twi2_lcd_print_format_float_P(col_left, 12 * 10, l_twi1_hygro_RH_100 / 100.f, PM_FORMAT_05F2);
+	}
+}
+
+void task_twi2_lcd__gyro_gfxmag(void)
+{
+	/* Mag lines */
+	const uint8_t plot_intensity_center_x = 115;
+	const uint8_t plot_intensity_center_y =  64;
+	const uint8_t plot_mag_center_x = 150;
+	const uint8_t plot_mag_center_y =  40;
+	static int32_t s_twi1_gyro_2_mag_x_nT = 0;
+	static int32_t s_twi1_gyro_2_mag_y_nT = 0;
+	static int32_t s_twi1_gyro_2_mag_z_nT = 0;
+	static float  s_length = 0.f;
+	static int8_t s_p1x = 0;
+	static int8_t s_p1y = 0;
+	static int8_t s_p2x = 0;
+	static int8_t s_p2y = 0;
+	static int8_t s_p3x = 0;
+	static int8_t s_p3y = 0;
+	int32_t l_twi1_gyro_2_mag_x_nT;
+	int32_t l_twi1_gyro_2_mag_y_nT;
+	int32_t l_twi1_gyro_2_mag_z_nT;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_twi1_gyro_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
+		l_twi1_gyro_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
+		l_twi1_gyro_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
+		cpu_irq_restore(flags);
+	}
+
+	if ((s_twi1_gyro_2_mag_x_nT != l_twi1_gyro_2_mag_x_nT) || (s_twi1_gyro_2_mag_y_nT != l_twi1_gyro_2_mag_y_nT) || (s_twi1_gyro_2_mag_z_nT != l_twi1_gyro_2_mag_z_nT)) {
+		s_twi1_gyro_2_mag_x_nT = l_twi1_gyro_2_mag_x_nT;
+		s_twi1_gyro_2_mag_y_nT = l_twi1_gyro_2_mag_y_nT;
+		s_twi1_gyro_2_mag_z_nT = l_twi1_gyro_2_mag_z_nT;
+
+		/* Removing old lines first */
+		task_twi2_lcd_rect(plot_intensity_center_x - 1,	plot_intensity_center_y - s_length / 3000.f, 3, s_length / 3000.f, true, 0);
+		task_twi2_lcd_line(plot_mag_center_x,			plot_mag_center_y,			plot_mag_center_x + s_p1x, plot_mag_center_y + s_p1y, 0);
+		task_twi2_lcd_line(plot_mag_center_x + s_p1x,	plot_mag_center_y + s_p1y,	plot_mag_center_x + s_p2x, plot_mag_center_y + s_p2y, 0);
+		task_twi2_lcd_line(plot_mag_center_x + s_p2x,	plot_mag_center_y + s_p2y,	plot_mag_center_x + s_p3x, plot_mag_center_y + s_p3y, 0);
+
+		/* Draw center point */
+		task_twi2_lcd_circ(plot_mag_center_x, plot_mag_center_y, 1, true, 1);
+
+		/* Draw new lines */
+		{
+			float l_length = pow(pow(l_twi1_gyro_2_mag_x_nT, 2.0) + pow(l_twi1_gyro_2_mag_y_nT, 2.0) + pow(l_twi1_gyro_2_mag_z_nT, 2.0), 0.5);
+			if (!l_length) {
+				l_length = 1.f;
+			}
+
+			float l_twi1_gyro_2_mag_x_norm = l_twi1_gyro_2_mag_x_nT / l_length;
+			float l_twi1_gyro_2_mag_y_norm = l_twi1_gyro_2_mag_y_nT / l_length;
+			float l_twi1_gyro_2_mag_z_norm = l_twi1_gyro_2_mag_z_nT / l_length;
+			uint8_t p1x =       (l_twi1_gyro_2_mag_x_norm * 12.5);
+			uint8_t p1y =      -(l_twi1_gyro_2_mag_x_norm * 12.5);
+			uint8_t p2x = p1x + (l_twi1_gyro_2_mag_y_norm * 25);
+			uint8_t p2y = p1y;
+			uint8_t p3x = p2x;
+			uint8_t p3y = p2y + (l_twi1_gyro_2_mag_z_norm * 25);
+
+			// Saturation at 100µT
+			if (l_length > 100000.f) {
+				l_length = 100000.f;
+			}
+
+			task_twi2_lcd_circ(plot_intensity_center_x,		plot_intensity_center_y,	2, false, 1);
+			task_twi2_lcd_rect(plot_intensity_center_x - 1,	plot_intensity_center_y - l_length / 3000.f, 3, l_length / 3000.f, true, 1);
+			task_twi2_lcd_line(plot_mag_center_x,			plot_mag_center_y,			plot_mag_center_x + p1x, plot_mag_center_y + p1y, 1);
+			task_twi2_lcd_line(plot_mag_center_x + p1x,		plot_mag_center_y + p1y,	plot_mag_center_x + p2x, plot_mag_center_y + p2y, 1);
+			task_twi2_lcd_line(plot_mag_center_x + p2x,		plot_mag_center_y + p2y,	plot_mag_center_x + p3x, plot_mag_center_y + p3y, 1);
+
+			/* Store new set */
+			s_length = l_length;
+			s_p1x = p1x;
+			s_p1y = p1y;
+			s_p2x = p2x;
+			s_p2y = p2y;
+			s_p3x = p3x;
+			s_p3y = p3y;
+		}
+	}
+}
+
+void task_twi2_lcd__gyro_gfxaccel(void)
+{
+	/* Accel lines */
+	const uint8_t plot_accel_center_x = 210;
+	const uint8_t plot_accel_center_y =  40;
+	static int16_t s_twi1_gyro_1_accel_x_mg = 0;
+	static int16_t s_twi1_gyro_1_accel_y_mg = 0;
+	static int16_t s_twi1_gyro_1_accel_z_mg = 0;
+	static int8_t s_p1x = 0;
+	static int8_t s_p1y = 0;
+	static int8_t s_p2x = 0;
+	static int8_t s_p2y = 0;
+	static int8_t s_p3x = 0;
+	static int8_t s_p3y = 0;
+	int16_t l_twi1_gyro_1_accel_x_mg;
+	int16_t l_twi1_gyro_1_accel_y_mg;
+	int16_t l_twi1_gyro_1_accel_z_mg;
+	int16_t l_backlight_mode_pwm;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
+		l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
+		l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
+		l_backlight_mode_pwm		= g_backlight_mode_pwm;
+		cpu_irq_restore(flags);
+	}
+
+	if ((s_twi1_gyro_1_accel_x_mg != l_twi1_gyro_1_accel_x_mg) || (s_twi1_gyro_1_accel_y_mg != l_twi1_gyro_1_accel_y_mg) || (s_twi1_gyro_1_accel_z_mg != l_twi1_gyro_1_accel_z_mg)) {
+		s_twi1_gyro_1_accel_x_mg = l_twi1_gyro_1_accel_x_mg;
+		s_twi1_gyro_1_accel_y_mg = l_twi1_gyro_1_accel_y_mg;
+		s_twi1_gyro_1_accel_z_mg = l_twi1_gyro_1_accel_z_mg;
+
+		/* Removing old lines first */
+		{
+			task_twi2_lcd_line(plot_accel_center_x,			plot_accel_center_y,			plot_accel_center_x + s_p1x, plot_accel_center_y + s_p1y, 0);
+			task_twi2_lcd_line(plot_accel_center_x + s_p1x,	plot_accel_center_y + s_p1y,	plot_accel_center_x + s_p2x, plot_accel_center_y + s_p2y, 0);
+			task_twi2_lcd_line(plot_accel_center_x + s_p2x,	plot_accel_center_y + s_p2y,	plot_accel_center_x + s_p3x, plot_accel_center_y + s_p3y, 0);
+		}
+
+		/* Center point */
+		task_twi2_lcd_circ(plot_accel_center_x, plot_accel_center_y, 1, true, 1);
+
+		/* Draw new lines */
+		{
+			uint8_t p1x =      -(l_twi1_gyro_1_accel_y_mg / 80);
+			uint8_t p1y =       (l_twi1_gyro_1_accel_y_mg / 80);
+			uint8_t p2x = p1x - (l_twi1_gyro_1_accel_x_mg / 40);
+			uint8_t p2y = p1y;
+			uint8_t p3x = p2x;
+			uint8_t p3y = p2y + (l_twi1_gyro_1_accel_z_mg / 40);
+
+			task_twi2_lcd_line(plot_accel_center_x,			plot_accel_center_y,		plot_accel_center_x + p1x, plot_accel_center_y + p1y, 1);
+			task_twi2_lcd_line(plot_accel_center_x + p1x,	plot_accel_center_y + p1y,	plot_accel_center_x + p2x, plot_accel_center_y + p2y, 1);
+			task_twi2_lcd_line(plot_accel_center_x + p2x,	plot_accel_center_y + p2y,	plot_accel_center_x + p3x, plot_accel_center_y + p3y, 1);
+
+			/* Store new set */
+			s_p1x = p1x;
+			s_p1y = p1y;
+			s_p2x = p2x;
+			s_p2y = p2y;
+			s_p3x = p3x;
+			s_p3y = p3y;
+		}
+
+		/* Calculate the luminance (sunshine on the surface) */
+		if (l_backlight_mode_pwm == -2) {
+			int32_t lum = 1000 + l_twi1_gyro_1_accel_z_mg;
+			if (lum < 0) {
+				lum = 0;
+			} else if (lum > 2000) {
+				lum = 2000;
+			}
+
+			twi2_set_ledbl(0, (uint8_t)(lum * 255 / 2000));
+		}
+	}
+}
+
+void task_twi2_lcd__gyro_gfxgyro(void)
+{
+	/* Gyro lines */
+	const uint8_t plot_gyro_center_x_X	= 150;
+	const uint8_t plot_gyro_center_x_Y	= 150 + 30;
+	const uint8_t plot_gyro_center_x_Z	= 150 + 60;
+	const uint8_t plot_gyro_center_y	= 100;
+	const uint8_t plot_gyro_radius		= 12;
+	static float s_rads_x = 0.f;
+	static float s_rads_y = 0.f;
+	static float s_rads_z = 0.f;
+	static int32_t s_twi1_gyro_1_gyro_x_mdps = 0;
+	static int32_t s_twi1_gyro_1_gyro_y_mdps = 0;
+	static int32_t s_twi1_gyro_1_gyro_z_mdps = 0;
+	int32_t l_twi1_gyro_1_gyro_x_mdps;
+	int32_t l_twi1_gyro_1_gyro_y_mdps;
+	int32_t l_twi1_gyro_1_gyro_z_mdps;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_twi1_gyro_1_gyro_x_mdps	= g_twi1_gyro_1_gyro_x_mdps;
+		l_twi1_gyro_1_gyro_y_mdps	= g_twi1_gyro_1_gyro_y_mdps;
+		l_twi1_gyro_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
+		cpu_irq_restore(flags);
+	}
+
+	if ((s_twi1_gyro_1_gyro_x_mdps != l_twi1_gyro_1_gyro_x_mdps) || (s_twi1_gyro_1_gyro_y_mdps != l_twi1_gyro_1_gyro_y_mdps) || (s_twi1_gyro_1_gyro_z_mdps != l_twi1_gyro_1_gyro_z_mdps)) {
+		s_twi1_gyro_1_gyro_x_mdps = l_twi1_gyro_1_gyro_x_mdps;
+		s_twi1_gyro_1_gyro_y_mdps = l_twi1_gyro_1_gyro_y_mdps;
+		s_twi1_gyro_1_gyro_z_mdps = l_twi1_gyro_1_gyro_z_mdps;
+
+		float rads_x = ((float)l_twi1_gyro_1_gyro_x_mdps * M_PI) / 180000.f;
+		float rads_y = ((float)l_twi1_gyro_1_gyro_y_mdps * M_PI) / 180000.f;
+		float rads_z = ((float)l_twi1_gyro_1_gyro_z_mdps * M_PI) / 180000.f;
+
+		/* Remove old lines */
+		task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - (int8_t)(plot_gyro_radius * sin(s_rads_x)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_x)), 0);
+		task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + (int8_t)(plot_gyro_radius * sin(s_rads_y)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_y)), 0);
+		task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - (int8_t)(plot_gyro_radius * sin(s_rads_z)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_z)), 0);
+
+		/* Draw new lines */
+		task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - (int8_t)(plot_gyro_radius * sin(  rads_x)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_x)), 1);
+		task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + (int8_t)(plot_gyro_radius * sin(  rads_y)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_y)), 1);
+		task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - (int8_t)(plot_gyro_radius * sin(  rads_z)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_z)), 1);
+
+		/* Store new set */
+		s_rads_x = rads_x;
+		s_rads_y = rads_y;
+		s_rads_z = rads_z;
+	}
+
+	/* Calculate speed of rotation */
+	if (g_pitch_tone_mode == 1) {
+		int32_t speed = l_twi1_gyro_1_gyro_x_mdps + l_twi1_gyro_1_gyro_y_mdps + l_twi1_gyro_1_gyro_z_mdps;
+		if (speed < 0) {
+			speed = -speed;
+		}
+		if (speed > 400) {
+			twi2_set_beep(18 + (uint8_t)(speed / 700), 10);
+			yield_ms(125);
+		}
+	}
+}
+
+void task_twi2_lcd__gyro_beepvario(void)
+{
+	/* Calculate variometer */
+	static uint32_t s_twi1_baro_p_100 = 100000UL;
+	int32_t l_twi1_baro_p_100;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_twi1_baro_p_100			= g_twi1_baro_p_100;
+		cpu_irq_restore(flags);
+	}
+
+	/* Calculate variometer tone */
+	if (g_pitch_tone_mode == 2) {
+		int32_t vario = g_twi1_baro_p_100 - s_twi1_baro_p_100;
+		uint32_t pitch = 100 - vario;
+
+		if (pitch < 10) {
+			pitch = 10;
+		} else if (pitch > 255) {
+			pitch = 255;
+		}
+
+		twi2_set_beep(pitch, 10);
+		yield_ms(125);
+	}
+
+	/* Update static value */
+	s_twi1_baro_p_100 = l_twi1_baro_p_100;
+}
+
+inline void task_twi2_lcd__gyro(void)
+{
+	/* Mag lines */
+	task_twi2_lcd__gyro_gfxmag();
+
+	/* Accel lines */
+	task_twi2_lcd__gyro_gfxaccel();
+
+	/* Gyro lines */
+	task_twi2_lcd__gyro_gfxgyro();
+
+	/* Calculate variometer */
+	task_twi2_lcd__gyro_beepvario();
+}
+
+void task_twi2_lcd__baro(uint8_t col_left)
+{
+	static int32_t s_twi1_baro_temp_100 = 0;
+	static int32_t s_twi1_baro_p_100 = 0;
+	int32_t l_twi1_baro_temp_100;
+	int32_t l_twi1_baro_p_100;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags				= cpu_irq_save();
+		l_twi1_baro_temp_100			= g_twi1_baro_temp_100;
+		l_twi1_baro_p_100				= g_twi1_baro_p_100;
+		cpu_irq_restore(flags);
+	}
+
+	/* Baro_Temp */
+	if (s_twi1_baro_temp_100 != l_twi1_baro_temp_100) {
+		s_twi1_baro_temp_100 = l_twi1_baro_temp_100;
+		task_twi2_lcd_print_format_float_P(col_left,  9 * 10, l_twi1_baro_temp_100 / 100.f, PM_FORMAT_05F2);
+	}
+
+	/* Baro_P */
+	if (s_twi1_baro_p_100 != l_twi1_baro_p_100) {
+		s_twi1_baro_p_100 = l_twi1_baro_p_100;
+		task_twi2_lcd_print_format_float_P(col_left, 10 * 10, l_twi1_baro_p_100 / 100.f, PM_FORMAT_07F2);
+	}
+}
+
 void task_twi2_lcd(uint32_t now)
 {
-	static uint16_t s_lcd_entry_cnt =  0U;
-	static uint32_t s_lcd_last		= 0UL;
+	static uint8_t s_lcd_entry_state =  0;
 
 	if (g_twi2_lcd_version >= 0x11) {
-		//static uint8_t s_ofs = 0;
+		/* Show current measurement data on the LCD */
+		const uint8_t col_left = 6 * 10;
 
-		/* Show current measurement data on the LCD - 8 times per second */
-		if (((now - s_lcd_last) >= 128) || (now < s_lcd_last)) {
-			const uint8_t col_left = 6 * 10;
-			static uint8_t s_line = 2;
+		/* Repaint all items when starting and at some interval */
+		if (g_twi2_lcd_repaint) {
+			g_twi2_lcd_repaint = false;
+			task_twi2_lcd_header();
+		}
 
-			irqflags_t flags = cpu_irq_save();
-			bool l_twi2_lcd_repaint = g_twi2_lcd_repaint;
-			cpu_irq_restore(flags);
+		/* Update Gfx every time */
+		task_twi2_lcd__gyro();
 
-			/* Each second go to the home position */
-			if (!(s_lcd_entry_cnt % 8)) {
-				s_line = 2;
-			}
-
-			/* Repaint all items when starting and at some interval */
-			if (!(s_lcd_entry_cnt++) || l_twi2_lcd_repaint) {
-				task_twi2_lcd_header();
-
-				flags = cpu_irq_save();
-				g_twi2_lcd_repaint = false;
-				cpu_irq_restore(flags);
-
-			#if 0
-			} else if (s_lcd_entry_cnt >= (60 * 8)) {  // Repaint after one minute
-				s_lcd_entry_cnt = 0;
-			#endif
-			}
-
-			/* Update Gfx twice a second */
-			if (!(s_lcd_entry_cnt % 4)) {
-				/* Mag lines */
-				{
-					const uint8_t plot_intensity_center_x = 115;
-					const uint8_t plot_intensity_center_y =  64;
-					const uint8_t plot_mag_center_x = 150;
-					const uint8_t plot_mag_center_y =  40;
-					static float  s_length = 0.f;
-					static int8_t s_p1x = 0;
-					static int8_t s_p1y = 0;
-					static int8_t s_p2x = 0;
-					static int8_t s_p2y = 0;
-					static int8_t s_p3x = 0;
-					static int8_t s_p3y = 0;
-
-					/* Get up-to-date global data */
-					flags = cpu_irq_save();
-					int32_t l_twi1_gyro_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
-					int32_t l_twi1_gyro_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
-					int32_t l_twi1_gyro_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
-					cpu_irq_restore(flags);
-
-					/* Removing old lines first */
-					task_twi2_lcd_rect(plot_intensity_center_x - 1,	plot_intensity_center_y - s_length / 3000.f, 3, s_length / 3000.f, true, 0);
-					task_twi2_lcd_line(plot_mag_center_x,			plot_mag_center_y,			plot_mag_center_x + s_p1x, plot_mag_center_y + s_p1y, 0);
-					task_twi2_lcd_line(plot_mag_center_x + s_p1x,	plot_mag_center_y + s_p1y,	plot_mag_center_x + s_p2x, plot_mag_center_y + s_p2y, 0);
-					task_twi2_lcd_line(plot_mag_center_x + s_p2x,	plot_mag_center_y + s_p2y,	plot_mag_center_x + s_p3x, plot_mag_center_y + s_p3y, 0);
-
-					/* Draw center point */
-					task_twi2_lcd_circ(plot_mag_center_x, plot_mag_center_y, 1, true, 1);
-
-					/* Draw new lines */
-					{
-						float l_length = pow(pow(l_twi1_gyro_2_mag_x_nT, 2.0) + pow(l_twi1_gyro_2_mag_y_nT, 2.0) + pow(l_twi1_gyro_2_mag_z_nT, 2.0), 0.5);
-						if (!l_length) {
-							l_length = 1.f;
-						}
-
-						float l_twi1_gyro_2_mag_x_norm = l_twi1_gyro_2_mag_x_nT / l_length;
-						float l_twi1_gyro_2_mag_y_norm = l_twi1_gyro_2_mag_y_nT / l_length;
-						float l_twi1_gyro_2_mag_z_norm = l_twi1_gyro_2_mag_z_nT / l_length;
-						uint8_t p1x =       (l_twi1_gyro_2_mag_x_norm * 12.5);
-						uint8_t p1y =      -(l_twi1_gyro_2_mag_x_norm * 12.5);
-						uint8_t p2x = p1x + (l_twi1_gyro_2_mag_y_norm * 25);
-						uint8_t p2y = p1y;
-						uint8_t p3x = p2x;
-						uint8_t p3y = p2y + (l_twi1_gyro_2_mag_z_norm * 25);
-
-						// Saturation at 100µT
-						if (l_length > 100000.f) {
-							l_length = 100000.f;
-						}
-
-						task_twi2_lcd_circ(plot_intensity_center_x,		plot_intensity_center_y,	2, false, 1);
-						task_twi2_lcd_rect(plot_intensity_center_x - 1,	plot_intensity_center_y - l_length / 3000.f, 3, l_length / 3000.f, true, 1);
-						task_twi2_lcd_line(plot_mag_center_x,			plot_mag_center_y,			plot_mag_center_x + p1x, plot_mag_center_y + p1y, 1);
-						task_twi2_lcd_line(plot_mag_center_x + p1x,		plot_mag_center_y + p1y,	plot_mag_center_x + p2x, plot_mag_center_y + p2y, 1);
-						task_twi2_lcd_line(plot_mag_center_x + p2x,		plot_mag_center_y + p2y,	plot_mag_center_x + p3x, plot_mag_center_y + p3y, 1);
-
-						/* Store new set */
-						s_length = l_length;
-						s_p1x = p1x;
-						s_p1y = p1y;
-						s_p2x = p2x;
-						s_p2y = p2y;
-						s_p3x = p3x;
-						s_p3y = p3y;
-					}
+		/* Update same text line each second when no Gfx data is drawn */
+		switch (s_lcd_entry_state) {
+			case 0:
+				if (g_adc_enabled) {
+					task_twi2_lcd__cpu1(col_left);
 				}
+				++s_lcd_entry_state;
+			break;
 
-				/* Accel lines */
-				{
-					const uint8_t plot_accel_center_x = 210;
-					const uint8_t plot_accel_center_y =  40;
-					static int8_t s_p1x = 0;
-					static int8_t s_p1y = 0;
-					static int8_t s_p2x = 0;
-					static int8_t s_p2y = 0;
-					static int8_t s_p3x = 0;
-					static int8_t s_p3y = 0;
-
-					/* Get up-to-date global data */
-					flags = cpu_irq_save();
-					int16_t l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
-					int16_t l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
-					int16_t l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
-					int16_t l_backlight_mode_pwm		= g_backlight_mode_pwm;
-					cpu_irq_restore(flags);
-
-					/* Removing old lines first */
-					{
-						task_twi2_lcd_line(plot_accel_center_x,			plot_accel_center_y,			plot_accel_center_x + s_p1x, plot_accel_center_y + s_p1y, 0);
-						task_twi2_lcd_line(plot_accel_center_x + s_p1x,	plot_accel_center_y + s_p1y,	plot_accel_center_x + s_p2x, plot_accel_center_y + s_p2y, 0);
-						task_twi2_lcd_line(plot_accel_center_x + s_p2x,	plot_accel_center_y + s_p2y,	plot_accel_center_x + s_p3x, plot_accel_center_y + s_p3y, 0);
-					}
-
-					/* Center point */
-					task_twi2_lcd_circ(plot_accel_center_x, plot_accel_center_y, 1, true, 1);
-
-					/* Draw new lines */
-					{
-						uint8_t p1x =      -(l_twi1_gyro_1_accel_y_mg / 80);
-						uint8_t p1y =       (l_twi1_gyro_1_accel_y_mg / 80);
-						uint8_t p2x = p1x - (l_twi1_gyro_1_accel_x_mg / 40);
-						uint8_t p2y = p1y;
-						uint8_t p3x = p2x;
-						uint8_t p3y = p2y + (l_twi1_gyro_1_accel_z_mg / 40);
-
-						task_twi2_lcd_line(plot_accel_center_x,			plot_accel_center_y,		plot_accel_center_x + p1x, plot_accel_center_y + p1y, 1);
-						task_twi2_lcd_line(plot_accel_center_x + p1x,	plot_accel_center_y + p1y,	plot_accel_center_x + p2x, plot_accel_center_y + p2y, 1);
-						task_twi2_lcd_line(plot_accel_center_x + p2x,	plot_accel_center_y + p2y,	plot_accel_center_x + p3x, plot_accel_center_y + p3y, 1);
-
-						/* Store new set */
-						s_p1x = p1x;
-						s_p1y = p1y;
-						s_p2x = p2x;
-						s_p2y = p2y;
-						s_p3x = p3x;
-						s_p3y = p3y;
-					}
-
-					/* Calculate the luminance (sunshine on the surface) */
-					if (l_backlight_mode_pwm == -2) {
-						int32_t lum = 1000 + l_twi1_gyro_1_accel_z_mg;
-						if (lum < 0) {
-							lum = 0;
-						} else if (lum > 2000) {
-							lum = 2000;
-						}
-
-						twi2_set_ledbl(0, (uint8_t)(lum * 255 / 2000));
-					}
+			case 1:
+				if (g_adc_enabled) {
+					task_twi2_lcd__cpu2(col_left);
 				}
+				++s_lcd_entry_state;
+			break;
 
-				/* Gyro lines */
-				{
-					const uint8_t plot_gyro_center_x_X	= 150;
-					const uint8_t plot_gyro_center_x_Y	= 150 + 30;
-					const uint8_t plot_gyro_center_x_Z	= 150 + 60;
-					const uint8_t plot_gyro_center_y	= 100;
-					const uint8_t plot_gyro_radius		= 12;
-					static float s_rads_x = 0.f;
-					static float s_rads_y = 0.f;
-					static float s_rads_z = 0.f;
-
-					/* Get up-to-date global data */
-					flags = cpu_irq_save();
-					int32_t l_twi1_gyro_1_gyro_x_mdps	= g_twi1_gyro_1_gyro_x_mdps;
-					int32_t l_twi1_gyro_1_gyro_y_mdps	= g_twi1_gyro_1_gyro_y_mdps;
-					int32_t l_twi1_gyro_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
-					cpu_irq_restore(flags);
-
-					float rads_x = ((float)l_twi1_gyro_1_gyro_x_mdps * M_PI) / 180000.f;
-					float rads_y = ((float)l_twi1_gyro_1_gyro_y_mdps * M_PI) / 180000.f;
-					float rads_z = ((float)l_twi1_gyro_1_gyro_z_mdps * M_PI) / 180000.f;
-
-					/* Remove old lines */
-					task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - (int8_t)(plot_gyro_radius * sin(s_rads_x)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_x)), 0);
-					task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + (int8_t)(plot_gyro_radius * sin(s_rads_y)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_y)), 0);
-					task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - (int8_t)(plot_gyro_radius * sin(s_rads_z)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_z)), 0);
-
-					/* Draw new lines */
-					task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - (int8_t)(plot_gyro_radius * sin(  rads_x)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_x)), 1);
-					task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + (int8_t)(plot_gyro_radius * sin(  rads_y)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_y)), 1);
-					task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - (int8_t)(plot_gyro_radius * sin(  rads_z)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_z)), 1);
-
-					/* Store new set */
-					s_rads_x = rads_x;
-					s_rads_y = rads_y;
-					s_rads_z = rads_z;
-
-					/* Calculate speed of rotation */
-					if (g_pitch_tone_mode == 1) {
-#if 0
-						float speed = pow((l_twi1_gyro_1_gyro_x_mdps * l_twi1_gyro_1_gyro_x_mdps) + (l_twi1_gyro_1_gyro_y_mdps * l_twi1_gyro_1_gyro_y_mdps) + (l_twi1_gyro_1_gyro_z_mdps * l_twi1_gyro_1_gyro_z_mdps), 0.5);
-						if (speed > 500.f) {
-							twi2_set_beep(18 + (uint8_t)(speed / 500.f), 10);
-						}
-#else
-						int32_t speed = l_twi1_gyro_1_gyro_x_mdps + l_twi1_gyro_1_gyro_y_mdps + l_twi1_gyro_1_gyro_z_mdps;
-						if (speed < 0) {
-							speed = -speed;
-						}
-						if (speed > 400) {
-							twi2_set_beep(18 + (uint8_t)(speed / 700), 10);
-						}
-#endif
-					}
+			case 2:
+				if (g_adc_enabled) {
+					task_twi2_lcd__cpu3(col_left);
 				}
+				++s_lcd_entry_state;
+			break;
 
-				/* Calculate variometer */
-				{
-					static uint32_t s_twi1_baro_p_100 = 100000UL;
+			case 3:
+				task_twi2_lcd__baro(col_left);
+				++s_lcd_entry_state;
+			break;
 
-					/* Get up-to-date global data */
-					flags = cpu_irq_save();
-					int32_t l_twi1_baro_p_100 = g_twi1_baro_p_100;
-					cpu_irq_restore(flags);
+			case 4:
+				task_twi2_lcd__hygro(col_left);
+				s_lcd_entry_state = 0;
+			break;
 
-					/* Calculate variometer tone */
-					if (g_pitch_tone_mode == 2) {
-						int32_t vario = g_twi1_baro_p_100 - s_twi1_baro_p_100;
-						uint32_t pitch = 100 - vario;
-
-						if (pitch < 10) {
-							pitch = 10;
-						} else if (pitch > 255) {
-							pitch = 255;
-						}
-
-						twi2_set_beep(pitch, 10);
-						yield_ms(5);
-					}
-
-					/* Update static value */
-					s_twi1_baro_p_100 = l_twi1_baro_p_100;
-				}
-			}
-
-			/* Update same text line each second when no Gfx data is drawn */
-			if (g_adc_enabled) {
-				if ((s_lcd_entry_cnt % 8) == 1) {
-					/* Get up-to-date global data */
-					flags = cpu_irq_save();
-					int16_t l_adc_temp_deg_100			= g_adc_temp_deg_100;
-					int16_t l_adc_5v0_volt_1000			= g_adc_5v0_volt_1000;
-					cpu_irq_restore(flags);
-
-					/* ADC_TEMP */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_temp_deg_100 / 100.f, PM_FORMAT_4F1);
-
-					/* ADC_5V0 */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_5v0_volt_1000 / 1000.f, PM_FORMAT_5F3);
-
-				} else if ((s_lcd_entry_cnt % 8) == 2) {
-					/* Get up-to-date global data */
-					flags = cpu_irq_save();
-					int16_t l_adc_vbat_volt_1000		= g_adc_vbat_volt_1000;
-					int16_t l_adc_vctcxo_volt_1000		= g_adc_vctcxo_volt_1000;
-					cpu_irq_restore(flags);
-
-					/* ADC_VBAT */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_vbat_volt_1000 / 1000.f, PM_FORMAT_5F3);
-
-					/* ADC_VCTCXO */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_vctcxo_volt_1000 / 1000.f, PM_FORMAT_5F3);
-
-				} else if ((s_lcd_entry_cnt % 8) == 3) {
-					/* Get up-to-date global data */
-					flags = cpu_irq_save();
-					int16_t l_adc_io_adc4_volt_1000		= g_adc_io_adc4_volt_1000;
-					int16_t l_adc_io_adc5_volt_1000		= g_adc_io_adc5_volt_1000;
-					cpu_irq_restore(flags);
-
-					/* ADC_IO_ADC4 */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_io_adc4_volt_1000 / 1000.f, PM_FORMAT_5F3);
-
-					/* ADC_IO_ADC5 */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_io_adc5_volt_1000 / 1000.f, PM_FORMAT_5F3);
-
-				} else if ((s_lcd_entry_cnt % 8) == 5) {
-					#if 0
-					flags = cpu_irq_save();
-					int16_t l_adc_silence_volt_1000	= g_adc_silence_volt_1000;
-					cpu_irq_restore(flags);
-
-					/* ADC_SILENCE */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_silence_volt_1000 / 1000.f, PM_FORMAT_5F3);
-					#else
-					s_line++;
-					#endif
-				}
-			}
-
-			if ((s_lcd_entry_cnt % 8) == 6) {
-				/* Get up-to-date global data */
-				flags = cpu_irq_save();
-				int32_t l_twi1_baro_temp_100		= g_twi1_baro_temp_100;
-				int32_t l_twi1_baro_p_100			= g_twi1_baro_p_100;
-				cpu_irq_restore(flags);
-
-				s_line = 9;
-
-				/* Baro_Temp */
-				task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_twi1_baro_temp_100 / 100.f, PM_FORMAT_05F2);
-
-				/* Baro_P */
-				task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_twi1_baro_p_100 / 100.f, PM_FORMAT_07F2);
-
-			} else if ((s_lcd_entry_cnt % 8) == 7) {
-				/* Get up-to-date global data */
-				flags = cpu_irq_save();
-				int16_t l_twi1_hygro_T_100			= g_twi1_hygro_T_100;
-				int16_t l_twi1_hygro_RH_100			= g_twi1_hygro_RH_100;
-				cpu_irq_restore(flags);
-
-				/* Hygro_Temp */
-				task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_twi1_hygro_T_100 / 100.f, PM_FORMAT_05F2);
-
-				/* Hygro_RH */
-				task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_twi1_hygro_RH_100 / 100.f, PM_FORMAT_05F2);
-			}
-
-			/* Store last time */
-			s_lcd_last = now;
+			default:
+				s_lcd_entry_state = 0;
 		}
 
 	} else if (g_twi2_lcd_version == 0x10) {
