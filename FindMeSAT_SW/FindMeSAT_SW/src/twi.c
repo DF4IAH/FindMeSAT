@@ -1022,17 +1022,17 @@ void isr_500ms_twi1_onboard(uint32_t now)
 
 	if (g_twi1_hygro_valid) {
 		service_twi1_hygro(now, true);
-		//sched_push(task_twi1_hygro, 10, true);
+		sched_push(task_twi1_hygro, 10, true, false);
 	}
 
 	if (g_twi1_gyro_valid) {
 		service_twi1_gyro(now, true);
-		//sched_push(task_twi1_gyro, 10, true);
+		sched_push(task_twi1_gyro, 10, true, false);
 	}
 
 	if (g_twi1_baro_valid) {
 		service_twi1_baro(now, true);
-		//sched_push(task_twi1_baro, 50, true);
+		sched_push(task_twi1_baro, 10, true, false);
 	}
 }
 
@@ -1253,6 +1253,7 @@ void task_twi1_onboard(uint32_t now)
 }
 
 
+#if 0
 static void task_twi2_lcd_reset(void)
 {
 	twi2_waitUntilReady();
@@ -1261,6 +1262,7 @@ static void task_twi2_lcd_reset(void)
 	twi_master_write(&TWI2_MASTER, &twi2_packet);
 	delay_ms(50);
 }
+#endif
 
 static void task_twi2_lcd_cls(void)
 {
@@ -1459,7 +1461,371 @@ PROGMEM_DECLARE(const char, PM_FORMAT_07F2[]);
 PROGMEM_DECLARE(const char, PM_FORMAT_4F1[]);
 PROGMEM_DECLARE(const char, PM_FORMAT_5F3[]);
 
+
 /* TWI2 - LCD Port */
+void task_twi2_lcd__cpu1(uint8_t col_left)
+{
+	int16_t l_adc_temp_deg_100;
+	int16_t l_adc_5v0_volt_1000;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_adc_temp_deg_100			= g_adc_temp_deg_100;
+		l_adc_5v0_volt_1000			= g_adc_5v0_volt_1000;
+		cpu_irq_restore(flags);
+	}
+
+	/* ADC_TEMP */
+	task_twi2_lcd_print_format_float_P(col_left,  2 * 10, l_adc_temp_deg_100 / 100.f, PM_FORMAT_4F1);
+
+	/* ADC_5V0 */
+	task_twi2_lcd_print_format_float_P(col_left,  3 * 10, l_adc_5v0_volt_1000 / 1000.f, PM_FORMAT_5F3);
+}
+
+void task_twi2_lcd__cpu2(uint8_t col_left)
+{
+	int16_t l_adc_vbat_volt_1000;
+	int16_t l_adc_vctcxo_volt_1000;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_adc_vbat_volt_1000		= g_adc_vbat_volt_1000;
+		l_adc_vctcxo_volt_1000		= g_adc_vctcxo_volt_1000;
+		cpu_irq_restore(flags);
+	}
+
+	/* ADC_VBAT */
+	task_twi2_lcd_print_format_float_P(col_left,  4 * 10, l_adc_vbat_volt_1000 / 1000.f, PM_FORMAT_5F3);
+
+	/* ADC_VCTCXO */
+	task_twi2_lcd_print_format_float_P(col_left,  5 * 10, l_adc_vctcxo_volt_1000 / 1000.f, PM_FORMAT_5F3);
+}
+
+void task_twi2_lcd__cpu3(uint8_t col_left)
+{
+	int16_t l_adc_io_adc4_volt_1000;
+	int16_t l_adc_io_adc5_volt_1000;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_adc_io_adc4_volt_1000		= g_adc_io_adc4_volt_1000;
+		l_adc_io_adc5_volt_1000		= g_adc_io_adc5_volt_1000;
+		cpu_irq_restore(flags);
+	}
+
+	/* ADC_IO_ADC4 */
+	task_twi2_lcd_print_format_float_P(col_left,  6 * 10, l_adc_io_adc4_volt_1000 / 1000.f, PM_FORMAT_5F3);
+
+	/* ADC_IO_ADC5 */
+	task_twi2_lcd_print_format_float_P(col_left,  7 * 10, l_adc_io_adc5_volt_1000 / 1000.f, PM_FORMAT_5F3);
+
+	#if 0
+	int16_t l_adc_silence_volt_1000;
+
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_adc_silence_volt_1000		= g_adc_silence_volt_1000;
+		cpu_irq_restore(flags);
+	}
+
+	/* ADC_SILENCE */
+	task_twi2_lcd_print_format_float_P(col_left,  8 * 10, l_adc_silence_volt_1000 / 1000.f, PM_FORMAT_5F3);
+	#endif
+}
+
+void task_twi2_lcd__hygro(uint8_t col_left)
+{
+	int16_t l_twi1_hygro_T_100, l_twi1_hygro_RH_100;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags				= cpu_irq_save();
+		l_twi1_hygro_T_100				= g_twi1_hygro_T_100;
+		l_twi1_hygro_RH_100				= g_twi1_hygro_RH_100;
+		cpu_irq_restore(flags);
+	}
+
+	/* Hygro_Temp */
+	task_twi2_lcd_print_format_float_P(col_left, 11 * 10, l_twi1_hygro_T_100 / 100.f, PM_FORMAT_05F2);
+
+	/* Hygro_RH */
+	task_twi2_lcd_print_format_float_P(col_left, 12 * 10, l_twi1_hygro_RH_100 / 100.f, PM_FORMAT_05F2);
+}
+
+void task_twi2_lcd__gyro_gfxmag(void)
+{
+	/* Mag lines */
+	const uint8_t plot_intensity_center_x = 115;
+	const uint8_t plot_intensity_center_y =  64;
+	const uint8_t plot_mag_center_x = 150;
+	const uint8_t plot_mag_center_y =  40;
+	static float  s_length = 0.f;
+	static int8_t s_p1x = 0;
+	static int8_t s_p1y = 0;
+	static int8_t s_p2x = 0;
+	static int8_t s_p2y = 0;
+	static int8_t s_p3x = 0;
+	static int8_t s_p3y = 0;
+	int32_t l_twi1_gyro_2_mag_x_nT, l_twi1_gyro_2_mag_y_nT, l_twi1_gyro_2_mag_z_nT;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_twi1_gyro_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
+		l_twi1_gyro_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
+		l_twi1_gyro_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
+		cpu_irq_restore(flags);
+	}
+
+	/* Removing old lines first */
+	task_twi2_lcd_rect(plot_intensity_center_x - 1,	plot_intensity_center_y - s_length / 3000.f, 3, s_length / 3000.f, true, 0);
+	task_twi2_lcd_line(plot_mag_center_x,			plot_mag_center_y,			plot_mag_center_x + s_p1x, plot_mag_center_y + s_p1y, 0);
+	task_twi2_lcd_line(plot_mag_center_x + s_p1x,	plot_mag_center_y + s_p1y,	plot_mag_center_x + s_p2x, plot_mag_center_y + s_p2y, 0);
+	task_twi2_lcd_line(plot_mag_center_x + s_p2x,	plot_mag_center_y + s_p2y,	plot_mag_center_x + s_p3x, plot_mag_center_y + s_p3y, 0);
+
+	/* Draw center point */
+	task_twi2_lcd_circ(plot_mag_center_x, plot_mag_center_y, 1, true, 1);
+
+	/* Draw new lines */
+	{
+		float l_length = pow(pow(l_twi1_gyro_2_mag_x_nT, 2.0) + pow(l_twi1_gyro_2_mag_y_nT, 2.0) + pow(l_twi1_gyro_2_mag_z_nT, 2.0), 0.5);
+		if (!l_length) {
+			l_length = 1.f;
+		}
+
+		float l_twi1_gyro_2_mag_x_norm = l_twi1_gyro_2_mag_x_nT / l_length;
+		float l_twi1_gyro_2_mag_y_norm = l_twi1_gyro_2_mag_y_nT / l_length;
+		float l_twi1_gyro_2_mag_z_norm = l_twi1_gyro_2_mag_z_nT / l_length;
+		uint8_t p1x =       (l_twi1_gyro_2_mag_x_norm * 12.5);
+		uint8_t p1y =      -(l_twi1_gyro_2_mag_x_norm * 12.5);
+		uint8_t p2x = p1x + (l_twi1_gyro_2_mag_y_norm * 25);
+		uint8_t p2y = p1y;
+		uint8_t p3x = p2x;
+		uint8_t p3y = p2y + (l_twi1_gyro_2_mag_z_norm * 25);
+
+		// Saturation at 100µT
+		if (l_length > 100000.f) {
+			l_length = 100000.f;
+		}
+
+		task_twi2_lcd_circ(plot_intensity_center_x,		plot_intensity_center_y,	2, false, 1);
+		task_twi2_lcd_rect(plot_intensity_center_x - 1,	plot_intensity_center_y - l_length / 3000.f, 3, l_length / 3000.f, true, 1);
+		task_twi2_lcd_line(plot_mag_center_x,			plot_mag_center_y,			plot_mag_center_x + p1x, plot_mag_center_y + p1y, 1);
+		task_twi2_lcd_line(plot_mag_center_x + p1x,		plot_mag_center_y + p1y,	plot_mag_center_x + p2x, plot_mag_center_y + p2y, 1);
+		task_twi2_lcd_line(plot_mag_center_x + p2x,		plot_mag_center_y + p2y,	plot_mag_center_x + p3x, plot_mag_center_y + p3y, 1);
+
+		/* Store new set */
+		s_length = l_length;
+		s_p1x = p1x;
+		s_p1y = p1y;
+		s_p2x = p2x;
+		s_p2y = p2y;
+		s_p3x = p3x;
+		s_p3y = p3y;
+	}
+}
+
+void task_twi2_lcd__gyro_gfxaccel(void)
+{
+	/* Accel lines */
+	const uint8_t plot_accel_center_x = 210;
+	const uint8_t plot_accel_center_y =  40;
+	static int8_t s_p1x = 0;
+	static int8_t s_p1y = 0;
+	static int8_t s_p2x = 0;
+	static int8_t s_p2y = 0;
+	static int8_t s_p3x = 0;
+	static int8_t s_p3y = 0;
+	int16_t l_twi1_gyro_1_accel_x_mg, l_twi1_gyro_1_accel_y_mg, l_twi1_gyro_1_accel_z_mg;
+	int16_t l_backlight_mode_pwm;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
+		l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
+		l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
+		l_backlight_mode_pwm		= g_backlight_mode_pwm;
+		cpu_irq_restore(flags);
+	}
+
+	/* Removing old lines first */
+	{
+		task_twi2_lcd_line(plot_accel_center_x,			plot_accel_center_y,			plot_accel_center_x + s_p1x, plot_accel_center_y + s_p1y, 0);
+		task_twi2_lcd_line(plot_accel_center_x + s_p1x,	plot_accel_center_y + s_p1y,	plot_accel_center_x + s_p2x, plot_accel_center_y + s_p2y, 0);
+		task_twi2_lcd_line(plot_accel_center_x + s_p2x,	plot_accel_center_y + s_p2y,	plot_accel_center_x + s_p3x, plot_accel_center_y + s_p3y, 0);
+	}
+
+	/* Center point */
+	task_twi2_lcd_circ(plot_accel_center_x, plot_accel_center_y, 1, true, 1);
+
+	/* Draw new lines */
+	{
+		uint8_t p1x =      -(l_twi1_gyro_1_accel_y_mg / 80);
+		uint8_t p1y =       (l_twi1_gyro_1_accel_y_mg / 80);
+		uint8_t p2x = p1x - (l_twi1_gyro_1_accel_x_mg / 40);
+		uint8_t p2y = p1y;
+		uint8_t p3x = p2x;
+		uint8_t p3y = p2y + (l_twi1_gyro_1_accel_z_mg / 40);
+
+		task_twi2_lcd_line(plot_accel_center_x,			plot_accel_center_y,		plot_accel_center_x + p1x, plot_accel_center_y + p1y, 1);
+		task_twi2_lcd_line(plot_accel_center_x + p1x,	plot_accel_center_y + p1y,	plot_accel_center_x + p2x, plot_accel_center_y + p2y, 1);
+		task_twi2_lcd_line(plot_accel_center_x + p2x,	plot_accel_center_y + p2y,	plot_accel_center_x + p3x, plot_accel_center_y + p3y, 1);
+
+		/* Store new set */
+		s_p1x = p1x;
+		s_p1y = p1y;
+		s_p2x = p2x;
+		s_p2y = p2y;
+		s_p3x = p3x;
+		s_p3y = p3y;
+	}
+
+	/* Calculate the luminance (sunshine on the surface) */
+	if (l_backlight_mode_pwm == -2) {
+		int32_t lum = 1000 + l_twi1_gyro_1_accel_z_mg;
+		if (lum < 0) {
+			lum = 0;
+		} else if (lum > 2000) {
+			lum = 2000;
+		}
+
+		twi2_set_ledbl(0, (uint8_t)(lum * 255 / 2000));
+	}
+}
+
+void task_twi2_lcd__gyro_gfxgyro(void)
+{
+	/* Gyro lines */
+	const uint8_t plot_gyro_center_x_X	= 150;
+	const uint8_t plot_gyro_center_x_Y	= 150 + 30;
+	const uint8_t plot_gyro_center_x_Z	= 150 + 60;
+	const uint8_t plot_gyro_center_y	= 100;
+	const uint8_t plot_gyro_radius		= 12;
+	static float s_rads_x = 0.f;
+	static float s_rads_y = 0.f;
+	static float s_rads_z = 0.f;
+	int32_t l_twi1_gyro_1_gyro_x_mdps, l_twi1_gyro_1_gyro_y_mdps, l_twi1_gyro_1_gyro_z_mdps;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_twi1_gyro_1_gyro_x_mdps	= g_twi1_gyro_1_gyro_x_mdps;
+		l_twi1_gyro_1_gyro_y_mdps	= g_twi1_gyro_1_gyro_y_mdps;
+		l_twi1_gyro_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
+		cpu_irq_restore(flags);
+	}
+
+	float rads_x = ((float)l_twi1_gyro_1_gyro_x_mdps * M_PI) / 180000.f;
+	float rads_y = ((float)l_twi1_gyro_1_gyro_y_mdps * M_PI) / 180000.f;
+	float rads_z = ((float)l_twi1_gyro_1_gyro_z_mdps * M_PI) / 180000.f;
+
+	/* Remove old lines */
+	task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - (int8_t)(plot_gyro_radius * sin(s_rads_x)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_x)), 0);
+	task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + (int8_t)(plot_gyro_radius * sin(s_rads_y)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_y)), 0);
+	task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - (int8_t)(plot_gyro_radius * sin(s_rads_z)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_z)), 0);
+
+	/* Draw new lines */
+	task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - (int8_t)(plot_gyro_radius * sin(  rads_x)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_x)), 1);
+	task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + (int8_t)(plot_gyro_radius * sin(  rads_y)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_y)), 1);
+	task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - (int8_t)(plot_gyro_radius * sin(  rads_z)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_z)), 1);
+
+	/* Store new set */
+	s_rads_x = rads_x;
+	s_rads_y = rads_y;
+	s_rads_z = rads_z;
+
+	/* Calculate speed of rotation */
+	if (g_pitch_tone_mode == 1) {
+#if 0
+		float speed = pow((l_twi1_gyro_1_gyro_x_mdps * l_twi1_gyro_1_gyro_x_mdps) + (l_twi1_gyro_1_gyro_y_mdps * l_twi1_gyro_1_gyro_y_mdps) + (l_twi1_gyro_1_gyro_z_mdps * l_twi1_gyro_1_gyro_z_mdps), 0.5);
+		if (speed > 500.f) {
+			twi2_set_beep(18 + (uint8_t)(speed / 500.f), 10);
+			delay_ms(100);
+		}
+#else
+		int32_t speed = l_twi1_gyro_1_gyro_x_mdps + l_twi1_gyro_1_gyro_y_mdps + l_twi1_gyro_1_gyro_z_mdps;
+		if (speed < 0) {
+			speed = -speed;
+		}
+		if (speed > 400) {
+			twi2_set_beep(18 + (uint8_t)(speed / 700), 10);
+			yield_ms(125);
+		}
+#endif
+	}
+}
+
+void task_twi2_lcd__gyro_beepvario(void)
+{
+	/* Calculate variometer */
+	static uint32_t s_twi1_baro_p_100 = 100000UL;
+	int32_t l_twi1_baro_p_100;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags			= cpu_irq_save();
+		l_twi1_baro_p_100			= g_twi1_baro_p_100;
+		cpu_irq_restore(flags);
+	}
+
+	/* Calculate variometer tone */
+	if (g_pitch_tone_mode == 2) {
+		int32_t vario = g_twi1_baro_p_100 - s_twi1_baro_p_100;
+		uint32_t pitch = 100 - vario;
+
+		if (pitch < 10) {
+			pitch = 10;
+		} else if (pitch > 255) {
+			pitch = 255;
+		}
+
+		twi2_set_beep(pitch, 10);
+		yield_ms(125);
+	}
+
+	/* Update static value */
+	s_twi1_baro_p_100 = l_twi1_baro_p_100;
+}
+
+inline void task_twi2_lcd__gyro(void)
+{
+	/* Mag lines */
+	task_twi2_lcd__gyro_gfxmag();
+
+	/* Accel lines */
+	task_twi2_lcd__gyro_gfxaccel();
+
+	/* Gyro lines */
+	task_twi2_lcd__gyro_gfxgyro();
+
+	/* Calculate variometer */
+	task_twi2_lcd__gyro_beepvario();
+}
+
+void task_twi2_lcd__baro(uint8_t col_left)
+{
+	int32_t l_twi1_baro_temp_100;
+	int32_t l_twi1_baro_p_100;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags				= cpu_irq_save();
+		l_twi1_baro_temp_100			= g_twi1_baro_temp_100;
+		l_twi1_baro_p_100				= g_twi1_baro_p_100;
+		cpu_irq_restore(flags);
+	}
+
+	/* Baro_Temp */
+	task_twi2_lcd_print_format_float_P(col_left,  9 * 10, l_twi1_baro_temp_100 / 100.f, PM_FORMAT_05F2);
+
+	/* Baro_P */
+	task_twi2_lcd_print_format_float_P(col_left, 10 * 10, l_twi1_baro_p_100 / 100.f, PM_FORMAT_07F2);
+}
+
 void task_twi2_lcd(uint32_t now)
 {
 	static uint16_t s_lcd_entry_cnt =  0U;
@@ -1471,12 +1837,6 @@ void task_twi2_lcd(uint32_t now)
 		/* Show current measurement data on the LCD - 8 times per second */
 		if (((now - s_lcd_last) >= 128) || (now < s_lcd_last)) {
 			const uint8_t col_left = 6 * 10;
-			static uint8_t s_line = 2;
-
-			/* Each second go to the home position */
-			if (!(s_lcd_entry_cnt % 8)) {
-				s_line = 2;
-			}
 
 			/* Repaint all items when starting and at some interval */
 			if (!(s_lcd_entry_cnt++) || g_twi2_lcd_repaint) {
@@ -1491,349 +1851,30 @@ void task_twi2_lcd(uint32_t now)
 
 			/* Update Gfx twice a second */
 			if (!(s_lcd_entry_cnt % 4)) {
-				/* Mag lines */
-				{
-					const uint8_t plot_intensity_center_x = 115;
-					const uint8_t plot_intensity_center_y =  64;
-					const uint8_t plot_mag_center_x = 150;
-					const uint8_t plot_mag_center_y =  40;
-					static float  s_length = 0.f;
-					static int8_t s_p1x = 0;
-					static int8_t s_p1y = 0;
-					static int8_t s_p2x = 0;
-					static int8_t s_p2y = 0;
-					static int8_t s_p3x = 0;
-					static int8_t s_p3y = 0;
-					int32_t l_twi1_gyro_2_mag_x_nT, l_twi1_gyro_2_mag_y_nT, l_twi1_gyro_2_mag_z_nT;
-
-					/* Get up-to-date global data */
-					{
-						irqflags_t flags			= cpu_irq_save();
-						l_twi1_gyro_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
-						l_twi1_gyro_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
-						l_twi1_gyro_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
-						cpu_irq_restore(flags);
-					}
-
-					/* Removing old lines first */
-					task_twi2_lcd_rect(plot_intensity_center_x - 1,	plot_intensity_center_y - s_length / 3000.f, 3, s_length / 3000.f, true, 0);
-					task_twi2_lcd_line(plot_mag_center_x,			plot_mag_center_y,			plot_mag_center_x + s_p1x, plot_mag_center_y + s_p1y, 0);
-					task_twi2_lcd_line(plot_mag_center_x + s_p1x,	plot_mag_center_y + s_p1y,	plot_mag_center_x + s_p2x, plot_mag_center_y + s_p2y, 0);
-					task_twi2_lcd_line(plot_mag_center_x + s_p2x,	plot_mag_center_y + s_p2y,	plot_mag_center_x + s_p3x, plot_mag_center_y + s_p3y, 0);
-
-					/* Draw center point */
-					task_twi2_lcd_circ(plot_mag_center_x, plot_mag_center_y, 1, true, 1);
-
-					/* Draw new lines */
-					{
-						float l_length = pow(pow(l_twi1_gyro_2_mag_x_nT, 2.0) + pow(l_twi1_gyro_2_mag_y_nT, 2.0) + pow(l_twi1_gyro_2_mag_z_nT, 2.0), 0.5);
-						if (!l_length) {
-							l_length = 1.f;
-						}
-
-						float l_twi1_gyro_2_mag_x_norm = l_twi1_gyro_2_mag_x_nT / l_length;
-						float l_twi1_gyro_2_mag_y_norm = l_twi1_gyro_2_mag_y_nT / l_length;
-						float l_twi1_gyro_2_mag_z_norm = l_twi1_gyro_2_mag_z_nT / l_length;
-						uint8_t p1x =       (l_twi1_gyro_2_mag_x_norm * 12.5);
-						uint8_t p1y =      -(l_twi1_gyro_2_mag_x_norm * 12.5);
-						uint8_t p2x = p1x + (l_twi1_gyro_2_mag_y_norm * 25);
-						uint8_t p2y = p1y;
-						uint8_t p3x = p2x;
-						uint8_t p3y = p2y + (l_twi1_gyro_2_mag_z_norm * 25);
-
-						// Saturation at 100µT
-						if (l_length > 100000.f) {
-							l_length = 100000.f;
-						}
-
-						task_twi2_lcd_circ(plot_intensity_center_x,		plot_intensity_center_y,	2, false, 1);
-						task_twi2_lcd_rect(plot_intensity_center_x - 1,	plot_intensity_center_y - l_length / 3000.f, 3, l_length / 3000.f, true, 1);
-						task_twi2_lcd_line(plot_mag_center_x,			plot_mag_center_y,			plot_mag_center_x + p1x, plot_mag_center_y + p1y, 1);
-						task_twi2_lcd_line(plot_mag_center_x + p1x,		plot_mag_center_y + p1y,	plot_mag_center_x + p2x, plot_mag_center_y + p2y, 1);
-						task_twi2_lcd_line(plot_mag_center_x + p2x,		plot_mag_center_y + p2y,	plot_mag_center_x + p3x, plot_mag_center_y + p3y, 1);
-
-						/* Store new set */
-						s_length = l_length;
-						s_p1x = p1x;
-						s_p1y = p1y;
-						s_p2x = p2x;
-						s_p2y = p2y;
-						s_p3x = p3x;
-						s_p3y = p3y;
-					}
-				}
-
-				/* Accel lines */
-				{
-					const uint8_t plot_accel_center_x = 210;
-					const uint8_t plot_accel_center_y =  40;
-					static int8_t s_p1x = 0;
-					static int8_t s_p1y = 0;
-					static int8_t s_p2x = 0;
-					static int8_t s_p2y = 0;
-					static int8_t s_p3x = 0;
-					static int8_t s_p3y = 0;
-					int16_t l_twi1_gyro_1_accel_x_mg, l_twi1_gyro_1_accel_y_mg, l_twi1_gyro_1_accel_z_mg;
-					int16_t l_backlight_mode_pwm;
-
-					/* Get up-to-date global data */
-					{
-						irqflags_t flags			= cpu_irq_save();
-						l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
-						l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
-						l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
-						l_backlight_mode_pwm		= g_backlight_mode_pwm;
-						cpu_irq_restore(flags);
-					}
-
-					/* Removing old lines first */
-					{
-						task_twi2_lcd_line(plot_accel_center_x,			plot_accel_center_y,			plot_accel_center_x + s_p1x, plot_accel_center_y + s_p1y, 0);
-						task_twi2_lcd_line(plot_accel_center_x + s_p1x,	plot_accel_center_y + s_p1y,	plot_accel_center_x + s_p2x, plot_accel_center_y + s_p2y, 0);
-						task_twi2_lcd_line(plot_accel_center_x + s_p2x,	plot_accel_center_y + s_p2y,	plot_accel_center_x + s_p3x, plot_accel_center_y + s_p3y, 0);
-					}
-
-					/* Center point */
-					task_twi2_lcd_circ(plot_accel_center_x, plot_accel_center_y, 1, true, 1);
-
-					/* Draw new lines */
-					{
-						uint8_t p1x =      -(l_twi1_gyro_1_accel_y_mg / 80);
-						uint8_t p1y =       (l_twi1_gyro_1_accel_y_mg / 80);
-						uint8_t p2x = p1x - (l_twi1_gyro_1_accel_x_mg / 40);
-						uint8_t p2y = p1y;
-						uint8_t p3x = p2x;
-						uint8_t p3y = p2y + (l_twi1_gyro_1_accel_z_mg / 40);
-
-						task_twi2_lcd_line(plot_accel_center_x,			plot_accel_center_y,		plot_accel_center_x + p1x, plot_accel_center_y + p1y, 1);
-						task_twi2_lcd_line(plot_accel_center_x + p1x,	plot_accel_center_y + p1y,	plot_accel_center_x + p2x, plot_accel_center_y + p2y, 1);
-						task_twi2_lcd_line(plot_accel_center_x + p2x,	plot_accel_center_y + p2y,	plot_accel_center_x + p3x, plot_accel_center_y + p3y, 1);
-
-						/* Store new set */
-						s_p1x = p1x;
-						s_p1y = p1y;
-						s_p2x = p2x;
-						s_p2y = p2y;
-						s_p3x = p3x;
-						s_p3y = p3y;
-					}
-
-					/* Calculate the luminance (sunshine on the surface) */
-					if (l_backlight_mode_pwm == -2) {
-						int32_t lum = 1000 + l_twi1_gyro_1_accel_z_mg;
-						if (lum < 0) {
-							lum = 0;
-						} else if (lum > 2000) {
-							lum = 2000;
-						}
-
-						twi2_set_ledbl(0, (uint8_t)(lum * 255 / 2000));
-					}
-				}
-
-				/* Gyro lines */
-				{
-					const uint8_t plot_gyro_center_x_X	= 150;
-					const uint8_t plot_gyro_center_x_Y	= 150 + 30;
-					const uint8_t plot_gyro_center_x_Z	= 150 + 60;
-					const uint8_t plot_gyro_center_y	= 100;
-					const uint8_t plot_gyro_radius		= 12;
-					static float s_rads_x = 0.f;
-					static float s_rads_y = 0.f;
-					static float s_rads_z = 0.f;
-					int32_t l_twi1_gyro_1_gyro_x_mdps, l_twi1_gyro_1_gyro_y_mdps, l_twi1_gyro_1_gyro_z_mdps;
-
-					/* Get up-to-date global data */
-					{
-						irqflags_t flags			= cpu_irq_save();
-						l_twi1_gyro_1_gyro_x_mdps	= g_twi1_gyro_1_gyro_x_mdps;
-						l_twi1_gyro_1_gyro_y_mdps	= g_twi1_gyro_1_gyro_y_mdps;
-						l_twi1_gyro_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
-						cpu_irq_restore(flags);
-					}
-
-					float rads_x = ((float)l_twi1_gyro_1_gyro_x_mdps * M_PI) / 180000.f;
-					float rads_y = ((float)l_twi1_gyro_1_gyro_y_mdps * M_PI) / 180000.f;
-					float rads_z = ((float)l_twi1_gyro_1_gyro_z_mdps * M_PI) / 180000.f;
-
-					/* Remove old lines */
-					task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - (int8_t)(plot_gyro_radius * sin(s_rads_x)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_x)), 0);
-					task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + (int8_t)(plot_gyro_radius * sin(s_rads_y)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_y)), 0);
-					task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - (int8_t)(plot_gyro_radius * sin(s_rads_z)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(s_rads_z)), 0);
-
-					/* Draw new lines */
-					task_twi2_lcd_line(plot_gyro_center_x_X, plot_gyro_center_y, plot_gyro_center_x_X - (int8_t)(plot_gyro_radius * sin(  rads_x)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_x)), 1);
-					task_twi2_lcd_line(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_center_x_Y + (int8_t)(plot_gyro_radius * sin(  rads_y)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_y)), 1);
-					task_twi2_lcd_line(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_center_x_Z - (int8_t)(plot_gyro_radius * sin(  rads_z)), plot_gyro_center_y - (int8_t)(plot_gyro_radius * cos(  rads_z)), 1);
-
-					/* Store new set */
-					s_rads_x = rads_x;
-					s_rads_y = rads_y;
-					s_rads_z = rads_z;
-
-					/* Calculate speed of rotation */
-					if (g_pitch_tone_mode == 1) {
-#if 0
-						float speed = pow((l_twi1_gyro_1_gyro_x_mdps * l_twi1_gyro_1_gyro_x_mdps) + (l_twi1_gyro_1_gyro_y_mdps * l_twi1_gyro_1_gyro_y_mdps) + (l_twi1_gyro_1_gyro_z_mdps * l_twi1_gyro_1_gyro_z_mdps), 0.5);
-						if (speed > 500.f) {
-							twi2_set_beep(18 + (uint8_t)(speed / 500.f), 10);
-							delay_ms(100);
-						}
-#else
-						int32_t speed = l_twi1_gyro_1_gyro_x_mdps + l_twi1_gyro_1_gyro_y_mdps + l_twi1_gyro_1_gyro_z_mdps;
-						if (speed < 0) {
-							speed = -speed;
-						}
-						if (speed > 400) {
-							twi2_set_beep(18 + (uint8_t)(speed / 700), 10);
-							yield_ms(125);
-						}
-#endif
-					}
-				}
-
-				/* Calculate variometer */
-				{
-					static uint32_t s_twi1_baro_p_100 = 100000UL;
-					int32_t l_twi1_baro_p_100;
-
-					/* Get up-to-date global data */
-					{
-						irqflags_t flags			= cpu_irq_save();
-						l_twi1_baro_p_100			= g_twi1_baro_p_100;
-						cpu_irq_restore(flags);
-					}
-
-					/* Calculate variometer tone */
-					if (g_pitch_tone_mode == 2) {
-						int32_t vario = g_twi1_baro_p_100 - s_twi1_baro_p_100;
-						uint32_t pitch = 100 - vario;
-
-						if (pitch < 10) {
-							pitch = 10;
-						} else if (pitch > 255) {
-							pitch = 255;
-						}
-
-						twi2_set_beep(pitch, 10);
-						yield_ms(125);
-					}
-
-					/* Update static value */
-					s_twi1_baro_p_100 = l_twi1_baro_p_100;
-				}
+				task_twi2_lcd__gyro();
 			}
 
 			/* Update same text line each second when no Gfx data is drawn */
-			if (g_adc_enabled) {
-				if ((s_lcd_entry_cnt % 8) == 1) {
-					int16_t l_adc_temp_deg_100;
-					int16_t l_adc_5v0_volt_1000;
-
-					/* Get up-to-date global data */
-					{
-						irqflags_t flags			= cpu_irq_save();
-						l_adc_temp_deg_100			= g_adc_temp_deg_100;
-						l_adc_5v0_volt_1000			= g_adc_5v0_volt_1000;
-						cpu_irq_restore(flags);
-					}
-
-					/* ADC_TEMP */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_temp_deg_100 / 100.f, PM_FORMAT_4F1);
-
-					/* ADC_5V0 */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_5v0_volt_1000 / 1000.f, PM_FORMAT_5F3);
-
-				} else if ((s_lcd_entry_cnt % 8) == 2) {
-					int16_t l_adc_vbat_volt_1000;
-					int16_t l_adc_vctcxo_volt_1000;
-
-					/* Get up-to-date global data */
-					{
-						irqflags_t flags			= cpu_irq_save();
-						l_adc_vbat_volt_1000		= g_adc_vbat_volt_1000;
-						l_adc_vctcxo_volt_1000		= g_adc_vctcxo_volt_1000;
-						cpu_irq_restore(flags);
-					}
-
-					/* ADC_VBAT */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_vbat_volt_1000 / 1000.f, PM_FORMAT_5F3);
-
-					/* ADC_VCTCXO */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_vctcxo_volt_1000 / 1000.f, PM_FORMAT_5F3);
-
-				} else if ((s_lcd_entry_cnt % 8) == 3) {
-					int16_t l_adc_io_adc4_volt_1000;
-					int16_t l_adc_io_adc5_volt_1000;
-
-					/* Get up-to-date global data */
-					{
-						irqflags_t flags			= cpu_irq_save();
-						l_adc_io_adc4_volt_1000		= g_adc_io_adc4_volt_1000;
-						l_adc_io_adc5_volt_1000		= g_adc_io_adc5_volt_1000;
-						cpu_irq_restore(flags);
-					}
-
-					/* ADC_IO_ADC4 */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_io_adc4_volt_1000 / 1000.f, PM_FORMAT_5F3);
-
-					/* ADC_IO_ADC5 */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_io_adc5_volt_1000 / 1000.f, PM_FORMAT_5F3);
-
-				} else if ((s_lcd_entry_cnt % 8) == 5) {
-					#if 0
-					int16_t l_adc_silence_volt_1000;
-
-					{
-						irqflags_t flags			= cpu_irq_save();
-						l_adc_silence_volt_1000		= g_adc_silence_volt_1000;
-						cpu_irq_restore(flags);
-					}
-
-					/* ADC_SILENCE */
-					task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_adc_silence_volt_1000 / 1000.f, PM_FORMAT_5F3);
-					#else
-					s_line++;
-					#endif
-				}
-			}
-
-			if ((s_lcd_entry_cnt % 8) == 6) {
-				int32_t l_twi1_baro_temp_100;
-				int32_t l_twi1_baro_p_100;
-
-				/* Get up-to-date global data */
-				{
-					irqflags_t flags				= cpu_irq_save();
-					l_twi1_baro_temp_100			= g_twi1_baro_temp_100;
-					l_twi1_baro_p_100				= g_twi1_baro_p_100;
-					cpu_irq_restore(flags);
+			if ((s_lcd_entry_cnt % 8) == 1) {
+				if (g_adc_enabled) {
+					task_twi2_lcd__cpu1(col_left);
 				}
 
-				s_line = 9;
+			} else if ((s_lcd_entry_cnt % 8) == 2) {
+				if (g_adc_enabled) {
+					task_twi2_lcd__cpu2(col_left);
+				}
 
-				/* Baro_Temp */
-				task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_twi1_baro_temp_100 / 100.f, PM_FORMAT_05F2);
+			} else if ((s_lcd_entry_cnt % 8) == 3) {
+				if (g_adc_enabled) {
+					task_twi2_lcd__cpu3(col_left);
+				}
 
-				/* Baro_P */
-				task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_twi1_baro_p_100 / 100.f, PM_FORMAT_07F2);
+			} else if ((s_lcd_entry_cnt % 8) == 6) {
+				task_twi2_lcd__baro(col_left);
 
 			} else if ((s_lcd_entry_cnt % 8) == 7) {
-				int16_t l_twi1_hygro_T_100, l_twi1_hygro_RH_100;
-
-				/* Get up-to-date global data */
-				{
-					irqflags_t flags				= cpu_irq_save();
-					l_twi1_hygro_T_100				= g_twi1_hygro_T_100;
-					l_twi1_hygro_RH_100				= g_twi1_hygro_RH_100;
-					cpu_irq_restore(flags);
-				}
-
-				/* Hygro_Temp */
-				task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_twi1_hygro_T_100 / 100.f, PM_FORMAT_05F2);
-
-				/* Hygro_RH */
-				task_twi2_lcd_print_format_float_P(col_left, (s_line++) * 10, l_twi1_hygro_RH_100 / 100.f, PM_FORMAT_05F2);
+				task_twi2_lcd__hygro(col_left);
 			}
 
 			/* Store last time */

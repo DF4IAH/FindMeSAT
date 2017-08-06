@@ -330,6 +330,17 @@ void isr_500ms_twi1_onboard(uint32_t now);
 void isr_sparetime_twi1_onboard(uint32_t now);
 
 void task_twi1_onboard(uint32_t now);
+
+void task_twi2_lcd__cpu1(uint8_t col_left);
+void task_twi2_lcd__cpu2(uint8_t col_left);
+void task_twi2_lcd__cpu3(uint8_t col_left);
+void task_twi2_lcd__hygro(uint8_t col_left);
+void task_twi2_lcd__gyro_gfxmag(void);
+void task_twi2_lcd__gyro_gfxaccel(void);
+void task_twi2_lcd__gyro_gfxgyro(void);
+void task_twi2_lcd__gyro_beepvario(void);
+// void task_twi2_lcd__gyro(void);
+void task_twi2_lcd__baro(uint8_t col_left);
 void task_twi2_lcd(uint32_t now);
 
 
