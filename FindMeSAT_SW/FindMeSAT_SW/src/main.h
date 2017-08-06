@@ -14,8 +14,10 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												170
-#define VERSION_LOW													730
+#define VERSION_LOW													805
 
+
+#define C_USB_LINE_DELAY_MS											2
 
 #define C_TWI1_BARO_C_CNT											8
 
@@ -50,7 +52,8 @@ typedef struct sched_entry {
 	void*				callback;
 
 	uint8_t				occupied		: 1;
-	uint8_t				reserved1		: 7;
+	uint8_t				isIntDis		: 1;
+	uint8_t				reserved1		: 6;
 } sched_entry_t;
 
 typedef void(*sched_callback)(uint32_t listTime);
@@ -105,7 +108,7 @@ void halt(void);
 
 bool sched_getLock(volatile uint8_t* lockVar);
 void sched_freeLock(volatile uint8_t* lockVar);
-void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay);
+void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay, bool isIntDis);
 void sched_pop(uint32_t wakeNow);
 void yield_ms(uint16_t ms);
 void yield_ms_cb(uint32_t listTime);
@@ -115,6 +118,7 @@ void isr_rtc_alarm(uint32_t rtc_time);
 void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
 void isr_adc_b(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
 
+uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl);
 void usb_callback_suspend_action(void);
 void usb_callback_resume_action(void);
 void usb_callback_remotewakeup_enable(void);

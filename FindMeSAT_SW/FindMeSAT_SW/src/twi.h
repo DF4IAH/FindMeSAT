@@ -27,7 +27,8 @@
 #define TWI_SMART_LCD_CMD_GET_STATE									0x03
 
 // mode 0x10 commands (Smart-LCD draw box)
-#define TWI_SMART_LCD_CMD_CLS										0x10
+#define TWI_SMART_LCD_CMD_RESET										0x10
+#define TWI_SMART_LCD_CMD_CLS										0x11
 #define TWI_SMART_LCD_CMD_SET_PIXEL_TYPE							0x14
 #define TWI_SMART_LCD_CMD_SET_POS_X_Y								0x20
 #define TWI_SMART_LCD_CMD_WRITE										0x30

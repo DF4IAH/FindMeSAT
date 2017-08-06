@@ -53,7 +53,7 @@ bool						g_keyBeep_enable					= false;
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines			= false;
 bool						g_usb_cdc_rx_received				= false;
-bool						g_usb_cdc_transfers_autorized		= false;
+bool						g_usb_cdc_transfers_authorized		= false;
 bool						g_usb_cdc_access_blocked			= false;
 uint8_t						g_pitch_tone_mode					= 1;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
@@ -167,8 +167,8 @@ char						g_prepare_buf[C_TX_BUF_SIZE]		= "";
 fifo_desc_t					fifo_sched_desc;
 uint32_t					fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH];
 
-uint8_t						g_sched_lock						= 0;
-uint8_t						g_interpreter_lock					= 0;
+volatile uint8_t			g_sched_lock						= 0;
+volatile uint8_t			g_interpreter_lock					= 0;
 bool						g_sched_yield						= false;
 bool						g_sched_pop_again					= false;
 sched_entry_t				g_sched_data[C_SCH_SLOT_CNT]		= { 0 };
@@ -251,6 +251,7 @@ static void dac_start(void);
 static void dac_stop(void);
 
 static void isr_10ms(uint32_t now);
+static void isr_100ms(uint32_t now);
 static void isr_500ms(uint32_t now);
 static void isr_sparetime(uint32_t now);
 
@@ -319,11 +320,7 @@ int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int o
 
 void adc_app_enable(bool enable)
 {
-	irqflags_t flags = cpu_irq_save();
-	bool l_adc_enabled = g_adc_enabled;
-	cpu_irq_restore(flags);
-
-	if (l_adc_enabled != enable) {
+	if (g_adc_enabled != enable) {
 		if (enable) {
 			tc_init();
 			adc_init();
@@ -347,9 +344,12 @@ void backlight_mode_pwm(int16_t mode_pwm)
 {
 	uint8_t l_pwm = mode_pwm & 0xff;
 
-	irqflags_t flags = cpu_irq_save();
-	g_backlight_mode_pwm = mode_pwm;
-	cpu_irq_restore(flags);
+	/* Setting the mode */
+	{
+		irqflags_t flags		= cpu_irq_save();
+		g_backlight_mode_pwm	= mode_pwm;
+		cpu_irq_restore(flags);
+	}
 
 	switch (mode_pwm) {
 		case -2:
@@ -375,18 +375,17 @@ void bias_update(uint8_t bias)
 
 void dac_app_enable(bool enable)
 {
-	irqflags_t flags = cpu_irq_save();
-	bool l_dac_enabled = g_dac_enabled;
-	cpu_irq_restore(flags);
-
-	if (l_dac_enabled != enable) {
+	if (g_dac_enabled != enable) {
 		if (enable) {
-			flags = cpu_irq_save();
-			dds0_freq_mHz	= 2000000UL;		// 2 kHz
-			dds0_reg		= 0UL;				// Sine
-			dds1_freq_mHz	= 4000010UL;		// 4 kHz
-			dds1_reg		= 0x40000000UL;		// Cosine
-			cpu_irq_restore(flags);
+			/* Setting the values */
+			{
+				irqflags_t flags	= cpu_irq_save();
+				dds0_freq_mHz		= 2000000UL;		// 2 kHz
+				dds0_reg			= 0UL;				// Sine
+				dds1_freq_mHz		= 4000010UL;		// 4 kHz
+				dds1_reg			= 0x40000000UL;		// Cosine
+				cpu_irq_restore(flags);
+			}
 
 			dac_init();
 			tc_start();
@@ -397,9 +396,7 @@ void dac_app_enable(bool enable)
 		}
 
 		/* atomic */
-		{
-			g_dac_enabled = enable;
-		}
+		g_dac_enabled = enable;
 	}
 }
 
@@ -424,26 +421,28 @@ void dds_update(float dds0_hz, float dds1_hz, float phase)
 		l_dds1_reg = (uint32_t) (0x40000000UL * (phase / 90.f));
 	}
 
+	/* Modifying the DDS registers */
+	{
+		irqflags_t flags = cpu_irq_save();
 
-	irqflags_t flags = cpu_irq_save();
+		/* Update only when mHz value for DDS0 is given */
+		if (dds0_hz >= 0.f) {
+			dds0_freq_mHz = l_dds0_freq_mHz;
+		}
 
-	/* Update only when mHz value for DDS0 is given */
-	if (dds0_hz >= 0.f) {
-		dds0_freq_mHz = l_dds0_freq_mHz;
+		/* Update only when mHz value for DDS1 is given */
+		if (dds1_hz >= 0.f) {
+			dds1_freq_mHz = l_dds1_freq_mHz;
+		}
+
+		/* Set the phase between two starting oscillators */
+		if (phase >= 0.f) {
+			dds0_reg = 0UL;
+			dds1_reg = l_dds1_reg;
+		}
+
+		cpu_irq_restore(flags);
 	}
-
-	/* Update only when mHz value for DDS1 is given */
-	if (dds1_hz >= 0.f) {
-		dds1_freq_mHz = l_dds1_freq_mHz;
-	}
-
-	/* Set the phase between two starting oscillators */
-	if (phase >= 0.f) {
-		dds0_reg = 0UL;
-		dds1_reg = l_dds1_reg;
-	}
-
-	cpu_irq_restore(flags);
 
 	/* Calculate new increment values */
 	task_dac(rtc_get_time());
@@ -510,21 +509,24 @@ bool sched_getLock(volatile uint8_t* lockVar)
 {
 	bool status = false;
 
-	irqflags_t flags = cpu_irq_save();
-	if (++*lockVar == 1) {														// No use before
-		status = true;
-	} else {
-		--*lockVar;
+	/* IRQ secured access */	
+	{
+		irqflags_t flags = cpu_irq_save();
+		barrier();
+		if (!*lockVar) {	// No use before
+			++*lockVar;
+			barrier();
+			status = true;
+		}
+		cpu_irq_restore(flags);
 	}
-	cpu_irq_restore(flags);
-
 	return status;
 }
 
 void sched_freeLock(volatile uint8_t* lockVar)
 {
-	irqflags_t flags = cpu_irq_save();
-	*lockVar = 0;
+	irqflags_t flags	= cpu_irq_save();
+	*lockVar			= 0;
 	cpu_irq_restore(flags);
 }
 
@@ -538,10 +540,11 @@ static void sched_set_alarm(uint32_t alarmTime)
 	rtc_set_alarm(alarmTime);
 }
 
-void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay)
+void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay, bool isIntDis)
 {
 	const uint32_t pushTime = rtc_get_time();
 	uint32_t alarmTime = 0UL;
+	uint32_t sfCb = (isIntDis ?  0x82340000UL : 0x0234000UL) | ((uint32_t)(uint16_t)cb);
 
 	if (isDelay) {
 		/* Sanity checks */
@@ -557,23 +560,27 @@ void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay)
 		wakeTime += pushTime;
 	}
 
-	irqflags_t flags = cpu_irq_save();
-
 	/* Lock access to the scheduler entries */
 	if (!sched_getLock(&g_sched_lock)) {
-		// Push entry to the stack due to blocked access
-		fifo_push_uint32(&fifo_sched_desc, wakeTime);
-		fifo_push_uint16(&fifo_sched_desc, (uint16_t) cb);
+		/* Push entry to the stack due to blocked access */
+		{
+			irqflags_t flags = cpu_irq_save();
+			fifo_push_uint32(&fifo_sched_desc, wakeTime);
+			fifo_push_uint32(&fifo_sched_desc, sfCb);
+			cpu_irq_restore(flags);
+		}
 		return;
 	}
 
 	/* Get next free slot */
 	bool dataEntryStored = false;
 	uint8_t slot = 0;
+
 	for (int idx = 0; idx < C_SCH_SLOT_CNT; ++idx) {
 		if (!(g_sched_data[idx].occupied)) {
 			g_sched_data[idx].occupied = true;
 			g_sched_data[idx].callback = cb;
+			g_sched_data[idx].isIntDis = (isIntDis ?  1 : 0);
 			g_sched_data[idx].wakeTime = wakeTime;
 			slot = idx + 1;
 			dataEntryStored = true;
@@ -617,21 +624,29 @@ sched_push_out:
 
 	/* Pop back all FIFO entries */
 	while (!fifo_is_empty(&fifo_sched_desc)) {
-		uint16_t cb_uint = 0U;
-		wakeTime = cb_uint;
+		uint32_t sfCb = 0U;
+		wakeTime = sfCb;
 
-		fifo_pull_uint32(&fifo_sched_desc, &wakeTime);
-		fifo_pull_uint16(&fifo_sched_desc, &cb_uint);
+		{
+			irqflags_t flags = cpu_irq_save();
+			fifo_pull_uint32(&fifo_sched_desc, &wakeTime);
+			fifo_pull_uint32(&fifo_sched_desc, &sfCb);
+			cpu_irq_restore(flags);
+		}
 
-		if (cb_uint && wakeTime) {
-			sched_push((void*) cb_uint, wakeTime, false);
+		/* FIFO check */
+		if ((sfCb & 0x0fff0000UL) != 0x02340000UL) {
+			// Signature not found
+			nop();
+		}
+
+		if ((sfCb & 0x0000ffffUL) && wakeTime) {
+			sched_push((void*)(uint16_t)(sfCb & 0x0000ffffUL), wakeTime, false, (sfCb & 0x80000000UL ?  true : false));
 		} else {
 			// Fatal error
 			nop();
 		}
 	}
-
-	cpu_irq_restore(flags);
 
 	/* Set next time to wake up */
 	if (alarmTime) {
@@ -643,12 +658,9 @@ void sched_pop(uint32_t wakeNow)
 {
 	uint32_t alarmTime = 0UL;
 
-	irqflags_t flags = cpu_irq_save();
-
 	if (!sched_getLock(&g_sched_lock)) {
 		/* Locked by another one, so let us be called later */
 		g_sched_pop_again = true;
-		cpu_irq_restore(flags);
 		return;
 	}
 
@@ -666,7 +678,8 @@ void sched_pop(uint32_t wakeNow)
 	alarmTime = g_sched_data[idx - 1].wakeTime;
 	while (alarmTime <= rtc_get_time()) {
 		/* Get callback */
-		sched_callback cb = g_sched_data[idx - 1].callback;
+		sched_callback cb	= g_sched_data[idx - 1].callback;
+		bool isIntDis		= g_sched_data[idx - 1].isIntDis;
 
 		/* Free entry */
 		g_sched_data[idx - 1].occupied = false;
@@ -679,10 +692,14 @@ void sched_pop(uint32_t wakeNow)
 
 		/* Call the CB function */
 		if (cb) {
-			/* To be called in IRQ enabled context ("usercontext") */
-			cpu_irq_enable();
+			irqflags_t flags = cpu_irq_save();
+			if (isIntDis) {
+				cpu_irq_disable();
+			} else {
+				cpu_irq_enable();
+			}
 			cb(alarmTime);
-			cpu_irq_disable();
+			cpu_irq_restore(flags);
 		}
 
 		/* Get the next alarm time */
@@ -703,24 +720,22 @@ void sched_pop(uint32_t wakeNow)
 sched_pop_out:
 	sched_freeLock(&g_sched_lock);
 
-	cpu_irq_restore(flags);
+	/* Set next time to wake up */
+	if (alarmTime) {
+		sched_set_alarm(alarmTime);
+	}
 
 	/* Restart due to another guest rang the door bell */
 	if (g_sched_pop_again) {
 		g_sched_pop_again = false;
 		sched_pop(wakeNow);
 	}
-
-	/* Set next time to wake up */
-	if (alarmTime) {
-		sched_set_alarm(alarmTime);
-	}
 }
 
 void yield_ms(uint16_t ms)
 {
-	irqflags_t flags = cpu_irq_save();
-	cpu_irq_enable();
+//	irqflags_t flags = cpu_irq_save();
+//	cpu_irq_enable();
 
 #if 0
 	/* Push ourself to the scheduler */
@@ -739,7 +754,7 @@ void yield_ms(uint16_t ms)
 #else
 	delay_ms(ms);
 #endif
-	cpu_irq_restore(flags);
+//	cpu_irq_restore(flags);
 }
 
 void yield_ms_cb(uint32_t listTime)
@@ -788,7 +803,7 @@ static void tc_start(void)
 {
 	/* ADC clock */
 	tc_write_clock_source(&TCC0, TC_CLKSEL_DIV1_gc);							// VCTCXO PWM start, output still is Z-state
-	tc_set_overflow_interrupt_callback(&TCC0, isr_tcc0_ovfl);
+	tc_set_overflow_interrupt_callback(&TCC0, isr_tcc0_ovfl);					// TODO: bug work-around !
 	tc_set_overflow_interrupt_level(&TCC0, TC_INT_LVL_LO);
 
 //	tc_write_clock_source(&TCC1, TC_CLKSEL_DIV1_gc);
@@ -803,11 +818,13 @@ static void tc_start(void)
 //	tc_write_clock_source(&TCF1, TC_CLKSEL_DIV1_gc);
 }
 
+//ISR(__vector_14)
 void isr_tcc0_ovfl(void)
 {	// This ISR is called 2048 per second
 	static uint32_t	last_10ms  = 0UL;
+	static uint32_t	last_100ms = 0UL;
 	static uint32_t	last_500ms = 0UL;
-
+	
 	/* Time downscaling */
 	uint32_t now = rtc_get_time();
 
@@ -819,6 +836,13 @@ void isr_tcc0_ovfl(void)
 		if (((now - last_10ms) >= 10) || (now < last_10ms)) {
 			last_10ms = now;
 			isr_10ms(now);
+			return;
+		}
+
+		/* Group, which needs to be called about 10x per second */
+		if (((now - last_100ms) >= 102) || (now < last_100ms)) {
+			last_100ms = now;
+			isr_100ms(now);
 			return;
 		}
 
@@ -836,6 +860,11 @@ void isr_tcc0_ovfl(void)
 static void isr_10ms(uint32_t now)
 {
 	isr_10ms_twi1_onboard(now);
+}
+
+static void isr_100ms(uint32_t now)
+{
+	//isr_100ms_twi1_onboard(now);
 }
 
 static void isr_500ms(uint32_t now)
@@ -1147,14 +1176,52 @@ static void isr_dma_dac_ch0_B(enum dma_channel_status status)
 }
 
 
-const char					PM_USBINIT_HEADER_01[]				= "\r\n\r\n\r\n";
-const char					PM_USBINIT_HEADER_02[]				= "%c\r\n===============================\r\n";
-const char					PM_USBINIT_HEADER_03[]				= "FindMeSAT - USB logging started\r\n";
-const char					PM_USBINIT_HEADER_04[]				= "===============================\r\n\r\n";
-PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_01[]);
-PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_02[]);
-PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_03[]);
-PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_04[]);
+static bool udi_write_tx_char(int chr, bool stripControl)
+{
+	if (stripControl) {
+		/* Drop control character and report putc() success */
+		if ((chr < 0x20) || (chr >= 0x80)) {
+			return true;
+		}
+	}
+
+	if (!g_usb_cdc_access_blocked) {  // atomic operation
+		return udi_cdc_putc(chr);
+	}
+
+	return true;	// write to nowhere
+}
+
+uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl)
+{
+	uint8_t ret = 0;
+	uint8_t cnt = 0;
+
+	/* Write each character - avoiding to use the block write function */
+	while (ret < len) {
+		if (!udi_write_tx_char(*(buf + ret), stripControl)) {
+			yield_ms(C_USB_LINE_DELAY_MS);
+			if (++cnt > 100) {
+				/* Device blocks */
+				return ret;
+			}
+		} else {
+			cnt = 0;
+		}
+		++ret;
+	}
+	return ret;
+}
+
+
+const char					PM_USBINIT_HEADER_1[]				= "\r\n\r\n\r\n";
+const char					PM_USBINIT_HEADER_2[]				= "%c\r\n===============================\r\n";
+const char					PM_USBINIT_HEADER_3[]				= "FindMeSAT - USB logging started\r\n";
+const char					PM_USBINIT_HEADER_4[]				= "===============================\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_1[]);
+PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_2[]);
+PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_3[]);
+PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_4[]);
 
 static void usb_init(void)
 {
@@ -1162,21 +1229,19 @@ static void usb_init(void)
 	if (g_usb_cdc_stdout_enabled) {
 		stdio_usb_enable();
 	}
-	yield_ms(750);
+	delay_ms(500);
 
-	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_01);
+	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_02, 0x0c);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_2, 0x0c);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_03);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_3);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_04);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_4);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-
-	yield_ms(250);
 }
 
 void usb_callback_suspend_action(void)
@@ -1185,12 +1250,8 @@ void usb_callback_suspend_action(void)
 
 	// Disable hardware component to reduce power consumption
 	// Reduce power consumption in suspend mode (max. 2.5mA on VBUS)
-#if 0
-#endif
 
-	irqflags_t flags = cpu_irq_save();
 	g_workmode = WORKMODE_SUSPENDED;
-	cpu_irq_restore(flags);
 }
 
 void usb_callback_resume_action(void)
@@ -1228,9 +1289,7 @@ void usb_callback_resume_action(void)
 #endif
 
 	/* The application code */
-	irqflags_t flags = cpu_irq_save();
 	g_workmode = WORKMODE_RUN;
-	cpu_irq_restore(flags);
 }
 
 void usb_callback_remotewakeup_enable(void)
@@ -1260,7 +1319,7 @@ bool usb_callback_cdc_enable(void)
 {
 	/* USB CDC feature for serial communication */
 
-	g_usb_cdc_transfers_autorized = true;
+	g_usb_cdc_transfers_authorized = true;
 	return true;
 }
 
@@ -1268,7 +1327,7 @@ void usb_callback_cdc_disable(void)
 {
 	/* USB CDC feature for serial communication */
 
-	g_usb_cdc_transfers_autorized = false;
+	g_usb_cdc_transfers_authorized = false;
 }
 
 void usb_callback_config(uint8_t port, usb_cdc_line_coding_t * cfg)
@@ -1289,10 +1348,6 @@ void usb_callback_cdc_set_rts(uint8_t port, bool b_enable)
 void usb_callback_rx_notify(uint8_t port)
 {
 	g_usb_cdc_rx_received = true;
-
-	/* Lets process the scheduler */
-	cpu_irq_enable();
-	sched_push(usb_rx_process, 0, true);
 }
 
 void usb_callback_tx_empty_notify(uint8_t port)
@@ -1303,48 +1358,39 @@ void usb_callback_tx_empty_notify(uint8_t port)
 
 static void usb_rx_process(uint32_t thisTime)
 {
-	if (g_usb_cdc_transfers_autorized) {
-		irqflags_t flags = cpu_irq_save();
+	char cdc_rx_buf[4];
 
+	if (g_usb_cdc_transfers_authorized) {
 		/* Single thread only */
 		if (!sched_getLock(&g_interpreter_lock)) {
-			cpu_irq_restore(flags);
 			return;
 		}
 
 		/* Get command lines from the USB host */
-		if (g_usb_cdc_rx_received) {
-			iram_size_t cdc_rx_len = udi_cdc_get_nb_received_data();
-			while (cdc_rx_len) {
-				char cdc_rx_buf[cdc_rx_len];
-
-				if (g_keyBeep_enable) {
-					twi2_set_beep(176, 1);  // Click sound
-					yield_ms(5);
-				}
-
-				udi_cdc_read_no_polling(cdc_rx_buf, cdc_rx_len);
-
-				/* Echo back when not monitoring information are enabled */
-				if (!g_usb_cdc_printStatusLines) {
-					udi_write_tx_buf(cdc_rx_buf, cdc_rx_len, true);
-				}
-
-				/* Call the interpreter */
-				cpu_irq_enable();
-				interpreter_doProcess(cdc_rx_buf, cdc_rx_len);
-				cpu_irq_disable();
-
-				/* Check for more available data */
-				cdc_rx_len = udi_cdc_get_nb_received_data();
+		iram_size_t cdc_rx_len = udi_cdc_get_nb_received_data();
+		cdc_rx_len = min(cdc_rx_len, sizeof(cdc_rx_buf));
+		while (cdc_rx_len) {
+			if (g_keyBeep_enable) {
+				twi2_set_beep(176, 1);  // Click sound
+				yield_ms(10);
 			}
-			g_usb_cdc_rx_received = false;
+
+			udi_cdc_read_no_polling(cdc_rx_buf, cdc_rx_len);
+
+			/* Echo back when not monitoring information are enabled */
+			if (!g_usb_cdc_printStatusLines) {
+				udi_write_tx_buf(cdc_rx_buf, cdc_rx_len, true);
+			}
+
+			/* Call the interpreter */
+			interpreter_doProcess(cdc_rx_buf, cdc_rx_len);
+
+			/* Check for more available data */
+			cdc_rx_len = udi_cdc_get_nb_received_data();
 		}
 
 		/* Release this lock */
 		sched_freeLock(&g_interpreter_lock);
-
-		cpu_irq_restore(flags);
 	}
 }
 
@@ -1357,10 +1403,13 @@ static void task_dac(uint32_t now)
 	static uint32_t s_dds1_freq_mHz = 0UL;
 	uint32_t l_dds0_freq_mHz, l_dds1_freq_mHz;
 
-	irqflags_t flags = cpu_irq_save();
-	l_dds0_freq_mHz = dds0_freq_mHz;
-	l_dds1_freq_mHz = dds1_freq_mHz;
-	cpu_irq_restore(flags);
+	/* Setting the pair of frequencies */
+	{
+		irqflags_t flags		= cpu_irq_save();
+		l_dds0_freq_mHz			= dds0_freq_mHz;
+		l_dds1_freq_mHz			= dds1_freq_mHz;
+		cpu_irq_restore(flags);
+	}
 
 	if ((l_dds0_freq_mHz != s_dds0_freq_mHz) || (l_dds1_freq_mHz != s_dds1_freq_mHz)) {
 		/* DDS increment calculation */
@@ -1369,10 +1418,13 @@ static void task_dac(uint32_t now)
 		s_dds0_freq_mHz = l_dds0_freq_mHz;
 		s_dds1_freq_mHz = l_dds1_freq_mHz;
 
-		flags = cpu_irq_save();
-		dds0_inc = l_dds0_inc;
-		dds1_inc = l_dds1_inc;
-		cpu_irq_restore(flags);
+		/* Setting the pair of increments */
+		{
+			irqflags_t flags	= cpu_irq_save();
+			dds0_inc			= l_dds0_inc;
+			dds1_inc			= l_dds1_inc;
+			cpu_irq_restore(flags);
+		}
 	}
 }
 
@@ -1381,17 +1433,23 @@ static void task_adc(uint32_t now)
 	static uint32_t adc_last = 0;
 
 	if ((now - adc_last) >= 512 || (now < adc_last)) {
+		uint32_t l_adc_vctcxo_cur, l_adc_5v0_cur, l_adc_vbat_cur, l_adc_io_adc4_cur, l_adc_io_adc5_cur;
+		uint32_t l_adc_silence_cur, l_adc_temp_cur;
+
 		adc_last = now;
 
-		irqflags_t flags = cpu_irq_save();
-		uint32_t l_adc_vctcxo_cur	= g_adc_vctcxo_cur;
-		uint32_t l_adc_5v0_cur		= g_adc_5v0_cur;
-		uint32_t l_adc_vbat_cur		= g_adc_vbat_cur;
-		uint32_t l_adc_io_adc4_cur	= g_adc_io_adc4_cur;
-		uint32_t l_adc_io_adc5_cur	= g_adc_io_adc5_cur;
-		uint32_t l_adc_silence_cur	= g_adc_silence_cur;
-		uint32_t l_adc_temp_cur		= g_adc_temp_cur;
-		cpu_irq_restore(flags);
+		/* Getting a copy of the values */
+		{
+			irqflags_t flags	= cpu_irq_save();
+			l_adc_vctcxo_cur	= g_adc_vctcxo_cur;
+			l_adc_5v0_cur		= g_adc_5v0_cur;
+			l_adc_vbat_cur		= g_adc_vbat_cur;
+			l_adc_io_adc4_cur	= g_adc_io_adc4_cur;
+			l_adc_io_adc5_cur	= g_adc_io_adc5_cur;
+			l_adc_silence_cur	= g_adc_silence_cur;
+			l_adc_temp_cur		= g_adc_temp_cur;
+			cpu_irq_restore(flags);
+		}
 
 		int16_t l_adc_vctcxo_volt_1000	= (int16_t) (((( 1000UL * l_adc_vctcxo_cur  * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS))  - 1000 * C_VCTCXO_DELTA_VOLTS);
 		int16_t l_adc_5v0_volt_1000		= (int16_t) (((  1000UL * l_adc_5v0_cur     * C_VCC_3V0_AREF_VOLTS * C_VCC_5V0_MULT  ) / C_ADC_STEPS));
@@ -1401,15 +1459,18 @@ static void task_adc(uint32_t now)
 		int16_t l_adc_silence_volt_1000	= (int16_t) (((  1000UL * l_adc_silence_cur * C_VCC_3V0_AREF_VOLTS                   ) / C_ADC_STEPS));
 		int16_t l_adc_temp_deg_100		= (int16_t) ((((  100UL * l_adc_temp_cur                           * C_TEMPSENSE_MULT) / C_ADC_STEPS))  -  100 * C_0DEGC_K);
 
-		flags = cpu_irq_save();
-		g_adc_vctcxo_volt_1000	= l_adc_vctcxo_volt_1000;
-		g_adc_5v0_volt_1000		= l_adc_5v0_volt_1000;
-		g_adc_vbat_volt_1000	= l_adc_vbat_volt_1000;
-		g_adc_io_adc4_volt_1000	= l_adc_io_adc4_volt_1000;
-		g_adc_io_adc5_volt_1000	= l_adc_io_adc5_volt_1000;
-		g_adc_silence_volt_1000	= l_adc_silence_volt_1000;
-		g_adc_temp_deg_100		= l_adc_temp_deg_100;
-		cpu_irq_restore(flags);
+		/* Writing back the values */
+		{
+			irqflags_t flags		= cpu_irq_save();
+			g_adc_vctcxo_volt_1000	= l_adc_vctcxo_volt_1000;
+			g_adc_5v0_volt_1000		= l_adc_5v0_volt_1000;
+			g_adc_vbat_volt_1000	= l_adc_vbat_volt_1000;
+			g_adc_io_adc4_volt_1000	= l_adc_io_adc4_volt_1000;
+			g_adc_io_adc5_volt_1000	= l_adc_io_adc5_volt_1000;
+			g_adc_silence_volt_1000	= l_adc_silence_volt_1000;
+			g_adc_temp_deg_100		= l_adc_temp_deg_100;
+			cpu_irq_restore(flags);
+		}
 	}
 }
 
@@ -1459,48 +1520,86 @@ PROGMEM_DECLARE(const char, PM_INFO_PART_L2P4[]);
 static void task_usb(uint32_t now)
 {
 	/* Monitoring at the USB serial terminal */
-	if (g_usb_cdc_transfers_autorized) {
+	if (g_usb_cdc_transfers_authorized) {
 		static uint32_t usb_last = 0UL;
 
 		/* Get command lines from the USB host */
-		usb_rx_process(now);
+		if (g_usb_cdc_rx_received) {
+			g_usb_cdc_rx_received = false;
+			usb_rx_process(now);
+		}
 
 		/* Status output when requested */
 		if (g_usb_cdc_printStatusLines) {
 			if (((now - usb_last) >= 512) || (now < usb_last)) {
-				irqflags_t flags = cpu_irq_save();
-				int16_t l_adc_vctcxo_volt_1000		= g_adc_vctcxo_volt_1000;
-				int16_t l_adc_5v0_volt_1000			= g_adc_5v0_volt_1000;
-				int16_t l_adc_vbat_volt_1000		= g_adc_vbat_volt_1000;
-				int16_t l_adc_io_adc4_volt_1000		= g_adc_io_adc4_volt_1000;
-				int16_t l_adc_io_adc5_volt_1000		= g_adc_io_adc5_volt_1000;
-				int16_t l_adc_silence_volt_1000		= g_adc_silence_volt_1000;
-				int16_t l_adc_temp_deg_100			= g_adc_temp_deg_100;
-				int32_t l_twi1_baro_temp_100		= g_twi1_baro_temp_100;
-				int32_t l_twi1_baro_p_100			= g_twi1_baro_p_100;
-				int16_t l_twi1_hygro_T_100			= g_twi1_hygro_T_100;
-				int16_t l_twi1_hygro_RH_100			= g_twi1_hygro_RH_100;
-				int16_t	l_twi1_gyro_1_accel_x		= g_twi1_gyro_1_accel_x;
-				int16_t	l_twi1_gyro_1_accel_y		= g_twi1_gyro_1_accel_y;
-				int16_t	l_twi1_gyro_1_accel_z		= g_twi1_gyro_1_accel_z;
-				int16_t	l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
-				int16_t	l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
-				int16_t	l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
-				int16_t l_twi1_gyro_1_gyro_x		= g_twi1_gyro_1_gyro_x;
-				int16_t l_twi1_gyro_1_gyro_y		= g_twi1_gyro_1_gyro_y;
-				int16_t l_twi1_gyro_1_gyro_z		= g_twi1_gyro_1_gyro_z;
-				int32_t	l_twi1_gyro_1_gyro_x_mdps	= g_twi1_gyro_1_gyro_x_mdps;
-				int32_t	l_twi1_gyro_1_gyro_y_mdps	= g_twi1_gyro_1_gyro_y_mdps;
-				int32_t	l_twi1_gyro_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
-				int16_t	l_twi1_gyro_1_temp			= g_twi1_gyro_1_temp;
-				int16_t	l_twi1_gyro_1_temp_deg_100	= g_twi1_gyro_1_temp_deg_100;
-				int16_t l_twi1_gyro_2_mag_x			= g_twi1_gyro_2_mag_x;
-				int16_t l_twi1_gyro_2_mag_y			= g_twi1_gyro_2_mag_y;
-				int16_t l_twi1_gyro_2_mag_z			= g_twi1_gyro_2_mag_z;
-				int32_t	l_twi1_gyro_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
-				int32_t	l_twi1_gyro_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
-				int32_t	l_twi1_gyro_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
-				cpu_irq_restore(flags);
+				int16_t l_adc_vctcxo_volt_1000;
+				int16_t l_adc_5v0_volt_1000;
+				int16_t l_adc_vbat_volt_1000;
+				int16_t l_adc_io_adc4_volt_1000;
+				int16_t l_adc_io_adc5_volt_1000;
+				int16_t l_adc_silence_volt_1000;
+				int16_t l_adc_temp_deg_100;
+				int32_t l_twi1_baro_temp_100;
+				int32_t l_twi1_baro_p_100;
+				int16_t l_twi1_hygro_T_100;
+				int16_t l_twi1_hygro_RH_100;
+				int16_t	l_twi1_gyro_1_accel_x;
+				int16_t	l_twi1_gyro_1_accel_y;
+				int16_t	l_twi1_gyro_1_accel_z;
+				int16_t	l_twi1_gyro_1_accel_x_mg;
+				int16_t	l_twi1_gyro_1_accel_y_mg;
+				int16_t	l_twi1_gyro_1_accel_z_mg;
+				int16_t l_twi1_gyro_1_gyro_x;
+				int16_t l_twi1_gyro_1_gyro_y;
+				int16_t l_twi1_gyro_1_gyro_z;
+				int32_t	l_twi1_gyro_1_gyro_x_mdps;
+				int32_t	l_twi1_gyro_1_gyro_y_mdps;
+				int32_t	l_twi1_gyro_1_gyro_z_mdps;
+				int16_t	l_twi1_gyro_1_temp;
+				int16_t	l_twi1_gyro_1_temp_deg_100;
+				int16_t l_twi1_gyro_2_mag_x;
+				int16_t l_twi1_gyro_2_mag_y;
+				int16_t l_twi1_gyro_2_mag_z;
+				int32_t	l_twi1_gyro_2_mag_x_nT;
+				int32_t	l_twi1_gyro_2_mag_y_nT;
+				int32_t	l_twi1_gyro_2_mag_z_nT;
+
+				/* Getting a copy of the values */
+				{
+					irqflags_t flags			= cpu_irq_save();
+					l_adc_vctcxo_volt_1000		= g_adc_vctcxo_volt_1000;
+					l_adc_5v0_volt_1000			= g_adc_5v0_volt_1000;
+					l_adc_vbat_volt_1000		= g_adc_vbat_volt_1000;
+					l_adc_io_adc4_volt_1000		= g_adc_io_adc4_volt_1000;
+					l_adc_io_adc5_volt_1000		= g_adc_io_adc5_volt_1000;
+					l_adc_silence_volt_1000		= g_adc_silence_volt_1000;
+					l_adc_temp_deg_100			= g_adc_temp_deg_100;
+					l_twi1_baro_temp_100		= g_twi1_baro_temp_100;
+					l_twi1_baro_p_100			= g_twi1_baro_p_100;
+					l_twi1_hygro_T_100			= g_twi1_hygro_T_100;
+					l_twi1_hygro_RH_100			= g_twi1_hygro_RH_100;
+					l_twi1_gyro_1_accel_x		= g_twi1_gyro_1_accel_x;
+					l_twi1_gyro_1_accel_y		= g_twi1_gyro_1_accel_y;
+					l_twi1_gyro_1_accel_z		= g_twi1_gyro_1_accel_z;
+					l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
+					l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
+					l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
+					l_twi1_gyro_1_gyro_x		= g_twi1_gyro_1_gyro_x;
+					l_twi1_gyro_1_gyro_y		= g_twi1_gyro_1_gyro_y;
+					l_twi1_gyro_1_gyro_z		= g_twi1_gyro_1_gyro_z;
+					l_twi1_gyro_1_gyro_x_mdps	= g_twi1_gyro_1_gyro_x_mdps;
+					l_twi1_gyro_1_gyro_y_mdps	= g_twi1_gyro_1_gyro_y_mdps;
+					l_twi1_gyro_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
+					l_twi1_gyro_1_temp			= g_twi1_gyro_1_temp;
+					l_twi1_gyro_1_temp_deg_100	= g_twi1_gyro_1_temp_deg_100;
+					l_twi1_gyro_2_mag_x			= g_twi1_gyro_2_mag_x;
+					l_twi1_gyro_2_mag_y			= g_twi1_gyro_2_mag_y;
+					l_twi1_gyro_2_mag_z			= g_twi1_gyro_2_mag_z;
+					l_twi1_gyro_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
+					l_twi1_gyro_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
+					l_twi1_gyro_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
+					cpu_irq_restore(flags);
+				}
 
 				int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P1A,
 				now >> 10,
@@ -1635,20 +1734,13 @@ int main(void)
 	//twi2_set_leds(0x02);
 
 	/* The application code */
-	irqflags_t flags = cpu_irq_save();
-	WORKMODE_ENUM_t l_workmode = g_workmode = WORKMODE_RUN;
-	cpu_irq_restore(flags);
-
-    while (l_workmode) {
+	g_workmode = WORKMODE_RUN;
+    while (g_workmode) {
 		task();
 
 		twi2_set_leds(0x01);
 		yield_ms(0);
 		twi2_set_leds(0x00);
-
-		flags = cpu_irq_save();
-		l_workmode = g_workmode;
-		cpu_irq_restore(flags);
     }
 
 	twi2_set_leds(0x00);  // LEDs: off

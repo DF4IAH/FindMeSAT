@@ -14,7 +14,6 @@
 #define C_TX_BUF_SIZE												64
 
 
-uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl);
 void printHelp(void);
 void interpreter_doProcess(char rx_buf[], iram_size_t rx_len);
 
