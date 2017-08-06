@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												170
-#define VERSION_LOW													805
+#define VERSION_LOW													807
 
 
 #define C_USB_LINE_DELAY_MS											2

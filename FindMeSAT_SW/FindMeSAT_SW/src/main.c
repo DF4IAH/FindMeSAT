@@ -1250,18 +1250,30 @@ uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl)
 	uint8_t ret = 0;
 	uint8_t cnt = 0;
 
+	if (!g_usb_cdc_transfers_authorized) {
+		return 0;
+	}
+
 	/* Write each character - avoiding to use the block write function */
 	while (ret < len) {
-		if (!udi_write_tx_char(*(buf + ret), stripControl)) {
+		if (!udi_cdc_is_tx_ready()) {
+			++cnt;
 			yield_ms(C_USB_LINE_DELAY_MS);
-			if (++cnt > 100) {
-				/* Device blocks */
-				return ret;
-			}
+
+		} else if (!udi_write_tx_char(*(buf + ret), stripControl)) {
+			++cnt;
+			yield_ms(C_USB_LINE_DELAY_MS);
+
 		} else {
 			cnt = 0;
+			++ret;
 		}
-		++ret;
+
+		if (cnt > 200) {
+			/* Device blocks, get rid of it */
+			g_usb_cdc_transfers_authorized = false;
+			return ret;
+		}
 	}
 	return ret;
 }
@@ -1718,8 +1730,7 @@ static void task(void)
 		uint32_t now = rtc_get_time();
 
 		/* TASK when woken up and all ISRs are done */
-		//task_dac(now);
-		//task_adc(now);
+		/* note: ADC and DAC are handled by the scheduler */
 		task_twi(now);										// Handle (TWI1 and) TWI2 communications
 		task_usb(now);										// Handling the USB connection
 	}
