@@ -47,16 +47,25 @@
 /* SCHEDULER */
 #define C_SCH_SLOT_CNT												32
 
+
+typedef enum SCHED_ENTRY_CB_TYPE_ENUM {
+	SCHED_ENTRY_CB_TYPE__LISTTIME = 0,
+	SCHED_ENTRY_CB_TYPE__LISTTIME_ISSYNC,
+} SCHED_ENTRY_CB_TYPE_ENUM_t;
+
 typedef struct sched_entry {
 	uint32_t			wakeTime;
 	void*				callback;
 
 	uint8_t				occupied		: 1;
 	uint8_t				isIntDis		: 1;
-	uint8_t				reserved1		: 6;
+	uint8_t				isSync			: 1;
+	uint8_t				cbType			: 2;
+	uint8_t				reserved1		: 3;
 } sched_entry_t;
 
-typedef void(*sched_callback)(uint32_t listTime);
+typedef void(*sched_callback_type0)(uint32_t listTime);
+typedef void(*sched_callback_type1)(uint32_t listTime, bool isSync);
 
 
 typedef enum MY_STRING_TO_VAR_ENUM {
@@ -108,7 +117,8 @@ void halt(void);
 
 bool sched_getLock(volatile uint8_t* lockVar);
 void sched_freeLock(volatile uint8_t* lockVar);
-void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay, bool isIntDis);
+void sched_doSleep(void);
+void sched_push(void* cb, SCHED_ENTRY_CB_TYPE_ENUM_t cbType, uint32_t wakeTime, bool isDelay, bool isIntDis, bool isSync);
 void sched_pop(uint32_t wakeNow);
 void yield_ms(uint16_t ms);
 void yield_ms_cb(uint32_t listTime);

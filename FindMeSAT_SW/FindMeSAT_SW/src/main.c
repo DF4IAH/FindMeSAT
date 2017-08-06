@@ -63,65 +63,65 @@ uint8_t						g_twi1_gsm_version					= 0;
 
 bool						g_twi1_gyro_valid					= false;
 uint8_t						g_twi1_gyro_1_version				= 0;
-int16_t						g_twi1_gyro_1_temp					= 0;
-int16_t						g_twi1_gyro_1_temp_RTofs			= 0;
-int16_t						g_twi1_gyro_1_temp_sens				= 413;
-int16_t						g_twi1_gyro_1_temp_deg_100			= 0;
-int16_t						g_twi1_gyro_1_accel_x				= 0;
-int16_t						g_twi1_gyro_1_accel_y				= 0;
-int16_t						g_twi1_gyro_1_accel_z				= 0;
-int16_t						g_twi1_gyro_1_accel_ofsx			= ((int16_t) (-46672L / 16));	// 16LSB / OFS
-int16_t						g_twi1_gyro_1_accel_ofsy			= ((int16_t) (+41120L / 16));	// 16LSB / OFS
-int16_t						g_twi1_gyro_1_accel_ofsz			= ((int16_t) (+76672L / 16));	// 16LSB / OFS
-int16_t						g_twi1_gyro_1_accel_factx			=  9980;						// X = Xchip * factx / 10000
-int16_t						g_twi1_gyro_1_accel_facty			=  9975;						// Y = Ychip * facty / 10000
-int16_t						g_twi1_gyro_1_accel_factz			=  9950;						// Z = Zchip * factz / 10000
-int16_t						g_twi1_gyro_1_accel_x_mg			= 0;
-int16_t						g_twi1_gyro_1_accel_y_mg			= 0;
-int16_t						g_twi1_gyro_1_accel_z_mg			= 0;
-int16_t						g_twi1_gyro_1_gyro_x				= 0;
-int16_t						g_twi1_gyro_1_gyro_y				= 0;
-int16_t						g_twi1_gyro_1_gyro_z				= 0;
-int16_t						g_twi1_gyro_1_gyro_ofsx				= ( -32 / 4);					//  4LSB / OFS
-int16_t						g_twi1_gyro_1_gyro_ofsy				= ( -80 / 4);					//  4LSB / OFS
-int16_t						g_twi1_gyro_1_gyro_ofsz				= (+148 / 4);					//  4LSB / OFS
-int32_t						g_twi1_gyro_1_gyro_x_mdps			= 0;
-int32_t						g_twi1_gyro_1_gyro_y_mdps			= 0;
-int32_t						g_twi1_gyro_1_gyro_z_mdps			= 0;
+volatile int16_t			g_twi1_gyro_1_temp					= 0;
+volatile int16_t			g_twi1_gyro_1_temp_RTofs			= 0;
+volatile int16_t			g_twi1_gyro_1_temp_sens				= 413;
+volatile int16_t			g_twi1_gyro_1_temp_deg_100			= 0;
+volatile int16_t			g_twi1_gyro_1_accel_x				= 0;
+volatile int16_t			g_twi1_gyro_1_accel_y				= 0;
+volatile int16_t			g_twi1_gyro_1_accel_z				= 0;
+volatile int16_t			g_twi1_gyro_1_accel_ofsx			= ((int16_t) (-46672L / 16));	// 16LSB / OFS
+volatile int16_t			g_twi1_gyro_1_accel_ofsy			= ((int16_t) (+41120L / 16));	// 16LSB / OFS
+volatile int16_t			g_twi1_gyro_1_accel_ofsz			= ((int16_t) (+76672L / 16));	// 16LSB / OFS
+volatile int16_t			g_twi1_gyro_1_accel_factx			=  9980;						// X = Xchip * factx / 10000
+volatile int16_t			g_twi1_gyro_1_accel_facty			=  9975;						// Y = Ychip * facty / 10000
+volatile int16_t			g_twi1_gyro_1_accel_factz			=  9950;						// Z = Zchip * factz / 10000
+volatile int16_t			g_twi1_gyro_1_accel_x_mg			= 0;
+volatile int16_t			g_twi1_gyro_1_accel_y_mg			= 0;
+volatile int16_t			g_twi1_gyro_1_accel_z_mg			= 0;
+volatile int16_t			g_twi1_gyro_1_gyro_x				= 0;
+volatile int16_t			g_twi1_gyro_1_gyro_y				= 0;
+volatile int16_t			g_twi1_gyro_1_gyro_z				= 0;
+volatile int16_t			g_twi1_gyro_1_gyro_ofsx				= ( -32 / 4);					//  4LSB / OFS
+volatile int16_t			g_twi1_gyro_1_gyro_ofsy				= ( -80 / 4);					//  4LSB / OFS
+volatile int16_t			g_twi1_gyro_1_gyro_ofsz				= (+148 / 4);					//  4LSB / OFS
+volatile int32_t			g_twi1_gyro_1_gyro_x_mdps			= 0;
+volatile int32_t			g_twi1_gyro_1_gyro_y_mdps			= 0;
+volatile int32_t			g_twi1_gyro_1_gyro_z_mdps			= 0;
 uint8_t						g_twi1_gyro_2_version				= 0;
-int8_t						g_twi1_gyro_2_asax					= 0;
-int8_t						g_twi1_gyro_2_asay					= 0;
-int8_t						g_twi1_gyro_2_asaz					= 0;
-int16_t						g_twi1_gyro_2_ofsx					=  +37;							//  1LSB / OFS
-int16_t						g_twi1_gyro_2_ofsy					= +156;							//  1LSB / OFS
-int16_t						g_twi1_gyro_2_ofsz					= -217;							//  1LSB / OFS
-int16_t						g_twi1_gyro_2_mag_x					= 0;
-int16_t						g_twi1_gyro_2_mag_y					= 0;
-int16_t						g_twi1_gyro_2_mag_z					= 0;
-int16_t						g_twi1_gyro_2_mag_factx				=  9250;						// X = Xchip * factx / 10000
-int16_t						g_twi1_gyro_2_mag_facty				=  9250;						// Y = Ychip * facty / 10000
-int16_t						g_twi1_gyro_2_mag_factz				= 14440;						// Z = Zchip * factz / 10000
-int32_t						g_twi1_gyro_2_mag_x_nT				= 0;
-int32_t						g_twi1_gyro_2_mag_y_nT				= 0;
-int32_t						g_twi1_gyro_2_mag_z_nT				= 0;
+volatile int8_t				g_twi1_gyro_2_asax					= 0;
+volatile int8_t				g_twi1_gyro_2_asay					= 0;
+volatile int8_t				g_twi1_gyro_2_asaz					= 0;
+volatile int16_t			g_twi1_gyro_2_ofsx					=  +37;							//  1LSB / OFS
+volatile int16_t			g_twi1_gyro_2_ofsy					= +156;							//  1LSB / OFS
+volatile int16_t			g_twi1_gyro_2_ofsz					= -217;							//  1LSB / OFS
+volatile int16_t			g_twi1_gyro_2_mag_x					= 0;
+volatile int16_t			g_twi1_gyro_2_mag_y					= 0;
+volatile int16_t			g_twi1_gyro_2_mag_z					= 0;
+volatile int16_t			g_twi1_gyro_2_mag_factx				=  9250;						// X = Xchip * factx / 10000
+volatile int16_t			g_twi1_gyro_2_mag_facty				=  9250;						// Y = Ychip * facty / 10000
+volatile int16_t			g_twi1_gyro_2_mag_factz				= 14440;						// Z = Zchip * factz / 10000
+volatile int32_t			g_twi1_gyro_2_mag_x_nT				= 0;
+volatile int32_t			g_twi1_gyro_2_mag_y_nT				= 0;
+volatile int32_t			g_twi1_gyro_2_mag_z_nT				= 0;
 
 bool						g_twi1_baro_valid					= false;
 uint16_t					g_twi1_baro_version					= 0;
-uint16_t					g_twi1_baro_c[C_TWI1_BARO_C_CNT]	= { 0 };
-uint32_t					g_twi1_baro_d1						= 0UL;
-uint32_t					g_twi1_baro_d2						= 0UL;
-int32_t						g_twi1_baro_temp_100				= 0L;
-int32_t						g_twi1_baro_p_100					= 0L;
+volatile uint16_t			g_twi1_baro_c[C_TWI1_BARO_C_CNT]	= { 0 };
+volatile uint32_t			g_twi1_baro_d1						= 0UL;
+volatile uint32_t			g_twi1_baro_d2						= 0UL;
+volatile int32_t			g_twi1_baro_temp_100				= 0L;
+volatile int32_t			g_twi1_baro_p_100					= 0L;
 
 bool						g_twi1_hygro_valid					= false;
 uint8_t						g_twi1_hygro_status					= 0;
-uint16_t					g_twi1_hygro_S_T					= 0;
-uint16_t					g_twi1_hygro_S_RH					= 0;
-int16_t						g_twi1_hygro_T_100					= 0;
-int16_t						g_twi1_hygro_RH_100					= 0;
+volatile uint16_t			g_twi1_hygro_S_T					= 0;
+volatile uint16_t			g_twi1_hygro_S_RH					= 0;
+volatile int16_t			g_twi1_hygro_T_100					= 0;
+volatile int16_t			g_twi1_hygro_RH_100					= 0;
 
 uint8_t						g_twi2_lcd_version					= 0;
-bool						g_twi2_lcd_repaint					= false;
+volatile bool				g_twi2_lcd_repaint					= false;
 
 
 struct adc_config			g_adc_a_conf						= { 0 };
@@ -133,34 +133,34 @@ struct adc_channel_config	g_adcch_silence_conf				= { 0 };
 struct adc_config			g_adc_b_conf						= { 0 };
 struct adc_channel_config	g_adcch_temp_conf					= { 0 };
 
-uint32_t					g_adc_vctcxo_cur					= 0;
-uint32_t					g_adc_vctcxo_sum					= 0;
-uint16_t					g_adc_vctcxo_cnt					= 0;
-uint32_t					g_adc_5v0_cur						= 0;
-uint32_t					g_adc_5v0_sum						= 0;
-uint16_t					g_adc_5v0_cnt						= 0;
-uint32_t					g_adc_vbat_cur						= 0;
-uint32_t					g_adc_vbat_sum						= 0;
-uint16_t					g_adc_vbat_cnt						= 0;
-uint32_t					g_adc_io_adc4_cur					= 0;
-uint32_t					g_adc_io_adc4_sum					= 0;
-uint16_t					g_adc_io_adc4_cnt					= 0;
-uint32_t					g_adc_io_adc5_cur					= 0;
-uint32_t					g_adc_io_adc5_sum					= 0;
-uint16_t					g_adc_io_adc5_cnt					= 0;
-uint32_t					g_adc_silence_cur					= 0;
-uint32_t					g_adc_silence_sum					= 0;
-uint16_t					g_adc_silence_cnt					= 0;
-uint32_t					g_adc_temp_cur						= 0;
-uint32_t					g_adc_temp_sum						= 0;
-uint16_t					g_adc_temp_cnt						= 0;
-int16_t						g_adc_vctcxo_volt_1000				= 0;
-int16_t						g_adc_5v0_volt_1000					= 0;
-int16_t						g_adc_vbat_volt_1000				= 0;
-int16_t						g_adc_io_adc4_volt_1000				= 0;
-int16_t						g_adc_io_adc5_volt_1000				= 0;
-int16_t						g_adc_silence_volt_1000				= 0;
-int16_t						g_adc_temp_deg_100					= 0;
+volatile uint32_t			g_adc_vctcxo_cur					= 0;
+volatile uint32_t			g_adc_vctcxo_sum					= 0;
+volatile uint16_t			g_adc_vctcxo_cnt					= 0;
+volatile uint32_t			g_adc_5v0_cur						= 0;
+volatile uint32_t			g_adc_5v0_sum						= 0;
+volatile uint16_t			g_adc_5v0_cnt						= 0;
+volatile uint32_t			g_adc_vbat_cur						= 0;
+volatile uint32_t			g_adc_vbat_sum						= 0;
+volatile uint16_t			g_adc_vbat_cnt						= 0;
+volatile uint32_t			g_adc_io_adc4_cur					= 0;
+volatile uint32_t			g_adc_io_adc4_sum					= 0;
+volatile uint16_t			g_adc_io_adc4_cnt					= 0;
+volatile uint32_t			g_adc_io_adc5_cur					= 0;
+volatile uint32_t			g_adc_io_adc5_sum					= 0;
+volatile uint16_t			g_adc_io_adc5_cnt					= 0;
+volatile uint32_t			g_adc_silence_cur					= 0;
+volatile uint32_t			g_adc_silence_sum					= 0;
+volatile uint16_t			g_adc_silence_cnt					= 0;
+volatile uint32_t			g_adc_temp_cur						= 0;
+volatile uint32_t			g_adc_temp_sum						= 0;
+volatile uint16_t			g_adc_temp_cnt						= 0;
+volatile int16_t			g_adc_vctcxo_volt_1000				= 0;
+volatile int16_t			g_adc_5v0_volt_1000					= 0;
+volatile int16_t			g_adc_vbat_volt_1000				= 0;
+volatile int16_t			g_adc_io_adc4_volt_1000				= 0;
+volatile int16_t			g_adc_io_adc5_volt_1000				= 0;
+volatile int16_t			g_adc_silence_volt_1000				= 0;
+volatile int16_t			g_adc_temp_deg_100					= 0;
 
 char						g_prepare_buf[C_TX_BUF_SIZE]		= "";
 
@@ -169,10 +169,11 @@ uint32_t					fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH];
 
 volatile uint8_t			g_sched_lock						= 0;
 volatile uint8_t			g_interpreter_lock					= 0;
-bool						g_sched_yield						= false;
-bool						g_sched_pop_again					= false;
-sched_entry_t				g_sched_data[C_SCH_SLOT_CNT]		= { 0 };
-uint8_t						g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
+volatile uint8_t			g_twi1_lock							= 0;
+volatile bool				g_sched_yield						= false;
+volatile bool				g_sched_pop_again					= false;
+volatile sched_entry_t		g_sched_data[C_SCH_SLOT_CNT]		= { 0 };
+volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
 
 
 twi_options_t twi1_options = {
@@ -250,7 +251,7 @@ static void dac_init(void);
 static void dac_start(void);
 static void dac_stop(void);
 
-static void isr_10ms(uint32_t now);
+//static void isr_10ms(uint32_t now);
 static void isr_100ms(uint32_t now);
 static void isr_500ms(uint32_t now);
 static void isr_sparetime(uint32_t now);
@@ -263,6 +264,8 @@ static void isr_dma_dac_ch0_B(enum dma_channel_status status);
 static void usb_rx_process(uint32_t wakeTime);
 
 static void task_dac(uint32_t now);
+static void task_adc(uint32_t now);
+static void task_twi(uint32_t now);
 static void task_usb(uint32_t now);
 
 
@@ -445,7 +448,7 @@ void dds_update(float dds0_hz, float dds1_hz, float phase)
 	}
 
 	/* Calculate new increment values */
-	task_dac(rtc_get_time());
+	sched_push(task_dac, SCHED_ENTRY_CB_TYPE__LISTTIME, 10, true, false, false);
 }
 
 void errorBeep_enable(bool enable)
@@ -540,11 +543,19 @@ static void sched_set_alarm(uint32_t alarmTime)
 	rtc_set_alarm(alarmTime);
 }
 
-void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay, bool isIntDis)
+void sched_doSleep(void)
+{
+#if 1
+	/* Power down until IRQ or event calls in */
+	sleepmgr_enter_sleep();
+#endif
+}
+
+void sched_push(void* cb, SCHED_ENTRY_CB_TYPE_ENUM_t cbType, uint32_t wakeTime, bool isDelay, bool isIntDis, bool isSync)
 {
 	const uint32_t pushTime = rtc_get_time();
 	uint32_t alarmTime = 0UL;
-	uint32_t sfCb = (isIntDis ?  0x82340000UL : 0x0234000UL) | ((uint32_t)(uint16_t)cb);
+	uint32_t sfCb = (isIntDis ?  0x8F000000UL : 0x0F00000UL) | (isSync ?  0x40000000UL : 0x0000000UL) | ((uint32_t)cbType << 24) | ((uint32_t)(uint16_t)cb);
 
 	if (isDelay) {
 		/* Sanity checks */
@@ -563,7 +574,7 @@ void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay, bool isIntDi
 	/* Lock access to the scheduler entries */
 	if (!sched_getLock(&g_sched_lock)) {
 		/* Push entry to the stack due to blocked access */
-		{
+		if (!fifo_is_full(&fifo_sched_desc)) {
 			irqflags_t flags = cpu_irq_save();
 			fifo_push_uint32(&fifo_sched_desc, wakeTime);
 			fifo_push_uint32(&fifo_sched_desc, sfCb);
@@ -572,16 +583,21 @@ void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay, bool isIntDi
 		return;
 	}
 
+// -- single entry section for g_sched_data[] / g_sched_sort[]
+// v
+
 	/* Get next free slot */
 	bool dataEntryStored = false;
 	uint8_t slot = 0;
 
 	for (int idx = 0; idx < C_SCH_SLOT_CNT; ++idx) {
 		if (!(g_sched_data[idx].occupied)) {
-			g_sched_data[idx].occupied = true;
-			g_sched_data[idx].callback = cb;
-			g_sched_data[idx].isIntDis = (isIntDis ?  1 : 0);
-			g_sched_data[idx].wakeTime = wakeTime;
+			g_sched_data[idx].occupied	= true;
+			g_sched_data[idx].callback	= cb;
+			g_sched_data[idx].cbType	= cbType & 0x03;
+			g_sched_data[idx].isIntDis	= (isIntDis ?  1 : 0);
+			g_sched_data[idx].isSync	= (isSync	?  1 : 0);
+			g_sched_data[idx].wakeTime	= wakeTime;
 			slot = idx + 1;
 			dataEntryStored = true;
 			break;
@@ -619,14 +635,19 @@ void sched_push(sched_callback cb, uint32_t wakeTime, bool isDelay, bool isIntDi
 	alarmTime = g_sched_data[g_sched_sort[0] - 1].wakeTime;
 
 sched_push_out:
+
+// ^
+// -- single entry section for g_sched_data[] / g_sched_sort[]
+
 	/* Release lock */
 	sched_freeLock(&g_sched_lock);
 
 	/* Pop back all FIFO entries */
 	while (!fifo_is_empty(&fifo_sched_desc)) {
-		uint32_t sfCb = 0U;
-		wakeTime = sfCb;
+		uint32_t sfCb = 0UL;
+		wakeTime = 0UL;
 
+		/* Get next entries */
 		{
 			irqflags_t flags = cpu_irq_save();
 			fifo_pull_uint32(&fifo_sched_desc, &wakeTime);
@@ -635,16 +656,18 @@ sched_push_out:
 		}
 
 		/* FIFO check */
-		if ((sfCb & 0x0fff0000UL) != 0x02340000UL) {
-			// Signature not found
-			nop();
+		if ((sfCb & 0x0f000000UL) != 0x0f000000UL) {
+			/* Signature not found - clear all entries to synchronize again */
+			irqflags_t flags = cpu_irq_save();
+			while (!fifo_is_empty(&fifo_sched_desc)) {
+				fifo_pull_uint32(&fifo_sched_desc, &sfCb);
+			}
+			sfCb = 0UL;
+			cpu_irq_restore(flags);
 		}
 
 		if ((sfCb & 0x0000ffffUL) && wakeTime) {
-			sched_push((void*)(uint16_t)(sfCb & 0x0000ffffUL), wakeTime, false, (sfCb & 0x80000000UL ?  true : false));
-		} else {
-			// Fatal error
-			nop();
+			sched_push((void*)(uint16_t)(sfCb & 0x0000ffffUL), ((sfCb & 0x00030000) >> 24), wakeTime, false, (sfCb & 0x80000000UL ?  true : false), (sfCb & 0x40000000UL ?  true : false));
 		}
 	}
 
@@ -659,10 +682,13 @@ void sched_pop(uint32_t wakeNow)
 	uint32_t alarmTime = 0UL;
 
 	if (!sched_getLock(&g_sched_lock)) {
-		/* Locked by another one, so let us be called later */
+		/* Locked by another one, sched_pop() later */
 		g_sched_pop_again = true;
 		return;
 	}
+
+// -- single entry section for g_sched_data[] / g_sched_sort[]
+// v
 
 	uint8_t idx = g_sched_sort[0];
 	if (!idx) {
@@ -674,12 +700,14 @@ void sched_pop(uint32_t wakeNow)
 		goto sched_pop_out;
 	}
 
-	/* Process each entry until now  */
+	/* Process each entry until the current timestamp */
 	alarmTime = g_sched_data[idx - 1].wakeTime;
 	while (alarmTime <= rtc_get_time()) {
 		/* Get callback */
-		sched_callback cb	= g_sched_data[idx - 1].callback;
-		bool isIntDis		= g_sched_data[idx - 1].isIntDis;
+		void* cbVal		= g_sched_data[idx - 1].callback;
+		uint8_t cbType	= g_sched_data[idx - 1].cbType;
+		bool isIntDis	= g_sched_data[idx - 1].isIntDis;
+		bool isSync		= g_sched_data[idx - 1].isSync;
 
 		/* Free entry */
 		g_sched_data[idx - 1].occupied = false;
@@ -691,14 +719,28 @@ void sched_pop(uint32_t wakeNow)
 		g_sched_sort[C_SCH_SLOT_CNT - 1] = 0;	// clear top-most index
 
 		/* Call the CB function */
-		if (cb) {
+		if (cbVal) {
 			irqflags_t flags = cpu_irq_save();
 			if (isIntDis) {
 				cpu_irq_disable();
 			} else {
 				cpu_irq_enable();
 			}
-			cb(alarmTime);
+			switch (cbType) {
+				case SCHED_ENTRY_CB_TYPE__LISTTIME:
+				{
+					sched_callback_type0 cb = cbVal;
+					cb(alarmTime);
+				}
+				break;
+
+				case SCHED_ENTRY_CB_TYPE__LISTTIME_ISSYNC:
+				{
+					sched_callback_type1 cb = cbVal;
+					cb(alarmTime, isSync);
+				}
+				break;
+			}
 			cpu_irq_restore(flags);
 		}
 
@@ -718,6 +760,10 @@ void sched_pop(uint32_t wakeNow)
 	}
 
 sched_pop_out:
+
+// ^
+// -- single entry section for g_sched_data[] / g_sched_sort[]
+
 	sched_freeLock(&g_sched_lock);
 
 	/* Set next time to wake up */
@@ -734,27 +780,24 @@ sched_pop_out:
 
 void yield_ms(uint16_t ms)
 {
-//	irqflags_t flags = cpu_irq_save();
-//	cpu_irq_enable();
-
-#if 0
-	/* Push ourself to the scheduler */
-	sched_push(yield_ms_cb, ms, true);
+	irqflags_t flags = cpu_irq_save();
+	cpu_irq_enable();
 
 	/* A yield job is on the scheduler */
 	g_sched_yield = true;
 
+	/* Push ourself to the scheduler */
+	sched_push(yield_ms_cb, SCHED_ENTRY_CB_TYPE__LISTTIME, ms, true, false, false);
+
 	/* Continued sleep until our callback is done */
 	do {
 		/* Enter sleep mode */
-		//sleepmgr_enter_sleep();
+		sched_doSleep();
 
 		/* Woke up for any reason - check if we were called */
 	} while (g_sched_yield);
-#else
-	delay_ms(ms);
-#endif
-//	cpu_irq_restore(flags);
+
+	cpu_irq_restore(flags);
 }
 
 void yield_ms_cb(uint32_t listTime)
@@ -821,7 +864,7 @@ static void tc_start(void)
 //ISR(__vector_14)
 void isr_tcc0_ovfl(void)
 {	// This ISR is called 2048 per second
-	static uint32_t	last_10ms  = 0UL;
+//	static uint32_t	last_10ms  = 0UL;
 	static uint32_t	last_100ms = 0UL;
 	static uint32_t	last_500ms = 0UL;
 	
@@ -832,12 +875,14 @@ void isr_tcc0_ovfl(void)
 	TCC0_INTFLAGS = TC0_OVFIF_bm;
 
 	if (g_workmode == WORKMODE_RUN) {
+#if 0
 		/* Group, which needs to be called about 100x per second */
 		if (((now - last_10ms) >= 10) || (now < last_10ms)) {
 			last_10ms = now;
 			isr_10ms(now);
 			return;
 		}
+#endif
 
 		/* Group, which needs to be called about 10x per second */
 		if (((now - last_100ms) >= 102) || (now < last_100ms)) {
@@ -857,19 +902,27 @@ void isr_tcc0_ovfl(void)
 	}
 }
 
+#if 0
 static void isr_10ms(uint32_t now)
 {
 	isr_10ms_twi1_onboard(now);
 }
+#endif
 
 static void isr_100ms(uint32_t now)
 {
-	//isr_100ms_twi1_onboard(now);
+	isr_100ms_twi1_onboard(now);
 }
 
 static void isr_500ms(uint32_t now)
 {
 	isr_500ms_twi1_onboard(now);
+
+	/* CPU ADC values */
+	sched_push(task_adc, SCHED_ENTRY_CB_TYPE__LISTTIME, 100, true, false, false);
+
+	/* CPU DAC reconfiguration */
+	sched_push(task_dac, SCHED_ENTRY_CB_TYPE__LISTTIME, 100, true, false, false);
 
 	/* Kick RTC32 */
 	rtc_set_alarm(rtc_get_time() + 2);
@@ -1476,7 +1529,7 @@ static void task_adc(uint32_t now)
 
 static void task_twi(uint32_t now)
 {	/* Calculations for the presentation layer and display */
-#if 1
+#if 0
 	// now to be called by the scheduler by  isr_500ms_twi1_onboard()
 
 	/* TWI1 - SIM808, Hygro, Gyro, Baro devices */
@@ -1484,7 +1537,6 @@ static void task_twi(uint32_t now)
 #endif
 
 	/* TWI2 - LCD Port */
-	yield_ms(100);
 	task_twi2_lcd(now);
 }
 
@@ -1666,9 +1718,9 @@ static void task(void)
 		uint32_t now = rtc_get_time();
 
 		/* TASK when woken up and all ISRs are done */
-		task_dac(now);
-		task_adc(now);
-		task_twi(now);										// Handle TWI1 and TWI2 communications
+		//task_dac(now);
+		//task_adc(now);
+		task_twi(now);										// Handle (TWI1 and) TWI2 communications
 		task_usb(now);										// Handling the USB connection
 	}
 }
@@ -1729,8 +1781,8 @@ int main(void)
 	/* Show help page of command set */
 	printHelp();
 
-	/* Show green LED */
-	//twi2_set_leds(0x02);
+	/* LED off */
+	twi2_set_leds(0x00);
 
 	/* The application code */
 	g_twi2_lcd_repaint = true;
@@ -1738,12 +1790,12 @@ int main(void)
     while (g_workmode) {
 		task();
 
-		twi2_set_leds(0x01);
+		/* Work on the pushed back jobs */
 		yield_ms(0);
-		twi2_set_leds(0x00);
     }
 
-	twi2_set_leds(0x00);  // LEDs: off
+	/* LED off */
+	twi2_set_leds(0x00);
 
 	cpu_irq_disable();
 	sleepmgr_enter_sleep();
