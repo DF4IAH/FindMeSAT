@@ -348,11 +348,7 @@ void backlight_mode_pwm(int16_t mode_pwm)
 	uint8_t l_pwm = mode_pwm & 0xff;
 
 	/* Setting the mode */
-	{
-		irqflags_t flags		= cpu_irq_save();
-		g_backlight_mode_pwm	= mode_pwm;
-		cpu_irq_restore(flags);
-	}
+	g_backlight_mode_pwm	= mode_pwm;
 
 	switch (mode_pwm) {
 		case -2:
