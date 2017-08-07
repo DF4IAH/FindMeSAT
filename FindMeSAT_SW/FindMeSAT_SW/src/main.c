@@ -45,17 +45,18 @@
 /* GLOBAL section */
 
 bool						g_adc_enabled						= true;
+bool						g_dac_enabled						= false;
 int16_t						g_backlight_mode_pwm				= 50;		// -2: SPECIAL
 uint8_t						g_bias_pm							= 22;
-bool						g_dac_enabled						= false;
+uint8_t						g_pitch_tone_mode					= 1;
 bool						g_errorBeep_enable					= true;
 bool						g_keyBeep_enable					= false;
+
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines			= false;
 bool						g_usb_cdc_rx_received				= false;
 bool						g_usb_cdc_transfers_authorized		= false;
 bool						g_usb_cdc_access_blocked			= false;
-uint8_t						g_pitch_tone_mode					= 1;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 
 bool						g_twi1_gsm_valid					= false;
