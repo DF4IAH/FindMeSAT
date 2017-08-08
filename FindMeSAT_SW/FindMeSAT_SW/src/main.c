@@ -36,6 +36,7 @@
 
 #include "conf_dac.h"
 #include "dds.h"
+#include "serial.h"
 #include "usb.h"
 #include "twi.h"
 #include "interpreter.h"
@@ -1337,6 +1338,7 @@ int main(void)
 
 	evsys_init();		// Event system
 	tc_init();			// Timers
+	serial_init();		// Set up serial connection to the SIM808
 	if (g_adc_enabled) {
 		adc_init();		// ADC
 	}
@@ -1354,6 +1356,7 @@ int main(void)
 
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
+	serial_start();		// Start the communication
 	if (g_dac_enabled) {
 		dac_start();	// Start DA convertions
 	}
