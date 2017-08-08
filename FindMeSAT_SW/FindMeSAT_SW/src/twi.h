@@ -394,7 +394,10 @@ void task_twi2_lcd__gyro_gfxgyro(void);
 void task_twi2_lcd__gyro_beepvario(void);
 // void task_twi2_lcd__gyro(void);
 void task_twi2_lcd__baro(uint8_t col_left);
-void task_twi2_lcd(uint32_t now);
+
+// void task_twi2_lcd(uint32_t now);
+
+void task_twi(uint32_t now);
 
 
 #endif /* TWI_H_ */

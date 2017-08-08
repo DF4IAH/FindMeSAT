@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "main.h"
+#include "usb.h"
 #include "twi.h"
 
 #include "interpreter.h"

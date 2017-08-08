@@ -13,6 +13,7 @@
 
 #include "main.h"
 #include "interpreter.h"
+#include "usb.h"
 
 #include "twi.h"
 
@@ -774,7 +775,9 @@ static void start_twi2_lcd(void)
 			twi2_set_ledbl(0, lum);
 			delay_ms(1);
 		}
-		// g_backlight_mode_pwm = 128;
+
+		/* Set the backlight */
+		twi2_set_ledbl(0, g_backlight_mode_pwm);
 	}
 }
 
@@ -1275,7 +1278,7 @@ static void task_twi1_baro(uint32_t now)
 /* TWI1 - onboard devices */
 // hint: not called anymore, now done by  isr_500ms_twi1_onboard()
 #if 0
-void task_twi1_onboard(uint32_t now)
+static void task_twi1_onboard(uint32_t now)
 {
 	if (g_twi1_hygro_valid) {
 		task_twi1_hygro(now);
@@ -1944,7 +1947,7 @@ void task_twi2_lcd__baro(uint8_t col_left)
 	}
 }
 
-void task_twi2_lcd(uint32_t now)
+static void task_twi2_lcd(uint32_t now)
 {
 	static uint8_t s_lcd_entry_state =  0;
 
@@ -2008,4 +2011,18 @@ void task_twi2_lcd(uint32_t now)
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_TCXOPWM_DELAY_MIN_US);
 	}
+}
+
+
+void task_twi(uint32_t now)
+{	/* Calculations for the presentation layer and display */
+	#if 0
+	// now to be called by the scheduler by  isr_500ms_twi1_onboard()
+
+	/* TWI1 - SIM808, Hygro, Gyro, Baro devices */
+	task_twi1_onboard(now);
+	#endif
+
+	/* TWI2 - LCD Port */
+	task_twi2_lcd(now);
 }

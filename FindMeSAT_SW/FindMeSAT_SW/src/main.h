@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												170
-#define VERSION_LOW													807
+#define VERSION_LOW													808
 
 
 #define C_USB_LINE_DELAY_MS											2
@@ -127,20 +127,6 @@ void isr_tcc0_ovfl(void);
 void isr_rtc_alarm(uint32_t rtc_time);
 void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
 void isr_adc_b(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
-
-uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl);
-void usb_callback_suspend_action(void);
-void usb_callback_resume_action(void);
-void usb_callback_remotewakeup_enable(void);
-void usb_callback_remotewakeup_disable(void);
-void usb_send_wakeup_event(void);
-bool usb_callback_cdc_enable(void);
-void usb_callback_cdc_disable(void);
-void usb_callback_config(uint8_t port, usb_cdc_line_coding_t * cfg);
-void usb_callback_cdc_set_dtr(uint8_t port, bool b_enable);
-void usb_callback_cdc_set_rts(uint8_t port, bool b_enable);
-void usb_callback_rx_notify(uint8_t port);
-void usb_callback_tx_empty_notify(uint8_t port);
 
 int main(void);
 
