@@ -40,6 +40,7 @@
 #include "usb.h"
 #include "twi.h"
 #include "interpreter.h"
+#include "usart_serial.h"
 
 #include "main.h"
 
@@ -60,6 +61,11 @@ bool						g_usb_cdc_rx_received				= false;
 bool						g_usb_cdc_transfers_authorized		= false;
 bool						g_usb_cdc_access_blocked			= false;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
+
+usart_serial_options_t		g_usart1_options					= { 0 };
+bool						g_usart1_rx_ready					= false;
+uint8_t						g_usart1_rx_idx						= 0;
+uint8_t						g_usart1_rx_buf[C_USART1_RX_BUF_LEN]= { 0 };
 
 bool						g_twi1_gsm_valid					= false;
 uint8_t						g_twi1_gsm_version					= 0;
@@ -1310,6 +1316,7 @@ static void task(void)
 
 		/* TASK when woken up and all ISRs are done */
 		/* note: ADC and DAC are handled by the scheduler */
+		task_serial(now);									// Handle serial communication with the SIM808
 		task_twi(now);										// Handle (TWI1 and) TWI2 communications
 		task_usb(now);										// Handling the USB connection
 	}
@@ -1319,6 +1326,9 @@ static void task(void)
 int main(void)
 {
 	uint8_t retcode = 0;
+
+	/* Init the IOPORT */
+	ioport_init();
 
 	/* Init the FIFO buffers */
 	fifo_init(&fifo_sched_desc, fifo_sched_buffer, FIFO_SCHED_BUFFER_LENGTH);
@@ -1356,7 +1366,6 @@ int main(void)
 
 	/* Start of sub-modules */
 	tc_start();			// All clocks and PWM timers start here
-	serial_start();		// Start the communication
 	if (g_dac_enabled) {
 		dac_start();	// Start DA convertions
 	}
@@ -1369,6 +1378,9 @@ int main(void)
 
 	/* Start TWI channels */
 	twi_start();		// Start TWI
+
+	/* Start serial1 */
+	serial_start();		// Release GSM_RESET and start communication with the SIM808 */
 
 	/* Show help page of command set */
 	printHelp();

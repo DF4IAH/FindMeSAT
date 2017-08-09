@@ -136,6 +136,12 @@
 #include <twim.h>
 #include <twis.h>
 
+// From module: USART - Serial interface - XMEGA implementation
+#include <serial.h>
+
+// From module: USART - Universal Synchronous/Asynchronous Receiver/Transmitter
+#include <usart.h>
+
 // From module: USB CDC Protocol
 #include <usb_protocol_cdc.h>
 

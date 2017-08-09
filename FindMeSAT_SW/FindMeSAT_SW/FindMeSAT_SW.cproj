@@ -32,6 +32,7 @@
     <option id="common.boards" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.drivers.nvm" value="Add" config="no_extmem" content-id="Atmel.ASF" />
     <option id="common.services.calendar" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="common.services.basic.fifo" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.gfx_mono" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.gfx_mono.font" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.ioport" value="Add" config="" content-id="Atmel.ASF" />
@@ -47,7 +48,7 @@
     <option id="xmega.drivers.tc" value="Add" config="" content-id="Atmel.ASF" />
     <option id="xmega.drivers.twi" value="Add" config="both" content-id="Atmel.ASF" />
     <option id="xmega.services.pwm" value="Add" config="" content-id="Atmel.ASF" />
-    <option id="common.services.basic.fifo" value="Add" config="" content-id="Atmel.ASF" />
+    <option id="common.services.basic.serial" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.boards.user_board.common" value="Add" config="" content-id="Atmel.ASF" />
   </options>
   <configurations>
@@ -177,6 +178,12 @@
     <file path="src/ASF/common/drivers/nvm/xmega/xmega_nvm.c" framework="" version="3.34.1" source="common\drivers\nvm\xmega\xmega_nvm.c" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/common/services/fifo/fifo.h" framework="" version="3.34.1" source="common\services\fifo\fifo.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/common/services/fifo/fifo.c" framework="" version="3.34.1" source="common\services\fifo\fifo.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/serial/usart_serial.c" framework="" version="3.34.1" source="common\services\serial\usart_serial.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/serial/xmega_usart/usart_serial.h" framework="" version="3.34.1" source="common\services\serial\xmega_usart\usart_serial.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/common/services/serial/serial.h" framework="" version="3.34.1" source="common\services\serial\serial.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/Config/conf_usart_serial.h" framework="" version="3.34.1" source="common\services\serial\xmega_usart\module_config\conf_usart_serial.h" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/xmega/drivers/usart/usart.c" framework="" version="3.34.1" source="xmega\drivers\usart\usart.c" changed="False" content-id="Atmel.ASF" />
+    <file path="src/ASF/xmega/drivers/usart/usart.h" framework="" version="3.34.1" source="xmega\drivers\usart\usart.h" changed="False" content-id="Atmel.ASF" />
   </files>
   <documentation help="http://asf.atmel.com/docs/3.34.1/common.applications.user_application.user_board.xmegaau/html/index.html" />
   <offline-documentation help="" />
@@ -281,6 +288,9 @@
       <Value>../src/ASF/common/drivers/nvm</Value>
       <Value>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include</Value>
       <Value>../src/ASF/common/services/fifo</Value>
+      <Value>../src/ASF/common/services/serial/xmega_usart</Value>
+      <Value>../src/ASF/common/services/serial</Value>
+      <Value>../src/ASF/xmega/drivers/usart</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize for size (-Os)</avrgcc.compiler.optimization.level>
@@ -329,6 +339,9 @@
       <Value>../src/ASF/xmega/drivers/dma</Value>
       <Value>../src/ASF/common/drivers/nvm</Value>
       <Value>../src/ASF/common/services/fifo</Value>
+      <Value>../src/ASF/common/services/serial/xmega_usart</Value>
+      <Value>../src/ASF/common/services/serial</Value>
+      <Value>../src/ASF/xmega/drivers/usart</Value>
     </ListValues>
   </avrgcc.assembler.general.IncludePaths>
 </AvrGcc>
@@ -386,6 +399,9 @@
       <Value>../src/ASF/common/drivers/nvm</Value>
       <Value>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include\</Value>
       <Value>../src/ASF/common/services/fifo</Value>
+      <Value>../src/ASF/common/services/serial/xmega_usart</Value>
+      <Value>../src/ASF/common/services/serial</Value>
+      <Value>../src/ASF/xmega/drivers/usart</Value>
     </ListValues>
   </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.level>Optimize (-O1)</avrgcc.compiler.optimization.level>
@@ -435,6 +451,9 @@
       <Value>../src/ASF/xmega/drivers/dma</Value>
       <Value>../src/ASF/common/drivers/nvm</Value>
       <Value>../src/ASF/common/services/fifo</Value>
+      <Value>../src/ASF/common/services/serial/xmega_usart</Value>
+      <Value>../src/ASF/common/services/serial</Value>
+      <Value>../src/ASF/xmega/drivers/usart</Value>
     </ListValues>
   </avrgcc.assembler.general.IncludePaths>
   <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
@@ -444,6 +463,36 @@
     <OutputFileExtension>.elf</OutputFileExtension>
   </PropertyGroup>
   <ItemGroup>
+    <None Include="src\ASF\common\services\serial\serial.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\common\services\serial\usart_serial.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\common\services\serial\xmega_usart\usart_serial.h">
+      <SubType>compile</SubType>
+    </None>
+    <None Include="src\config\conf_usart_serial.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\ASF\xmega\drivers\usart\usart.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <None Include="src\ASF\xmega\drivers\usart\usart.h">
+      <SubType>compile</SubType>
+    </None>
+    <Compile Include="src\serial.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\serial.h">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\usb.c">
+      <SubType>compile</SubType>
+    </Compile>
+    <Compile Include="src\usb.h">
+      <SubType>compile</SubType>
+    </Compile>
     <None Include="src\ASF\xmega\drivers\rtc32\rtc32.h">
       <SubType>compile</SubType>
     </None>
@@ -853,6 +902,8 @@
     <Folder Include="src\ASF\common\services\hugemem\generic\" />
     <Folder Include="src\ASF\common\services\ioport\" />
     <Folder Include="src\ASF\common\services\ioport\xmega\" />
+    <Folder Include="src\ASF\common\services\serial\" />
+    <Folder Include="src\ASF\common\services\serial\xmega_usart\" />
     <Folder Include="src\ASF\common\services\sleepmgr\" />
     <Folder Include="src\ASF\common\services\sleepmgr\xmega\" />
     <Folder Include="src\ASF\common\services\twi\" />
@@ -880,6 +931,7 @@
     <Folder Include="src\ASF\xmega\drivers\sleep\" />
     <Folder Include="src\ASF\xmega\drivers\tc\" />
     <Folder Include="src\ASF\xmega\drivers\twi\" />
+    <Folder Include="src\ASF\xmega\drivers\usart\" />
     <Folder Include="src\ASF\xmega\drivers\usb\" />
     <Folder Include="src\ASF\xmega\services\" />
     <Folder Include="src\ASF\xmega\services\pwm\" />
