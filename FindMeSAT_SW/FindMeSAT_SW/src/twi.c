@@ -9,10 +9,20 @@
  *
  */
 
+/*
+ * Include header files for all drivers that have been imported from
+ * Atmel Software Framework (ASF).
+ */
+/*
+ * Support and FAQ: visit <a href="http://www.atmel.com/design-support/">Atmel Support</a>
+ */
+#include <asf.h>
+
 #include <math.h>
 
 #include "main.h"
 #include "interpreter.h"
+#include "usb.h"
 
 #include "twi.h"
 
@@ -123,6 +133,7 @@ extern uint8_t			twi2_recv_data[TWI_DATA_LENGTH];
 static void task_twi1_hygro(uint32_t now);
 static void task_twi1_gyro(uint32_t now);
 static void task_twi1_baro(uint32_t now);
+static void task_twi2_lcd_template(void);
 
 
 /* Functions */
@@ -262,52 +273,18 @@ void twi2_set_beep(uint8_t pitch_10hz, uint8_t len_10ms)
 
 /* INIT functions */
 
-#if 0
-const char					PM_TWI1_INIT_GSM_01[]				= "\r\nTWI-onboard: GSM/BT/GPS SIM808 - I2C address: 0x%02X\r\n";
-const char					PM_TWI1_INIT_GSM_02[]				= "TWI-onboard: GSM/BT/GPS SIM808 -     version: 0x%02X\r\n";
-const char					PM_TWI1_INIT_GSM_03[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GSM_01[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GSM_02[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GSM_03[]);
-
-static void init_twi1_gsm(void)
-{
-	status_code_t sc;
-
-	/*
-	* No documentation for I2C slave mode found, yet.
-	*/
-	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_GSM_01, TWI1_SLAVE_GSM_ADDR);
-	udi_write_tx(g_prepare_buf, min(len, sizeof(g_prepare_buf)));
-
-	g_twi1_gsm_version = 0;
-
-	twi1_packet.chip = TWI1_SLAVE_GSM_ADDR;
-	twi1_packet.addr[0] = TWI1_SLAVE_GSM_REG_1_DEVICE_ID;
-	twi1_packet.addr_length = 1;
-	twi1_packet.length = 1;
-	sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
-	if (sc == STATUS_OK) {
-		g_twi1_gsm_version = twi1_m_data[0];
-		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_GSM_02, g_twi1_gsm_version);
-	} else {
-		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_GSM_03, sc);
-	}
-	udi_write_tx(g_prepare_buf, min(len, sizeof(g_prepare_buf)));
-}
-#endif
-
-
 const char					PM_TWI1_INIT_HYGRO_01[]				= "\r\nTWI-onboard: Hygro SHT31-DIS - I2C address: 0x%02X\r\n";
 const char					PM_TWI1_INIT_HYGRO_02[]				= "TWI-onboard: Hygro SHT31-DIS -   address NACK / 'break' bad response\r\n";
 const char					PM_TWI1_INIT_HYGRO_03[]				= "TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n";
 const char					PM_TWI1_INIT_HYGRO_04[]				= "TWI-onboard:  INIT success.\r\n";
 const char					PM_TWI1_INIT_HYGRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
+const char					PM_TWI1_INIT_ONBOARD_HYGRO_OK[]		= "Init: Hygro success";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_01[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_02[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_03[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_04[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_05[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_HYGRO_OK[]);
 
 static void init_twi1_hygro(void)
 {
@@ -370,6 +347,10 @@ static void init_twi1_hygro(void)
 		}
 
 		g_twi1_hygro_valid = true;
+
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_HYGRO_OK);
+		task_twi2_lcd_str(8, 3 * 10, g_prepare_buf);
+
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_HYGRO_04);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 		return;
@@ -379,17 +360,18 @@ static void init_twi1_hygro(void)
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 }
 
-
 const char					PM_TWI1_INIT_GYRO_01[]				= "\r\nTWI-onboard: Gyro MPU-9250 - I2C address: 0x%02X, 0x%02X\r\n";
 const char					PM_TWI1_INIT_GYRO_02[]				= "TWI-onboard: Gyro MPU-9250   -   'reset 1' bad response\r\n";
 const char					PM_TWI1_INIT_GYRO_03[]				= "TWI-onboard: Gyro MPU-9250 -     version: 0x%02X, 0x%02X\r\n";
 const char					PM_TWI1_INIT_GYRO_04[]				= "TWI-onboard:  INIT success.\r\n";
 const char					PM_TWI1_INIT_GYRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
+const char					PM_TWI1_INIT_ONBOARD_GYRO_OK[]		= "Init: Gyro  success";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_01[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_02[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_03[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_04[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_05[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_GYRO_OK[]);
 
 static void init_twi1_gyro(void)
 {
@@ -459,7 +441,7 @@ static void init_twi1_gyro(void)
 			break;
 		}
 		g_twi1_gyro_2_version = twi1_m_data[0];
-		g_twi1_gyro_valid = true;
+
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_GYRO_03, g_twi1_gyro_1_version, g_twi1_gyro_2_version);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
@@ -610,6 +592,11 @@ static void init_twi1_gyro(void)
 		}
 		delay_ms(10);
 
+		g_twi1_gyro_valid = true;
+
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_GYRO_OK);
+		task_twi2_lcd_str(8, 4 * 10, g_prepare_buf);
+
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_GYRO_04);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 		return;
@@ -619,19 +606,20 @@ static void init_twi1_gyro(void)
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 }
 
-
 const char					PM_TWI1_INIT_BARO_01[]				= "\r\nTWI-onboard: Baro MS560702BA03-50 - I2C address: 0x%02X\r\n";
 const char					PM_TWI1_INIT_BARO_02[]				= "TWI-onboard:  BAD reading serial/CRC word. (sc=%d)\r\n";
 const char					PM_TWI1_INIT_BARO_03[]				= "TWI-onboard: Baro MS560702BA03-50 -     serial#: %d\r\n";
 const char					PM_TWI1_INIT_BARO_04[]				= "TWI-onboard:  BAD reading PROM address %d. (sc=%d)\r\n";
 const char					PM_TWI1_INIT_BARO_05[]				= "TWI-onboard:  INIT success.\r\n";
 const char					PM_TWI1_INIT_BARO_06[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
+const char					PM_TWI1_INIT_ONBOARD_BARO_OK[]		= "Init: Baro  success";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_01[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_02[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_03[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_04[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_05[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_06[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_BARO_OK[]);
 
 static void init_twi1_baro(void)
 {
@@ -683,6 +671,10 @@ static void init_twi1_baro(void)
 		}
 
 		g_twi1_baro_valid = true;
+
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_BARO_OK);
+		task_twi2_lcd_str(8, 5 * 10, g_prepare_buf);
+
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_BARO_05);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 		return;
@@ -700,8 +692,8 @@ PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_01[]);
 
 static void start_twi1_onboard(void)
 {
-	/* Device GSM/BT/GPS SIM808 - I2C address: 0xXX */
-	//init_twi1_gsm();
+	/* Booting screen with header */
+	task_twi2_lcd_header();
 
 	/* Device Hygro SHT31-DIS - I2C address: 0x44 */
 	init_twi1_hygro();
@@ -742,15 +734,16 @@ static void start_twi2_lcd(void)
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_ms(50);
 
+		/* LED red */
+		twi2_set_leds(0x01);
+
+		/* Set the pixel type to SET pixels */
 		twi2_waitUntilReady();
 		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
 		twi2_m_data[0] = GFX_PIXEL_SET;
 		twi2_packet.length = 1;
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
-
-		/* LED yellow */
-		twi2_set_leds(0x03);
 
 		/* Set optimum contrast voltage */
 		twi2_set_bias(g_bias_pm);
@@ -774,7 +767,12 @@ static void start_twi2_lcd(void)
 			twi2_set_ledbl(0, lum);
 			delay_ms(1);
 		}
-		// g_backlight_mode_pwm = 128;
+
+		/* Set the backlight */
+		twi2_set_ledbl(0, g_backlight_mode_pwm);
+
+		/* LED green */
+		twi2_set_leds(0x02);
 	}
 }
 
@@ -828,11 +826,11 @@ void twi_start(void) {
 	#endif
 	#endif
 
+	delay_ms(1000);											// Give Smart-LCD some time being up and ready
+	start_twi2_lcd();
+
 	/* Start each TWI channel devices */
 	start_twi1_onboard();
-
-	delay_ms(250);											// Give Smart-LCD some time being up and ready
-	start_twi2_lcd();
 }
 
 
@@ -952,7 +950,7 @@ static bool service_twi1_gyro(uint32_t now, bool sync)
 	if (twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST2__HOFL) {
 		/* Data of Magnetometer AK8963 overflowed */
 		g_twi1_gyro_2_mag_z = g_twi1_gyro_2_mag_y = g_twi1_gyro_2_mag_x = 0;
-		return true;	// Even overflowed data is correct information
+		//return true;	// Even overflowed data is correct information
 	}
 	return true;
 }
@@ -1095,7 +1093,6 @@ void isr_sparetime_twi1_onboard(uint32_t now)
 		}
 	}
 }
-
 
 static void task_twi1_hygro(uint32_t now)
 {	// Calculations for the presentation layer
@@ -1275,7 +1272,7 @@ static void task_twi1_baro(uint32_t now)
 /* TWI1 - onboard devices */
 // hint: not called anymore, now done by  isr_500ms_twi1_onboard()
 #if 0
-void task_twi1_onboard(uint32_t now)
+static void task_twi1_onboard(uint32_t now)
 {
 	if (g_twi1_hygro_valid) {
 		task_twi1_hygro(now);
@@ -1303,7 +1300,7 @@ static void task_twi2_lcd_reset(void)
 }
 #endif
 
-static void task_twi2_lcd_cls(void)
+void task_twi2_lcd_cls(void)
 {
 	twi2_waitUntilReady();
 	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_CLS;
@@ -1312,7 +1309,7 @@ static void task_twi2_lcd_cls(void)
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
-static void task_twi2_lcd_pos_xy(uint8_t x, uint8_t y)
+void task_twi2_lcd_pos_xy(uint8_t x, uint8_t y)
 {
 	twi2_waitUntilReady();
 	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_POS_X_Y;
@@ -1323,7 +1320,7 @@ static void task_twi2_lcd_pos_xy(uint8_t x, uint8_t y)
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
-static void task_twi2_lcd_str(uint8_t x, uint8_t y, const char* str)
+void task_twi2_lcd_str(uint8_t x, uint8_t y, const char* str)
 {
 	uint8_t slen = strlen(str);
 	if (!slen) {
@@ -1356,7 +1353,7 @@ static void task_twi2_lcd_str(uint8_t x, uint8_t y, const char* str)
 	}
 }
 
-static void task_twi2_lcd_line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t color)
+void task_twi2_lcd_line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t color)
 {
 	task_twi2_lcd_pos_xy(x1, y1);
 
@@ -1370,7 +1367,7 @@ static void task_twi2_lcd_line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, u
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
-static void task_twi2_lcd_rect(uint8_t x, uint8_t y, uint8_t width, uint8_t height, bool filled, uint8_t color)
+void task_twi2_lcd_rect(uint8_t x, uint8_t y, uint8_t width, uint8_t height, bool filled, uint8_t color)
 {
 	task_twi2_lcd_pos_xy(x, y);
 
@@ -1384,7 +1381,7 @@ static void task_twi2_lcd_rect(uint8_t x, uint8_t y, uint8_t width, uint8_t heig
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
-static void task_twi2_lcd_circ(uint8_t x, uint8_t y, uint8_t radius, bool filled, uint8_t color)
+void task_twi2_lcd_circ(uint8_t x, uint8_t y, uint8_t radius, bool filled, uint8_t color)
 {
 	task_twi2_lcd_pos_xy(x, y);
 
@@ -1397,10 +1394,8 @@ static void task_twi2_lcd_circ(uint8_t x, uint8_t y, uint8_t radius, bool filled
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
-static void task_twi2_lcd_header(void)
+void task_twi2_lcd_header(void)
 {
-	uint8_t line;
-
 	/* The header line */
 	task_twi2_lcd_cls();
 	task_twi2_lcd_str(6 * 10, 2, "FindMeSAT");
@@ -1413,6 +1408,12 @@ static void task_twi2_lcd_header(void)
 
 	/* Header line separator */
 	task_twi2_lcd_line(0, 11, 239, 11, 1);
+}
+
+
+static void task_twi2_lcd_template(void)
+{
+	uint8_t line;
 
 	if (g_adc_enabled) {
 		/* Left measurement names */
@@ -1478,13 +1479,25 @@ static void task_twi2_lcd_header(void)
 	}
 }
 
-static void task_twi2_lcd_print_format_float_P(uint8_t x, uint8_t y, float adc, const char* fmt_P)
+void task_twi2_lcd_print_format_P(uint8_t x, uint8_t y, const char* fmt_P)
 {
 	task_twi2_lcd_pos_xy(x, y);
 
 	twi2_waitUntilReady();
 	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
-	twi2_m_data[0] = sprintf_P((char*)&(twi2_m_data[1]), fmt_P, adc);
+	twi2_m_data[0] = sprintf_P((char*)&(twi2_m_data[1]), fmt_P);
+	twi2_packet.length = twi2_m_data[0] + 1;
+	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+}
+
+static void task_twi2_lcd_print_format_float_P(uint8_t x, uint8_t y, float flt, const char* fmt_P)
+{
+	task_twi2_lcd_pos_xy(x, y);
+
+	twi2_waitUntilReady();
+	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
+	twi2_m_data[0] = sprintf_P((char*)&(twi2_m_data[1]), fmt_P, flt);
 	twi2_packet.length = twi2_m_data[0] + 1;
 	twi_master_write(&TWI2_MASTER, &twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
@@ -1944,7 +1957,7 @@ void task_twi2_lcd__baro(uint8_t col_left)
 	}
 }
 
-void task_twi2_lcd(uint32_t now)
+static void task_twi2_lcd(uint32_t now)
 {
 	static uint8_t s_lcd_entry_state =  0;
 
@@ -1956,6 +1969,7 @@ void task_twi2_lcd(uint32_t now)
 		if (g_twi2_lcd_repaint) {
 			g_twi2_lcd_repaint = false;
 			task_twi2_lcd_header();
+			task_twi2_lcd_template();
 		}
 
 		/* Update Gfx every time */
@@ -2008,4 +2022,18 @@ void task_twi2_lcd(uint32_t now)
 		twi_master_write(&TWI2_MASTER, &twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_TCXOPWM_DELAY_MIN_US);
 	}
+}
+
+
+void task_twi(uint32_t now)
+{	/* Calculations for the presentation layer and display */
+	#if 0
+	// now to be called by the scheduler by  isr_500ms_twi1_onboard()
+
+	/* TWI1 - SIM808, Hygro, Gyro, Baro devices */
+	task_twi1_onboard(now);
+	#endif
+
+	/* TWI2 - LCD Port */
+	task_twi2_lcd(now);
 }

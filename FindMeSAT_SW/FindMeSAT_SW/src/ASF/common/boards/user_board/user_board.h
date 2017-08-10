@@ -47,41 +47,41 @@
  * The SIM808 is a GMS/BT/GPS device.
  */
 //@{
-#define GSM_RF_SYNC_GPIO                IOPORT_CREATE_PIN(PORTA, 6)
-#define GSM_NETLIGHT_GPIO               IOPORT_CREATE_PIN(PORTA, 7)
-#define GSM_PCM_SYNC_GPIO               IOPORT_CREATE_PIN(PORTD, 0)
-#define GSM_PCM_CLK_DRV_GPIO            IOPORT_CREATE_PIN(PORTD, 1)
-#define GSM_PCM_OUT_GPIO                IOPORT_CREATE_PIN(PORTD, 2)
-#define GSM_PCM_IN_DRV_GPIO             IOPORT_CREATE_PIN(PORTD, 3)
-#define POWERED_GSM_GPIO                IOPORT_CREATE_PIN(PORTE, 3)
-#define PWRKEY_GSM_GPIO                 IOPORT_CREATE_PIN(PORTE, 4)
-#define RESET_GSM_GPIO                  IOPORT_CREATE_PIN(PORTE, 5)
-#define DTR1_GPIO                       IOPORT_CREATE_PIN(PORTF, 0)
-#define GSM_DTR_GPIO                    IOPORT_CREATE_PIN(PORTF, 1)
-#define RXD1_GPIO                       IOPORT_CREATE_PIN(PORTF, 2)
-#define GSM_RXD_GPIO                    IOPORT_CREATE_PIN(PORTF, 3)
-#define RI1_GPIO                        IOPORT_CREATE_PIN(PORTF, 4)
-#define RTS1_GPIO                       IOPORT_CREATE_PIN(PORTF, 6)
-#define GSM_RTS_GPIO                    IOPORT_CREATE_PIN(PORTF, 7)
-#define GPS_1PPS_GPIO                   IOPORT_CREATE_PIN(PORTR, 0)
+#define GSM_RF_SYNC_GPIO				IOPORT_CREATE_PIN(PORTA, 6)
+#define GSM_NETLIGHT_GPIO				IOPORT_CREATE_PIN(PORTA, 7)
+#define GSM_PCM_SYNC_GPIO				IOPORT_CREATE_PIN(PORTD, 0)
+#define GSM_PCM_CLK_DRV_GPIO			IOPORT_CREATE_PIN(PORTD, 1)
+#define GSM_PCM_OUT_GPIO				IOPORT_CREATE_PIN(PORTD, 2)
+#define GSM_PCM_IN_DRV_GPIO				IOPORT_CREATE_PIN(PORTD, 3)
+#define GSM_POWERED_GPIO				IOPORT_CREATE_PIN(PORTE, 3)
+#define GSM_PWRKEY_DRV_GPIO				IOPORT_CREATE_PIN(PORTE, 4)
+#define GSM_RESET_DRV_GPIO				IOPORT_CREATE_PIN(PORTE, 5)
+#define GSM_DCD1_GPIO					IOPORT_CREATE_PIN(PORTF, 0)
+#define GSM_DTR1_DRV_GPIO				IOPORT_CREATE_PIN(PORTF, 1)
+#define GSM_RXD1_GPIO					IOPORT_CREATE_PIN(PORTF, 2)
+#define GSM_TXD1_DRV_GPIO				IOPORT_CREATE_PIN(PORTF, 3)
+#define GSM_RI1_GPIO					IOPORT_CREATE_PIN(PORTF, 4)
+#define GSM_CTS1_GPIO					IOPORT_CREATE_PIN(PORTF, 6)
+#define GSM_RTS1_DRV_GPIO				IOPORT_CREATE_PIN(PORTF, 7)
+#define GPS_GSM_1PPS_GPIO				IOPORT_CREATE_PIN(PORTR, 0)
 
-#define GSM_RF_SYNC                     GSM_RF_SYNC_GPIO
-#define GSM_NETLIGHT                    GSM_NETLIGHT_GPIO
-#define GSM_PCM_SYNC                    GSM_PCM_SYNC_GPIO
-#define GSM_PCM_CLK_DRV                 GSM_PCM_CLK_DRV_GPIO
-#define GSM_PCM_OUT                     GSM_PCM_OUT_GPIO
-#define GSM_PCM_IN_DRV                  GSM_PCM_IN_DRV_GPIO
-#define POWERED_GSM                     POWERED_GSM_GPIO
-#define PWRKEY_GSM                      PWRKEY_GSM_GPIO
-#define RESET_GSM                       RESET_GSM_GPIO
-#define DTR1                            DTR1_GPIO
-#define GSM_DTR                         GSM_DTR_GPIO
-#define RXD1                            RXD1_GPIO
-#define GSM_RXD                         GSM_RXD_GPIO
-#define RI1                             RI1_GPIO
-#define RTS1                            RTS1_GPIO
-#define GSM_RTS                         GSM_RTS_GPIO
-#define RESET_N                         RESET_GSM
+#define GSM_RF_SYNC						GSM_RF_SYNC_GPIO
+#define GSM_NETLIGHT					GSM_NETLIGHT_GPIO
+#define GSM_PCM_SYNC					GSM_PCM_SYNC_GPIO
+#define GSM_PCM_CLK_DRV					GSM_PCM_CLK_DRV_GPIO
+#define GSM_PCM_OUT						GSM_PCM_OUT_GPIO
+#define GSM_PCM_IN_DRV					GSM_PCM_IN_DRV_GPIO
+#define GSM_POWERED						GSM_POWERED_GPIO
+#define GSM_PWRKEY_DRV					GSM_PWRKEY_DRV_GPIO
+#define GSM_RESET_DRV					GSM_RESET_DRV_GPIO
+#define GSM_DCD1						GSM_DCD1_GPIO
+#define GSM_DTR1_DRV					GSM_DTR1_DRV_GPIO
+#define GSM_RXD1						GSM_RXD1_GPIO
+#define GSM_TXD1_DRV					GSM_TXD1_DRV_GPIO
+#define GSM_RI1							GSM_RI1_GPIO
+#define GSM_CTS1						GSM_CTS1_GPIO
+#define GSM_RTS1_DRV					GSM_RTS1_DRV_GPIO
+#define GPS_GSM_1PPS					GPS_GSM_1PPS_GPIO
 //@}
 
 

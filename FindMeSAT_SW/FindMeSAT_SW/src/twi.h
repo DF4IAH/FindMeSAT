@@ -384,6 +384,14 @@ void isr_sparetime_twi1_onboard(uint32_t now);
 
 // void task_twi1_onboard(uint32_t now);
 
+void task_twi2_lcd_cls(void);
+void task_twi2_lcd_pos_xy(uint8_t x, uint8_t y);
+void task_twi2_lcd_str(uint8_t x, uint8_t y, const char* str);
+void task_twi2_lcd_line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t color);
+void task_twi2_lcd_rect(uint8_t x, uint8_t y, uint8_t width, uint8_t height, bool filled, uint8_t color);
+void task_twi2_lcd_circ(uint8_t x, uint8_t y, uint8_t radius, bool filled, uint8_t color);
+void task_twi2_lcd_header(void);
+
 void task_twi2_lcd__cpu1(uint8_t col_left);
 void task_twi2_lcd__cpu2(uint8_t col_left);
 void task_twi2_lcd__cpu3(uint8_t col_left);
@@ -394,7 +402,10 @@ void task_twi2_lcd__gyro_gfxgyro(void);
 void task_twi2_lcd__gyro_beepvario(void);
 // void task_twi2_lcd__gyro(void);
 void task_twi2_lcd__baro(uint8_t col_left);
-void task_twi2_lcd(uint32_t now);
+void task_twi2_lcd_print_format_P(uint8_t x, uint8_t y, const char* fmt_P);
+// void task_twi2_lcd(uint32_t now);
+
+void task_twi(uint32_t now);
 
 
 #endif /* TWI_H_ */
