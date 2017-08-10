@@ -87,6 +87,8 @@ extern "C" {
 #define USART_BAUD_38400     0x05
 //! Offset in lookup table for baudrate 57600
 #define USART_BAUD_57600     0x06
+//! Offset in lookup table for baudrate 115200
+#define USART_BAUD_115200    0x07
 //! Baudrate not in lookup table
 #define USART_BAUD_UNDEFINED 0xFF
 
@@ -99,6 +101,19 @@ static PROGMEM_DECLARE(uint16_t, baudctrl_2mhz[]) = {
 	0xC192, // Baud: 19200
 	0x2191, // Baud: 38400
 	0x9690, // Baud: 57600
+	0x0B90, // Baud: 115200
+};
+
+//! Lookup table containing baudctrl values for CPU frequency 30 Mhz
+static PROGMEM_DECLARE(uint16_t, baudctrl_30mhz[]) = {
+	0x33FC, // Baud: 1200
+	0x31EC, // Baud: 2400
+	0x2DDC, // Baud: 4800
+	0x25CC, // Baud: 9600
+	0x15BC, // Baud: 19200
+	0xF5AB, // Baud: 38400
+	0xE3A7, // Baud: 57600
+	0xA397, // Baud: 115200
 };
 
 //! Lookup table containing baudctrl values for CPU frequency 32 Mhz
@@ -110,6 +125,7 @@ static PROGMEM_DECLARE(uint16_t, baudctrl_32mhz[]) = {
 	0xE5BC, // Baud: 19200
 	0xC5AC, // Baud: 38400
 	0x6EA8, // Baud: 57600
+	0x2E98, // Baud: 115200
 };
 
 

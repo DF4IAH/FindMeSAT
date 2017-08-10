@@ -164,6 +164,7 @@ const char					PM_IP_CMD_info[]						= "info=";
 const char					PM_IP_CMD_help[]						= "help";
 const char					PM_IP_CMD_kb[]							= "kb=";
 const char					PM_IP_CMD_pt[]							= "pt=";
+const char					PM_IP_CMD_reset[]						= "reset=";
 const char					PM_UNKNOWN_01[]							= "\r\n??? unknown command - for assistance enter  help\r\n";
 PROGMEM_DECLARE(const char, PM_IP_CMD_adc[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_bias[]);
@@ -175,6 +176,7 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_info[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_help[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_kb[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_pt[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_reset[]);
 PROGMEM_DECLARE(const char, PM_UNKNOWN_01[]);
 
 static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
@@ -236,6 +238,23 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			int val[1] = { 0 };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_pt) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
 				pitchTone_mode(val[0]);
+			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_reset, sizeof(PM_IP_CMD_reset) - 1)) {
+			int val[1] = { 0 };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_reset) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
+				if (val[0] == 1) {
+					/* Terminate the USB connection */
+					stdio_usb_disable();
+					udc_stop();
+
+					asm volatile(
+						"jmp 0 \n\t"
+						:
+						:
+						:
+					);
+				}
 			}
 
 		} else {

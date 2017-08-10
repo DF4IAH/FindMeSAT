@@ -300,8 +300,8 @@ void usart_set_bsel_bscale_value(USART_t *usart, uint16_t bsel, uint8_t bscale)
 /**
  * \brief Set the baudrate using precalculated BAUDCTRL values from PROGMEM
  *
- * \note This function only works for cpu_hz 2Mhz or 32Mhz and baudrate values
- * 1200, 2400, 4800, 9600, 19200, 38400 and 57600.
+ * \note This function only works for cpu_hz 2Mhz, 30MHz or 32Mhz and baudrate values
+ * 1200, 2400, 4800, 9600, 19200, 38400, 57600 and 115200.
  *
  * \param usart  The USART module.
  * \param baud   The baudrate.
@@ -318,6 +318,8 @@ void usart_set_baudrate_precalculated(USART_t *usart, uint32_t baud,
 
 	if (cpu_hz == 2000000UL) {
 		baudctrl = PROGMEM_READ_WORD(baudctrl_2mhz + baud_offset);
+	} else if (cpu_hz == 30000000UL) {
+		baudctrl = PROGMEM_READ_WORD(baudctrl_30mhz + baud_offset);
 	} else if (cpu_hz == 32000000UL) {
 		baudctrl = PROGMEM_READ_WORD(baudctrl_32mhz + baud_offset);
 	} else {
@@ -432,6 +434,13 @@ bool usart_set_baudrate(USART_t *usart, uint32_t baud, uint32_t cpu_hz)
 		baud <<= exp + 3;
 		div = (cpu_hz + baud / 2) / baud - 1;
 	}
+
+#if 0
+	/* To look for new constant values for usart_set_baudrate_precalculated() */
+	volatile uint8_t reg_b = (uint8_t)(((div >> 8) & 0X0F) | (exp << 4));
+	volatile uint8_t reg_a = (uint8_t)div;
+	volatile uint16_t pre  = ((uint16_t)reg_b) | ((uint16_t)reg_a << 8);
+#endif
 
 	(usart)->BAUDCTRLB = (uint8_t)(((div >> 8) & 0X0F) | (exp << 4));
 	(usart)->BAUDCTRLA = (uint8_t)div;

@@ -49,7 +49,7 @@
 
 bool						g_adc_enabled						= true;
 bool						g_dac_enabled						= false;
-int16_t						g_backlight_mode_pwm				= 0;		// -2: SPECIAL
+int16_t						g_backlight_mode_pwm				= -1;		// -1: AUTO, -2: SPECIAL
 uint8_t						g_bias_pm							= 22;
 uint8_t						g_pitch_tone_mode					= 1;
 bool						g_errorBeep_enable					= true;
@@ -1374,13 +1374,13 @@ int main(void)
 	}
 
 	/* Init of USB system */
-	usb_init();			// USB device stack start function to enable stack and start USB
+	//usb_init();			// USB device stack start function to enable stack and start USB
 
 	/* Start TWI channels */
 	twi_start();		// Start TWI
 
 	/* Start serial1 */
-	serial_start();		// Release GSM_RESET and start communication with the SIM808 */
+	serial_start();		// Start communication with the SIM808 */
 
 	/* Show help page of command set */
 	printHelp();

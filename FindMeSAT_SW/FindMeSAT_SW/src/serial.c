@@ -21,6 +21,7 @@
 #include "main.h"
 #include "interpreter.h"
 #include "usb.h"
+#include "twi.h"
 #include "usart_serial.h"
 
 #include "serial.h"
@@ -141,8 +142,9 @@ ISR(USARTF0_RXC_vect)
 void serial_init(void)
 {
 	/* Set TXD high */
-	ioport_set_pin_level(GSM_TXD1_DRV, HIGH);
-	ioport_set_pin_level(GSM_CTS1_DRV_GPIO, HIGH);
+	ioport_set_pin_level(GSM_DTR1_DRV,				HIGH);	// DTR inactive
+	ioport_set_pin_level(GSM_TXD1_DRV,				HIGH);	// TXD pausing
+	ioport_set_pin_level(GSM_RTS1_DRV,				HIGH);	// RTS inactive
 
 	ioport_set_pin_level(GSM_RESET_DRV_GPIO,		LOW);	// RESETn active
 	ioport_set_pin_level(GSM_PWRKEY_DRV_GPIO,		LOW);	// Power key not pressed
@@ -151,20 +153,32 @@ void serial_init(void)
 	ioport_set_pin_level(GSM_PCM_IN_DRV_GPIO,		LOW);	// PCM data  not used
 
 
+	/* Set limited slew rate */
+	ioport_set_pin_mode(GSM_DTR1_DRV,				IOPORT_MODE_TOTEM    | IOPORT_MODE_SLEW_RATE_LIMIT);
+	ioport_set_pin_mode(GSM_TXD1_DRV,				IOPORT_MODE_TOTEM    | IOPORT_MODE_SLEW_RATE_LIMIT);
+	ioport_set_pin_mode(GSM_RTS1_DRV,				IOPORT_MODE_TOTEM    | IOPORT_MODE_SLEW_RATE_LIMIT);
+
+	ioport_set_pin_mode(GSM_RESET_DRV_GPIO,			IOPORT_MODE_PULLDOWN | IOPORT_MODE_SLEW_RATE_LIMIT);
+	ioport_set_pin_mode(GSM_PWRKEY_DRV_GPIO,		IOPORT_MODE_PULLDOWN | IOPORT_MODE_SLEW_RATE_LIMIT);
+
+	ioport_set_pin_mode(GSM_PCM_CLK_DRV_GPIO,		IOPORT_MODE_PULLDOWN | IOPORT_MODE_SLEW_RATE_LIMIT);
+	ioport_set_pin_mode(GSM_PCM_IN_DRV_GPIO,		IOPORT_MODE_PULLDOWN | IOPORT_MODE_SLEW_RATE_LIMIT);
+
+
 	/* Set TXD line as output PIN */
+	ioport_set_pin_dir(GSM_DTR1_DRV,				IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(GSM_TXD1_DRV,				IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(GSM_RXD1,					IOPORT_DIR_INPUT);
-	ioport_set_pin_dir(GSM_CTS1_DRV_GPIO,			IOPORT_DIR_OUTPUT);
-	ioport_set_pin_dir(GSM_RTS1_GPIO,				IOPORT_DIR_INPUT);
-	ioport_set_pin_dir(GSM_DTR1_GPIO,				IOPORT_DIR_INPUT);
-	ioport_set_pin_dir(GSM_RI1_GPIO,				IOPORT_DIR_INPUT);
-	ioport_set_pin_dir(GSM_DCD1_GPIO,				IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(GSM_RTS1_DRV,				IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(GSM_CTS1,					IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(GSM_RI1,						IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(GSM_DCD1,					IOPORT_DIR_INPUT);
 
-	ioport_set_pin_dir(GSM_RESET_DRV_GPIO,			IOPORT_DIR_OUTPUT);
-	ioport_set_pin_dir(GSM_PWRKEY_DRV_GPIO,			IOPORT_DIR_OUTPUT);
-	ioport_set_pin_dir(GSM_POWERED_GPIO,			IOPORT_DIR_INPUT);
-	ioport_set_pin_dir(GSM_NETLIGHT_GPIO,			IOPORT_DIR_INPUT);
-	ioport_set_pin_dir(GSM_RF_SYNC_GPIO,			IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(GSM_RESET_DRV,				IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(GSM_PWRKEY_DRV,				IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(GSM_POWERED,					IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(GSM_NETLIGHT,				IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(GSM_RF_SYNC,					IOPORT_DIR_INPUT);
 
 	ioport_set_pin_dir(GSM_PCM_CLK_DRV_GPIO,		IOPORT_DIR_OUTPUT);
 	ioport_set_pin_dir(GSM_PCM_IN_DRV_GPIO,			IOPORT_DIR_OUTPUT);
@@ -173,6 +187,7 @@ void serial_init(void)
 
 	ioport_set_pin_dir(GPS_GSM_1PPS_GPIO,			IOPORT_DIR_INPUT);
 
+
 	/* Prepare to use ASF USART service */
 	g_usart1_options.baudrate	= USART_SERIAL1_BAUDRATE;
 	g_usart1_options.charlength	= USART_SERIAL1_CHAR_LENGTH;
@@ -180,13 +195,112 @@ void serial_init(void)
 	g_usart1_options.stopbits	= USART_SERIAL1_STOP_BIT;
 }
 
+
+const char					PM_SIM808_OK[]							= "OK";
+const char					PM_SIM808_RDY[]							= "RDY";
+const char					PM_SIM808_INFO_START[]					= "SIM808 ser1:  Starting the device ...\r\n";
+const char					PM_SIM808_INFO_RESTART[]				= "SIM808 ser1:  Starting the device ...\r\n";
+const char					PM_SIM808_INFO_SYNCED[]					= "SIM808 ser1:   baud rate synced\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_START[]		= "Init: SIM808 starting ...";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_RESTART[]	= "Init: SIM808 restarting ...";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_OK[]		= "Init: SIM808 success";
+PROGMEM_DECLARE(const char, PM_SIM808_OK[]);
+PROGMEM_DECLARE(const char, PM_SIM808_RDY[]);
+PROGMEM_DECLARE(const char, PM_SIM808_INFO_START[]);
+PROGMEM_DECLARE(const char, PM_SIM808_INFO_RESTART[]);
+PROGMEM_DECLARE(const char, PM_SIM808_INFO_SYNCED[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_START[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_RESTART[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_OK[]);
+
 /* USB device stack start function to enable stack and start USB */
 void serial_start(void)
 {
+	uint16_t loop_ctr = 0;
+	uint8_t  line = 7;
+
+	/* Init and start of the ASF USART service/device */
 	usart_serial_init(USART_SERIAL1, &g_usart1_options);
-	
+
+	/* ISR interrupt levels */
+	((USART_t*)USART_SERIAL1)->CTRLA = USART_RXCINTLVL_LO_gc | USART_TXCINTLVL_OFF_gc | USART_DREINTLVL_OFF_gc;
+
+	/* Inform about to start the SIM808 - LCD */
+	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_START);
+	task_twi2_lcd_str(8, (line++) * 10, g_prepare_buf);
+
+	/* Inform about to start the SIM808 - USB */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_START);
+	udi_write_tx_buf(g_prepare_buf, len, false);
+
 	/* Release the GSM_RESETn */
 	ioport_set_pin_level(GSM_RESET_DRV_GPIO, HIGH);
+	delay_ms(500);
+
+	/* Data Terminal Ready is true */
+	ioport_set_pin_level(GSM_DTR1_DRV, LOW);	// Activate SIM808 (non SLEEP mode)
+	delay_ms(100);
+	ioport_set_pin_level(GSM_RTS1_DRV, LOW);	// Serial line ready
+	delay_ms(1);
+
+	/* Synchronize with SIM808 */
+	while (true) {
+		usart_serial_write_packet(USART_SERIAL1, (const uint8_t*)"AT\r", 3);
+		delay_ms(100);
+		if (g_usart1_rx_ready) {
+			{
+				irqflags_t flags = cpu_irq_save();
+				for (int8_t idx = g_usart1_rx_idx - 1; idx >= 0; --idx) {
+					g_prepare_buf[idx] = g_usart1_rx_buf[idx];
+				}
+				g_usart1_rx_idx = 0;
+				g_usart1_rx_ready = false;
+				cpu_irq_restore(flags);
+			}
+
+			/* Leave loop when SIM808 responds */
+			if (g_prepare_buf[0] && strstr_P(g_prepare_buf, PM_SIM808_OK))
+				break;
+
+			if (loop_ctr++ > 10) {
+				loop_ctr = 0;
+
+				/* Turn off SIM808 */
+				ioport_set_pin_level(GSM_RTS1_DRV,			HIGH);	// Serial line NOT ready
+				ioport_set_pin_level(GSM_DTR1_DRV,			HIGH);	// DTR inactive
+				ioport_set_pin_level(GSM_RESET_DRV_GPIO,	LOW);	// RESETn active
+				delay_ms(150);
+
+				/* Inform about restart - LCD */
+				if (line > 12) {
+					task_twi2_lcd_header();
+					line = 3;
+				}
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_RESTART);
+				task_twi2_lcd_str(8, (line++) * 10, g_prepare_buf);
+
+				/* Inform about restart - USB */
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_RESTART);
+				udi_write_tx_buf(g_prepare_buf, len, false);
+
+				/* Restart SIM808 */
+				ioport_set_pin_level(GSM_RESET_DRV_GPIO,	HIGH);	// Release the RESETn line
+				delay_ms(500);
+				ioport_set_pin_level(GSM_DTR1_DRV,			LOW);	// DTR active
+				delay_ms(100);
+				ioport_set_pin_level(GSM_RTS1_DRV,			LOW);	// Serial line ready
+				delay_ms(1);
+			}
+		}
+	}
+
+	/* Inform about baud rate match - LCD */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_OK);
+	task_twi2_lcd_str(8, (line++) * 10, g_prepare_buf);
+
+	/* Inform about baud rate match - USB */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_SYNCED);
+	udi_write_tx_buf(g_prepare_buf, len, false);
 }
 
 
@@ -204,10 +318,11 @@ void task_serial(uint32_t now)
 		irqflags_t flags = cpu_irq_save();
 		if (g_usart1_rx_idx) {
 			len = g_usart1_rx_idx;
-			for (int8_t idx = g_usart1_rx_idx - 1; idx; --idx) {
+			for (int8_t idx = g_usart1_rx_idx - 1; idx >= 0; --idx) {
 				g_prepare_buf[idx] = g_usart1_rx_buf[idx];
 			}
 			g_usart1_rx_idx = 0;
+			g_usart1_rx_ready = false;
 		}
 		cpu_irq_restore(flags);
 	}
@@ -216,7 +331,4 @@ void task_serial(uint32_t now)
 	if (len) {
 		udi_write_tx_buf(g_prepare_buf, len, false);
 	}
-
-// usart_serial_getchar(USART_SERIAL, &received_byte);
-// usart_serial_putchar(USART_SERIAL, transmit_byte);
 }
