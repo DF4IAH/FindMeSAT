@@ -1374,7 +1374,7 @@ int main(void)
 	}
 
 	/* Init of USB system */
-	//usb_init();			// USB device stack start function to enable stack and start USB
+	usb_init();			// USB device stack start function to enable stack and start USB
 
 	/* Start TWI channels */
 	twi_start();		// Start TWI
