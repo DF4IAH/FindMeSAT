@@ -13,8 +13,11 @@
 #define SERIAL_H_
 
 
-#define C_USART1_RX_BUF_LEN			8
+#define C_USART1_RX_BUF_LEN			256U
+#define C_USART1_RX_BUF_CHUNK		64
 
+
+void serial_sim808_send(const char*, uint8_t len);
 
 void serial_init(void);
 void serial_start(void);

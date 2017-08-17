@@ -13,6 +13,9 @@
 #define USB_H_
 
 
+#define C_USB_LINE_DELAY_MS											25
+
+
 void usb_init(void);
 
 uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl);

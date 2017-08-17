@@ -14,10 +14,8 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												170
-#define VERSION_LOW													808
+#define VERSION_LOW													818
 
-
-#define C_USB_LINE_DELAY_MS											2
 
 #define C_TWI1_BARO_C_CNT											8
 
@@ -38,6 +36,8 @@
 #define C_VCC_5V0_MULT												2.41948528f
 #define C_VCC_VBAT_MULT												2.42614048f
 #define C_TEMPSENSE_MULT											629.20f
+
+#define C_TCC1_PERIOD												30000U
 
 
 /* FIFO */
@@ -124,6 +124,7 @@ void yield_ms(uint16_t ms);
 void yield_ms_cb(uint32_t listTime);
 
 void isr_tcc0_ovfl(void);
+void isr_tcc1_ovfl(void);
 void isr_rtc_alarm(uint32_t rtc_time);
 void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
 void isr_adc_b(ADC_t* adc, uint8_t ch_mask, adc_result_t res);

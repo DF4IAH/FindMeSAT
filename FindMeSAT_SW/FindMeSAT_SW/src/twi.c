@@ -40,6 +40,12 @@ extern int16_t			g_backlight_mode_pwm;
 extern uint8_t			g_bias_pm;
 extern uint8_t			g_pitch_tone_mode;
 
+extern uint64_t			g_milliseconds_cnt64;
+
+extern uint16_t			g_1pps_last_lo;
+extern uint64_t			g_1pps_last_hi;
+extern bool				g_1pps_last_new;
+
 extern bool				g_twi1_gsm_valid;
 extern uint8_t			g_twi1_gsm_version;
 
@@ -771,8 +777,8 @@ static void start_twi2_lcd(void)
 		/* Set the backlight */
 		twi2_set_ledbl(0, g_backlight_mode_pwm);
 
-		/* LED green */
-		twi2_set_leds(0x02);
+		/* LED yellow */
+		twi2_set_leds(0x03);
 	}
 }
 
@@ -1504,6 +1510,44 @@ static void task_twi2_lcd_print_format_float_P(uint8_t x, uint8_t y, float flt, 
 }
 
 
+static void task_twi2_lcd__pll(void)
+{
+	const uint16_t pll_cnt	= 30000U;
+	const uint8_t size_x	= 240U;
+	const uint8_t size_y	= 128U;
+	const uint8_t pos_y_top	= 13U;
+	const uint8_t pos_y_mul	= (size_y - pos_y_top) >> 1;
+	const uint8_t pos_y_mid	= pos_y_mul + pos_y_top;
+
+	if (g_1pps_last_new) {
+		/* Get timer for phase */
+		uint16_t l_pll_lo;
+		{
+			irqflags_t flags = cpu_irq_save();
+			l_pll_lo = g_1pps_last_lo;
+			g_1pps_last_new = false;
+			cpu_irq_restore(flags);
+		}
+
+		/* LED red */
+		twi2_set_leds(0x01);
+
+		/* Clear old line */
+		task_twi2_lcd_rect(size_x - 3, pos_y_top, 3, size_y - pos_y_top, true, GFX_PIXEL_CLR);
+
+		/* Draw new line - positive phase */
+		if (l_pll_lo < (pll_cnt >> 1)) {
+			uint8_t len_y = (uint8_t) (((uint32_t)l_pll_lo * pos_y_mul) / pll_cnt);
+			task_twi2_lcd_rect(size_x - 3, pos_y_mid - len_y, 3, len_y, false, GFX_PIXEL_SET);
+
+		} else {
+			uint8_t len_y = (uint8_t) ((((uint32_t) (pll_cnt - l_pll_lo)) * pos_y_mul) / pll_cnt);
+			task_twi2_lcd_rect(size_x - 3, pos_y_mid, 3, len_y, false, GFX_PIXEL_SET);
+		}
+	}
+}
+
+
 const char					PM_FORMAT_05F2[]			= "%05.2f";
 const char					PM_FORMAT_07F2[]			= "%07.2f";
 const char					PM_FORMAT_4F1[]				= "%4.1f";
@@ -1512,7 +1556,6 @@ PROGMEM_DECLARE(const char, PM_FORMAT_05F2[]);
 PROGMEM_DECLARE(const char, PM_FORMAT_07F2[]);
 PROGMEM_DECLARE(const char, PM_FORMAT_4F1[]);
 PROGMEM_DECLARE(const char, PM_FORMAT_5F3[]);
-
 
 /* TWI2 - LCD Port */
 void task_twi2_lcd__cpu1(uint8_t col_left)
@@ -1974,6 +2017,7 @@ static void task_twi2_lcd(uint32_t now)
 
 		/* Update Gfx every time */
 		task_twi2_lcd__gyro();
+		task_twi2_lcd__pll();
 
 		/* Update same text line each second when no Gfx data is drawn */
 		switch (s_lcd_entry_state) {
@@ -2036,4 +2080,7 @@ void task_twi(uint32_t now)
 
 	/* TWI2 - LCD Port */
 	task_twi2_lcd(now);
+
+	/* LED off */
+	twi2_set_leds(0x00);
 }
