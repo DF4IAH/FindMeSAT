@@ -10472,7 +10472,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="GND1201" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND1203" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND701" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="RPOLY711" library="rcl" deviceset="R-EU_" device="M1206" value="0.5A/1.0A"/>
+<part name="RPOLY711" library="rcl" deviceset="R-EU_" device="M1206" value="1.1A/2.2A"/>
 <part name="R722" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R723" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="C711" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
@@ -10570,12 +10570,12 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="R211" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="R212" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="+3V3_211" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R172" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R172" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="R224" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R223" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R221" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
-<part name="R173" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
-<part name="R171" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R173" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
+<part name="R171" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="R222" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R271" library="rcl" deviceset="R-EU_" device="R0805"/>
 <part name="R281" library="rcl" deviceset="R-EU_" device="R0805"/>
@@ -10598,16 +10598,16 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="+3V0_231" library="df4iah_supply" deviceset="+3V0" device=""/>
 <part name="C251" library="rcl" deviceset="C-EU" device="C0603" value="100pF"/>
 <part name="GND231" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R163" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
-<part name="R162" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R163" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
+<part name="R162" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="R161" library="rcl" deviceset="R-EU_" device="R0603" value="4.7kR"/>
 <part name="R231" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R232" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R233" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R234" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R241" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
-<part name="R141" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
-<part name="R142" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
+<part name="R141" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
+<part name="R142" library="rcl" deviceset="R-EU_" device="R0603" value="10kR"/>
 <part name="+3V3_121" library="df4iah_supply" deviceset="+3V3" device=""/>
 <part name="R251" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R151" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
@@ -10987,14 +10987,14 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="137.16" y="83.82" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="RTS1" class="0">
+<net name="CTS1" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PF6"/>
 <wire x1="129.54" y1="78.74" x2="137.16" y2="78.74" width="0.1524" layer="91"/>
 <label x="137.16" y="78.74" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="CTS1" class="0">
+<net name="RTS1" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PF7"/>
 <wire x1="129.54" y1="76.2" x2="162.56" y2="76.2" width="0.1524" layer="91"/>
@@ -11016,7 +11016,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="190.5" y="91.44" size="1.778" layer="95" xref="yes"/>
 </segment>
 </net>
-<net name="DCD1" class="0">
+<net name="DTR1" class="0">
 <segment>
 <pinref part="R171" gate="G$1" pin="1"/>
 <pinref part="U101" gate="A" pin="PF1"/>
@@ -11024,7 +11024,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="154.94" y="91.44" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="DTR1" class="0">
+<net name="DCD1" class="0">
 <segment>
 <pinref part="U101" gate="A" pin="PF0"/>
 <wire x1="129.54" y1="93.98" x2="137.16" y2="93.98" width="0.1524" layer="91"/>
@@ -11788,13 +11788,6 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="111.76" y="152.4" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="RTS1" class="0">
-<segment>
-<pinref part="R223" gate="G$1" pin="1"/>
-<wire x1="86.36" y1="152.4" x2="33.02" y2="152.4" width="0.1524" layer="91"/>
-<label x="33.02" y="152.4" size="1.778" layer="95" rot="R180" xref="yes"/>
-</segment>
-</net>
 <net name="GSM_RI" class="0">
 <segment>
 <wire x1="127" y1="157.48" x2="106.68" y2="157.48" width="0.1524" layer="91"/>
@@ -11822,7 +11815,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <label x="116.84" y="154.94" size="1.778" layer="95"/>
 </segment>
 </net>
-<net name="DTR1" class="0">
+<net name="DCD1" class="0">
 <segment>
 <pinref part="R222" gate="G$1" pin="1"/>
 <wire x1="104.14" y1="154.94" x2="55.88" y2="154.94" width="0.1524" layer="91"/>
@@ -11983,6 +11976,13 @@ Diameter = 1mm, Clearance = 3R</description>
 <wire x1="93.98" y1="101.6" x2="66.04" y2="101.6" width="0.1524" layer="91"/>
 <pinref part="JP201" gate="A" pin="2"/>
 <label x="68.58" y="99.06" size="1.778" layer="95"/>
+</segment>
+</net>
+<net name="CTS1" class="0">
+<segment>
+<pinref part="R223" gate="G$1" pin="1"/>
+<wire x1="86.36" y1="152.4" x2="33.02" y2="152.4" width="0.1524" layer="91"/>
+<label x="33.02" y="152.4" size="1.778" layer="95" rot="R180" xref="yes"/>
 </segment>
 </net>
 </nets>
