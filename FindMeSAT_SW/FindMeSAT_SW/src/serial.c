@@ -44,7 +44,7 @@ extern WORKMODE_ENUM_t				g_workmode;
 
 extern usart_serial_options_t		g_usart1_options;
 extern bool							g_usart1_rx_ready;
-extern uint8_t						g_usart1_rx_idx;
+extern uint16_t						g_usart1_rx_idx;
 extern uint8_t						g_usart1_rx_buf[C_USART1_RX_BUF_LEN];
 
 extern bool							g_twi1_gyro_valid;
@@ -122,7 +122,6 @@ extern char							g_prepare_buf[C_TX_BUF_SIZE];
 
 /* ISR routines */
 
-
 /* Serial data received */
 ISR(USARTF0_RXC_vect)
 {
@@ -137,6 +136,21 @@ ISR(USARTF0_RXC_vect)
 	g_usart1_rx_ready = true;
 }
 
+
+/* Functions */
+
+void serial_sim808_send(const char* cmd, uint8_t len)
+{
+	/* Make a copy */
+	for (uint8_t cnt = len, idx = len - 1; cnt; --cnt, --idx) {
+		g_prepare_buf[idx] = cmd[idx];
+	}
+	g_prepare_buf[len]		= '\r';
+	g_prepare_buf[len + 1]	= 0;
+
+	/* Send the string to the SIM808 */
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+}
 
 /* Set up serial connection to the SIM808 */
 void serial_init(void)
@@ -204,6 +218,14 @@ const char					PM_SIM808_INFO_SYNCED[]					= "SIM808 ser1:   baud rate synced\r\
 const char					PM_TWI1_INIT_ONBOARD_SIM808_START[]		= "Init: SIM808 starting ...";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_RESTART[]	= "Init: SIM808 restarting ...";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_OK[]		= "Init: SIM808 success";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_IPR[]		= "AT+IPR=%ld\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_CFUN0[]		= "AT+CFUN=0\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_01[]	= "ATI\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_02[]	= "AT+GSV\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_03[]	= "AT+CIMI\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_04[]	= "AT+COPN\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_01[]	= "AT+CGNSPWR=%d\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_02[]	= "AT+CGNSINF\r\n";
 PROGMEM_DECLARE(const char, PM_SIM808_OK[]);
 PROGMEM_DECLARE(const char, PM_SIM808_RDY[]);
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_START[]);
@@ -212,6 +234,14 @@ PROGMEM_DECLARE(const char, PM_SIM808_INFO_SYNCED[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_START[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_RESTART[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_OK[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_IPR[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CFUN0[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_01[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_02[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_03[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_04[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_01[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_02[]);
 
 /* USB device stack start function to enable stack and start USB */
 void serial_start(void)
@@ -250,7 +280,7 @@ void serial_start(void)
 		if (g_usart1_rx_ready) {
 			{
 				irqflags_t flags = cpu_irq_save();
-				for (int8_t idx = g_usart1_rx_idx - 1; idx >= 0; --idx) {
+				for (int16_t idx = g_usart1_rx_idx - 1; idx >= 0; --idx) {
 					g_prepare_buf[idx] = g_usart1_rx_buf[idx];
 				}
 				g_usart1_rx_idx = 0;
@@ -294,6 +324,56 @@ void serial_start(void)
 		}
 	}
 
+	/* Set the auto baud rate to fix rate */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_IPR, USART_SERIAL1_BAUDRATE);
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+	yield_ms(500);
+
+#if 1
+	/* Request the version number of the firmware */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_01);
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+	yield_ms(1000);
+#endif
+
+#if 0
+	/* Request more details about the firmware */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_02);
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+	yield_ms(1000);
+#endif
+
+#if 0
+	/* Request the IMSI number of the GSM device */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_03);
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+	yield_ms(1000);
+#endif
+
+#if 0
+	/* Show providers of the GSM networks */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_04);
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+	yield_ms(1000);
+#endif
+
+#if 1
+	/* Minimize functionality - do not do GSM */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_CFUN0);
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+	yield_ms(500);
+#endif
+
+#if 1
+	/* Enable GNSS (GPS, Glonass, ...) */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_01, 1);
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+	yield_ms(500);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_02, 1);
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+	yield_ms(500);
+#endif
+
 	/* Inform about baud rate match - LCD */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_OK);
 	task_twi2_lcd_str(8, (line++) * 10, g_prepare_buf);
@@ -306,7 +386,8 @@ void serial_start(void)
 
 void task_serial(uint32_t now)
 {
-	uint8_t len = 0;
+	uint16_t len = 0;
+	uint16_t move = 0;
 
 	/* Leave when nothing to do */
 	if (!g_usart1_rx_ready) {
@@ -317,18 +398,36 @@ void task_serial(uint32_t now)
 	{
 		irqflags_t flags = cpu_irq_save();
 		if (g_usart1_rx_idx) {
+			/* Do a chunk each time */
 			len = g_usart1_rx_idx;
-			for (int8_t idx = g_usart1_rx_idx - 1; idx >= 0; --idx) {
+			if (len > C_USART1_RX_BUF_CHUNK) {
+				move = len - C_USART1_RX_BUF_CHUNK;
+				len = C_USART1_RX_BUF_CHUNK;
+			}
+
+			/* Make a copy of the chunk */
+			for (int16_t idx = len - 1; idx >= 0; --idx) {
 				g_prepare_buf[idx] = g_usart1_rx_buf[idx];
 			}
-			g_usart1_rx_idx = 0;
-			g_usart1_rx_ready = false;
+
+			/* If more data is available move that part down */
+			if (move) {
+				for (int16_t mov_idx = 0; mov_idx < move; ++mov_idx) {
+					g_usart1_rx_buf[mov_idx] = g_usart1_rx_buf[mov_idx + C_USART1_RX_BUF_CHUNK];
+				}
+				g_usart1_rx_idx = move;
+
+			} else {
+				/* Buffer empty */
+				g_usart1_rx_idx = 0;
+				g_usart1_rx_ready = false;
+			}
 		}
 		cpu_irq_restore(flags);
 	}
 
-	/* Copy stream to USB_CDC */
+	/* Copy chunk of data to USB_CDC */
 	if (len) {
-		udi_write_tx_buf(g_prepare_buf, len, false);
+		udi_write_tx_buf(g_prepare_buf, (uint8_t)len, false);
 	}
 }

@@ -47,6 +47,7 @@ const char					PM_HELP_HDR_1[]							= "\r\n\r\n\r\n************\r\n";
 const char					PM_HELP_HDR_2[]							= "* COMMANDS *\r\n************\r\n\r\n";
 const char					PM_HELP_ADC_1[]							= "adc=\t\t0: turn ADCA and ADCB off, ";
 const char					PM_HELP_ADC_2[]							= "1: turn ADCA and ADCB on\r\n";
+const char					PM_HELP_AT_1[]							= "AT\t\tCMD to send to the SIM808\r\n";
 const char					PM_HELP_BIAS_1[]						= "bias=\t\t0-63: bias voltage ";
 const char					PM_HELP_BIAS_2[]						= "for LCD contrast\r\n";
 const char					PM_HELP_BL_1[]							= "bl=\t\t0-255: backlight PWM, ";
@@ -63,12 +64,14 @@ const char					PM_HELP_INFO_1[]						= "info=\t\t0: OFF, 1: ON\r\n";
 const char					PM_HELP_KB_1[]							= "kb=\t\t0: key beep OFF, 1: ON\r\n";
 const char					PM_HELP_PT_1[]							= "pt=\t\t0: pitch tone OFF, ";
 const char					PM_HELP_PT_2[]							= "1: turn speed, 2: variometer\r\n";
+const char					PM_HELP_RESET_1[]						= "reset=\t\t1: reboot ALL\r\n";
 const char					PM_IP_CMD_NewLine[]						= "\r\n";
 const char					PM_IP_CMD_CmdLine[]						= "\r\n> ";
 PROGMEM_DECLARE(const char, PM_HELP_HDR_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_HDR_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_ADC_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_ADC_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_AT_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_BIAS_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_BIAS_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_BL_1[]);
@@ -85,6 +88,7 @@ PROGMEM_DECLARE(const char, PM_HELP_INFO_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_KB_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_PT_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_PT_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_RESET_1[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_NewLine[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_CmdLine[]);
 
@@ -100,6 +104,9 @@ void printHelp(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_ADC_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_ADC_2);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_AT_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_BIAS_1);
@@ -143,6 +150,9 @@ void printHelp(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_PT_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_RESET_1);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_IP_CMD_NewLine);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
@@ -155,6 +165,7 @@ void printHelp(void)
 
 
 const char					PM_IP_CMD_adc[]							= "adc=";
+const char					PM_IP_CMD_AT[]							= "AT";
 const char					PM_IP_CMD_bias[]						= "bias=";
 const char					PM_IP_CMD_bl[]							= "bl=";
 const char					PM_IP_CMD_dac[]							= "dac=";
@@ -167,6 +178,7 @@ const char					PM_IP_CMD_pt[]							= "pt=";
 const char					PM_IP_CMD_reset[]						= "reset=";
 const char					PM_UNKNOWN_01[]							= "\r\n??? unknown command - for assistance enter  help\r\n";
 PROGMEM_DECLARE(const char, PM_IP_CMD_adc[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_AT[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_bias[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_bl[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_dac[]);
@@ -188,6 +200,9 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_adc) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
 				adc_app_enable(val[0]);
 			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_AT, sizeof(PM_IP_CMD_AT) - 1)) {
+				serial_sim808_send(cmdLine_buf, cmdLine_len);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_bias, sizeof(PM_IP_CMD_bias) - 1)) {
 			int val[1] = { 0 };

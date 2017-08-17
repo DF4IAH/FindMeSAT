@@ -77,6 +77,11 @@
 #define  USB_DEVICE_SERIAL_NAME           "0"
 
 
+// By default USB interrupt have low priority
+#define UDD_USB_INT_LEVEL USB_INTLVL_MED_gc
+
+
+
 /**
  * Device speeds support
  * Low speed not supported by CDC
@@ -152,7 +157,7 @@ extern void usb_callback_cdc_set_rts(uint8_t port, bool b_enable);
 
 //! Define it when the transfer CDC Device to Host is a low rate (<512000 bauds)
 //! to reduce CDC buffers size
-#define  UDI_CDC_LOW_RATE
+//#define  UDI_CDC_LOW_RATE
 
 //! Default configuration of communication port
 #define  UDI_CDC_DEFAULT_RATE             115200

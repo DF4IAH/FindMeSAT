@@ -40,6 +40,12 @@ extern bool				g_usb_cdc_transfers_authorized;
 extern bool				g_usb_cdc_access_blocked;
 extern WORKMODE_ENUM_t	g_workmode;
 
+extern uint64_t			g_milliseconds_cnt64;
+
+extern uint16_t			g_1pps_last_lo;
+extern uint64_t			g_1pps_last_hi;
+extern bool				g_1pps_last_new;
+
 extern bool				g_twi1_gyro_valid;
 extern uint8_t			g_twi1_gyro_1_version;
 extern int16_t			g_twi1_gyro_1_temp;
@@ -180,20 +186,19 @@ void usb_init(void)
 	if (g_usb_cdc_stdout_enabled) {
 		stdio_usb_enable();
 	}
-	#if 1
-	yield_ms(500);
-	#else
-	delay_ms(500);
-	#endif
+	yield_ms(1000);
 
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	yield_ms(500);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_2, 0x0c);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	yield_ms(250);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_3);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	yield_ms(250);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_4);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -364,6 +369,7 @@ const char					PM_INFO_PART_L2P2B[]				= "Gz=%+07.2fdps (%06d)\t \t";
 const char					PM_INFO_PART_L2P3A[]				= "Mx=%+07.3fuT (%+06d), My=%+07.3fuT (%+06d), ";
 const char					PM_INFO_PART_L2P3B[]				= "Mz=%+07.3fuT (%+06d)\t \t";
 const char					PM_INFO_PART_L2P4[]					= "Gyro_Temp=%+06.2fC (%+06d)\r\n\r\n";
+const char					PM_INFO_PART_PLL1[]					= "PLL: %8ld.%03ld + %03d/30E+6 sec\r\n\r\n";
 
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1B[]);
@@ -377,6 +383,7 @@ PROGMEM_DECLARE(const char, PM_INFO_PART_L2P2B[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3B[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P4[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1[]);
 
 void task_usb(uint32_t now)
 {
@@ -388,6 +395,21 @@ void task_usb(uint32_t now)
 		if (g_usb_cdc_rx_received) {
 			g_usb_cdc_rx_received = false;
 			usb_rx_process(now);
+		}
+
+		/* Status of the PLL unit */
+		if (g_1pps_last_new) {
+			uint16_t l_pll_lo;
+			uint64_t l_pll_hi;
+			{
+				irqflags_t flags = cpu_irq_save();
+				l_pll_lo = g_1pps_last_lo;
+				l_pll_hi = g_1pps_last_hi;
+				cpu_irq_restore(flags);
+			}
+
+			int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_PLL1, (uint32_t)(l_pll_hi / 1000U), (uint32_t) (l_pll_hi % 1000), l_pll_lo);
+			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 		}
 
 		/* Status output when requested */
