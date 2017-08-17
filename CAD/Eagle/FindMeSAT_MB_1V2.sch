@@ -10455,7 +10455,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="GND1201" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND1203" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND701" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="RPOLY711" library="rcl" deviceset="R-EU_" device="M1206" value="0.5A/1.0A"/>
+<part name="RPOLY711" library="rcl" deviceset="R-EU_" device="M1206" value="1.1A/2.2A"/>
 <part name="R722" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R723" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="C711" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>

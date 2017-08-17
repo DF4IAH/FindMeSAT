@@ -2384,7 +2384,7 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <element name="H1204" library="holes" package="2,8-PAD" value="MOUNT-PAD-ROUND2.8" x="11.43" y="3.81" rot="R180"/>
 <element name="H1203" library="holes" package="2,8-PAD" value="MOUNT-PAD-ROUND2.8" x="11.43" y="38.1" rot="R180"/>
 <element name="H1201" library="holes" package="2,8-PAD" value="MOUNT-PAD-ROUND2.8" x="94.996" y="38.1" smashed="yes" rot="R180"/>
-<element name="RPOLY711" library="rcl" package="M1206" value="0.5A/1.0A" x="96.139" y="21.463" smashed="yes" rot="MR0">
+<element name="RPOLY711" library="rcl" package="M1206" value="1.1A/2.2A" x="96.139" y="21.463" smashed="yes" rot="MR0">
 <attribute name="NAME" x="98.298" y="22.86" size="0.6096" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="96.647" y="21.082" size="0.6096" layer="28" rot="MR0"/>
 </element>
