@@ -2,7 +2,7 @@
 List of Corrections to be done for  V1.2 —> V1.3
 ==================================================
 
-				Update: 2017-06-09
+				Update: 2017-08-17
 
 01)	Inspection of V1.2 showed that the PWM low pass filter frequency
 	is to high. Instead of 100 Hz the new frequency is set to 1 Hz.
@@ -15,7 +15,21 @@ List of Corrections to be done for  V1.2 —> V1.3
 	file to have a correct long-hole like in some devices found in the
 	library.
 
-03)	All version numbers to V1.3 —> To be Done!
+03)	All version numbers to V1.3
+
+04)	A level-shifter between ATxmega and SIM808 is needed due to
+	different supply voltages. See SIM808 serial documentation for
+	this.
+
+05)	GSM antenna needs to be tuned in length, again. Bluetooth seems
+	to be OK. More to be investigated.
+
+
+06)	USB Polyfuse modified from 0.5A/1.0A to 1.1A/2.2A to be able to
+	charge the LiPo battery.
+
+
+07)	Missing ground connections for the SIM808 added (3x).
 
 
 
