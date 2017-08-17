@@ -1536,12 +1536,12 @@ static void task_twi2_lcd__pll(void)
 		task_twi2_lcd_rect(size_x - 3, pos_y_top, 3, size_y - pos_y_top, true, GFX_PIXEL_CLR);
 
 		/* Draw new line - positive phase */
-		if (l_pll_lo < (pll_cnt >> 1)) {
-			uint8_t len_y = (uint8_t) (((uint32_t)l_pll_lo * pos_y_mul) / pll_cnt);
+		if ((l_pll_lo % pos_y_mul) < (pos_y_mul >> 1)) {
+			uint8_t len_y = (uint8_t) (((uint32_t)l_pll_lo) % pos_y_mul);
 			task_twi2_lcd_rect(size_x - 3, pos_y_mid - len_y, 3, len_y, false, GFX_PIXEL_SET);
 
 		} else {
-			uint8_t len_y = (uint8_t) ((((uint32_t) (pll_cnt - l_pll_lo)) * pos_y_mul) / pll_cnt);
+			uint8_t len_y = (uint8_t) ((((uint32_t) (pll_cnt - l_pll_lo))) % pos_y_mul);
 			task_twi2_lcd_rect(size_x - 3, pos_y_mid, 3, len_y, false, GFX_PIXEL_SET);
 		}
 	}
