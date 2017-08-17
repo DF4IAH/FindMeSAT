@@ -201,7 +201,7 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 				adc_app_enable(val[0]);
 			}
 
-		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_AT, sizeof(PM_IP_CMD_AT) - 1)) {
+		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_AT, sizeof(PM_IP_CMD_AT) - 1)) {
 				serial_sim808_send(cmdLine_buf, cmdLine_len);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_bias, sizeof(PM_IP_CMD_bias) - 1)) {
