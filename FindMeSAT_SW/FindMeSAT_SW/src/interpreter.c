@@ -52,7 +52,7 @@ const char					PM_HELP_AT_1[]							= "AT\t\tCMD to send to the SIM808\r\n";
 const char					PM_HELP_BIAS_1[]						= "bias=\t\t0-63: bias voltage ";
 const char					PM_HELP_BIAS_2[]						=   "for LCD contrast\r\n";
 const char					PM_HELP_BL_1[]							= "bl=\t\t0-255: backlight PWM, ";
-const char					PM_HELP_BL_2[]							= "-1: AUTO, -2: SPECIAL\r\n";
+const char					PM_HELP_BL_2[]							= "-1: AUTO, -2: TURNLIGHT special\r\n";
 const char					PM_HELP_DAC_1[]							= "dac=\t\t0: turn DACB off, ";
 const char					PM_HELP_DAC_2[]							=  "1: turn DACB on\r\n";
 const char					PM_HELP_DDS_1[]							= "dds=a,b,c\ta: DDS0 frequency mHz, ";
@@ -67,6 +67,8 @@ const char					PM_HELP_KB_1[]							= "kb=\t\t0: key beep OFF, 1: ON\r\n";
 const char					PM_HELP_PT_1[]							= "pt=\t\t0: pitch tone OFF, ";
 const char					PM_HELP_PT_2[]							=  "1: turn speed, 2: variometer\r\n";
 const char					PM_HELP_RESET_1[]						= "reset=\t\t1: reboot ALL\r\n";
+const char					PM_HELP_XO_1[]							= "xo=\t\t0-65535: VCTCXO pull voltage, ";
+const char					PM_HELP_XO_2[]							=  "-1: PLL ON\r\n";
 const char					PM_IP_CMD_NewLine[]						= "\r\n";
 const char					PM_IP_CMD_CmdLine[]						= "\r\n> ";
 PROGMEM_DECLARE(const char, PM_HELP_HDR_1[]);
@@ -92,6 +94,8 @@ PROGMEM_DECLARE(const char, PM_HELP_KB_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_PT_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_PT_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_RESET_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_XO_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_XO_2[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_NewLine[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_CmdLine[]);
 
@@ -158,6 +162,11 @@ void printHelp(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_RESET_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_XO_1);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_XO_2);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_IP_CMD_NewLine);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
@@ -182,6 +191,7 @@ const char					PM_IP_CMD_help[]						= "help";
 const char					PM_IP_CMD_kb[]							= "kb=";
 const char					PM_IP_CMD_pt[]							= "pt=";
 const char					PM_IP_CMD_reset[]						= "reset=";
+const char					PM_IP_CMD_xo[]							= "xo=";
 const char					PM_UNKNOWN_01[]							= "\r\n??? unknown command - for assistance enter  help\r\n";
 PROGMEM_DECLARE(const char, PM_IP_CMD_adc[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_AT[]);
@@ -196,6 +206,7 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_help[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_kb[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_pt[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_reset[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_xo[]);
 PROGMEM_DECLARE(const char, PM_UNKNOWN_01[]);
 
 static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
@@ -278,6 +289,12 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 						:
 					);
 				}
+			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_xo, sizeof(PM_IP_CMD_xo) - 1)) {
+			long val[1] = { 0 };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_xo) - 1), MY_STRING_TO_VAR_LONG, NULL, &(val[0]), NULL)) {
+				xoPwm_set(val[0]);
 			}
 
 		} else {

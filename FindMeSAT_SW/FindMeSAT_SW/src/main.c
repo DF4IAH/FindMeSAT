@@ -49,7 +49,7 @@
 
 bool						g_adc_enabled						= true;
 bool						g_dac_enabled						= false;
-int16_t						g_backlight_mode_pwm				= 20;		// -1: AUTO, -2: SPECIAL
+int16_t						g_backlight_mode_pwm				= 0;
 uint8_t						g_bias_pm							= 22;
 uint8_t						g_pitch_tone_mode					= 1;
 bool						g_errorBeep_enable					= true;
@@ -139,6 +139,8 @@ volatile int16_t			g_twi1_hygro_RH_100					= 0;
 uint8_t						g_twi2_lcd_version					= 0;
 volatile bool				g_twi2_lcd_repaint					= false;
 
+volatile int32_t			g_xo_mode_pwm						= 0L;
+
 
 struct adc_config			g_adc_a_conf						= { 0 };
 struct adc_channel_config	g_adcch_vctcxo_5v0_vbat_conf		= { 0 };
@@ -180,6 +182,9 @@ volatile int16_t			g_adc_temp_deg_100					= 0;
 
 fifo_desc_t					fifo_sched_desc;
 uint32_t					fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH];
+
+struct pwm_config			g_pwm_vctcxo_cfg					= { 0 };
+struct pwm_config			g_pwm_ctr_pll_cfg					= { 0 };
 
 volatile uint8_t			g_sched_lock						= 0;
 volatile uint8_t			g_interpreter_lock					= 0;
@@ -283,6 +288,63 @@ static void task_adc(uint32_t now);
 
 /* UTILS section */
 
+static void init_globals(void)
+{
+	/* VCTCXO */
+	{
+		int32_t val_i32 = 0L;
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__VCTCXO, &val_i32, sizeof(val_i32)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_xo_mode_pwm = val_i32;
+			cpu_irq_restore(flags);
+		}
+	}
+
+	/* LCD backlight */
+	{
+		int16_t val_i16 = 0;
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__LCDBL, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_backlight_mode_pwm = val_i16;
+			cpu_irq_restore(flags);
+		}
+	}
+}
+
+void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
+{
+	/* Version information */
+	{
+		uint32_t version_ui32 = ((uint32_t)(20000 + VERSION_HIGH) * 1000) + (uint32_t)VERSION_LOW;
+		for (uint8_t idx = 0; idx < 8; ++idx) {
+			uint8_t pad = '0' + (version_ui32 % 10);
+			nvm_write(INT_EEPROM, EEPROM_ADDR__VERSION + (7 - idx), (void*)&pad, sizeof(pad));
+			version_ui32 /= 10;
+		}
+	}
+
+	/* VCTCXO */
+	if (bf & EEPROM_SAVE_BF__VCTCXO) {
+		irqflags_t flags = cpu_irq_save();
+		int32_t val_i32 = g_xo_mode_pwm;
+		cpu_irq_restore(flags);
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__VCTCXO, (void*)&val_i32, sizeof(val_i32));
+	}
+
+	/* LCD backlight */
+	if (bf & EEPROM_SAVE_BF__LCDBL) {
+		irqflags_t flags = cpu_irq_save();
+		int16_t val_i16 = g_backlight_mode_pwm;
+		cpu_irq_restore(flags);
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__LCDBL, (void*)&val_i16, sizeof(val_i16));
+	}
+}
+
+
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[])
 {
 	int ret = 0;
@@ -360,7 +422,8 @@ void backlight_mode_pwm(int16_t mode_pwm)
 	uint8_t l_pwm = mode_pwm & 0xff;
 
 	/* Setting the mode */
-	g_backlight_mode_pwm	= mode_pwm;
+	g_backlight_mode_pwm = mode_pwm;
+	save_globals(EEPROM_SAVE_BF__LCDBL);
 
 	switch (mode_pwm) {
 		case -2:
@@ -467,15 +530,6 @@ void errorBeep_enable(bool enable)
 	}
 }
 
-void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf)
-{
-	/* atomic */
-	{
-		g_usb_cdc_printStatusLines_atxmega	= bf & PRINT_STATUS_LINES__ATXMEGA	?  true : false;
-		g_usb_cdc_printStatusLines_sim808	= bf & PRINT_STATUS_LINES__SIM808	?  true : false;
-	}
-}
-
 void keyBeep_enable(bool enable)
 {
 	/* atomic */
@@ -489,6 +543,55 @@ void pitchTone_mode(uint8_t mode)
 	/* atomic */
 	{
 		g_pitch_tone_mode = mode;
+	}
+}
+
+void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf)
+{
+	/* atomic */
+	{
+		g_usb_cdc_printStatusLines_atxmega	= bf & PRINT_STATUS_LINES__ATXMEGA	?  true : false;
+		g_usb_cdc_printStatusLines_sim808	= bf & PRINT_STATUS_LINES__SIM808	?  true : false;
+	}
+}
+
+void xoPwm_set(int32_t mode_pwm)
+{
+	int32_t l_xo_mode_pwm = INT16_MIN;
+
+	if (mode_pwm >= 0) {
+		/* Set the PWM value for the VCTCXO pull voltage (should be abt. 1.5 V) */
+		l_xo_mode_pwm = mode_pwm & C_XO_VAL_MASK;			// Flags removed
+		tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) l_xo_mode_pwm);
+
+	} else {
+		switch (mode_pwm) {
+			case -2:
+				/* Preset value */
+				l_xo_mode_pwm = ((int32_t) (0.5f + g_pwm_vctcxo_cfg.period * C_VCTCXO_DEFAULT_VOLTS / C_VCTCXO_PWM_HI_VOLTS)) & UINT16_MAX;
+				tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) l_xo_mode_pwm);	// Preset value with no flags
+			break;
+
+			case -1:
+				/* PLL mode - get current PWM value and set PLL bit */
+				{
+					irqflags_t flags = cpu_irq_save();
+					l_xo_mode_pwm = g_xo_mode_pwm;
+					cpu_irq_restore(flags);
+				}
+				l_xo_mode_pwm &= C_XO_VAL_MASK;				// Mask out all flags
+				l_xo_mode_pwm |= C_XO_BF_PLL;				// Flag: use PLL feature
+			break;
+		}
+	}
+
+	/* Write back global var */
+	if (l_xo_mode_pwm != INT16_MIN) {
+		irqflags_t flags = cpu_irq_save();
+		g_xo_mode_pwm = l_xo_mode_pwm;
+		cpu_irq_restore(flags);
+
+		save_globals(EEPROM_SAVE_BF__VCTCXO);
 	}
 }
 
@@ -859,19 +962,26 @@ static void evsys_init(void)
 
 static void tc_init(void)
 {
+	/* Get the PWM value */
+	int32_t l_xo_mode_pwm;
+	{
+		irqflags_t flags = cpu_irq_save();
+		l_xo_mode_pwm = g_xo_mode_pwm;
+		cpu_irq_restore(flags);
+	}
+
 	/* TCC0: VCTCXO PWM signal generation and ADCA & ADCB */
-	struct pwm_config pwm_vctcxo_cfg;
-	pwm_init(&pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2048);						// Init PWM structure and enable timer - running with 2048 Hz --> 2 Hz averaged data
-	pwm_start(&pwm_vctcxo_cfg, 45);												// Start PWM here. Percentage with 1% granularity is to coarse, use driver access instead
-	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) (0.5f + pwm_vctcxo_cfg.period * C_VCTCXO_DEFAULT_VOLTS / C_VCTCXO_PWM_HI_VOLTS));	// Initial value for VCTCXO
+	pwm_init(&g_pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2048);						// Init PWM structure and enable timer - running with 2048 Hz --> 2 Hz averaged data
+	pwm_start(&g_pwm_vctcxo_cfg, 45);											// Start PWM here. Percentage with 1% granularity is to coarse, use driver access instead
+	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) (l_xo_mode_pwm & C_XO_VAL_MASK));	// Setting the PWM value
 
 	/* TCC1: Free running clock for 30 MHz PLL */
-	struct pwm_config ctr_pll_cfg = { &TCC1 };
+	g_pwm_ctr_pll_cfg.tc = &TCC1;
 	tc_enable(&TCC1);															// Enable TCC1 and power up
 	tc_set_wgm(&TCC1, TC_WG_NORMAL);											// Normal counting up
 	tc_write_clock_source(&TCC1, PWM_CLK_OFF);									// Disable counter until all is ready
-	pwm_set_frequency(&ctr_pll_cfg, 1000);										// Prepare structure for 1 ms overflow frequency
-	tc_write_period(&TCC1, ctr_pll_cfg.period);									// Calculate period count
+	pwm_set_frequency(&g_pwm_ctr_pll_cfg, 1000);								// Prepare structure for 1 ms overflow frequency
+	tc_write_period(&TCC1, g_pwm_ctr_pll_cfg.period);							// Calculate period count
 	tc_write_period_buffer(&TCC1, C_TCC1_PERIOD - 1);							// Overflows every 1 ms
 
 	/* TCE1: DAC clock */
@@ -1391,6 +1501,8 @@ int main(void)
 
 	rtc_init();
 	rtc_start();
+
+	init_globals();
 
 	interrupt_init();	// Port interrupts
 	evsys_init();		// Event system

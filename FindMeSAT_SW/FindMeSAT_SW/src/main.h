@@ -100,6 +100,21 @@ typedef enum DMA_CHANNEL_ENUM {
 	DMA_CHANNEL_DACB_CH0_B,
 } DMA_CHANNEL_ENUM_t;
 
+typedef enum EEPROM_ADDR_ENUM {
+	EEPROM_ADDR__VERSION			= 0x0000,						// i32
+	EEPROM_ADDR__VCTCXO				= 0x0010,						// i32
+	EEPROM_ADDR__LCDBL				= 0x0014,						// i16
+} EEPROM_ADDR_ENUM_t;
+
+typedef enum EEPROM_SAVE_BF_ENUM {
+	EEPROM_SAVE_BF__VCTCXO			= 0b00000001,
+	EEPROM_SAVE_BF__LCDBL			= 0b00000010,
+} EEPROM_SAVE_BF_ENUM_t;
+
+
+#define C_XO_BF_PLL					0x40000000L
+#define C_XO_VAL_MASK				0x0000ffffL
+
 
 typedef struct dma_dac_buf_s {
 	uint16_t	ch0;
@@ -107,6 +122,7 @@ typedef struct dma_dac_buf_s {
 } dma_dac_buf_t;
 
 
+void save_globals(EEPROM_SAVE_BF_ENUM_t bf);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
 
 void adc_app_enable(bool enable);
@@ -115,9 +131,10 @@ void bias_update(uint8_t bias);
 void dac_app_enable(bool enable);
 void dds_update(float dds0_hz, float dds1_hz, float phase);
 void errorBeep_enable(bool enable);
-void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf);
 void keyBeep_enable(bool enable);
 void pitchTone_mode(uint8_t mode);
+void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf);
+void xoPwm_set(int32_t mode_pwm);
 void halt(void);
 
 bool sched_getLock(volatile uint8_t* lockVar);
