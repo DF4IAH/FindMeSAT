@@ -36,7 +36,7 @@ extern bool							g_errorBeep_enable;
 extern bool							g_keyBeep_enable;
 
 extern bool							g_usb_cdc_stdout_enabled;
-extern bool							g_usb_cdc_printStatusLines;
+extern bool							g_usb_cdc_printStatusLines_atxmega;
 extern bool							g_usb_cdc_rx_received;
 extern bool							g_usb_cdc_transfers_authorized;
 extern bool							g_usb_cdc_access_blocked;
