@@ -166,6 +166,7 @@ void printHelp(void)
 
 const char					PM_IP_CMD_adc[]							= "adc=";
 const char					PM_IP_CMD_AT[]							= "AT";
+const char					PM_IP_CMD_A_slash[]						= "A/";
 const char					PM_IP_CMD_bias[]						= "bias=";
 const char					PM_IP_CMD_bl[]							= "bl=";
 const char					PM_IP_CMD_dac[]							= "dac=";
@@ -179,6 +180,7 @@ const char					PM_IP_CMD_reset[]						= "reset=";
 const char					PM_UNKNOWN_01[]							= "\r\n??? unknown command - for assistance enter  help\r\n";
 PROGMEM_DECLARE(const char, PM_IP_CMD_adc[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_AT[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_A_slash[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_bias[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_bl[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_dac[]);
@@ -201,7 +203,8 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 				adc_app_enable(val[0]);
 			}
 
-		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_AT, sizeof(PM_IP_CMD_AT) - 1)) {
+		} else if ((!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_AT,		sizeof(PM_IP_CMD_AT) - 1))		||
+				   (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_A_slash,	sizeof(PM_IP_CMD_A_slash) - 1))) {
 				serial_sim808_send(cmdLine_buf, cmdLine_len);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_bias, sizeof(PM_IP_CMD_bias) - 1)) {
