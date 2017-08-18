@@ -49,7 +49,7 @@
 
 bool						g_adc_enabled						= true;
 bool						g_dac_enabled						= false;
-int16_t						g_backlight_mode_pwm				= -1;		// -1: AUTO, -2: SPECIAL
+int16_t						g_backlight_mode_pwm				= 20;		// -1: AUTO, -2: SPECIAL
 uint8_t						g_bias_pm							= 22;
 uint8_t						g_pitch_tone_mode					= 1;
 bool						g_errorBeep_enable					= true;
@@ -62,7 +62,8 @@ uint64_t					g_1pps_last_hi						= 0ULL;
 bool						g_1pps_last_new						= false;
 
 bool						g_usb_cdc_stdout_enabled			= false;
-bool						g_usb_cdc_printStatusLines			= false;
+bool						g_usb_cdc_printStatusLines_atxmega	= false;
+bool						g_usb_cdc_printStatusLines_sim808	= true;
 bool						g_usb_cdc_rx_received				= false;
 bool						g_usb_cdc_transfers_authorized		= false;
 bool						g_usb_cdc_access_blocked			= false;
@@ -466,11 +467,12 @@ void errorBeep_enable(bool enable)
 	}
 }
 
-void printStatusLines_enable(bool enable)
+void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf)
 {
 	/* atomic */
 	{
-		g_usb_cdc_printStatusLines = enable;
+		g_usb_cdc_printStatusLines_atxmega	= bf & PRINT_STATUS_LINES__ATXMEGA	?  true : false;
+		g_usb_cdc_printStatusLines_sim808	= bf & PRINT_STATUS_LINES__SIM808	?  true : false;
 	}
 }
 

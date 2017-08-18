@@ -34,7 +34,8 @@ extern bool				g_errorBeep_enable;
 extern bool				g_keyBeep_enable;
 
 extern bool				g_usb_cdc_stdout_enabled;
-extern bool				g_usb_cdc_printStatusLines;
+extern bool				g_usb_cdc_printStatusLines_atxmega;
+extern bool				g_usb_cdc_printStatusLines_sim808;
 extern bool				g_usb_cdc_rx_received;
 extern bool				g_usb_cdc_transfers_authorized;
 extern bool				g_usb_cdc_access_blocked;
@@ -341,7 +342,7 @@ static void usb_rx_process(uint32_t thisTime)
 		udi_cdc_read_no_polling(cdc_rx_buf, cdc_rx_len);
 
 		/* Echo back when not monitoring information are enabled */
-		if (!g_usb_cdc_printStatusLines) {
+		if (!g_usb_cdc_printStatusLines_atxmega) {
 			udi_write_tx_buf(cdc_rx_buf, cdc_rx_len, true);
 		}
 
@@ -398,7 +399,7 @@ void task_usb(uint32_t now)
 		}
 
 		/* Status of the PLL unit */
-		if (g_1pps_last_new) {
+		if (g_usb_cdc_printStatusLines_sim808 && g_1pps_last_new) {
 			uint16_t l_pll_lo;
 			uint64_t l_pll_hi;
 			{
@@ -413,7 +414,7 @@ void task_usb(uint32_t now)
 		}
 
 		/* Status output when requested */
-		if (g_usb_cdc_printStatusLines) {
+		if (g_usb_cdc_printStatusLines_atxmega) {
 			if (((now - usb_last) >= 512) || (now < usb_last)) {
 				int16_t l_adc_vctcxo_volt_1000;
 				int16_t l_adc_5v0_volt_1000;

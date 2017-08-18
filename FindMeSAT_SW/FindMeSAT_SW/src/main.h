@@ -83,6 +83,11 @@ typedef enum WORKMODE_ENUM {
 	WORKMODE_END,
 } WORKMODE_ENUM_t;
 
+typedef enum PRINT_STATUS_BF_ENUM {
+	PRINT_STATUS_LINES__ATXMEGA		= 0b00000001,
+	PRINT_STATUS_LINES__SIM808		= 0b00000010,
+} PRINT_STATUS_BF_ENUM_t;
+
 typedef enum ADC_CH0_SCAN_ENUM {
 	ADC_CH0_SCAN_3V0 = 255,											// PIN = PA0, ADC0 - used as AREFA
 	ADC_CH0_SCAN_VCTCXO = 0,										// PIN = PA1, ADC1
@@ -110,7 +115,7 @@ void bias_update(uint8_t bias);
 void dac_app_enable(bool enable);
 void dds_update(float dds0_hz, float dds1_hz, float phase);
 void errorBeep_enable(bool enable);
-void printStatusLines_enable(bool enable);
+void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf);
 void keyBeep_enable(bool enable);
 void pitchTone_mode(uint8_t mode);
 void halt(void);
