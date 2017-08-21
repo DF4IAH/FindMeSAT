@@ -382,6 +382,9 @@ void isr_100ms_twi1_onboard(uint32_t now);
 void isr_500ms_twi1_onboard(uint32_t now);
 void isr_sparetime_twi1_onboard(uint32_t now);
 
+status_code_t twi1_gyro_gyro_offset_set(void);
+status_code_t twi1_gyro_accel_offset_set(void);
+void init_twi1_gyro(void);
 // void task_twi1_onboard(uint32_t now);
 
 void task_twi2_lcd_cls(void);

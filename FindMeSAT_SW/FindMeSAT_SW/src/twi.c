@@ -76,6 +76,7 @@ extern int16_t			g_twi1_gyro_1_gyro_ofsz;
 extern int32_t			g_twi1_gyro_1_gyro_x_mdps;
 extern int32_t			g_twi1_gyro_1_gyro_y_mdps;
 extern int32_t			g_twi1_gyro_1_gyro_z_mdps;
+extern bool				g_twi1_gyro_gyro_offset_set__flag;
 extern uint8_t			g_twi1_gyro_2_version;
 extern int8_t			g_twi1_gyro_2_asax;
 extern int8_t			g_twi1_gyro_2_asay;
@@ -379,7 +380,56 @@ PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_04[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_05[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_GYRO_OK[]);
 
-static void init_twi1_gyro(void)
+
+status_code_t twi1_gyro_gyro_offset_set(void)
+{
+	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_GYRO_XG_OFFSET_H;
+	twi1_packet.addr_length = 1;
+	twi1_m_data[0] = (uint8_t) (g_twi1_gyro_1_gyro_ofsx >> 8);
+	twi1_m_data[1] = (uint8_t) (g_twi1_gyro_1_gyro_ofsx & 0xFF);
+	twi1_m_data[2] = (uint8_t) (g_twi1_gyro_1_gyro_ofsy >> 8);
+	twi1_m_data[3] = (uint8_t) (g_twi1_gyro_1_gyro_ofsy & 0xFF);
+	twi1_m_data[4] = (uint8_t) (g_twi1_gyro_1_gyro_ofsz >> 8);
+	twi1_m_data[5] = (uint8_t) (g_twi1_gyro_1_gyro_ofsz & 0xFF);
+	twi1_packet.length = 6;
+	return twi_master_write(&TWI1_MASTER, &twi1_packet);
+}
+
+status_code_t twi1_gyro_accel_offset_set(void)
+{
+	status_code_t sc;
+
+	do {
+			twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+			twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_XA_OFFSET_H;
+			twi1_packet.addr_length = 1;
+			twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsx & 0x7F80) >> 7);
+			twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsx &   0x7F) << 1);
+			twi1_packet.length = 2;
+			sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+			if (sc != STATUS_OK) {
+				break;
+			}
+
+			twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_YA_OFFSET_H;
+			twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsy & 0x7F80) >> 7);
+			twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsy &   0x7F) << 1);
+			sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+			if (sc != STATUS_OK) {
+				break;
+			}
+
+			twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ZA_OFFSET_H;
+			twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsz & 0x7F80) >> 7);
+			twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsz &   0x7F) << 1);
+			sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+	} while (false);
+
+	return sc;
+}
+
+void init_twi1_gyro(void)
 {
 	status_code_t sc;
 
@@ -498,46 +548,14 @@ static void init_twi1_gyro(void)
 			break;
 		}
 
-		/* MPU-9250 6 axis: set gyro offset values */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_GYRO_XG_OFFSET_H;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = (uint8_t) (g_twi1_gyro_1_gyro_ofsx >> 8);
-		twi1_m_data[1] = (uint8_t) (g_twi1_gyro_1_gyro_ofsx & 0xFF);
-		twi1_m_data[2] = (uint8_t) (g_twi1_gyro_1_gyro_ofsy >> 8);
-		twi1_m_data[3] = (uint8_t) (g_twi1_gyro_1_gyro_ofsy & 0xFF);
-		twi1_m_data[4] = (uint8_t) (g_twi1_gyro_1_gyro_ofsz >> 8);
-		twi1_m_data[5] = (uint8_t) (g_twi1_gyro_1_gyro_ofsz & 0xFF);
-		twi1_packet.length = 6;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		/* MPU-9250 6 axis: GYRO set offset values */
+		sc = twi1_gyro_gyro_offset_set();
 		if (sc != STATUS_OK) {
 			break;
 		}
 
-		/* MPU-9250 6 axis: set accel offset values */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_XA_OFFSET_H;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsx & 0x7F80) >> 7);
-		twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsx &   0x7F) << 1);
-		twi1_packet.length = 2;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
-		if (sc != STATUS_OK) {
-			break;
-		}
-
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_YA_OFFSET_H;
-		twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsy & 0x7F80) >> 7);
-		twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsy &   0x7F) << 1);
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
-		if (sc != STATUS_OK) {
-			break;
-		}
-
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ZA_OFFSET_H;
-		twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsz & 0x7F80) >> 7);
-		twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsz &   0x7F) << 1);
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		/* MPU-9250 6 axis: ACCEL set offset values */
+		sc = twi1_gyro_accel_offset_set();
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -553,7 +571,7 @@ static void init_twi1_gyro(void)
 			break;
 		}
 
-		/* MPU-9250 6 axis: Bandwidth = 5 Hz, Fs = 1 kHz */
+		/* MPU-9250 6 axis: GYRO Bandwidth = 5 Hz, Fs = 1 kHz */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
 		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_CONFIG;
 		twi1_packet.addr_length = 1;
@@ -564,7 +582,7 @@ static void init_twi1_gyro(void)
 			break;
 		}
 
-		/* MPU-9250 6 axis: Bandwidth = 5 Hz, Fs = 1 kHz */
+		/* MPU-9250 6 axis: ACCEL Bandwidth = 5 Hz, Fs = 1 kHz */
 		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
 		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ACCEL_CONFIG2;
 		twi1_packet.addr_length = 1;
@@ -917,6 +935,12 @@ static bool service_twi1_gyro(uint32_t now, bool sync)
 	g_twi1_gyro_1_gyro_x = ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
 	g_twi1_gyro_1_gyro_y = ((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3];
 	g_twi1_gyro_1_gyro_z = ((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5];
+
+	/* Do update GYRO offset registers */
+	if (g_twi1_gyro_gyro_offset_set__flag) {
+		g_twi1_gyro_gyro_offset_set__flag = false;
+		(void) twi1_gyro_gyro_offset_set();
+	}
 
 	/* Magnetometer: check if new data is available */
 	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
@@ -1515,6 +1539,7 @@ static void task_twi2_lcd__pll(void)
 	const uint16_t pll_cnt	= 30000U;
 	const uint8_t size_x	= 240U;
 	const uint8_t size_y	= 128U;
+	const uint8_t width		= 4U;
 	const uint8_t pos_y_top	= 13U;
 	const uint8_t pos_y_mul	= (size_y - pos_y_top) >> 1;
 	const uint8_t pos_y_mid	= pos_y_mul + pos_y_top;
@@ -1533,16 +1558,16 @@ static void task_twi2_lcd__pll(void)
 		twi2_set_leds(0x01);
 
 		/* Clear old line */
-		task_twi2_lcd_rect(size_x - 3, pos_y_top, 3, size_y - pos_y_top, true, GFX_PIXEL_CLR);
+		task_twi2_lcd_rect(size_x - width, pos_y_top, width, size_y - pos_y_top, true, GFX_PIXEL_CLR);
 
 		/* Draw new line - positive phase */
 		if ((l_pll_lo % pos_y_mul) < (pos_y_mul >> 1)) {
 			uint8_t len_y = (uint8_t) (((uint32_t)l_pll_lo) % pos_y_mul);
-			task_twi2_lcd_rect(size_x - 3, pos_y_mid - len_y, 3, len_y, false, GFX_PIXEL_SET);
+			task_twi2_lcd_rect(size_x - width, pos_y_mid - len_y, width, len_y, false, GFX_PIXEL_SET);
 
 		} else {
 			uint8_t len_y = (uint8_t) ((((uint32_t) (pll_cnt - l_pll_lo))) % pos_y_mul);
-			task_twi2_lcd_rect(size_x - 3, pos_y_mid, 3, len_y, false, GFX_PIXEL_SET);
+			task_twi2_lcd_rect(size_x - width, pos_y_mid, width, len_y, false, GFX_PIXEL_SET);
 		}
 	}
 }
