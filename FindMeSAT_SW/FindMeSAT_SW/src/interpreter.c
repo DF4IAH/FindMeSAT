@@ -54,8 +54,11 @@ const char					PM_HELP_BIAS_2[]						=   "for LCD contrast\r\n";
 const char					PM_HELP_BL_1[]							= "bl=\t\t0-255: backlight PWM, ";
 const char					PM_HELP_BL_2[]							= "-1: AUTO, -2: TURNLIGHT special\r\n";
 const char					PM_HELP_CAL_1[]							= "cal=\t\tdefaults: save default values ";
-const char					PM_HELP_CAL_2[]							=	"to EEPROM, ";
-const char					PM_HELP_CAL_3[]							=	"gyro: reduce GYRO offset errors\r\n";
+const char					PM_HELP_CAL_2[]							=	"to EEPROM\r\n";
+const char					PM_HELP_CAL_3[]							=	"\t\taccelx: X-axis 1g fact-cal, Y/Z offset-cal\r\n";
+const char					PM_HELP_CAL_4[]							=	"\t\taccely: Y-axis 1g fact-cal, X/Z offset-cal\r\n";
+const char					PM_HELP_CAL_5[]							=	"\t\taccelz: Z-axis 1g fact-cal, X/Y offset-cal\r\n";
+const char					PM_HELP_CAL_6[]							=	"\t\tgyro: reduce GYRO offset errors\r\n";
 const char					PM_HELP_DAC_1[]							= "dac=\t\t0: turn DACB off, ";
 const char					PM_HELP_DAC_2[]							=  "1: turn DACB on\r\n";
 const char					PM_HELP_DDS_1[]							= "dds=a,b,c\ta: DDS0 frequency mHz, ";
@@ -86,6 +89,9 @@ PROGMEM_DECLARE(const char, PM_HELP_BL_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_CAL_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_CAL_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_CAL_3[]);
+PROGMEM_DECLARE(const char, PM_HELP_CAL_4[]);
+PROGMEM_DECLARE(const char, PM_HELP_CAL_5[]);
+PROGMEM_DECLARE(const char, PM_HELP_CAL_6[]);
 PROGMEM_DECLARE(const char, PM_HELP_DAC_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_DAC_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_DDS_1[]);
@@ -137,6 +143,12 @@ void printHelp(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_CAL_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_CAL_3);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_CAL_4);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_CAL_5);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_CAL_6);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DAC_1);
@@ -196,6 +208,9 @@ const char					PM_IP_CMD_AT[]							= "AT";
 const char					PM_IP_CMD_A_slash[]						= "A/";
 const char					PM_IP_CMD_bias[]						= "bias=";
 const char					PM_IP_CMD_bl[]							= "bl=";
+const char					PM_IP_CMD_cal_accelx[]					= "cal=accelx";
+const char					PM_IP_CMD_cal_accely[]					= "cal=accely";
+const char					PM_IP_CMD_cal_accelz[]					= "cal=accelz";
 const char					PM_IP_CMD_cal_defaults[]				= "cal=defaults";
 const char					PM_IP_CMD_cal_gyro[]					= "cal=gyro";
 const char					PM_IP_CMD_dac[]							= "dac=";
@@ -213,6 +228,9 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_AT[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_A_slash[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_bias[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_bl[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_cal_accelx[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_cal_accely[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_cal_accelz[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_cal_defaults[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_cal_gyro[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_dac[]);
@@ -254,6 +272,15 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_cal_defaults, sizeof(PM_IP_CMD_cal_defaults) - 1)) {
 			calibration_mode(CALIBRATION_MODE_ENUM__DEFAULTS);
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_cal_accelx, sizeof(PM_IP_CMD_cal_accelx) - 1)) {
+			calibration_mode(CALIBRATION_MODE_ENUM__ACCEL_X);
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_cal_accely, sizeof(PM_IP_CMD_cal_accely) - 1)) {
+			calibration_mode(CALIBRATION_MODE_ENUM__ACCEL_Y);
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_cal_accelz, sizeof(PM_IP_CMD_cal_accelz) - 1)) {
+			calibration_mode(CALIBRATION_MODE_ENUM__ACCEL_Z);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_cal_gyro, sizeof(PM_IP_CMD_cal_gyro) - 1)) {
 			calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
