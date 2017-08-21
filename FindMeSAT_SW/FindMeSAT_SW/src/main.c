@@ -105,6 +105,7 @@ volatile int32_t			g_twi1_gyro_1_gyro_x_mdps			= 0;
 volatile int32_t			g_twi1_gyro_1_gyro_y_mdps			= 0;
 volatile int32_t			g_twi1_gyro_1_gyro_z_mdps			= 0;
 volatile bool				g_twi1_gyro_gyro_offset_set__flag	= false;
+volatile bool				g_twi1_gyro_accel_offset_set__flag	= false;
 uint8_t						g_twi1_gyro_2_version				= 0;
 volatile int8_t				g_twi1_gyro_2_asax					= 0;
 volatile int8_t				g_twi1_gyro_2_asay					= 0;
@@ -650,7 +651,8 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 				g_twi1_gyro_2_mag_factz		= 14440;						// Z = Zchip * factz / 10000
 
 				/* Update the offset registers in the I2C device */
-				g_twi1_gyro_gyro_offset_set__flag = true;
+				g_twi1_gyro_gyro_offset_set__flag	= true;
+				g_twi1_gyro_accel_offset_set__flag	= true;
 
 				cpu_irq_restore(flags);
 
@@ -670,6 +672,69 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 
 				/* Update the offset registers in the I2C device */
 				g_twi1_gyro_gyro_offset_set__flag = true;
+
+				cpu_irq_restore(flags);
+
+				/* Write back current offset values to the EEPROM */
+				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+			}
+		break;
+
+		case CALIBRATION_MODE_ENUM__ACCEL_X:
+			{
+				irqflags_t flags = cpu_irq_save();
+
+				/* Adjust X factor */
+				g_twi1_gyro_1_accel_factx = (int16_t) (((int32_t)g_twi1_gyro_1_accel_factx * 1000L) / g_twi1_gyro_1_accel_x_mg);
+
+				/* Adjust Y/Z offsets */
+				g_twi1_gyro_1_accel_ofsy -= (g_twi1_gyro_1_accel_y >> 4);
+				g_twi1_gyro_1_accel_ofsz -= (g_twi1_gyro_1_accel_z >> 4);
+
+				/* Update the offset registers in the I2C device */
+				g_twi1_gyro_accel_offset_set__flag = true;
+
+				cpu_irq_restore(flags);
+
+				/* Write back current offset values to the EEPROM */
+				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+			}
+		break;
+
+		case CALIBRATION_MODE_ENUM__ACCEL_Y:
+			{
+				irqflags_t flags = cpu_irq_save();
+
+				/* Adjust Y factor */
+				g_twi1_gyro_1_accel_facty = (int16_t) (((int32_t)g_twi1_gyro_1_accel_facty * 1000L) / g_twi1_gyro_1_accel_y_mg);
+
+				/* Adjust X/Z offsets */
+				g_twi1_gyro_1_accel_ofsx -= (g_twi1_gyro_1_accel_x >> 4);
+				g_twi1_gyro_1_accel_ofsz -= (g_twi1_gyro_1_accel_z >> 4);
+
+				/* Update the offset registers in the I2C device */
+				g_twi1_gyro_accel_offset_set__flag = true;
+
+				cpu_irq_restore(flags);
+
+				/* Write back current offset values to the EEPROM */
+				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+			}
+		break;
+
+		case CALIBRATION_MODE_ENUM__ACCEL_Z:
+			{
+				irqflags_t flags = cpu_irq_save();
+
+				/* Adjust Z factor */
+				g_twi1_gyro_1_accel_factz = (int16_t) (((int32_t)g_twi1_gyro_1_accel_factz * 1000L) / g_twi1_gyro_1_accel_z_mg);
+
+				/* Adjust X/Y offsets */
+				g_twi1_gyro_1_accel_ofsx -= (g_twi1_gyro_1_accel_x >> 4);
+				g_twi1_gyro_1_accel_ofsy -= (g_twi1_gyro_1_accel_y >> 4);
+
+				/* Update the offset registers in the I2C device */
+				g_twi1_gyro_accel_offset_set__flag = true;
 
 				cpu_irq_restore(flags);
 
