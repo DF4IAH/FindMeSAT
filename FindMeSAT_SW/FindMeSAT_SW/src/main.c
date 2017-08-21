@@ -49,11 +49,11 @@
 
 bool						g_adc_enabled						= true;
 bool						g_dac_enabled						= false;
-int16_t						g_backlight_mode_pwm				= 0;
+int16_t						g_backlight_mode_pwm				= 0;		// EEPROM
 uint8_t						g_bias_pm							= 22;
-uint8_t						g_pitch_tone_mode					= 1;
-bool						g_errorBeep_enable					= true;
-bool						g_keyBeep_enable					= false;
+uint8_t						g_pitch_tone_mode					= 0;		// EEPROM
+bool						g_errorBeep_enable					= false;	// EEPROM
+bool						g_keyBeep_enable					= false;	// EEPROM
 
 uint64_t					g_milliseconds_cnt64				= 0ULL;
 
@@ -62,8 +62,8 @@ uint64_t					g_1pps_last_hi						= 0ULL;
 bool						g_1pps_last_new						= false;
 
 bool						g_usb_cdc_stdout_enabled			= false;
-bool						g_usb_cdc_printStatusLines_atxmega	= false;
-bool						g_usb_cdc_printStatusLines_sim808	= true;
+bool						g_usb_cdc_printStatusLines_atxmega	= false;	// EEPROM
+bool						g_usb_cdc_printStatusLines_sim808	= false;	// EEPROM
 bool						g_usb_cdc_rx_received				= false;
 bool						g_usb_cdc_transfers_authorized		= false;
 bool						g_usb_cdc_access_blocked			= false;
@@ -80,43 +80,44 @@ uint8_t						g_twi1_gsm_version					= 0;
 bool						g_twi1_gyro_valid					= false;
 uint8_t						g_twi1_gyro_1_version				= 0;
 volatile int16_t			g_twi1_gyro_1_temp					= 0;
-volatile int16_t			g_twi1_gyro_1_temp_RTofs			= 0;
-volatile int16_t			g_twi1_gyro_1_temp_sens				= 413;
+volatile int16_t			g_twi1_gyro_1_temp_RTofs			= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_temp_sens				= 0;		// EEPROM
 volatile int16_t			g_twi1_gyro_1_temp_deg_100			= 0;
 volatile int16_t			g_twi1_gyro_1_accel_x				= 0;
 volatile int16_t			g_twi1_gyro_1_accel_y				= 0;
 volatile int16_t			g_twi1_gyro_1_accel_z				= 0;
-volatile int16_t			g_twi1_gyro_1_accel_ofsx			= ((int16_t) (-46672L / 16));	// 16LSB / OFS
-volatile int16_t			g_twi1_gyro_1_accel_ofsy			= ((int16_t) (+41120L / 16));	// 16LSB / OFS
-volatile int16_t			g_twi1_gyro_1_accel_ofsz			= ((int16_t) (+76672L / 16));	// 16LSB / OFS
-volatile int16_t			g_twi1_gyro_1_accel_factx			=  9980;						// X = Xchip * factx / 10000
-volatile int16_t			g_twi1_gyro_1_accel_facty			=  9975;						// Y = Ychip * facty / 10000
-volatile int16_t			g_twi1_gyro_1_accel_factz			=  9950;						// Z = Zchip * factz / 10000
+volatile int16_t			g_twi1_gyro_1_accel_ofsx			= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_accel_ofsy			= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_accel_ofsz			= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_accel_factx			= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_accel_facty			= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_accel_factz			= 0;		// EEPROM
 volatile int16_t			g_twi1_gyro_1_accel_x_mg			= 0;
 volatile int16_t			g_twi1_gyro_1_accel_y_mg			= 0;
 volatile int16_t			g_twi1_gyro_1_accel_z_mg			= 0;
 volatile int16_t			g_twi1_gyro_1_gyro_x				= 0;
 volatile int16_t			g_twi1_gyro_1_gyro_y				= 0;
 volatile int16_t			g_twi1_gyro_1_gyro_z				= 0;
-volatile int16_t			g_twi1_gyro_1_gyro_ofsx				= ( -32 / 4);					//  4LSB / OFS
-volatile int16_t			g_twi1_gyro_1_gyro_ofsy				= ( -80 / 4);					//  4LSB / OFS
-volatile int16_t			g_twi1_gyro_1_gyro_ofsz				= (+148 / 4);					//  4LSB / OFS
+volatile int16_t			g_twi1_gyro_1_gyro_ofsx				= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_gyro_ofsy				= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_gyro_ofsz				= 0;		// EEPROM
 volatile int32_t			g_twi1_gyro_1_gyro_x_mdps			= 0;
 volatile int32_t			g_twi1_gyro_1_gyro_y_mdps			= 0;
 volatile int32_t			g_twi1_gyro_1_gyro_z_mdps			= 0;
+volatile bool				g_twi1_gyro_gyro_offset_set__flag	= false;
 uint8_t						g_twi1_gyro_2_version				= 0;
 volatile int8_t				g_twi1_gyro_2_asax					= 0;
 volatile int8_t				g_twi1_gyro_2_asay					= 0;
 volatile int8_t				g_twi1_gyro_2_asaz					= 0;
-volatile int16_t			g_twi1_gyro_2_ofsx					=  +37;							//  1LSB / OFS
-volatile int16_t			g_twi1_gyro_2_ofsy					= +156;							//  1LSB / OFS
-volatile int16_t			g_twi1_gyro_2_ofsz					= -217;							//  1LSB / OFS
+volatile int16_t			g_twi1_gyro_2_ofsx					= 0;
+volatile int16_t			g_twi1_gyro_2_ofsy					= 0;
+volatile int16_t			g_twi1_gyro_2_ofsz					= 0;
 volatile int16_t			g_twi1_gyro_2_mag_x					= 0;
 volatile int16_t			g_twi1_gyro_2_mag_y					= 0;
 volatile int16_t			g_twi1_gyro_2_mag_z					= 0;
-volatile int16_t			g_twi1_gyro_2_mag_factx				=  9250;						// X = Xchip * factx / 10000
-volatile int16_t			g_twi1_gyro_2_mag_facty				=  9250;						// Y = Ychip * facty / 10000
-volatile int16_t			g_twi1_gyro_2_mag_factz				= 14440;						// Z = Zchip * factz / 10000
+volatile int16_t			g_twi1_gyro_2_mag_factx				= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_2_mag_facty				= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_2_mag_factz				= 0;		// EEPROM
 volatile int32_t			g_twi1_gyro_2_mag_x_nT				= 0;
 volatile int32_t			g_twi1_gyro_2_mag_y_nT				= 0;
 volatile int32_t			g_twi1_gyro_2_mag_z_nT				= 0;
@@ -139,7 +140,7 @@ volatile int16_t			g_twi1_hygro_RH_100					= 0;
 uint8_t						g_twi2_lcd_version					= 0;
 volatile bool				g_twi2_lcd_repaint					= false;
 
-volatile int32_t			g_xo_mode_pwm						= 0L;
+volatile int32_t			g_xo_mode_pwm						= 0L;		// EEPROM
 
 
 struct adc_config			g_adc_a_conf						= { 0 };
@@ -311,6 +312,109 @@ static void init_globals(void)
 			cpu_irq_restore(flags);
 		}
 	}
+
+	/* Beepers */
+	{
+		uint8_t val_ui8 = 0;
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__BEEP, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_errorBeep_enable	= val_ui8 & 0x01;
+			g_keyBeep_enable	= val_ui8 & 0x02;
+			cpu_irq_restore(flags);
+		}
+	}
+
+	/* Pitch tone variants */
+	{
+		uint8_t val_i8 = 0;
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__PITCHTONE, &val_i8, sizeof(val_i8)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_pitch_tone_mode = val_i8;
+			cpu_irq_restore(flags);
+		}
+	}
+
+	/* Status lines */
+	{
+		uint8_t val_ui8 = 0;
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__PRINT_STATUS, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_usb_cdc_printStatusLines_atxmega	= val_ui8 & 0x01;
+			g_usb_cdc_printStatusLines_sim808	= val_ui8 & 0x02;
+			cpu_irq_restore(flags);
+		}
+	}
+
+	/* 9-axis offset and gain corrections */
+	{
+		int16_t l_twi1_gyro_1_temp_RTofs	= 0;
+		int16_t l_twi1_gyro_1_temp_sens		= 0;
+		int16_t l_twi1_gyro_1_accel_ofsx	= 0;
+		int16_t l_twi1_gyro_1_accel_ofsy	= 0;
+		int16_t l_twi1_gyro_1_accel_ofsz	= 0;
+		int16_t l_twi1_gyro_1_accel_factx	= 0;
+		int16_t l_twi1_gyro_1_accel_facty	= 0;
+		int16_t l_twi1_gyro_1_accel_factz	= 0;
+		int16_t l_twi1_gyro_1_gyro_ofsx		= 0;
+		int16_t l_twi1_gyro_1_gyro_ofsy		= 0;
+		int16_t l_twi1_gyro_1_gyro_ofsz		= 0;
+		int16_t l_twi1_gyro_2_mag_factx		= 0;
+		int16_t l_twi1_gyro_2_mag_facty		= 0;
+		int16_t l_twi1_gyro_2_mag_factz		= 0;
+
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_TEMP_RTOFS, (void*)&l_twi1_gyro_1_temp_RTofs, sizeof(l_twi1_gyro_1_temp_RTofs));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_TEMP_SENS,  (void*)&l_twi1_gyro_1_temp_sens, sizeof(l_twi1_gyro_1_temp_sens));
+
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_OFS_X, (void*)&l_twi1_gyro_1_accel_ofsx, sizeof(l_twi1_gyro_1_accel_ofsx));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_OFS_Y, (void*)&l_twi1_gyro_1_accel_ofsy, sizeof(l_twi1_gyro_1_accel_ofsy));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_OFS_Z, (void*)&l_twi1_gyro_1_accel_ofsz, sizeof(l_twi1_gyro_1_accel_ofsz));
+
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_FACT_X, (void*)&l_twi1_gyro_1_accel_factx, sizeof(l_twi1_gyro_1_accel_factx));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_FACT_Y, (void*)&l_twi1_gyro_1_accel_facty, sizeof(l_twi1_gyro_1_accel_facty));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_FACT_Z, (void*)&l_twi1_gyro_1_accel_factz, sizeof(l_twi1_gyro_1_accel_factz));
+
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_GYRO_OFS_X, (void*)&l_twi1_gyro_1_gyro_ofsx, sizeof(l_twi1_gyro_1_gyro_ofsx));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_GYRO_OFS_Y, (void*)&l_twi1_gyro_1_gyro_ofsy, sizeof(l_twi1_gyro_1_gyro_ofsy));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_GYRO_OFS_Z, (void*)&l_twi1_gyro_1_gyro_ofsz, sizeof(l_twi1_gyro_1_gyro_ofsz));
+
+		// EEPROM_ADDR__9AXIS_GYRO_FACT_XYZ
+		// EEPROM_ADDR__9AXIS_MAG_OFS_XYZ
+
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_X, (void*)&l_twi1_gyro_2_mag_factx, sizeof(l_twi1_gyro_2_mag_factx));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Y, (void*)&l_twi1_gyro_2_mag_facty, sizeof(l_twi1_gyro_2_mag_facty));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Z, (void*)&l_twi1_gyro_2_mag_factz, sizeof(l_twi1_gyro_2_mag_factz));
+
+		/* In case EEPROM is not set yet - load with default values instead */
+		if (!l_twi1_gyro_1_accel_factx || !l_twi1_gyro_1_accel_facty || !l_twi1_gyro_1_accel_factz ||
+			!l_twi1_gyro_2_mag_factx || !l_twi1_gyro_2_mag_facty || !l_twi1_gyro_2_mag_factz) {
+			calibration_mode(CALIBRATION_MODE_ENUM__DEFAULTS);
+			return;
+		}
+
+		irqflags_t flags = cpu_irq_save();
+		g_twi1_gyro_1_temp_RTofs	= l_twi1_gyro_1_temp_RTofs;
+		g_twi1_gyro_1_temp_sens		= l_twi1_gyro_1_temp_sens;
+
+		g_twi1_gyro_1_accel_ofsx	= l_twi1_gyro_1_accel_ofsx;
+		g_twi1_gyro_1_accel_ofsy	= l_twi1_gyro_1_accel_ofsy;
+		g_twi1_gyro_1_accel_ofsz	= l_twi1_gyro_1_accel_ofsz;
+
+		g_twi1_gyro_1_accel_factx	= l_twi1_gyro_1_accel_factx;
+		g_twi1_gyro_1_accel_facty	= l_twi1_gyro_1_accel_facty;
+		g_twi1_gyro_1_accel_factz	= l_twi1_gyro_1_accel_factz;
+
+		g_twi1_gyro_1_gyro_ofsx		= l_twi1_gyro_1_gyro_ofsx;
+		g_twi1_gyro_1_gyro_ofsy		= l_twi1_gyro_1_gyro_ofsy;
+		g_twi1_gyro_1_gyro_ofsz		= l_twi1_gyro_1_gyro_ofsz;
+
+		g_twi1_gyro_2_mag_factx		= l_twi1_gyro_2_mag_factx;
+		g_twi1_gyro_2_mag_facty		= l_twi1_gyro_2_mag_facty;
+		g_twi1_gyro_2_mag_factz		= l_twi1_gyro_2_mag_factz;
+		cpu_irq_restore(flags);
+	}
 }
 
 void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
@@ -341,6 +445,79 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		cpu_irq_restore(flags);
 
 		nvm_write(INT_EEPROM, EEPROM_ADDR__LCDBL, (void*)&val_i16, sizeof(val_i16));
+	}
+
+	/* Beepers */
+	if (bf & EEPROM_SAVE_BF__BEEP) {
+		irqflags_t flags = cpu_irq_save();
+		uint8_t val_ui8 = (g_keyBeep_enable ?  0x02 : 0x00) | (g_errorBeep_enable ?  0x01 : 0x00);
+		cpu_irq_restore(flags);
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__BEEP, (void*)&val_ui8, sizeof(val_ui8));
+	}
+
+	/* Pitch tone variants */
+	if (bf & EEPROM_SAVE_BF__PITCHTONE) {
+		irqflags_t flags = cpu_irq_save();
+		int8_t val_i8 = g_pitch_tone_mode;
+		cpu_irq_restore(flags);
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__PITCHTONE, (void*)&val_i8, sizeof(val_i8));
+	}
+
+	/* Status lines */
+	if (bf & EEPROM_SAVE_BF__PRINT_STATUS) {
+		irqflags_t flags = cpu_irq_save();
+		uint8_t val_ui8 = (g_usb_cdc_printStatusLines_sim808 ?  0x02 : 0x00) | (g_usb_cdc_printStatusLines_atxmega ?  0x01 : 0x00);
+		cpu_irq_restore(flags);
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__PRINT_STATUS, (void*)&val_ui8, sizeof(val_ui8));
+	}
+
+	/* 9-axis offset and gain corrections */
+	if (bf & EEPROM_SAVE_BF__9AXIS_OFFSETS) {
+		irqflags_t flags = cpu_irq_save();
+		int16_t l_twi1_gyro_1_temp_RTofs	= g_twi1_gyro_1_temp_RTofs;
+		int16_t l_twi1_gyro_1_temp_sens		= g_twi1_gyro_1_temp_sens;
+
+		int16_t l_twi1_gyro_1_accel_ofsx	= g_twi1_gyro_1_accel_ofsx;
+		int16_t l_twi1_gyro_1_accel_ofsy	= g_twi1_gyro_1_accel_ofsy;
+		int16_t l_twi1_gyro_1_accel_ofsz	= g_twi1_gyro_1_accel_ofsz;
+
+		int16_t l_twi1_gyro_1_accel_factx	= g_twi1_gyro_1_accel_factx;
+		int16_t l_twi1_gyro_1_accel_facty	= g_twi1_gyro_1_accel_facty;
+		int16_t l_twi1_gyro_1_accel_factz	= g_twi1_gyro_1_accel_factz;
+
+		int16_t l_twi1_gyro_1_gyro_ofsx		= g_twi1_gyro_1_gyro_ofsx;
+		int16_t l_twi1_gyro_1_gyro_ofsy		= g_twi1_gyro_1_gyro_ofsy;
+		int16_t l_twi1_gyro_1_gyro_ofsz		= g_twi1_gyro_1_gyro_ofsz;
+
+		int16_t l_twi1_gyro_2_mag_factx		= g_twi1_gyro_2_mag_factx;
+		int16_t l_twi1_gyro_2_mag_facty		= g_twi1_gyro_2_mag_facty;
+		int16_t l_twi1_gyro_2_mag_factz		= g_twi1_gyro_2_mag_factz;
+		cpu_irq_restore(flags);
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_TEMP_RTOFS, (void*)&l_twi1_gyro_1_temp_RTofs, sizeof(l_twi1_gyro_1_temp_RTofs));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_TEMP_SENS,  (void*)&l_twi1_gyro_1_temp_sens, sizeof(l_twi1_gyro_1_temp_sens));
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_OFS_X, (void*)&l_twi1_gyro_1_accel_ofsx, sizeof(l_twi1_gyro_1_accel_ofsx));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_OFS_Y, (void*)&l_twi1_gyro_1_accel_ofsy, sizeof(l_twi1_gyro_1_accel_ofsy));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_OFS_Z, (void*)&l_twi1_gyro_1_accel_ofsz, sizeof(l_twi1_gyro_1_accel_ofsz));
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_FACT_X, (void*)&l_twi1_gyro_1_accel_factx, sizeof(l_twi1_gyro_1_accel_factx));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_FACT_Y, (void*)&l_twi1_gyro_1_accel_facty, sizeof(l_twi1_gyro_1_accel_facty));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_FACT_Z, (void*)&l_twi1_gyro_1_accel_factz, sizeof(l_twi1_gyro_1_accel_factz));
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_GYRO_OFS_X, (void*)&l_twi1_gyro_1_gyro_ofsx, sizeof(l_twi1_gyro_1_gyro_ofsx));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_GYRO_OFS_Y, (void*)&l_twi1_gyro_1_gyro_ofsy, sizeof(l_twi1_gyro_1_gyro_ofsy));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_GYRO_OFS_Z, (void*)&l_twi1_gyro_1_gyro_ofsz, sizeof(l_twi1_gyro_1_gyro_ofsz));
+
+		// EEPROM_ADDR__9AXIS_GYRO_FACT_XYZ
+		// EEPROM_ADDR__9AXIS_MAG_OFS_XYZ
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_X, (void*)&l_twi1_gyro_2_mag_factx, sizeof(l_twi1_gyro_2_mag_factx));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Y, (void*)&l_twi1_gyro_2_mag_facty, sizeof(l_twi1_gyro_2_mag_facty));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Z, (void*)&l_twi1_gyro_2_mag_factz, sizeof(l_twi1_gyro_2_mag_factz));
 	}
 }
 
@@ -447,6 +624,62 @@ void bias_update(uint8_t bias)
 	twi2_set_bias(l_bias_pm);
 }
 
+void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
+{
+	switch (mode) {
+		case CALIBRATION_MODE_ENUM__DEFAULTS:
+			{
+				irqflags_t flags = cpu_irq_save();
+
+				g_twi1_gyro_1_temp_RTofs	= 0;
+				g_twi1_gyro_1_temp_sens		= 413;
+
+				g_twi1_gyro_1_accel_ofsx	= ((int16_t) (-46672L / 16));	// 16LSB / OFS
+				g_twi1_gyro_1_accel_ofsy	= ((int16_t) (+41120L / 16));	// 16LSB / OFS
+				g_twi1_gyro_1_accel_ofsz	= ((int16_t) (+76672L / 16));	// 16LSB / OFS
+				g_twi1_gyro_1_accel_factx	=  9980;						// X = Xchip * factx / 10000
+				g_twi1_gyro_1_accel_facty	=  9975;						// Y = Ychip * facty / 10000
+				g_twi1_gyro_1_accel_factz	=  9950;						// Z = Zchip * factz / 10000
+
+				g_twi1_gyro_1_gyro_ofsx		= ( -32 / 4);					//  4LSB / OFS
+				g_twi1_gyro_1_gyro_ofsy		= ( -80 / 4);					//  4LSB / OFS
+				g_twi1_gyro_1_gyro_ofsz		= (+148 / 4);					//  4LSB / OFS
+
+				g_twi1_gyro_2_mag_factx		=  9250;						// X = Xchip * factx / 10000
+				g_twi1_gyro_2_mag_facty		=  9250;						// Y = Ychip * facty / 10000
+				g_twi1_gyro_2_mag_factz		= 14440;						// Z = Zchip * factz / 10000
+
+				/* Update the offset registers in the I2C device */
+				g_twi1_gyro_gyro_offset_set__flag = true;
+
+				cpu_irq_restore(flags);
+
+				/* Write back current offset values to the EEPROM */
+				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+			}
+		break;
+
+		case CALIBRATION_MODE_ENUM__GYRO:
+			{
+				irqflags_t flags = cpu_irq_save();
+
+				/* Adjust the settings */
+				g_twi1_gyro_1_gyro_ofsx -= (g_twi1_gyro_1_gyro_x >> 2);
+				g_twi1_gyro_1_gyro_ofsy -= (g_twi1_gyro_1_gyro_y >> 2);
+				g_twi1_gyro_1_gyro_ofsz -= (g_twi1_gyro_1_gyro_z >> 2);
+
+				/* Update the offset registers in the I2C device */
+				g_twi1_gyro_gyro_offset_set__flag = true;
+
+				cpu_irq_restore(flags);
+
+				/* Write back current offset values to the EEPROM */
+				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+			}
+		break;
+	}
+}
+
 void dac_app_enable(bool enable)
 {
 	if (g_dac_enabled != enable) {
@@ -525,34 +758,34 @@ void dds_update(float dds0_hz, float dds1_hz, float phase)
 void errorBeep_enable(bool enable)
 {
 	/* atomic */
-	{
-		g_errorBeep_enable = enable;
-	}
+	g_errorBeep_enable = enable;
+
+	save_globals(EEPROM_SAVE_BF__BEEP);
 }
 
 void keyBeep_enable(bool enable)
 {
 	/* atomic */
-	{
-		g_keyBeep_enable = enable;
-	}
+	g_keyBeep_enable = enable;
+
+	save_globals(EEPROM_SAVE_BF__BEEP);
 }
 
 void pitchTone_mode(uint8_t mode)
 {
 	/* atomic */
-	{
-		g_pitch_tone_mode = mode;
-	}
+	g_pitch_tone_mode = mode;
+
+	save_globals(EEPROM_SAVE_BF__PITCHTONE);
 }
 
 void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf)
 {
 	/* atomic */
-	{
-		g_usb_cdc_printStatusLines_atxmega	= bf & PRINT_STATUS_LINES__ATXMEGA	?  true : false;
-		g_usb_cdc_printStatusLines_sim808	= bf & PRINT_STATUS_LINES__SIM808	?  true : false;
-	}
+	g_usb_cdc_printStatusLines_atxmega	= bf & PRINT_STATUS_LINES__ATXMEGA	?  true : false;
+	g_usb_cdc_printStatusLines_sim808	= bf & PRINT_STATUS_LINES__SIM808	?  true : false;
+
+	save_globals(EEPROM_SAVE_BF__PRINT_STATUS);
 }
 
 void xoPwm_set(int32_t mode_pwm)
@@ -645,7 +878,7 @@ void sched_freeLock(volatile uint8_t* lockVar)
 	cpu_irq_restore(flags);
 }
 
-static void sched_set_alarm(uint32_t alarmTime)
+void sched_set_alarm(uint32_t alarmTime)
 {
 	/* Set next time to wake up */
 	uint32_t checkTime = rtc_get_time() + 2;

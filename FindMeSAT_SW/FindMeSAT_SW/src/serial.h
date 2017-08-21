@@ -9,6 +9,36 @@
  */
 
 
+/*
+ * ATI
+ * AT+GSV
+ *
+ * AT+CMEE=2
+ * AT+CFUN=1
+ *
+ * AT+ECHARGE=1
+ * AT+CBC
+ *
+ * AT+CGNSPWR=1
+ * AT+CGNSINF
+ *
+ * AT+CANT=1,0,10
+ * AT+CNETSCAN=1;+CNETSCAN
+ *
+ * AT+CPIN?
+ * AT+CREG?
+ * AT+CGATT?
+ * AT+CSQ
+ * AT+C
+ * AT+SAPBR=3,1,"Contype","GPRS"
+ * AT+SAPBR=3,1,"APN","live.vodafone.com"
+ * AT+SAPBR=1,1
+ * AT+SAPBR=2,1
+ * ... @see https://stackoverflow.com/questions/41418880/sim808-error-601-network-error
+ * AT+SAPBR=0,1
+ */
+
+
 #ifndef SERIAL_H_
 #define SERIAL_H_
 

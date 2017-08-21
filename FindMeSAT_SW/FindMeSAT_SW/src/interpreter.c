@@ -53,6 +53,9 @@ const char					PM_HELP_BIAS_1[]						= "bias=\t\t0-63: bias voltage ";
 const char					PM_HELP_BIAS_2[]						=   "for LCD contrast\r\n";
 const char					PM_HELP_BL_1[]							= "bl=\t\t0-255: backlight PWM, ";
 const char					PM_HELP_BL_2[]							= "-1: AUTO, -2: TURNLIGHT special\r\n";
+const char					PM_HELP_CAL_1[]							= "cal=\t\tdefaults: save default values ";
+const char					PM_HELP_CAL_2[]							=	"to EEPROM, ";
+const char					PM_HELP_CAL_3[]							=	"gyro: reduce GYRO offset errors\r\n";
 const char					PM_HELP_DAC_1[]							= "dac=\t\t0: turn DACB off, ";
 const char					PM_HELP_DAC_2[]							=  "1: turn DACB on\r\n";
 const char					PM_HELP_DDS_1[]							= "dds=a,b,c\ta: DDS0 frequency mHz, ";
@@ -80,6 +83,9 @@ PROGMEM_DECLARE(const char, PM_HELP_BIAS_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_BIAS_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_BL_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_BL_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_CAL_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_CAL_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_CAL_3[]);
 PROGMEM_DECLARE(const char, PM_HELP_DAC_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_DAC_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_DDS_1[]);
@@ -124,6 +130,13 @@ void printHelp(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_BL_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_BL_2);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_CAL_1);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_CAL_2);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_CAL_3);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DAC_1);
@@ -183,6 +196,8 @@ const char					PM_IP_CMD_AT[]							= "AT";
 const char					PM_IP_CMD_A_slash[]						= "A/";
 const char					PM_IP_CMD_bias[]						= "bias=";
 const char					PM_IP_CMD_bl[]							= "bl=";
+const char					PM_IP_CMD_cal_defaults[]				= "cal=defaults";
+const char					PM_IP_CMD_cal_gyro[]					= "cal=gyro";
 const char					PM_IP_CMD_dac[]							= "dac=";
 const char					PM_IP_CMD_dds[]							= "dds=";
 const char					PM_IP_CMD_eb[]							= "eb=";
@@ -198,6 +213,8 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_AT[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_A_slash[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_bias[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_bl[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_cal_defaults[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_cal_gyro[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_dac[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_dds[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_eb[]);
@@ -234,6 +251,12 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_bl) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
 				backlight_mode_pwm(val[0]);
 			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_cal_defaults, sizeof(PM_IP_CMD_cal_defaults) - 1)) {
+			calibration_mode(CALIBRATION_MODE_ENUM__DEFAULTS);
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_cal_gyro, sizeof(PM_IP_CMD_cal_gyro) - 1)) {
+			calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_dac, sizeof(PM_IP_CMD_dac) - 1)) {
 			int val[1] = { 0 };
