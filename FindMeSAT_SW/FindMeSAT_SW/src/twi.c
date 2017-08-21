@@ -1562,7 +1562,7 @@ static void task_twi2_lcd__pll(void)
 	const uint16_t pll_cnt	= 30000U;
 	const uint8_t size_x	= 240U;
 	const uint8_t size_y	= 128U;
-	const uint8_t width		= 4U;
+	const uint8_t width		= 3U;
 	const uint8_t pos_y_top	= 13U;
 	const uint8_t pos_y_mul	= (size_y - pos_y_top) >> 1;
 	const uint8_t pos_y_mid	= pos_y_mul + pos_y_top;
@@ -1572,7 +1572,7 @@ static void task_twi2_lcd__pll(void)
 		uint16_t l_pll_lo;
 		{
 			irqflags_t flags = cpu_irq_save();
-			l_pll_lo = g_1pps_last_lo;
+			l_pll_lo = g_1pps_last_lo >> 2;
 			g_1pps_last_new = false;
 			cpu_irq_restore(flags);
 		}
