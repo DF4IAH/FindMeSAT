@@ -81,7 +81,7 @@ enum {
 };
 
 //! FIFO descriptor used by FIFO driver.
-struct fifo_sched_desc {
+struct g_fifo_sched_desc {
 	union
 	{
 		uint32_t *u32ptr; //!< Pointer to unsigned-32 bits location
@@ -94,7 +94,7 @@ struct fifo_sched_desc {
 	uint8_t mask;                 //!< Mask used to speed up FIFO operation (wrapping)
 };
 
-typedef struct fifo_sched_desc fifo_desc_t;
+typedef struct g_fifo_sched_desc fifo_desc_t;
 
 /**
  *  \brief Initializes a new software FIFO for a certain 'size'.

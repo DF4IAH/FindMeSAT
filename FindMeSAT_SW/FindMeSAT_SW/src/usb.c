@@ -25,99 +25,8 @@
 #include "usb.h"
 
 
-extern bool				g_adc_enabled;
-extern bool				g_dac_enabled;
-extern int16_t			g_backlight_mode_pwm;
-extern uint8_t			g_bias_pm;
-extern uint8_t			g_pitch_tone_mode;
-extern bool				g_errorBeep_enable;
-extern bool				g_keyBeep_enable;
-
-extern bool				g_usb_cdc_stdout_enabled;
-extern bool				g_usb_cdc_printStatusLines_atxmega;
-extern bool				g_usb_cdc_printStatusLines_sim808;
-extern bool				g_usb_cdc_rx_received;
-extern bool				g_usb_cdc_transfers_authorized;
-extern bool				g_usb_cdc_access_blocked;
-extern WORKMODE_ENUM_t	g_workmode;
-
-extern uint64_t			g_milliseconds_cnt64;
-
-extern uint16_t			g_1pps_last_lo;
-extern uint64_t			g_1pps_last_hi;
-extern bool				g_1pps_last_new;
-
-extern bool				g_twi1_gyro_valid;
-extern uint8_t			g_twi1_gyro_1_version;
-extern int16_t			g_twi1_gyro_1_temp;
-extern int16_t			g_twi1_gyro_1_temp_RTofs;
-extern int16_t			g_twi1_gyro_1_temp_sens;
-extern int16_t			g_twi1_gyro_1_temp_deg_100;
-extern int16_t			g_twi1_gyro_1_accel_x;
-extern int16_t			g_twi1_gyro_1_accel_y;
-extern int16_t			g_twi1_gyro_1_accel_z;
-extern int16_t			g_twi1_gyro_1_accel_ofsx;
-extern int16_t			g_twi1_gyro_1_accel_ofsy;
-extern int16_t			g_twi1_gyro_1_accel_ofsz;
-extern int16_t			g_twi1_gyro_1_accel_factx;
-extern int16_t			g_twi1_gyro_1_accel_facty;
-extern int16_t			g_twi1_gyro_1_accel_factz;
-extern int16_t			g_twi1_gyro_1_accel_x_mg;
-extern int16_t			g_twi1_gyro_1_accel_y_mg;
-extern int16_t			g_twi1_gyro_1_accel_z_mg;
-extern int16_t			g_twi1_gyro_1_gyro_x;
-extern int16_t			g_twi1_gyro_1_gyro_y;
-extern int16_t			g_twi1_gyro_1_gyro_z;
-extern int16_t			g_twi1_gyro_1_gyro_ofsx;
-extern int16_t			g_twi1_gyro_1_gyro_ofsy;
-extern int16_t			g_twi1_gyro_1_gyro_ofsz;
-extern int32_t			g_twi1_gyro_1_gyro_x_mdps;
-extern int32_t			g_twi1_gyro_1_gyro_y_mdps;
-extern int32_t			g_twi1_gyro_1_gyro_z_mdps;
-extern uint8_t			g_twi1_gyro_2_version;
-extern int8_t			g_twi1_gyro_2_asax;
-extern int8_t			g_twi1_gyro_2_asay;
-extern int8_t			g_twi1_gyro_2_asaz;
-extern int16_t			g_twi1_gyro_2_ofsx;
-extern int16_t			g_twi1_gyro_2_ofsy;
-extern int16_t			g_twi1_gyro_2_ofsz;
-extern int16_t			g_twi1_gyro_2_mag_x;
-extern int16_t			g_twi1_gyro_2_mag_y;
-extern int16_t			g_twi1_gyro_2_mag_z;
-extern int16_t			g_twi1_gyro_2_mag_factx;
-extern int16_t			g_twi1_gyro_2_mag_facty;
-extern int16_t			g_twi1_gyro_2_mag_factz;
-extern int32_t			g_twi1_gyro_2_mag_x_nT;
-extern int32_t			g_twi1_gyro_2_mag_y_nT;
-extern int32_t			g_twi1_gyro_2_mag_z_nT;
-
-extern bool				g_twi1_baro_valid;
-extern uint16_t			g_twi1_baro_version;
-extern uint16_t			g_twi1_baro_c[C_TWI1_BARO_C_CNT];
-extern uint32_t			g_twi1_baro_d1;
-extern uint32_t			g_twi1_baro_d2;
-extern int32_t			g_twi1_baro_temp_100;
-extern int32_t			g_twi1_baro_p_100;
-
-extern uint8_t			g_twi1_lock;
-extern bool				g_twi1_hygro_valid;
-extern uint8_t			g_twi1_hygro_status;
-extern uint16_t			g_twi1_hygro_S_T;
-extern uint16_t			g_twi1_hygro_S_RH;
-extern int16_t			g_twi1_hygro_T_100;
-extern int16_t			g_twi1_hygro_RH_100;
-
-extern int16_t			g_adc_vctcxo_volt_1000;
-extern int16_t			g_adc_5v0_volt_1000;
-extern int16_t			g_adc_vbat_volt_1000;
-extern int16_t			g_adc_io_adc4_volt_1000;
-extern int16_t			g_adc_io_adc5_volt_1000;
-extern int16_t			g_adc_silence_volt_1000;
-extern int16_t			g_adc_temp_deg_100;
-
-extern uint8_t			g_interpreter_lock;
-
-extern char				g_prepare_buf[C_TX_BUF_SIZE];
+/* Add access to the global vars */
+#include "externals.h"
 
 
 /* Functions */
@@ -370,7 +279,9 @@ const char					PM_INFO_PART_L2P2B[]				= "Gz=%+07.2fdps (%06d)\t \t";
 const char					PM_INFO_PART_L2P3A[]				= "Mx=%+07.3fuT (%+06d), My=%+07.3fuT (%+06d), ";
 const char					PM_INFO_PART_L2P3B[]				= "Mz=%+07.3fuT (%+06d)\t \t";
 const char					PM_INFO_PART_L2P4[]					= "Gyro_Temp=%+06.2fC (%+06d)\r\n\r\n";
-const char					PM_INFO_PART_PLL1[]					= "PLL: %8ld.%03ld + %03d/30E+6 sec\r\n\r\n";
+const char					PM_INFO_PART_PLL1[]					= "PLL: time=%8ld.%03ld + %03d/30E+6 sec, ";
+const char					PM_INFO_PART_PLL2[]					= "1pps_deviation=%+10f, ";
+const char					PM_INFO_PART_PLL3[]					= "XO_PWM=%05ldd : 0x%02x\r\n\r\n";
 
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1B[]);
@@ -385,6 +296,8 @@ PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3B[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P4[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_PLL2[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_PLL3[]);
 
 void task_usb(uint32_t now)
 {
@@ -399,17 +312,29 @@ void task_usb(uint32_t now)
 		}
 
 		/* Status of the PLL unit */
-		if (g_usb_cdc_printStatusLines_sim808 && g_1pps_last_new) {
+		if (g_usb_cdc_printStatusLines_sim808 && g_1pps_printusb_avail) {
 			uint16_t l_pll_lo;
 			uint64_t l_pll_hi;
+			float l_1pps_deviation;
+			uint32_t l_xo_mode_pwm;
 			{
 				irqflags_t flags = cpu_irq_save();
-				l_pll_lo = g_1pps_last_lo;
-				l_pll_hi = g_1pps_last_hi;
+				l_pll_lo				= g_1pps_last_lo;
+				l_pll_hi				= g_1pps_last_hi;
+				l_1pps_deviation		= g_1pps_deviation;
+				l_xo_mode_pwm			= g_xo_mode_pwm;
 				cpu_irq_restore(flags);
+
+				g_1pps_printusb_avail	= false;
 			}
 
 			int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_PLL1, (uint32_t)(l_pll_hi / 1000U), (uint32_t) (l_pll_hi % 1000), l_pll_lo);
+			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_PLL2, l_1pps_deviation);
+			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_PLL3, (l_xo_mode_pwm & C_XO_VAL_INT_MASK) >> C_XO_VAL_INT_SHIFT, l_xo_mode_pwm & C_XO_VAL_FRAC_MASK);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 		}
 

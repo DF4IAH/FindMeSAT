@@ -57,9 +57,16 @@ bool						g_keyBeep_enable					= false;	// EEPROM
 
 uint64_t					g_milliseconds_cnt64				= 0ULL;
 
-uint16_t					g_1pps_last_lo						= 0U;
+uint16_t					g_1pps_last_lo						= 0U;		// measuring time
 uint64_t					g_1pps_last_hi						= 0ULL;
 bool						g_1pps_last_new						= false;
+uint16_t					g_1pps_processed_lo					= 0U;		// corrected time to use
+uint64_t					g_1pps_processed_hi					= 0ULL;
+bool						g_1pps_proceeded_avail				= false;
+uint8_t						g_1pps_processed_outOfSync			= 0;
+float						g_1pps_deviation					= 0.f;
+bool						g_1pps_printtwi_avail				= false;
+bool						g_1pps_printusb_avail				= false;
 
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines_atxmega	= false;	// EEPROM
@@ -143,7 +150,6 @@ volatile bool				g_twi2_lcd_repaint					= false;
 
 volatile int32_t			g_xo_mode_pwm						= 0L;		// EEPROM
 
-
 struct adc_config			g_adc_a_conf						= { 0 };
 struct adc_channel_config	g_adcch_vctcxo_5v0_vbat_conf		= { 0 };
 struct adc_channel_config	g_adcch_io_adc4_conf				= { 0 };
@@ -182,8 +188,8 @@ volatile int16_t			g_adc_io_adc5_volt_1000				= 0;
 volatile int16_t			g_adc_silence_volt_1000				= 0;
 volatile int16_t			g_adc_temp_deg_100					= 0;
 
-fifo_desc_t					fifo_sched_desc;
-uint32_t					fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH];
+fifo_desc_t					g_fifo_sched_desc;
+uint32_t					g_fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH];
 
 struct pwm_config			g_pwm_vctcxo_cfg					= { 0 };
 struct pwm_config			g_pwm_ctr_pll_cfg					= { 0 };
@@ -199,48 +205,48 @@ volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
 char						g_prepare_buf[C_TX_BUF_SIZE]		= "";
 
 
-twi_options_t twi1_options = {
+twi_options_t g_twi1_options = {
 	.speed     = TWI1_SPEED,
 //	.speed_reg = TWI_BAUD(sysclk_get_cpu_hz(), TWI1_SPEED),
 	.speed_reg = TWI_BAUD((BOARD_XOSC_HZ * CONFIG_PLL0_MUL) / 2, TWI1_SPEED),
 	.chip      = TWI1_MASTER_ADDR
 };
 
-uint8_t twi1_m_data[TWI_DATA_LENGTH] = {
+uint8_t g_twi1_m_data[TWI_DATA_LENGTH] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-twi_package_t twi1_packet = {
-	.buffer      = (void *)twi1_m_data,
+twi_package_t g_twi1_packet = {
+	.buffer      = (void *)g_twi1_m_data,
 	.no_wait     = true
 };
 
 
-twi_options_t twi2_options = {
+twi_options_t g_twi2_options = {
 	.speed     = TWI2_SPEED,
 //	.speed_reg = TWI_BAUD(sysclk_get_cpu_hz(), TWI2_SPEED),
 	.speed_reg = TWI_BAUD((BOARD_XOSC_HZ * CONFIG_PLL0_MUL) / 2, TWI2_SPEED),
 	.chip      = TWI2_MASTER_ADDR
 };
 
-uint8_t twi2_m_data[TWI_DATA_LENGTH] = {
+uint8_t g_twi2_m_data[TWI_DATA_LENGTH] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-twi_package_t twi2_packet = {
+twi_package_t g_twi2_packet = {
 	.chip        = TWI2_SLAVE_ADDR,
-	.buffer      = (void *)twi2_m_data,
+	.buffer      = (void *)g_twi2_m_data,
 	.no_wait     = true
 };
 
 #ifdef TWI1_SLAVE
-TWI_Slave_t		twi1_slave;
-uint8_t			twi1_recv_data[DATA_LENGTH];
+TWI_Slave_t		g_twi1_slave;
+uint8_t			g_twi1_recv_data[DATA_LENGTH];
 #endif
 
 #ifdef TWI2_SLAVE
-TWI_Slave_t		twi2_slave;
-uint8_t			twi2_recv_data[DATA_LENGTH];
+TWI_Slave_t		g_twi2_slave;
+uint8_t			g_twi2_recv_data[DATA_LENGTH];
 #endif
 
 
@@ -859,15 +865,16 @@ void xoPwm_set(int32_t mode_pwm)
 
 	if (mode_pwm >= 0) {
 		/* Set the PWM value for the VCTCXO pull voltage (should be abt. 1.5 V) */
-		l_xo_mode_pwm = mode_pwm & C_XO_VAL_MASK;			// Flags removed
-		tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) l_xo_mode_pwm);
+		l_xo_mode_pwm = ((mode_pwm << C_XO_VAL_INT_SHIFT) & C_XO_VAL_INT_MASK);
+		tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) (l_xo_mode_pwm >> C_XO_VAL_INT_SHIFT));
 
 	} else {
 		switch (mode_pwm) {
 			case -2:
 				/* Preset value */
 				l_xo_mode_pwm = ((int32_t) (0.5f + g_pwm_vctcxo_cfg.period * C_VCTCXO_DEFAULT_VOLTS / C_VCTCXO_PWM_HI_VOLTS)) & UINT16_MAX;
-				tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) l_xo_mode_pwm);	// Preset value with no flags
+				tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t)l_xo_mode_pwm);	// Preset value with no flags
+				l_xo_mode_pwm <<= C_XO_VAL_INT_SHIFT;
 			break;
 
 			case -1:
@@ -877,8 +884,8 @@ void xoPwm_set(int32_t mode_pwm)
 					l_xo_mode_pwm = g_xo_mode_pwm;
 					cpu_irq_restore(flags);
 				}
-				l_xo_mode_pwm &= C_XO_VAL_MASK;				// Mask out all flags
-				l_xo_mode_pwm |= C_XO_BF_PLL;				// Flag: use PLL feature
+				l_xo_mode_pwm &= (C_XO_VAL_INT_MASK | C_XO_VAL_FRAC_MASK);	// Mask out all flags
+				l_xo_mode_pwm |=  C_XO_BF_PLL;								// Flag: use PLL feature
 			break;
 		}
 	}
@@ -912,6 +919,65 @@ static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0
 
 		uint16_t dds1_phase = *dds1_reg_p >> 16;
 		buf[idx].ch1 = get_interpolated_sine(dds1_phase);
+	}
+}
+
+static void isr_100ms_main_1pps(void)
+{
+	/* Correct 1PPS time - called each second once */
+
+	/* Leave when no new event has arrived */
+	if (!g_1pps_last_new) {
+		return;
+
+	} else {
+		bool doUpdate = false;
+
+		if (g_1pps_processed_lo || g_1pps_processed_hi) {
+			/* Calculate diff-time */
+			int16_t diff	= g_1pps_last_lo - g_1pps_processed_lo;
+			bool inSpan		= false;
+
+			if ((-18 <= diff) && (diff <= 18)) {	// window size is +/- 200 ns
+				inSpan		= true;
+				doUpdate	= true;
+			}
+
+			if (!inSpan) {
+				if (g_1pps_processed_outOfSync < 255) {
+					g_1pps_processed_outOfSync++;
+				}
+			}
+
+			if (g_1pps_processed_outOfSync) {
+				if (inSpan) {
+					g_1pps_processed_outOfSync = 0;
+
+				} else {
+					/* Re-adjust to try new time slice */
+					if (g_1pps_processed_outOfSync > 10) {
+						doUpdate = true;
+					}
+				}
+			}
+
+		} else {
+			/* Preset with first event */
+			doUpdate = true;
+		}
+
+		if (doUpdate) {
+			g_1pps_processed_lo = g_1pps_last_lo;
+			g_1pps_processed_hi = g_1pps_last_hi;
+		} else {
+			g_1pps_processed_hi += 1000;	// Advance 1000 ms further, keep lo value
+		}
+
+		/* Adjust the signals */
+		g_1pps_last_new			= false;
+		g_1pps_proceeded_avail	= true;
+		g_1pps_printtwi_avail	= true;
+		g_1pps_printusb_avail	= true;
 	}
 }
 
@@ -984,10 +1050,10 @@ void sched_push(void* cb, SCHED_ENTRY_CB_TYPE_ENUM_t cbType, uint32_t wakeTime, 
 	/* Lock access to the scheduler entries */
 	if (!sched_getLock(&g_sched_lock)) {
 		/* Push entry to the stack due to blocked access */
-		if (!fifo_is_full(&fifo_sched_desc)) {
+		if (!fifo_is_full(&g_fifo_sched_desc)) {
 			irqflags_t flags = cpu_irq_save();
-			fifo_push_uint32(&fifo_sched_desc, wakeTime);
-			fifo_push_uint32(&fifo_sched_desc, sfCb);
+			fifo_push_uint32(&g_fifo_sched_desc, wakeTime);
+			fifo_push_uint32(&g_fifo_sched_desc, sfCb);
 			cpu_irq_restore(flags);
 		}
 		return;
@@ -1053,15 +1119,15 @@ sched_push_out:
 	sched_freeLock(&g_sched_lock);
 
 	/* Pop back all FIFO entries */
-	while (!fifo_is_empty(&fifo_sched_desc)) {
+	while (!fifo_is_empty(&g_fifo_sched_desc)) {
 		uint32_t sfCb = 0UL;
 		wakeTime = 0UL;
 
 		/* Get next entries */
 		{
 			irqflags_t flags = cpu_irq_save();
-			fifo_pull_uint32(&fifo_sched_desc, &wakeTime);
-			fifo_pull_uint32(&fifo_sched_desc, &sfCb);
+			fifo_pull_uint32(&g_fifo_sched_desc, &wakeTime);
+			fifo_pull_uint32(&g_fifo_sched_desc, &sfCb);
 			cpu_irq_restore(flags);
 		}
 
@@ -1069,8 +1135,8 @@ sched_push_out:
 		if ((sfCb & 0x0f000000UL) != 0x0f000000UL) {
 			/* Signature not found - clear all entries to synchronize again */
 			irqflags_t flags = cpu_irq_save();
-			while (!fifo_is_empty(&fifo_sched_desc)) {
-				fifo_pull_uint32(&fifo_sched_desc, &sfCb);
+			while (!fifo_is_empty(&g_fifo_sched_desc)) {
+				fifo_pull_uint32(&g_fifo_sched_desc, &sfCb);
 			}
 			sfCb = 0UL;
 			cpu_irq_restore(flags);
@@ -1226,7 +1292,7 @@ static void interrupt_init(void)
 	PORTR_INT0MASK	= (1 << 0);													// Port R0	--> INT0
 	PORTR_INT1MASK	= 0;														// (none)	--> INT1
 
-	PORTR_INTCTRL	= PORT_INT1LVL_OFF_gc | PORT_INT0LVL_LO_gc;					// Enable interrupt for port R0 with low level
+	PORTR_INTCTRL	= PORT_INT1LVL_OFF_gc | PORT_INT0LVL_MED_gc;				// Enable interrupt for port R0 with med level
 }
 
 ISR(PORTR_INT0_vect)
@@ -1271,7 +1337,7 @@ static void tc_init(void)
 	/* TCC0: VCTCXO PWM signal generation and ADCA & ADCB */
 	pwm_init(&g_pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2048);						// Init PWM structure and enable timer - running with 2048 Hz --> 2 Hz averaged data
 	pwm_start(&g_pwm_vctcxo_cfg, 45);											// Start PWM here. Percentage with 1% granularity is to coarse, use driver access instead
-	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) (l_xo_mode_pwm & C_XO_VAL_MASK));	// Setting the PWM value
+	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) ((l_xo_mode_pwm & C_XO_VAL_INT_MASK) >> C_XO_VAL_INT_SHIFT));	// Setting the PWM value
 
 	/* TCC1: Free running clock for 30 MHz PLL */
 	g_pwm_ctr_pll_cfg.tc = &TCC1;
@@ -1361,6 +1427,7 @@ static void isr_10ms(uint32_t now)
 
 static void isr_100ms(uint32_t now)
 {
+	isr_100ms_main_1pps();
 	isr_100ms_twi1_onboard(now);
 }
 
@@ -1763,6 +1830,73 @@ static void task_adc(uint32_t now)
 	}
 }
 
+static void task_main_pll(uint32_t now)
+{	/* Handling the 1PPS PLL system */
+	static uint16_t s_1pps_processed_lo = 0;
+	static uint16_t s_xo_mode_pwm_val_frac = 0;
+	static bool		s_isInited = false;
+	uint16_t		l_1pps_processed_lo;
+	float			l_1pps_deviation;
+	int32_t			l_xo_mode_pwm;
+
+	/* Process each second once */
+	if (!g_1pps_proceeded_avail) {
+		return;
+	}
+	g_1pps_proceeded_avail = false;
+
+	irqflags_t flags = cpu_irq_save();
+	l_1pps_processed_lo = g_1pps_processed_lo;
+	l_1pps_deviation	= g_1pps_deviation;
+	l_xo_mode_pwm		= g_xo_mode_pwm;
+	cpu_irq_restore(flags);
+
+	volatile int16_t diff		 = l_1pps_processed_lo - s_1pps_processed_lo;
+	uint8_t l_xo_mode_pwm_flags = l_xo_mode_pwm &  C_XO_VAL_FLAGS_MASK;
+	int32_t l_xo_mode_pwm_val	= l_xo_mode_pwm & (C_XO_VAL_INT_MASK | C_XO_VAL_FRAC_MASK);
+
+	/* Eat the first measurement */
+	if (!s_isInited) {
+		s_isInited = true;
+		diff = 0;
+	}
+
+//	if (!g_1pps_processed_outOfSync) {
+	{
+		/* Fine correction */
+
+		l_1pps_deviation	 = 0.98f * l_1pps_deviation + 0.02f * diff;
+		l_xo_mode_pwm_val	-= (int32_t) (128.f * l_1pps_deviation);
+
+		volatile int16_t i_xo_mode_pwm_val_i = (l_xo_mode_pwm_val & C_XO_VAL_INT_MASK) >> C_XO_VAL_INT_SHIFT;
+		volatile uint8_t i_xo_mode_pwm_val_f	=  l_xo_mode_pwm_val & C_XO_VAL_FRAC_MASK;
+
+		s_xo_mode_pwm_val_frac += i_xo_mode_pwm_val_f;
+		if (s_xo_mode_pwm_val_frac >= 256) {
+			s_xo_mode_pwm_val_frac -= 256;
+			i_xo_mode_pwm_val_i++;
+		}
+
+		/* Set the new PWM value */
+		tc_write_cc_buffer(&TCC0, TC_CCC, i_xo_mode_pwm_val_i);
+
+//	} else {
+		/* Coarse correction */
+
+		// TODO: code to be written
+	}
+
+	l_xo_mode_pwm = l_xo_mode_pwm_flags | (l_xo_mode_pwm_val & (C_XO_VAL_INT_MASK | C_XO_VAL_FRAC_MASK));
+
+	flags = cpu_irq_save();
+	g_1pps_deviation	= l_1pps_deviation;
+	g_xo_mode_pwm		= l_xo_mode_pwm;
+	cpu_irq_restore(flags);
+
+	/* Update time */
+	s_1pps_processed_lo = g_1pps_processed_lo;
+}
+
 static void task(void)
 {
 	if (g_workmode == WORKMODE_RUN) {
@@ -1773,6 +1907,7 @@ static void task(void)
 		task_serial(now);									// Handle serial communication with the SIM808
 		task_twi(now);										// Handle (TWI1 and) TWI2 communications
 		task_usb(now);										// Handling the USB connection
+		task_main_pll(now);									// Handling the 1PPS PLL system
 	}
 }
 
@@ -1785,7 +1920,7 @@ int main(void)
 	ioport_init();
 
 	/* Init the FIFO buffers */
-	fifo_init(&fifo_sched_desc, fifo_sched_buffer, FIFO_SCHED_BUFFER_LENGTH);
+	fifo_init(&g_fifo_sched_desc, g_fifo_sched_buffer, FIFO_SCHED_BUFFER_LENGTH);
 
 	/* Init of interrupt system */
 	g_workmode = WORKMODE_INIT;

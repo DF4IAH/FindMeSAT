@@ -403,7 +403,7 @@ void task_twi2_lcd__gyro_gfxmag(void);
 void task_twi2_lcd__gyro_gfxaccel(void);
 void task_twi2_lcd__gyro_gfxgyro(void);
 void task_twi2_lcd__gyro_beepvario(void);
-// void task_twi2_lcd__gyro(void);
+void task_twi2_lcd__gyro(void);
 void task_twi2_lcd__baro(uint8_t col_left);
 void task_twi2_lcd_print_format_P(uint8_t x, uint8_t y, const char* fmt_P);
 // void task_twi2_lcd(uint32_t now);

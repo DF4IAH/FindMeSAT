@@ -27,18 +27,9 @@
 #include "interpreter.h"
 
 
-extern bool					g_adc_enabled;
-extern int16_t				g_backlight_mode_pwm;
-extern uint8_t				g_bias_pm;
-extern bool					g_dac_enabled;
-extern bool					g_errorBeep_enable;
-extern bool					g_keyBeep_enable;
-extern bool					g_usb_cdc_printStatusLines_atxmega;
-extern bool					g_usb_cdc_printStatusLines_sim808;
-extern bool					g_usb_cdc_rx_received;
-extern bool					g_usb_cdc_access_blocked;
-extern uint8_t				g_pitch_tone_mode;
-extern char					g_prepare_buf[C_TX_BUF_SIZE];
+/* Add access to the global vars */
+#include "externals.h"
+
 
 static char					s_rx_cmdLine_buf[C_RX_CMDLINE_BUF_SIZE]	= "";
 static uint8_t				s_rx_cmdLine_idx						= 0;
