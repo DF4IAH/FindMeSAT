@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												170
-#define VERSION_LOW													821
+#define VERSION_LOW													911
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -155,7 +155,10 @@ typedef enum EEPROM_SAVE_BF_ENUM {
 
 
 #define C_XO_BF_PLL					0x40000000L
-#define C_XO_VAL_MASK				0x0000ffffL
+#define C_XO_VAL_FLAGS_MASK			0xff000000L
+#define C_XO_VAL_INT_MASK			0x00ffff00L
+#define C_XO_VAL_INT_SHIFT			8
+#define C_XO_VAL_FRAC_MASK			0x000000ffL
 
 
 typedef struct dma_dac_buf_s {

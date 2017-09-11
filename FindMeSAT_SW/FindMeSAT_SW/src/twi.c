@@ -27,112 +27,17 @@
 #include "twi.h"
 
 
-extern bool				g_adc_enabled;
-extern int32_t			g_adc_temp_cur;
-extern int16_t			g_adc_vctcxo_volt_1000;
-extern int16_t			g_adc_5v0_volt_1000;
-extern int16_t			g_adc_vbat_volt_1000;
-extern int16_t			g_adc_io_adc4_volt_1000;
-extern int16_t			g_adc_io_adc5_volt_1000;
-extern int16_t			g_adc_silence_volt_1000;
-extern int16_t			g_adc_temp_deg_100;
-extern int16_t			g_backlight_mode_pwm;
-extern uint8_t			g_bias_pm;
-extern uint8_t			g_pitch_tone_mode;
-
-extern uint64_t			g_milliseconds_cnt64;
-
-extern uint16_t			g_1pps_last_lo;
-extern uint64_t			g_1pps_last_hi;
-extern bool				g_1pps_last_new;
-
-extern bool				g_twi1_gsm_valid;
-extern uint8_t			g_twi1_gsm_version;
-
-extern bool				g_twi1_gyro_valid;
-extern uint8_t			g_twi1_gyro_1_version;
-extern int16_t			g_twi1_gyro_1_temp;
-extern int16_t			g_twi1_gyro_1_temp_RTofs;
-extern int16_t			g_twi1_gyro_1_temp_sens;
-extern int16_t			g_twi1_gyro_1_temp_deg_100;
-extern int16_t			g_twi1_gyro_1_accel_x;
-extern int16_t			g_twi1_gyro_1_accel_y;
-extern int16_t			g_twi1_gyro_1_accel_z;
-extern int16_t			g_twi1_gyro_1_accel_ofsx;
-extern int16_t			g_twi1_gyro_1_accel_ofsy;
-extern int16_t			g_twi1_gyro_1_accel_ofsz;
-extern int16_t			g_twi1_gyro_1_accel_factx;
-extern int16_t			g_twi1_gyro_1_accel_facty;
-extern int16_t			g_twi1_gyro_1_accel_factz;
-extern int16_t			g_twi1_gyro_1_accel_x_mg;
-extern int16_t			g_twi1_gyro_1_accel_y_mg;
-extern int16_t			g_twi1_gyro_1_accel_z_mg;
-extern int16_t			g_twi1_gyro_1_gyro_x;
-extern int16_t			g_twi1_gyro_1_gyro_y;
-extern int16_t			g_twi1_gyro_1_gyro_z;
-extern int16_t			g_twi1_gyro_1_gyro_ofsx;
-extern int16_t			g_twi1_gyro_1_gyro_ofsy;
-extern int16_t			g_twi1_gyro_1_gyro_ofsz;
-extern int32_t			g_twi1_gyro_1_gyro_x_mdps;
-extern int32_t			g_twi1_gyro_1_gyro_y_mdps;
-extern int32_t			g_twi1_gyro_1_gyro_z_mdps;
-extern bool				g_twi1_gyro_gyro_offset_set__flag;
-extern bool				g_twi1_gyro_accel_offset_set__flag;
-extern uint8_t			g_twi1_gyro_2_version;
-extern int8_t			g_twi1_gyro_2_asax;
-extern int8_t			g_twi1_gyro_2_asay;
-extern int8_t			g_twi1_gyro_2_asaz;
-extern int16_t			g_twi1_gyro_2_ofsx;
-extern int16_t			g_twi1_gyro_2_ofsy;
-extern int16_t			g_twi1_gyro_2_ofsz;
-extern int16_t			g_twi1_gyro_2_mag_x;
-extern int16_t			g_twi1_gyro_2_mag_y;
-extern int16_t			g_twi1_gyro_2_mag_z;
-extern int16_t			g_twi1_gyro_2_mag_factx;
-extern int16_t			g_twi1_gyro_2_mag_facty;
-extern int16_t			g_twi1_gyro_2_mag_factz;
-extern int32_t			g_twi1_gyro_2_mag_x_nT;
-extern int32_t			g_twi1_gyro_2_mag_y_nT;
-extern int32_t			g_twi1_gyro_2_mag_z_nT;
-
-
-extern bool				g_twi1_baro_valid;
-extern uint16_t			g_twi1_baro_version;
-extern uint16_t			g_twi1_baro_c[C_TWI1_BARO_C_CNT];
-extern uint32_t			g_twi1_baro_d1;
-extern uint32_t			g_twi1_baro_d2;
-extern int32_t			g_twi1_baro_temp_100;
-extern int32_t			g_twi1_baro_p_100;
-
-extern uint8_t			g_twi1_lock;
-extern bool				g_twi1_hygro_valid;
-extern uint8_t			g_twi1_hygro_status;
-extern uint16_t			g_twi1_hygro_S_T;
-extern uint16_t			g_twi1_hygro_S_RH;
-extern int16_t			g_twi1_hygro_T_100;
-extern int16_t			g_twi1_hygro_RH_100;
-
-extern uint8_t			g_twi2_lcd_version;
-extern bool				g_twi2_lcd_repaint;
-
-extern char				g_prepare_buf[C_TX_BUF_SIZE];
-
-extern twi_options_t	twi1_options;
-extern uint8_t			twi1_m_data[TWI_DATA_LENGTH];
-extern twi_package_t	twi1_packet;
-
-extern twi_options_t	twi2_options;
-extern uint8_t			twi2_m_data[TWI_DATA_LENGTH];
-extern twi_package_t	twi2_packet;
+/* Add access to the global vars */
+#include "externals.h"
 
 #ifdef TWI1_SLAVE
-extern TWI_Slave_t		twi1_slave;
-extern uint8_t			twi1_recv_data[TWI_DATA_LENGTH];
+extern TWI_Slave_t		g_twi1_slave;
+extern uint8_t			g_twi1_recv_data[TWI_DATA_LENGTH];
 #endif
 
 #ifdef TWI2_SLAVE
-extern TWI_Slave_t		twi2_slave;
-extern uint8_t			twi2_recv_data[TWI_DATA_LENGTH];
+extern TWI_Slave_t		g_twi2_slave;
+extern uint8_t			g_twi2_recv_data[TWI_DATA_LENGTH];
 #endif
 
 
@@ -151,12 +56,12 @@ static void twi1_slave_process(void) {
 	int i;
 
 	for(i = 0; i < TWI_DATA_LENGTH; i++) {
-		twi1_recv_data[i] = twi1_slave.receivedData[i];
+		g_twi1_recv_data[i] = g_twi1_slave.receivedData[i];
 	}
 }
 
 ISR(TWIE_TWIS_vect) {
-	TWI_SlaveInterruptHandler(&twi1_slave);
+	TWI_SlaveInterruptHandler(&g_twi1_slave);
 }
 #endif
 
@@ -165,12 +70,12 @@ static void twi2_slave_process(void) {
 	int i;
 
 	for(i = 0; i < TWI_DATA_LENGTH; i++) {
-		twi2_recv_data[i] = twi2_slave.receivedData[i];
+		g_twi2_recv_data[i] = g_twi2_slave.receivedData[i];
 	}
 }
 
 ISR(TWIC_TWIS_vect) {
-	TWI_SlaveInterruptHandler(&twi2_slave);
+	TWI_SlaveInterruptHandler(&g_twi2_slave);
 }
 #endif
 
@@ -212,15 +117,15 @@ void twi2_waitUntilReady(void)
 	uint8_t isBusy;
 	uint8_t isValid;
 
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_STATE;
-	twi2_packet.addr_length = 1;
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_STATE;
+	g_twi2_packet.addr_length = 1;
 
 	/* Wait until not BUSY */
 	do {
-		twi2_packet.length = 1;
-		status = twi_master_read(&TWI2_MASTER, &twi2_packet);
-		isValid = twi2_m_data[0] & 0x80;
-		isBusy  = twi2_m_data[0] & 0x01;
+		g_twi2_packet.length = 1;
+		status = twi_master_read(&TWI2_MASTER, &g_twi2_packet);
+		isValid = g_twi2_m_data[0] & 0x80;
+		isBusy  = g_twi2_m_data[0] & 0x01;
 
 		if ((status != STATUS_OK) || !isValid) {
 			delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
@@ -239,42 +144,42 @@ void twi2_set_leds(uint8_t leds)
 {
 	/* Show green LED */
 	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_LEDS;
-	twi2_m_data[0] = leds & 0x03;
-	twi2_packet.length = 1;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_LEDS;
+	g_twi2_m_data[0] = leds & 0x03;
+	g_twi2_packet.length = 1;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
 void twi2_set_ledbl(uint8_t mode, uint8_t pwm_p100)
 {
 	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_BACKLIGHT;
-	twi2_m_data[0] = mode;
-	twi2_m_data[1] = pwm_p100;
-	twi2_packet.length = 2;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_BACKLIGHT;
+	g_twi2_m_data[0] = mode;
+	g_twi2_m_data[1] = pwm_p100;
+	g_twi2_packet.length = 2;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
 void twi2_set_bias(uint8_t bias)
 {
 	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_CONTRAST;
-	twi2_m_data[0] = bias;
-	twi2_packet.length = 1;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_CONTRAST;
+	g_twi2_m_data[0] = bias;
+	g_twi2_packet.length = 1;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
 void twi2_set_beep(uint8_t pitch_10hz, uint8_t len_10ms)
 {
 	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_BEEP;
-	twi2_m_data[0] = len_10ms;
-	twi2_m_data[1] = pitch_10hz;
-	twi2_packet.length = 2;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_BEEP;
+	g_twi2_m_data[0] = len_10ms;
+	g_twi2_m_data[1] = pitch_10hz;
+	g_twi2_packet.length = 2;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
@@ -304,12 +209,12 @@ static void init_twi1_hygro(void)
 
 	do {
 		/* SHT31-DIS hygro: stop any running jobs */
-		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
-		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_BREAK_HI;
-		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_BREAK_LO;
-		twi1_packet.addr_length = 2;
-		twi1_packet.length = 0;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_BREAK_HI;
+		g_twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_BREAK_LO;
+		g_twi1_packet.addr_length = 2;
+		g_twi1_packet.length = 0;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_HYGRO_02);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -318,38 +223,38 @@ static void init_twi1_hygro(void)
 		delay_ms(2);
 
 		/* SHT31-DIS hygro: reset */
-		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
-		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_RESET_HI;
-		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_RESET_LO;
-		twi1_packet.addr_length = 2;
-		twi1_packet.length = 0;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_RESET_HI;
+		g_twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_RESET_LO;
+		g_twi1_packet.addr_length = 2;
+		g_twi1_packet.length = 0;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
 		delay_ms(2);
 
 		/* SHT31-DIS hygro: return current status */
-		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
-		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_STATUS_HI;
-		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_STATUS_LO;
-		twi1_packet.addr_length = 2;
-		twi1_packet.length = 2;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_STATUS_HI;
+		g_twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_STATUS_LO;
+		g_twi1_packet.addr_length = 2;
+		g_twi1_packet.length = 2;
+		sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
-		g_twi1_hygro_status = (twi1_m_data[0] << 8) | twi1_m_data[1];
+		g_twi1_hygro_status = (g_twi1_m_data[0] << 8) | g_twi1_m_data[1];
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_HYGRO_03, g_twi1_hygro_status);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 		/* SHT31-DIS hygro: start next measurement */
-		twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
-		twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_HI;
-		twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_LO;
-		twi1_packet.addr_length = 2;
-		twi1_packet.length = 0;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_HI;
+		g_twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_LO;
+		g_twi1_packet.addr_length = 2;
+		g_twi1_packet.length = 0;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -384,17 +289,17 @@ PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_GYRO_OK[]);
 
 status_code_t twi1_gyro_gyro_offset_set(void)
 {
-	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_GYRO_XG_OFFSET_H;
-	twi1_packet.addr_length = 1;
-	twi1_m_data[0] = (uint8_t) (g_twi1_gyro_1_gyro_ofsx >> 8);
-	twi1_m_data[1] = (uint8_t) (g_twi1_gyro_1_gyro_ofsx & 0xFF);
-	twi1_m_data[2] = (uint8_t) (g_twi1_gyro_1_gyro_ofsy >> 8);
-	twi1_m_data[3] = (uint8_t) (g_twi1_gyro_1_gyro_ofsy & 0xFF);
-	twi1_m_data[4] = (uint8_t) (g_twi1_gyro_1_gyro_ofsz >> 8);
-	twi1_m_data[5] = (uint8_t) (g_twi1_gyro_1_gyro_ofsz & 0xFF);
-	twi1_packet.length = 6;
-	return twi_master_write(&TWI1_MASTER, &twi1_packet);
+	g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+	g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_GYRO_XG_OFFSET_H;
+	g_twi1_packet.addr_length = 1;
+	g_twi1_m_data[0] = (uint8_t) (g_twi1_gyro_1_gyro_ofsx >> 8);
+	g_twi1_m_data[1] = (uint8_t) (g_twi1_gyro_1_gyro_ofsx & 0xFF);
+	g_twi1_m_data[2] = (uint8_t) (g_twi1_gyro_1_gyro_ofsy >> 8);
+	g_twi1_m_data[3] = (uint8_t) (g_twi1_gyro_1_gyro_ofsy & 0xFF);
+	g_twi1_m_data[4] = (uint8_t) (g_twi1_gyro_1_gyro_ofsz >> 8);
+	g_twi1_m_data[5] = (uint8_t) (g_twi1_gyro_1_gyro_ofsz & 0xFF);
+	g_twi1_packet.length = 6;
+	return twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 }
 
 status_code_t twi1_gyro_accel_offset_set(void)
@@ -402,29 +307,29 @@ status_code_t twi1_gyro_accel_offset_set(void)
 	status_code_t sc;
 
 	do {
-			twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-			twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_XA_OFFSET_H;
-			twi1_packet.addr_length = 1;
-			twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsx & 0x7F80) >> 7);
-			twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsx &   0x7F) << 1);
-			twi1_packet.length = 2;
-			sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+			g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+			g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_XA_OFFSET_H;
+			g_twi1_packet.addr_length = 1;
+			g_twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsx & 0x7F80) >> 7);
+			g_twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsx &   0x7F) << 1);
+			g_twi1_packet.length = 2;
+			sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 			if (sc != STATUS_OK) {
 				break;
 			}
 
-			twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_YA_OFFSET_H;
-			twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsy & 0x7F80) >> 7);
-			twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsy &   0x7F) << 1);
-			sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+			g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_YA_OFFSET_H;
+			g_twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsy & 0x7F80) >> 7);
+			g_twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsy &   0x7F) << 1);
+			sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 			if (sc != STATUS_OK) {
 				break;
 			}
 
-			twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ZA_OFFSET_H;
-			twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsz & 0x7F80) >> 7);
-			twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsz &   0x7F) << 1);
-			sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+			g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ZA_OFFSET_H;
+			g_twi1_m_data[0] = (uint8_t) ((g_twi1_gyro_1_accel_ofsz & 0x7F80) >> 7);
+			g_twi1_m_data[1] = (uint8_t) ((g_twi1_gyro_1_accel_ofsz &   0x7F) << 1);
+			sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 	} while (false);
 
 	return sc;
@@ -441,12 +346,12 @@ void init_twi1_gyro(void)
 
 	do {
 		/* MPU-9250 6 axis: RESET */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_PWR_MGMT_1;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_PWR_MGMT_1__HRESET | TWI1_SLAVE_GYRO_DTA_1_PWR_MGMT_1__CLKSEL_VAL;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_PWR_MGMT_1;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_PWR_MGMT_1__HRESET | TWI1_SLAVE_GYRO_DTA_1_PWR_MGMT_1__CLKSEL_VAL;
+		g_twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_GYRO_02);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -455,96 +360,96 @@ void init_twi1_gyro(void)
 		delay_ms(10);
 
 		/* MPU-9250 6 axis: read Who Am I control value */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_WHOAMI;
-		twi1_packet.addr_length = 1;
-		twi1_packet.length = 1;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_WHOAMI;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_packet.length = 1;
+		sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
-		g_twi1_gyro_1_version = twi1_m_data[0];
+		g_twi1_gyro_1_version = g_twi1_m_data[0];
 
 		/* MPU-9250 6 axis: I2C bypass on to access the Magnetometer chip */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_INT_PIN_CFG;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_INT_PIN_CFG__BYPASS_EN;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_INT_PIN_CFG;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_INT_PIN_CFG__BYPASS_EN;
+		g_twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
 
 		/* Magnetometer: soft reset */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_CNTL2;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL2__SRST;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_CNTL2;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL2__SRST;
+		g_twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
 		delay_ms(10);
 
 		/* Magnetometer: read Device ID */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_WIA;
-		twi1_packet.addr_length = 1;
-		twi1_packet.length = 1;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_WIA;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_packet.length = 1;
+		sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
-		g_twi1_gyro_2_version = twi1_m_data[0];
+		g_twi1_gyro_2_version = g_twi1_m_data[0];
 
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_GYRO_03, g_twi1_gyro_1_version, g_twi1_gyro_2_version);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 		/* Magnetometer: 16 bit access and prepare for PROM access */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_CNTL1;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_PROM_VAL;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_CNTL1;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_PROM_VAL;
+		g_twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
 
 		/* Magnetometer: read correction data for X, Y and Z */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ASAX;
-		twi1_packet.addr_length = 1;
-		twi1_packet.length = 3;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ASAX;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_packet.length = 3;
+		sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
-		g_twi1_gyro_2_asax = twi1_m_data[0];
-		g_twi1_gyro_2_asay = twi1_m_data[1];
-		g_twi1_gyro_2_asaz = twi1_m_data[2];
+		g_twi1_gyro_2_asax = g_twi1_m_data[0];
+		g_twi1_gyro_2_asay = g_twi1_m_data[1];
+		g_twi1_gyro_2_asaz = g_twi1_m_data[2];
 
 		/* Magnetometer: mode change via power-down mode */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_CNTL1;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_16B_POWER_DOWN;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_CNTL1;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_16B_POWER_DOWN;
+		g_twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
 		delay_ms(10);
 
 		/* Magnetometer: mode change for 16bit and run all axis at 8 Hz */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_CNTL1;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_16B_RUN_8HZ_VAL;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_CNTL1;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_16B_RUN_8HZ_VAL;
+		g_twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -562,56 +467,56 @@ void init_twi1_gyro(void)
 		}
 
 		/* MPU-9250 6 axis: FIFO frequency = 10 Hz */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_SMPLRT_DIV;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = 99;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_SMPLRT_DIV;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_m_data[0] = 99;
+		g_twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
 
 		/* MPU-9250 6 axis: GYRO Bandwidth = 5 Hz, Fs = 1 kHz */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_CONFIG;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = 6;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_CONFIG;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_m_data[0] = 6;
+		g_twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
 
 		/* MPU-9250 6 axis: ACCEL Bandwidth = 5 Hz, Fs = 1 kHz */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ACCEL_CONFIG2;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = 6;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ACCEL_CONFIG2;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_m_data[0] = 6;
+		g_twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
 
 		/* MPU-9250 6 axis: Wake On Motion interrupt = 0.1 g (1 LSB = 4 mg) */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_WOM_THR;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = 25;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_WOM_THR;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_m_data[0] = 25;
+		g_twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
 
 		/* MPU-9250 6 axis: RESET all internal data paths */
-		twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-		twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_USER_CTRL;
-		twi1_packet.addr_length = 1;
-		twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_USER_CTRL__SIG_COND_RST;  // | TWI1_SLAVE_GYRO_DTA_1_USER_CTRL__FIFO_EN;
-		twi1_packet.length = 1;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_USER_CTRL;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_m_data[0] = TWI1_SLAVE_GYRO_DTA_1_USER_CTRL__SIG_COND_RST;  // | TWI1_SLAVE_GYRO_DTA_1_USER_CTRL__FIFO_EN;
+		g_twi1_packet.length = 1;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -655,44 +560,44 @@ static void init_twi1_baro(void)
 
 	do {
 		/* MS560702BA03-50 Baro: RESET all internal data paths */
-		twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
-		twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_RESET;
-		twi1_packet.addr_length = 1;
-		twi1_packet.length = 0;
-		sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_RESET;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_packet.length = 0;
+		sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			break;
 		}
 		delay_ms(3);
 
 		/* MS560702BA03-50 Baro: get version information */
-		twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
-		twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_VERSION;
-		twi1_packet.addr_length = 1;
-		twi1_packet.length = 2;
-		sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+		g_twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
+		g_twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_VERSION;
+		g_twi1_packet.addr_length = 1;
+		g_twi1_packet.length = 2;
+		sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 		if (sc != STATUS_OK) {
 			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_BARO_02, sc);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 			break;
 		}
-		g_twi1_baro_version = (((uint16_t)twi1_m_data[0] << 8) | (uint16_t)twi1_m_data[1]) >> 4;
+		g_twi1_baro_version = (((uint16_t)g_twi1_m_data[0] << 8) | (uint16_t)g_twi1_m_data[1]) >> 4;
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_BARO_03, g_twi1_baro_version);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 		/* MS560702BA03-50 Baro: get correction data from the PROM */
 		for (int adr = 1; adr < C_TWI1_BARO_C_CNT; ++adr) {
-			twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
-			twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_PROM | (adr << 1);
-			twi1_packet.addr_length = 1;
-			twi1_packet.length = 2;
-			sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+			g_twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
+			g_twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_PROM | (adr << 1);
+			g_twi1_packet.addr_length = 1;
+			g_twi1_packet.length = 2;
+			sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 			if (sc != STATUS_OK) {
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_BARO_04, adr, sc);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 				break;
 			}
-			g_twi1_baro_c[adr] = (twi1_m_data[0] << 8) | twi1_m_data[1];
+			g_twi1_baro_c[adr] = (g_twi1_m_data[0] << 8) | g_twi1_m_data[1];
 		}
 
 		g_twi1_baro_valid = true;
@@ -737,26 +642,26 @@ static void start_twi1_onboard(void)
 static void start_twi2_lcd(void)
 {
 	/* Read the version number */
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_VER;
-	twi2_packet.addr_length = 1;
-	twi2_packet.length = 1;
-	twi_master_read(&TWI2_MASTER, &twi2_packet);
-	g_twi2_lcd_version = twi2_m_data[0];
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_VER;
+	g_twi2_packet.addr_length = 1;
+	g_twi2_packet.length = 1;
+	twi_master_read(&TWI2_MASTER, &g_twi2_packet);
+	g_twi2_lcd_version = g_twi2_m_data[0];
 
 	if (g_twi2_lcd_version >= 0x11) {
 		/* Select "Smart-LCD draw box" mode
 		 * that includes a clear screen     */
-		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_MODE;
-		twi2_m_data[0] = 0x10;
-		twi2_packet.length = 1;
-		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_MODE;
+		g_twi2_m_data[0] = 0x10;
+		g_twi2_packet.length = 1;
+		twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
 		/* Reset the LCD to bring it up in case of a bad POR */
 		twi2_waitUntilReady();
-		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_RESET;
-		twi2_packet.length = 0;
-		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_RESET;
+		g_twi2_packet.length = 0;
+		twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 		delay_ms(50);
 
 		/* LED red */
@@ -764,10 +669,10 @@ static void start_twi2_lcd(void)
 
 		/* Set the pixel type to SET pixels */
 		twi2_waitUntilReady();
-		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
-		twi2_m_data[0] = GFX_PIXEL_SET;
-		twi2_packet.length = 1;
-		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
+		g_twi2_m_data[0] = GFX_PIXEL_SET;
+		g_twi2_packet.length = 1;
+		twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
 		/* Set optimum contrast voltage */
@@ -819,16 +724,16 @@ void twi_start(void) {
 	uint8_t i1;
 
 	sysclk_enable_peripheral_clock(&TWI1_SLAVE);
-	TWI_SlaveInitializeDriver(&twi1_slave, &TWI1_SLAVE, *twi1_slave_process);
-	TWI_SlaveInitializeModule(&twi1_slave, TWI1_SLAVE_ADDR,	TWI_SLAVE_INTLVL_MED_gc);
+	TWI_SlaveInitializeDriver(&g_twi1_slave, &TWI1_SLAVE, *twi1_slave_process);
+	TWI_SlaveInitializeModule(&g_twi1_slave, TWI1_SLAVE_ADDR,	TWI_SLAVE_INTLVL_MED_gc);
 
 	for (i1 = 0; i1 < TWIS_SEND_BUFFER_SIZE; i1++) {
-		twi1_slave.receivedData[i1] = 0;
+		g_twi1_slave.receivedData[i1] = 0;
 	}
 	#else
 	#ifdef TWI1_MASTER
 	sysclk_enable_peripheral_clock(&TWI1_MASTER);
-	twi_master_init(&TWI1_MASTER, &twi1_options);
+	twi_master_init(&TWI1_MASTER, &g_twi1_options);
 	twi_master_enable(&TWI1_MASTER);
 	#endif
 	#endif
@@ -837,16 +742,16 @@ void twi_start(void) {
 	uint8_t i2;
 
 	sysclk_enable_peripheral_clock(&TWI2_SLAVE);
-	TWI_SlaveInitializeDriver(&twi2_slave, &TWI2_SLAVE, *twi2_slave_process);
-	TWI_SlaveInitializeModule(&twi2_slave, TWI2_SLAVE_ADDR,	TWI_SLAVE_INTLVL_MED_gc);
+	TWI_SlaveInitializeDriver(&g_twi2_slave, &TWI2_SLAVE, *twi2_slave_process);
+	TWI_SlaveInitializeModule(&g_twi2_slave, TWI2_SLAVE_ADDR,	TWI_SLAVE_INTLVL_MED_gc);
 
 	for (i2 = 0; i2 < TWIS_SEND_BUFFER_SIZE; i2++) {
-		twi2_slave.receivedData[i2] = 0;
+		g_twi2_slave.receivedData[i2] = 0;
 	}
 	#else
 	#ifdef TWI2_MASTER
 	sysclk_enable_peripheral_clock(&TWI2_MASTER);
-	twi_master_init(&TWI2_MASTER, &twi2_options);
+	twi_master_init(&TWI2_MASTER, &g_twi2_options);
 	twi_master_enable(&TWI2_MASTER);
 	#endif
 	#endif
@@ -874,24 +779,24 @@ static bool service_twi1_hygro(uint32_t now, bool sync)
 	}
 
 	/* Read current measurement data */
-	twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
-	twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_FETCH_DATA_HI;
-	twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_FETCH_DATA_LO;
-	twi1_packet.addr_length = 2;
-	twi1_packet.length = 5;
-	status_code_t sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	g_twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
+	g_twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_FETCH_DATA_HI;
+	g_twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_FETCH_DATA_LO;
+	g_twi1_packet.addr_length = 2;
+	g_twi1_packet.length = 5;
+	status_code_t sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 	if (sc == STATUS_OK) {
-		g_twi1_hygro_S_T	= ((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1];
-		g_twi1_hygro_S_RH	= ((uint16_t)twi1_m_data[3] << 8) | twi1_m_data[4];
+		g_twi1_hygro_S_T	= ((uint16_t)g_twi1_m_data[0] << 8) | g_twi1_m_data[1];
+		g_twi1_hygro_S_RH	= ((uint16_t)g_twi1_m_data[3] << 8) | g_twi1_m_data[4];
 	}
 
 	/* Start next measurement - available 15ms later */
-	twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
-	twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_HI;
-	twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_LO;
-	twi1_packet.addr_length = 2;
-	twi1_packet.length = 0;
-	sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+	g_twi1_packet.chip = TWI1_SLAVE_HYGRO_ADDR;
+	g_twi1_packet.addr[0] = TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_HI;
+	g_twi1_packet.addr[1] = TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_LO;
+	g_twi1_packet.addr_length = 2;
+	g_twi1_packet.length = 0;
+	sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 	if (sc == STATUS_OK) {
 		return true;
 	}
@@ -912,30 +817,30 @@ static bool service_twi1_gyro(uint32_t now, bool sync)
 		return false;
 	}
 
-	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ACCEL_XOUT_H;		// Starting with this address (big endian)
-	twi1_packet.addr_length = 1;
-	twi1_packet.length = 8;											// Auto incrementation
-	status_code_t sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+	g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ACCEL_XOUT_H;		// Starting with this address (big endian)
+	g_twi1_packet.addr_length = 1;
+	g_twi1_packet.length = 8;											// Auto incrementation
+	status_code_t sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 	if (sc != STATUS_OK) {
 		return false;
 	}
-	g_twi1_gyro_1_accel_x = (int16_t) (((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1]);
-	g_twi1_gyro_1_accel_y = (int16_t) (((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3]);
-	g_twi1_gyro_1_accel_z = (int16_t) (((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5]);
-	g_twi1_gyro_1_temp    = (int16_t) (((uint16_t)twi1_m_data[6] << 8) | twi1_m_data[7]);
+	g_twi1_gyro_1_accel_x = (int16_t) (((uint16_t)g_twi1_m_data[0] << 8) | g_twi1_m_data[1]);
+	g_twi1_gyro_1_accel_y = (int16_t) (((uint16_t)g_twi1_m_data[2] << 8) | g_twi1_m_data[3]);
+	g_twi1_gyro_1_accel_z = (int16_t) (((uint16_t)g_twi1_m_data[4] << 8) | g_twi1_m_data[5]);
+	g_twi1_gyro_1_temp    = (int16_t) (((uint16_t)g_twi1_m_data[6] << 8) | g_twi1_m_data[7]);
 
-	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
-	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_GYRO_XOUT_H;
-	twi1_packet.addr_length = 1;
-	twi1_packet.length = 6;
-	sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
+	g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_GYRO_XOUT_H;
+	g_twi1_packet.addr_length = 1;
+	g_twi1_packet.length = 6;
+	sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 	if (sc != STATUS_OK) {
 		return false;
 	}
-	g_twi1_gyro_1_gyro_x = (int16_t) (((uint16_t)twi1_m_data[0] << 8) | twi1_m_data[1]);
-	g_twi1_gyro_1_gyro_y = (int16_t) (((uint16_t)twi1_m_data[2] << 8) | twi1_m_data[3]);
-	g_twi1_gyro_1_gyro_z = (int16_t) (((uint16_t)twi1_m_data[4] << 8) | twi1_m_data[5]);
+	g_twi1_gyro_1_gyro_x = (int16_t) (((uint16_t)g_twi1_m_data[0] << 8) | g_twi1_m_data[1]);
+	g_twi1_gyro_1_gyro_y = (int16_t) (((uint16_t)g_twi1_m_data[2] << 8) | g_twi1_m_data[3]);
+	g_twi1_gyro_1_gyro_z = (int16_t) (((uint16_t)g_twi1_m_data[4] << 8) | g_twi1_m_data[5]);
 
 	/* Do update GYRO offset registers */
 	if (g_twi1_gyro_gyro_offset_set__flag) {
@@ -950,41 +855,41 @@ static bool service_twi1_gyro(uint32_t now, bool sync)
 	}
 
 	/* Magnetometer: check if new data is available */
-	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ST1;
-	twi1_packet.addr_length = 1;
-	twi1_packet.length = 1;
-	sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+	g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ST1;
+	g_twi1_packet.addr_length = 1;
+	g_twi1_packet.length = 1;
+	sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 	if (sc != STATUS_OK) {
 		return false;
 	}
-	if (!(twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST1__DRDY)) {
+	if (!(g_twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST1__DRDY)) {
 		/* Data of Magnetometer AK8963 not ready yet */
 		return false;
 	}
 
-	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_HX_L;			// Starting with this address (little endian)
-	twi1_packet.addr_length = 1;
-	twi1_packet.length = 6;										// Auto incrementation
-	sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+	g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_HX_L;			// Starting with this address (little endian)
+	g_twi1_packet.addr_length = 1;
+	g_twi1_packet.length = 6;										// Auto incrementation
+	sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 	if (sc != STATUS_OK) {
 		return false;
 	}
-	g_twi1_gyro_2_mag_x = ((int16_t) ((((uint16_t)twi1_m_data[1]) << 8) | twi1_m_data[0])) + g_twi1_gyro_2_ofsx;
-	g_twi1_gyro_2_mag_y = ((int16_t) ((((uint16_t)twi1_m_data[3]) << 8) | twi1_m_data[2])) + g_twi1_gyro_2_ofsy;
-	g_twi1_gyro_2_mag_z = ((int16_t) ((((uint16_t)twi1_m_data[5]) << 8) | twi1_m_data[4])) + g_twi1_gyro_2_ofsz;
+	g_twi1_gyro_2_mag_x = ((int16_t) ((((uint16_t)g_twi1_m_data[1]) << 8) | g_twi1_m_data[0])) + g_twi1_gyro_2_ofsx;
+	g_twi1_gyro_2_mag_y = ((int16_t) ((((uint16_t)g_twi1_m_data[3]) << 8) | g_twi1_m_data[2])) + g_twi1_gyro_2_ofsy;
+	g_twi1_gyro_2_mag_z = ((int16_t) ((((uint16_t)g_twi1_m_data[5]) << 8) | g_twi1_m_data[4])) + g_twi1_gyro_2_ofsz;
 
 	/* Magnetometer: check for data validity and release cycle */
-	twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
-	twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ST2;
-	twi1_packet.addr_length = 1;
-	twi1_packet.length = 1;
-	sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+	g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
+	g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_ST2;
+	g_twi1_packet.addr_length = 1;
+	g_twi1_packet.length = 1;
+	sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 	if (sc != STATUS_OK) {
 		return false;
 	}
-	if (twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST2__HOFL) {
+	if (g_twi1_m_data[0] & TWI1_SLAVE_GYRO_DTA_2_ST2__HOFL) {
 		/* Data of Magnetometer AK8963 overflowed */
 		g_twi1_gyro_2_mag_z = g_twi1_gyro_2_mag_y = g_twi1_gyro_2_mag_x = 0;
 		//return true;	// Even overflowed data is correct information
@@ -1011,11 +916,11 @@ static bool service_twi1_baro(uint32_t now, bool sync)
 	switch (s_step) {
 		case 0:
 			/* Request D1 */
-			twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
-			twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_CONV_D1_4096;
-			twi1_packet.addr_length = 1;
-			twi1_packet.length = 0;
-			status_code_t sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+			g_twi1_packet.chip = TWI1_SLAVE_BARO_ADDR;
+			g_twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_CONV_D1_4096;
+			g_twi1_packet.addr_length = 1;
+			g_twi1_packet.length = 0;
+			status_code_t sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 			if (sc == STATUS_OK) {
 				s_step = 1;
 				return false;
@@ -1027,16 +932,16 @@ static bool service_twi1_baro(uint32_t now, bool sync)
 
 		case 21:
 			/* Get data */
-			twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_ADC_READ;
-			twi1_packet.length = 3;
-			sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+			g_twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_ADC_READ;
+			g_twi1_packet.length = 3;
+			sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 			if (sc == STATUS_OK) {
-				s_twi1_baro_d1 = ((uint32_t)twi1_m_data[0] << 16) | ((uint32_t)twi1_m_data[1] << 8) | twi1_m_data[2];
+				s_twi1_baro_d1 = ((uint32_t)g_twi1_m_data[0] << 16) | ((uint32_t)g_twi1_m_data[1] << 8) | g_twi1_m_data[2];
 
 				/* Request D2 */
-				twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_CONV_D2_4096;
-				twi1_packet.length = 0;
-				sc = twi_master_write(&TWI1_MASTER, &twi1_packet);
+				g_twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_CONV_D2_4096;
+				g_twi1_packet.length = 0;
+				sc = twi_master_write(&TWI1_MASTER, &g_twi1_packet);
 				if (sc == STATUS_OK) {
 					s_step = 22;
 					return false;
@@ -1048,11 +953,11 @@ static bool service_twi1_baro(uint32_t now, bool sync)
 		break;
 
 		case 43:
-			twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_ADC_READ;
-			twi1_packet.length = 3;
-			sc = twi_master_read(&TWI1_MASTER, &twi1_packet);
+			g_twi1_packet.addr[0] = TWI1_SLAVE_BARO_REG_ADC_READ;
+			g_twi1_packet.length = 3;
+			sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 			if (sc == STATUS_OK) {
-				s_twi1_baro_d2 = ((uint32_t)twi1_m_data[0] << 16) | ((uint32_t)twi1_m_data[1] << 8) | twi1_m_data[2];
+				s_twi1_baro_d2 = ((uint32_t)g_twi1_m_data[0] << 16) | ((uint32_t)g_twi1_m_data[1] << 8) | g_twi1_m_data[2];
 
 				/* Setting the global values */
 				{
@@ -1356,20 +1261,20 @@ static void task_twi2_lcd_reset(void)
 void task_twi2_lcd_cls(void)
 {
 	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_CLS;
-	twi2_packet.length = 0;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_CLS;
+	g_twi2_packet.length = 0;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
 void task_twi2_lcd_pos_xy(uint8_t x, uint8_t y)
 {
 	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_POS_X_Y;
-	twi2_m_data[0] = x;
-	twi2_m_data[1] = y;
-	twi2_packet.length = 2;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_POS_X_Y;
+	g_twi2_m_data[0] = x;
+	g_twi2_m_data[1] = y;
+	g_twi2_packet.length = 2;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
@@ -1391,13 +1296,13 @@ void task_twi2_lcd_str(uint8_t x, uint8_t y, const char* str)
 			task_twi2_lcd_pos_xy(x, y);
 
 			twi2_waitUntilReady();
-			twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
-			twi2_m_data[0] = this_len;
+			g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
+			g_twi2_m_data[0] = this_len;
 			for (uint8_t idx = 1; idx <= this_len; ++idx) {
-				twi2_m_data[idx] = *(str++);
+				g_twi2_m_data[idx] = *(str++);
 			}
-			twi2_packet.length = this_len + 1;
-			twi_master_write(&TWI2_MASTER, &twi2_packet);
+			g_twi2_packet.length = this_len + 1;
+			twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 			delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 		}
 
@@ -1411,12 +1316,12 @@ void task_twi2_lcd_line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t 
 	task_twi2_lcd_pos_xy(x1, y1);
 
 	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_LINE;
-	twi2_m_data[0] = x2;
-	twi2_m_data[1] = y2;
-	twi2_m_data[2] = color;
-	twi2_packet.length = 3;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_DRAW_LINE;
+	g_twi2_m_data[0] = x2;
+	g_twi2_m_data[1] = y2;
+	g_twi2_m_data[2] = color;
+	g_twi2_packet.length = 3;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
@@ -1425,12 +1330,12 @@ void task_twi2_lcd_rect(uint8_t x, uint8_t y, uint8_t width, uint8_t height, boo
 	task_twi2_lcd_pos_xy(x, y);
 
 	twi2_waitUntilReady();
-	twi2_packet.addr[0] = filled ?  TWI_SMART_LCD_CMD_DRAW_FILLED_RECT : TWI_SMART_LCD_CMD_DRAW_RECT;
-	twi2_m_data[0] = width;
-	twi2_m_data[1] = height;
-	twi2_m_data[2] = color;
-	twi2_packet.length = 3;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	g_twi2_packet.addr[0] = filled ?  TWI_SMART_LCD_CMD_DRAW_FILLED_RECT : TWI_SMART_LCD_CMD_DRAW_RECT;
+	g_twi2_m_data[0] = width;
+	g_twi2_m_data[1] = height;
+	g_twi2_m_data[2] = color;
+	g_twi2_packet.length = 3;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
@@ -1439,11 +1344,11 @@ void task_twi2_lcd_circ(uint8_t x, uint8_t y, uint8_t radius, bool filled, uint8
 	task_twi2_lcd_pos_xy(x, y);
 
 	twi2_waitUntilReady();
-	twi2_packet.addr[0] = filled ?  TWI_SMART_LCD_CMD_DRAW_FILLED_CIRC : TWI_SMART_LCD_CMD_DRAW_CIRC;
-	twi2_m_data[0] = radius;
-	twi2_m_data[1] = color;
-	twi2_packet.length = 2;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	g_twi2_packet.addr[0] = filled ?  TWI_SMART_LCD_CMD_DRAW_FILLED_CIRC : TWI_SMART_LCD_CMD_DRAW_CIRC;
+	g_twi2_m_data[0] = radius;
+	g_twi2_m_data[1] = color;
+	g_twi2_packet.length = 2;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
@@ -1537,10 +1442,10 @@ void task_twi2_lcd_print_format_P(uint8_t x, uint8_t y, const char* fmt_P)
 	task_twi2_lcd_pos_xy(x, y);
 
 	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
-	twi2_m_data[0] = sprintf_P((char*)&(twi2_m_data[1]), fmt_P);
-	twi2_packet.length = twi2_m_data[0] + 1;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
+	g_twi2_m_data[0] = sprintf_P((char*)&(g_twi2_m_data[1]), fmt_P);
+	g_twi2_packet.length = g_twi2_m_data[0] + 1;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
@@ -1549,10 +1454,10 @@ static void task_twi2_lcd_print_format_float_P(uint8_t x, uint8_t y, float flt, 
 	task_twi2_lcd_pos_xy(x, y);
 
 	twi2_waitUntilReady();
-	twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
-	twi2_m_data[0] = sprintf_P((char*)&(twi2_m_data[1]), fmt_P, flt);
-	twi2_packet.length = twi2_m_data[0] + 1;
-	twi_master_write(&TWI2_MASTER, &twi2_packet);
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
+	g_twi2_m_data[0] = sprintf_P((char*)&(g_twi2_m_data[1]), fmt_P, flt);
+	g_twi2_packet.length = g_twi2_m_data[0] + 1;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
@@ -1567,14 +1472,15 @@ static void task_twi2_lcd__pll(void)
 	const uint8_t pos_y_mul	= (size_y - pos_y_top) >> 1;
 	const uint8_t pos_y_mid	= pos_y_mul + pos_y_top;
 
-	if (g_1pps_last_new) {
+	if (g_1pps_printtwi_avail) {
 		/* Get timer for phase */
 		uint16_t l_pll_lo;
 		{
 			irqflags_t flags = cpu_irq_save();
 			l_pll_lo = g_1pps_last_lo >> 2;
-			g_1pps_last_new = false;
 			cpu_irq_restore(flags);
+
+			g_1pps_printtwi_avail = false;
 		}
 
 		/* LED red */
@@ -2005,7 +1911,7 @@ void task_twi2_lcd__gyro_beepvario(void)
 	s_twi1_baro_p_100 = l_twi1_baro_p_100;
 }
 
-inline void task_twi2_lcd__gyro(void)
+void task_twi2_lcd__gyro(void)
 {
 	/* Mag lines */
 	task_twi2_lcd__gyro_gfxmag();
@@ -2107,11 +2013,11 @@ static void task_twi2_lcd(uint32_t now)
 	} else if (g_twi2_lcd_version == 0x10) {
 		/* Show PWM in % when version is V1.0 and mode==0x20 selected */
 		twi2_waitUntilReady();
-		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SHOW_TCXO_PWM;
-		twi2_m_data[0] = 1;
-		twi2_m_data[1] = 128;
-		twi2_packet.length = 2;
-		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SHOW_TCXO_PWM;
+		g_twi2_m_data[0] = 1;
+		g_twi2_m_data[1] = 128;
+		g_twi2_packet.length = 2;
+		twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_TCXOPWM_DELAY_MIN_US);
 	}
 }
