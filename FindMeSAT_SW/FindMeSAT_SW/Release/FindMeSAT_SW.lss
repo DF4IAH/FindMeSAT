@@ -19533,7 +19533,7 @@ Disassembly of section .text:
     d5b2:	93 e0       	ldi	r25, 0x03	; 3
     d5b4:	8c 1b       	sub	r24, r28
     d5b6:	9d 0b       	sbc	r25, r29
-    d5b8:	64 e1       	ldi	r22, 0x14	; 20
+    d5b8:	68 e2       	ldi	r22, 0x28	; 40
     d5ba:	70 e0       	ldi	r23, 0x00	; 0
     d5bc:	0e 94 92 83 	call	0x10724	; 0x10724 <__udivmodhi4>
     d5c0:	e6 1b       	sub	r30, r22
@@ -19547,7 +19547,7 @@ Disassembly of section .text:
     d5d0:	94 07       	cpc	r25, r20
     d5d2:	38 f4       	brcc	.+14     	; 0xd5e2 <isr_tcc0_ovfl+0x178>
     d5d4:	01 96       	adiw	r24, 0x01	; 1
-    d5d6:	64 e1       	ldi	r22, 0x14	; 20
+    d5d6:	68 e2       	ldi	r22, 0x28	; 40
     d5d8:	70 e0       	ldi	r23, 0x00	; 0
     d5da:	0e 94 92 83 	call	0x10724	; 0x10724 <__udivmodhi4>
     d5de:	e6 0f       	add	r30, r22
