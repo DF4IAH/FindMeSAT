@@ -24,7 +24,9 @@ extern uint64_t						g_milliseconds_cnt64;
 
 extern uint16_t						g_1pps_last_lo;
 extern uint64_t						g_1pps_last_hi;
+extern int16_t						g_1pps_last_diff;
 extern bool							g_1pps_last_new;
+extern bool							g_1pps_last_adjust;
 extern uint16_t						g_1pps_processed_lo;
 extern uint64_t						g_1pps_processed_hi;
 extern bool							g_1pps_proceeded_avail;
@@ -32,6 +34,8 @@ extern uint8_t						g_1pps_processed_outOfSync;
 extern float						g_1pps_deviation;
 extern bool							g_1pps_printtwi_avail;
 extern bool							g_1pps_printusb_avail;
+extern uint8_t						g_1pps_phased_cntr;
+extern uint8_t						g_1pps_led;
 
 extern bool							g_usb_cdc_stdout_enabled;
 extern bool							g_usb_cdc_printStatusLines_atxmega;

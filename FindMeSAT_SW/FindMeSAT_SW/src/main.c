@@ -59,7 +59,9 @@ uint64_t					g_milliseconds_cnt64				= 0ULL;
 
 uint16_t					g_1pps_last_lo						= 0U;		// measuring time
 uint64_t					g_1pps_last_hi						= 0ULL;
+int16_t						g_1pps_last_diff					= 0;
 bool						g_1pps_last_new						= false;
+bool						g_1pps_last_adjust					= false;
 uint16_t					g_1pps_processed_lo					= 0U;		// corrected time to use
 uint64_t					g_1pps_processed_hi					= 0ULL;
 bool						g_1pps_proceeded_avail				= false;
@@ -67,6 +69,8 @@ uint8_t						g_1pps_processed_outOfSync			= 0;
 float						g_1pps_deviation					= 0.f;
 bool						g_1pps_printtwi_avail				= false;
 bool						g_1pps_printusb_avail				= false;
+uint8_t						g_1pps_phased_cntr					= 0;
+uint8_t						g_1pps_led							= 0;
 
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines_atxmega	= false;	// EEPROM
@@ -298,6 +302,26 @@ static void task_adc(uint32_t now);
 
 static void init_globals(void)
 {
+	/* 1PPS */
+	{
+		g_milliseconds_cnt64				= 0ULL;
+
+		g_1pps_last_lo						= 0U;		// measuring time
+		g_1pps_last_hi						= 0ULL;
+		g_1pps_last_diff					= 0;
+		g_1pps_last_new						= false;
+		g_1pps_last_adjust					= false;
+		g_1pps_processed_lo					= 0U;		// corrected time to use
+		g_1pps_processed_hi					= 0ULL;
+		g_1pps_proceeded_avail				= false;
+		g_1pps_processed_outOfSync			= 0;
+		g_1pps_deviation					= 0.f;
+		g_1pps_printtwi_avail				= false;
+		g_1pps_printusb_avail				= false;
+		g_1pps_phased_cntr					= 0;
+		g_1pps_led							= 0;
+	}
+
 	/* VCTCXO */
 	{
 		int32_t val_i32 = 0L;
@@ -922,6 +946,14 @@ static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0
 	}
 }
 
+
+#if 1
+/* DEBUG */
+const char					PM_DEBUG_MAIN_1PPS_1[]				= "DEBUG_MAIN_1PPS: diff=%+04d, last_adjust=%d, inSpan=%d, ";
+const char					PM_DEBUG_MAIN_1PPS_2[]				= "doUpdate=%d, outOfSync=%d \t";
+PROGMEM_DECLARE(const char, PM_DEBUG_MAIN_1PPS_1[]);
+PROGMEM_DECLARE(const char, PM_DEBUG_MAIN_1PPS_2[]);
+#endif
 static void isr_100ms_main_1pps(void)
 {
 	/* Correct 1PPS time - called each second once */
@@ -931,53 +963,88 @@ static void isr_100ms_main_1pps(void)
 		return;
 
 	} else {
-		bool doUpdate = false;
+		bool doUpdate				= false;
+		bool inSpan					= false;
+		int16_t l_1pps_last_diff	= 0;
+		int16_t	l_1pps_last_diff_d	= 0;
 
-		if (g_1pps_processed_lo || g_1pps_processed_hi) {
-			/* Calculate diff-time */
-			int16_t diff	= g_1pps_last_lo - g_1pps_processed_lo;
-			bool inSpan		= false;
+		/* Timer has adjust to 1PPS */
+		if (g_1pps_last_adjust) {
+			g_1pps_last_adjust			= false;
+			g_1pps_processed_lo			= g_1pps_last_lo;
+			g_1pps_processed_hi			= g_1pps_last_hi;
+			g_1pps_processed_outOfSync	= 0;
+			inSpan						= true;
+#if 1
+			/* Only as long as DEBUG is needed */
+			doUpdate					= true;
+#endif
 
-			if ((-18 <= diff) && (diff <= 18)) {	// window size is +/- 200 ns
-				inSpan		= true;
-				doUpdate	= true;
-			}
+		} else {
+			/* Normal operation */
+			if (g_1pps_processed_lo || g_1pps_processed_hi) {
+				/* Calculate diff-time */
+				l_1pps_last_diff = (int16_t)g_1pps_last_lo - (int16_t)g_1pps_processed_lo;
 
-			if (!inSpan) {
-				if (g_1pps_processed_outOfSync < 255) {
-					g_1pps_processed_outOfSync++;
+				/* Border values */
+				if (l_1pps_last_diff < (C_TCC1_BORDER_OFFSET - C_TCC1_PERIOD)) {
+					l_1pps_last_diff += C_TCC1_PERIOD;
+				} else if ((C_TCC1_PERIOD - C_TCC1_BORDER_OFFSET) < l_1pps_last_diff) {
+					l_1pps_last_diff -= C_TCC1_PERIOD;
 				}
-			}
 
-			if (g_1pps_processed_outOfSync) {
+				/* Window check */
+				if ((-30 <= l_1pps_last_diff) && (l_1pps_last_diff <= 30)) {	// +/- 1 µs
+					inSpan		= true;
+					doUpdate	= true;
+				}
+
+				/* Move to median */
+				if ((0 <= g_1pps_processed_lo) && (g_1pps_processed_lo < C_TCC1_MEAN_OFFSET)) {									// To early
+					l_1pps_last_diff -= (C_TCC1_MEAN_OFFSET - g_1pps_processed_lo) / 20;
+
+				} else if ((C_TCC1_MEAN_OFFSET < g_1pps_processed_lo) && (g_1pps_processed_lo <= (C_TCC1_MEAN_OFFSET << 1))) {	// To late
+					l_1pps_last_diff += (g_1pps_processed_lo - C_TCC1_MEAN_OFFSET) / 20;
+				}
+
 				if (inSpan) {
 					g_1pps_processed_outOfSync = 0;
-
 				} else {
-					/* Re-adjust to try new time slice */
-					if (g_1pps_processed_outOfSync > 10) {
-						doUpdate = true;
+					if (g_1pps_processed_outOfSync < 255) {
+						g_1pps_processed_outOfSync++;
 					}
 				}
+
+			} else {
+				/* Preset with first event */
+				doUpdate = true;
 			}
 
-		} else {
-			/* Preset with first event */
-			doUpdate = true;
-		}
-
-		if (doUpdate) {
-			g_1pps_processed_lo = g_1pps_last_lo;
-			g_1pps_processed_hi = g_1pps_last_hi;
-		} else {
-			g_1pps_processed_hi += 1000;	// Advance 1000 ms further, keep lo value
+			l_1pps_last_diff_d = l_1pps_last_diff;
+			if (doUpdate) {
+				g_1pps_processed_lo  = g_1pps_last_lo;
+				g_1pps_processed_hi  = g_1pps_last_hi;
+			} else {
+				g_1pps_processed_hi += 1000;	// Advance 1000 ms further, keep lo value
+				l_1pps_last_diff	 = 0;		// Void diff time when out of sync
+			}
 		}
 
 		/* Adjust the signals */
 		g_1pps_last_new			= false;
 		g_1pps_proceeded_avail	= true;
+		g_1pps_last_diff		= l_1pps_last_diff;
 		g_1pps_printtwi_avail	= true;
 		g_1pps_printusb_avail	= true;
+		g_1pps_led				= inSpan ?  0x02 : 0x01;  // Green / Red
+
+#if 1
+		/* DEBUG */
+		int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_DEBUG_MAIN_1PPS_1, l_1pps_last_diff_d, g_1pps_last_adjust, inSpan);
+		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_DEBUG_MAIN_1PPS_2, doUpdate, g_1pps_processed_outOfSync);
+		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+#endif
 	}
 }
 
@@ -1297,10 +1364,29 @@ static void interrupt_init(void)
 
 ISR(PORTR_INT0_vect)
 {
-	/* Take the time */
-	g_1pps_last_lo	= TCC1_CNT;
-	g_1pps_last_hi	= g_milliseconds_cnt64;
-	g_1pps_last_new	= true;
+	if (g_1pps_phased_cntr != C_TCC1_CLOCKSETTING_AFTER_SECS) {
+		/* Take the time */
+		g_1pps_last_lo	= tc_read_count(&TCC1);
+		g_1pps_last_hi	= g_milliseconds_cnt64;
+		g_1pps_last_new	= true;
+
+	} else {
+		/* Phased-in time correction */
+		tc_write_count(&TCC1, C_TCC1_CLOCKSETTING_OFFSET + C_TCC1_MEAN_OFFSET);	// Time difference between 1PPS interrupt to this position in code
+		tc_update(&TCC1);
+		g_1pps_last_lo = C_TCC1_CLOCKSETTING_OFFSET + C_TCC1_MEAN_OFFSET;
+
+		/* Rounding up to next full second */
+		g_1pps_last_hi			+= 1000U;
+		g_1pps_last_hi			-= g_1pps_last_hi % 1000U;
+		g_milliseconds_cnt64	 = g_1pps_last_hi;
+
+		/* Step ahead avoiding to trap in here, again */
+		++g_1pps_phased_cntr;
+
+		/* Inform about the adjustment */
+		g_1pps_last_adjust = true;
+	}
 }
 
 
@@ -1832,10 +1918,8 @@ static void task_adc(uint32_t now)
 
 static void task_main_pll(uint32_t now)
 {	/* Handling the 1PPS PLL system */
-	static uint16_t s_1pps_processed_lo = 0;
 	static uint16_t s_xo_mode_pwm_val_frac = 0;
-	static bool		s_isInited = false;
-	uint16_t		l_1pps_processed_lo;
+	int16_t			l_1pps_last_diff;
 	float			l_1pps_deviation;
 	int32_t			l_xo_mode_pwm;
 
@@ -1845,56 +1929,54 @@ static void task_main_pll(uint32_t now)
 	}
 	g_1pps_proceeded_avail = false;
 
+	/* Get copy of global data */
 	irqflags_t flags = cpu_irq_save();
-	l_1pps_processed_lo = g_1pps_processed_lo;
+	l_1pps_last_diff	= g_1pps_last_diff;
 	l_1pps_deviation	= g_1pps_deviation;
 	l_xo_mode_pwm		= g_xo_mode_pwm;
 	cpu_irq_restore(flags);
 
-	volatile int16_t diff		 = l_1pps_processed_lo - s_1pps_processed_lo;
+	/* Diverting into PWM value and flags */
 	uint8_t l_xo_mode_pwm_flags = l_xo_mode_pwm &  C_XO_VAL_FLAGS_MASK;
 	int32_t l_xo_mode_pwm_val	= l_xo_mode_pwm & (C_XO_VAL_INT_MASK | C_XO_VAL_FRAC_MASK);
 
-	/* Eat the first measurement */
-	if (!s_isInited) {
-		s_isInited = true;
-		diff = 0;
-	}
-
-//	if (!g_1pps_processed_outOfSync) {
+	/* Normal correction mode */
 	{
-		/* Fine correction */
-
-		l_1pps_deviation	 = 0.98f * l_1pps_deviation + 0.02f * diff;
+		/* Low-pass filtering of deviation and PWM integration */
+		l_1pps_deviation	 = 0.98f * l_1pps_deviation + 0.02f * l_1pps_last_diff;
 		l_xo_mode_pwm_val	-= (int32_t) (128.f * l_1pps_deviation);
 
-		volatile int16_t i_xo_mode_pwm_val_i = (l_xo_mode_pwm_val & C_XO_VAL_INT_MASK) >> C_XO_VAL_INT_SHIFT;
-		volatile uint8_t i_xo_mode_pwm_val_f	=  l_xo_mode_pwm_val & C_XO_VAL_FRAC_MASK;
+		int16_t i_xo_mode_pwm_val_i	= (l_xo_mode_pwm_val & C_XO_VAL_INT_MASK) >> C_XO_VAL_INT_SHIFT;
+		uint8_t i_xo_mode_pwm_val_f	=  l_xo_mode_pwm_val & C_XO_VAL_FRAC_MASK;
 
+		/* Fractional part */
 		s_xo_mode_pwm_val_frac += i_xo_mode_pwm_val_f;
 		if (s_xo_mode_pwm_val_frac >= 256) {
 			s_xo_mode_pwm_val_frac -= 256;
 			i_xo_mode_pwm_val_i++;
 		}
 
-		/* Set the new PWM value */
+		/* Set the new integer PWM value */
 		tc_write_cc_buffer(&TCC0, TC_CCC, i_xo_mode_pwm_val_i);
 
-//	} else {
-		/* Coarse correction */
-
-		// TODO: code to be written
+		/* Synced stability counter */
+		if (-0.35f <= l_1pps_deviation && l_1pps_deviation <= +0.35f) {
+			if (++g_1pps_phased_cntr > 250) {
+				g_1pps_phased_cntr = 250;  // Saturated value
+			}
+		} else {
+			g_1pps_phased_cntr = 0;
+		}
 	}
 
+	/* Adding previous flags */
 	l_xo_mode_pwm = l_xo_mode_pwm_flags | (l_xo_mode_pwm_val & (C_XO_VAL_INT_MASK | C_XO_VAL_FRAC_MASK));
 
+	/* Pushing global data */
 	flags = cpu_irq_save();
 	g_1pps_deviation	= l_1pps_deviation;
 	g_xo_mode_pwm		= l_xo_mode_pwm;
 	cpu_irq_restore(flags);
-
-	/* Update time */
-	s_1pps_processed_lo = g_1pps_processed_lo;
 }
 
 static void task(void)
