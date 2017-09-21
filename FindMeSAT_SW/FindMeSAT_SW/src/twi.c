@@ -1464,7 +1464,6 @@ static void task_twi2_lcd_print_format_float_P(uint8_t x, uint8_t y, float flt, 
 
 static void task_twi2_lcd__pll(void)
 {
-	const uint16_t pll_cnt	= 30000U;
 	const uint8_t size_x	= 240U;
 	const uint8_t size_y	= 128U;
 	const uint8_t width		= 3U;
@@ -1474,28 +1473,30 @@ static void task_twi2_lcd__pll(void)
 
 	if (g_1pps_printtwi_avail) {
 		/* Get timer for phase */
-		uint16_t l_pll_lo;
+		int16_t l_pll_lo;
 		{
 			irqflags_t flags = cpu_irq_save();
-			l_pll_lo = g_1pps_last_lo >> 2;
+			l_pll_lo = g_1pps_last_lo - C_TCC1_MEAN_OFFSET;
 			cpu_irq_restore(flags);
 
 			g_1pps_printtwi_avail = false;
 		}
 
-		/* LED red */
-		twi2_set_leds(0x01);
+		/* LED green/red */
+		twi2_set_leds(g_1pps_led);
 
 		/* Clear old line */
 		task_twi2_lcd_rect(size_x - width, pos_y_top, width, size_y - pos_y_top, true, GFX_PIXEL_CLR);
 
-		/* Draw new line - positive phase */
-		if ((l_pll_lo % pos_y_mul) < (pos_y_mul >> 1)) {
-			uint8_t len_y = (uint8_t) (((uint32_t)l_pll_lo) % pos_y_mul);
+		/* Draw new line */
+		if (l_pll_lo >= 0) {
+			/* Positive phase */
+			uint8_t len_y = (uint8_t) (((uint32_t) (pos_y_mul + l_pll_lo)) % pos_y_mul);
 			task_twi2_lcd_rect(size_x - width, pos_y_mid - len_y, width, len_y, false, GFX_PIXEL_SET);
 
 		} else {
-			uint8_t len_y = (uint8_t) ((((uint32_t) (pll_cnt - l_pll_lo))) % pos_y_mul);
+			/* Negative phase */
+			uint8_t len_y = (uint8_t) (((uint32_t) (pos_y_mul - l_pll_lo)) % pos_y_mul);
 			task_twi2_lcd_rect(size_x - width, pos_y_mid, width, len_y, false, GFX_PIXEL_SET);
 		}
 	}

@@ -279,7 +279,7 @@ const char					PM_INFO_PART_L2P2B[]				= "Gz=%+07.2fdps (%06d)\t \t";
 const char					PM_INFO_PART_L2P3A[]				= "Mx=%+07.3fuT (%+06d), My=%+07.3fuT (%+06d), ";
 const char					PM_INFO_PART_L2P3B[]				= "Mz=%+07.3fuT (%+06d)\t \t";
 const char					PM_INFO_PART_L2P4[]					= "Gyro_Temp=%+06.2fC (%+06d)\r\n\r\n";
-const char					PM_INFO_PART_PLL1[]					= "PLL: time=%8ld.%03ld + %03d/30E+6 sec, ";
+const char					PM_INFO_PART_PLL1[]					= "PLL: time=%6ld.%03ld + %05d/30E+6 sec, ";
 const char					PM_INFO_PART_PLL2[]					= "1pps_deviation=%+10f, ";
 const char					PM_INFO_PART_PLL3[]					= "XO_PWM=%05ldd : 0x%02x\r\n\r\n";
 

@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												170
-#define VERSION_LOW													911
+#define VERSION_LOW													921
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -37,7 +37,11 @@
 #define C_VCC_VBAT_MULT												2.42614048f
 #define C_TEMPSENSE_MULT											629.20f
 
-#define C_TCC1_PERIOD												30000U
+#define C_TCC1_PERIOD												30000
+#define C_TCC1_MEAN_OFFSET											1000
+#define C_TCC1_BORDER_OFFSET										3000
+#define C_TCC1_CLOCKSETTING_AFTER_SECS								30U
+#define C_TCC1_CLOCKSETTING_OFFSET									11U
 
 
 /* FIFO */
