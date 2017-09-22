@@ -43,6 +43,8 @@
 #define C_TCC1_CLOCKSETTING_AFTER_SECS								30U
 #define C_TCC1_CLOCKSETTING_OFFSET									11U
 
+#define C_1PPS_PWM_DIFF_ARY_CNT										16
+
 
 /* FIFO */
 #define FIFO_SCHED_BUFFER_LENGTH									32
