@@ -251,7 +251,7 @@ static void usb_rx_process(uint32_t thisTime)
 		udi_cdc_read_no_polling(cdc_rx_buf, cdc_rx_len);
 
 		/* Echo back when not monitoring information are enabled */
-		if (!g_usb_cdc_printStatusLines_atxmega) {
+		if (!(g_usb_cdc_printStatusLines_atxmega || g_usb_cdc_printStatusLines_1pps)) {
 			udi_write_tx_buf(cdc_rx_buf, cdc_rx_len, true);
 		}
 
@@ -312,7 +312,7 @@ void task_usb(uint32_t now)
 		}
 
 		/* Status of the PLL unit */
-		if (g_usb_cdc_printStatusLines_sim808 && g_1pps_printusb_avail) {
+		if (g_usb_cdc_printStatusLines_1pps && g_1pps_printusb_avail) {
 			uint16_t l_pll_lo;
 			uint64_t l_pll_hi;
 			float l_1pps_deviation;

@@ -43,7 +43,7 @@
 #define SERIAL_H_
 
 
-#define C_USART1_RX_BUF_LEN			256U
+#define C_USART1_RX_BUF_LEN			128U
 #define C_USART1_RX_BUF_CHUNK		64
 
 

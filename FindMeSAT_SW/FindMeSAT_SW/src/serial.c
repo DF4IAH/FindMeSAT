@@ -43,6 +43,11 @@ ISR(USARTF0_RXC_vect)
 		g_usart1_rx_buf[g_usart1_rx_idx++] = ser1_rxd;
 	}
 
+	/* Handshaking - STOP data */
+	if (g_usart1_rx_idx > (C_USART1_RX_BUF_LEN - 4)) {
+		ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_HIGH);
+	}
+
 	/* Input string ready to read */
 	g_usart1_rx_ready = true;
 }
@@ -130,6 +135,7 @@ const char					PM_TWI1_INIT_ONBOARD_SIM808_START[]		= "Init: SIM808 starting ...
 const char					PM_TWI1_INIT_ONBOARD_SIM808_RESTART[]	= "Init: SIM808 restarting ...";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_OK[]		= "Init: SIM808 success";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_IPR[]		= "AT+IPR=%ld\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_IFC[]		= "AT+IFC=2,2\r\n";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_CMEE2[]		= "AT+CMEE=2\r\n";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_CFUN1[]		= "AT+CFUN=1\r\n";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_01[]	= "ATI\r\n";
@@ -148,6 +154,7 @@ PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_START[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_RESTART[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_OK[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_IPR[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_IFC[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CMEE2[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CFUN1[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_01[]);
@@ -244,6 +251,11 @@ void serial_start(void)
 	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 	yield_ms(500);
 
+	/* Set handshaking of both directions to hardware CTS/RTS */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_IFC);
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+	yield_ms(500);
+
 #if 1
 	/* Request the version number of the firmware */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_01);
@@ -304,7 +316,6 @@ void serial_start(void)
 	yield_ms(500);
 #endif
 
-
 	/* Inform about baud rate match - LCD */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_OK);
 	task_twi2_lcd_str(8, (line++) * 10, g_prepare_buf);
@@ -317,8 +328,9 @@ void serial_start(void)
 
 void task_serial(uint32_t now)
 {
-	uint16_t len = 0;
-	uint16_t move = 0;
+	uint16_t len_in		= 0;
+	uint16_t len_out	= 0;
+	uint16_t move		= 0;
 
 	/* Leave when nothing to do */
 	if (!g_usart1_rx_ready) {
@@ -330,15 +342,18 @@ void task_serial(uint32_t now)
 		irqflags_t flags = cpu_irq_save();
 		if (g_usart1_rx_idx) {
 			/* Do a chunk each time */
-			len = g_usart1_rx_idx;
-			if (len > C_USART1_RX_BUF_CHUNK) {
-				move = len - C_USART1_RX_BUF_CHUNK;
-				len = C_USART1_RX_BUF_CHUNK;
+			len_in = g_usart1_rx_idx;
+			if (len_in > C_USART1_RX_BUF_CHUNK) {
+				move = len_in - C_USART1_RX_BUF_CHUNK;
+				len_in = C_USART1_RX_BUF_CHUNK;
 			}
 
 			/* Make a copy of the chunk */
-			for (int16_t idx = len - 1; idx >= 0; --idx) {
-				g_prepare_buf[idx] = g_usart1_rx_buf[idx];
+			for (int16_t idx = 0; idx < len_in; ++idx) {
+				if (g_usart1_rx_buf[idx] == '\n') {
+					g_prepare_buf[len_out++] = '\r';
+				}
+				g_prepare_buf[len_out++] = g_usart1_rx_buf[idx];
 			}
 
 			/* If more data is available move that part down */
@@ -346,19 +361,29 @@ void task_serial(uint32_t now)
 				for (int16_t mov_idx = 0; mov_idx < move; ++mov_idx) {
 					g_usart1_rx_buf[mov_idx] = g_usart1_rx_buf[mov_idx + C_USART1_RX_BUF_CHUNK];
 				}
-				g_usart1_rx_idx = move;
+				g_usart1_rx_idx		= move;
 
 			} else {
 				/* Buffer empty */
-				g_usart1_rx_idx = 0;
-				g_usart1_rx_ready = false;
+				g_usart1_rx_idx		= 0;
+				g_usart1_rx_ready	= false;
 			}
 		}
 		cpu_irq_restore(flags);
 	}
 
+	/* Handshaking - START data */
+	{
+		irqflags_t flags = cpu_irq_save();
+		if (g_usart1_rx_idx < (C_USART1_RX_BUF_LEN - 8)) {
+			ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_LOW);
+		}
+		cpu_irq_restore(flags);
+	}
+
 	/* Copy chunk of data to USB_CDC */
-	if (len) {
-		udi_write_tx_buf(g_prepare_buf, (uint8_t)len, false);
+	if (len_out && g_usb_cdc_printStatusLines_sim808) {
+		udi_write_tx_buf(g_prepare_buf, (uint8_t)len_out, false);
+		yield_ms(100);
 	}
 }
