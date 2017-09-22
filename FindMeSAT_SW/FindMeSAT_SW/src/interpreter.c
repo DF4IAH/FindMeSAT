@@ -59,7 +59,8 @@ const char					PM_HELP_EB_1[]							= "eb=\t\t0: error beep OFF, 1: ON\r\n";
 const char					PM_HELP_HELP_1[]						= "help\t\tThis information page ";
 const char					PM_HELP_HELP_2[]						=  "about all available commands\r\n";
 const char					PM_HELP_INFO_1[]						= "info=\t\t0: OFF, 0x01: ATxmega, ";
-const char					PM_HELP_INFO_2[]						=  "0x02: SIM808\r\n";
+const char					PM_HELP_INFO_2[]						=  "0x02: SIM808, ";
+const char					PM_HELP_INFO_3[]						=  "0x04: 1PPS/PLL\r\n";
 const char					PM_HELP_KB_1[]							= "kb=\t\t0: key beep OFF, 1: ON\r\n";
 const char					PM_HELP_PT_1[]							= "pt=\t\t0: pitch tone OFF, ";
 const char					PM_HELP_PT_2[]							=  "1: turn speed, 2: variometer\r\n";
@@ -93,6 +94,7 @@ PROGMEM_DECLARE(const char, PM_HELP_HELP_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_HELP_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_INFO_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_INFO_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_INFO_3[]);
 PROGMEM_DECLARE(const char, PM_HELP_KB_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_PT_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_PT_2[]);
@@ -165,6 +167,8 @@ void printHelp(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_INFO_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_INFO_2);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_INFO_3);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_KB_1);

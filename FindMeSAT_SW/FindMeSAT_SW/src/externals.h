@@ -41,6 +41,7 @@ extern uint8_t						g_1pps_led;
 extern bool							g_usb_cdc_stdout_enabled;
 extern bool							g_usb_cdc_printStatusLines_atxmega;
 extern bool							g_usb_cdc_printStatusLines_sim808;
+extern bool							g_usb_cdc_printStatusLines_1pps;
 extern bool							g_usb_cdc_rx_received;
 extern bool							g_usb_cdc_transfers_authorized;
 extern bool							g_usb_cdc_access_blocked;

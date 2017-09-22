@@ -76,6 +76,7 @@ uint8_t						g_1pps_led							= 0;
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines_atxmega	= false;	// EEPROM
 bool						g_usb_cdc_printStatusLines_sim808	= false;	// EEPROM
+bool						g_usb_cdc_printStatusLines_1pps		= false;	// EEPROM
 bool						g_usb_cdc_rx_received				= false;
 bool						g_usb_cdc_transfers_authorized		= false;
 bool						g_usb_cdc_access_blocked			= false;
@@ -375,8 +376,9 @@ static void init_globals(void)
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__PRINT_STATUS, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
 			irqflags_t flags = cpu_irq_save();
-			g_usb_cdc_printStatusLines_atxmega	= val_ui8 & 0x01;
-			g_usb_cdc_printStatusLines_sim808	= val_ui8 & 0x02;
+			g_usb_cdc_printStatusLines_atxmega	= val_ui8 & PRINT_STATUS_LINES__ATXMEGA;
+			g_usb_cdc_printStatusLines_sim808	= val_ui8 & PRINT_STATUS_LINES__SIM808;
+			g_usb_cdc_printStatusLines_1pps		= val_ui8 & PRINT_STATUS_LINES__1PPS;
 			cpu_irq_restore(flags);
 		}
 	}
@@ -501,7 +503,9 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 	/* Status lines */
 	if (bf & EEPROM_SAVE_BF__PRINT_STATUS) {
 		irqflags_t flags = cpu_irq_save();
-		uint8_t val_ui8 = (g_usb_cdc_printStatusLines_sim808 ?  0x02 : 0x00) | (g_usb_cdc_printStatusLines_atxmega ?  0x01 : 0x00);
+		uint8_t val_ui8 = (g_usb_cdc_printStatusLines_atxmega	?  PRINT_STATUS_LINES__ATXMEGA	: 0x00)
+						| (g_usb_cdc_printStatusLines_sim808	?  PRINT_STATUS_LINES__SIM808	: 0x00)
+						| (g_usb_cdc_printStatusLines_1pps		?  PRINT_STATUS_LINES__1PPS		: 0x00);
 		cpu_irq_restore(flags);
 
 		nvm_write(INT_EEPROM, EEPROM_ADDR__PRINT_STATUS, (void*)&val_ui8, sizeof(val_ui8));
@@ -881,6 +885,7 @@ void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf)
 	/* atomic */
 	g_usb_cdc_printStatusLines_atxmega	= bf & PRINT_STATUS_LINES__ATXMEGA	?  true : false;
 	g_usb_cdc_printStatusLines_sim808	= bf & PRINT_STATUS_LINES__SIM808	?  true : false;
+	g_usb_cdc_printStatusLines_1pps		= bf & PRINT_STATUS_LINES__1PPS		?  true : false;
 
 	save_globals(EEPROM_SAVE_BF__PRINT_STATUS);
 }
@@ -949,13 +954,10 @@ static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0
 }
 
 
-#if 1
-/* DEBUG */
 const char					PM_DEBUG_MAIN_1PPS_1[]				= "DEBUG_MAIN_1PPS: diff=%+04d, last_adjust=%d, inSpan=%d, ";
 const char					PM_DEBUG_MAIN_1PPS_2[]				= "doUpdate=%d, outOfSync=%d \t";
 PROGMEM_DECLARE(const char, PM_DEBUG_MAIN_1PPS_1[]);
 PROGMEM_DECLARE(const char, PM_DEBUG_MAIN_1PPS_2[]);
-#endif
 static void isr_100ms_main_1pps(void)
 {
 	/* Correct 1PPS time - called each second once */
@@ -1040,13 +1042,13 @@ static void isr_100ms_main_1pps(void)
 		g_1pps_printusb_avail	= true;
 		g_1pps_led				= inSpan ?  0x02 : 0x01;  // Green / Red
 
-#if 1
-		/* DEBUG */
-		int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_DEBUG_MAIN_1PPS_1, l_1pps_last_diff, g_1pps_last_adjust, inSpan);
-		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_DEBUG_MAIN_1PPS_2, doUpdate, g_1pps_processed_outOfSync);
-		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-#endif
+		/* Show PLL inter-calculation values and states */
+		if (g_usb_cdc_printStatusLines_1pps) {
+			int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_DEBUG_MAIN_1PPS_1, l_1pps_last_diff, g_1pps_last_adjust, inSpan);
+			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_DEBUG_MAIN_1PPS_2, doUpdate, g_1pps_processed_outOfSync);
+			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+		}
 	}
 }
 
