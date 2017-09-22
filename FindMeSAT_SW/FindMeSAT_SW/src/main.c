@@ -60,13 +60,14 @@ uint64_t					g_milliseconds_cnt64				= 0ULL;
 uint16_t					g_1pps_last_lo						= 0U;		// measuring time
 uint64_t					g_1pps_last_hi						= 0ULL;
 int16_t						g_1pps_last_diff					= 0;
+bool						g_1pps_last_inSpan					= false;
 bool						g_1pps_last_new						= false;
 bool						g_1pps_last_adjust					= false;
 uint16_t					g_1pps_processed_lo					= 0U;		// corrected time to use
 uint64_t					g_1pps_processed_hi					= 0ULL;
 bool						g_1pps_proceeded_avail				= false;
 uint8_t						g_1pps_processed_outOfSync			= 0;
-float						g_1pps_deviation					= 0.f;
+int16_t						g_1pps_deviation					= 0;
 bool						g_1pps_printtwi_avail				= false;
 bool						g_1pps_printusb_avail				= false;
 uint8_t						g_1pps_phased_cntr					= 0;
@@ -309,13 +310,14 @@ static void init_globals(void)
 		g_1pps_last_lo						= 0U;		// measuring time
 		g_1pps_last_hi						= 0ULL;
 		g_1pps_last_diff					= 0;
+		g_1pps_last_inSpan					= false;
 		g_1pps_last_new						= false;
 		g_1pps_last_adjust					= false;
 		g_1pps_processed_lo					= 0U;		// corrected time to use
 		g_1pps_processed_hi					= 0ULL;
 		g_1pps_proceeded_avail				= false;
 		g_1pps_processed_outOfSync			= 0;
-		g_1pps_deviation					= 0.f;
+		g_1pps_deviation					= 0;
 		g_1pps_printtwi_avail				= false;
 		g_1pps_printusb_avail				= false;
 		g_1pps_phased_cntr					= 0;
@@ -966,7 +968,6 @@ static void isr_100ms_main_1pps(void)
 		bool doUpdate				= false;
 		bool inSpan					= false;
 		int16_t l_1pps_last_diff	= 0;
-		int16_t	l_1pps_last_diff_d	= 0;
 
 		/* Timer has adjust to 1PPS */
 		if (g_1pps_last_adjust) {
@@ -975,10 +976,6 @@ static void isr_100ms_main_1pps(void)
 			g_1pps_processed_hi			= g_1pps_last_hi;
 			g_1pps_processed_outOfSync	= 0;
 			inSpan						= true;
-#if 1
-			/* Only as long as DEBUG is needed */
-			doUpdate					= true;
-#endif
 
 		} else {
 			/* Normal operation */
@@ -999,17 +996,23 @@ static void isr_100ms_main_1pps(void)
 					doUpdate	= true;
 				}
 
-				/* Move to median */
+				/* Move slowly to meridian */
 				if ((0 <= g_1pps_processed_lo) && (g_1pps_processed_lo < C_TCC1_MEAN_OFFSET)) {									// To early
-					l_1pps_last_diff -= (C_TCC1_MEAN_OFFSET - g_1pps_processed_lo) / 20;
+					l_1pps_last_diff -= (C_TCC1_MEAN_OFFSET - g_1pps_processed_lo) / 40;
 
 				} else if ((C_TCC1_MEAN_OFFSET < g_1pps_processed_lo) && (g_1pps_processed_lo <= (C_TCC1_MEAN_OFFSET << 1))) {	// To late
-					l_1pps_last_diff += (g_1pps_processed_lo - C_TCC1_MEAN_OFFSET) / 20;
+					l_1pps_last_diff += (g_1pps_processed_lo - C_TCC1_MEAN_OFFSET) / 40;
 				}
 
 				if (inSpan) {
 					g_1pps_processed_outOfSync = 0;
 				} else {
+					/* Re-align meridian */
+					if (g_1pps_processed_outOfSync > 10) {
+						doUpdate			= true;
+						l_1pps_last_diff	= 0;
+					}
+
 					if (g_1pps_processed_outOfSync < 255) {
 						g_1pps_processed_outOfSync++;
 					}
@@ -1020,13 +1023,11 @@ static void isr_100ms_main_1pps(void)
 				doUpdate = true;
 			}
 
-			l_1pps_last_diff_d = l_1pps_last_diff;
 			if (doUpdate) {
 				g_1pps_processed_lo  = g_1pps_last_lo;
 				g_1pps_processed_hi  = g_1pps_last_hi;
 			} else {
 				g_1pps_processed_hi += 1000;	// Advance 1000 ms further, keep lo value
-				l_1pps_last_diff	 = 0;		// Void diff time when out of sync
 			}
 		}
 
@@ -1034,13 +1035,14 @@ static void isr_100ms_main_1pps(void)
 		g_1pps_last_new			= false;
 		g_1pps_proceeded_avail	= true;
 		g_1pps_last_diff		= l_1pps_last_diff;
+		g_1pps_last_inSpan		= inSpan;
 		g_1pps_printtwi_avail	= true;
 		g_1pps_printusb_avail	= true;
 		g_1pps_led				= inSpan ?  0x02 : 0x01;  // Green / Red
 
 #if 1
 		/* DEBUG */
-		int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_DEBUG_MAIN_1PPS_1, l_1pps_last_diff_d, g_1pps_last_adjust, inSpan);
+		int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_DEBUG_MAIN_1PPS_1, l_1pps_last_diff, g_1pps_last_adjust, inSpan);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_DEBUG_MAIN_1PPS_2, doUpdate, g_1pps_processed_outOfSync);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -1919,9 +1921,13 @@ static void task_adc(uint32_t now)
 static void task_main_pll(uint32_t now)
 {	/* Handling the 1PPS PLL system */
 	static uint16_t s_xo_mode_pwm_val_frac = 0;
+	static int16_t	s_diff_ary[C_1PPS_PWM_DIFF_ARY_CNT] = { 0 };
+	static uint8_t	s_diff_ary_idx = 0;
 	int16_t			l_1pps_last_diff;
-	float			l_1pps_deviation;
+	bool			l_1pps_last_inSpan;
+	int16_t			l_1pps_deviation;
 	int32_t			l_xo_mode_pwm;
+	uint8_t			l_1pps_phased_cntr;
 
 	/* Process each second once */
 	if (!g_1pps_proceeded_avail) {
@@ -1932,19 +1938,31 @@ static void task_main_pll(uint32_t now)
 	/* Get copy of global data */
 	irqflags_t flags = cpu_irq_save();
 	l_1pps_last_diff	= g_1pps_last_diff;
-	l_1pps_deviation	= g_1pps_deviation;
+	l_1pps_last_inSpan	= g_1pps_last_inSpan;
 	l_xo_mode_pwm		= g_xo_mode_pwm;
+	l_1pps_phased_cntr	= g_1pps_phased_cntr;
 	cpu_irq_restore(flags);
 
-	/* Diverting into PWM value and flags */
-	uint8_t l_xo_mode_pwm_flags = l_xo_mode_pwm &  C_XO_VAL_FLAGS_MASK;
-	int32_t l_xo_mode_pwm_val	= l_xo_mode_pwm & (C_XO_VAL_INT_MASK | C_XO_VAL_FRAC_MASK);
+	/* Modify PWM only when last data was in span */
+	if (l_1pps_last_inSpan) {
+		/* Diverting into PWM value and flags */
+		uint8_t l_xo_mode_pwm_flags = l_xo_mode_pwm &  C_XO_VAL_FLAGS_MASK;
+		int32_t l_xo_mode_pwm_val	= l_xo_mode_pwm & (C_XO_VAL_INT_MASK | C_XO_VAL_FRAC_MASK);
 
-	/* Normal correction mode */
-	{
+		/* Entering new diff value into array */
+		s_diff_ary[s_diff_ary_idx++] = l_1pps_last_diff;
+		if (s_diff_ary_idx >= C_1PPS_PWM_DIFF_ARY_CNT) {
+			s_diff_ary_idx = 0;
+		}
+
+		/* Calculate mean value on the total array */
+		l_1pps_deviation = 0;
+		for (uint8_t idx = C_1PPS_PWM_DIFF_ARY_CNT; idx; idx--) {
+			l_1pps_deviation += s_diff_ary[idx - 1];
+		}
+
 		/* Low-pass filtering of deviation and PWM integration */
-		l_1pps_deviation	 = 0.98f * l_1pps_deviation + 0.02f * l_1pps_last_diff;
-		l_xo_mode_pwm_val	-= (int32_t) (128.f * l_1pps_deviation);
+		l_xo_mode_pwm_val -= l_1pps_deviation;
 
 		int16_t i_xo_mode_pwm_val_i	= (l_xo_mode_pwm_val & C_XO_VAL_INT_MASK) >> C_XO_VAL_INT_SHIFT;
 		uint8_t i_xo_mode_pwm_val_f	=  l_xo_mode_pwm_val & C_XO_VAL_FRAC_MASK;
@@ -1960,23 +1978,24 @@ static void task_main_pll(uint32_t now)
 		tc_write_cc_buffer(&TCC0, TC_CCC, i_xo_mode_pwm_val_i);
 
 		/* Synced stability counter */
-		if (-0.35f <= l_1pps_deviation && l_1pps_deviation <= +0.35f) {
-			if (++g_1pps_phased_cntr > 250) {
-				g_1pps_phased_cntr = 250;  // Saturated value
+		if (-20 <= l_1pps_deviation && l_1pps_deviation <= 20) {
+			if (++l_1pps_phased_cntr > 250) {
+				l_1pps_phased_cntr = 250;  // Saturated value
 			}
 		} else {
-			g_1pps_phased_cntr = 0;
+			l_1pps_phased_cntr = 0;
 		}
+
+		/* Adding previous flags */
+		l_xo_mode_pwm = l_xo_mode_pwm_flags | (l_xo_mode_pwm_val & (C_XO_VAL_INT_MASK | C_XO_VAL_FRAC_MASK));
+
+		/* Pushing global data */
+		flags = cpu_irq_save();
+		g_1pps_deviation	= l_1pps_deviation;
+		g_xo_mode_pwm		= l_xo_mode_pwm;
+		g_1pps_phased_cntr	= l_1pps_phased_cntr;
+		cpu_irq_restore(flags);
 	}
-
-	/* Adding previous flags */
-	l_xo_mode_pwm = l_xo_mode_pwm_flags | (l_xo_mode_pwm_val & (C_XO_VAL_INT_MASK | C_XO_VAL_FRAC_MASK));
-
-	/* Pushing global data */
-	flags = cpu_irq_save();
-	g_1pps_deviation	= l_1pps_deviation;
-	g_xo_mode_pwm		= l_xo_mode_pwm;
-	cpu_irq_restore(flags);
 }
 
 static void task(void)

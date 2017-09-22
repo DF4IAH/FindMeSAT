@@ -1346,7 +1346,7 @@ END GROUP
 .rela.plt
  *(.rela.plt)
 
-.text           0x00000000    0x116e0
+.text           0x00000000    0x116a8
  *(.vectors)
  .vectors       0x00000000      0x1fc C:/Program Files (x86)/Atmel/Studio/7.0/Packs/Atmel/XMEGAA_DFP/1.1.68/gcc/dev/atxmega256a3bu/avrxmega6/crtatxmega256a3bu.o
                 0x00000000                __vector_default
@@ -1909,1046 +1909,1046 @@ END GROUP
                 0x00004258        0x6 src/usb.o
                 0x00004258                usb_callback_tx_empty_notify
  .text.task_usb
-                0x0000425e      0x970 src/usb.o
+                0x0000425e      0x974 src/usb.o
                 0x0000425e                task_usb
  .text.nvm_init
-                0x00004bce        0xc src/ASF/common/drivers/nvm/xmega/xmega_nvm.o
-                0x00004bce                nvm_init
+                0x00004bd2        0xc src/ASF/common/drivers/nvm/xmega/xmega_nvm.o
+                0x00004bd2                nvm_init
  .text.nvm_read
-                0x00004bda       0x4c src/ASF/common/drivers/nvm/xmega/xmega_nvm.o
-                0x00004bda                nvm_read
+                0x00004bde       0x4c src/ASF/common/drivers/nvm/xmega/xmega_nvm.o
+                0x00004bde                nvm_read
  .text.nvm_write
-                0x00004c26       0x50 src/ASF/common/drivers/nvm/xmega/xmega_nvm.o
-                0x00004c26                nvm_write
+                0x00004c2a       0x50 src/ASF/common/drivers/nvm/xmega/xmega_nvm.o
+                0x00004c2a                nvm_write
  .text.fifo_init
-                0x00004c76       0x18 src/ASF/common/services/fifo/fifo.o
-                0x00004c76                fifo_init
+                0x00004c7a       0x18 src/ASF/common/services/fifo/fifo.o
+                0x00004c7a                fifo_init
  .text.cpu_irq_save
-                0x00004c8e       0x1a src/ASF/xmega/drivers/dma/dma.o
+                0x00004c92       0x1a src/ASF/xmega/drivers/dma/dma.o
  .text.dma_interrupt
-                0x00004ca8       0xca src/ASF/xmega/drivers/dma/dma.o
+                0x00004cac       0xca src/ASF/xmega/drivers/dma/dma.o
  .text.dma_enable
-                0x00004d72       0x2e src/ASF/xmega/drivers/dma/dma.o
-                0x00004d72                dma_enable
+                0x00004d76       0x2e src/ASF/xmega/drivers/dma/dma.o
+                0x00004d76                dma_enable
  .text.dma_disable
-                0x00004da0       0x26 src/ASF/xmega/drivers/dma/dma.o
-                0x00004da0                dma_disable
+                0x00004da4       0x26 src/ASF/xmega/drivers/dma/dma.o
+                0x00004da4                dma_disable
  .text.dma_set_callback
-                0x00004dc6       0x12 src/ASF/xmega/drivers/dma/dma.o
-                0x00004dc6                dma_set_callback
+                0x00004dca       0x12 src/ASF/xmega/drivers/dma/dma.o
+                0x00004dca                dma_set_callback
  .text.__vector_6
-                0x00004dd8       0x50 src/ASF/xmega/drivers/dma/dma.o
-                0x00004dd8                __vector_6
+                0x00004ddc       0x50 src/ASF/xmega/drivers/dma/dma.o
+                0x00004ddc                __vector_6
  .text.__vector_7
-                0x00004e28       0x50 src/ASF/xmega/drivers/dma/dma.o
-                0x00004e28                __vector_7
+                0x00004e2c       0x50 src/ASF/xmega/drivers/dma/dma.o
+                0x00004e2c                __vector_7
  .text.__vector_8
-                0x00004e78       0x50 src/ASF/xmega/drivers/dma/dma.o
-                0x00004e78                __vector_8
+                0x00004e7c       0x50 src/ASF/xmega/drivers/dma/dma.o
+                0x00004e7c                __vector_8
  .text.__vector_9
-                0x00004ec8       0x50 src/ASF/xmega/drivers/dma/dma.o
-                0x00004ec8                __vector_9
+                0x00004ecc       0x50 src/ASF/xmega/drivers/dma/dma.o
+                0x00004ecc                __vector_9
  .text.dma_channel_write_config
-                0x00004f18       0x5c src/ASF/xmega/drivers/dma/dma.o
-                0x00004f18                dma_channel_write_config
+                0x00004f1c       0x5c src/ASF/xmega/drivers/dma/dma.o
+                0x00004f1c                dma_channel_write_config
  .text.__portable_avr_delay_cycles.constprop.1
-                0x00004f74       0x10 src/ASF/xmega/drivers/rtc32/rtc32.o
+                0x00004f78       0x10 src/ASF/xmega/drivers/rtc32/rtc32.o
  .text.rtc_get_time
-                0x00004f84       0x20 src/ASF/xmega/drivers/rtc32/rtc32.o
-                0x00004f84                rtc_get_time
+                0x00004f88       0x20 src/ASF/xmega/drivers/rtc32/rtc32.o
+                0x00004f88                rtc_get_time
  .text.rtc_set_alarm
-                0x00004fa4       0x16 src/ASF/xmega/drivers/rtc32/rtc32.o
-                0x00004fa4                rtc_set_alarm
+                0x00004fa8       0x16 src/ASF/xmega/drivers/rtc32/rtc32.o
+                0x00004fa8                rtc_set_alarm
  .text.rtc_set_callback
-                0x00004fba        0xa src/ASF/xmega/drivers/rtc32/rtc32.o
-                0x00004fba                rtc_set_callback
+                0x00004fbe        0xa src/ASF/xmega/drivers/rtc32/rtc32.o
+                0x00004fbe                rtc_set_callback
  .text.rtc_init
-                0x00004fc4       0x88 src/ASF/xmega/drivers/rtc32/rtc32.o
-                0x00004fc4                rtc_init
+                0x00004fc8       0x88 src/ASF/xmega/drivers/rtc32/rtc32.o
+                0x00004fc8                rtc_init
  .text.__vector_11
-                0x0000504c       0x7c src/ASF/xmega/drivers/rtc32/rtc32.o
-                0x0000504c                __vector_11
+                0x00005050       0x7c src/ASF/xmega/drivers/rtc32/rtc32.o
+                0x00005050                __vector_11
  .text.get_interpolated_sine
-                0x000050c8       0x64 src/dds.o
-                0x000050c8                get_interpolated_sine
+                0x000050cc       0x64 src/dds.o
+                0x000050cc                get_interpolated_sine
  .text.printHelp
-                0x0000512c      0x692 src/interpreter.o
-                0x0000512c                printHelp
+                0x00005130      0x692 src/interpreter.o
+                0x00005130                printHelp
  .text.interpreter_doProcess
-                0x000057be      0x56e src/interpreter.o
-                0x000057be                interpreter_doProcess
+                0x000057c2      0x56e src/interpreter.o
+                0x000057c2                interpreter_doProcess
  .text.cpu_irq_save
-                0x00005d2c       0x1a src/twi.o
+                0x00005d30       0x1a src/twi.o
  .text.__portable_avr_delay_cycles
-                0x00005d46       0x16 src/twi.o
+                0x00005d4a       0x16 src/twi.o
  .text.task_twi1_hygro
-                0x00005d5c       0x80 src/twi.o
+                0x00005d60       0x80 src/twi.o
  .text.task_twi1_baro
-                0x00005ddc      0x3ca src/twi.o
+                0x00005de0      0x3ca src/twi.o
  .text.twi_master_read
-                0x000061a6        0x6 src/twi.o
+                0x000061aa        0x6 src/twi.o
  .text.twi_master_write
-                0x000061ac        0x6 src/twi.o
+                0x000061b0        0x6 src/twi.o
  .text.calc_gyro2_correct_mag_2_nT
-                0x000061b2       0x9a src/twi.o
+                0x000061b6       0x9a src/twi.o
  .text.task_twi1_gyro
-                0x0000624c      0x308 src/twi.o
+                0x00006250      0x308 src/twi.o
  .text.service_twi1_baro.isra.3
-                0x00006554      0x1a4 src/twi.o
+                0x00006558      0x1a4 src/twi.o
  .text.sysclk_enable_peripheral_clock
-                0x000066f8      0x1d4 src/twi.o
+                0x000066fc      0x1d4 src/twi.o
  .text.twi2_waitUntilReady
-                0x000068cc       0x7c src/twi.o
-                0x000068cc                twi2_waitUntilReady
+                0x000068d0       0x7c src/twi.o
+                0x000068d0                twi2_waitUntilReady
  .text.twi2_set_leds
-                0x00006948       0x30 src/twi.o
-                0x00006948                twi2_set_leds
+                0x0000694c       0x30 src/twi.o
+                0x0000694c                twi2_set_leds
  .text.twi2_set_ledbl
-                0x00006978       0x3a src/twi.o
-                0x00006978                twi2_set_ledbl
+                0x0000697c       0x3a src/twi.o
+                0x0000697c                twi2_set_ledbl
  .text.twi2_set_bias
-                0x000069b2       0x2e src/twi.o
-                0x000069b2                twi2_set_bias
+                0x000069b6       0x2e src/twi.o
+                0x000069b6                twi2_set_bias
  .text.twi2_set_beep
-                0x000069e0       0x3a src/twi.o
-                0x000069e0                twi2_set_beep
+                0x000069e4       0x3a src/twi.o
+                0x000069e4                twi2_set_beep
  .text.twi1_gyro_gyro_offset_set
-                0x00006a1a       0x58 src/twi.o
-                0x00006a1a                twi1_gyro_gyro_offset_set
+                0x00006a1e       0x58 src/twi.o
+                0x00006a1e                twi1_gyro_gyro_offset_set
  .text.twi1_gyro_accel_offset_set
-                0x00006a72       0xb2 src/twi.o
-                0x00006a72                twi1_gyro_accel_offset_set
+                0x00006a76       0xb2 src/twi.o
+                0x00006a76                twi1_gyro_accel_offset_set
  .text.twi_init
-                0x00006b24       0x14 src/twi.o
-                0x00006b24                twi_init
+                0x00006b28       0x14 src/twi.o
+                0x00006b28                twi_init
  .text.isr_100ms_twi1_onboard
-                0x00006b38      0x256 src/twi.o
-                0x00006b38                isr_100ms_twi1_onboard
+                0x00006b3c      0x256 src/twi.o
+                0x00006b3c                isr_100ms_twi1_onboard
  .text.isr_500ms_twi1_onboard
-                0x00006d8e       0xe2 src/twi.o
-                0x00006d8e                isr_500ms_twi1_onboard
+                0x00006d92       0xe2 src/twi.o
+                0x00006d92                isr_500ms_twi1_onboard
  .text.isr_sparetime_twi1_onboard
-                0x00006e70       0x38 src/twi.o
-                0x00006e70                isr_sparetime_twi1_onboard
+                0x00006e74       0x38 src/twi.o
+                0x00006e74                isr_sparetime_twi1_onboard
  .text.task_twi2_lcd_cls
-                0x00006ea8       0x22 src/twi.o
-                0x00006ea8                task_twi2_lcd_cls
+                0x00006eac       0x22 src/twi.o
+                0x00006eac                task_twi2_lcd_cls
  .text.task_twi2_lcd_pos_xy
-                0x00006eca       0x3c src/twi.o
-                0x00006eca                task_twi2_lcd_pos_xy
+                0x00006ece       0x3c src/twi.o
+                0x00006ece                task_twi2_lcd_pos_xy
  .text.task_twi2_lcd_print_format_float_P
-                0x00006f06       0x76 src/twi.o
+                0x00006f0a       0x76 src/twi.o
  .text.task_twi2_lcd_str
-                0x00006f7c       0x9c src/twi.o
-                0x00006f7c                task_twi2_lcd_str
+                0x00006f80       0x9c src/twi.o
+                0x00006f80                task_twi2_lcd_str
  .text.init_twi1_gyro
-                0x00007018      0x4a6 src/twi.o
-                0x00007018                init_twi1_gyro
+                0x0000701c      0x4a6 src/twi.o
+                0x0000701c                init_twi1_gyro
  .text.task_twi2_lcd_line
-                0x000074be       0x4c src/twi.o
-                0x000074be                task_twi2_lcd_line
+                0x000074c2       0x4c src/twi.o
+                0x000074c2                task_twi2_lcd_line
  .text.task_twi2_lcd_rect
-                0x0000750a       0x56 src/twi.o
-                0x0000750a                task_twi2_lcd_rect
+                0x0000750e       0x56 src/twi.o
+                0x0000750e                task_twi2_lcd_rect
  .text.task_twi2_lcd_circ
-                0x00007560       0x4e src/twi.o
-                0x00007560                task_twi2_lcd_circ
+                0x00007564       0x4e src/twi.o
+                0x00007564                task_twi2_lcd_circ
  .text.task_twi2_lcd_header
-                0x000075ae       0x52 src/twi.o
-                0x000075ae                task_twi2_lcd_header
+                0x000075b2       0x52 src/twi.o
+                0x000075b2                task_twi2_lcd_header
  .text.twi_start
-                0x00007600      0x6c8 src/twi.o
-                0x00007600                twi_start
+                0x00007604      0x6c8 src/twi.o
+                0x00007604                twi_start
  .text.task_twi2_lcd__cpu1
-                0x00007cc8       0xa6 src/twi.o
-                0x00007cc8                task_twi2_lcd__cpu1
+                0x00007ccc       0xa6 src/twi.o
+                0x00007ccc                task_twi2_lcd__cpu1
  .text.task_twi2_lcd__cpu2
-                0x00007d6e       0xa6 src/twi.o
-                0x00007d6e                task_twi2_lcd__cpu2
+                0x00007d72       0xa6 src/twi.o
+                0x00007d72                task_twi2_lcd__cpu2
  .text.task_twi2_lcd__cpu3
-                0x00007e14       0xa6 src/twi.o
-                0x00007e14                task_twi2_lcd__cpu3
+                0x00007e18       0xa6 src/twi.o
+                0x00007e18                task_twi2_lcd__cpu3
  .text.task_twi2_lcd__hygro
-                0x00007eba       0xaa src/twi.o
-                0x00007eba                task_twi2_lcd__hygro
+                0x00007ebe       0xaa src/twi.o
+                0x00007ebe                task_twi2_lcd__hygro
  .text.task_twi2_lcd__gyro_gfxmag
-                0x00007f64      0x3be src/twi.o
-                0x00007f64                task_twi2_lcd__gyro_gfxmag
+                0x00007f68      0x3be src/twi.o
+                0x00007f68                task_twi2_lcd__gyro_gfxmag
  .text.task_twi2_lcd__gyro_gfxaccel
-                0x00008322      0x1dc src/twi.o
-                0x00008322                task_twi2_lcd__gyro_gfxaccel
+                0x00008326      0x1dc src/twi.o
+                0x00008326                task_twi2_lcd__gyro_gfxaccel
  .text.task_twi2_lcd__gyro_gfxgyro
-                0x000084fe      0x4d2 src/twi.o
-                0x000084fe                task_twi2_lcd__gyro_gfxgyro
+                0x00008502      0x4d2 src/twi.o
+                0x00008502                task_twi2_lcd__gyro_gfxgyro
  .text.task_twi2_lcd__gyro_beepvario
-                0x000089d0       0xa6 src/twi.o
-                0x000089d0                task_twi2_lcd__gyro_beepvario
+                0x000089d4       0xa6 src/twi.o
+                0x000089d4                task_twi2_lcd__gyro_beepvario
  .text.task_twi2_lcd__gyro
-                0x00008a76        0x8 src/twi.o
-                0x00008a76                task_twi2_lcd__gyro
+                0x00008a7a        0x8 src/twi.o
+                0x00008a7a                task_twi2_lcd__gyro
  .text.task_twi2_lcd__baro
-                0x00008a7e       0xe0 src/twi.o
-                0x00008a7e                task_twi2_lcd__baro
+                0x00008a82       0xe0 src/twi.o
+                0x00008a82                task_twi2_lcd__baro
  .text.task_twi
-                0x00008b5e      0x2da src/twi.o
-                0x00008b5e                task_twi
+                0x00008b62      0x2da src/twi.o
+                0x00008b62                task_twi
  .text.board_init
-                0x00008e38        0x2 src/ASF/common/boards/user_board/init.o
-                0x00008e38                board_init
+                0x00008e3c        0x2 src/ASF/common/boards/user_board/init.o
+                0x00008e3c                board_init
  .text.cpu_irq_save
-                0x00008e3a       0x1a src/ASF/xmega/drivers/adc/adc.o
+                0x00008e3e       0x1a src/ASF/xmega/drivers/adc/adc.o
  .text.adc_set_callback
-                0x00008e54       0x3a src/ASF/xmega/drivers/adc/adc.o
-                0x00008e54                adc_set_callback
+                0x00008e58       0x3a src/ASF/xmega/drivers/adc/adc.o
+                0x00008e58                adc_set_callback
  .text.adc_enable_clock
-                0x00008e8e       0x3e src/ASF/xmega/drivers/adc/adc.o
-                0x00008e8e                adc_enable_clock
+                0x00008e92       0x3e src/ASF/xmega/drivers/adc/adc.o
+                0x00008e92                adc_enable_clock
  .text.adc_disable_clock
-                0x00008ecc       0x3a src/ASF/xmega/drivers/adc/adc.o
-                0x00008ecc                adc_disable_clock
+                0x00008ed0       0x3a src/ASF/xmega/drivers/adc/adc.o
+                0x00008ed0                adc_disable_clock
  .text.adc_enable
-                0x00008f06       0x38 src/ASF/xmega/drivers/adc/adc.o
-                0x00008f06                adc_enable
+                0x00008f0a       0x38 src/ASF/xmega/drivers/adc/adc.o
+                0x00008f0a                adc_enable
  .text.adc_disable
-                0x00008f3e       0x38 src/ASF/xmega/drivers/adc/adc.o
-                0x00008f3e                adc_disable
+                0x00008f42       0x38 src/ASF/xmega/drivers/adc/adc.o
+                0x00008f42                adc_disable
  .text.cpu_irq_save
-                0x00008f76       0x1a src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x00008f7a       0x1a src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
  .text.__vector_71
-                0x00008f90       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
-                0x00008f90                __vector_71
+                0x00008f94       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x00008f94                __vector_71
  .text.__vector_72
-                0x00008ff4       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
-                0x00008ff4                __vector_72
+                0x00008ff8       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x00008ff8                __vector_72
  .text.__vector_73
-                0x00009058       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
-                0x00009058                __vector_73
+                0x0000905c       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x0000905c                __vector_73
  .text.__vector_74
-                0x000090bc       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
-                0x000090bc                __vector_74
+                0x000090c0       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x000090c0                __vector_74
  .text.__vector_39
-                0x00009120       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
-                0x00009120                __vector_39
+                0x00009124       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x00009124                __vector_39
  .text.__vector_40
-                0x00009184       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
-                0x00009184                __vector_40
+                0x00009188       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x00009188                __vector_40
  .text.__vector_41
-                0x000091e8       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
-                0x000091e8                __vector_41
+                0x000091ec       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x000091ec                __vector_41
  .text.__vector_42
-                0x0000924c       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
-                0x0000924c                __vector_42
+                0x00009250       0x64 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x00009250                __vector_42
  .text.adc_write_configuration
-                0x000092b0       0xb8 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
-                0x000092b0                adc_write_configuration
+                0x000092b4       0xb8 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x000092b4                adc_write_configuration
  .text.adc_read_configuration
-                0x00009368       0x48 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
-                0x00009368                adc_read_configuration
+                0x0000936c       0x48 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x0000936c                adc_read_configuration
  .text.adcch_write_configuration
-                0x000093b0       0x70 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
-                0x000093b0                adcch_write_configuration
+                0x000093b4       0x70 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x000093b4                adcch_write_configuration
  .text.adcch_read_configuration
-                0x00009420       0x70 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
-                0x00009420                adcch_read_configuration
+                0x00009424       0x70 src/ASF/xmega/drivers/adc/xmega_aau/adc_aau.o
+                0x00009424                adcch_read_configuration
  .text.cpu_irq_save
-                0x00009490       0x1a src/ASF/xmega/drivers/dac/dac.o
+                0x00009494       0x1a src/ASF/xmega/drivers/dac/dac.o
  .text.dac_enable_clock
-                0x000094aa       0x20 src/ASF/xmega/drivers/dac/dac.o
+                0x000094ae       0x20 src/ASF/xmega/drivers/dac/dac.o
  .text.dac_disable_clock
-                0x000094ca       0x1e src/ASF/xmega/drivers/dac/dac.o
+                0x000094ce       0x1e src/ASF/xmega/drivers/dac/dac.o
  .text.dac_enable
-                0x000094e8       0x38 src/ASF/xmega/drivers/dac/dac.o
-                0x000094e8                dac_enable
+                0x000094ec       0x38 src/ASF/xmega/drivers/dac/dac.o
+                0x000094ec                dac_enable
  .text.dac_disable
-                0x00009520       0x38 src/ASF/xmega/drivers/dac/dac.o
-                0x00009520                dac_disable
+                0x00009524       0x38 src/ASF/xmega/drivers/dac/dac.o
+                0x00009524                dac_disable
  .text.dac_write_configuration
-                0x00009558       0x9e src/ASF/xmega/drivers/dac/dac.o
-                0x00009558                dac_write_configuration
+                0x0000955c       0x9e src/ASF/xmega/drivers/dac/dac.o
+                0x0000955c                dac_write_configuration
  .text.dac_read_configuration
-                0x000095f6       0x3c src/ASF/xmega/drivers/dac/dac.o
-                0x000095f6                dac_read_configuration
+                0x000095fa       0x3c src/ASF/xmega/drivers/dac/dac.o
+                0x000095fa                dac_read_configuration
  .text.cpu_irq_save
-                0x00009632       0x1a src/ASF/xmega/drivers/tc/tc.o
+                0x00009636       0x1a src/ASF/xmega/drivers/tc/tc.o
  .text.__vector_14
-                0x0000964c       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x0000964c                __vector_14
+                0x00009650       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009650                __vector_14
  .text.__vector_15
-                0x000096a6       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x000096a6                __vector_15
+                0x000096aa       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x000096aa                __vector_15
  .text.__vector_16
-                0x00009700       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009700                __vector_16
+                0x00009704       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009704                __vector_16
  .text.__vector_17
-                0x0000975a       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x0000975a                __vector_17
+                0x0000975e       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x0000975e                __vector_17
  .text.__vector_18
-                0x000097b4       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x000097b4                __vector_18
+                0x000097b8       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x000097b8                __vector_18
  .text.__vector_19
-                0x0000980e       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x0000980e                __vector_19
+                0x00009812       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009812                __vector_19
  .text.__vector_20
-                0x00009868       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009868                __vector_20
+                0x0000986c       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x0000986c                __vector_20
  .text.__vector_21
-                0x000098c2       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x000098c2                __vector_21
+                0x000098c6       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x000098c6                __vector_21
  .text.__vector_22
-                0x0000991c       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x0000991c                __vector_22
+                0x00009920       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009920                __vector_22
  .text.__vector_23
-                0x00009976       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009976                __vector_23
+                0x0000997a       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x0000997a                __vector_23
  .text.__vector_77
-                0x000099d0       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x000099d0                __vector_77
+                0x000099d4       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x000099d4                __vector_77
  .text.__vector_78
-                0x00009a2a       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009a2a                __vector_78
+                0x00009a2e       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009a2e                __vector_78
  .text.__vector_79
-                0x00009a84       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009a84                __vector_79
+                0x00009a88       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009a88                __vector_79
  .text.__vector_80
-                0x00009ade       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009ade                __vector_80
+                0x00009ae2       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009ae2                __vector_80
  .text.__vector_81
-                0x00009b38       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009b38                __vector_81
+                0x00009b3c       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009b3c                __vector_81
  .text.__vector_82
-                0x00009b92       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009b92                __vector_82
+                0x00009b96       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009b96                __vector_82
  .text.__vector_83
-                0x00009bec       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009bec                __vector_83
+                0x00009bf0       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009bf0                __vector_83
  .text.__vector_84
-                0x00009c46       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009c46                __vector_84
+                0x00009c4a       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009c4a                __vector_84
  .text.__vector_85
-                0x00009ca0       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009ca0                __vector_85
+                0x00009ca4       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009ca4                __vector_85
  .text.__vector_86
-                0x00009cfa       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009cfa                __vector_86
+                0x00009cfe       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009cfe                __vector_86
  .text.__vector_47
-                0x00009d54       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009d54                __vector_47
+                0x00009d58       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009d58                __vector_47
  .text.__vector_48
-                0x00009dae       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009dae                __vector_48
+                0x00009db2       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009db2                __vector_48
  .text.__vector_49
-                0x00009e08       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009e08                __vector_49
+                0x00009e0c       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009e0c                __vector_49
  .text.__vector_50
-                0x00009e62       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009e62                __vector_50
+                0x00009e66       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009e66                __vector_50
  .text.__vector_51
-                0x00009ebc       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009ebc                __vector_51
+                0x00009ec0       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009ec0                __vector_51
  .text.__vector_52
-                0x00009f16       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009f16                __vector_52
+                0x00009f1a       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009f1a                __vector_52
  .text.__vector_53
-                0x00009f70       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009f70                __vector_53
+                0x00009f74       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009f74                __vector_53
  .text.__vector_54
-                0x00009fca       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x00009fca                __vector_54
+                0x00009fce       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x00009fce                __vector_54
  .text.__vector_55
-                0x0000a024       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x0000a024                __vector_55
+                0x0000a028       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x0000a028                __vector_55
  .text.__vector_56
-                0x0000a07e       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x0000a07e                __vector_56
+                0x0000a082       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x0000a082                __vector_56
  .text.__vector_108
-                0x0000a0d8       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x0000a0d8                __vector_108
+                0x0000a0dc       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x0000a0dc                __vector_108
  .text.__vector_109
-                0x0000a132       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x0000a132                __vector_109
+                0x0000a136       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x0000a136                __vector_109
  .text.__vector_110
-                0x0000a18c       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x0000a18c                __vector_110
+                0x0000a190       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x0000a190                __vector_110
  .text.__vector_111
-                0x0000a1e6       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x0000a1e6                __vector_111
+                0x0000a1ea       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x0000a1ea                __vector_111
  .text.__vector_112
-                0x0000a240       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x0000a240                __vector_112
+                0x0000a244       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x0000a244                __vector_112
  .text.__vector_113
-                0x0000a29a       0x5a src/ASF/xmega/drivers/tc/tc.o
-                0x0000a29a                __vector_113
+                0x0000a29e       0x5a src/ASF/xmega/drivers/tc/tc.o
+                0x0000a29e                __vector_113
  .text.tc_enable
-                0x0000a2f4       0xaa src/ASF/xmega/drivers/tc/tc.o
-                0x0000a2f4                tc_enable
+                0x0000a2f8       0xaa src/ASF/xmega/drivers/tc/tc.o
+                0x0000a2f8                tc_enable
  .text.tc_set_overflow_interrupt_callback
-                0x0000a39e       0x7c src/ASF/xmega/drivers/tc/tc.o
-                0x0000a39e                tc_set_overflow_interrupt_callback
+                0x0000a3a2       0x7c src/ASF/xmega/drivers/tc/tc.o
+                0x0000a3a2                tc_set_overflow_interrupt_callback
  .text.__vector_46
-                0x0000a41a      0x170 src/ASF/xmega/drivers/twi/twim.o
-                0x0000a41a                __vector_46
+                0x0000a41e      0x170 src/ASF/xmega/drivers/twi/twim.o
+                0x0000a41e                __vector_46
  .text.__vector_13
-                0x0000a58a       0x4e src/ASF/xmega/drivers/twi/twim.o
-                0x0000a58a                __vector_13
+                0x0000a58e       0x4e src/ASF/xmega/drivers/twi/twim.o
+                0x0000a58e                __vector_13
  .text.twi_master_init
-                0x0000a5d8       0x2a src/ASF/xmega/drivers/twi/twim.o
-                0x0000a5d8                twi_master_init
+                0x0000a5dc       0x2a src/ASF/xmega/drivers/twi/twim.o
+                0x0000a5dc                twi_master_init
  .text.twi_master_transfer
-                0x0000a602       0xaa src/ASF/xmega/drivers/twi/twim.o
-                0x0000a602                twi_master_transfer
+                0x0000a606       0xaa src/ASF/xmega/drivers/twi/twim.o
+                0x0000a606                twi_master_transfer
  .text.cpu_irq_save
-                0x0000a6ac       0x1a src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000a6b0       0x1a src/ASF/xmega/drivers/usb/usb_device.o
  .text.sleepmgr_lock_mode
-                0x0000a6c6       0x24 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000a6ca       0x24 src/ASF/xmega/drivers/usb/usb_device.o
  .text.sleepmgr_unlock_mode
-                0x0000a6ea       0x24 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000a6ee       0x24 src/ASF/xmega/drivers/usb/usb_device.o
  .text.udd_sleep_mode
-                0x0000a70e       0x26 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000a712       0x26 src/ASF/xmega/drivers/usb/usb_device.o
  .text.udd_ep_get_ctrl
-                0x0000a734       0x2e src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000a738       0x2e src/ASF/xmega/drivers/usb/usb_device.o
  .text.udd_ctrl_init
-                0x0000a762       0x4a src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000a766       0x4a src/ASF/xmega/drivers/usb/usb_device.o
  .text.udd_ctrl_stall_data
-                0x0000a7ac       0x1c src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000a7b0       0x1c src/ASF/xmega/drivers/usb/usb_device.o
  .text.udd_ctrl_send_zlp_in
-                0x0000a7c8       0x1c src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000a7cc       0x1c src/ASF/xmega/drivers/usb/usb_device.o
  .text.udd_ctrl_endofrequest
-                0x0000a7e4       0x10 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000a7e8       0x10 src/ASF/xmega/drivers/usb/usb_device.o
  .text.udd_ep_get_job
-                0x0000a7f4       0x34 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000a7f8       0x34 src/ASF/xmega/drivers/usb/usb_device.o
  .text.udd_ep_trans_complet
-                0x0000a828      0x20c src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000a82c      0x20c src/ASF/xmega/drivers/usb/usb_device.o
  .text.udd_ctrl_in_sent
-                0x0000aa34       0xdc src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000aa38       0xdc src/ASF/xmega/drivers/usb/usb_device.o
  .text.udd_ctrl_interrupt_tc_setup
-                0x0000ab10       0xe6 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ab14       0xe6 src/ASF/xmega/drivers/usb/usb_device.o
  .text.udd_disable
-                0x0000abf6       0x28 src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000abf6                udd_disable
+                0x0000abfa       0x28 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000abfa                udd_disable
  .text.udd_attach
-                0x0000ac1e       0x46 src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000ac1e                udd_attach
+                0x0000ac22       0x46 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ac22                udd_attach
  .text.udd_enable
-                0x0000ac64       0xdc src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000ac64                udd_enable
+                0x0000ac68       0xdc src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ac68                udd_enable
  .text.udd_is_high_speed
-                0x0000ad40        0x4 src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000ad40                udd_is_high_speed
+                0x0000ad44        0x4 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ad44                udd_is_high_speed
  .text.udd_set_address
-                0x0000ad44        0x6 src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000ad44                udd_set_address
+                0x0000ad48        0x6 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ad48                udd_set_address
  .text.udd_getaddress
-                0x0000ad4a        0x6 src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000ad4a                udd_getaddress
+                0x0000ad4e        0x6 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ad4e                udd_getaddress
  .text.udd_get_frame_number
-                0x0000ad50        0xa src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000ad50                udd_get_frame_number
+                0x0000ad54        0xa src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ad54                udd_get_frame_number
  .text.udd_get_micro_frame_number
-                0x0000ad5a        0x6 src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000ad5a                udd_get_micro_frame_number
+                0x0000ad5e        0x6 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ad5e                udd_get_micro_frame_number
  .text.udd_set_setup_payload
-                0x0000ad60        0xe src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000ad60                udd_set_setup_payload
+                0x0000ad64        0xe src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ad64                udd_set_setup_payload
  .text.udd_ep_alloc
-                0x0000ad6e       0xa6 src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000ad6e                udd_ep_alloc
+                0x0000ad72       0xa6 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ad72                udd_ep_alloc
  .text.udd_ep_is_halted
-                0x0000ae14        0xe src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000ae14                udd_ep_is_halted
+                0x0000ae18        0xe src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ae18                udd_ep_is_halted
  .text.udd_ep_clear_halt
-                0x0000ae22       0x3a src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000ae22                udd_ep_clear_halt
+                0x0000ae26       0x3a src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ae26                udd_ep_clear_halt
  .text.udd_ep_run
-                0x0000ae5c       0xfc src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000ae5c                udd_ep_run
+                0x0000ae60       0xfc src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000ae60                udd_ep_run
  .text.udd_ep_abort
-                0x0000af58       0x60 src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000af58                udd_ep_abort
+                0x0000af5c       0x60 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000af5c                udd_ep_abort
  .text.udd_ep_free
-                0x0000afb8       0x12 src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000afb8                udd_ep_free
+                0x0000afbc       0x12 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000afbc                udd_ep_free
  .text.udd_ep_set_halt
-                0x0000afca       0x18 src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000afca                udd_ep_set_halt
+                0x0000afce       0x18 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000afce                udd_ep_set_halt
  .text.__vector_125
-                0x0000afe2      0x170 src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000afe2                __vector_125
+                0x0000afe6      0x170 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000afe6                __vector_125
  .text.__vector_126
-                0x0000b152      0x1b2 src/ASF/xmega/drivers/usb/usb_device.o
-                0x0000b152                __vector_126
+                0x0000b156      0x1b2 src/ASF/xmega/drivers/usb/usb_device.o
+                0x0000b156                __vector_126
  .text.pwm_set_frequency
-                0x0000b304       0xd8 src/ASF/xmega/services/pwm/pwm.o
-                0x0000b304                pwm_set_frequency
+                0x0000b308       0xd8 src/ASF/xmega/services/pwm/pwm.o
+                0x0000b308                pwm_set_frequency
  .text.pwm_init
-                0x0000b3dc      0x180 src/ASF/xmega/services/pwm/pwm.o
-                0x0000b3dc                pwm_init
+                0x0000b3e0      0x180 src/ASF/xmega/services/pwm/pwm.o
+                0x0000b3e0                pwm_init
  .text.pwm_start
-                0x0000b55c       0x8c src/ASF/xmega/services/pwm/pwm.o
-                0x0000b55c                pwm_start
+                0x0000b560       0x8c src/ASF/xmega/services/pwm/pwm.o
+                0x0000b560                pwm_start
  .text.cpu_irq_save
-                0x0000b5e8       0x1a src/main.o
+                0x0000b5ec       0x1a src/main.o
  .text.sleepmgr_enter_sleep
-                0x0000b602       0x48 src/main.o
+                0x0000b606       0x48 src/main.o
  .text.dma_channel_enable
-                0x0000b64a       0x22 src/main.o
+                0x0000b64e       0x22 src/main.o
  .text.yield_ms_cb
-                0x0000b66c        0x6 src/main.o
-                0x0000b66c                yield_ms_cb
+                0x0000b670        0x6 src/main.o
+                0x0000b670                yield_ms_cb
  .text.isr_tcc1_ovfl
-                0x0000b672       0x48 src/main.o
-                0x0000b672                isr_tcc1_ovfl
+                0x0000b676       0x48 src/main.o
+                0x0000b676                isr_tcc1_ovfl
  .text.isr_adc_a
-                0x0000b6ba      0x34e src/main.o
-                0x0000b6ba                isr_adc_a
+                0x0000b6be      0x34e src/main.o
+                0x0000b6be                isr_adc_a
  .text.task_dac
-                0x0000ba08      0x130 src/main.o
+                0x0000ba0c      0x130 src/main.o
  .text.task_adc
-                0x0000bb38      0x2b0 src/main.o
+                0x0000bb3c      0x2b0 src/main.o
  .text.nvm_read_production_signature_row
-                0x0000bde8        0xa src/main.o
+                0x0000bdec        0xa src/main.o
  .text.adcch_enable_interrupt.isra.10
-                0x0000bdf2        0xc src/main.o
+                0x0000bdf6        0xc src/main.o
  .text.isr_adc_b
-                0x0000bdfe       0x94 src/main.o
-                0x0000bdfe                isr_adc_b
+                0x0000be02       0x94 src/main.o
+                0x0000be02                isr_adc_b
  .text.calc_next_frame.constprop.28
-                0x0000be92       0xb4 src/main.o
+                0x0000be96       0xb4 src/main.o
  .text.isr_dma_dac_ch0_A
-                0x0000bf46        0xc src/main.o
+                0x0000bf4a        0xc src/main.o
  .text.isr_dma_dac_ch0_B
-                0x0000bf52        0xc src/main.o
+                0x0000bf56        0xc src/main.o
  .text.fifo_pull_uint32.constprop.29
-                0x0000bf5e       0x56 src/main.o
- .text.tc_init  0x0000bfb4       0xba src/main.o
+                0x0000bf62       0x56 src/main.o
+ .text.tc_init  0x0000bfb8       0xba src/main.o
  .text.dac_start
-                0x0000c06e       0x88 src/main.o
+                0x0000c072       0x88 src/main.o
  .text.tc_start
-                0x0000c0f6       0x5e src/main.o
+                0x0000c0fa       0x5e src/main.o
  .text.fifo_push_uint32.constprop.30
-                0x0000c154       0x56 src/main.o
+                0x0000c158       0x56 src/main.o
  .text.dac_init
-                0x0000c1aa       0xc6 src/main.o
+                0x0000c1ae       0xc6 src/main.o
  .text.adc_init
-                0x0000c270      0x260 src/main.o
+                0x0000c274      0x260 src/main.o
  .text.save_globals
-                0x0000c4d0      0x398 src/main.o
-                0x0000c4d0                save_globals
+                0x0000c4d4      0x398 src/main.o
+                0x0000c4d4                save_globals
  .text.myStringToVar
-                0x0000c868      0x136 src/main.o
-                0x0000c868                myStringToVar
+                0x0000c86c      0x136 src/main.o
+                0x0000c86c                myStringToVar
  .text.adc_app_enable
-                0x0000c99e       0x46 src/main.o
-                0x0000c99e                adc_app_enable
+                0x0000c9a2       0x46 src/main.o
+                0x0000c9a2                adc_app_enable
  .text.backlight_mode_pwm
-                0x0000c9e4       0x40 src/main.o
-                0x0000c9e4                backlight_mode_pwm
+                0x0000c9e8       0x40 src/main.o
+                0x0000c9e8                backlight_mode_pwm
  .text.bias_update
-                0x0000ca24        0xa src/main.o
-                0x0000ca24                bias_update
+                0x0000ca28        0xa src/main.o
+                0x0000ca28                bias_update
  .text.calibration_mode
-                0x0000ca2e      0x2f8 src/main.o
-                0x0000ca2e                calibration_mode
+                0x0000ca32      0x2f8 src/main.o
+                0x0000ca32                calibration_mode
  .text.dac_app_enable
-                0x0000cd26       0x8c src/main.o
-                0x0000cd26                dac_app_enable
+                0x0000cd2a       0x8c src/main.o
+                0x0000cd2a                dac_app_enable
  .text.errorBeep_enable
-                0x0000cdb2        0x8 src/main.o
-                0x0000cdb2                errorBeep_enable
+                0x0000cdb6        0x8 src/main.o
+                0x0000cdb6                errorBeep_enable
  .text.keyBeep_enable
-                0x0000cdba        0x8 src/main.o
-                0x0000cdba                keyBeep_enable
+                0x0000cdbe        0x8 src/main.o
+                0x0000cdbe                keyBeep_enable
  .text.pitchTone_mode
-                0x0000cdc2        0x8 src/main.o
-                0x0000cdc2                pitchTone_mode
+                0x0000cdc6        0x8 src/main.o
+                0x0000cdc6                pitchTone_mode
  .text.printStatusLines_bitfield
-                0x0000cdca       0x16 src/main.o
-                0x0000cdca                printStatusLines_bitfield
+                0x0000cdce       0x16 src/main.o
+                0x0000cdce                printStatusLines_bitfield
  .text.xoPwm_set
-                0x0000cde0       0xe4 src/main.o
-                0x0000cde0                xoPwm_set
+                0x0000cde4       0xe4 src/main.o
+                0x0000cde4                xoPwm_set
  .text.sched_getLock
-                0x0000cec4       0x26 src/main.o
-                0x0000cec4                sched_getLock
+                0x0000cec8       0x26 src/main.o
+                0x0000cec8                sched_getLock
  .text.sched_freeLock
-                0x0000ceea       0x14 src/main.o
-                0x0000ceea                sched_freeLock
+                0x0000ceee       0x14 src/main.o
+                0x0000ceee                sched_freeLock
  .text.sched_set_alarm
-                0x0000cefe       0x32 src/main.o
-                0x0000cefe                sched_set_alarm
+                0x0000cf02       0x32 src/main.o
+                0x0000cf02                sched_set_alarm
  .text.sched_push
-                0x0000cf30      0x37e src/main.o
-                0x0000cf30                sched_push
+                0x0000cf34      0x37e src/main.o
+                0x0000cf34                sched_push
  .text.dds_update
-                0x0000d2ae      0x1bc src/main.o
-                0x0000d2ae                dds_update
+                0x0000d2b2      0x1bc src/main.o
+                0x0000d2b2                dds_update
  .text.isr_tcc0_ovfl
-                0x0000d46a      0x3c8 src/main.o
-                0x0000d46a                isr_tcc0_ovfl
+                0x0000d46e      0x3c8 src/main.o
+                0x0000d46e                isr_tcc0_ovfl
  .text.sched_pop
-                0x0000d832      0x176 src/main.o
-                0x0000d832                sched_pop
+                0x0000d836      0x176 src/main.o
+                0x0000d836                sched_pop
  .text.isr_rtc_alarm
-                0x0000d9a8        0x4 src/main.o
-                0x0000d9a8                isr_rtc_alarm
+                0x0000d9ac        0x4 src/main.o
+                0x0000d9ac                isr_rtc_alarm
  .text.yield_ms
-                0x0000d9ac       0x4c src/main.o
-                0x0000d9ac                yield_ms
+                0x0000d9b0       0x4c src/main.o
+                0x0000d9b0                yield_ms
  .text.__vector_4
-                0x0000d9f8      0x1c4 src/main.o
-                0x0000d9f8                __vector_4
+                0x0000d9fc      0x1c4 src/main.o
+                0x0000d9fc                __vector_4
  .text.startup.main
-                0x0000dbbc      0x6f2 src/main.o
-                0x0000dbbc                main
+                0x0000dbc0      0x6b6 src/main.o
+                0x0000dbc0                main
  .text.cpu_irq_save
-                0x0000e2ae       0x1a src/ASF/common/services/clock/xmega/sysclk.o
+                0x0000e276       0x1a src/ASF/common/services/clock/xmega/sysclk.o
  .text.sysclk_init
-                0x0000e2c8       0xfc src/ASF/common/services/clock/xmega/sysclk.o
-                0x0000e2c8                sysclk_init
+                0x0000e290       0xfc src/ASF/common/services/clock/xmega/sysclk.o
+                0x0000e290                sysclk_init
  .text.sysclk_enable_module
-                0x0000e3c4       0x22 src/ASF/common/services/clock/xmega/sysclk.o
-                0x0000e3c4                sysclk_enable_module
+                0x0000e38c       0x22 src/ASF/common/services/clock/xmega/sysclk.o
+                0x0000e38c                sysclk_enable_module
  .text.sysclk_disable_module
-                0x0000e3e6       0x20 src/ASF/common/services/clock/xmega/sysclk.o
-                0x0000e3e6                sysclk_disable_module
+                0x0000e3ae       0x20 src/ASF/common/services/clock/xmega/sysclk.o
+                0x0000e3ae                sysclk_disable_module
  .text.sysclk_enable_usb
-                0x0000e406       0x6c src/ASF/common/services/clock/xmega/sysclk.o
-                0x0000e406                sysclk_enable_usb
+                0x0000e3ce       0x6c src/ASF/common/services/clock/xmega/sysclk.o
+                0x0000e3ce                sysclk_enable_usb
  .text.sysclk_disable_usb
-                0x0000e472       0x10 src/ASF/common/services/clock/xmega/sysclk.o
-                0x0000e472                sysclk_disable_usb
+                0x0000e43a       0x10 src/ASF/common/services/clock/xmega/sysclk.o
+                0x0000e43a                sysclk_disable_usb
  .text.cpu_irq_save
-                0x0000e482       0x1a src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e44a       0x1a src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .text.udi_cdc_comm_disable
-                0x0000e49c        0xc src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e49c                udi_cdc_comm_disable
+                0x0000e464        0xc src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e464                udi_cdc_comm_disable
  .text.udi_cdc_data_setup
-                0x0000e4a8        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e4a8                udi_cdc_data_setup
+                0x0000e470        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e470                udi_cdc_data_setup
  .text.udi_cdc_getsetting
-                0x0000e4ac        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e4ac                udi_cdc_getsetting
+                0x0000e474        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e474                udi_cdc_getsetting
  .text.udi_cdc_line_coding_received
-                0x0000e4b0        0xa src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e478        0xa src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .text.udi_cdc_data_disable
-                0x0000e4ba       0x18 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e4ba                udi_cdc_data_disable
+                0x0000e482       0x18 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e482                udi_cdc_data_disable
  .text.udi_cdc_comm_enable
-                0x0000e4d2       0x80 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e4d2                udi_cdc_comm_enable
+                0x0000e49a       0x80 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e49a                udi_cdc_comm_enable
  .text.udi_cdc_tx_send.isra.1
-                0x0000e552      0x142 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e51a      0x142 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .text.udi_cdc_data_sof_notify
-                0x0000e694        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e694                udi_cdc_data_sof_notify
+                0x0000e65c        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e65c                udi_cdc_data_sof_notify
  .text.udi_cdc_data_sent
-                0x0000e696       0x38 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e65e       0x38 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .text.udi_cdc_comm_setup
-                0x0000e6ce       0x90 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e6ce                udi_cdc_comm_setup
+                0x0000e696       0x90 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e696                udi_cdc_comm_setup
  .text.udi_cdc_multi_get_nb_received_data
-                0x0000e75e       0x26 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e75e                udi_cdc_multi_get_nb_received_data
+                0x0000e726       0x26 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e726                udi_cdc_multi_get_nb_received_data
  .text.udi_cdc_get_nb_received_data
-                0x0000e784        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e784                udi_cdc_get_nb_received_data
+                0x0000e74c        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e74c                udi_cdc_get_nb_received_data
  .text.udi_cdc_multi_is_rx_ready
-                0x0000e788        0xe src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e788                udi_cdc_multi_is_rx_ready
+                0x0000e750        0xe src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e750                udi_cdc_multi_is_rx_ready
  .text.udi_cdc_rx_start.isra.8
-                0x0000e796       0x94 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e75e       0x94 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .text.udi_cdc_data_enable
-                0x0000e82a       0x68 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e82a                udi_cdc_data_enable
+                0x0000e7f2       0x68 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e7f2                udi_cdc_data_enable
  .text.udi_cdc_data_received
-                0x0000e892       0x60 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e85a       0x60 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .text.udi_cdc_multi_getc
-                0x0000e8f2       0x94 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e8f2                udi_cdc_multi_getc
+                0x0000e8ba       0x94 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e8ba                udi_cdc_multi_getc
  .text.udi_cdc_getc
-                0x0000e986        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e986                udi_cdc_getc
+                0x0000e94e        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e94e                udi_cdc_getc
  .text.udi_cdc_read_no_polling
-                0x0000e98a       0xa6 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000e98a                udi_cdc_read_no_polling
+                0x0000e952       0xa6 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e952                udi_cdc_read_no_polling
  .text.udi_cdc_multi_get_free_tx_buffer
-                0x0000ea30       0x4c src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000ea30                udi_cdc_multi_get_free_tx_buffer
+                0x0000e9f8       0x4c src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000e9f8                udi_cdc_multi_get_free_tx_buffer
  .text.udi_cdc_multi_is_tx_ready
-                0x0000ea7c        0xe src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000ea7c                udi_cdc_multi_is_tx_ready
+                0x0000ea44        0xe src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000ea44                udi_cdc_multi_is_tx_ready
  .text.udi_cdc_is_tx_ready
-                0x0000ea8a        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000ea8a                udi_cdc_is_tx_ready
+                0x0000ea52        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000ea52                udi_cdc_is_tx_ready
  .text.udi_cdc_multi_putc
-                0x0000ea8e       0x90 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000ea8e                udi_cdc_multi_putc
+                0x0000ea56       0x90 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000ea56                udi_cdc_multi_putc
  .text.udi_cdc_putc
-                0x0000eb1e        0x6 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
-                0x0000eb1e                udi_cdc_putc
+                0x0000eae6        0x6 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0000eae6                udi_cdc_putc
  .text.udc_valid_address
-                0x0000eb24        0xa src/ASF/common/services/usb/udc/udc.o
+                0x0000eaec        0xa src/ASF/common/services/usb/udc/udc.o
  .text.udc_update_iface_desc
-                0x0000eb2e       0x66 src/ASF/common/services/usb/udc/udc.o
+                0x0000eaf6       0x66 src/ASF/common/services/usb/udc/udc.o
  .text.udc_next_desc_in_iface.constprop.3
-                0x0000eb94       0x40 src/ASF/common/services/usb/udc/udc.o
+                0x0000eb5c       0x40 src/ASF/common/services/usb/udc/udc.o
  .text.udc_iface_enable
-                0x0000ebd4       0x68 src/ASF/common/services/usb/udc/udc.o
+                0x0000eb9c       0x68 src/ASF/common/services/usb/udc/udc.o
  .text.udc_iface_disable
-                0x0000ec3c       0x80 src/ASF/common/services/usb/udc/udc.o
+                0x0000ec04       0x80 src/ASF/common/services/usb/udc/udc.o
  .text.udc_start
-                0x0000ecbc        0x4 src/ASF/common/services/usb/udc/udc.o
-                0x0000ecbc                udc_start
+                0x0000ec84        0x4 src/ASF/common/services/usb/udc/udc.o
+                0x0000ec84                udc_start
  .text.udc_reset
-                0x0000ecc0       0x48 src/ASF/common/services/usb/udc/udc.o
-                0x0000ecc0                udc_reset
+                0x0000ec88       0x48 src/ASF/common/services/usb/udc/udc.o
+                0x0000ec88                udc_reset
  .text.udc_stop
-                0x0000ed08        0x6 src/ASF/common/services/usb/udc/udc.o
-                0x0000ed08                udc_stop
+                0x0000ecd0        0x6 src/ASF/common/services/usb/udc/udc.o
+                0x0000ecd0                udc_stop
  .text.udc_sof_notify
-                0x0000ed0e       0x4a src/ASF/common/services/usb/udc/udc.o
-                0x0000ed0e                udc_sof_notify
+                0x0000ecd6       0x4a src/ASF/common/services/usb/udc/udc.o
+                0x0000ecd6                udc_sof_notify
  .text.udc_process_setup
-                0x0000ed58      0x520 src/ASF/common/services/usb/udc/udc.o
-                0x0000ed58                udc_process_setup
- .text._read    0x0000f278       0x32 src/ASF/common/utils/stdio/read.o
-                0x0000f278                _read
+                0x0000ed20      0x520 src/ASF/common/services/usb/udc/udc.o
+                0x0000ed20                udc_process_setup
+ .text._read    0x0000f240       0x32 src/ASF/common/utils/stdio/read.o
+                0x0000f240                _read
  .text.stdio_usb_getchar
-                0x0000f2aa       0x1e src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
-                0x0000f2aa                stdio_usb_getchar
+                0x0000f272       0x1e src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
+                0x0000f272                stdio_usb_getchar
  .text.stdio_usb_putchar
-                0x0000f2c8       0x2e src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
-                0x0000f2c8                stdio_usb_putchar
+                0x0000f290       0x2e src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
+                0x0000f290                stdio_usb_putchar
  .text.stdio_usb_enable
-                0x0000f2f6        0x8 src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
-                0x0000f2f6                stdio_usb_enable
+                0x0000f2be        0x8 src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
+                0x0000f2be                stdio_usb_enable
  .text.stdio_usb_disable
-                0x0000f2fe        0x6 src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
-                0x0000f2fe                stdio_usb_disable
+                0x0000f2c6        0x6 src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
+                0x0000f2c6                stdio_usb_disable
  .text.stdio_usb_init
-                0x0000f304       0x2e src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
-                0x0000f304                stdio_usb_init
- .text._write   0x0000f332       0x24 src/ASF/common/utils/stdio/write.o
-                0x0000f332                _write
+                0x0000f2cc       0x2e src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
+                0x0000f2cc                stdio_usb_init
+ .text._write   0x0000f2fa       0x24 src/ASF/common/utils/stdio/write.o
+                0x0000f2fa                _write
  .text.nvm_wait_until_ready
-                0x0000f356        0xa src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f31e        0xa src/ASF/xmega/drivers/nvm/nvm.o
  .text.nvm_issue_command
-                0x0000f360       0x20 src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f328       0x20 src/ASF/xmega/drivers/nvm/nvm.o
  .text.nvm_eeprom_read_buffer
-                0x0000f380       0x46 src/ASF/xmega/drivers/nvm/nvm.o
-                0x0000f380                nvm_eeprom_read_buffer
+                0x0000f348       0x46 src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f348                nvm_eeprom_read_buffer
  .text.nvm_eeprom_flush_buffer
-                0x0000f3c6       0x1a src/ASF/xmega/drivers/nvm/nvm.o
-                0x0000f3c6                nvm_eeprom_flush_buffer
+                0x0000f38e       0x1a src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f38e                nvm_eeprom_flush_buffer
  .text.nvm_eeprom_load_byte_to_buffer
-                0x0000f3e0       0x28 src/ASF/xmega/drivers/nvm/nvm.o
-                0x0000f3e0                nvm_eeprom_load_byte_to_buffer
+                0x0000f3a8       0x28 src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f3a8                nvm_eeprom_load_byte_to_buffer
  .text.nvm_eeprom_write_byte
-                0x0000f408       0x44 src/ASF/xmega/drivers/nvm/nvm.o
-                0x0000f408                nvm_eeprom_write_byte
+                0x0000f3d0       0x44 src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f3d0                nvm_eeprom_write_byte
  .text.nvm_eeprom_load_page_to_buffer
-                0x0000f44c       0x24 src/ASF/xmega/drivers/nvm/nvm.o
-                0x0000f44c                nvm_eeprom_load_page_to_buffer
+                0x0000f414       0x24 src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f414                nvm_eeprom_load_page_to_buffer
  .text.nvm_eeprom_atomic_write_page
-                0x0000f470       0x1e src/ASF/xmega/drivers/nvm/nvm.o
-                0x0000f470                nvm_eeprom_atomic_write_page
+                0x0000f438       0x1e src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f438                nvm_eeprom_atomic_write_page
  .text.nvm_eeprom_erase_and_write_buffer
-                0x0000f48e       0x78 src/ASF/xmega/drivers/nvm/nvm.o
-                0x0000f48e                nvm_eeprom_erase_and_write_buffer
+                0x0000f456       0x78 src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f456                nvm_eeprom_erase_and_write_buffer
  .text.nvm_flash_read_buffer
-                0x0000f506       0x4a src/ASF/xmega/drivers/nvm/nvm.o
-                0x0000f506                nvm_flash_read_buffer
+                0x0000f4ce       0x4a src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f4ce                nvm_flash_read_buffer
  .text.nvm_user_sig_read_buffer
-                0x0000f550       0x3e src/ASF/xmega/drivers/nvm/nvm.o
-                0x0000f550                nvm_user_sig_read_buffer
+                0x0000f518       0x3e src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f518                nvm_user_sig_read_buffer
  .text.nvm_user_sig_write_buffer
-                0x0000f58e      0x12e src/ASF/xmega/drivers/nvm/nvm.o
-                0x0000f58e                nvm_user_sig_write_buffer
+                0x0000f556      0x12e src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f556                nvm_user_sig_write_buffer
  .text.nvm_flash_erase_and_write_buffer
-                0x0000f6bc      0x144 src/ASF/xmega/drivers/nvm/nvm.o
-                0x0000f6bc                nvm_flash_erase_and_write_buffer
+                0x0000f684      0x144 src/ASF/xmega/drivers/nvm/nvm.o
+                0x0000f684                nvm_flash_erase_and_write_buffer
  .text.nvm_read_byte
-                0x0000f800       0x14 src/ASF/xmega/drivers/nvm/nvm_asm.o
-                0x0000f800                nvm_read_byte
+                0x0000f7c8       0x14 src/ASF/xmega/drivers/nvm/nvm_asm.o
+                0x0000f7c8                nvm_read_byte
  .text.ccp_write_io
-                0x0000f814        0xc src/ASF/xmega/drivers/cpu/ccp.o
-                0x0000f814                ccp_write_io
+                0x0000f7dc        0xc src/ASF/xmega/drivers/cpu/ccp.o
+                0x0000f7dc                ccp_write_io
  .text.avr-libc
-                0x0000f820      0x740 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libprintf_flt.a(vfprintf_flt.o)
-                0x0000f820                vfprintf
+                0x0000f7e8      0x740 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libprintf_flt.a(vfprintf_flt.o)
+                0x0000f7e8                vfprintf
  .text.avr-libc.fplib
-                0x0000ff60        0xa c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(addsf3.o)
-                0x0000ff60                __subsf3
-                0x0000ff62                __addsf3
+                0x0000ff28        0xa c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(addsf3.o)
+                0x0000ff28                __subsf3
+                0x0000ff2a                __addsf3
  .text.avr-libc.fplib
-                0x0000ff6a       0xc0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(addsf3x.o)
-                0x0000ff84                __addsf3x
+                0x0000ff32       0xc0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(addsf3x.o)
+                0x0000ff4c                __addsf3x
  .text.avr-libc.fplib
-                0x0001002a        0x8 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(cmpsf2.o)
-                0x0001002a                __nesf2
-                0x0001002a                __eqsf2
-                0x0001002a                __cmpsf2
-                0x0001002a                __ltsf2
-                0x0001002a                __lesf2
+                0x0000fff2        0x8 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(cmpsf2.o)
+                0x0000fff2                __nesf2
+                0x0000fff2                __eqsf2
+                0x0000fff2                __cmpsf2
+                0x0000fff2                __ltsf2
+                0x0000fff2                __lesf2
  .text.avr-libc.fplib
-                0x00010032        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(cos.o)
-                0x00010032                cos
+                0x0000fffa        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(cos.o)
+                0x0000fffa                cos
  .text.avr-libc.fplib
-                0x00010038        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(divsf3.o)
-                0x00010038                __divsf3
+                0x00010000        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(divsf3.o)
+                0x00010000                __divsf3
  .text.avr-libc.fplib
-                0x0001003c       0xcc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(divsf3x.o)
-                0x00010052                __divsf3x
-                0x00010056                __divsf3_pse
+                0x00010004       0xcc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(divsf3x.o)
+                0x0001001a                __divsf3x
+                0x0001001e                __divsf3_pse
  .text.avr-libc.fplib
-                0x00010108        0xa c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fixsfsi.o)
-                0x00010108                __fixsfsi
+                0x000100d0        0xa c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fixsfsi.o)
+                0x000100d0                __fixsfsi
  .text.avr-libc.fplib
-                0x00010112       0x58 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fixunssfsi.o)
-                0x00010112                __fixunssfsi
+                0x000100da       0x58 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fixunssfsi.o)
+                0x000100da                __fixunssfsi
  .text.avr-libc.fplib
-                0x0001016a       0x7a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(floatsisf.o)
-                0x0001016a                __floatunsisf
-                0x0001016e                __floatsisf
+                0x00010132       0x7a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(floatsisf.o)
+                0x00010132                __floatunsisf
+                0x00010136                __floatsisf
  .text.avr-libc.fplib
-                0x000101e4       0x48 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_cmp.o)
-                0x000101e4                __fp_cmp
+                0x000101ac       0x48 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_cmp.o)
+                0x000101ac                __fp_cmp
  .text.avr-libc.fplib
-                0x0001022c        0xc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_inf.o)
-                0x0001022c                __fp_inf
+                0x000101f4        0xc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_inf.o)
+                0x000101f4                __fp_inf
  .text.avr-libc.fplib
-                0x00010238        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_nan.o)
-                0x00010238                __fp_nan
+                0x00010200        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_nan.o)
+                0x00010200                __fp_nan
  .text.avr-libc.fplib
-                0x0001023e        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_pscA.o)
-                0x0001023e                __fp_pscA
+                0x00010206        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_pscA.o)
+                0x00010206                __fp_pscA
  .text.avr-libc.fplib
-                0x0001024c        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_pscB.o)
-                0x0001024c                __fp_pscB
+                0x00010214        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_pscB.o)
+                0x00010214                __fp_pscB
  .text.avr-libc.fplib
-                0x0001025a       0x50 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_rempio2.o)
-                0x0001025c                __fp_rempio2
+                0x00010222       0x50 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_rempio2.o)
+                0x00010224                __fp_rempio2
  .text.avr-libc.fplib
-                0x000102aa       0x22 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_round.o)
-                0x000102aa                __fp_round
+                0x00010272       0x22 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_round.o)
+                0x00010272                __fp_round
  .text.avr-libc.fplib
-                0x000102cc       0x22 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_sinus.o)
-                0x000102cc                __fp_sinus
+                0x00010294       0x22 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_sinus.o)
+                0x00010294                __fp_sinus
  .text.avr-libc.fplib
-                0x000102ee       0x44 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_split3.o)
-                0x000102ee                __fp_split3
-                0x000102fe                __fp_splitA
+                0x000102b6       0x44 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_split3.o)
+                0x000102b6                __fp_split3
+                0x000102c6                __fp_splitA
  .text.avr-libc.fplib
-                0x00010332        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_zero.o)
-                0x00010332                __fp_zero
-                0x00010334                __fp_szero
+                0x000102fa        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_zero.o)
+                0x000102fa                __fp_zero
+                0x000102fc                __fp_szero
  .text.avr-libc.fplib
-                0x00010340        0x8 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(gesf2.o)
-                0x00010340                __gesf2
-                0x00010340                __gtsf2
+                0x00010308        0x8 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(gesf2.o)
+                0x00010308                __gesf2
+                0x00010308                __gtsf2
  .text.avr-libc.fplib
-                0x00010348        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(mulsf3.o)
-                0x00010348                __mulsf3
+                0x00010310        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(mulsf3.o)
+                0x00010310                __mulsf3
  .text.avr-libc.fplib
-                0x0001034c       0xc2 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(mulsf3x.o)
-                0x00010360                __mulsf3x
-                0x00010364                __mulsf3_pse
+                0x00010314       0xc2 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(mulsf3x.o)
+                0x00010328                __mulsf3x
+                0x0001032c                __mulsf3_pse
  .text.avr-libc.fplib
-                0x0001040e       0x98 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(pow.o)
-                0x0001040e                pow
+                0x000103d6       0x98 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(pow.o)
+                0x000103d6                pow
  .text.avr-libc.fplib
-                0x000104a6        0xc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(sin.o)
-                0x000104a6                sin
+                0x0001046e        0xc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(sin.o)
+                0x0001046e                sin
  .text.avr-libc.fplib
-                0x000104b2       0x62 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(exp.o)
-                0x000104bc                exp
+                0x0001047a       0x62 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(exp.o)
+                0x00010484                exp
  .text.avr-libc.fplib
-                0x00010514       0x1c c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_mpack.o)
-                0x00010514                __fp_mpack
-                0x00010518                __fp_mpack_finite
+                0x000104dc       0x1c c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_mpack.o)
+                0x000104dc                __fp_mpack
+                0x000104e0                __fp_mpack_finite
  .text.avr-libc.fplib
-                0x00010530       0x4a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_powser.o)
-                0x00010530                __fp_powser
+                0x000104f8       0x4a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_powser.o)
+                0x000104f8                __fp_powser
  .text.avr-libc.fplib
-                0x0001057a       0x22 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_powsodd.o)
-                0x0001057a                __fp_powsodd
+                0x00010542       0x22 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(fp_powsodd.o)
+                0x00010542                __fp_powsodd
  .text.avr-libc.fplib
-                0x0001059c        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(inverse.o)
-                0x0001059c                inverse
+                0x00010564        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(inverse.o)
+                0x00010564                inverse
  .text.avr-libc.fplib
-                0x000105aa       0x6c c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(ldexp.o)
-                0x000105ae                ldexp
+                0x00010572       0x6c c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(ldexp.o)
+                0x00010576                ldexp
  .text.avr-libc.fplib
-                0x00010616       0x8a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(log.o)
-                0x00010620                log
+                0x000105de       0x8a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(log.o)
+                0x000105e8                log
  .text.avr-libc.fplib
-                0x000106a0       0x66 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(modf.o)
-                0x000106a0                modf
-                0x000106a0                modff
+                0x00010668       0x66 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libm.a(modf.o)
+                0x00010668                modf
+                0x00010668                modff
  .text.libgcc.mul
-                0x00010706       0x1e c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_mulsi3.o)
-                0x00010706                __mulsi3
+                0x000106ce       0x1e c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_mulsi3.o)
+                0x000106ce                __mulsi3
  .text.libgcc.div
-                0x00010724       0x28 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_udivmodhi4.o)
-                0x00010724                __udivmodhi4
+                0x000106ec       0x28 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_udivmodhi4.o)
+                0x000106ec                __udivmodhi4
  .text.libgcc.div
-                0x0001074c       0x26 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_divmodhi4.o)
-                0x0001074c                _div
-                0x0001074c                __divmodhi4
+                0x00010714       0x26 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_divmodhi4.o)
+                0x00010714                _div
+                0x00010714                __divmodhi4
  .text.libgcc.div
-                0x00010772       0x44 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_udivmodsi4.o)
-                0x00010772                __udivmodsi4
+                0x0001073a       0x44 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_udivmodsi4.o)
+                0x0001073a                __udivmodsi4
  .text.libgcc.div
-                0x000107b6       0x28 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_divmodsi4.o)
-                0x000107b6                __divmodsi4
+                0x0001077e       0x28 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_divmodsi4.o)
+                0x0001077e                __divmodsi4
  .text.libgcc.div
-                0x000107de       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_negsi2.o)
-                0x000107de                __negsi2
- .text.libgcc   0x000107ee       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_tablejump2.o)
-                0x000107ee                __tablejump2__
+                0x000107a6       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_negsi2.o)
+                0x000107a6                __negsi2
+ .text.libgcc   0x000107b6       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_tablejump2.o)
+                0x000107b6                __tablejump2__
  .text.libgcc.mul
-                0x000107fe        0xc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_mulhisi3.o)
-                0x000107fe                __mulhisi3
+                0x000107c6        0xc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_mulhisi3.o)
+                0x000107c6                __mulhisi3
  .text.libgcc.mul
-                0x0001080a       0x1e c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_umulhisi3.o)
-                0x0001080a                __umulhisi3
+                0x000107d2       0x1e c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_umulhisi3.o)
+                0x000107d2                __umulhisi3
  .text.libgcc.mul
-                0x00010828        0xc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_usmulhisi3.o)
-                0x00010828                __usmulhisi3
-                0x0001082a                __usmulhisi3_tail
+                0x000107f0        0xc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_usmulhisi3.o)
+                0x000107f0                __usmulhisi3
+                0x000107f2                __usmulhisi3_tail
  .text.libgcc.mul
-                0x00010834       0x14 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_muluhisi3.o)
-                0x00010834                __muluhisi3
+                0x000107fc       0x14 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_muluhisi3.o)
+                0x000107fc                __muluhisi3
  .text.libgcc.mul
-                0x00010848       0x92 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_muldi3.o)
-                0x00010848                __muldi3
+                0x00010810       0x92 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_muldi3.o)
+                0x00010810                __muldi3
  .text.libgcc.mul
-                0x000108da       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_muldi3_6.o)
-                0x000108da                __muldi3_6
+                0x000108a2       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_muldi3_6.o)
+                0x000108a2                __muldi3_6
  .text.libgcc.mul
-                0x000108ea       0x1a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_mulsidi3.o)
-                0x000108ea                __mulsidi3
+                0x000108b2       0x1a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_mulsidi3.o)
+                0x000108b2                __mulsidi3
  .text.libgcc.mul
-                0x00010904       0x4e c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_umulsidi3.o)
-                0x00010904                __umulsidi3
-                0x00010906                __umulsidi3_helper
+                0x000108cc       0x4e c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_umulsidi3.o)
+                0x000108cc                __umulsidi3
+                0x000108ce                __umulsidi3_helper
  .text.libgcc.div
-                0x00010952       0x56 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_divdi3.o)
-                0x00010952                __moddi3
-                0x00010956                __divdi3
-                0x00010958                __divdi3_moddi3
+                0x0001091a       0x56 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_divdi3.o)
+                0x0001091a                __moddi3
+                0x0001091e                __divdi3
+                0x00010920                __divdi3_moddi3
  .text.libgcc.div
-                0x000109a8       0x1a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_udivdi3.o)
-                0x000109a8                __umoddi3
-                0x000109ac                __udivdi3
-                0x000109ae                __udivdi3_umoddi3
+                0x00010970       0x1a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_udivdi3.o)
+                0x00010970                __umoddi3
+                0x00010974                __udivdi3
+                0x00010976                __udivdi3_umoddi3
  .text.libgcc.div
-                0x000109c2       0xa2 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_udivmod64.o)
-                0x000109c2                __udivmod64
- .text.libgcc   0x00010a64       0x20 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_negdi2.o)
-                0x00010a64                __negdi2
+                0x0001098a       0xa2 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_udivmod64.o)
+                0x0001098a                __udivmod64
+ .text.libgcc   0x00010a2c       0x20 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_negdi2.o)
+                0x00010a2c                __negdi2
  .text.libgcc.prologue
-                0x00010a84       0x32 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_prologue.o)
-                0x00010a84                __prologue_saves__
+                0x00010a4c       0x32 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_prologue.o)
+                0x00010a4c                __prologue_saves__
  .text.libgcc.prologue
-                0x00010ab6       0x30 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_epilogue.o)
-                0x00010ab6                __epilogue_restores__
+                0x00010a7e       0x30 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_epilogue.o)
+                0x00010a7e                __epilogue_restores__
  .text.libgcc.builtins
-                0x00010ae6       0x32 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_ashldi3.o)
-                0x00010ae6                __ashldi3
+                0x00010aae       0x32 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_ashldi3.o)
+                0x00010aae                __ashldi3
  .text.libgcc.builtins
-                0x00010b18       0x3c c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_ashrdi3.o)
-                0x00010b18                __ashrdi3
-                0x00010b1c                __lshrdi3
- .text.libgcc   0x00010b54       0x12 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_adddi3.o)
-                0x00010b54                __adddi3
- .text.libgcc   0x00010b66       0x18 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_adddi3_s8.o)
-                0x00010b66                __adddi3_s8
- .text.libgcc   0x00010b7e       0x12 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_subdi3.o)
-                0x00010b7e                __subdi3
- .text.libgcc   0x00010b90       0x18 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_cmpdi2_s8.o)
-                0x00010b90                __cmpdi2_s8
+                0x00010ae0       0x3c c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_ashrdi3.o)
+                0x00010ae0                __ashrdi3
+                0x00010ae4                __lshrdi3
+ .text.libgcc   0x00010b1c       0x12 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_adddi3.o)
+                0x00010b1c                __adddi3
+ .text.libgcc   0x00010b2e       0x18 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_adddi3_s8.o)
+                0x00010b2e                __adddi3_s8
+ .text.libgcc   0x00010b46       0x12 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_subdi3.o)
+                0x00010b46                __subdi3
+ .text.libgcc   0x00010b58       0x18 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_cmpdi2_s8.o)
+                0x00010b58                __cmpdi2_s8
  .text.avr-libc
-                0x00010ba8        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(atof.o)
-                0x00010ba8                atof
+                0x00010b70        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(atof.o)
+                0x00010b70                atof
  .text.avr-libc
-                0x00010bae       0x3a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(atoi.o)
-                0x00010bae                atoi
+                0x00010b76       0x3a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(atoi.o)
+                0x00010b76                atoi
  .text.avr-libc
-                0x00010be8       0x4c c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(atol.o)
-                0x00010be8                atol
+                0x00010bb0       0x4c c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(atol.o)
+                0x00010bb0                atol
  .text.avr-libc
-                0x00010c34      0x1b0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(ftoa_engine.o)
-                0x00010c34                __ftoa_engine
+                0x00010bfc      0x1b0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(ftoa_engine.o)
+                0x00010bfc                __ftoa_engine
  .text.avr-libc
-                0x00010de4       0x30 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strncasecmp_P.o)
-                0x00010de4                strncasecmp_P
+                0x00010dac       0x30 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strncasecmp_P.o)
+                0x00010dac                strncasecmp_P
  .text.avr-libc
-                0x00010e14       0x1c c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strncmp_P.o)
-                0x00010e14                strncmp_P
+                0x00010ddc       0x1c c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strncmp_P.o)
+                0x00010ddc                strncmp_P
  .text.avr-libc
-                0x00010e30       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strnlen_P.o)
-                0x00010e30                strnlen_P
+                0x00010df8       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strnlen_P.o)
+                0x00010df8                strnlen_P
  .text.avr-libc
-                0x00010e46       0x34 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strstr_P.o)
-                0x00010e46                strstr_P
+                0x00010e0e       0x34 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strstr_P.o)
+                0x00010e0e                strstr_P
  .text.avr-libc
-                0x00010e7a       0x1a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(memchr.o)
-                0x00010e7a                memchr
+                0x00010e42       0x1a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(memchr.o)
+                0x00010e42                memchr
  .text.avr-libc
-                0x00010e94       0x12 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(memcpy.o)
-                0x00010e94                memcpy
+                0x00010e5c       0x12 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(memcpy.o)
+                0x00010e5c                memcpy
  .text.avr-libc
-                0x00010ea6       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strchr.o)
-                0x00010ea6                strchr
+                0x00010e6e       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strchr.o)
+                0x00010e6e                strchr
  .text.avr-libc
-                0x00010ebc       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strnlen.o)
-                0x00010ebc                strnlen
+                0x00010e84       0x16 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strnlen.o)
+                0x00010e84                strnlen
  .text.avr-libc
-                0x00010ed2       0x2a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(mulsi10.o)
-                0x00010ed2                __mulsi_const_10
+                0x00010e9a       0x2a c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(mulsi10.o)
+                0x00010e9a                __mulsi_const_10
  .text.avr-libc
-                0x00010efc       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(mul10.o)
-                0x00010efc                __mulhi_const_10
+                0x00010ec4       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(mul10.o)
+                0x00010ec4                __mulhi_const_10
  .text.avr-libc
-                0x00010f0c       0x94 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(fdevopen.o)
-                0x00010f0c                fdevopen
+                0x00010ed4       0x94 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(fdevopen.o)
+                0x00010ed4                fdevopen
  .text.avr-libc
-                0x00010fa0       0x78 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(fputc.o)
-                0x00010fa0                fputc
+                0x00010f68       0x78 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(fputc.o)
+                0x00010f68                fputc
  .text.avr-libc
-                0x00011018       0x6e c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(snprintf_p.o)
-                0x00011018                snprintf_P
+                0x00010fe0       0x6e c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(snprintf_p.o)
+                0x00010fe0                snprintf_P
  .text.avr-libc
-                0x00011086       0x52 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(sprintf_p.o)
-                0x00011086                sprintf_P
+                0x0001104e       0x52 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(sprintf_p.o)
+                0x0001104e                sprintf_P
  .text.avr-libc
-                0x000110d8       0xbc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(ultoa_invert.o)
-                0x000110d8                __ultoa_invert
+                0x000110a0       0xbc c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(ultoa_invert.o)
+                0x000110a0                __ultoa_invert
  .text.avr-libc
-                0x00011194       0x34 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(calloc.o)
-                0x00011194                calloc
+                0x0001115c       0x34 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(calloc.o)
+                0x0001115c                calloc
  .text.avr-libc
-                0x000111c8      0x242 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(malloc.o)
-                0x000111c8                malloc
-                0x000112f8                free
+                0x00011190      0x242 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(malloc.o)
+                0x00011190                malloc
+                0x000112c0                free
  .text.avr-libc
-                0x0001140a      0x2ae c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strtod.o)
-                0x0001140a                strtod
+                0x000113d2      0x2ae c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(strtod.o)
+                0x000113d2                strtod
  .text.avr-libc
-                0x000116b8       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(isspace.o)
-                0x000116b8                isspace
+                0x00011680       0x10 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(isspace.o)
+                0x00011680                isspace
  .text.avr-libc
-                0x000116c8        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(memset.o)
-                0x000116c8                memset
+                0x00011690        0xe c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(memset.o)
+                0x00011690                memset
  .text.avr-libc
-                0x000116d6        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(cty_isfalse.o)
-                0x000116d6                __ctype_isfalse
-                0x000116da                __ctype_istrue
-                0x000116dc                . = ALIGN (0x2)
+                0x0001169e        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(cty_isfalse.o)
+                0x0001169e                __ctype_isfalse
+                0x000116a2                __ctype_istrue
+                0x000116a4                . = ALIGN (0x2)
  *(.fini9)
- .fini9         0x000116dc        0x0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_exit.o)
-                0x000116dc                _exit
-                0x000116dc                exit
+ .fini9         0x000116a4        0x0 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_exit.o)
+                0x000116a4                _exit
+                0x000116a4                exit
  *(.fini9)
  *(.fini8)
  *(.fini8)
@@ -2967,16 +2967,16 @@ END GROUP
  *(.fini1)
  *(.fini1)
  *(.fini0)
- .fini0         0x000116dc        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_exit.o)
+ .fini0         0x000116a4        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/avrxmega6\libgcc.a(_exit.o)
  *(.fini0)
-                0x000116e0                _etext = .
+                0x000116a8                _etext = .
 
-.BOOT           0x000116e0       0x44
- .BOOT          0x000116e0       0x44 src/ASF/xmega/drivers/nvm/nvm_asm.o
-                0x000116e0                nvm_common_spm
-                0x000116fe                nvm_flash_load_word_to_buffer
+.BOOT           0x000116a8       0x44
+ .BOOT          0x000116a8       0x44 src/ASF/xmega/drivers/nvm/nvm_asm.o
+                0x000116a8                nvm_common_spm
+                0x000116c6                nvm_flash_load_word_to_buffer
 
-.data           0x00802000      0x1ba load address 0x00011724
+.data           0x00802000      0x1ba load address 0x000116ec
                 0x00802000                PROVIDE (__data_start, .)
  *(.data)
  .data          0x00802000        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(malloc.o)
@@ -2984,9 +2984,9 @@ END GROUP
                 0x00802002                __malloc_heap_start
                 0x00802004                __malloc_margin
  *(.data*)
- .data.s_twi1_baro_p_100.8401
+ .data.s_twi1_baro_p_100.8402
                 0x00802006        0x4 src/twi.o
- .data.s_step.8108
+ .data.s_step.8109
                 0x0080200a        0x1 src/twi.o
  .data.dds1_reg
                 0x0080200b        0x4 src/main.o
@@ -3061,93 +3061,93 @@ END GROUP
                 0x008021ba                _edata = .
                 0x008021ba                PROVIDE (__data_end, .)
 
-.bss            0x008021ba      0xcff
+.bss            0x008021ba      0xd1f
                 0x008021ba                PROVIDE (__bss_start, .)
  *(.bss)
  *(.bss*)
- .bss.usb_last.7967
+ .bss.usb_last.7968
                 0x008021ba        0x4 src/usb.o
- .bss.s_again.7932
+ .bss.s_again.7933
                 0x008021be        0x1 src/interpreter.o
  .bss.s_rx_cmdLine_idx
                 0x008021bf        0x1 src/interpreter.o
  .bss.s_rx_cmdLine_buf
                 0x008021c0      0x100 src/interpreter.o
- .bss.s_lcd_entry_state.8420
+ .bss.s_lcd_entry_state.8421
                 0x008022c0        0x1 src/twi.o
- .bss.s_twi1_baro_p_100.8413
+ .bss.s_twi1_baro_p_100.8414
                 0x008022c1        0x4 src/twi.o
- .bss.s_twi1_baro_temp_100.8412
+ .bss.s_twi1_baro_temp_100.8413
                 0x008022c5        0x4 src/twi.o
- .bss.s_rads_z.8386
+ .bss.s_rads_z.8387
                 0x008022c9        0x4 src/twi.o
- .bss.s_rads_y.8385
+ .bss.s_rads_y.8386
                 0x008022cd        0x4 src/twi.o
- .bss.s_rads_x.8384
+ .bss.s_rads_x.8385
                 0x008022d1        0x4 src/twi.o
- .bss.s_twi1_gyro_1_gyro_z_mdps.8389
+ .bss.s_twi1_gyro_1_gyro_z_mdps.8390
                 0x008022d5        0x4 src/twi.o
- .bss.s_twi1_gyro_1_gyro_y_mdps.8388
+ .bss.s_twi1_gyro_1_gyro_y_mdps.8389
                 0x008022d9        0x4 src/twi.o
- .bss.s_twi1_gyro_1_gyro_x_mdps.8387
+ .bss.s_twi1_gyro_1_gyro_x_mdps.8388
                 0x008022dd        0x4 src/twi.o
- .bss.s_p3x.8362
+ .bss.s_p3x.8363
                 0x008022e1        0x1 src/twi.o
- .bss.s_p3y.8363
+ .bss.s_p3y.8364
                 0x008022e2        0x1 src/twi.o
- .bss.s_p2x.8360
+ .bss.s_p2x.8361
                 0x008022e3        0x1 src/twi.o
- .bss.s_p2y.8361
+ .bss.s_p2y.8362
                 0x008022e4        0x1 src/twi.o
- .bss.s_p1x.8358
+ .bss.s_p1x.8359
                 0x008022e5        0x1 src/twi.o
- .bss.s_p1y.8359
+ .bss.s_p1y.8360
                 0x008022e6        0x1 src/twi.o
- .bss.s_twi1_gyro_1_accel_z_mg.8357
+ .bss.s_twi1_gyro_1_accel_z_mg.8358
                 0x008022e7        0x2 src/twi.o
- .bss.s_twi1_gyro_1_accel_y_mg.8356
+ .bss.s_twi1_gyro_1_accel_y_mg.8357
                 0x008022e9        0x2 src/twi.o
- .bss.s_twi1_gyro_1_accel_x_mg.8355
+ .bss.s_twi1_gyro_1_accel_x_mg.8356
                 0x008022eb        0x2 src/twi.o
- .bss.s_p3x.8334
+ .bss.s_p3x.8335
                 0x008022ed        0x1 src/twi.o
- .bss.s_p3y.8335
+ .bss.s_p3y.8336
                 0x008022ee        0x1 src/twi.o
- .bss.s_p2x.8332
+ .bss.s_p2x.8333
                 0x008022ef        0x1 src/twi.o
- .bss.s_p2y.8333
+ .bss.s_p2y.8334
                 0x008022f0        0x1 src/twi.o
- .bss.s_p1x.8330
+ .bss.s_p1x.8331
                 0x008022f1        0x1 src/twi.o
- .bss.s_p1y.8331
+ .bss.s_p1y.8332
                 0x008022f2        0x1 src/twi.o
- .bss.s_length.8329
+ .bss.s_length.8330
                 0x008022f3        0x4 src/twi.o
- .bss.s_twi1_gyro_2_mag_z_nT.8328
+ .bss.s_twi1_gyro_2_mag_z_nT.8329
                 0x008022f7        0x4 src/twi.o
- .bss.s_twi1_gyro_2_mag_y_nT.8327
+ .bss.s_twi1_gyro_2_mag_y_nT.8328
                 0x008022fb        0x4 src/twi.o
- .bss.s_twi1_gyro_2_mag_x_nT.8326
+ .bss.s_twi1_gyro_2_mag_x_nT.8327
                 0x008022ff        0x4 src/twi.o
- .bss.s_twi1_hygro_RH_100.8315
+ .bss.s_twi1_hygro_RH_100.8316
                 0x00802303        0x2 src/twi.o
- .bss.s_twi1_hygro_T_100.8314
+ .bss.s_twi1_hygro_T_100.8315
                 0x00802305        0x2 src/twi.o
- .bss.s_adc_io_adc5_volt_1000.8307
+ .bss.s_adc_io_adc5_volt_1000.8308
                 0x00802307        0x2 src/twi.o
- .bss.s_adc_io_adc4_volt_1000.8306
+ .bss.s_adc_io_adc4_volt_1000.8307
                 0x00802309        0x2 src/twi.o
- .bss.s_adc_vctcxo_volt_1000.8299
+ .bss.s_adc_vctcxo_volt_1000.8300
                 0x0080230b        0x2 src/twi.o
- .bss.s_adc_vbat_volt_1000.8298
+ .bss.s_adc_vbat_volt_1000.8299
                 0x0080230d        0x2 src/twi.o
- .bss.s_adc_5v0_volt_1000.8291
+ .bss.s_adc_5v0_volt_1000.8292
                 0x0080230f        0x2 src/twi.o
- .bss.s_adc_temp_deg_100.8290
+ .bss.s_adc_temp_deg_100.8291
                 0x00802311        0x2 src/twi.o
- .bss.s_twi1_baro_d2.8110
+ .bss.s_twi1_baro_d2.8111
                 0x00802313        0x4 src/twi.o
- .bss.s_twi1_baro_d1.8109
+ .bss.s_twi1_baro_d1.8110
                 0x00802317        0x4 src/twi.o
  .bss.adcb_enable_count
                 0x0080231b        0x1 src/ASF/xmega/drivers/adc/adc.o
@@ -3248,532 +3248,539 @@ END GROUP
                 0x0080249c        0x1 src/ASF/xmega/drivers/usb/usb_device.o
  .bss.s_xo_mode_pwm_val_frac.8292
                 0x0080249d        0x2 src/main.o
+ .bss.s_diff_ary.8293
+                0x0080249f       0x20 src/main.o
+ .bss.s_diff_ary_idx.8294
+                0x008024bf        0x1 src/main.o
  .bss.adc_last.8272
-                0x0080249f        0x4 src/main.o
+                0x008024c0        0x4 src/main.o
  .bss.last_500ms.8190
-                0x008024a3        0x4 src/main.o
+                0x008024c4        0x4 src/main.o
  .bss.last_100ms.8189
-                0x008024a7        0x4 src/main.o
+                0x008024c8        0x4 src/main.o
  .bss.s_dds1_freq_mHz.8262
-                0x008024ab        0x4 src/main.o
+                0x008024cc        0x4 src/main.o
  .bss.s_dds0_freq_mHz.8261
-                0x008024af        0x4 src/main.o
+                0x008024d0        0x4 src/main.o
  .bss.dac_io_dac0_buf
-                0x008024b3       0x40 src/main.o
- .bss.dds1_inc  0x008024f3        0x4 src/main.o
- .bss.dds0_reg  0x008024f7        0x4 src/main.o
- .bss.dds0_inc  0x008024fb        0x4 src/main.o
+                0x008024d4       0x40 src/main.o
+ .bss.dds1_inc  0x00802514        0x4 src/main.o
+ .bss.dds0_reg  0x00802518        0x4 src/main.o
+ .bss.dds0_inc  0x0080251c        0x4 src/main.o
  .bss.dmach_dma1_conf
-                0x008024ff        0xb src/main.o
+                0x00802520        0xb src/main.o
  .bss.dmach_dma0_conf
-                0x0080250a        0xb src/main.o
- .bss.dac_conf  0x00802515        0x4 src/main.o
+                0x0080252b        0xb src/main.o
+ .bss.dac_conf  0x00802536        0x4 src/main.o
  .bss.g_twi2_m_data
-                0x00802519        0x8 src/main.o
-                0x00802519                g_twi2_m_data
+                0x0080253a        0x8 src/main.o
+                0x0080253a                g_twi2_m_data
  .bss.g_twi1_m_data
-                0x00802521        0x8 src/main.o
-                0x00802521                g_twi1_m_data
+                0x00802542        0x8 src/main.o
+                0x00802542                g_twi1_m_data
  .bss.g_prepare_buf
-                0x00802529       0x40 src/main.o
-                0x00802529                g_prepare_buf
+                0x0080254a       0x40 src/main.o
+                0x0080254a                g_prepare_buf
  .bss.g_sched_sort
-                0x00802569       0x20 src/main.o
-                0x00802569                g_sched_sort
+                0x0080258a       0x20 src/main.o
+                0x0080258a                g_sched_sort
  .bss.g_sched_data
-                0x00802589       0xe0 src/main.o
-                0x00802589                g_sched_data
+                0x008025aa       0xe0 src/main.o
+                0x008025aa                g_sched_data
  .bss.g_sched_pop_again
-                0x00802669        0x1 src/main.o
-                0x00802669                g_sched_pop_again
+                0x0080268a        0x1 src/main.o
+                0x0080268a                g_sched_pop_again
  .bss.g_sched_yield
-                0x0080266a        0x1 src/main.o
-                0x0080266a                g_sched_yield
+                0x0080268b        0x1 src/main.o
+                0x0080268b                g_sched_yield
  .bss.g_twi1_lock
-                0x0080266b        0x1 src/main.o
-                0x0080266b                g_twi1_lock
+                0x0080268c        0x1 src/main.o
+                0x0080268c                g_twi1_lock
  .bss.g_interpreter_lock
-                0x0080266c        0x1 src/main.o
-                0x0080266c                g_interpreter_lock
+                0x0080268d        0x1 src/main.o
+                0x0080268d                g_interpreter_lock
  .bss.g_sched_lock
-                0x0080266d        0x1 src/main.o
-                0x0080266d                g_sched_lock
+                0x0080268e        0x1 src/main.o
+                0x0080268e                g_sched_lock
  .bss.g_pwm_ctr_pll_cfg
-                0x0080266e        0x7 src/main.o
-                0x0080266e                g_pwm_ctr_pll_cfg
+                0x0080268f        0x7 src/main.o
+                0x0080268f                g_pwm_ctr_pll_cfg
  .bss.g_pwm_vctcxo_cfg
-                0x00802675        0x7 src/main.o
-                0x00802675                g_pwm_vctcxo_cfg
+                0x00802696        0x7 src/main.o
+                0x00802696                g_pwm_vctcxo_cfg
  .bss.g_adc_temp_deg_100
-                0x0080267c        0x2 src/main.o
-                0x0080267c                g_adc_temp_deg_100
+                0x0080269d        0x2 src/main.o
+                0x0080269d                g_adc_temp_deg_100
  .bss.g_adc_silence_volt_1000
-                0x0080267e        0x2 src/main.o
-                0x0080267e                g_adc_silence_volt_1000
+                0x0080269f        0x2 src/main.o
+                0x0080269f                g_adc_silence_volt_1000
  .bss.g_adc_io_adc5_volt_1000
-                0x00802680        0x2 src/main.o
-                0x00802680                g_adc_io_adc5_volt_1000
+                0x008026a1        0x2 src/main.o
+                0x008026a1                g_adc_io_adc5_volt_1000
  .bss.g_adc_io_adc4_volt_1000
-                0x00802682        0x2 src/main.o
-                0x00802682                g_adc_io_adc4_volt_1000
+                0x008026a3        0x2 src/main.o
+                0x008026a3                g_adc_io_adc4_volt_1000
  .bss.g_adc_vbat_volt_1000
-                0x00802684        0x2 src/main.o
-                0x00802684                g_adc_vbat_volt_1000
+                0x008026a5        0x2 src/main.o
+                0x008026a5                g_adc_vbat_volt_1000
  .bss.g_adc_5v0_volt_1000
-                0x00802686        0x2 src/main.o
-                0x00802686                g_adc_5v0_volt_1000
+                0x008026a7        0x2 src/main.o
+                0x008026a7                g_adc_5v0_volt_1000
  .bss.g_adc_vctcxo_volt_1000
-                0x00802688        0x2 src/main.o
-                0x00802688                g_adc_vctcxo_volt_1000
+                0x008026a9        0x2 src/main.o
+                0x008026a9                g_adc_vctcxo_volt_1000
  .bss.g_adc_temp_cnt
-                0x0080268a        0x2 src/main.o
-                0x0080268a                g_adc_temp_cnt
+                0x008026ab        0x2 src/main.o
+                0x008026ab                g_adc_temp_cnt
  .bss.g_adc_temp_sum
-                0x0080268c        0x4 src/main.o
-                0x0080268c                g_adc_temp_sum
+                0x008026ad        0x4 src/main.o
+                0x008026ad                g_adc_temp_sum
  .bss.g_adc_temp_cur
-                0x00802690        0x4 src/main.o
-                0x00802690                g_adc_temp_cur
+                0x008026b1        0x4 src/main.o
+                0x008026b1                g_adc_temp_cur
  .bss.g_adc_silence_cnt
-                0x00802694        0x2 src/main.o
-                0x00802694                g_adc_silence_cnt
+                0x008026b5        0x2 src/main.o
+                0x008026b5                g_adc_silence_cnt
  .bss.g_adc_silence_sum
-                0x00802696        0x4 src/main.o
-                0x00802696                g_adc_silence_sum
+                0x008026b7        0x4 src/main.o
+                0x008026b7                g_adc_silence_sum
  .bss.g_adc_silence_cur
-                0x0080269a        0x4 src/main.o
-                0x0080269a                g_adc_silence_cur
+                0x008026bb        0x4 src/main.o
+                0x008026bb                g_adc_silence_cur
  .bss.g_adc_io_adc5_cnt
-                0x0080269e        0x2 src/main.o
-                0x0080269e                g_adc_io_adc5_cnt
+                0x008026bf        0x2 src/main.o
+                0x008026bf                g_adc_io_adc5_cnt
  .bss.g_adc_io_adc5_sum
-                0x008026a0        0x4 src/main.o
-                0x008026a0                g_adc_io_adc5_sum
+                0x008026c1        0x4 src/main.o
+                0x008026c1                g_adc_io_adc5_sum
  .bss.g_adc_io_adc5_cur
-                0x008026a4        0x4 src/main.o
-                0x008026a4                g_adc_io_adc5_cur
+                0x008026c5        0x4 src/main.o
+                0x008026c5                g_adc_io_adc5_cur
  .bss.g_adc_io_adc4_cnt
-                0x008026a8        0x2 src/main.o
-                0x008026a8                g_adc_io_adc4_cnt
+                0x008026c9        0x2 src/main.o
+                0x008026c9                g_adc_io_adc4_cnt
  .bss.g_adc_io_adc4_sum
-                0x008026aa        0x4 src/main.o
-                0x008026aa                g_adc_io_adc4_sum
+                0x008026cb        0x4 src/main.o
+                0x008026cb                g_adc_io_adc4_sum
  .bss.g_adc_io_adc4_cur
-                0x008026ae        0x4 src/main.o
-                0x008026ae                g_adc_io_adc4_cur
+                0x008026cf        0x4 src/main.o
+                0x008026cf                g_adc_io_adc4_cur
  .bss.g_adc_vbat_cnt
-                0x008026b2        0x2 src/main.o
-                0x008026b2                g_adc_vbat_cnt
+                0x008026d3        0x2 src/main.o
+                0x008026d3                g_adc_vbat_cnt
  .bss.g_adc_vbat_sum
-                0x008026b4        0x4 src/main.o
-                0x008026b4                g_adc_vbat_sum
+                0x008026d5        0x4 src/main.o
+                0x008026d5                g_adc_vbat_sum
  .bss.g_adc_vbat_cur
-                0x008026b8        0x4 src/main.o
-                0x008026b8                g_adc_vbat_cur
+                0x008026d9        0x4 src/main.o
+                0x008026d9                g_adc_vbat_cur
  .bss.g_adc_5v0_cnt
-                0x008026bc        0x2 src/main.o
-                0x008026bc                g_adc_5v0_cnt
+                0x008026dd        0x2 src/main.o
+                0x008026dd                g_adc_5v0_cnt
  .bss.g_adc_5v0_sum
-                0x008026be        0x4 src/main.o
-                0x008026be                g_adc_5v0_sum
- .bss.g_adc_5v0_cur
-                0x008026c2        0x4 src/main.o
-                0x008026c2                g_adc_5v0_cur
- .bss.g_adc_vctcxo_cnt
-                0x008026c6        0x2 src/main.o
-                0x008026c6                g_adc_vctcxo_cnt
- .bss.g_adc_vctcxo_sum
-                0x008026c8        0x4 src/main.o
-                0x008026c8                g_adc_vctcxo_sum
- .bss.g_adc_vctcxo_cur
-                0x008026cc        0x4 src/main.o
-                0x008026cc                g_adc_vctcxo_cur
- .bss.g_adcch_temp_conf
-                0x008026d0        0x4 src/main.o
-                0x008026d0                g_adcch_temp_conf
- .bss.g_adc_b_conf
-                0x008026d4        0x7 src/main.o
-                0x008026d4                g_adc_b_conf
- .bss.g_adcch_silence_conf
-                0x008026db        0x4 src/main.o
-                0x008026db                g_adcch_silence_conf
- .bss.g_adcch_io_adc5_conf
                 0x008026df        0x4 src/main.o
-                0x008026df                g_adcch_io_adc5_conf
- .bss.g_adcch_io_adc4_conf
+                0x008026df                g_adc_5v0_sum
+ .bss.g_adc_5v0_cur
                 0x008026e3        0x4 src/main.o
-                0x008026e3                g_adcch_io_adc4_conf
+                0x008026e3                g_adc_5v0_cur
+ .bss.g_adc_vctcxo_cnt
+                0x008026e7        0x2 src/main.o
+                0x008026e7                g_adc_vctcxo_cnt
+ .bss.g_adc_vctcxo_sum
+                0x008026e9        0x4 src/main.o
+                0x008026e9                g_adc_vctcxo_sum
+ .bss.g_adc_vctcxo_cur
+                0x008026ed        0x4 src/main.o
+                0x008026ed                g_adc_vctcxo_cur
+ .bss.g_adcch_temp_conf
+                0x008026f1        0x4 src/main.o
+                0x008026f1                g_adcch_temp_conf
+ .bss.g_adc_b_conf
+                0x008026f5        0x7 src/main.o
+                0x008026f5                g_adc_b_conf
+ .bss.g_adcch_silence_conf
+                0x008026fc        0x4 src/main.o
+                0x008026fc                g_adcch_silence_conf
+ .bss.g_adcch_io_adc5_conf
+                0x00802700        0x4 src/main.o
+                0x00802700                g_adcch_io_adc5_conf
+ .bss.g_adcch_io_adc4_conf
+                0x00802704        0x4 src/main.o
+                0x00802704                g_adcch_io_adc4_conf
  .bss.g_adcch_vctcxo_5v0_vbat_conf
-                0x008026e7        0x4 src/main.o
-                0x008026e7                g_adcch_vctcxo_5v0_vbat_conf
+                0x00802708        0x4 src/main.o
+                0x00802708                g_adcch_vctcxo_5v0_vbat_conf
  .bss.g_adc_a_conf
-                0x008026eb        0x7 src/main.o
-                0x008026eb                g_adc_a_conf
+                0x0080270c        0x7 src/main.o
+                0x0080270c                g_adc_a_conf
  .bss.g_xo_mode_pwm
-                0x008026f2        0x4 src/main.o
-                0x008026f2                g_xo_mode_pwm
+                0x00802713        0x4 src/main.o
+                0x00802713                g_xo_mode_pwm
  .bss.g_twi2_lcd_repaint
-                0x008026f6        0x1 src/main.o
-                0x008026f6                g_twi2_lcd_repaint
+                0x00802717        0x1 src/main.o
+                0x00802717                g_twi2_lcd_repaint
  .bss.g_twi2_lcd_version
-                0x008026f7        0x1 src/main.o
-                0x008026f7                g_twi2_lcd_version
+                0x00802718        0x1 src/main.o
+                0x00802718                g_twi2_lcd_version
  .bss.g_twi1_hygro_RH_100
-                0x008026f8        0x2 src/main.o
-                0x008026f8                g_twi1_hygro_RH_100
+                0x00802719        0x2 src/main.o
+                0x00802719                g_twi1_hygro_RH_100
  .bss.g_twi1_hygro_T_100
-                0x008026fa        0x2 src/main.o
-                0x008026fa                g_twi1_hygro_T_100
+                0x0080271b        0x2 src/main.o
+                0x0080271b                g_twi1_hygro_T_100
  .bss.g_twi1_hygro_S_RH
-                0x008026fc        0x2 src/main.o
-                0x008026fc                g_twi1_hygro_S_RH
+                0x0080271d        0x2 src/main.o
+                0x0080271d                g_twi1_hygro_S_RH
  .bss.g_twi1_hygro_S_T
-                0x008026fe        0x2 src/main.o
-                0x008026fe                g_twi1_hygro_S_T
+                0x0080271f        0x2 src/main.o
+                0x0080271f                g_twi1_hygro_S_T
  .bss.g_twi1_hygro_status
-                0x00802700        0x1 src/main.o
-                0x00802700                g_twi1_hygro_status
+                0x00802721        0x1 src/main.o
+                0x00802721                g_twi1_hygro_status
  .bss.g_twi1_hygro_valid
-                0x00802701        0x1 src/main.o
-                0x00802701                g_twi1_hygro_valid
+                0x00802722        0x1 src/main.o
+                0x00802722                g_twi1_hygro_valid
  .bss.g_twi1_baro_p_100
-                0x00802702        0x4 src/main.o
-                0x00802702                g_twi1_baro_p_100
+                0x00802723        0x4 src/main.o
+                0x00802723                g_twi1_baro_p_100
  .bss.g_twi1_baro_temp_100
-                0x00802706        0x4 src/main.o
-                0x00802706                g_twi1_baro_temp_100
+                0x00802727        0x4 src/main.o
+                0x00802727                g_twi1_baro_temp_100
  .bss.g_twi1_baro_d2
-                0x0080270a        0x4 src/main.o
-                0x0080270a                g_twi1_baro_d2
+                0x0080272b        0x4 src/main.o
+                0x0080272b                g_twi1_baro_d2
  .bss.g_twi1_baro_d1
-                0x0080270e        0x4 src/main.o
-                0x0080270e                g_twi1_baro_d1
+                0x0080272f        0x4 src/main.o
+                0x0080272f                g_twi1_baro_d1
  .bss.g_twi1_baro_c
-                0x00802712       0x10 src/main.o
-                0x00802712                g_twi1_baro_c
+                0x00802733       0x10 src/main.o
+                0x00802733                g_twi1_baro_c
  .bss.g_twi1_baro_version
-                0x00802722        0x2 src/main.o
-                0x00802722                g_twi1_baro_version
+                0x00802743        0x2 src/main.o
+                0x00802743                g_twi1_baro_version
  .bss.g_twi1_baro_valid
-                0x00802724        0x1 src/main.o
-                0x00802724                g_twi1_baro_valid
- .bss.g_twi1_gyro_2_mag_z_nT
-                0x00802725        0x4 src/main.o
-                0x00802725                g_twi1_gyro_2_mag_z_nT
- .bss.g_twi1_gyro_2_mag_y_nT
-                0x00802729        0x4 src/main.o
-                0x00802729                g_twi1_gyro_2_mag_y_nT
- .bss.g_twi1_gyro_2_mag_x_nT
-                0x0080272d        0x4 src/main.o
-                0x0080272d                g_twi1_gyro_2_mag_x_nT
- .bss.g_twi1_gyro_2_mag_factz
-                0x00802731        0x2 src/main.o
-                0x00802731                g_twi1_gyro_2_mag_factz
- .bss.g_twi1_gyro_2_mag_facty
-                0x00802733        0x2 src/main.o
-                0x00802733                g_twi1_gyro_2_mag_facty
- .bss.g_twi1_gyro_2_mag_factx
-                0x00802735        0x2 src/main.o
-                0x00802735                g_twi1_gyro_2_mag_factx
- .bss.g_twi1_gyro_2_mag_z
-                0x00802737        0x2 src/main.o
-                0x00802737                g_twi1_gyro_2_mag_z
- .bss.g_twi1_gyro_2_mag_y
-                0x00802739        0x2 src/main.o
-                0x00802739                g_twi1_gyro_2_mag_y
- .bss.g_twi1_gyro_2_mag_x
-                0x0080273b        0x2 src/main.o
-                0x0080273b                g_twi1_gyro_2_mag_x
- .bss.g_twi1_gyro_2_ofsz
-                0x0080273d        0x2 src/main.o
-                0x0080273d                g_twi1_gyro_2_ofsz
- .bss.g_twi1_gyro_2_ofsy
-                0x0080273f        0x2 src/main.o
-                0x0080273f                g_twi1_gyro_2_ofsy
- .bss.g_twi1_gyro_2_ofsx
-                0x00802741        0x2 src/main.o
-                0x00802741                g_twi1_gyro_2_ofsx
- .bss.g_twi1_gyro_2_asaz
-                0x00802743        0x1 src/main.o
-                0x00802743                g_twi1_gyro_2_asaz
- .bss.g_twi1_gyro_2_asay
-                0x00802744        0x1 src/main.o
-                0x00802744                g_twi1_gyro_2_asay
- .bss.g_twi1_gyro_2_asax
                 0x00802745        0x1 src/main.o
-                0x00802745                g_twi1_gyro_2_asax
+                0x00802745                g_twi1_baro_valid
+ .bss.g_twi1_gyro_2_mag_z_nT
+                0x00802746        0x4 src/main.o
+                0x00802746                g_twi1_gyro_2_mag_z_nT
+ .bss.g_twi1_gyro_2_mag_y_nT
+                0x0080274a        0x4 src/main.o
+                0x0080274a                g_twi1_gyro_2_mag_y_nT
+ .bss.g_twi1_gyro_2_mag_x_nT
+                0x0080274e        0x4 src/main.o
+                0x0080274e                g_twi1_gyro_2_mag_x_nT
+ .bss.g_twi1_gyro_2_mag_factz
+                0x00802752        0x2 src/main.o
+                0x00802752                g_twi1_gyro_2_mag_factz
+ .bss.g_twi1_gyro_2_mag_facty
+                0x00802754        0x2 src/main.o
+                0x00802754                g_twi1_gyro_2_mag_facty
+ .bss.g_twi1_gyro_2_mag_factx
+                0x00802756        0x2 src/main.o
+                0x00802756                g_twi1_gyro_2_mag_factx
+ .bss.g_twi1_gyro_2_mag_z
+                0x00802758        0x2 src/main.o
+                0x00802758                g_twi1_gyro_2_mag_z
+ .bss.g_twi1_gyro_2_mag_y
+                0x0080275a        0x2 src/main.o
+                0x0080275a                g_twi1_gyro_2_mag_y
+ .bss.g_twi1_gyro_2_mag_x
+                0x0080275c        0x2 src/main.o
+                0x0080275c                g_twi1_gyro_2_mag_x
+ .bss.g_twi1_gyro_2_ofsz
+                0x0080275e        0x2 src/main.o
+                0x0080275e                g_twi1_gyro_2_ofsz
+ .bss.g_twi1_gyro_2_ofsy
+                0x00802760        0x2 src/main.o
+                0x00802760                g_twi1_gyro_2_ofsy
+ .bss.g_twi1_gyro_2_ofsx
+                0x00802762        0x2 src/main.o
+                0x00802762                g_twi1_gyro_2_ofsx
+ .bss.g_twi1_gyro_2_asaz
+                0x00802764        0x1 src/main.o
+                0x00802764                g_twi1_gyro_2_asaz
+ .bss.g_twi1_gyro_2_asay
+                0x00802765        0x1 src/main.o
+                0x00802765                g_twi1_gyro_2_asay
+ .bss.g_twi1_gyro_2_asax
+                0x00802766        0x1 src/main.o
+                0x00802766                g_twi1_gyro_2_asax
  .bss.g_twi1_gyro_2_version
-                0x00802746        0x1 src/main.o
-                0x00802746                g_twi1_gyro_2_version
+                0x00802767        0x1 src/main.o
+                0x00802767                g_twi1_gyro_2_version
  .bss.g_twi1_gyro_accel_offset_set__flag
-                0x00802747        0x1 src/main.o
-                0x00802747                g_twi1_gyro_accel_offset_set__flag
+                0x00802768        0x1 src/main.o
+                0x00802768                g_twi1_gyro_accel_offset_set__flag
  .bss.g_twi1_gyro_gyro_offset_set__flag
-                0x00802748        0x1 src/main.o
-                0x00802748                g_twi1_gyro_gyro_offset_set__flag
+                0x00802769        0x1 src/main.o
+                0x00802769                g_twi1_gyro_gyro_offset_set__flag
  .bss.g_twi1_gyro_1_gyro_z_mdps
-                0x00802749        0x4 src/main.o
-                0x00802749                g_twi1_gyro_1_gyro_z_mdps
+                0x0080276a        0x4 src/main.o
+                0x0080276a                g_twi1_gyro_1_gyro_z_mdps
  .bss.g_twi1_gyro_1_gyro_y_mdps
-                0x0080274d        0x4 src/main.o
-                0x0080274d                g_twi1_gyro_1_gyro_y_mdps
+                0x0080276e        0x4 src/main.o
+                0x0080276e                g_twi1_gyro_1_gyro_y_mdps
  .bss.g_twi1_gyro_1_gyro_x_mdps
-                0x00802751        0x4 src/main.o
-                0x00802751                g_twi1_gyro_1_gyro_x_mdps
+                0x00802772        0x4 src/main.o
+                0x00802772                g_twi1_gyro_1_gyro_x_mdps
  .bss.g_twi1_gyro_1_gyro_ofsz
-                0x00802755        0x2 src/main.o
-                0x00802755                g_twi1_gyro_1_gyro_ofsz
+                0x00802776        0x2 src/main.o
+                0x00802776                g_twi1_gyro_1_gyro_ofsz
  .bss.g_twi1_gyro_1_gyro_ofsy
-                0x00802757        0x2 src/main.o
-                0x00802757                g_twi1_gyro_1_gyro_ofsy
+                0x00802778        0x2 src/main.o
+                0x00802778                g_twi1_gyro_1_gyro_ofsy
  .bss.g_twi1_gyro_1_gyro_ofsx
-                0x00802759        0x2 src/main.o
-                0x00802759                g_twi1_gyro_1_gyro_ofsx
+                0x0080277a        0x2 src/main.o
+                0x0080277a                g_twi1_gyro_1_gyro_ofsx
  .bss.g_twi1_gyro_1_gyro_z
-                0x0080275b        0x2 src/main.o
-                0x0080275b                g_twi1_gyro_1_gyro_z
+                0x0080277c        0x2 src/main.o
+                0x0080277c                g_twi1_gyro_1_gyro_z
  .bss.g_twi1_gyro_1_gyro_y
-                0x0080275d        0x2 src/main.o
-                0x0080275d                g_twi1_gyro_1_gyro_y
+                0x0080277e        0x2 src/main.o
+                0x0080277e                g_twi1_gyro_1_gyro_y
  .bss.g_twi1_gyro_1_gyro_x
-                0x0080275f        0x2 src/main.o
-                0x0080275f                g_twi1_gyro_1_gyro_x
+                0x00802780        0x2 src/main.o
+                0x00802780                g_twi1_gyro_1_gyro_x
  .bss.g_twi1_gyro_1_accel_z_mg
-                0x00802761        0x2 src/main.o
-                0x00802761                g_twi1_gyro_1_accel_z_mg
+                0x00802782        0x2 src/main.o
+                0x00802782                g_twi1_gyro_1_accel_z_mg
  .bss.g_twi1_gyro_1_accel_y_mg
-                0x00802763        0x2 src/main.o
-                0x00802763                g_twi1_gyro_1_accel_y_mg
+                0x00802784        0x2 src/main.o
+                0x00802784                g_twi1_gyro_1_accel_y_mg
  .bss.g_twi1_gyro_1_accel_x_mg
-                0x00802765        0x2 src/main.o
-                0x00802765                g_twi1_gyro_1_accel_x_mg
+                0x00802786        0x2 src/main.o
+                0x00802786                g_twi1_gyro_1_accel_x_mg
  .bss.g_twi1_gyro_1_accel_factz
-                0x00802767        0x2 src/main.o
-                0x00802767                g_twi1_gyro_1_accel_factz
+                0x00802788        0x2 src/main.o
+                0x00802788                g_twi1_gyro_1_accel_factz
  .bss.g_twi1_gyro_1_accel_facty
-                0x00802769        0x2 src/main.o
-                0x00802769                g_twi1_gyro_1_accel_facty
+                0x0080278a        0x2 src/main.o
+                0x0080278a                g_twi1_gyro_1_accel_facty
  .bss.g_twi1_gyro_1_accel_factx
-                0x0080276b        0x2 src/main.o
-                0x0080276b                g_twi1_gyro_1_accel_factx
+                0x0080278c        0x2 src/main.o
+                0x0080278c                g_twi1_gyro_1_accel_factx
  .bss.g_twi1_gyro_1_accel_ofsz
-                0x0080276d        0x2 src/main.o
-                0x0080276d                g_twi1_gyro_1_accel_ofsz
+                0x0080278e        0x2 src/main.o
+                0x0080278e                g_twi1_gyro_1_accel_ofsz
  .bss.g_twi1_gyro_1_accel_ofsy
-                0x0080276f        0x2 src/main.o
-                0x0080276f                g_twi1_gyro_1_accel_ofsy
+                0x00802790        0x2 src/main.o
+                0x00802790                g_twi1_gyro_1_accel_ofsy
  .bss.g_twi1_gyro_1_accel_ofsx
-                0x00802771        0x2 src/main.o
-                0x00802771                g_twi1_gyro_1_accel_ofsx
+                0x00802792        0x2 src/main.o
+                0x00802792                g_twi1_gyro_1_accel_ofsx
  .bss.g_twi1_gyro_1_accel_z
-                0x00802773        0x2 src/main.o
-                0x00802773                g_twi1_gyro_1_accel_z
+                0x00802794        0x2 src/main.o
+                0x00802794                g_twi1_gyro_1_accel_z
  .bss.g_twi1_gyro_1_accel_y
-                0x00802775        0x2 src/main.o
-                0x00802775                g_twi1_gyro_1_accel_y
+                0x00802796        0x2 src/main.o
+                0x00802796                g_twi1_gyro_1_accel_y
  .bss.g_twi1_gyro_1_accel_x
-                0x00802777        0x2 src/main.o
-                0x00802777                g_twi1_gyro_1_accel_x
+                0x00802798        0x2 src/main.o
+                0x00802798                g_twi1_gyro_1_accel_x
  .bss.g_twi1_gyro_1_temp_deg_100
-                0x00802779        0x2 src/main.o
-                0x00802779                g_twi1_gyro_1_temp_deg_100
+                0x0080279a        0x2 src/main.o
+                0x0080279a                g_twi1_gyro_1_temp_deg_100
  .bss.g_twi1_gyro_1_temp_sens
-                0x0080277b        0x2 src/main.o
-                0x0080277b                g_twi1_gyro_1_temp_sens
+                0x0080279c        0x2 src/main.o
+                0x0080279c                g_twi1_gyro_1_temp_sens
  .bss.g_twi1_gyro_1_temp_RTofs
-                0x0080277d        0x2 src/main.o
-                0x0080277d                g_twi1_gyro_1_temp_RTofs
+                0x0080279e        0x2 src/main.o
+                0x0080279e                g_twi1_gyro_1_temp_RTofs
  .bss.g_twi1_gyro_1_temp
-                0x0080277f        0x2 src/main.o
-                0x0080277f                g_twi1_gyro_1_temp
+                0x008027a0        0x2 src/main.o
+                0x008027a0                g_twi1_gyro_1_temp
  .bss.g_twi1_gyro_1_version
-                0x00802781        0x1 src/main.o
-                0x00802781                g_twi1_gyro_1_version
+                0x008027a2        0x1 src/main.o
+                0x008027a2                g_twi1_gyro_1_version
  .bss.g_twi1_gyro_valid
-                0x00802782        0x1 src/main.o
-                0x00802782                g_twi1_gyro_valid
+                0x008027a3        0x1 src/main.o
+                0x008027a3                g_twi1_gyro_valid
  .bss.g_usart1_rx_buf
-                0x00802783      0x100 src/main.o
-                0x00802783                g_usart1_rx_buf
+                0x008027a4      0x100 src/main.o
+                0x008027a4                g_usart1_rx_buf
  .bss.g_usart1_rx_idx
-                0x00802883        0x2 src/main.o
-                0x00802883                g_usart1_rx_idx
+                0x008028a4        0x2 src/main.o
+                0x008028a4                g_usart1_rx_idx
  .bss.g_usart1_rx_ready
-                0x00802885        0x1 src/main.o
-                0x00802885                g_usart1_rx_ready
+                0x008028a6        0x1 src/main.o
+                0x008028a6                g_usart1_rx_ready
  .bss.g_usart1_options
-                0x00802886        0x7 src/main.o
-                0x00802886                g_usart1_options
+                0x008028a7        0x7 src/main.o
+                0x008028a7                g_usart1_options
  .bss.g_workmode
-                0x0080288d        0x1 src/main.o
-                0x0080288d                g_workmode
+                0x008028ae        0x1 src/main.o
+                0x008028ae                g_workmode
  .bss.g_usb_cdc_access_blocked
-                0x0080288e        0x1 src/main.o
-                0x0080288e                g_usb_cdc_access_blocked
+                0x008028af        0x1 src/main.o
+                0x008028af                g_usb_cdc_access_blocked
  .bss.g_usb_cdc_transfers_authorized
-                0x0080288f        0x1 src/main.o
-                0x0080288f                g_usb_cdc_transfers_authorized
+                0x008028b0        0x1 src/main.o
+                0x008028b0                g_usb_cdc_transfers_authorized
  .bss.g_usb_cdc_rx_received
-                0x00802890        0x1 src/main.o
-                0x00802890                g_usb_cdc_rx_received
+                0x008028b1        0x1 src/main.o
+                0x008028b1                g_usb_cdc_rx_received
  .bss.g_usb_cdc_printStatusLines_sim808
-                0x00802891        0x1 src/main.o
-                0x00802891                g_usb_cdc_printStatusLines_sim808
+                0x008028b2        0x1 src/main.o
+                0x008028b2                g_usb_cdc_printStatusLines_sim808
  .bss.g_usb_cdc_printStatusLines_atxmega
-                0x00802892        0x1 src/main.o
-                0x00802892                g_usb_cdc_printStatusLines_atxmega
+                0x008028b3        0x1 src/main.o
+                0x008028b3                g_usb_cdc_printStatusLines_atxmega
  .bss.g_usb_cdc_stdout_enabled
-                0x00802893        0x1 src/main.o
-                0x00802893                g_usb_cdc_stdout_enabled
+                0x008028b4        0x1 src/main.o
+                0x008028b4                g_usb_cdc_stdout_enabled
  .bss.g_1pps_led
-                0x00802894        0x1 src/main.o
-                0x00802894                g_1pps_led
+                0x008028b5        0x1 src/main.o
+                0x008028b5                g_1pps_led
  .bss.g_1pps_phased_cntr
-                0x00802895        0x1 src/main.o
-                0x00802895                g_1pps_phased_cntr
+                0x008028b6        0x1 src/main.o
+                0x008028b6                g_1pps_phased_cntr
  .bss.g_1pps_printusb_avail
-                0x00802896        0x1 src/main.o
-                0x00802896                g_1pps_printusb_avail
+                0x008028b7        0x1 src/main.o
+                0x008028b7                g_1pps_printusb_avail
  .bss.g_1pps_printtwi_avail
-                0x00802897        0x1 src/main.o
-                0x00802897                g_1pps_printtwi_avail
+                0x008028b8        0x1 src/main.o
+                0x008028b8                g_1pps_printtwi_avail
  .bss.g_1pps_deviation
-                0x00802898        0x4 src/main.o
-                0x00802898                g_1pps_deviation
+                0x008028b9        0x2 src/main.o
+                0x008028b9                g_1pps_deviation
  .bss.g_1pps_processed_outOfSync
-                0x0080289c        0x1 src/main.o
-                0x0080289c                g_1pps_processed_outOfSync
+                0x008028bb        0x1 src/main.o
+                0x008028bb                g_1pps_processed_outOfSync
  .bss.g_1pps_proceeded_avail
-                0x0080289d        0x1 src/main.o
-                0x0080289d                g_1pps_proceeded_avail
+                0x008028bc        0x1 src/main.o
+                0x008028bc                g_1pps_proceeded_avail
  .bss.g_1pps_processed_hi
-                0x0080289e        0x8 src/main.o
-                0x0080289e                g_1pps_processed_hi
+                0x008028bd        0x8 src/main.o
+                0x008028bd                g_1pps_processed_hi
  .bss.g_1pps_processed_lo
-                0x008028a6        0x2 src/main.o
-                0x008028a6                g_1pps_processed_lo
+                0x008028c5        0x2 src/main.o
+                0x008028c5                g_1pps_processed_lo
  .bss.g_1pps_last_adjust
-                0x008028a8        0x1 src/main.o
-                0x008028a8                g_1pps_last_adjust
+                0x008028c7        0x1 src/main.o
+                0x008028c7                g_1pps_last_adjust
  .bss.g_1pps_last_new
-                0x008028a9        0x1 src/main.o
-                0x008028a9                g_1pps_last_new
+                0x008028c8        0x1 src/main.o
+                0x008028c8                g_1pps_last_new
+ .bss.g_1pps_last_inSpan
+                0x008028c9        0x1 src/main.o
+                0x008028c9                g_1pps_last_inSpan
  .bss.g_1pps_last_diff
-                0x008028aa        0x2 src/main.o
-                0x008028aa                g_1pps_last_diff
+                0x008028ca        0x2 src/main.o
+                0x008028ca                g_1pps_last_diff
  .bss.g_1pps_last_hi
-                0x008028ac        0x8 src/main.o
-                0x008028ac                g_1pps_last_hi
+                0x008028cc        0x8 src/main.o
+                0x008028cc                g_1pps_last_hi
  .bss.g_1pps_last_lo
-                0x008028b4        0x2 src/main.o
-                0x008028b4                g_1pps_last_lo
+                0x008028d4        0x2 src/main.o
+                0x008028d4                g_1pps_last_lo
  .bss.g_milliseconds_cnt64
-                0x008028b6        0x8 src/main.o
-                0x008028b6                g_milliseconds_cnt64
+                0x008028d6        0x8 src/main.o
+                0x008028d6                g_milliseconds_cnt64
  .bss.g_keyBeep_enable
-                0x008028be        0x1 src/main.o
-                0x008028be                g_keyBeep_enable
+                0x008028de        0x1 src/main.o
+                0x008028de                g_keyBeep_enable
  .bss.g_errorBeep_enable
-                0x008028bf        0x1 src/main.o
-                0x008028bf                g_errorBeep_enable
+                0x008028df        0x1 src/main.o
+                0x008028df                g_errorBeep_enable
  .bss.g_pitch_tone_mode
-                0x008028c0        0x1 src/main.o
-                0x008028c0                g_pitch_tone_mode
+                0x008028e0        0x1 src/main.o
+                0x008028e0                g_pitch_tone_mode
  .bss.g_backlight_mode_pwm
-                0x008028c1        0x2 src/main.o
-                0x008028c1                g_backlight_mode_pwm
+                0x008028e1        0x2 src/main.o
+                0x008028e1                g_backlight_mode_pwm
  .bss.g_dac_enabled
-                0x008028c3        0x1 src/main.o
-                0x008028c3                g_dac_enabled
+                0x008028e3        0x1 src/main.o
+                0x008028e3                g_dac_enabled
  .bss.sof_zlp_counter.5059
-                0x008028c4        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x008028e4        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_tx_both_buf_to_send
-                0x008028c6        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x008028e6        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_tx_trans_ongoing
-                0x008028c7        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x008028e7        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_tx_sof_num
-                0x008028c8        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x008028e8        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_tx_buf_sel
-                0x008028ca        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x008028ea        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_tx_buf_nb
-                0x008028cb        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
- *fill*         0x008028cf        0x1 
+                0x008028eb        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+ *fill*         0x008028ef        0x1 
  .bss.udi_cdc_tx_buf
-                0x008028d0      0x280 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x008028f0      0x280 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_rx_trans_ongoing
-                0x00802b50        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802b70        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_rx_pos
-                0x00802b51        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802b71        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_rx_buf_sel
-                0x00802b53        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802b73        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_rx_buf_nb
-                0x00802b54        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802b74        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_rx_buf
-                0x00802b58      0x280 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802b78      0x280 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_data_running
-                0x00802dd8        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802df8        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_nb_data_enabled
-                0x00802dd9        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802df9        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_nb_comm_enabled
-                0x00802dda        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
- *fill*         0x00802ddb        0x1 
+                0x00802dfa        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+ *fill*         0x00802dfb        0x1 
  .bss.uid_cdc_state_msg
-                0x00802ddc        0xa src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802dfc        0xa src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_state
-                0x00802de6        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802e06        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_line_coding
-                0x00802de8        0x8 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802e08        0x8 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udc_ep_status.4757
-                0x00802df0        0x2 src/ASF/common/services/usb/udc/udc.o
+                0x00802e10        0x2 src/ASF/common/services/usb/udc/udc.o
  .bss.udc_ptr_iface
-                0x00802df2        0x2 src/ASF/common/services/usb/udc/udc.o
+                0x00802e12        0x2 src/ASF/common/services/usb/udc/udc.o
  .bss.udc_ptr_conf
-                0x00802df4        0x2 src/ASF/common/services/usb/udc/udc.o
+                0x00802e14        0x2 src/ASF/common/services/usb/udc/udc.o
  .bss.udc_num_configuration
-                0x00802df6        0x2 src/ASF/common/services/usb/udc/udc.o
+                0x00802e16        0x2 src/ASF/common/services/usb/udc/udc.o
  .bss.udc_iface_setting
-                0x00802df8        0x2 src/ASF/common/services/usb/udc/udc.o
+                0x00802e18        0x2 src/ASF/common/services/usb/udc/udc.o
  .bss.udc_device_status
-                0x00802dfa        0x2 src/ASF/common/services/usb/udc/udc.o
+                0x00802e1a        0x2 src/ASF/common/services/usb/udc/udc.o
  .bss.stdio_usb_interface_enable
-                0x00802dfc        0x1 src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
+                0x00802e1c        0x1 src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
  *(COMMON)
- COMMON         0x00802dfd        0x8 src/ASF/xmega/drivers/dma/dma.o
-                0x00802dfd                dma_data
- COMMON         0x00802e05        0x2 src/ASF/xmega/drivers/rtc32/rtc32.o
-                0x00802e05                rtc_data
- COMMON         0x00802e07        0x4 src/ASF/xmega/drivers/adc/adc.o
-                0x00802e07                adcb_callback
-                0x00802e09                adca_callback
- COMMON         0x00802e0b       0x10 src/ASF/xmega/drivers/usb/usb_device.o
-                0x00802e0b                udd_g_ctrlreq
- COMMON         0x00802e1b       0x86 src/main.o
-                0x00802e1b                g_fifo_sched_desc
-                0x00802e21                g_fifo_sched_buffer
- COMMON         0x00802ea1        0x6 src/ASF/common/services/sleepmgr/xmega/sleepmgr.o
-                0x00802ea1                sleepmgr_locks
- COMMON         0x00802ea7        0x2 src/ASF/common/utils/stdio/read.o
-                0x00802ea7                ptr_get
- COMMON         0x00802ea9        0x4 src/ASF/common/utils/stdio/write.o
-                0x00802ea9                ptr_put
-                0x00802eab                stdio_base
- COMMON         0x00802ead        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(iob.o)
-                0x00802ead                __iob
- COMMON         0x00802eb3        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(malloc.o)
-                0x00802eb3                __brkval
-                0x00802eb5                __flp
- COMMON         0x00802eb7        0x2 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(errno.o)
-                0x00802eb7                errno
-                0x00802eb9                PROVIDE (__bss_end, .)
-                0x00011724                __data_load_start = LOADADDR (.data)
-                0x000118de                __data_load_end = (__data_load_start + SIZEOF (.data))
+ COMMON         0x00802e1d        0x8 src/ASF/xmega/drivers/dma/dma.o
+                0x00802e1d                dma_data
+ COMMON         0x00802e25        0x2 src/ASF/xmega/drivers/rtc32/rtc32.o
+                0x00802e25                rtc_data
+ COMMON         0x00802e27        0x4 src/ASF/xmega/drivers/adc/adc.o
+                0x00802e27                adcb_callback
+                0x00802e29                adca_callback
+ COMMON         0x00802e2b       0x10 src/ASF/xmega/drivers/usb/usb_device.o
+                0x00802e2b                udd_g_ctrlreq
+ COMMON         0x00802e3b       0x86 src/main.o
+                0x00802e3b                g_fifo_sched_desc
+                0x00802e41                g_fifo_sched_buffer
+ COMMON         0x00802ec1        0x6 src/ASF/common/services/sleepmgr/xmega/sleepmgr.o
+                0x00802ec1                sleepmgr_locks
+ COMMON         0x00802ec7        0x2 src/ASF/common/utils/stdio/read.o
+                0x00802ec7                ptr_get
+ COMMON         0x00802ec9        0x4 src/ASF/common/utils/stdio/write.o
+                0x00802ec9                ptr_put
+                0x00802ecb                stdio_base
+ COMMON         0x00802ecd        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(iob.o)
+                0x00802ecd                __iob
+ COMMON         0x00802ed3        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(malloc.o)
+                0x00802ed3                __brkval
+                0x00802ed5                __flp
+ COMMON         0x00802ed7        0x2 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(errno.o)
+                0x00802ed7                errno
+                0x00802ed9                PROVIDE (__bss_end, .)
+                0x000116ec                __data_load_start = LOADADDR (.data)
+                0x000118a6                __data_load_end = (__data_load_start + SIZEOF (.data))
 
-.noinit         0x00802eb9        0x0
+.noinit         0x00802ed9        0x0
                 [!provide]                PROVIDE (__noinit_start, .)
  *(.noinit*)
                 [!provide]                PROVIDE (__noinit_end, .)
-                0x00802eb9                _end = .
-                0x00802eb9                PROVIDE (__heap_start, .)
+                0x00802ed9                _end = .
+                0x00802ed9                PROVIDE (__heap_start, .)
 
 .eeprom         0x00810000        0x0
  *(.eeprom*)
