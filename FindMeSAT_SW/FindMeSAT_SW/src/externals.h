@@ -21,6 +21,7 @@ extern bool							g_errorBeep_enable;
 extern bool							g_keyBeep_enable;
 
 extern uint64_t						g_milliseconds_cnt64;
+extern uint32_t						g_boot_time_ts;
 
 extern uint16_t						g_1pps_last_lo;
 extern uint64_t						g_1pps_last_hi;
@@ -37,6 +38,24 @@ extern bool							g_1pps_printtwi_avail;
 extern bool							g_1pps_printusb_avail;
 extern uint8_t						g_1pps_phased_cntr;
 extern uint8_t						g_1pps_led;
+
+extern uint8_t						g_gns_run_status;
+extern uint8_t						g_gns_fix_status;
+extern float						g_gns_lat;
+extern float						g_gns_lon;
+extern float						g_gns_msl_alt_m;
+extern float						g_gns_speed_kmPh;
+extern float						g_gns_course_deg;
+extern uint8_t						g_gns_fix_mode;
+extern float						g_gns_dop_h;
+extern float						g_gns_dop_p;
+extern float						g_gns_dop_v;
+extern uint8_t						g_gns_gps_sats_inView;
+extern uint8_t						g_gns_gnss_sats_used;
+extern uint8_t						g_gns_glonass_sats_inView;
+extern uint8_t						g_gns_cPn0_dBHz;
+//extern uint16_t						g_gns_hpa_m;
+//extern uint16_t						g_gns_vpa_m;
 
 extern bool							g_usb_cdc_stdout_enabled;
 extern bool							g_usb_cdc_printStatusLines_atxmega;

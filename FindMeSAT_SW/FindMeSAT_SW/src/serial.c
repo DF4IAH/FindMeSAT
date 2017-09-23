@@ -325,6 +325,148 @@ void serial_start(void)
 	udi_write_tx_buf(g_prepare_buf, len, false);
 }
 
+void serial_send_gns_info_req(void)
+{
+	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_02, 1);
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+}
+
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF[] = "+CGNSINF:";
+PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF[]);
+/*static*/ void serial_filter_inStream(int16_t len)
+{
+	/* Sanity checks for minimum length */
+	if (len < 10) {
+		return;
+	}
+
+	/* Check for AT+CGNSINF sentence reply */
+	char* ptr = strstr_P(g_prepare_buf, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF);
+	if (ptr) {
+		irqflags_t flags;
+		const int hdrLen = strlen_P(PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF);
+		ptr += hdrLen;
+
+		uint8_t idx = 0;
+		int restLen = len - (ptr - g_prepare_buf);
+		while (restLen > 0) {
+			uint64_t u64	= 0;
+			long	loVal	= 0;
+			float	fVal	= 0.;
+			char*	ptr2	= NULL;
+			int		fLen	= 0;
+			struct calendar_date calDat;
+
+			switch (idx) {
+				case  0:
+				case  1:
+				case  8:
+				case 14:
+				case 15:
+				case 18:
+					loVal = strtol(ptr, &ptr2, 10);
+					ptr = ptr2 + 1;
+
+					if        (idx ==  0) {
+						g_gns_run_status = loVal;
+
+					} else if (idx ==  1) {
+						g_gns_fix_status = loVal;
+
+					} else if (idx ==  8) {
+						g_gns_fix_mode = loVal;
+
+					} else if (idx == 14) {
+						g_gns_gps_sats_inView = loVal;
+
+					} else if (idx == 15) {
+						g_gns_gnss_sats_used = loVal;
+
+					} else if (idx == 16) {
+						g_gns_glonass_sats_inView = loVal;
+
+					} else if (idx == 18) {
+						g_gns_cPn0_dBHz = loVal;
+					}
+				break;
+
+				case  2:
+					do {
+						char c = *(ptr++);
+						if ('0' <= c && c <= '9') {
+							u64 *= 10;
+							u64 += c - '0';
+						} else if (c == '.') {
+							// Skip decimal point
+						} else {
+							// Leave loop
+							break;
+						}
+					} while (true);
+
+					u64	/=	1000U;
+					calDat.second	= (uint8_t) (u64 % 100U);
+					u64	/= 	100U;
+					calDat.minute	= (uint8_t) (u64 % 100U);
+					u64	/= 	100U;
+					calDat.hour		= (uint8_t) (u64 % 100U);
+					u64	/= 	100U;
+					calDat.date		= (uint8_t) (u64 % 100U) - 1;
+					u64	/= 	100U;
+					calDat.month	= (uint8_t) (u64 % 100U) - 1;
+					u64	/= 	100U;
+					calDat.year		= (uint16_t) u64;
+					uint32_t l_ts = calendar_date_to_timestamp(&calDat) - rtc_get_time();
+
+					flags = cpu_irq_save();
+					g_boot_time_ts = l_ts;
+					cpu_irq_restore(flags);
+				break;
+
+				case  3:
+				case  4:
+				case  5:
+				case  6:
+				case  7:
+				case 10:
+				case 11:
+				case 12:
+					ptr += myStringToFloat(ptr, &fVal);
+					if        (idx ==  3) {
+						g_gns_lat = fVal;
+
+					} else if (idx ==  4) {
+						g_gns_lon = fVal;
+
+					} else if (idx ==  5) {
+						g_gns_msl_alt_m = fVal;
+
+					} else if (idx ==  6) {
+						g_gns_speed_kmPh = fVal;
+
+					} else if (idx ==  7) {
+						g_gns_course_deg = fVal;
+
+					} else if (idx == 10) {
+						g_gns_dop_h = fVal;
+
+					} else if (idx == 11) {
+						g_gns_dop_p = fVal;
+
+					} else if (idx == 12) {
+						g_gns_dop_v = fVal;
+					}
+				break;
+
+				default:
+					ptr = cueBehind(ptr, ',');
+			}
+			restLen = len - (ptr - g_prepare_buf);
+			idx++;
+		}
+	}
+}
+
 
 void task_serial(uint32_t now)
 {
@@ -380,6 +522,9 @@ void task_serial(uint32_t now)
 		}
 		cpu_irq_restore(flags);
 	}
+
+	/* Filter data out of incoming data stream */
+	serial_filter_inStream(len_out);
 
 	/* Copy chunk of data to USB_CDC */
 	if (len_out && g_usb_cdc_printStatusLines_sim808) {

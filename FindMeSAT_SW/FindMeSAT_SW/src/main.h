@@ -175,6 +175,8 @@ typedef struct dma_dac_buf_s {
 
 
 void save_globals(EEPROM_SAVE_BF_ENUM_t bf);
+char* cueBehind(char* ptr, char delim);
+int myStringToFloat(const char* ptr, float* out);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
 
 void adc_app_enable(bool enable);
