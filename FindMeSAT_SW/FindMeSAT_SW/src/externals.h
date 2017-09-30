@@ -193,6 +193,7 @@ extern sched_entry_t				g_sched_data[C_SCH_SLOT_CNT];
 extern uint8_t						g_sched_sort[C_SCH_SLOT_CNT];
 
 extern char							g_prepare_buf[C_TX_BUF_SIZE];
+extern char							g_gns_concat_buf[C_GNS_CONCAT_LEN];
 
 
 /* TWI communications  */

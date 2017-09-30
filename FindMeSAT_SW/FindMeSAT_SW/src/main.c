@@ -230,6 +230,7 @@ volatile sched_entry_t		g_sched_data[C_SCH_SLOT_CNT]		= { 0 };
 volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
 
 char						g_prepare_buf[C_TX_BUF_SIZE]		= "";
+char						g_gns_concat_buf[C_GNS_CONCAT_LEN]	= "";
 
 
 twi_options_t g_twi1_options = {
@@ -733,6 +734,86 @@ int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int o
 	return ret;
 }
 
+char* myConcatUntil(char* concatBuf, int concatBuf_len, const char* fragmentBuf, int fragmentBuf_len, char untilChr)
+{
+	// TODO Separate in IN and OUT
+	/* Sanity checks */
+	if (!concatBuf || !concatBuf_len) {
+		return NULL;
+
+	} else {
+		int idx;
+
+		/* Drop first string */
+		size_t len = strlen(concatBuf);
+		int cnt = concatBuf_len - len - 1;
+		for (idx = 0; cnt; idx++, cnt--) {
+			concatBuf[idx] = concatBuf[idx + len + 1];
+		}
+		concatBuf[concatBuf_len - 1] = 0;
+
+		/* Cue until end of string array is found */
+		for (idx = 0; idx < concatBuf_len;) {
+			len = strlen(&(concatBuf[idx]));
+			idx += 1 + len;
+			if (!(concatBuf[idx])) {
+				/* End of list found */
+				break;
+			}
+		}
+
+		/* INPUT section */
+		bool isFound = false;
+		int cB_len = idx;
+		int cB_sp  = concatBuf_len - idx - 1;
+
+		/* Check if enough room to concatenate */
+		if (cB_sp >= fragmentBuf_len) {
+			char* concatBufPtr = concatBuf + cB_len;
+
+			/* Input string concatenation */
+			for (int i = 0; i < fragmentBuf_len && 2 < cB_sp; i++) {
+				char c = *(fragmentBuf++);
+
+				/* Ignore string terminators */
+				if (!c) {
+					continue;
+				}
+
+				/* Any other character is copied */
+				*(concatBufPtr++) = c;
+				--cB_sp;
+
+				/* Until character has to be followed by a string terminator */
+				if (c == untilChr) {
+					*(concatBufPtr++) = 0;
+					--cB_sp;
+				}
+			}
+
+			/* String and list terminator */
+			*(concatBufPtr++)	= 0;
+			* concatBufPtr		= 0;
+
+			/* OUTPUT section */
+			concatBufPtr = concatBuf;
+			for (int i = 0; i < concatBuf_len; i++) {
+				if (*(concatBufPtr++) == untilChr) {
+					isFound = true;
+					break;
+				}
+			}
+			return isFound ?  concatBuf : NULL;
+
+		} else {
+			/* Size not enough to hold all, reset */
+			concatBuf[0] = 0;
+			concatBuf[1] = 0;
+			return NULL;
+		}
+	}
+}
+
 
 void adc_app_enable(bool enable)
 {
@@ -1080,7 +1161,7 @@ static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0
 
 
 const char					PM_DEBUG_MAIN_1PPS_1[]				= "DEBUG_MAIN_1PPS: diff=%+04d, last_adjust=%d, inSpan=%d, ";
-const char					PM_DEBUG_MAIN_1PPS_2[]				= "doUpdate=%d, outOfSync=%d \t";
+const char					PM_DEBUG_MAIN_1PPS_2[]				= "doUpdate=%d, outOfSync=%d\r\n";
 PROGMEM_DECLARE(const char, PM_DEBUG_MAIN_1PPS_1[]);
 PROGMEM_DECLARE(const char, PM_DEBUG_MAIN_1PPS_2[]);
 static void isr_100ms_main_1pps(void)
@@ -2105,10 +2186,10 @@ static void task_main_pll(uint32_t now)
 		tc_write_cc_buffer(&TCC0, TC_CCC, i_xo_mode_pwm_val_i);
 
 		/* Synced stability counter */
-		if (-20 <= l_1pps_deviation && l_1pps_deviation <= 20) {
+		if (-50 <= l_1pps_deviation && l_1pps_deviation <= 50) {
 			if (++l_1pps_phased_cntr > 250) {
 				l_1pps_phased_cntr = 250;  // Saturated value
-			} else if (l_1pps_phased_cntr == (C_TCC1_CLOCKSETTING_AFTER_SECS + 1)) {
+			} else if (l_1pps_phased_cntr == (C_TCC1_CLOCKSETTING_AFTER_SECS + 5)) {
 				/* Send GNS info request */
 				serial_send_gns_info_req();
 			}
@@ -2152,9 +2233,6 @@ int main(void)
 
 	/* Init the FIFO buffers */
 	fifo_init(&g_fifo_sched_desc, g_fifo_sched_buffer, FIFO_SCHED_BUFFER_LENGTH);
-
-	strcpy(g_prepare_buf, "+CGNSINF: 1,1,20170923183446.000,49.473215,8.614407,116.800,0.52,204.6,1,,0.9,1.2,0.9,,11,9,,,32,,\n");
-	serial_filter_inStream(strlen(g_prepare_buf));
 
 	/* Init of interrupt system */
 	g_workmode = WORKMODE_INIT;

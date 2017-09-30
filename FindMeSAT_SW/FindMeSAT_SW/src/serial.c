@@ -246,10 +246,12 @@ void serial_start(void)
 		}
 	}
 
-	/* Set the auto baud rate to fix rate */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_IPR, USART_SERIAL1_BAUDRATE);
+#if 1
+	/* Set the baud rate to AUTO or fixed rate */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_IPR, USART_SIM808_BAUDRATE);
 	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 	yield_ms(500);
+#endif
 
 	/* Set handshaking of both directions to hardware CTS/RTS */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_IFC);
@@ -333,137 +335,143 @@ void serial_send_gns_info_req(void)
 
 const char					PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF[] = "+CGNSINF:";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF[]);
-/*static*/ void serial_filter_inStream(int16_t len)
+static void serial_filter_inStream(int16_t len)
 {
-	/* Sanity checks for minimum length */
-	if (len < 10) {
+	// TODO: store into intermediate buffer until EOL is found
+	/* Sanity check for minimum length */
+	if (!len) {
 		return;
 	}
 
-	/* Check for AT+CGNSINF sentence reply */
-	char* ptr = strstr_P(g_prepare_buf, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF);
-	if (ptr) {
-		irqflags_t flags;
-		const int hdrLen = strlen_P(PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF);
-		ptr += hdrLen;
+	/* Concatenate last fragment and report when complete */
+	char* ptr = myConcatUntil(g_gns_concat_buf, sizeof(g_gns_concat_buf), g_prepare_buf, len, '\n');
+	while (ptr) {
+		/* Check for AT+CGNSINF sentence reply */
+		ptr = strstr_P(g_prepare_buf, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF);
+		while (ptr) {
+			irqflags_t flags;
+			const int hdrLen = strlen_P(PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF);
+			ptr += hdrLen;
 
-		uint8_t idx = 0;
-		int restLen = len - (ptr - g_prepare_buf);
-		while (restLen > 0) {
-			uint64_t u64	= 0;
-			long	loVal	= 0;
-			float	fVal	= 0.;
-			char*	ptr2	= NULL;
-			int		fLen	= 0;
-			struct calendar_date calDat;
+			uint8_t idx = 0;
+			int restLen = len - (ptr - g_prepare_buf);
+			while (restLen > 0) {
+				uint64_t u64	= 0;
+				long	loVal	= 0;
+				float	fVal	= 0.;
+				char*	ptr2	= NULL;
+				struct calendar_date calDat;
 
-			switch (idx) {
-				case  0:
-				case  1:
-				case  8:
-				case 14:
-				case 15:
-				case 18:
-					loVal = strtol(ptr, &ptr2, 10);
-					ptr = ptr2 + 1;
+				switch (idx) {
+					case  0:
+					case  1:
+					case  8:
+					case 14:
+					case 15:
+					case 18:
+						loVal = strtol(ptr, &ptr2, 10);
+						ptr = ptr2 + 1;
 
-					if        (idx ==  0) {
-						g_gns_run_status = loVal;
+						if        (idx ==  0) {
+							g_gns_run_status = loVal;
 
-					} else if (idx ==  1) {
-						g_gns_fix_status = loVal;
+						} else if (idx ==  1) {
+							g_gns_fix_status = loVal;
 
-					} else if (idx ==  8) {
-						g_gns_fix_mode = loVal;
+						} else if (idx ==  8) {
+							g_gns_fix_mode = loVal;
 
-					} else if (idx == 14) {
-						g_gns_gps_sats_inView = loVal;
+						} else if (idx == 14) {
+							g_gns_gps_sats_inView = loVal;
 
-					} else if (idx == 15) {
-						g_gns_gnss_sats_used = loVal;
+						} else if (idx == 15) {
+							g_gns_gnss_sats_used = loVal;
 
-					} else if (idx == 16) {
-						g_gns_glonass_sats_inView = loVal;
+						} else if (idx == 16) {
+							g_gns_glonass_sats_inView = loVal;
 
-					} else if (idx == 18) {
-						g_gns_cPn0_dBHz = loVal;
-					}
-				break;
-
-				case  2:
-					do {
-						char c = *(ptr++);
-						if ('0' <= c && c <= '9') {
-							u64 *= 10;
-							u64 += c - '0';
-						} else if (c == '.') {
-							// Skip decimal point
-						} else {
-							// Leave loop
-							break;
+						} else if (idx == 18) {
+							g_gns_cPn0_dBHz = loVal;
 						}
-					} while (true);
+					break;
 
-					u64	/=	1000U;
-					calDat.second	= (uint8_t) (u64 % 100U);
-					u64	/= 	100U;
-					calDat.minute	= (uint8_t) (u64 % 100U);
-					u64	/= 	100U;
-					calDat.hour		= (uint8_t) (u64 % 100U);
-					u64	/= 	100U;
-					calDat.date		= (uint8_t) (u64 % 100U) - 1;
-					u64	/= 	100U;
-					calDat.month	= (uint8_t) (u64 % 100U) - 1;
-					u64	/= 	100U;
-					calDat.year		= (uint16_t) u64;
-					uint32_t l_ts = calendar_date_to_timestamp(&calDat) - rtc_get_time();
+					case  2:
+						do {
+							char c = *(ptr++);
+							if ('0' <= c && c <= '9') {
+								u64 *= 10;
+								u64 += c - '0';
+							} else if (c == '.') {
+								// Skip decimal point
+							} else {
+								// Leave loop
+								break;
+							}
+						} while (true);
 
-					flags = cpu_irq_save();
-					g_boot_time_ts = l_ts;
-					cpu_irq_restore(flags);
-				break;
+						u64	/=	1000U;
+						calDat.second	= (uint8_t) (u64 % 100U);
+						u64	/= 	100U;
+						calDat.minute	= (uint8_t) (u64 % 100U);
+						u64	/= 	100U;
+						calDat.hour		= (uint8_t) (u64 % 100U);
+						u64	/= 	100U;
+						calDat.date		= (uint8_t) (u64 % 100U) - 1;
+						u64	/= 	100U;
+						calDat.month	= (uint8_t) (u64 % 100U) - 1;
+						u64	/= 	100U;
+						calDat.year		= (uint16_t) u64;
+						uint32_t l_ts = calendar_date_to_timestamp(&calDat) - rtc_get_time();
 
-				case  3:
-				case  4:
-				case  5:
-				case  6:
-				case  7:
-				case 10:
-				case 11:
-				case 12:
-					ptr += myStringToFloat(ptr, &fVal);
-					if        (idx ==  3) {
-						g_gns_lat = fVal;
+						flags = cpu_irq_save();
+						g_boot_time_ts = l_ts;
+						cpu_irq_restore(flags);
+					break;
 
-					} else if (idx ==  4) {
-						g_gns_lon = fVal;
+					case  3:
+					case  4:
+					case  5:
+					case  6:
+					case  7:
+					case 10:
+					case 11:
+					case 12:
+						ptr += myStringToFloat(ptr, &fVal);
+						if        (idx ==  3) {
+							g_gns_lat = fVal;
 
-					} else if (idx ==  5) {
-						g_gns_msl_alt_m = fVal;
+						} else if (idx ==  4) {
+							g_gns_lon = fVal;
 
-					} else if (idx ==  6) {
-						g_gns_speed_kmPh = fVal;
+						} else if (idx ==  5) {
+							g_gns_msl_alt_m = fVal;
 
-					} else if (idx ==  7) {
-						g_gns_course_deg = fVal;
+						} else if (idx ==  6) {
+							g_gns_speed_kmPh = fVal;
 
-					} else if (idx == 10) {
-						g_gns_dop_h = fVal;
+						} else if (idx ==  7) {
+							g_gns_course_deg = fVal;
 
-					} else if (idx == 11) {
-						g_gns_dop_p = fVal;
+						} else if (idx == 10) {
+							g_gns_dop_h = fVal;
 
-					} else if (idx == 12) {
-						g_gns_dop_v = fVal;
-					}
-				break;
+						} else if (idx == 11) {
+							g_gns_dop_p = fVal;
 
-				default:
-					ptr = cueBehind(ptr, ',');
+						} else if (idx == 12) {
+							g_gns_dop_v = fVal;
+						}
+					break;
+
+					default:
+						ptr = cueBehind(ptr, ',');
+				}
+				restLen = len - (ptr - g_prepare_buf);
+				idx++;
 			}
-			restLen = len - (ptr - g_prepare_buf);
-			idx++;
 		}
+
+		ptr = myConcatUntil(g_gns_concat_buf, sizeof(g_gns_concat_buf), NULL, 0, '\n');
 	}
 }
 
@@ -485,9 +493,9 @@ void task_serial(uint32_t now)
 		if (g_usart1_rx_idx) {
 			/* Do a chunk each time */
 			len_in = g_usart1_rx_idx;
-			if (len_in > C_USART1_RX_BUF_CHUNK) {
-				move = len_in - C_USART1_RX_BUF_CHUNK;
-				len_in = C_USART1_RX_BUF_CHUNK;
+			if (len_in > (C_USART1_RX_BUF_CHUNK - 1)) {
+				move = len_in - C_USART1_RX_BUF_CHUNK - 1;
+				len_in = C_USART1_RX_BUF_CHUNK - 1;
 			}
 
 			/* Make a copy of the chunk */
@@ -497,11 +505,12 @@ void task_serial(uint32_t now)
 				}
 				g_prepare_buf[len_out++] = g_usart1_rx_buf[idx];
 			}
+			g_prepare_buf[len_out++] = 0;
 
 			/* If more data is available move that part down */
 			if (move) {
-				for (int16_t mov_idx = 0; mov_idx < move; ++mov_idx) {
-					g_usart1_rx_buf[mov_idx] = g_usart1_rx_buf[mov_idx + C_USART1_RX_BUF_CHUNK];
+				for (int16_t mov_idx = 0; mov_idx < move; mov_idx++) {
+					g_usart1_rx_buf[mov_idx] = g_usart1_rx_buf[mov_idx + move];
 				}
 				g_usart1_rx_idx		= move;
 
