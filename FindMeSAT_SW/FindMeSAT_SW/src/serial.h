@@ -43,8 +43,9 @@
 #define SERIAL_H_
 
 
-#define C_USART1_RX_BUF_LEN			128U
-#define C_USART1_RX_BUF_CHUNK		48
+#define C_USART1_RX_BUF_LEN			512U
+#define C_USART1_RX_BUF_DIFF_OFF	16
+#define C_USART1_RX_BUF_DIFF_ON		32
 
 
 void serial_sim808_send(const char*, uint8_t len);

@@ -69,7 +69,7 @@ extern WORKMODE_ENUM_t				g_workmode;
 extern usart_serial_options_t		g_usart1_options;
 extern bool							g_usart1_rx_ready;
 extern uint16_t						g_usart1_rx_idx;
-extern uint8_t						g_usart1_rx_buf[C_USART1_RX_BUF_LEN];
+extern char							g_usart1_rx_buf[C_USART1_RX_BUF_LEN];
 
 extern bool							g_twi1_gsm_valid;
 extern uint8_t						g_twi1_gsm_version;

@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													001
+#define VERSION_LOW													003
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -180,7 +180,6 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf);
 char* cueBehind(char* ptr, char delim);
 int myStringToFloat(const char* ptr, float* out);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
-char* myConcatUntil(char* concatBuf, int concatBuf_len, const char* fragmentBuf, int fragmentBuf_len, char delim);
 
 void adc_app_enable(bool enable);
 void backlight_mode_pwm(int16_t mode_pwm);

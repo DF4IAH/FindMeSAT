@@ -106,7 +106,7 @@ WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 usart_serial_options_t		g_usart1_options					= { 0 };
 bool						g_usart1_rx_ready					= false;
 uint16_t					g_usart1_rx_idx						= 0;
-uint8_t						g_usart1_rx_buf[C_USART1_RX_BUF_LEN]= { 0 };
+char						g_usart1_rx_buf[C_USART1_RX_BUF_LEN]= { 0 };
 
 bool						g_twi1_gsm_valid					= false;
 uint8_t						g_twi1_gsm_version					= 0;
@@ -732,86 +732,6 @@ int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int o
 	}
 
 	return ret;
-}
-
-char* myConcatUntil(char* concatBuf, int concatBuf_len, const char* fragmentBuf, int fragmentBuf_len, char untilChr)
-{
-	// TODO Separate in IN and OUT
-	/* Sanity checks */
-	if (!concatBuf || !concatBuf_len) {
-		return NULL;
-
-	} else {
-		int idx;
-
-		/* Drop first string */
-		size_t len = strlen(concatBuf);
-		int cnt = concatBuf_len - len - 1;
-		for (idx = 0; cnt; idx++, cnt--) {
-			concatBuf[idx] = concatBuf[idx + len + 1];
-		}
-		concatBuf[concatBuf_len - 1] = 0;
-
-		/* Cue until end of string array is found */
-		for (idx = 0; idx < concatBuf_len;) {
-			len = strlen(&(concatBuf[idx]));
-			idx += 1 + len;
-			if (!(concatBuf[idx])) {
-				/* End of list found */
-				break;
-			}
-		}
-
-		/* INPUT section */
-		bool isFound = false;
-		int cB_len = idx;
-		int cB_sp  = concatBuf_len - idx - 1;
-
-		/* Check if enough room to concatenate */
-		if (cB_sp >= fragmentBuf_len) {
-			char* concatBufPtr = concatBuf + cB_len;
-
-			/* Input string concatenation */
-			for (int i = 0; i < fragmentBuf_len && 2 < cB_sp; i++) {
-				char c = *(fragmentBuf++);
-
-				/* Ignore string terminators */
-				if (!c) {
-					continue;
-				}
-
-				/* Any other character is copied */
-				*(concatBufPtr++) = c;
-				--cB_sp;
-
-				/* Until character has to be followed by a string terminator */
-				if (c == untilChr) {
-					*(concatBufPtr++) = 0;
-					--cB_sp;
-				}
-			}
-
-			/* String and list terminator */
-			*(concatBufPtr++)	= 0;
-			* concatBufPtr		= 0;
-
-			/* OUTPUT section */
-			concatBufPtr = concatBuf;
-			for (int i = 0; i < concatBuf_len; i++) {
-				if (*(concatBufPtr++) == untilChr) {
-					isFound = true;
-					break;
-				}
-			}
-			return isFound ?  concatBuf : NULL;
-
-		} else {
-			/* Size not enough to hold all, reset */
-			concatBuf[0] = 0;
-			concatBuf[1] = 0;
-			return NULL;
-		}
-	}
 }
 
 
