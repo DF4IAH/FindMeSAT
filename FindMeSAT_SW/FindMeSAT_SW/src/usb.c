@@ -80,6 +80,52 @@ uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl)
 	return ret;
 }
 
+void udi_write_serial_line(const char* buf, uint16_t len)
+{
+	char* l_usart1_rx_buf_ptr	= (char*) buf;
+	bool crUntreated			= false;
+
+	for (uint16_t cnt = len; cnt; --cnt) {
+		char c = *(l_usart1_rx_buf_ptr++);
+
+		if (c == '\n') {
+			crUntreated = false;
+
+			/* Each LF is converted to CR+LF */
+			(void) udi_write_tx_char('\r', false);
+			(void) udi_write_tx_char('\n', false);	yield_ms(30);
+			continue;
+
+		} else if (c == '\r') {
+			if (!crUntreated) {
+				crUntreated = true;
+
+				/* Each CR is removed */
+				continue;
+
+			} else {
+				/* Emit one CR+LF for an untreatedCr */
+				(void) udi_write_tx_char('\r', false);
+				(void) udi_write_tx_char('\n', false);	yield_ms(30);
+				continue;
+			}
+
+		} else {
+			if (crUntreated) {
+				crUntreated = false;
+
+				/* Each untreated CR is converted to CR+LF */
+				(void) udi_write_tx_char('\r', false);
+				(void) udi_write_tx_char('\n', false);	yield_ms(30);
+			}
+		}
+
+		/* Write out any readable character */
+		(void) udi_write_tx_char(c, true);
+	}
+	yield_ms(30);
+}
+
 
 const char					PM_USBINIT_HEADER_1[]				= "\r\n\r\n\r\n";
 const char					PM_USBINIT_HEADER_2[]				= "%c\r\n===============================\r\n";

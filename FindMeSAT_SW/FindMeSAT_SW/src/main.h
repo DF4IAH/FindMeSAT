@@ -13,8 +13,8 @@
 
 
 /* VERSION: YYM, MDD */
-#define VERSION_HIGH												170
-#define VERSION_LOW													921
+#define VERSION_HIGH												171
+#define VERSION_LOW													003
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -44,6 +44,8 @@
 #define C_TCC1_CLOCKSETTING_OFFSET									11U
 
 #define C_1PPS_PWM_DIFF_ARY_CNT										16
+
+#define C_GNS_CONCAT_LEN											512
 
 
 /* FIFO */
@@ -175,6 +177,8 @@ typedef struct dma_dac_buf_s {
 
 
 void save_globals(EEPROM_SAVE_BF_ENUM_t bf);
+char* cueBehind(char* ptr, char delim);
+int myStringToFloat(const char* ptr, float* out);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
 
 void adc_app_enable(bool enable);

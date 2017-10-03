@@ -34,6 +34,8 @@
  */
 #include <asf.h>
 
+#include <ctype.h>
+
 #include "conf_dac.h"
 #include "dds.h"
 #include "serial.h"
@@ -56,6 +58,7 @@ bool						g_errorBeep_enable					= false;	// EEPROM
 bool						g_keyBeep_enable					= false;	// EEPROM
 
 uint64_t					g_milliseconds_cnt64				= 0ULL;
+uint32_t					g_boot_time_ts						= 0UL;
 
 uint16_t					g_1pps_last_lo						= 0U;		// measuring time
 uint64_t					g_1pps_last_hi						= 0ULL;
@@ -73,6 +76,24 @@ bool						g_1pps_printusb_avail				= false;
 uint8_t						g_1pps_phased_cntr					= 0;
 uint8_t						g_1pps_led							= 0;
 
+uint8_t						g_gns_run_status					= 0;
+uint8_t						g_gns_fix_status					= 0;
+float						g_gns_lat							= 0.;
+float						g_gns_lon							= 0.;
+float						g_gns_msl_alt_m						= 0.;
+float						g_gns_speed_kmPh					= 0.;
+float						g_gns_course_deg					= 0.;
+uint8_t						g_gns_fix_mode						= 0;
+float						g_gns_dop_h							= 0.;
+float						g_gns_dop_p							= 0.;
+float						g_gns_dop_v							= 0.;
+uint8_t						g_gns_gps_sats_inView				= 0;
+uint8_t						g_gns_gnss_sats_used				= 0;
+uint8_t						g_gns_glonass_sats_inView			= 0;
+uint8_t						g_gns_cPn0_dBHz						= 0;
+//uint16_t					g_gns_hpa_m							= 0;
+//uint16_t					g_gns_vpa_m							= 0;
+
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines_atxmega	= false;	// EEPROM
 bool						g_usb_cdc_printStatusLines_sim808	= false;	// EEPROM
@@ -85,7 +106,7 @@ WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 usart_serial_options_t		g_usart1_options					= { 0 };
 bool						g_usart1_rx_ready					= false;
 uint16_t					g_usart1_rx_idx						= 0;
-uint8_t						g_usart1_rx_buf[C_USART1_RX_BUF_LEN]= { 0 };
+char						g_usart1_rx_buf[C_USART1_RX_BUF_LEN]= { 0 };
 
 bool						g_twi1_gsm_valid					= false;
 uint8_t						g_twi1_gsm_version					= 0;
@@ -209,6 +230,7 @@ volatile sched_entry_t		g_sched_data[C_SCH_SLOT_CNT]		= { 0 };
 volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
 
 char						g_prepare_buf[C_TX_BUF_SIZE]		= "";
+char						g_gns_concat_buf[C_GNS_CONCAT_LEN]	= "";
 
 
 twi_options_t g_twi1_options = {
@@ -307,6 +329,7 @@ static void init_globals(void)
 	/* 1PPS */
 	{
 		g_milliseconds_cnt64				= 0ULL;
+		g_boot_time_ts						= 0UL;
 
 		g_1pps_last_lo						= 0U;		// measuring time
 		g_1pps_last_hi						= 0ULL;
@@ -323,6 +346,27 @@ static void init_globals(void)
 		g_1pps_printusb_avail				= false;
 		g_1pps_phased_cntr					= 0;
 		g_1pps_led							= 0;
+	}
+
+	/* GNS */
+	{
+		g_gns_run_status					= 0;
+		g_gns_fix_status					= 0;
+		g_gns_lat							= 0.;
+		g_gns_lon							= 0.;
+		g_gns_msl_alt_m						= 0.;
+		g_gns_speed_kmPh					= 0.;
+		g_gns_course_deg					= 0.;
+		g_gns_fix_mode						= 0;
+		g_gns_dop_h							= 0.;
+		g_gns_dop_p							= 0.;
+		g_gns_dop_v							= 0.;
+		g_gns_gps_sats_inView				= 0;
+		g_gns_gnss_sats_used				= 0;
+		g_gns_glonass_sats_inView			= 0;
+		g_gns_cPn0_dBHz						= 0;
+//		g_gns_hpa_m							= 0;
+//		g_gns_vpa_m							= 0;
 	}
 
 	/* VCTCXO */
@@ -558,6 +602,88 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 	}
 }
 
+
+char* cueBehind(char* ptr, char delim)
+{
+	do {
+		char c = *ptr;
+
+		if (c == delim) {
+			return ++ptr;
+		} else if (!c) {
+			return ptr;
+		}
+		++ptr;
+	} while (true);
+
+	return NULL;
+}
+
+int myStringToFloat(const char* ptr, float* out)
+{
+	const char* start	= ptr;
+	uint32_t	i1		= 0;
+	uint32_t	f1		= 0;
+	uint32_t	f2		= 1;
+	bool		isNeg	= false;
+	bool		isFrac	= false;
+
+	if (ptr) {
+		/* Eat any white space */
+		while (isspace(*ptr)) {
+			ptr++;
+		}
+
+		/* Get sign */
+		if (*ptr == '+') {
+			ptr++;
+		} else if (*ptr == '-') {
+			ptr++;
+			isNeg = true;
+		}
+
+		/* Read integer part */
+		do {
+			char c = *(ptr++);
+
+			if ('0' <= c && c <= '9') {
+				i1 *= 10;
+				i1 += c - '0';
+			} else if (c == '.') {
+				isFrac = true;
+				break;
+			} else {
+				break;
+			}
+		} while (true);
+
+		/* Read fractional part */
+		if (isFrac) {
+			do {
+				char c = *(ptr++);
+
+				if ('0' <= c && c <= '9') {
+					f2 *= 10;
+					f1 *= 10;
+					f1 += c - '0';
+				} else {
+					break;
+				}
+			} while (true);
+		}
+
+		/* Write out float value */
+		if (out) {
+			float fl = i1 + ((float)f1 / (float)f2);
+
+			if (isNeg) {
+				fl = -fl;
+			}
+			*out = fl;
+		}
+	}
+	return ptr - start;
+}
 
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[])
 {
@@ -955,7 +1081,7 @@ static void calc_next_frame(dma_dac_buf_t buf[DAC_NR_OF_SAMPLES], uint32_t* dds0
 
 
 const char					PM_DEBUG_MAIN_1PPS_1[]				= "DEBUG_MAIN_1PPS: diff=%+04d, last_adjust=%d, inSpan=%d, ";
-const char					PM_DEBUG_MAIN_1PPS_2[]				= "doUpdate=%d, outOfSync=%d \t";
+const char					PM_DEBUG_MAIN_1PPS_2[]				= "doUpdate=%d, outOfSync=%d\r\n";
 PROGMEM_DECLARE(const char, PM_DEBUG_MAIN_1PPS_1[]);
 PROGMEM_DECLARE(const char, PM_DEBUG_MAIN_1PPS_2[]);
 static void isr_100ms_main_1pps(void)
@@ -1980,9 +2106,12 @@ static void task_main_pll(uint32_t now)
 		tc_write_cc_buffer(&TCC0, TC_CCC, i_xo_mode_pwm_val_i);
 
 		/* Synced stability counter */
-		if (-20 <= l_1pps_deviation && l_1pps_deviation <= 20) {
+		if (-50 <= l_1pps_deviation && l_1pps_deviation <= 50) {
 			if (++l_1pps_phased_cntr > 250) {
 				l_1pps_phased_cntr = 250;  // Saturated value
+			} else if (l_1pps_phased_cntr == (C_TCC1_CLOCKSETTING_AFTER_SECS + 5)) {
+				/* Send GNS info request */
+				serial_send_gns_info_req();
 			}
 		} else {
 			l_1pps_phased_cntr = 0;

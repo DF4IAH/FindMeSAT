@@ -21,6 +21,7 @@ extern bool							g_errorBeep_enable;
 extern bool							g_keyBeep_enable;
 
 extern uint64_t						g_milliseconds_cnt64;
+extern uint32_t						g_boot_time_ts;
 
 extern uint16_t						g_1pps_last_lo;
 extern uint64_t						g_1pps_last_hi;
@@ -38,6 +39,24 @@ extern bool							g_1pps_printusb_avail;
 extern uint8_t						g_1pps_phased_cntr;
 extern uint8_t						g_1pps_led;
 
+extern uint8_t						g_gns_run_status;
+extern uint8_t						g_gns_fix_status;
+extern float						g_gns_lat;
+extern float						g_gns_lon;
+extern float						g_gns_msl_alt_m;
+extern float						g_gns_speed_kmPh;
+extern float						g_gns_course_deg;
+extern uint8_t						g_gns_fix_mode;
+extern float						g_gns_dop_h;
+extern float						g_gns_dop_p;
+extern float						g_gns_dop_v;
+extern uint8_t						g_gns_gps_sats_inView;
+extern uint8_t						g_gns_gnss_sats_used;
+extern uint8_t						g_gns_glonass_sats_inView;
+extern uint8_t						g_gns_cPn0_dBHz;
+//extern uint16_t						g_gns_hpa_m;
+//extern uint16_t						g_gns_vpa_m;
+
 extern bool							g_usb_cdc_stdout_enabled;
 extern bool							g_usb_cdc_printStatusLines_atxmega;
 extern bool							g_usb_cdc_printStatusLines_sim808;
@@ -50,7 +69,7 @@ extern WORKMODE_ENUM_t				g_workmode;
 extern usart_serial_options_t		g_usart1_options;
 extern bool							g_usart1_rx_ready;
 extern uint16_t						g_usart1_rx_idx;
-extern uint8_t						g_usart1_rx_buf[C_USART1_RX_BUF_LEN];
+extern char							g_usart1_rx_buf[C_USART1_RX_BUF_LEN];
 
 extern bool							g_twi1_gsm_valid;
 extern uint8_t						g_twi1_gsm_version;
@@ -174,6 +193,7 @@ extern sched_entry_t				g_sched_data[C_SCH_SLOT_CNT];
 extern uint8_t						g_sched_sort[C_SCH_SLOT_CNT];
 
 extern char							g_prepare_buf[C_TX_BUF_SIZE];
+extern char							g_gns_concat_buf[C_GNS_CONCAT_LEN];
 
 
 /* TWI communications  */
