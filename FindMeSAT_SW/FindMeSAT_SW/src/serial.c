@@ -353,11 +353,18 @@ static void serial_filter_inStream(const char* buf, uint16_t len)
 	}
 
 	/* Check for AT+CGNSINF sentence reply */
-	char* ptr = strstr_P(buf, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF);
-	if (ptr) {
+	const int gnsInf_len = strlen_P(PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF);
+
+	const char* lineEnd_ptr = strchr(buf, '\n');
+	const int lineEnd_idx = lineEnd_ptr ?  (lineEnd_ptr - buf) : (len - 1);
+
+	const char* gnsInf_ptr = strstr_P(buf, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF);
+	const int gnsInf_idx = gnsInf_ptr ?  (gnsInf_ptr - buf) : (len - 1);
+
+	char* ptr = (char*) gnsInf_ptr;
+	if (gnsInf_ptr && (gnsInf_idx < lineEnd_idx)) {
 		irqflags_t flags;
-		const int hdrLen = strlen_P(PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF);
-		ptr += hdrLen;
+		ptr += gnsInf_idx + gnsInf_len;
 
 		uint8_t idx = 0;
 		int16_t restLen = len - (ptr - buf);
@@ -415,23 +422,27 @@ static void serial_filter_inStream(const char* buf, uint16_t len)
 						}
 					} while (true);
 
-					u64	/=	1000U;
-					calDat.second	= (uint8_t) (u64 % 100U);
-					u64	/= 	100U;
-					calDat.minute	= (uint8_t) (u64 % 100U);
-					u64	/= 	100U;
-					calDat.hour		= (uint8_t) (u64 % 100U);
-					u64	/= 	100U;
-					calDat.date		= (uint8_t) (u64 % 100U) - 1;
-					u64	/= 	100U;
-					calDat.month	= (uint8_t) (u64 % 100U) - 1;
-					u64	/= 	100U;
-					calDat.year		= (uint16_t) u64;
-					uint32_t l_ts = calendar_date_to_timestamp(&calDat) - rtc_get_time();
+					if (u64) {
+						u64	/=	1000U;
+						calDat.second	= (uint8_t) (u64 % 100U);
+						u64	/= 	100U;
+						calDat.minute	= (uint8_t) (u64 % 100U);
+						u64	/= 	100U;
+						calDat.hour		= (uint8_t) (u64 % 100U);
+						u64	/= 	100U;
+						calDat.date		= (uint8_t) (u64 % 100U) - 1;
+						u64	/= 	100U;
+						calDat.month	= (uint8_t) (u64 % 100U) - 1;
+						u64	/= 	100U;
+						calDat.year		= (uint16_t) u64;
 
-					flags = cpu_irq_save();
-					g_boot_time_ts = l_ts;
-					cpu_irq_restore(flags);
+						uint32_t l_ts	= calendar_date_to_timestamp(&calDat) + 1;
+						l_ts		   -= rtc_get_time() >> 10;
+
+						flags = cpu_irq_save();
+						g_boot_time_ts = l_ts;
+						cpu_irq_restore(flags);
+					}
 				break;
 
 				case  3:
@@ -472,7 +483,7 @@ static void serial_filter_inStream(const char* buf, uint16_t len)
 				default:
 					ptr = cueBehind(ptr, ',');
 			}
-			restLen = len - (ptr - g_prepare_buf);
+			restLen = len - (ptr - buf);
 			idx++;
 		}
 	}

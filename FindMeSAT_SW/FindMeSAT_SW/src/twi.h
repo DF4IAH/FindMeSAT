@@ -397,7 +397,7 @@ void task_twi2_lcd_header(void);
 
 void task_twi2_lcd__cpu1(uint8_t col_left);
 void task_twi2_lcd__cpu2(uint8_t col_left);
-void task_twi2_lcd__cpu3(uint8_t col_left);
+void task_twi2_lcd__sim1(uint8_t col_left);
 void task_twi2_lcd__hygro(uint8_t col_left);
 void task_twi2_lcd__gyro_gfxmag(void);
 void task_twi2_lcd__gyro_gfxaccel(void);

@@ -75,6 +75,7 @@ bool						g_1pps_printtwi_avail				= false;
 bool						g_1pps_printusb_avail				= false;
 uint8_t						g_1pps_phased_cntr					= 0;
 uint8_t						g_1pps_led							= 0;
+bool						g_1pps_twi_new						= false;
 
 uint8_t						g_gns_run_status					= 0;
 uint8_t						g_gns_fix_status					= 0;
@@ -230,7 +231,6 @@ volatile sched_entry_t		g_sched_data[C_SCH_SLOT_CNT]		= { 0 };
 volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
 
 char						g_prepare_buf[C_TX_BUF_SIZE]		= "";
-char						g_gns_concat_buf[C_GNS_CONCAT_LEN]	= "";
 
 
 twi_options_t g_twi1_options = {
@@ -346,6 +346,7 @@ static void init_globals(void)
 		g_1pps_printusb_avail				= false;
 		g_1pps_phased_cntr					= 0;
 		g_1pps_led							= 0;
+		g_1pps_twi_new						= false;
 	}
 
 	/* GNS */
@@ -1170,10 +1171,12 @@ static void isr_100ms_main_1pps(void)
 
 		/* Show PLL inter-calculation values and states */
 		if (g_usb_cdc_printStatusLines_1pps) {
-			int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_DEBUG_MAIN_1PPS_1, l_1pps_last_diff, g_1pps_last_adjust, inSpan);
-			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_DEBUG_MAIN_1PPS_2, doUpdate, g_1pps_processed_outOfSync);
-			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+			char l_prepare_buf[C_TX_BUF_SIZE];
+
+			int len = snprintf_P(l_prepare_buf, sizeof(l_prepare_buf), PM_DEBUG_MAIN_1PPS_1, l_1pps_last_diff, g_1pps_last_adjust, inSpan);
+			udi_write_tx_buf(l_prepare_buf, min(len, sizeof(l_prepare_buf)), false);
+			len = snprintf_P(l_prepare_buf, sizeof(l_prepare_buf), PM_DEBUG_MAIN_1PPS_2, doUpdate, g_1pps_processed_outOfSync);
+			udi_write_tx_buf(l_prepare_buf, min(len, sizeof(l_prepare_buf)), false);
 		}
 	}
 }
@@ -1489,7 +1492,7 @@ static void interrupt_init(void)
 	PORTR_INT0MASK	= (1 << 0);													// Port R0	--> INT0
 	PORTR_INT1MASK	= 0;														// (none)	--> INT1
 
-	PORTR_INTCTRL	= PORT_INT1LVL_OFF_gc | PORT_INT0LVL_MED_gc;				// Enable interrupt for port R0 with med level
+	PORTR_INTCTRL	= PORT_INT1LVL_OFF_gc | PORT_INT0LVL_HI_gc;					// Enable interrupt for port R0 with high level
 }
 
 ISR(PORTR_INT0_vect)
@@ -1517,6 +1520,9 @@ ISR(PORTR_INT0_vect)
 		/* Inform about the adjustment */
 		g_1pps_last_adjust = true;
 	}
+
+	/* TWI2 - LCD line scheduler synchronization */
+	g_1pps_twi_new	= true;
 }
 
 
@@ -2109,7 +2115,8 @@ static void task_main_pll(uint32_t now)
 		if (-50 <= l_1pps_deviation && l_1pps_deviation <= 50) {
 			if (++l_1pps_phased_cntr > 250) {
 				l_1pps_phased_cntr = 250;  // Saturated value
-			} else if (l_1pps_phased_cntr == (C_TCC1_CLOCKSETTING_AFTER_SECS + 5)) {
+			} else if (l_1pps_phased_cntr == (C_TCC1_CLOCKSETTING_AFTER_SECS + 3) ||
+					   l_1pps_phased_cntr == (C_TCC1_CLOCKSETTING_AFTER_SECS + 7)) {
 				/* Send GNS info request */
 				serial_send_gns_info_req();
 			}

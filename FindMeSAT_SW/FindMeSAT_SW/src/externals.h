@@ -38,6 +38,7 @@ extern bool							g_1pps_printtwi_avail;
 extern bool							g_1pps_printusb_avail;
 extern uint8_t						g_1pps_phased_cntr;
 extern uint8_t						g_1pps_led;
+extern bool							g_1pps_twi_new;
 
 extern uint8_t						g_gns_run_status;
 extern uint8_t						g_gns_fix_status;
@@ -193,7 +194,6 @@ extern sched_entry_t				g_sched_data[C_SCH_SLOT_CNT];
 extern uint8_t						g_sched_sort[C_SCH_SLOT_CNT];
 
 extern char							g_prepare_buf[C_TX_BUF_SIZE];
-extern char							g_gns_concat_buf[C_GNS_CONCAT_LEN];
 
 
 /* TWI communications  */
