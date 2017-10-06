@@ -436,11 +436,11 @@ static void serial_filter_inStream(const char* buf, uint16_t len)
 						u64	/= 	100U;
 						calDat.year		= (uint16_t) u64;
 
-						uint32_t l_ts	= calendar_date_to_timestamp(&calDat) + 1;
-						l_ts		   -= rtc_get_time() >> 10;
+						uint32_t l_ts	= calendar_date_to_timestamp(&calDat);
 
 						flags = cpu_irq_save();
-						g_boot_time_ts = l_ts;
+						l_ts		   -= (uint32_t)(g_milliseconds_cnt64 / 1000) - 1UL;
+						g_boot_time_ts	= l_ts;
 						cpu_irq_restore(flags);
 					}
 				break;

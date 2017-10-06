@@ -42,6 +42,7 @@
 #define C_TCC1_BORDER_OFFSET										3000
 #define C_TCC1_CLOCKSETTING_AFTER_SECS								30U
 #define C_TCC1_CLOCKSETTING_OFFSET									11U
+#define C_TCC1_SPAN_HALF											50  // 30 equals to 1 µs
 
 #define C_1PPS_PWM_DIFF_ARY_CNT										16
 

@@ -1590,7 +1590,7 @@ void task_twi2_lcd__cpu1(uint8_t col_left)
 	{
 		irqflags_t flags = cpu_irq_save();
 		l_seconds		= g_boot_time_ts;
-		l_seconds	   += rtc_get_time() >> 10;
+		l_seconds	   += (uint32_t)(g_milliseconds_cnt64 / 1000);
 		cpu_irq_restore(flags);
 	}
 

@@ -1120,7 +1120,7 @@ static void isr_100ms_main_1pps(void)
 				}
 
 				/* Window check */
-				if ((-30 <= l_1pps_last_diff) && (l_1pps_last_diff <= 30)) {	// +/- 1 µs
+				if ((-C_TCC1_SPAN_HALF <= l_1pps_last_diff) && (l_1pps_last_diff <= C_TCC1_SPAN_HALF)) {	// +/- 1.67 µs
 					inSpan		= true;
 					doUpdate	= true;
 				}
@@ -2112,11 +2112,10 @@ static void task_main_pll(uint32_t now)
 		tc_write_cc_buffer(&TCC0, TC_CCC, i_xo_mode_pwm_val_i);
 
 		/* Synced stability counter */
-		if (-50 <= l_1pps_deviation && l_1pps_deviation <= 50) {
-			if (++l_1pps_phased_cntr > 250) {
-				l_1pps_phased_cntr = 250;  // Saturated value
-			} else if (l_1pps_phased_cntr == (C_TCC1_CLOCKSETTING_AFTER_SECS + 3) ||
-					   l_1pps_phased_cntr == (C_TCC1_CLOCKSETTING_AFTER_SECS + 7)) {
+		if ((-C_TCC1_SPAN_HALF <= l_1pps_deviation) && (l_1pps_deviation <= C_TCC1_SPAN_HALF)) {
+			if (++l_1pps_phased_cntr > (C_TCC1_CLOCKSETTING_AFTER_SECS << 1)) {
+				l_1pps_phased_cntr = (C_TCC1_CLOCKSETTING_AFTER_SECS + 1);  // Repeat 2x per minute
+			} else if (l_1pps_phased_cntr == (C_TCC1_CLOCKSETTING_AFTER_SECS + 3)) {
 				/* Send GNS info request */
 				serial_send_gns_info_req();
 			}
