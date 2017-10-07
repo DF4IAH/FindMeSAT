@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													003
+#define VERSION_LOW													007
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -42,10 +42,9 @@
 #define C_TCC1_BORDER_OFFSET										3000
 #define C_TCC1_CLOCKSETTING_AFTER_SECS								30U
 #define C_TCC1_CLOCKSETTING_OFFSET									11U
+#define C_TCC1_SPAN_HALF											50  // 30 equals to 1 µs
 
 #define C_1PPS_PWM_DIFF_ARY_CNT										16
-
-#define C_GNS_CONCAT_LEN											512
 
 
 /* FIFO */

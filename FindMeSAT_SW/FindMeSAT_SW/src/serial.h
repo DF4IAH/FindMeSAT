@@ -53,7 +53,7 @@ void serial_sim808_send(const char*, uint8_t len);
 void serial_init(void);
 void serial_start(void);
 
-void serial_send_gns_info_req(void);
+void serial_send_gns_urc(uint8_t val);
 
 void task_serial(uint32_t now);
 

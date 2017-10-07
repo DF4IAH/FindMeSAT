@@ -41,6 +41,124 @@ extern uint8_t			g_twi2_recv_data[TWI_DATA_LENGTH];
 #endif
 
 
+const char					PM_FORMAT_02LD[]					= "%02ld";
+PROGMEM_DECLARE(const char, PM_FORMAT_02LD[]);
+const char					PM_FORMAT_03LD[]					= "%03ld";
+PROGMEM_DECLARE(const char, PM_FORMAT_03LD[]);
+const char					PM_FORMAT_03F10[]					= "%03.10f";
+PROGMEM_DECLARE(const char, PM_FORMAT_03F10[]);
+const char					PM_FORMAT_4LD[]						= "%4ld";
+PROGMEM_DECLARE(const char, PM_FORMAT_4LD[]);
+const char					PM_FORMAT_4F1[]						= "%4.1f";
+PROGMEM_DECLARE(const char, PM_FORMAT_4F1[]);
+const char					PM_FORMAT_5F1[]						= "%5.1f";
+PROGMEM_DECLARE(const char, PM_FORMAT_5F1[]);
+const char					PM_FORMAT_5F3[]						= "%5.3f";
+PROGMEM_DECLARE(const char, PM_FORMAT_5F3[]);
+const char					PM_FORMAT_05LD[]					= "%05ld";
+PROGMEM_DECLARE(const char, PM_FORMAT_05LD[]);
+const char					PM_FORMAT_05F2[]					= "%05.2f";
+PROGMEM_DECLARE(const char, PM_FORMAT_05F2[]);
+const char					PM_FORMAT_6F1[]						= "%6.1f";
+PROGMEM_DECLARE(const char, PM_FORMAT_6F1[]);
+const char					PM_FORMAT_07F2[]					= "%07.2f";
+PROGMEM_DECLARE(const char, PM_FORMAT_07F2[]);
+const char					PM_FORMAT_KMPH[]					= "kmh";
+PROGMEM_DECLARE(const char, PM_FORMAT_KMPH[]);
+
+const char					PM_TWI1_INIT_HYGRO_01[]				= "\r\nTWI-onboard: Hygro SHT31-DIS - I2C address: 0x%02X\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_01[]);
+const char					PM_TWI1_INIT_HYGRO_02[]				= "TWI-onboard: Hygro SHT31-DIS -   address NACK / 'break' bad response\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_02[]);
+const char					PM_TWI1_INIT_HYGRO_03[]				= "TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_03[]);
+const char					PM_TWI1_INIT_HYGRO_04[]				= "TWI-onboard:  INIT success.\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_04[]);
+const char					PM_TWI1_INIT_HYGRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_05[]);
+const char					PM_TWI1_INIT_ONBOARD_HYGRO_OK[]		= "Init: Hygro success";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_HYGRO_OK[]);
+
+const char					PM_TWI1_INIT_GYRO_01[]				= "\r\nTWI-onboard: Gyro MPU-9250 - I2C address: 0x%02X, 0x%02X\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_01[]);
+const char					PM_TWI1_INIT_GYRO_02[]				= "TWI-onboard: Gyro MPU-9250   -   'reset 1' bad response\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_02[]);
+const char					PM_TWI1_INIT_GYRO_03[]				= "TWI-onboard: Gyro MPU-9250 -     version: 0x%02X, 0x%02X\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_03[]);
+const char					PM_TWI1_INIT_GYRO_04[]				= "TWI-onboard:  INIT success.\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_04[]);
+const char					PM_TWI1_INIT_GYRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_05[]);
+const char					PM_TWI1_INIT_ONBOARD_GYRO_OK[]		= "Init: Gyro  success";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_GYRO_OK[]);
+
+const char					PM_TWI1_INIT_BARO_01[]				= "\r\nTWI-onboard: Baro MS560702BA03-50 - I2C address: 0x%02X\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_01[]);
+const char					PM_TWI1_INIT_BARO_02[]				= "TWI-onboard:  BAD reading serial/CRC word. (sc=%d)\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_02[]);
+const char					PM_TWI1_INIT_BARO_03[]				= "TWI-onboard: Baro MS560702BA03-50 -     serial#: %d\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_03[]);
+const char					PM_TWI1_INIT_BARO_04[]				= "TWI-onboard:  BAD reading PROM address %d. (sc=%d)\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_04[]);
+const char					PM_TWI1_INIT_BARO_05[]				= "TWI-onboard:  INIT success.\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_05[]);
+const char					PM_TWI1_INIT_BARO_06[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_06[]);
+const char					PM_TWI1_INIT_ONBOARD_BARO_OK[]		= "Init: Baro  success";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_BARO_OK[]);
+
+const char					PM_TWI1_INIT_ONBOARD_01[]			= "-----------\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_01[]);
+
+const char					PM_TWIHEADER_FINDMESAT[]			= "FindMeSAT";
+PROGMEM_DECLARE(const char, PM_TWIHEADER_FINDMESAT[]);
+const char					PM_TWIHEADER_BY_DF4IAH[]			= "by DF4IAH";
+PROGMEM_DECLARE(const char, PM_TWIHEADER_BY_DF4IAH[]);
+
+const char					PM_TWIINIT_DATE_TIME[]				= "    -  -     :  :   UTC";
+PROGMEM_DECLARE(const char, PM_TWIINIT_DATE_TIME[]);
+const char					PM_TWIINIT_MP_TEMP[]				= "mP Temp =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MP_TEMP[]);
+const char					PM_TWIINIT_MP_UUSB[]				=    "Uusb =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MP_UUSB[]);
+const char					PM_TWIINIT_MP_UBAT[]				=    "Ubat =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MP_UBAT[]);
+const char					PM_TWIINIT_MP_UVCTCXO[]				= "Uvctcxo =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MP_UVCTCXO[]);
+//const char				PM_TWIINIT_MP_UIOADC4[]				= "Uioadc4 =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_UIOADC4[]);
+//const char				PM_TWIINIT_MP_UIOADC5[]				= "Uioadc5 =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_UIOADC5[]);
+//const char				PM_TWIINIT_MP_USILEN[]				= "Usilen. =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_USILEN[]);
+const char					PM_TWIINIT_BA_TEMP[]				= "Ba_Temp =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_BA_TEMP[]);
+const char					PM_TWIINIT_BA_PRES[]				= "Ba_Pres =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_BA_PRES[]);
+const char					PM_TWIINIT_HY_TEMP[]				= "Hy_Temp =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_HY_TEMP[]);
+const char					PM_TWIINIT_HY_RELH[]				= "Hy_RelH =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_HY_RELH[]);
+const char					PM_TWIINIT_C[]						= "C";
+PROGMEM_DECLARE(const char, PM_TWIINIT_C[]);
+const char					PM_TWIINIT_V[]						= "V";
+PROGMEM_DECLARE(const char, PM_TWIINIT_V[]);
+const char					PM_TWIINIT_P100[]					= "%";
+PROGMEM_DECLARE(const char, PM_TWIINIT_P100[]);
+const char					PM_TWIINIT_HPA[]					= "hPa";
+PROGMEM_DECLARE(const char, PM_TWIINIT_HPA[]);
+const char					PM_TWIINIT_GX[]						= "Gx";
+PROGMEM_DECLARE(const char, PM_TWIINIT_GX[]);
+const char					PM_TWIINIT_GY[]						= "Gy";
+PROGMEM_DECLARE(const char, PM_TWIINIT_GY[]);
+const char					PM_TWIINIT_GZ[]						= "Gz";
+PROGMEM_DECLARE(const char, PM_TWIINIT_GZ[]);
+const char					PM_TWIINIT_MAGNETICS[]				= "Magnetics";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MAGNETICS[]);
+const char					PM_TWIINIT_ACCEL[]					= "Accel.";
+PROGMEM_DECLARE(const char, PM_TWIINIT_ACCEL[]);
+
+
 /* Forward declarations */
 
 static void task_twi1_hygro(uint32_t now);
@@ -186,19 +304,6 @@ void twi2_set_beep(uint8_t pitch_10hz, uint8_t len_10ms)
 
 /* INIT functions */
 
-const char					PM_TWI1_INIT_HYGRO_01[]				= "\r\nTWI-onboard: Hygro SHT31-DIS - I2C address: 0x%02X\r\n";
-const char					PM_TWI1_INIT_HYGRO_02[]				= "TWI-onboard: Hygro SHT31-DIS -   address NACK / 'break' bad response\r\n";
-const char					PM_TWI1_INIT_HYGRO_03[]				= "TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n";
-const char					PM_TWI1_INIT_HYGRO_04[]				= "TWI-onboard:  INIT success.\r\n";
-const char					PM_TWI1_INIT_HYGRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
-const char					PM_TWI1_INIT_ONBOARD_HYGRO_OK[]		= "Init: Hygro success";
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_01[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_02[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_03[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_04[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_05[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_HYGRO_OK[]);
-
 static void init_twi1_hygro(void)
 {
 	status_code_t sc;
@@ -272,20 +377,6 @@ static void init_twi1_hygro(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_HYGRO_05, sc);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 }
-
-const char					PM_TWI1_INIT_GYRO_01[]				= "\r\nTWI-onboard: Gyro MPU-9250 - I2C address: 0x%02X, 0x%02X\r\n";
-const char					PM_TWI1_INIT_GYRO_02[]				= "TWI-onboard: Gyro MPU-9250   -   'reset 1' bad response\r\n";
-const char					PM_TWI1_INIT_GYRO_03[]				= "TWI-onboard: Gyro MPU-9250 -     version: 0x%02X, 0x%02X\r\n";
-const char					PM_TWI1_INIT_GYRO_04[]				= "TWI-onboard:  INIT success.\r\n";
-const char					PM_TWI1_INIT_GYRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
-const char					PM_TWI1_INIT_ONBOARD_GYRO_OK[]		= "Init: Gyro  success";
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_01[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_02[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_03[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_04[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_05[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_GYRO_OK[]);
-
 
 status_code_t twi1_gyro_gyro_offset_set(void)
 {
@@ -536,21 +627,6 @@ void init_twi1_gyro(void)
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 }
 
-const char					PM_TWI1_INIT_BARO_01[]				= "\r\nTWI-onboard: Baro MS560702BA03-50 - I2C address: 0x%02X\r\n";
-const char					PM_TWI1_INIT_BARO_02[]				= "TWI-onboard:  BAD reading serial/CRC word. (sc=%d)\r\n";
-const char					PM_TWI1_INIT_BARO_03[]				= "TWI-onboard: Baro MS560702BA03-50 -     serial#: %d\r\n";
-const char					PM_TWI1_INIT_BARO_04[]				= "TWI-onboard:  BAD reading PROM address %d. (sc=%d)\r\n";
-const char					PM_TWI1_INIT_BARO_05[]				= "TWI-onboard:  INIT success.\r\n";
-const char					PM_TWI1_INIT_BARO_06[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
-const char					PM_TWI1_INIT_ONBOARD_BARO_OK[]		= "Init: Baro  success";
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_01[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_02[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_03[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_04[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_05[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_06[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_BARO_OK[]);
-
 static void init_twi1_baro(void)
 {
 	status_code_t sc;
@@ -616,9 +692,6 @@ static void init_twi1_baro(void)
 
 
 /* TWI1 - GSM, Gyro, Baro, Hygro devices */
-
-const char					PM_TWI1_INIT_ONBOARD_01[]			= "-----------\r\n\r\n";
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_01[]);
 
 static void start_twi1_onboard(void)
 {
@@ -1356,8 +1429,8 @@ void task_twi2_lcd_header(void)
 {
 	/* The header line */
 	task_twi2_lcd_cls();
-	task_twi2_lcd_str(6 * 10, 2, "FindMeSAT");
-	task_twi2_lcd_str(6 * 30, 2, "by DF4IAH");
+	task_twi2_lcd_str(6 * 10, 2, strcpy_P(g_prepare_buf, PM_TWIHEADER_FINDMESAT));
+	task_twi2_lcd_str(6 * 30, 2, strcpy_P(g_prepare_buf, PM_TWIHEADER_BY_DF4IAH));
 
 	/* A tiny satellite */
 	task_twi2_lcd_circ( 9, 4, 3, true, 1);
@@ -1376,42 +1449,39 @@ static void task_twi2_lcd_template(void)
 	if (g_adc_enabled) {
 		/* Left measurement names */
 		line = 2;
-		task_twi2_lcd_str(6 *  0, (line++) * 10, "mP Temp =");
-		task_twi2_lcd_str(6 *  3, (line++) * 10,    "Vusb =");
-		task_twi2_lcd_str(6 *  3, (line++) * 10,    "Vbat =");
-		task_twi2_lcd_str(6 *  0, (line++) * 10, "Vvctcxo =");
-		task_twi2_lcd_str(6 *  0, (line++) * 10, "Vioadc4 =");
-		task_twi2_lcd_str(6 *  0, (line++) * 10, "Vioadc5 =");
-		//task_twi2_lcd_str(6 *  0, (line++) * 10, "Vsilen. =");
-		line++;
-	} else {
-		line = 9;
+		task_twi2_lcd_str(6 *  0, (line++) * 10 -4, strcpy_P(g_prepare_buf, PM_TWIINIT_DATE_TIME));
+		task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_TEMP));
+		task_twi2_lcd_str(6 *  3, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_UUSB));
+		task_twi2_lcd_str(6 *  3, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_UBAT));
+		task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_UVCTCXO));
+		//task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_UIOADC4));
+		//task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_UIOADC5));
+		//task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_USILEN));
 	}
 
-	task_twi2_lcd_str(6 *  0, (line++) * 10, "Ba_Temp =");
-	task_twi2_lcd_str(6 *  0, (line++) * 10, "Ba_Pres =");
-	task_twi2_lcd_str(6 *  0, (line++) * 10, "Hy_Temp =");
-	task_twi2_lcd_str(6 *  0, (line++) * 10, "Hy_RelH =");
+	line = 9;
+	task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_BA_TEMP));
+	task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_BA_PRES));
+	task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_HY_TEMP));
+	task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_HY_RELH));
 
 	if (g_adc_enabled) {
 		/* Left measurement units */
-		line = 2;
-		task_twi2_lcd_str(6 * 16, (line++) * 10, "C");
-		task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
-		task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
-		task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
-		task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
-		task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
-		//task_twi2_lcd_str(6 * 16, (line++) * 10, "V");
-		line++;
-	} else {
-		line = 9;
+		line = 3;
+		task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_C));
+		task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_V));
+		task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_V));
+		task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_V));
+		//task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_V));
+		//task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_V));
+		//task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_V));
 	}
 
-	task_twi2_lcd_str(6 * 16, (line++) * 10, "C");
-	task_twi2_lcd_str(6 * 18, (line++) * 10, "hPa");
-	task_twi2_lcd_str(6 * 16, (line++) * 10, "C");
-	task_twi2_lcd_str(6 * 16, (line++) * 10, "%");
+	line = 9;
+	task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_C));
+	task_twi2_lcd_str(6 * 18, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_HPA));
+	task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_C));
+	task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_P100));
 
 	/* Gyro: plot circles */
 	{
@@ -1425,15 +1495,15 @@ static void task_twi2_lcd_template(void)
 		task_twi2_lcd_circ(plot_gyro_center_x_Y, plot_gyro_center_y, plot_gyro_radius, false, 1);
 		task_twi2_lcd_circ(plot_gyro_center_x_Z, plot_gyro_center_y, plot_gyro_radius, false, 1);
 
-		task_twi2_lcd_str(plot_gyro_center_x_X - 4, plot_gyro_center_y + plot_gyro_radius + 4, "Gx");
-		task_twi2_lcd_str(plot_gyro_center_x_Y - 4, plot_gyro_center_y + plot_gyro_radius + 4, "Gy");
-		task_twi2_lcd_str(plot_gyro_center_x_Z - 4, plot_gyro_center_y + plot_gyro_radius + 4, "Gz");
+		task_twi2_lcd_str(plot_gyro_center_x_X - 4, plot_gyro_center_y + plot_gyro_radius + 4, strcpy_P(g_prepare_buf, PM_TWIINIT_GX));
+		task_twi2_lcd_str(plot_gyro_center_x_Y - 4, plot_gyro_center_y + plot_gyro_radius + 4, strcpy_P(g_prepare_buf, PM_TWIINIT_GY));
+		task_twi2_lcd_str(plot_gyro_center_x_Z - 4, plot_gyro_center_y + plot_gyro_radius + 4, strcpy_P(g_prepare_buf, PM_TWIINIT_GZ));
 	}
 
 	/* Magnetic & Accel */
 	{
-		task_twi2_lcd_str(113, 72, "Magnetics");
-		task_twi2_lcd_str(196, 72, "Accel.");
+		task_twi2_lcd_str(18 * 6, 72, strcpy_P(g_prepare_buf, PM_TWIINIT_MAGNETICS));
+		task_twi2_lcd_str(196, 72, strcpy_P(g_prepare_buf, PM_TWIINIT_ACCEL));
 	}
 }
 
@@ -1444,6 +1514,31 @@ void task_twi2_lcd_print_format_P(uint8_t x, uint8_t y, const char* fmt_P)
 	twi2_waitUntilReady();
 	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
 	g_twi2_m_data[0] = sprintf_P((char*)&(g_twi2_m_data[1]), fmt_P);
+	g_twi2_packet.length = g_twi2_m_data[0] + 1;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
+	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+}
+
+static void task_twi2_lcd_print_format_c(uint8_t x, uint8_t y, char val)
+{
+	task_twi2_lcd_pos_xy(x, y);
+
+	twi2_waitUntilReady();
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
+	g_twi2_m_data[0] = 1;
+	g_twi2_m_data[1] = (uint8_t)val;
+	g_twi2_packet.length = g_twi2_m_data[0] + 1;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
+	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+}
+
+static void task_twi2_lcd_print_format_long_P(uint8_t x, uint8_t y, long val, const char* fmt_P)
+{
+	task_twi2_lcd_pos_xy(x, y);
+
+	twi2_waitUntilReady();
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
+	g_twi2_m_data[0] = sprintf_P((char*)&(g_twi2_m_data[1]), fmt_P, val);
 	g_twi2_packet.length = g_twi2_m_data[0] + 1;
 	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
@@ -1503,28 +1598,83 @@ static void task_twi2_lcd__pll(void)
 }
 
 
-const char					PM_FORMAT_05F2[]			= "%05.2f";
-const char					PM_FORMAT_07F2[]			= "%07.2f";
-const char					PM_FORMAT_4F1[]				= "%4.1f";
-const char					PM_FORMAT_5F3[]				= "%5.3f";
-PROGMEM_DECLARE(const char, PM_FORMAT_05F2[]);
-PROGMEM_DECLARE(const char, PM_FORMAT_07F2[]);
-PROGMEM_DECLARE(const char, PM_FORMAT_4F1[]);
-PROGMEM_DECLARE(const char, PM_FORMAT_5F3[]);
-
 /* TWI2 - LCD Port */
 void task_twi2_lcd__cpu1(uint8_t col_left)
 {
-	static int16_t s_adc_temp_deg_100 = 0;
-	static int16_t s_adc_5v0_volt_1000 = 0;
+	static uint32_t	s_epoch_secs		= 0UL;
+	static uint8_t	s_minute			= 0;
+	static uint8_t	s_hour				= 0;
+	static uint8_t	s_date				= 0;
+	static uint8_t	s_month				= 0;
+	static uint16_t	s_year				= 0;
+	static int16_t	s_adc_temp_deg_100	= 0;
+	static int16_t	s_adc_5v0_volt_1000	= 0;
+	uint32_t l_seconds;
 	int16_t l_adc_temp_deg_100;
 	int16_t l_adc_5v0_volt_1000;
 
 	/* Get up-to-date global data */
 	{
-		irqflags_t flags			= cpu_irq_save();
-		l_adc_temp_deg_100			= g_adc_temp_deg_100;
-		l_adc_5v0_volt_1000			= g_adc_5v0_volt_1000;
+		irqflags_t flags = cpu_irq_save();
+		l_seconds		= g_boot_time_ts;
+		l_seconds	   += (uint32_t)(g_milliseconds_cnt64 / 1000);
+		cpu_irq_restore(flags);
+	}
+
+	if ((s_epoch_secs != l_seconds) && (1000000000UL < l_seconds && l_seconds < 2000000000UL)) {
+		s_epoch_secs = l_seconds;
+
+		struct calendar_date calDat;
+		calendar_timestamp_to_date(l_seconds, &calDat);
+
+		if (calDat.second <= 60) {
+			task_twi2_lcd_print_format_long_P(17 * 6,  2 * 10 -4, calDat.second,		PM_FORMAT_02LD);
+		}
+
+		if ((s_minute != calDat.minute) && (calDat.minute <= 59)) {
+			s_minute = calDat.minute;
+			task_twi2_lcd_print_format_long_P(14 * 6,  2 * 10 -4, calDat.minute,		PM_FORMAT_02LD);
+		}
+
+		if ((s_hour != calDat.hour) && (calDat.hour <= 23)) {
+			s_hour = calDat.hour;
+			task_twi2_lcd_print_format_long_P(11 * 6,  2 * 10 -4, calDat.hour,			PM_FORMAT_02LD);
+		}
+
+		if ((s_date != calDat.date) && (calDat.date <= 30)) {
+			s_date = calDat.date;
+			task_twi2_lcd_print_format_long_P( 8 * 6,  2 * 10 -4, calDat.date  + 1,		PM_FORMAT_02LD);
+		}
+
+		if ((s_month != calDat.month) && (calDat.month <= 11)) {
+			s_month = calDat.month;
+			task_twi2_lcd_print_format_long_P( 5 * 6,  2 * 10 -4, calDat.month + 1,		PM_FORMAT_02LD);
+		}
+
+		if ((s_year != calDat.year) && (2017 <= calDat.year) && (calDat.year <= 2100)) {
+			s_year = calDat.year;
+			task_twi2_lcd_print_format_long_P( 0 * 6,  2 * 10 -4, calDat.year,			PM_FORMAT_4LD);
+		}
+
+	} else {
+		/* Reset static vars */
+		s_epoch_secs	= 0UL;
+		s_minute		= 0;
+		s_hour			= 0;
+		s_date			= 0;
+		s_month			= 0;
+		s_year			= 0;
+	}
+
+	if (!g_adc_enabled) {
+		return;
+	}
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags = cpu_irq_save();
+		l_adc_temp_deg_100	= g_adc_temp_deg_100;
+		l_adc_5v0_volt_1000	= g_adc_5v0_volt_1000;
 		cpu_irq_restore(flags);
 	}
 
@@ -1532,14 +1682,14 @@ void task_twi2_lcd__cpu1(uint8_t col_left)
 		s_adc_temp_deg_100 = l_adc_temp_deg_100;
 
 		/* ADC_TEMP */
-		task_twi2_lcd_print_format_float_P(col_left,  2 * 10, l_adc_temp_deg_100 / 100.f, PM_FORMAT_4F1);
+		task_twi2_lcd_print_format_float_P(col_left,  3 * 10, l_adc_temp_deg_100 / 100.f, PM_FORMAT_4F1);
 	}
 
 	if (s_adc_5v0_volt_1000 != l_adc_5v0_volt_1000) {
 		s_adc_5v0_volt_1000 = l_adc_5v0_volt_1000;
 
 		/* ADC_5V0 */
-		task_twi2_lcd_print_format_float_P(col_left,  3 * 10, l_adc_5v0_volt_1000 / 1000.f, PM_FORMAT_5F3);
+		task_twi2_lcd_print_format_float_P(col_left,  4 * 10, l_adc_5v0_volt_1000 / 1000.f, PM_FORMAT_5F3);
 	}
 }
 
@@ -1552,7 +1702,7 @@ void task_twi2_lcd__cpu2(uint8_t col_left)
 
 	/* Get up-to-date global data */
 	{
-		irqflags_t flags			= cpu_irq_save();
+		irqflags_t flags = cpu_irq_save();
 		l_adc_vbat_volt_1000		= g_adc_vbat_volt_1000;
 		l_adc_vctcxo_volt_1000		= g_adc_vctcxo_volt_1000;
 		cpu_irq_restore(flags);
@@ -1562,17 +1712,18 @@ void task_twi2_lcd__cpu2(uint8_t col_left)
 		s_adc_vbat_volt_1000 = l_adc_vbat_volt_1000;
 
 		/* ADC_VBAT */
-		task_twi2_lcd_print_format_float_P(col_left,  4 * 10, l_adc_vbat_volt_1000 / 1000.f, PM_FORMAT_5F3);
+		task_twi2_lcd_print_format_float_P(col_left,  5 * 10, l_adc_vbat_volt_1000 / 1000.f, PM_FORMAT_5F3);
 	}
 
 	if (s_adc_vctcxo_volt_1000 != l_adc_vctcxo_volt_1000) {
 		s_adc_vctcxo_volt_1000 = l_adc_vctcxo_volt_1000;
 
 		/* ADC_VCTCXO */
-		task_twi2_lcd_print_format_float_P(col_left,  5 * 10, l_adc_vctcxo_volt_1000 / 1000.f, PM_FORMAT_5F3);
+		task_twi2_lcd_print_format_float_P(col_left,  6 * 10, l_adc_vctcxo_volt_1000 / 1000.f, PM_FORMAT_5F3);
 	}
 }
 
+#if 0
 void task_twi2_lcd__cpu3(uint8_t col_left)
 {
 	static int16_t s_adc_io_adc4_volt_1000 = 0;
@@ -1592,17 +1743,17 @@ void task_twi2_lcd__cpu3(uint8_t col_left)
 		s_adc_io_adc4_volt_1000 = l_adc_io_adc4_volt_1000;
 
 		/* ADC_IO_ADC4 */
-		task_twi2_lcd_print_format_float_P(col_left,  6 * 10, l_adc_io_adc4_volt_1000 / 1000.f, PM_FORMAT_5F3);
+		task_twi2_lcd_print_format_float_P(col_left,  7 * 10, l_adc_io_adc4_volt_1000 / 1000.f, PM_FORMAT_5F3);
 	}
 
 	if (s_adc_io_adc5_volt_1000 != l_adc_io_adc5_volt_1000) {
 		s_adc_io_adc5_volt_1000 = l_adc_io_adc5_volt_1000;
 
 		/* ADC_IO_ADC5 */
-		task_twi2_lcd_print_format_float_P(col_left,  7 * 10, l_adc_io_adc5_volt_1000 / 1000.f, PM_FORMAT_5F3);
+		task_twi2_lcd_print_format_float_P(col_left,  8 * 10, l_adc_io_adc5_volt_1000 / 1000.f, PM_FORMAT_5F3);
 	}
 
-#if 0
+	#if 0
 	static int16_t s_adc_silence_volt_1000 = 0;
 	int16_t l_adc_silence_volt_1000;
 
@@ -1618,7 +1769,74 @@ void task_twi2_lcd__cpu3(uint8_t col_left)
 		/* ADC_SILENCE */
 		task_twi2_lcd_print_format_float_P(col_left,  8 * 10, l_adc_silence_volt_1000 / 1000.f, PM_FORMAT_5F3);
 	}
+	#endif
+}
 #endif
+
+void task_twi2_lcd__sim1(uint8_t col_left)
+{
+	static float	s_gns_lat		= 0.f;
+	static float	s_gns_lon		= 0.f;
+	static float	s_gns_msl		= 0.f;
+	static float	s_gns_speed		= 0.f;
+	float			l_gns_lat;
+	float			l_gns_lon;
+	float			l_gns_msl_alt_m;
+	float			l_gns_speed_kmPh;
+	char			l_lat_prefix;
+	char			l_lon_prefix;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags = cpu_irq_save();
+		l_gns_lat			= g_gns_lat;
+		l_gns_lon			= g_gns_lon;
+		l_gns_msl_alt_m		= g_gns_msl_alt_m;
+		l_gns_speed_kmPh	= g_gns_speed_kmPh;
+		cpu_irq_restore(flags);
+	}
+
+	/* Latitude */
+	if (s_gns_lat != l_gns_lat) {
+		s_gns_lat  = l_gns_lat;
+		l_lat_prefix = l_gns_lat >= 0.f ?  'N' : 'S';
+		l_gns_lat += 0.00005f;
+		task_twi2_lcd_print_format_c(       0 * 6,  7 * 10, l_lat_prefix);
+		task_twi2_lcd_print_format_long_P(  2 * 6,  7 * 10, (long) abs(l_gns_lat), PM_FORMAT_02LD);
+		task_twi2_lcd_print_format_c(       4 * 6,  7 * 10, '.');
+		float f_abs = l_gns_lat >= 0.f ?  l_gns_lat : -l_gns_lat;
+		float f_frac = (f_abs - (int)f_abs) * 1e5;
+		task_twi2_lcd_print_format_long_P(  5 * 6,  7 * 10, (long) f_frac, PM_FORMAT_05LD);
+		task_twi2_lcd_print_format_c(      10 * 6,  7 * 10, 0x7e);		// °
+	}
+
+	/* Longitude */
+	if (s_gns_lon != l_gns_lon) {
+		s_gns_lon  = l_gns_lon;
+		l_lon_prefix = l_gns_lon >= 0.f ?  'E' : 'W';
+		l_gns_lon += 0.00005f;
+		task_twi2_lcd_print_format_c(       0 * 6,  8 * 10, l_lon_prefix);
+		task_twi2_lcd_print_format_long_P(  1 * 6,  8 * 10, (long) abs(l_gns_lon), PM_FORMAT_03LD);
+		task_twi2_lcd_print_format_c(       4 * 6,  8 * 10, '.');
+		float f_abs = l_gns_lon >= 0.f ?  l_gns_lon : -l_gns_lon;
+		float f_frac = (f_abs - (int)f_abs) * 1e5;
+		task_twi2_lcd_print_format_long_P(  5 * 6,  8 * 10, (long) f_frac, PM_FORMAT_05LD);
+		task_twi2_lcd_print_format_c(      10 * 6,  8 * 10, 0x7e);		// °
+	}
+
+	/* Height */
+	if (s_gns_msl != l_gns_msl_alt_m) {
+		s_gns_msl  = l_gns_msl_alt_m;
+		task_twi2_lcd_print_format_long_P( 11 * 6,  7 * 10, (long)(l_gns_msl_alt_m + 0.5f), PM_FORMAT_4LD);
+		task_twi2_lcd_print_format_c(      16 * 6,  7 * 10, 'm');
+	}
+
+	/* Speed */
+	if (s_gns_speed != l_gns_speed_kmPh) {
+		s_gns_speed  = l_gns_speed_kmPh;
+		task_twi2_lcd_print_format_float_P(12 * 6,  8 * 10, l_gns_speed_kmPh + 0.05f, PM_FORMAT_5F1);
+		task_twi2_lcd_print_format_P(      18 * 6,  8 * 10, PM_FORMAT_KMPH);
+	}
 }
 
 void task_twi2_lcd__hygro(uint8_t col_left)
@@ -1630,7 +1848,7 @@ void task_twi2_lcd__hygro(uint8_t col_left)
 
 	/* Get up-to-date global data */
 	{
-		irqflags_t flags				= cpu_irq_save();
+		irqflags_t flags = cpu_irq_save();
 		l_twi1_hygro_T_100				= g_twi1_hygro_T_100;
 		l_twi1_hygro_RH_100				= g_twi1_hygro_RH_100;
 		cpu_irq_restore(flags);
@@ -1674,7 +1892,7 @@ void task_twi2_lcd__gyro_gfxmag(void)
 
 	/* Get up-to-date global data */
 	{
-		irqflags_t flags			= cpu_irq_save();
+		irqflags_t flags = cpu_irq_save();
 		l_twi1_gyro_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
 		l_twi1_gyro_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
 		l_twi1_gyro_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
@@ -1963,23 +2181,16 @@ static void task_twi2_lcd(uint32_t now)
 		/* Show current measurement data on the LCD */
 		const uint8_t col_left = 6 * 10;
 
-		/* Repaint all items when starting and at some interval */
-		if (g_twi2_lcd_repaint) {
-			g_twi2_lcd_repaint = false;
-			task_twi2_lcd_header();
-			task_twi2_lcd_template();
+		/* Check if new 1PPS has arrived do resync of state */
+		if (g_1pps_twi_new) {
+			g_1pps_twi_new = false;
+			s_lcd_entry_state = 0;
 		}
-
-		/* Update Gfx every time */
-		task_twi2_lcd__gyro();
-		task_twi2_lcd__pll();
 
 		/* Update same text line each second when no Gfx data is drawn */
 		switch (s_lcd_entry_state) {
 			case 0:
-				if (g_adc_enabled) {
-					task_twi2_lcd__cpu1(col_left);
-				}
+				task_twi2_lcd__cpu1(col_left);
 				++s_lcd_entry_state;
 			break;
 
@@ -1991,9 +2202,7 @@ static void task_twi2_lcd(uint32_t now)
 			break;
 
 			case 2:
-				if (g_adc_enabled) {
-					task_twi2_lcd__cpu3(col_left);
-				}
+				task_twi2_lcd__sim1(col_left);
 				++s_lcd_entry_state;
 			break;
 
@@ -2009,6 +2218,17 @@ static void task_twi2_lcd(uint32_t now)
 
 			default:
 				s_lcd_entry_state = 0;
+		}
+
+		/* Update Gfx every time */
+		task_twi2_lcd__gyro();
+		task_twi2_lcd__pll();
+
+		/* Repaint all items when starting and at some interval */
+		if (g_twi2_lcd_repaint) {
+			g_twi2_lcd_repaint = false;
+			task_twi2_lcd_header();
+			task_twi2_lcd_template();
 		}
 
 	} else if (g_twi2_lcd_version == 0x10) {
