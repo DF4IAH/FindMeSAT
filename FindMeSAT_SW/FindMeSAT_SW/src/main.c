@@ -2113,11 +2113,13 @@ static void task_main_pll(uint32_t now)
 
 		/* Synced stability counter */
 		if ((-C_TCC1_SPAN_HALF <= l_1pps_deviation) && (l_1pps_deviation <= C_TCC1_SPAN_HALF)) {
-			if (++l_1pps_phased_cntr > (C_TCC1_CLOCKSETTING_AFTER_SECS << 1)) {
-				l_1pps_phased_cntr = (C_TCC1_CLOCKSETTING_AFTER_SECS + 1);  // Repeat 2x per minute
-			} else if (l_1pps_phased_cntr == (C_TCC1_CLOCKSETTING_AFTER_SECS + 3)) {
-				/* Send GNS info request */
-				serial_send_gns_info_req();
+			if (++l_1pps_phased_cntr == (C_TCC1_CLOCKSETTING_AFTER_SECS + 3)) {
+				/* Send GNS URC command for repeated GNSINF status lines */
+				serial_send_gns_urc(1);
+
+			} else if (l_1pps_phased_cntr > 250) {
+				/* Saturated value*/
+				l_1pps_phased_cntr = 250;
 			}
 		} else {
 			l_1pps_phased_cntr = 0;

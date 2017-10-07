@@ -147,6 +147,7 @@ const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_04[]	= "AT+COPN\r\n";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_05[]	= "AT+CNETSCAN=1;+CNETSCAN\r\n";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_01[]	= "AT+CGNSPWR=%d\r\n";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_02[]	= "AT+CGNSINF\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_03[]	= "AT+CGNSURC=%d\r\n";
 PROGMEM_DECLARE(const char, PM_SIM808_OK[]);
 PROGMEM_DECLARE(const char, PM_SIM808_RDY[]);
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_START[]);
@@ -167,6 +168,7 @@ PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_04[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_05[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_01[]);
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_02[]);
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_03[]);
 
 /* USB device stack start function to enable stack and start USB */
 void serial_start(void)
@@ -323,7 +325,7 @@ void serial_start(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_01, 1);
 	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 	yield_ms(500);
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_02, 1);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_02);
 	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 	yield_ms(500);
 #endif
@@ -337,19 +339,19 @@ void serial_start(void)
 	udi_write_tx_buf(g_prepare_buf, len, false);
 }
 
-void serial_send_gns_info_req(void)
+void serial_send_gns_urc(uint8_t val)
 {
-	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_02, 1);
+	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_03, val);
 	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 }
 
-const char					PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF[] = "+CGNSINF:";
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF[] = "GNSINF:";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF[]);
-static void serial_filter_inStream(const char* buf, uint16_t len)
+static bool serial_filter_inStream(const char* buf, uint16_t len)
 {
 	/* Sanity check for minimum length */
 	if (!len) {
-		return;
+		return true;
 	}
 
 	/* Check for AT+CGNSINF sentence reply */
@@ -362,7 +364,10 @@ static void serial_filter_inStream(const char* buf, uint16_t len)
 	const int gnsInf_idx = gnsInf_ptr ?  (gnsInf_ptr - buf) : (len - 1);
 
 	char* ptr = (char*) gnsInf_ptr;
-	if (gnsInf_ptr && (gnsInf_idx < lineEnd_idx)) {
+	if (!gnsInf_ptr) {
+		return false;
+
+	} else if (gnsInf_idx < lineEnd_idx) {
 		irqflags_t flags;
 		ptr += gnsInf_idx + gnsInf_len;
 
@@ -439,7 +444,7 @@ static void serial_filter_inStream(const char* buf, uint16_t len)
 						uint32_t l_ts	= calendar_date_to_timestamp(&calDat);
 
 						flags = cpu_irq_save();
-						l_ts		   -= (uint32_t)(g_milliseconds_cnt64 / 1000) - 1UL;
+						l_ts		   -= (uint32_t)(g_milliseconds_cnt64 / 1000);
 						g_boot_time_ts	= l_ts;
 						cpu_irq_restore(flags);
 					}
@@ -487,6 +492,7 @@ static void serial_filter_inStream(const char* buf, uint16_t len)
 			idx++;
 		}
 	}
+	return true;
 }
 
 
@@ -512,10 +518,10 @@ void task_serial(uint32_t now)
 		/* Process the line - IRQ allowed */
 		if (len_out < C_USART1_RX_BUF_LEN) {
 			/* Process line and get data */
-			serial_filter_inStream(g_usart1_rx_buf, len_out);
+			bool doNotPrint = serial_filter_inStream(g_usart1_rx_buf, len_out);
 
 			/* Copy chunk of data to USB_CDC */
-			if (g_usb_cdc_printStatusLines_sim808) {
+			if (!doNotPrint && g_usb_cdc_printStatusLines_sim808) {
 				udi_write_serial_line(g_usart1_rx_buf, len_out);
 			}
 		}

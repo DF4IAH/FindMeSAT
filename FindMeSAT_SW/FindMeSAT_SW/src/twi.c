@@ -47,18 +47,20 @@ const char					PM_FORMAT_03LD[]					= "%03ld";
 PROGMEM_DECLARE(const char, PM_FORMAT_03LD[]);
 const char					PM_FORMAT_03F10[]					= "%03.10f";
 PROGMEM_DECLARE(const char, PM_FORMAT_03F10[]);
+const char					PM_FORMAT_4LD[]						= "%4ld";
+PROGMEM_DECLARE(const char, PM_FORMAT_4LD[]);
 const char					PM_FORMAT_4F1[]						= "%4.1f";
 PROGMEM_DECLARE(const char, PM_FORMAT_4F1[]);
-const char					PM_FORMAT_04LD[]					= "%04ld";
-PROGMEM_DECLARE(const char, PM_FORMAT_04LD[]);
+const char					PM_FORMAT_5F1[]						= "%5.1f";
+PROGMEM_DECLARE(const char, PM_FORMAT_5F1[]);
 const char					PM_FORMAT_5F3[]						= "%5.3f";
 PROGMEM_DECLARE(const char, PM_FORMAT_5F3[]);
+const char					PM_FORMAT_05LD[]					= "%05ld";
+PROGMEM_DECLARE(const char, PM_FORMAT_05LD[]);
 const char					PM_FORMAT_05F2[]					= "%05.2f";
 PROGMEM_DECLARE(const char, PM_FORMAT_05F2[]);
 const char					PM_FORMAT_6F1[]						= "%6.1f";
 PROGMEM_DECLARE(const char, PM_FORMAT_6F1[]);
-const char					PM_FORMAT_6F2[]						= "%6.2f";
-PROGMEM_DECLARE(const char, PM_FORMAT_6F2[]);
 const char					PM_FORMAT_07F2[]					= "%07.2f";
 PROGMEM_DECLARE(const char, PM_FORMAT_07F2[]);
 const char					PM_FORMAT_KMPH[]					= "kmh";
@@ -117,18 +119,18 @@ const char					PM_TWIINIT_DATE_TIME[]				= "    -  -     :  :   UTC";
 PROGMEM_DECLARE(const char, PM_TWIINIT_DATE_TIME[]);
 const char					PM_TWIINIT_MP_TEMP[]				= "mP Temp =";
 PROGMEM_DECLARE(const char, PM_TWIINIT_MP_TEMP[]);
-const char					PM_TWIINIT_MP_VUSB[]				=    "Vusb =";
-PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VUSB[]);
-const char					PM_TWIINIT_MP_VBAT[]				=    "Vbat =";
-PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VBAT[]);
-const char					PM_TWIINIT_MP_VVCTCXO[]				= "Vvctcxo =";
-PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VVCTCXO[]);
-//const char				PM_TWIINIT_MP_VIOADC4[]				= "Vioadc4 =";
-//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VIOADC4[]);
-//const char				PM_TWIINIT_MP_VIOADC5[]				= "Vioadc5 =";
-//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VIOADC5[]);
-//const char				PM_TWIINIT_MP_VSILEN[]				= "Vsilen. =";
-//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VSILEN[]);
+const char					PM_TWIINIT_MP_UUSB[]				=    "Uusb =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MP_UUSB[]);
+const char					PM_TWIINIT_MP_UBAT[]				=    "Ubat =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MP_UBAT[]);
+const char					PM_TWIINIT_MP_UVCTCXO[]				= "Uvctcxo =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MP_UVCTCXO[]);
+//const char				PM_TWIINIT_MP_UIOADC4[]				= "Uioadc4 =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_UIOADC4[]);
+//const char				PM_TWIINIT_MP_UIOADC5[]				= "Uioadc5 =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_UIOADC5[]);
+//const char				PM_TWIINIT_MP_USILEN[]				= "Usilen. =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_USILEN[]);
 const char					PM_TWIINIT_BA_TEMP[]				= "Ba_Temp =";
 PROGMEM_DECLARE(const char, PM_TWIINIT_BA_TEMP[]);
 const char					PM_TWIINIT_BA_PRES[]				= "Ba_Pres =";
@@ -1449,12 +1451,12 @@ static void task_twi2_lcd_template(void)
 		line = 2;
 		task_twi2_lcd_str(6 *  0, (line++) * 10 -4, strcpy_P(g_prepare_buf, PM_TWIINIT_DATE_TIME));
 		task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_TEMP));
-		task_twi2_lcd_str(6 *  3, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_VUSB));
-		task_twi2_lcd_str(6 *  3, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_VBAT));
-		task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_VVCTCXO));
-		//task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_VIOADC4));
-		//task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_VIOADC5));
-		//task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_VSILEN));
+		task_twi2_lcd_str(6 *  3, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_UUSB));
+		task_twi2_lcd_str(6 *  3, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_UBAT));
+		task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_UVCTCXO));
+		//task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_UIOADC4));
+		//task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_UIOADC5));
+		//task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_USILEN));
 	}
 
 	line = 9;
@@ -1651,7 +1653,7 @@ void task_twi2_lcd__cpu1(uint8_t col_left)
 
 		if ((s_year != calDat.year) && (2017 <= calDat.year) && (calDat.year <= 2100)) {
 			s_year = calDat.year;
-			task_twi2_lcd_print_format_long_P( 0 * 6,  2 * 10 -4, calDat.year,			PM_FORMAT_04LD);
+			task_twi2_lcd_print_format_long_P( 0 * 6,  2 * 10 -4, calDat.year,			PM_FORMAT_4LD);
 		}
 
 	} else {
@@ -1798,39 +1800,41 @@ void task_twi2_lcd__sim1(uint8_t col_left)
 	if (s_gns_lat != l_gns_lat) {
 		s_gns_lat  = l_gns_lat;
 		l_lat_prefix = l_gns_lat >= 0.f ?  'N' : 'S';
+		l_gns_lat += 0.00005f;
 		task_twi2_lcd_print_format_c(       0 * 6,  7 * 10, l_lat_prefix);
 		task_twi2_lcd_print_format_long_P(  2 * 6,  7 * 10, (long) abs(l_gns_lat), PM_FORMAT_02LD);
 		task_twi2_lcd_print_format_c(       4 * 6,  7 * 10, '.');
 		float f_abs = l_gns_lat >= 0.f ?  l_gns_lat : -l_gns_lat;
-		float f_frac = (f_abs - (int)f_abs) * 1e4;
-		task_twi2_lcd_print_format_long_P(  5 * 6,  7 * 10, (long) f_frac, PM_FORMAT_04LD);
-		task_twi2_lcd_print_format_c(       9 * 6,  7 * 10, 0x7e);		// °
+		float f_frac = (f_abs - (int)f_abs) * 1e5;
+		task_twi2_lcd_print_format_long_P(  5 * 6,  7 * 10, (long) f_frac, PM_FORMAT_05LD);
+		task_twi2_lcd_print_format_c(      10 * 6,  7 * 10, 0x7e);		// °
 	}
 
 	/* Longitude */
 	if (s_gns_lon != l_gns_lon) {
 		s_gns_lon  = l_gns_lon;
 		l_lon_prefix = l_gns_lon >= 0.f ?  'E' : 'W';
+		l_gns_lon += 0.00005f;
 		task_twi2_lcd_print_format_c(       0 * 6,  8 * 10, l_lon_prefix);
 		task_twi2_lcd_print_format_long_P(  1 * 6,  8 * 10, (long) abs(l_gns_lon), PM_FORMAT_03LD);
 		task_twi2_lcd_print_format_c(       4 * 6,  8 * 10, '.');
 		float f_abs = l_gns_lon >= 0.f ?  l_gns_lon : -l_gns_lon;
-		float f_frac = (f_abs - (int)f_abs) * 1e4;
-		task_twi2_lcd_print_format_long_P(  5 * 6,  8 * 10, (long) f_frac, PM_FORMAT_04LD);
-		task_twi2_lcd_print_format_c(       9 * 6,  8 * 10, 0x7e);		// °
+		float f_frac = (f_abs - (int)f_abs) * 1e5;
+		task_twi2_lcd_print_format_long_P(  5 * 6,  8 * 10, (long) f_frac, PM_FORMAT_05LD);
+		task_twi2_lcd_print_format_c(      10 * 6,  8 * 10, 0x7e);		// °
 	}
 
 	/* Height */
 	if (s_gns_msl != l_gns_msl_alt_m) {
 		s_gns_msl  = l_gns_msl_alt_m;
-		task_twi2_lcd_print_format_float_P(10 * 6,  7 * 10, l_gns_msl_alt_m + 0.05f, PM_FORMAT_6F1);
+		task_twi2_lcd_print_format_long_P( 11 * 6,  7 * 10, (long)(l_gns_msl_alt_m + 0.5f), PM_FORMAT_4LD);
 		task_twi2_lcd_print_format_c(      16 * 6,  7 * 10, 'm');
 	}
 
 	/* Speed */
 	if (s_gns_speed != l_gns_speed_kmPh) {
 		s_gns_speed  = l_gns_speed_kmPh;
-		task_twi2_lcd_print_format_float_P(11 * 6,  8 * 10, l_gns_speed_kmPh + 0.05f, PM_FORMAT_6F2);
+		task_twi2_lcd_print_format_float_P(12 * 6,  8 * 10, l_gns_speed_kmPh + 0.05f, PM_FORMAT_5F1);
 		task_twi2_lcd_print_format_P(      18 * 6,  8 * 10, PM_FORMAT_KMPH);
 	}
 }
