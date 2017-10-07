@@ -41,6 +41,122 @@ extern uint8_t			g_twi2_recv_data[TWI_DATA_LENGTH];
 #endif
 
 
+const char					PM_FORMAT_02LD[]					= "%02ld";
+PROGMEM_DECLARE(const char, PM_FORMAT_02LD[]);
+const char					PM_FORMAT_03LD[]					= "%03ld";
+PROGMEM_DECLARE(const char, PM_FORMAT_03LD[]);
+const char					PM_FORMAT_03F10[]					= "%03.10f";
+PROGMEM_DECLARE(const char, PM_FORMAT_03F10[]);
+const char					PM_FORMAT_4F1[]						= "%4.1f";
+PROGMEM_DECLARE(const char, PM_FORMAT_4F1[]);
+const char					PM_FORMAT_04LD[]					= "%04ld";
+PROGMEM_DECLARE(const char, PM_FORMAT_04LD[]);
+const char					PM_FORMAT_5F3[]						= "%5.3f";
+PROGMEM_DECLARE(const char, PM_FORMAT_5F3[]);
+const char					PM_FORMAT_05F2[]					= "%05.2f";
+PROGMEM_DECLARE(const char, PM_FORMAT_05F2[]);
+const char					PM_FORMAT_6F1[]						= "%6.1f";
+PROGMEM_DECLARE(const char, PM_FORMAT_6F1[]);
+const char					PM_FORMAT_6F2[]						= "%6.2f";
+PROGMEM_DECLARE(const char, PM_FORMAT_6F2[]);
+const char					PM_FORMAT_07F2[]					= "%07.2f";
+PROGMEM_DECLARE(const char, PM_FORMAT_07F2[]);
+const char					PM_FORMAT_KMPH[]					= "kmh";
+PROGMEM_DECLARE(const char, PM_FORMAT_KMPH[]);
+
+const char					PM_TWI1_INIT_HYGRO_01[]				= "\r\nTWI-onboard: Hygro SHT31-DIS - I2C address: 0x%02X\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_01[]);
+const char					PM_TWI1_INIT_HYGRO_02[]				= "TWI-onboard: Hygro SHT31-DIS -   address NACK / 'break' bad response\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_02[]);
+const char					PM_TWI1_INIT_HYGRO_03[]				= "TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_03[]);
+const char					PM_TWI1_INIT_HYGRO_04[]				= "TWI-onboard:  INIT success.\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_04[]);
+const char					PM_TWI1_INIT_HYGRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_05[]);
+const char					PM_TWI1_INIT_ONBOARD_HYGRO_OK[]		= "Init: Hygro success";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_HYGRO_OK[]);
+
+const char					PM_TWI1_INIT_GYRO_01[]				= "\r\nTWI-onboard: Gyro MPU-9250 - I2C address: 0x%02X, 0x%02X\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_01[]);
+const char					PM_TWI1_INIT_GYRO_02[]				= "TWI-onboard: Gyro MPU-9250   -   'reset 1' bad response\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_02[]);
+const char					PM_TWI1_INIT_GYRO_03[]				= "TWI-onboard: Gyro MPU-9250 -     version: 0x%02X, 0x%02X\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_03[]);
+const char					PM_TWI1_INIT_GYRO_04[]				= "TWI-onboard:  INIT success.\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_04[]);
+const char					PM_TWI1_INIT_GYRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_05[]);
+const char					PM_TWI1_INIT_ONBOARD_GYRO_OK[]		= "Init: Gyro  success";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_GYRO_OK[]);
+
+const char					PM_TWI1_INIT_BARO_01[]				= "\r\nTWI-onboard: Baro MS560702BA03-50 - I2C address: 0x%02X\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_01[]);
+const char					PM_TWI1_INIT_BARO_02[]				= "TWI-onboard:  BAD reading serial/CRC word. (sc=%d)\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_02[]);
+const char					PM_TWI1_INIT_BARO_03[]				= "TWI-onboard: Baro MS560702BA03-50 -     serial#: %d\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_03[]);
+const char					PM_TWI1_INIT_BARO_04[]				= "TWI-onboard:  BAD reading PROM address %d. (sc=%d)\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_04[]);
+const char					PM_TWI1_INIT_BARO_05[]				= "TWI-onboard:  INIT success.\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_05[]);
+const char					PM_TWI1_INIT_BARO_06[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_06[]);
+const char					PM_TWI1_INIT_ONBOARD_BARO_OK[]		= "Init: Baro  success";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_BARO_OK[]);
+
+const char					PM_TWI1_INIT_ONBOARD_01[]			= "-----------\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_01[]);
+
+const char					PM_TWIHEADER_FINDMESAT[]			= "FindMeSAT";
+PROGMEM_DECLARE(const char, PM_TWIHEADER_FINDMESAT[]);
+const char					PM_TWIHEADER_BY_DF4IAH[]			= "by DF4IAH";
+PROGMEM_DECLARE(const char, PM_TWIHEADER_BY_DF4IAH[]);
+
+const char					PM_TWIINIT_DATE_TIME[]				= "    -  -     :  :   UTC";
+PROGMEM_DECLARE(const char, PM_TWIINIT_DATE_TIME[]);
+const char					PM_TWIINIT_MP_TEMP[]				= "mP Temp =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MP_TEMP[]);
+const char					PM_TWIINIT_MP_VUSB[]				=    "Vusb =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VUSB[]);
+const char					PM_TWIINIT_MP_VBAT[]				=    "Vbat =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VBAT[]);
+const char					PM_TWIINIT_MP_VVCTCXO[]				= "Vvctcxo =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VVCTCXO[]);
+//const char				PM_TWIINIT_MP_VIOADC4[]				= "Vioadc4 =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VIOADC4[]);
+//const char				PM_TWIINIT_MP_VIOADC5[]				= "Vioadc5 =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VIOADC5[]);
+//const char				PM_TWIINIT_MP_VSILEN[]				= "Vsilen. =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VSILEN[]);
+const char					PM_TWIINIT_BA_TEMP[]				= "Ba_Temp =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_BA_TEMP[]);
+const char					PM_TWIINIT_BA_PRES[]				= "Ba_Pres =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_BA_PRES[]);
+const char					PM_TWIINIT_HY_TEMP[]				= "Hy_Temp =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_HY_TEMP[]);
+const char					PM_TWIINIT_HY_RELH[]				= "Hy_RelH =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_HY_RELH[]);
+const char					PM_TWIINIT_C[]						= "C";
+PROGMEM_DECLARE(const char, PM_TWIINIT_C[]);
+const char					PM_TWIINIT_V[]						= "V";
+PROGMEM_DECLARE(const char, PM_TWIINIT_V[]);
+const char					PM_TWIINIT_P100[]					= "%";
+PROGMEM_DECLARE(const char, PM_TWIINIT_P100[]);
+const char					PM_TWIINIT_HPA[]					= "hPa";
+PROGMEM_DECLARE(const char, PM_TWIINIT_HPA[]);
+const char					PM_TWIINIT_GX[]						= "Gx";
+PROGMEM_DECLARE(const char, PM_TWIINIT_GX[]);
+const char					PM_TWIINIT_GY[]						= "Gy";
+PROGMEM_DECLARE(const char, PM_TWIINIT_GY[]);
+const char					PM_TWIINIT_GZ[]						= "Gz";
+PROGMEM_DECLARE(const char, PM_TWIINIT_GZ[]);
+const char					PM_TWIINIT_MAGNETICS[]				= "Magnetics";
+PROGMEM_DECLARE(const char, PM_TWIINIT_MAGNETICS[]);
+const char					PM_TWIINIT_ACCEL[]					= "Accel.";
+PROGMEM_DECLARE(const char, PM_TWIINIT_ACCEL[]);
+
+
 /* Forward declarations */
 
 static void task_twi1_hygro(uint32_t now);
@@ -186,19 +302,6 @@ void twi2_set_beep(uint8_t pitch_10hz, uint8_t len_10ms)
 
 /* INIT functions */
 
-const char					PM_TWI1_INIT_HYGRO_01[]				= "\r\nTWI-onboard: Hygro SHT31-DIS - I2C address: 0x%02X\r\n";
-const char					PM_TWI1_INIT_HYGRO_02[]				= "TWI-onboard: Hygro SHT31-DIS -   address NACK / 'break' bad response\r\n";
-const char					PM_TWI1_INIT_HYGRO_03[]				= "TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n";
-const char					PM_TWI1_INIT_HYGRO_04[]				= "TWI-onboard:  INIT success.\r\n";
-const char					PM_TWI1_INIT_HYGRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
-const char					PM_TWI1_INIT_ONBOARD_HYGRO_OK[]		= "Init: Hygro success";
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_01[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_02[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_03[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_04[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_05[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_HYGRO_OK[]);
-
 static void init_twi1_hygro(void)
 {
 	status_code_t sc;
@@ -272,20 +375,6 @@ static void init_twi1_hygro(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_HYGRO_05, sc);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 }
-
-const char					PM_TWI1_INIT_GYRO_01[]				= "\r\nTWI-onboard: Gyro MPU-9250 - I2C address: 0x%02X, 0x%02X\r\n";
-const char					PM_TWI1_INIT_GYRO_02[]				= "TWI-onboard: Gyro MPU-9250   -   'reset 1' bad response\r\n";
-const char					PM_TWI1_INIT_GYRO_03[]				= "TWI-onboard: Gyro MPU-9250 -     version: 0x%02X, 0x%02X\r\n";
-const char					PM_TWI1_INIT_GYRO_04[]				= "TWI-onboard:  INIT success.\r\n";
-const char					PM_TWI1_INIT_GYRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
-const char					PM_TWI1_INIT_ONBOARD_GYRO_OK[]		= "Init: Gyro  success";
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_01[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_02[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_03[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_04[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_05[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_GYRO_OK[]);
-
 
 status_code_t twi1_gyro_gyro_offset_set(void)
 {
@@ -536,21 +625,6 @@ void init_twi1_gyro(void)
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 }
 
-const char					PM_TWI1_INIT_BARO_01[]				= "\r\nTWI-onboard: Baro MS560702BA03-50 - I2C address: 0x%02X\r\n";
-const char					PM_TWI1_INIT_BARO_02[]				= "TWI-onboard:  BAD reading serial/CRC word. (sc=%d)\r\n";
-const char					PM_TWI1_INIT_BARO_03[]				= "TWI-onboard: Baro MS560702BA03-50 -     serial#: %d\r\n";
-const char					PM_TWI1_INIT_BARO_04[]				= "TWI-onboard:  BAD reading PROM address %d. (sc=%d)\r\n";
-const char					PM_TWI1_INIT_BARO_05[]				= "TWI-onboard:  INIT success.\r\n";
-const char					PM_TWI1_INIT_BARO_06[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
-const char					PM_TWI1_INIT_ONBOARD_BARO_OK[]		= "Init: Baro  success";
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_01[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_02[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_03[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_04[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_05[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_06[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_BARO_OK[]);
-
 static void init_twi1_baro(void)
 {
 	status_code_t sc;
@@ -616,9 +690,6 @@ static void init_twi1_baro(void)
 
 
 /* TWI1 - GSM, Gyro, Baro, Hygro devices */
-
-const char					PM_TWI1_INIT_ONBOARD_01[]			= "-----------\r\n\r\n";
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_01[]);
 
 static void start_twi1_onboard(void)
 {
@@ -1352,10 +1423,6 @@ void task_twi2_lcd_circ(uint8_t x, uint8_t y, uint8_t radius, bool filled, uint8
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 }
 
-const char					PM_TWIHEADER_FINDMESAT[]				= "FindMeSAT";
-const char					PM_TWIHEADER_BY_DF4IAH[]				= "by DF4IAH";
-PROGMEM_DECLARE(const char, PM_TWIHEADER_FINDMESAT[]);
-PROGMEM_DECLARE(const char, PM_TWIHEADER_BY_DF4IAH[]);
 void task_twi2_lcd_header(void)
 {
 	/* The header line */
@@ -1373,48 +1440,6 @@ void task_twi2_lcd_header(void)
 }
 
 
-const char					PM_TWIINIT_DATE_TIME[]				= "yyyy-mm-dd hh:mm:ss UTC";
-const char					PM_TWIINIT_MP_TEMP[]				= "mP Temp =";
-const char					PM_TWIINIT_MP_VUSB[]				=    "Vusb =";
-const char					PM_TWIINIT_MP_VBAT[]				=    "Vbat =";
-const char					PM_TWIINIT_MP_VVCTCXO[]				= "Vvctcxo =";
-//const char				PM_TWIINIT_MP_VIOADC4[]				= "Vioadc4 =";
-//const char				PM_TWIINIT_MP_VIOADC5[]				= "Vioadc5 =";
-//const char				PM_TWIINIT_MP_VSILEN[]				= "Vsilen. =";
-const char					PM_TWIINIT_BA_TEMP[]				= "Ba_Temp =";
-const char					PM_TWIINIT_BA_PRES[]				= "Ba_Pres =";
-const char					PM_TWIINIT_HY_TEMP[]				= "Hy_Temp =";
-const char					PM_TWIINIT_HY_RELH[]				= "Hy_RelH =";
-const char					PM_TWIINIT_C[]						= "C";
-const char					PM_TWIINIT_V[]						= "V";
-const char					PM_TWIINIT_P100[]					= "%";
-const char					PM_TWIINIT_HPA[]					= "hPa";
-const char					PM_TWIINIT_GX[]						= "Gx";
-const char					PM_TWIINIT_GY[]						= "Gy";
-const char					PM_TWIINIT_GZ[]						= "Gz";
-const char					PM_TWIINIT_MAGNETICS[]				= "Magnetics";
-const char					PM_TWIINIT_ACCEL[]					= "Accel.";
-PROGMEM_DECLARE(const char, PM_TWIINIT_DATE_TIME[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_MP_TEMP[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VUSB[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VBAT[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VVCTCXO[]);
-//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VIOADC4[]);
-//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VIOADC5[]);
-//PROGMEM_DECLARE(const char, PM_TWIINIT_MP_VSILEN[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_BA_TEMP[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_BA_PRES[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_HY_TEMP[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_HY_RELH[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_C[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_V[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_P100[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_HPA[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_GX[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_GY[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_GZ[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_MAGNETICS[]);
-PROGMEM_DECLARE(const char, PM_TWIINIT_ACCEL[]);
 static void task_twi2_lcd_template(void)
 {
 	uint8_t line;
@@ -1475,7 +1500,7 @@ static void task_twi2_lcd_template(void)
 
 	/* Magnetic & Accel */
 	{
-		task_twi2_lcd_str(113, 72, strcpy_P(g_prepare_buf, PM_TWIINIT_MAGNETICS));
+		task_twi2_lcd_str(18 * 6, 72, strcpy_P(g_prepare_buf, PM_TWIINIT_MAGNETICS));
 		task_twi2_lcd_str(196, 72, strcpy_P(g_prepare_buf, PM_TWIINIT_ACCEL));
 	}
 }
@@ -1487,6 +1512,19 @@ void task_twi2_lcd_print_format_P(uint8_t x, uint8_t y, const char* fmt_P)
 	twi2_waitUntilReady();
 	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
 	g_twi2_m_data[0] = sprintf_P((char*)&(g_twi2_m_data[1]), fmt_P);
+	g_twi2_packet.length = g_twi2_m_data[0] + 1;
+	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
+	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+}
+
+static void task_twi2_lcd_print_format_c(uint8_t x, uint8_t y, char val)
+{
+	task_twi2_lcd_pos_xy(x, y);
+
+	twi2_waitUntilReady();
+	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_WRITE;
+	g_twi2_m_data[0] = 1;
+	g_twi2_m_data[1] = (uint8_t)val;
 	g_twi2_packet.length = g_twi2_m_data[0] + 1;
 	twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 	delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
@@ -1557,19 +1595,6 @@ static void task_twi2_lcd__pll(void)
 	}
 }
 
-
-const char					PM_FORMAT_02LD[]			= "%02ld";
-const char					PM_FORMAT_04LD[]			= "%04ld";
-const char					PM_FORMAT_05F2[]			= "%05.2f";
-const char					PM_FORMAT_07F2[]			= "%07.2f";
-const char					PM_FORMAT_4F1[]				= "%4.1f";
-const char					PM_FORMAT_5F3[]				= "%5.3f";
-PROGMEM_DECLARE(const char, PM_FORMAT_02LD[]);
-PROGMEM_DECLARE(const char, PM_FORMAT_04LD[]);
-PROGMEM_DECLARE(const char, PM_FORMAT_05F2[]);
-PROGMEM_DECLARE(const char, PM_FORMAT_07F2[]);
-PROGMEM_DECLARE(const char, PM_FORMAT_4F1[]);
-PROGMEM_DECLARE(const char, PM_FORMAT_5F3[]);
 
 /* TWI2 - LCD Port */
 void task_twi2_lcd__cpu1(uint8_t col_left)
@@ -1748,7 +1773,66 @@ void task_twi2_lcd__cpu3(uint8_t col_left)
 
 void task_twi2_lcd__sim1(uint8_t col_left)
 {
+	static float	s_gns_lat		= 0.f;
+	static float	s_gns_lon		= 0.f;
+	static float	s_gns_msl		= 0.f;
+	static float	s_gns_speed		= 0.f;
+	float			l_gns_lat;
+	float			l_gns_lon;
+	float			l_gns_msl_alt_m;
+	float			l_gns_speed_kmPh;
+	char			l_lat_prefix;
+	char			l_lon_prefix;
 
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags = cpu_irq_save();
+		l_gns_lat			= g_gns_lat;
+		l_gns_lon			= g_gns_lon;
+		l_gns_msl_alt_m		= g_gns_msl_alt_m;
+		l_gns_speed_kmPh	= g_gns_speed_kmPh;
+		cpu_irq_restore(flags);
+	}
+
+	/* Latitude */
+	if (s_gns_lat != l_gns_lat) {
+		s_gns_lat  = l_gns_lat;
+		l_lat_prefix = l_gns_lat >= 0.f ?  'N' : 'S';
+		task_twi2_lcd_print_format_c(       0 * 6,  7 * 10, l_lat_prefix);
+		task_twi2_lcd_print_format_long_P(  2 * 6,  7 * 10, (long) abs(l_gns_lat), PM_FORMAT_02LD);
+		task_twi2_lcd_print_format_c(       4 * 6,  7 * 10, '.');
+		float f_abs = l_gns_lat >= 0.f ?  l_gns_lat : -l_gns_lat;
+		float f_frac = (f_abs - (int)f_abs) * 1e4;
+		task_twi2_lcd_print_format_long_P(  5 * 6,  7 * 10, (long) f_frac, PM_FORMAT_04LD);
+		task_twi2_lcd_print_format_c(       9 * 6,  7 * 10, 0x7e);		// °
+	}
+
+	/* Longitude */
+	if (s_gns_lon != l_gns_lon) {
+		s_gns_lon  = l_gns_lon;
+		l_lon_prefix = l_gns_lon >= 0.f ?  'E' : 'W';
+		task_twi2_lcd_print_format_c(       0 * 6,  8 * 10, l_lon_prefix);
+		task_twi2_lcd_print_format_long_P(  1 * 6,  8 * 10, (long) abs(l_gns_lon), PM_FORMAT_03LD);
+		task_twi2_lcd_print_format_c(       4 * 6,  8 * 10, '.');
+		float f_abs = l_gns_lon >= 0.f ?  l_gns_lon : -l_gns_lon;
+		float f_frac = (f_abs - (int)f_abs) * 1e4;
+		task_twi2_lcd_print_format_long_P(  5 * 6,  8 * 10, (long) f_frac, PM_FORMAT_04LD);
+		task_twi2_lcd_print_format_c(       9 * 6,  8 * 10, 0x7e);		// °
+	}
+
+	/* Height */
+	if (s_gns_msl != l_gns_msl_alt_m) {
+		s_gns_msl  = l_gns_msl_alt_m;
+		task_twi2_lcd_print_format_float_P(10 * 6,  7 * 10, l_gns_msl_alt_m + 0.05f, PM_FORMAT_6F1);
+		task_twi2_lcd_print_format_c(      16 * 6,  7 * 10, 'm');
+	}
+
+	/* Speed */
+	if (s_gns_speed != l_gns_speed_kmPh) {
+		s_gns_speed  = l_gns_speed_kmPh;
+		task_twi2_lcd_print_format_float_P(11 * 6,  8 * 10, l_gns_speed_kmPh + 0.05f, PM_FORMAT_6F2);
+		task_twi2_lcd_print_format_P(      18 * 6,  8 * 10, PM_FORMAT_KMPH);
+	}
 }
 
 void task_twi2_lcd__hygro(uint8_t col_left)
