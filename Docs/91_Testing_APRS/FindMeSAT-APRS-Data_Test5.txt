@@ -1,0 +1,9 @@
+POST / HTTP/1.1
+Content-Length: 130
+Content-Type: application/octet-stream
+Accept-Type: text/plain
+
+user $CALL pass $PASSWORD vers FindMeSAT 0.1
+$CALL-12>APRS,TCPIP*:!4928.39N/00836.87Ej180/015N5 /A=000295 a=+0090.0m s=028.0k R=t
+
+
