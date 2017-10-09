@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													007
+#define VERSION_LOW													  9
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -173,6 +173,29 @@ typedef struct dma_dac_buf_s {
 	uint16_t	ch0;
 	uint16_t	ch1;
 } dma_dac_buf_t;
+
+
+typedef enum APRS_ALERT_FSM_STATE_ENUM {
+	APRS_ALERT_FSM_STATE__NOOP		= 0,
+	APRS_ALERT_FSM_STATE__DO_N1,
+	APRS_ALERT_FSM_STATE__DO_N2,
+	APRS_ALERT_FSM_STATE__DO_N3,
+	APRS_ALERT_FSM_STATE__DO_N4,
+	APRS_ALERT_FSM_STATE__DO_N5,
+} APRS_ALERT_FSM_STATE_ENUM_t;
+
+typedef enum APRS_ALERT_REASON_ENUM {		// Shorthand in APRS message
+	APRS_ALERT_REASON__NONE			= 0,	// '?'
+	APRS_ALERT_REASON__TIME,				// 't'
+	APRS_ALERT_REASON__POSITION,			// 'p'
+	APRS_ALERT_REASON__GYRO,				// 'g'
+	APRS_ALERT_REASON__ACCEL,				// 'a'
+	APRS_ALERT_REASON__MAGNET,				// 'm'
+	APRS_ALERT_REASON__REQUEST,				// 'r'
+
+	APRS_ALERT_REASON_COUNT
+} APRS_ALERT_REASON_ENUM_t;
+#define APRS_ALERT_REASON_SHORTHAND			"?tpgamr"
 
 
 void save_globals(EEPROM_SAVE_BF_ENUM_t bf);

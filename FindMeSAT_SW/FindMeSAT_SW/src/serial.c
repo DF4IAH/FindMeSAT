@@ -521,6 +521,7 @@ void task_serial(uint32_t now)
 
 			/* Process line and get data */
 			bool l_doNotPrint = serial_filter_inStream(g_usart1_rx_buf, len_out);
+			l_doNotPrint = false;		// TODO: remove me!
 
 			/* Copy chunk of data to USB_CDC */
 			if (!l_doNotPrint && (!s_doNotPrint || (len_out > 3)) && g_usb_cdc_printStatusLines_sim808) {

@@ -1800,7 +1800,7 @@ void task_twi2_lcd__sim1(uint8_t col_left)
 	if (s_gns_lat != l_gns_lat) {
 		s_gns_lat  = l_gns_lat;
 		l_lat_prefix = l_gns_lat >= 0.f ?  'N' : 'S';
-		l_gns_lat += 0.00005f;
+		l_gns_lat += 0.000005f;
 		task_twi2_lcd_print_format_c(       0 * 6,  7 * 10, l_lat_prefix);
 		task_twi2_lcd_print_format_long_P(  2 * 6,  7 * 10, (long) abs(l_gns_lat), PM_FORMAT_02LD);
 		task_twi2_lcd_print_format_c(       4 * 6,  7 * 10, '.');
@@ -1814,7 +1814,7 @@ void task_twi2_lcd__sim1(uint8_t col_left)
 	if (s_gns_lon != l_gns_lon) {
 		s_gns_lon  = l_gns_lon;
 		l_lon_prefix = l_gns_lon >= 0.f ?  'E' : 'W';
-		l_gns_lon += 0.00005f;
+		l_gns_lon += 0.000005f;
 		task_twi2_lcd_print_format_c(       0 * 6,  8 * 10, l_lon_prefix);
 		task_twi2_lcd_print_format_long_P(  1 * 6,  8 * 10, (long) abs(l_gns_lon), PM_FORMAT_03LD);
 		task_twi2_lcd_print_format_c(       4 * 6,  8 * 10, '.');
@@ -1825,14 +1825,14 @@ void task_twi2_lcd__sim1(uint8_t col_left)
 	}
 
 	/* Height */
-	if (s_gns_msl != l_gns_msl_alt_m) {
+	if ((s_gns_msl != l_gns_msl_alt_m) && (-1000.f < l_gns_msl_alt_m) && (l_gns_msl_alt_m < 10000.f)) {
 		s_gns_msl  = l_gns_msl_alt_m;
 		task_twi2_lcd_print_format_long_P( 11 * 6,  7 * 10, (long)(l_gns_msl_alt_m + 0.5f), PM_FORMAT_4LD);
 		task_twi2_lcd_print_format_c(      16 * 6,  7 * 10, 'm');
 	}
 
 	/* Speed */
-	if (s_gns_speed != l_gns_speed_kmPh) {
+	if ((s_gns_speed != l_gns_speed_kmPh) && (0.f <= l_gns_speed_kmPh) && (l_gns_speed_kmPh < 1000.f)) {
 		s_gns_speed  = l_gns_speed_kmPh;
 		task_twi2_lcd_print_format_float_P(12 * 6,  8 * 10, l_gns_speed_kmPh + 0.05f, PM_FORMAT_5F1);
 		task_twi2_lcd_print_format_P(      18 * 6,  8 * 10, PM_FORMAT_KMPH);
