@@ -517,13 +517,18 @@ void task_serial(uint32_t now)
 
 		/* Process the line - IRQ allowed */
 		if (len_out < C_USART1_RX_BUF_LEN) {
+			static bool s_doNotPrint = false;
+
 			/* Process line and get data */
-			bool doNotPrint = serial_filter_inStream(g_usart1_rx_buf, len_out);
+			bool l_doNotPrint = serial_filter_inStream(g_usart1_rx_buf, len_out);
+			l_doNotPrint = false;		// TODO: remove me!
 
 			/* Copy chunk of data to USB_CDC */
-			if (!doNotPrint && g_usb_cdc_printStatusLines_sim808) {
+			if (!l_doNotPrint && (!s_doNotPrint || (len_out > 3)) && g_usb_cdc_printStatusLines_sim808) {
 				udi_write_serial_line(g_usart1_rx_buf, len_out);
 			}
+
+			s_doNotPrint = l_doNotPrint;
 		}
 
 		/* Move serial buffer by one line and adjust index - IRQ disabled */

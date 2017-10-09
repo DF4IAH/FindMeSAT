@@ -95,6 +95,10 @@ uint8_t						g_gns_cPn0_dBHz						= 0;
 //uint16_t					g_gns_hpa_m							= 0;
 //uint16_t					g_gns_vpa_m							= 0;
 
+uint64_t					g_aprs_alert_last					= 0ULL;
+APRS_ALERT_FSM_STATE_ENUM_t	g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
+APRS_ALERT_REASON_ENUM_t	g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
+
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines_atxmega	= false;	// EEPROM
 bool						g_usb_cdc_printStatusLines_sim808	= false;	// EEPROM
@@ -231,6 +235,36 @@ volatile sched_entry_t		g_sched_data[C_SCH_SLOT_CNT]		= { 0 };
 volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
 
 char						g_prepare_buf[C_TX_BUF_SIZE]		= "";
+
+
+const char					PM_APRS_TX_HTTP_TARGET1_NM[]		= "karlsruhe.aprs2.net";
+PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_TARGET1_NM[]);
+const uint16_t				 C_APRS_TX_HTTP_TARGET1_PORT		= 8080U;
+const char					PM_APRS_TX_HTTP_TARGET2_NM[]		= "nuremberg.aprs2.net";
+PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_TARGET2_NM[]);
+const uint16_t				 C_APRS_TX_HTTP_TARGET2_PORT		= 8080U;
+const char					PM_APRS_TX_HTTP_L1[]				= "POST / HTTP/1.1/n";
+PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L1[]);
+const char					PM_APRS_TX_HTTP_L2[]				= "Content-Length: %d/n";
+PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L2[]);
+const char					PM_APRS_TX_HTTP_L3[]				= "Content-Type: application/octet-stream/n";
+PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L3[]);
+const char					PM_APRS_TX_HTTP_L4[]				= "Accept-Type: text/plain/n/n";
+PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L4[]);
+const char					PM_APRS_TX_LOGIN[]					= "user %s pass %s vers %s";
+PROGMEM_DECLARE(const char, PM_APRS_TX_LOGIN[]);
+const char					PM_APRS_TX_FORWARD[]				= "%s%s>APRS,TCPIP*:";							// USER, SSID with prefixing "-"
+PROGMEM_DECLARE(const char, PM_APRS_TX_FORWARD[]);
+const char					PM_APRS_TX_N1[]						= " N1 gx=%+06.1fd gy=%+06.1fd gz=%+06.1fd/n/n";
+PROGMEM_DECLARE(const char, PM_APRS_TX_N1[]);
+const char					PM_APRS_TX_N2[]						= " N2 ax=%+6.3fg ay=%+6.3fg az=%+6.3fg/n/n";
+PROGMEM_DECLARE(const char, PM_APRS_TX_N2[]);
+const char					PM_APRS_TX_N3[]						= " N3 mx=%+6.1fm my=%+6.1fm mz=%+6.1fm/n/n";
+PROGMEM_DECLARE(const char, PM_APRS_TX_N3[]);
+const char					PM_APRS_TX_N4[]						= " N4 t=%+5.2fC pa=%7.2fh rh=%5.2f%%/n/n";
+PROGMEM_DECLARE(const char, PM_APRS_TX_N4[]);
+const char					PM_APRS_TX_N5[]						= " N5 /A=%06ld a=%+07.1fm s=%5.1fk R=%c/n/n";
+PROGMEM_DECLARE(const char, PM_APRS_TX_N5[]);
 
 
 twi_options_t g_twi1_options = {
@@ -2137,6 +2171,118 @@ static void task_main_pll(uint32_t now)
 	}
 }
 
+static void task_main_aprs(uint32_t now)
+{
+	static uint32_t s_now	= 0UL;
+	int				len		= 0;
+	irqflags_t		flags;
+
+	do {
+		/* Once a second to be processed */
+		if (s_now == now) {
+			break;
+		}
+		s_now = now;
+		*g_prepare_buf = 0;
+
+		/* Check for sensor and time boundaries */
+		if (g_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
+
+			/* APRS messaging started */
+			g_aprs_alert_reason		= APRS_ALERT_REASON__TIME;  // TODO
+			g_aprs_alert_last		= now;
+			g_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N1;
+		}
+
+		/* Check for reporting interval */
+		switch (g_aprs_alert_fsm_state) {
+			case APRS_ALERT_FSM_STATE__DO_N1:
+			{
+				flags = cpu_irq_save();
+				volatile int32_t l_twi1_gyro_1_gyro_x_mdps = g_twi1_gyro_1_gyro_x_mdps;
+				volatile int32_t l_twi1_gyro_1_gyro_y_mdps = g_twi1_gyro_1_gyro_y_mdps;
+				volatile int32_t l_twi1_gyro_1_gyro_z_mdps = g_twi1_gyro_1_gyro_z_mdps;
+				cpu_irq_restore(flags);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N1, l_twi1_gyro_1_gyro_x_mdps / 1000.f, l_twi1_gyro_1_gyro_y_mdps / 1000.f, l_twi1_gyro_1_gyro_z_mdps / 1000.f);
+				g_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
+			}
+			break;
+
+			case APRS_ALERT_FSM_STATE__DO_N2:
+			{
+				flags = cpu_irq_save();
+				volatile int16_t l_twi1_gyro_1_accel_x_mg = g_twi1_gyro_1_accel_x_mg;
+				volatile int16_t l_twi1_gyro_1_accel_y_mg = g_twi1_gyro_1_accel_y_mg;
+				volatile int16_t l_twi1_gyro_1_accel_z_mg = g_twi1_gyro_1_accel_z_mg;
+				cpu_irq_restore(flags);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N2, l_twi1_gyro_1_accel_x_mg / 1000.f, l_twi1_gyro_1_accel_y_mg / 1000.f, l_twi1_gyro_1_accel_z_mg / 1000.f);
+				g_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N3;
+			}
+			break;
+
+			case APRS_ALERT_FSM_STATE__DO_N3:
+			{
+				flags = cpu_irq_save();
+				volatile int32_t l_twi1_gyro_2_mag_x_nT = g_twi1_gyro_2_mag_x_nT;
+				volatile int32_t l_twi1_gyro_2_mag_y_nT = g_twi1_gyro_2_mag_y_nT;
+				volatile int32_t l_twi1_gyro_2_mag_z_nT = g_twi1_gyro_2_mag_z_nT;
+				cpu_irq_restore(flags);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N3, l_twi1_gyro_2_mag_x_nT / 1000.f, l_twi1_gyro_2_mag_y_nT / 1000.f, l_twi1_gyro_2_mag_z_nT / 1000.f);
+				g_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
+			}
+			break;
+
+			case APRS_ALERT_FSM_STATE__DO_N4:
+			{
+				flags = cpu_irq_save();
+				volatile int16_t l_twi1_hygro_T_100		= g_twi1_hygro_T_100;
+				volatile int32_t l_twi1_baro_p_100		= g_twi1_baro_p_100;
+				volatile int16_t l_twi1_hygro_RH_100	= g_twi1_hygro_RH_100;
+				cpu_irq_restore(flags);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N4, l_twi1_hygro_T_100 / 100.f, l_twi1_baro_p_100 / 100.f, l_twi1_hygro_RH_100 / 100.f);
+				g_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N5;
+			}
+			break;
+
+			case APRS_ALERT_FSM_STATE__DO_N5:
+			{
+				const char					l_reason_ary[]		= APRS_ALERT_REASON_SHORTHAND;
+				APRS_ALERT_REASON_ENUM_t	l_aprs_alert_reason = g_aprs_alert_reason;
+				char						l_reason;
+
+				/* Get character of reason */
+				if (l_aprs_alert_reason < APRS_ALERT_REASON_COUNT) {
+					l_reason = l_reason_ary[l_aprs_alert_reason];
+				} else {
+					l_reason = l_reason_ary[APRS_ALERT_REASON__NONE];
+				}
+
+				flags = cpu_irq_save();
+				volatile float l_gns_msl_alt_m	= g_gns_msl_alt_m;
+				volatile float l_gns_speed_kmPh	= g_gns_speed_kmPh;
+				cpu_irq_restore(flags);
+
+				float l_gns_msl_alt_ft = l_gns_msl_alt_m >= 0.f ?  (0.5f + (l_gns_msl_alt_m / 0.3048f)) : (-0.5f + (l_gns_msl_alt_m / 0.3048f));
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N5, (long)l_gns_msl_alt_ft, l_gns_msl_alt_m, l_gns_speed_kmPh, l_reason);
+				g_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__NOOP;
+			}
+			break;
+
+			default:
+				g_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__NOOP;
+		}
+	} while (false);
+
+	/* Message content ready */
+	if (len) {
+	}
+}
+
 static void task(void)
 {
 	if (g_workmode == WORKMODE_RUN) {
@@ -2148,6 +2294,7 @@ static void task(void)
 		task_twi(now);										// Handle (TWI1 and) TWI2 communications
 		task_usb(now);										// Handling the USB connection
 		task_main_pll(now);									// Handling the 1PPS PLL system
+		task_main_aprs(now);								// Handling the APRS alerts
 	}
 }
 
@@ -2216,6 +2363,10 @@ int main(void)
 
 	/* Show help page of command set */
 	printHelp();
+
+	/* Calibration of TWI1 devices */
+	calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
+	calibration_mode(CALIBRATION_MODE_ENUM__ACCEL_Z);
 
 	/* LED green */
 	twi2_set_leds(0x02);
