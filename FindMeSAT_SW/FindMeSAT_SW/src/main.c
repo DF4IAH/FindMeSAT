@@ -2364,6 +2364,10 @@ int main(void)
 	/* Show help page of command set */
 	printHelp();
 
+	/* Calibration of TWI1 devices */
+	calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
+	calibration_mode(CALIBRATION_MODE_ENUM__ACCEL_Z);
+
 	/* LED green */
 	twi2_set_leds(0x02);
 
