@@ -58,8 +58,15 @@ extern uint8_t						g_gns_cPn0_dBHz;
 //extern uint16_t						g_gns_hpa_m;
 //extern uint16_t						g_gns_vpa_m;
 
+extern uint8_t						g_aprs_mode;
+extern char							g_aprs_source_callsign[12];
+extern char							g_aprs_source_ssid[4];
+extern uint64_t						g_aprs_alert_last;
+extern APRS_ALERT_FSM_STATE_ENUM_t	g_aprs_alert_fsm_state;
+extern APRS_ALERT_REASON_ENUM_t		g_aprs_alert_reason;
 extern float						g_aprs_pos_anchor_lat;
 extern float						g_aprs_pos_anchor_lon;
+
 
 extern bool							g_usb_cdc_stdout_enabled;
 extern bool							g_usb_cdc_printStatusLines_atxmega;

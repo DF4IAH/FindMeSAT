@@ -96,6 +96,9 @@ uint8_t						g_gns_cPn0_dBHz						= 0;
 //uint16_t					g_gns_hpa_m							= 0;
 //uint16_t					g_gns_vpa_m							= 0;
 
+uint8_t						g_aprs_mode							= 0;
+char						g_aprs_source_callsign[12]			= "";
+char						g_aprs_source_ssid[4]				= "";
 uint64_t					g_aprs_alert_last					= 0ULL;
 APRS_ALERT_FSM_STATE_ENUM_t	g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
 APRS_ALERT_REASON_ENUM_t	g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
@@ -258,16 +261,22 @@ const char					PM_APRS_TX_LOGIN[]					= "user %s pass %s vers %s";
 PROGMEM_DECLARE(const char, PM_APRS_TX_LOGIN[]);
 const char					PM_APRS_TX_FORWARD[]				= "%s%s>APRS,TCPIP*:";							// USER, SSID with prefixing "-"
 PROGMEM_DECLARE(const char, PM_APRS_TX_FORWARD[]);
-const char					PM_APRS_TX_N1[]						= " N1 gx=%+06.1fd gy=%+06.1fd gz=%+06.1fd\n\n";
+const char					PM_APRS_TX_SYMBOL_TABLE_ID			= '/';
+const char					PM_APRS_TX_SYMBOL_CODE				= '$';	// /$:Phone  /j:Jeep
+const char					PM_APRS_TX_POS[]					= "!%02d%5.2f%c%c%03d%5.2f%c%c%03d/%03d";
+PROGMEM_DECLARE(const char, PM_APRS_TX_POS[]);
+const char					PM_APRS_TX_N1[]						= " N1 gx=%+06.1fd gy=%+06.1fd gz=%+06.1fd";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N1[]);
-const char					PM_APRS_TX_N2[]						= " N2 ax=%+6.3fg ay=%+6.3fg az=%+6.3fg\n\n";
+const char					PM_APRS_TX_N2[]						= " N2 ax=%+6.3fg ay=%+6.3fg az=%+6.3fg";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N2[]);
-const char					PM_APRS_TX_N3[]						= " N3 mx=%+6.1fm my=%+6.1fm mz=%+6.1fm\n\n";
+const char					PM_APRS_TX_N3[]						= " N3 mx=%+6.1fm my=%+6.1fm mz=%+6.1fm";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N3[]);
-const char					PM_APRS_TX_N4[]						= " N4 t=%+5.2fC pa=%7.2fh rh=%5.2f%%\n\n";
+const char					PM_APRS_TX_N4[]						= " N4 t=%+5.2fC pa=%7.2fh rh=%5.2f%%";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N4[]);
-const char					PM_APRS_TX_N5[]						= " N5 /A=%06ld a=%+07.1fm s=%5.1fk R=%c\n\n";
+const char					PM_APRS_TX_N5[]						= " N5 /A=%06ld a=%+07.1fm s=%5.1fk R=%c";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N5[]);
+const char					PM_APRS_TX_MSGEND[]					= "\r\n";
+PROGMEM_DECLARE(const char, PM_APRS_TX_MSGEND[]);
 
 
 twi_options_t g_twi1_options = {
@@ -409,6 +418,9 @@ static void init_globals(void)
 
 	/* APRS */
 	{
+		g_aprs_mode							= 0;
+		*g_aprs_source_callsign				= 0;
+		*g_aprs_source_ssid					= 0;
 		g_aprs_alert_last					= 0ULL;
 		g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
 		g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
@@ -541,6 +553,13 @@ static void init_globals(void)
 		g_twi1_gyro_2_mag_factz		= l_twi1_gyro_2_mag_factz;
 		cpu_irq_restore(flags);
 	}
+
+	/* APRS */
+	{
+		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_CALLSIGN,	(void*)&g_aprs_source_callsign,	sizeof(g_aprs_source_callsign));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_SSID,		(void*)&g_aprs_source_ssid,		sizeof(g_aprs_source_ssid));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_MODE,		(void*)&g_aprs_mode,			sizeof(g_aprs_mode));
+	}
 }
 
 void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
@@ -646,6 +665,13 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_X, (void*)&l_twi1_gyro_2_mag_factx, sizeof(l_twi1_gyro_2_mag_factx));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Y, (void*)&l_twi1_gyro_2_mag_facty, sizeof(l_twi1_gyro_2_mag_facty));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Z, (void*)&l_twi1_gyro_2_mag_factz, sizeof(l_twi1_gyro_2_mag_factz));
+	}
+
+	/* APRS */
+	if (bf & EEPROM_SAVE_BF__APRS) {
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_CALLSIGN,	(void*)&g_aprs_source_callsign,	sizeof(g_aprs_source_callsign));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_SSID,		(void*)&g_aprs_source_ssid,		sizeof(g_aprs_source_ssid));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_MODE,		(void*)&g_aprs_mode,			sizeof(g_aprs_mode));
 	}
 }
 
@@ -802,6 +828,79 @@ void adc_app_enable(bool enable)
 			g_twi2_lcd_repaint = true;
 		}
 	}
+}
+
+void aprs_num_update(uint8_t mode)
+{
+	if (mode != APRS_MODE__OFF) {
+		mode = APRS_MODE__ON;
+	}
+
+	g_aprs_mode = mode;
+	save_globals(EEPROM_SAVE_BF__APRS);
+}
+
+void aprs_call_update(const char call[])
+{
+	uint8_t idx = 0;
+
+	if (!call) {
+		g_aprs_source_callsign[idx++] = 0;
+
+	} else if (strlen(call) < 12) {
+		for (; idx < (sizeof(g_aprs_source_callsign) - 1); idx++) {
+			if (((('/' <= call[idx]) && (call[idx]) <= '9')) || (('A' <= toupper(call[idx])) && (toupper(call[idx]) <= 'Z'))) {
+				g_aprs_source_callsign[idx] = (char) toupper(call[idx]);
+			} else {
+				g_aprs_source_callsign[idx++] = 0;
+				break;
+			}
+		}
+
+	} else {
+		g_aprs_source_callsign[0] = 0;
+	}
+
+	/* Fill up to the end of the field */
+	while (idx < sizeof(g_aprs_source_callsign)) {
+		g_aprs_source_callsign[idx++] = 0;
+	}
+
+	save_globals(EEPROM_SAVE_BF__APRS);
+}
+
+void aprs_ssid_update(const char ssid[])
+{
+	g_aprs_source_ssid[0] = 0;
+	g_aprs_source_ssid[1] = 0;
+	g_aprs_source_ssid[2] = 0;
+	g_aprs_source_ssid[3] = 0;
+
+	if (!ssid) {
+		return;
+
+	} else if (ssid[0] == '-') {
+		g_aprs_source_ssid[0] = ssid[0];
+		if (isdigit(ssid[1])) {
+			g_aprs_source_ssid[1] = ssid[1];
+
+			if (isdigit(ssid[2])) {
+				g_aprs_source_ssid[2] = ssid[2];
+			}
+		}
+
+	} else {
+		if (isdigit(ssid[0])) {
+			g_aprs_source_ssid[0] = '-';
+			g_aprs_source_ssid[1] = ssid[0];
+
+			if (isdigit(ssid[1])) {
+				g_aprs_source_ssid[2] = ssid[1];
+			}
+		}
+	}
+
+	save_globals(EEPROM_SAVE_BF__APRS);
 }
 
 void backlight_mode_pwm(int16_t mode_pwm)
@@ -2327,6 +2426,18 @@ static void task_main_aprs(uint32_t now)
 	static uint32_t				s_now_sec				= 0UL;
 	uint32_t					l_now_sec				= now >> 10;
 	uint32_t					l_boot_time_ts;
+	float						l_gns_lat;
+	uint8_t						l_lat_deg;
+	float						l_lat_minutes;
+	char						l_lat_hemisphere;
+	float						l_gns_lon;
+	uint8_t						l_lon_deg;
+	float						l_lon_minutes;
+	char						l_lon_hemisphere;
+	float						l_gns_course_deg;
+	uint16_t					l_course_deg;
+	float						l_gns_speed_kmPh;
+	uint16_t					l_speed_kn;
 	uint64_t					l_aprs_alert_last;
 	APRS_ALERT_FSM_STATE_ENUM_t	l_aprs_alert_fsm_state;
 	APRS_ALERT_REASON_ENUM_t	l_aprs_alert_reason;
@@ -2383,13 +2494,48 @@ static void task_main_aprs(uint32_t now)
 			}
 		}
 
+		/* Preparations for message strings */
+		if (l_aprs_alert_fsm_state != APRS_ALERT_FSM_STATE__NOOP) {
+			/* Get copy from global variables */
+			{
+				flags = cpu_irq_save();
+				l_gns_lat			= g_gns_lat;
+				l_gns_lon			= g_gns_lon;
+				l_gns_course_deg	= g_gns_course_deg;
+				l_gns_speed_kmPh	= g_gns_speed_kmPh;
+				cpu_irq_restore(flags);
+			}
+
+			/* Calculations */
+			{
+				l_lat_deg			= (uint8_t) (l_gns_lat >= 0.f ?  l_gns_lat : -l_gns_lat);
+				l_lat_minutes		= ((l_gns_lat >= 0.f ?  l_gns_lat : -l_gns_lat) - l_lat_deg) * 60.f + 0.005f;
+				l_lat_hemisphere	= l_gns_lat >= 0.f ?  'N' : 'S';
+				l_lon_deg			= (uint8_t) (l_gns_lon >= 0.f ?  l_gns_lon : -l_gns_lon);
+				l_lon_minutes		= ((l_gns_lon >= 0.f ?  l_gns_lon : -l_gns_lon) - l_lon_deg) * 60.f + 0.005f;
+				l_lon_hemisphere	= l_gns_lon >= 0.f ?  'E' : 'W';
+
+				l_course_deg		= (uint16_t) (0.5f + l_gns_course_deg);
+				l_course_deg		%= 360;
+				if (!l_course_deg) {
+					l_course_deg = 360;
+				}
+
+				l_speed_kn			= (uint16_t) (0.5f + l_gns_speed_kmPh / 1.852f);
+			}
+
+			/* Message content */
+			len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+			len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
+		}
+
 		/* Check for reporting interval */
 		switch (l_aprs_alert_fsm_state) {
 			case APRS_ALERT_FSM_STATE__DO_N1:
 			{
-				volatile int32_t l_twi1_gyro_1_gyro_x_mdps;
-				volatile int32_t l_twi1_gyro_1_gyro_y_mdps;
-				volatile int32_t l_twi1_gyro_1_gyro_z_mdps;
+				int32_t l_twi1_gyro_1_gyro_x_mdps;
+				int32_t l_twi1_gyro_1_gyro_y_mdps;
+				int32_t l_twi1_gyro_1_gyro_z_mdps;
 
 				flags = cpu_irq_save();
 				l_twi1_gyro_1_gyro_x_mdps = g_twi1_gyro_1_gyro_x_mdps;
@@ -2397,16 +2543,16 @@ static void task_main_aprs(uint32_t now)
 				l_twi1_gyro_1_gyro_z_mdps = g_twi1_gyro_1_gyro_z_mdps;
 				cpu_irq_restore(flags);
 
-				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N1, l_twi1_gyro_1_gyro_x_mdps / 1000.f, l_twi1_gyro_1_gyro_y_mdps / 1000.f, l_twi1_gyro_1_gyro_z_mdps / 1000.f);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N1, l_twi1_gyro_1_gyro_x_mdps / 1000.f, l_twi1_gyro_1_gyro_y_mdps / 1000.f, l_twi1_gyro_1_gyro_z_mdps / 1000.f);
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N2:
 			{
-				volatile int16_t l_twi1_gyro_1_accel_x_mg;
-				volatile int16_t l_twi1_gyro_1_accel_y_mg;
-				volatile int16_t l_twi1_gyro_1_accel_z_mg;
+				int16_t l_twi1_gyro_1_accel_x_mg;
+				int16_t l_twi1_gyro_1_accel_y_mg;
+				int16_t l_twi1_gyro_1_accel_z_mg;
 
 				flags = cpu_irq_save();
 				l_twi1_gyro_1_accel_x_mg = g_twi1_gyro_1_accel_x_mg;
@@ -2414,16 +2560,16 @@ static void task_main_aprs(uint32_t now)
 				l_twi1_gyro_1_accel_z_mg = g_twi1_gyro_1_accel_z_mg;
 				cpu_irq_restore(flags);
 
-				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N2, l_twi1_gyro_1_accel_x_mg / 1000.f, l_twi1_gyro_1_accel_y_mg / 1000.f, l_twi1_gyro_1_accel_z_mg / 1000.f);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N2, l_twi1_gyro_1_accel_x_mg / 1000.f, l_twi1_gyro_1_accel_y_mg / 1000.f, l_twi1_gyro_1_accel_z_mg / 1000.f);
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N3;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N3:
 			{
-				volatile int32_t l_twi1_gyro_2_mag_x_nT;
-				volatile int32_t l_twi1_gyro_2_mag_y_nT;
-				volatile int32_t l_twi1_gyro_2_mag_z_nT;
+				int32_t l_twi1_gyro_2_mag_x_nT;
+				int32_t l_twi1_gyro_2_mag_y_nT;
+				int32_t l_twi1_gyro_2_mag_z_nT;
 
 				flags = cpu_irq_save();
 				l_twi1_gyro_2_mag_x_nT = g_twi1_gyro_2_mag_x_nT;
@@ -2431,16 +2577,16 @@ static void task_main_aprs(uint32_t now)
 				l_twi1_gyro_2_mag_z_nT = g_twi1_gyro_2_mag_z_nT;
 				cpu_irq_restore(flags);
 
-				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N3, l_twi1_gyro_2_mag_x_nT / 1000.f, l_twi1_gyro_2_mag_y_nT / 1000.f, l_twi1_gyro_2_mag_z_nT / 1000.f);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N3, l_twi1_gyro_2_mag_x_nT / 1000.f, l_twi1_gyro_2_mag_y_nT / 1000.f, l_twi1_gyro_2_mag_z_nT / 1000.f);
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N4:
 			{
-				volatile int16_t l_twi1_hygro_T_100;
-				volatile int32_t l_twi1_baro_p_100;
-				volatile int16_t l_twi1_hygro_RH_100;
+				int16_t l_twi1_hygro_T_100;
+				int32_t l_twi1_baro_p_100;
+				int16_t l_twi1_hygro_RH_100;
 
 				flags = cpu_irq_save();
 				l_twi1_hygro_T_100	= g_twi1_hygro_T_100;
@@ -2448,7 +2594,7 @@ static void task_main_aprs(uint32_t now)
 				l_twi1_hygro_RH_100	= g_twi1_hygro_RH_100;
 				cpu_irq_restore(flags);
 
-				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N4, l_twi1_hygro_T_100 / 100.f, l_twi1_baro_p_100 / 100.f, l_twi1_hygro_RH_100 / 100.f);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N4, l_twi1_hygro_T_100 / 100.f, l_twi1_baro_p_100 / 100.f, l_twi1_hygro_RH_100 / 100.f);
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N5;
 			}
 			break;
@@ -2474,7 +2620,7 @@ static void task_main_aprs(uint32_t now)
 
 				float l_gns_msl_alt_ft = l_gns_msl_alt_m >= 0.f ?  (0.5f + (l_gns_msl_alt_m / 0.3048f)) : (-0.5f + (l_gns_msl_alt_m / 0.3048f));
 
-				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N5, (long)l_gns_msl_alt_ft, l_gns_msl_alt_m, l_gns_speed_kmPh, l_reason);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N5, (long)l_gns_msl_alt_ft, l_gns_msl_alt_m, l_gns_speed_kmPh, l_reason);
 				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__NOOP;
 				l_aprs_alert_reason		= APRS_ALERT_REASON__NONE;
 			}
@@ -2497,10 +2643,8 @@ static void task_main_aprs(uint32_t now)
 
 	/* Message content ready */
 	if (len) {
+		len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_MSGEND);
 		udi_write_tx_buf(g_prepare_buf, len, false);
-
-		strcpy(g_prepare_buf, "\r\n");
-		udi_write_tx_buf(g_prepare_buf, 2, false);
 	}
 }
 

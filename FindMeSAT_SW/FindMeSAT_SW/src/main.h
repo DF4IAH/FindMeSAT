@@ -116,6 +116,11 @@ typedef enum DMA_CHANNEL_ENUM {
 	DMA_CHANNEL_DACB_CH0_B,
 } DMA_CHANNEL_ENUM_t;
 
+typedef enum APRS_MODE_ENUM {
+	APRS_MODE__OFF					= 0,
+	APRS_MODE__ON,
+} APRS_MODE_ENUM_t;
+
 typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__VERSION			= 0x0000,						// i32
 	EEPROM_ADDR__VCTCXO				= 0x0010,						// i32
@@ -150,6 +155,10 @@ typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__9AXIS_MAG_FACT_X	= 0x0048,						// i16
 	EEPROM_ADDR__9AXIS_MAG_FACT_Y	= 0x004A,						// i16
 	EEPROM_ADDR__9AXIS_MAG_FACT_Z	= 0x004C,						// i16
+
+	EEPROM_ADDR__APRS_CALLSIGN		= 0x0080,						// char[12]
+	EEPROM_ADDR__APRS_SSID			= 0x008C,						// char[4]
+	EEPROM_ADDR__APRS_MODE			= 0x0090,						// ui8
 } EEPROM_ADDR_ENUM_t;
 
 typedef enum EEPROM_SAVE_BF_ENUM {
@@ -159,6 +168,7 @@ typedef enum EEPROM_SAVE_BF_ENUM {
 	EEPROM_SAVE_BF__PITCHTONE		= 0b00001000,
 	EEPROM_SAVE_BF__PRINT_STATUS	= 0b00010000,
 	EEPROM_SAVE_BF__9AXIS_OFFSETS	= 0b00100000,
+	EEPROM_SAVE_BF__APRS			= 0b01000000,
 } EEPROM_SAVE_BF_ENUM_t;
 
 
@@ -214,6 +224,9 @@ int myStringToFloat(const char* ptr, float* out);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
 
 void adc_app_enable(bool enable);
+void aprs_num_update(uint8_t mode);
+void aprs_call_update(const char call[]);
+void aprs_ssid_update(const char ssid[]);
 void backlight_mode_pwm(int16_t mode_pwm);
 void bias_update(uint8_t bias);
 void calibration_mode(CALIBRATION_MODE_ENUM_t mode);
@@ -224,6 +237,7 @@ void keyBeep_enable(bool enable);
 void pitchTone_mode(uint8_t mode);
 void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf);
 void xoPwm_set(int32_t mode_pwm);
+
 void halt(void);
 
 uint16_t aprs_pos_delta_m(void);
