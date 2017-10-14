@@ -238,6 +238,7 @@ void pitchTone_mode(uint8_t mode);
 void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf);
 void xoPwm_set(int32_t mode_pwm);
 
+uint32_t tcc1_get_time(void);
 void halt(void);
 
 uint16_t aprs_pos_delta_m(void);

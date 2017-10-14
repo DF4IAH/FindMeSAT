@@ -1891,7 +1891,7 @@ void isr_tcc0_ovfl(void)
 	static uint32_t	last_500ms = 0UL;
 	
 	/* Time downscaling */
-	uint32_t now = rtc_get_time();
+	uint32_t now = tcc1_get_time();
 
 	/* Clear IF bit to allow interrupt enabled section */
 	TCC0_INTFLAGS = TC0_OVFIF_bm;
@@ -1922,6 +1922,17 @@ void isr_tcc0_ovfl(void)
 
 		isr_sparetime(now);
 	}
+}
+
+uint32_t tcc1_get_time(void)
+{
+	uint64_t now;
+
+	irqflags_t flags = cpu_irq_save();
+	now = g_milliseconds_cnt64;
+	cpu_irq_restore(flags);
+
+	return (uint32_t)now;
 }
 
 #if 0
@@ -2220,7 +2231,7 @@ static void dma_init(void)
 	dma_channel_set_trigger_source(&dmach_dma1_conf, DMA_CH_TRIGSRC_DACB_CH0_gc);
 	dma_channel_set_single_shot(&dmach_dma1_conf);
 
-	task_dac(rtc_get_time());																		// Calculate DDS increments
+	task_dac(tcc1_get_time());																		// Calculate DDS increments
 }
 
 static void dma_start(void)
@@ -2651,7 +2662,7 @@ static void task_main_aprs(uint32_t now)
 static void task(void)
 {
 	if (g_workmode == WORKMODE_RUN) {
-		uint32_t now = rtc_get_time();
+		uint32_t now = tcc1_get_time();
 
 		/* TASK when woken up and all ISRs are done */
 		/* note: ADC and DAC are handled by the scheduler */
