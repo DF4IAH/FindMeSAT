@@ -35,6 +35,7 @@
 #include <asf.h>
 
 #include <ctype.h>
+#include <math.h>
 
 #include "conf_dac.h"
 #include "dds.h"
@@ -98,6 +99,8 @@ uint8_t						g_gns_cPn0_dBHz						= 0;
 uint64_t					g_aprs_alert_last					= 0ULL;
 APRS_ALERT_FSM_STATE_ENUM_t	g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
 APRS_ALERT_REASON_ENUM_t	g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
+float						g_aprs_pos_anchor_lat				= 0.f;
+float						g_aprs_pos_anchor_lon				= 0.f;
 
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines_atxmega	= false;	// EEPROM
@@ -243,27 +246,27 @@ const uint16_t				 C_APRS_TX_HTTP_TARGET1_PORT		= 8080U;
 const char					PM_APRS_TX_HTTP_TARGET2_NM[]		= "nuremberg.aprs2.net";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_TARGET2_NM[]);
 const uint16_t				 C_APRS_TX_HTTP_TARGET2_PORT		= 8080U;
-const char					PM_APRS_TX_HTTP_L1[]				= "POST / HTTP/1.1/n";
+const char					PM_APRS_TX_HTTP_L1[]				= "POST / HTTP/1.1\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L1[]);
-const char					PM_APRS_TX_HTTP_L2[]				= "Content-Length: %d/n";
+const char					PM_APRS_TX_HTTP_L2[]				= "Content-Length: %d\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L2[]);
-const char					PM_APRS_TX_HTTP_L3[]				= "Content-Type: application/octet-stream/n";
+const char					PM_APRS_TX_HTTP_L3[]				= "Content-Type: application/octet-stream\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L3[]);
-const char					PM_APRS_TX_HTTP_L4[]				= "Accept-Type: text/plain/n/n";
+const char					PM_APRS_TX_HTTP_L4[]				= "Accept-Type: text/plain\n\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L4[]);
 const char					PM_APRS_TX_LOGIN[]					= "user %s pass %s vers %s";
 PROGMEM_DECLARE(const char, PM_APRS_TX_LOGIN[]);
 const char					PM_APRS_TX_FORWARD[]				= "%s%s>APRS,TCPIP*:";							// USER, SSID with prefixing "-"
 PROGMEM_DECLARE(const char, PM_APRS_TX_FORWARD[]);
-const char					PM_APRS_TX_N1[]						= " N1 gx=%+06.1fd gy=%+06.1fd gz=%+06.1fd/n/n";
+const char					PM_APRS_TX_N1[]						= " N1 gx=%+06.1fd gy=%+06.1fd gz=%+06.1fd\n\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N1[]);
-const char					PM_APRS_TX_N2[]						= " N2 ax=%+6.3fg ay=%+6.3fg az=%+6.3fg/n/n";
+const char					PM_APRS_TX_N2[]						= " N2 ax=%+6.3fg ay=%+6.3fg az=%+6.3fg\n\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N2[]);
-const char					PM_APRS_TX_N3[]						= " N3 mx=%+6.1fm my=%+6.1fm mz=%+6.1fm/n/n";
+const char					PM_APRS_TX_N3[]						= " N3 mx=%+6.1fm my=%+6.1fm mz=%+6.1fm\n\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N3[]);
-const char					PM_APRS_TX_N4[]						= " N4 t=%+5.2fC pa=%7.2fh rh=%5.2f%%/n/n";
+const char					PM_APRS_TX_N4[]						= " N4 t=%+5.2fC pa=%7.2fh rh=%5.2f%%\n\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N4[]);
-const char					PM_APRS_TX_N5[]						= " N5 /A=%06ld a=%+07.1fm s=%5.1fk R=%c/n/n";
+const char					PM_APRS_TX_N5[]						= " N5 /A=%06ld a=%+07.1fm s=%5.1fk R=%c\n\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N5[]);
 
 
@@ -402,6 +405,15 @@ static void init_globals(void)
 		g_gns_cPn0_dBHz						= 0;
 //		g_gns_hpa_m							= 0;
 //		g_gns_vpa_m							= 0;
+	}
+
+	/* APRS */
+	{
+		g_aprs_alert_last					= 0ULL;
+		g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
+		g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
+		g_aprs_pos_anchor_lat				= 0.f;
+		g_aprs_pos_anchor_lon				= 0.f;
 	}
 
 	/* VCTCXO */
@@ -1213,6 +1225,145 @@ static void isr_100ms_main_1pps(void)
 			udi_write_tx_buf(l_prepare_buf, min(len, sizeof(l_prepare_buf)), false);
 		}
 	}
+}
+
+
+/* APRS alarming - detected activities */
+
+uint16_t aprs_pos_delta_m(void)
+{
+	float				l_aprs_pos_anchor_lat;
+	float				l_aprs_pos_anchor_lon;
+	float				l_gns_lat;
+	float				l_gns_lon;
+
+	/* Get the current position */
+	{
+		irqflags_t flags = cpu_irq_save();
+		l_aprs_pos_anchor_lat = g_aprs_pos_anchor_lat;
+		l_aprs_pos_anchor_lon = g_aprs_pos_anchor_lon;
+		l_gns_lat = g_gns_lat;
+		l_gns_lon = g_gns_lon;
+		cpu_irq_restore(flags);
+	}
+
+	/* Initial setting */
+	if (!l_aprs_pos_anchor_lat && !l_aprs_pos_anchor_lon) {
+		aprs_pos_anchor();
+		return 0;
+	}
+
+	/* Simplified plane calculations - 1deg = 60nm; 1nm = 1852m */
+	float l_dist_m_x	= 1852.f * 60.f * cos(l_gns_lat * M_PI / 180.f) *	(l_gns_lon >= l_aprs_pos_anchor_lon ?  (l_gns_lon - l_aprs_pos_anchor_lon) : (l_aprs_pos_anchor_lon - l_gns_lon));
+	float l_dist_m_y	= 1852.f * 60.f * 									(l_gns_lat >= l_aprs_pos_anchor_lat ?  (l_gns_lat - l_aprs_pos_anchor_lat) : (l_aprs_pos_anchor_lat - l_gns_lat));
+	float l_dist_m = 0.5f + sqrtf(l_dist_m_x * l_dist_m_x + l_dist_m_y * l_dist_m_y);
+
+	return (uint16_t)l_dist_m;
+}
+
+void aprs_pos_anchor(void)
+{
+	irqflags_t flags = cpu_irq_save();
+	g_aprs_pos_anchor_lat = g_gns_lat;
+	g_aprs_pos_anchor_lon = g_gns_lon;
+	cpu_irq_restore(flags);
+}
+
+uint16_t aprs_gyro_total_dps_1000(void)
+{
+	volatile float l_twi1_gyro_1_gyro_x_mdps;
+	volatile float l_twi1_gyro_1_gyro_y_mdps;
+	volatile float l_twi1_gyro_1_gyro_z_mdps;
+
+	/* Get the current position */
+	{
+		irqflags_t flags = cpu_irq_save();
+		l_twi1_gyro_1_gyro_x_mdps = g_twi1_gyro_1_gyro_x_mdps;
+		l_twi1_gyro_1_gyro_y_mdps = g_twi1_gyro_1_gyro_y_mdps;
+		l_twi1_gyro_1_gyro_z_mdps = g_twi1_gyro_1_gyro_z_mdps;
+		cpu_irq_restore(flags);
+	}
+
+	float l_gyro_total_dps_1000 = sqrt(l_twi1_gyro_1_gyro_x_mdps * l_twi1_gyro_1_gyro_x_mdps + l_twi1_gyro_1_gyro_y_mdps * l_twi1_gyro_1_gyro_y_mdps + l_twi1_gyro_1_gyro_z_mdps * l_twi1_gyro_1_gyro_z_mdps);
+	return (uint16_t) (0.5f + l_gyro_total_dps_1000);
+}
+
+uint16_t aprs_accel_xy_delta_g_1000(void)
+{
+	static float		s_twi1_gyro_1_accel_x_mg = 0.f;
+	static float		s_twi1_gyro_1_accel_y_mg = 0.f;
+	volatile float		l_twi1_gyro_1_accel_x_mg;
+	volatile float		l_twi1_gyro_1_accel_y_mg;
+
+	/* Initial setting */
+	if (!s_twi1_gyro_1_accel_x_mg && !s_twi1_gyro_1_accel_y_mg) {
+		irqflags_t flags = cpu_irq_save();
+		s_twi1_gyro_1_accel_x_mg = g_twi1_gyro_1_accel_x_mg;
+		s_twi1_gyro_1_accel_y_mg = g_twi1_gyro_1_accel_y_mg;
+		cpu_irq_restore(flags);
+		return 0;
+	}
+
+	/* Get the current position */
+	{
+		irqflags_t flags = cpu_irq_save();
+		l_twi1_gyro_1_accel_x_mg = g_twi1_gyro_1_accel_x_mg;
+		l_twi1_gyro_1_accel_y_mg = g_twi1_gyro_1_accel_y_mg;
+		cpu_irq_restore(flags);
+	}
+
+	/* Delta and geometric additions */
+	float l_accel_delta_x = l_twi1_gyro_1_accel_x_mg - s_twi1_gyro_1_accel_x_mg;
+	float l_accel_delta_y = l_twi1_gyro_1_accel_y_mg - s_twi1_gyro_1_accel_y_mg;
+	float l_accel_xy_delta_g_1000 = sqrt(l_accel_delta_x * l_accel_delta_x + l_accel_delta_y * l_accel_delta_y);
+
+	/* Adjust to this values */
+	s_twi1_gyro_1_accel_x_mg = l_twi1_gyro_1_accel_x_mg;
+	s_twi1_gyro_1_accel_y_mg = l_twi1_gyro_1_accel_y_mg;
+
+	return (uint16_t) (0.5f + l_accel_xy_delta_g_1000);
+}
+
+uint16_t aprs_mag_delta_nT(void)
+{
+	static int32_t		s_twi1_gyro_2_mag_x_nT	= 0;
+	static int32_t		s_twi1_gyro_2_mag_y_nT	= 0;
+	static int32_t		s_twi1_gyro_2_mag_z_nT	= 0;
+	volatile int32_t	l_twi1_gyro_2_mag_x_nT;
+	volatile int32_t	l_twi1_gyro_2_mag_y_nT;
+	volatile int32_t	l_twi1_gyro_2_mag_z_nT;
+
+	/* Initial setting */
+	if (!s_twi1_gyro_2_mag_x_nT && !s_twi1_gyro_2_mag_y_nT && !s_twi1_gyro_2_mag_z_nT) {
+		irqflags_t flags = cpu_irq_save();
+		s_twi1_gyro_2_mag_x_nT = g_twi1_gyro_2_mag_x_nT;
+		s_twi1_gyro_2_mag_y_nT = g_twi1_gyro_2_mag_y_nT;
+		s_twi1_gyro_2_mag_z_nT = g_twi1_gyro_2_mag_z_nT;
+		cpu_irq_restore(flags);
+		return 0;
+	}
+
+	/* Get the current position */
+	{
+		irqflags_t flags = cpu_irq_save();
+		l_twi1_gyro_2_mag_x_nT = g_twi1_gyro_2_mag_x_nT;
+		l_twi1_gyro_2_mag_y_nT = g_twi1_gyro_2_mag_y_nT;
+		l_twi1_gyro_2_mag_z_nT = g_twi1_gyro_2_mag_z_nT;
+		cpu_irq_restore(flags);
+	}
+
+	/* Delta and geometric additions */
+	float l_mag_delta_x = l_twi1_gyro_2_mag_x_nT - s_twi1_gyro_2_mag_x_nT;
+	float l_mag_delta_y = l_twi1_gyro_2_mag_y_nT - s_twi1_gyro_2_mag_y_nT;
+	float l_mag_delta_z = l_twi1_gyro_2_mag_z_nT - s_twi1_gyro_2_mag_z_nT;
+	float l_mag_delta_total = sqrtf(l_mag_delta_x * l_mag_delta_x + l_mag_delta_y * l_mag_delta_y + l_mag_delta_z * l_mag_delta_z);
+
+	/* Adjust to this values */
+	s_twi1_gyro_2_mag_x_nT = l_twi1_gyro_2_mag_x_nT;
+	s_twi1_gyro_2_mag_y_nT = l_twi1_gyro_2_mag_y_nT;
+	s_twi1_gyro_2_mag_z_nT = l_twi1_gyro_2_mag_z_nT;
+
+	return (uint16_t) (0.5f + l_mag_delta_total);
 }
 
 
@@ -2173,86 +2324,141 @@ static void task_main_pll(uint32_t now)
 
 static void task_main_aprs(uint32_t now)
 {
-	static uint32_t s_now	= 0UL;
-	int				len		= 0;
-	irqflags_t		flags;
+	static uint32_t				s_now_sec				= 0UL;
+	uint32_t					l_now_sec				= now >> 10;
+	uint32_t					l_boot_time_ts;
+	uint64_t					l_aprs_alert_last;
+	APRS_ALERT_FSM_STATE_ENUM_t	l_aprs_alert_fsm_state;
+	APRS_ALERT_REASON_ENUM_t	l_aprs_alert_reason;
+	int							len						= 0;
+	irqflags_t					flags;
+
+	/* Get a copy from the global variables */
+	{
+		flags = cpu_irq_save();
+		l_boot_time_ts			= g_boot_time_ts;
+		l_aprs_alert_last		= g_aprs_alert_last;
+		l_aprs_alert_fsm_state	= g_aprs_alert_fsm_state;
+		l_aprs_alert_reason		= g_aprs_alert_reason;
+		cpu_irq_restore(flags);
+	}
 
 	do {
-		/* Once a second to be processed */
-		if (s_now == now) {
-			break;
+		/* Once a second to be processed - GNSS has to be up */
+		if ((s_now_sec == l_now_sec) || !l_boot_time_ts) {
+			return;
 		}
-		s_now = now;
+
+		/* Preparation of time and used buffers */
+		s_now_sec = l_now_sec;
 		*g_prepare_buf = 0;
 
 		/* Check for sensor and time boundaries */
-		if (g_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
-
+		if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
 			/* APRS messaging started */
-			g_aprs_alert_reason		= APRS_ALERT_REASON__TIME;  // TODO
-			g_aprs_alert_last		= now;
-			g_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N1;
+			if ((l_aprs_alert_last + C_APRS_ALERT_TIME_SEC) <= l_now_sec) {
+				l_aprs_alert_reason = APRS_ALERT_REASON__TIME;
+
+			} else if ((aprs_pos_delta_m() > C_APRS_ALERT_POS_DELTA_M) &&
+				((l_aprs_alert_last + C_APRS_ALERT_POS_HOLDOFF_SEC) <= l_now_sec)) {
+				l_aprs_alert_reason = APRS_ALERT_REASON__POSITION;
+				aprs_pos_anchor();
+
+			} else if ((aprs_gyro_total_dps_1000() > C_APRS_ALERT_GYRO_DPS_1000) &&
+				((l_aprs_alert_last + C_APRS_ALERT_GYRO_HOLDOFF_SEC) <= l_now_sec)) {
+				l_aprs_alert_reason = APRS_ALERT_REASON__GYRO;
+
+			} else if ((aprs_accel_xy_delta_g_1000() > C_APRS_ALERT_ACCEL_G_1000) &&
+				((l_aprs_alert_last + C_APRS_ALERT_ACCEL_HOLDOFF_SEC) <= l_now_sec)) {
+				l_aprs_alert_reason = APRS_ALERT_REASON__ACCEL;
+
+			} else if ((aprs_mag_delta_nT() > C_APRS_ALERT_MAG_DELTA_NT) &&
+				((l_aprs_alert_last + C_APRS_ALERT_MAG_HOLDOFF_SEC) <= l_now_sec)) {
+				l_aprs_alert_reason = APRS_ALERT_REASON__MAGNET;
+			}
+
+			if (l_aprs_alert_reason != APRS_ALERT_REASON__NONE) {
+				l_aprs_alert_last		= l_now_sec;
+				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N1;
+			}
 		}
 
 		/* Check for reporting interval */
-		switch (g_aprs_alert_fsm_state) {
+		switch (l_aprs_alert_fsm_state) {
 			case APRS_ALERT_FSM_STATE__DO_N1:
 			{
+				volatile int32_t l_twi1_gyro_1_gyro_x_mdps;
+				volatile int32_t l_twi1_gyro_1_gyro_y_mdps;
+				volatile int32_t l_twi1_gyro_1_gyro_z_mdps;
+
 				flags = cpu_irq_save();
-				volatile int32_t l_twi1_gyro_1_gyro_x_mdps = g_twi1_gyro_1_gyro_x_mdps;
-				volatile int32_t l_twi1_gyro_1_gyro_y_mdps = g_twi1_gyro_1_gyro_y_mdps;
-				volatile int32_t l_twi1_gyro_1_gyro_z_mdps = g_twi1_gyro_1_gyro_z_mdps;
+				l_twi1_gyro_1_gyro_x_mdps = g_twi1_gyro_1_gyro_x_mdps;
+				l_twi1_gyro_1_gyro_y_mdps = g_twi1_gyro_1_gyro_y_mdps;
+				l_twi1_gyro_1_gyro_z_mdps = g_twi1_gyro_1_gyro_z_mdps;
 				cpu_irq_restore(flags);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N1, l_twi1_gyro_1_gyro_x_mdps / 1000.f, l_twi1_gyro_1_gyro_y_mdps / 1000.f, l_twi1_gyro_1_gyro_z_mdps / 1000.f);
-				g_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
+				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N2:
 			{
+				volatile int16_t l_twi1_gyro_1_accel_x_mg;
+				volatile int16_t l_twi1_gyro_1_accel_y_mg;
+				volatile int16_t l_twi1_gyro_1_accel_z_mg;
+
 				flags = cpu_irq_save();
-				volatile int16_t l_twi1_gyro_1_accel_x_mg = g_twi1_gyro_1_accel_x_mg;
-				volatile int16_t l_twi1_gyro_1_accel_y_mg = g_twi1_gyro_1_accel_y_mg;
-				volatile int16_t l_twi1_gyro_1_accel_z_mg = g_twi1_gyro_1_accel_z_mg;
+				l_twi1_gyro_1_accel_x_mg = g_twi1_gyro_1_accel_x_mg;
+				l_twi1_gyro_1_accel_y_mg = g_twi1_gyro_1_accel_y_mg;
+				l_twi1_gyro_1_accel_z_mg = g_twi1_gyro_1_accel_z_mg;
 				cpu_irq_restore(flags);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N2, l_twi1_gyro_1_accel_x_mg / 1000.f, l_twi1_gyro_1_accel_y_mg / 1000.f, l_twi1_gyro_1_accel_z_mg / 1000.f);
-				g_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N3;
+				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N3;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N3:
 			{
+				volatile int32_t l_twi1_gyro_2_mag_x_nT;
+				volatile int32_t l_twi1_gyro_2_mag_y_nT;
+				volatile int32_t l_twi1_gyro_2_mag_z_nT;
+
 				flags = cpu_irq_save();
-				volatile int32_t l_twi1_gyro_2_mag_x_nT = g_twi1_gyro_2_mag_x_nT;
-				volatile int32_t l_twi1_gyro_2_mag_y_nT = g_twi1_gyro_2_mag_y_nT;
-				volatile int32_t l_twi1_gyro_2_mag_z_nT = g_twi1_gyro_2_mag_z_nT;
+				l_twi1_gyro_2_mag_x_nT = g_twi1_gyro_2_mag_x_nT;
+				l_twi1_gyro_2_mag_y_nT = g_twi1_gyro_2_mag_y_nT;
+				l_twi1_gyro_2_mag_z_nT = g_twi1_gyro_2_mag_z_nT;
 				cpu_irq_restore(flags);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N3, l_twi1_gyro_2_mag_x_nT / 1000.f, l_twi1_gyro_2_mag_y_nT / 1000.f, l_twi1_gyro_2_mag_z_nT / 1000.f);
-				g_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
+				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N4:
 			{
+				volatile int16_t l_twi1_hygro_T_100;
+				volatile int32_t l_twi1_baro_p_100;
+				volatile int16_t l_twi1_hygro_RH_100;
+
 				flags = cpu_irq_save();
-				volatile int16_t l_twi1_hygro_T_100		= g_twi1_hygro_T_100;
-				volatile int32_t l_twi1_baro_p_100		= g_twi1_baro_p_100;
-				volatile int16_t l_twi1_hygro_RH_100	= g_twi1_hygro_RH_100;
+				l_twi1_hygro_T_100	= g_twi1_hygro_T_100;
+				l_twi1_baro_p_100	= g_twi1_baro_p_100;
+				l_twi1_hygro_RH_100	= g_twi1_hygro_RH_100;
 				cpu_irq_restore(flags);
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N4, l_twi1_hygro_T_100 / 100.f, l_twi1_baro_p_100 / 100.f, l_twi1_hygro_RH_100 / 100.f);
-				g_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N5;
+				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N5;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N5:
 			{
-				const char					l_reason_ary[]		= APRS_ALERT_REASON_SHORTHAND;
-				APRS_ALERT_REASON_ENUM_t	l_aprs_alert_reason = g_aprs_alert_reason;
-				char						l_reason;
+				const char	l_reason_ary[]		= APRS_ALERT_REASON_SHORTHAND;
+				float		l_gns_msl_alt_m		= g_gns_msl_alt_m;
+				float		l_gns_speed_kmPh	= g_gns_speed_kmPh;
+				char		l_reason;
 
 				/* Get character of reason */
 				if (l_aprs_alert_reason < APRS_ALERT_REASON_COUNT) {
@@ -2262,24 +2468,39 @@ static void task_main_aprs(uint32_t now)
 				}
 
 				flags = cpu_irq_save();
-				volatile float l_gns_msl_alt_m	= g_gns_msl_alt_m;
-				volatile float l_gns_speed_kmPh	= g_gns_speed_kmPh;
+				l_gns_msl_alt_m		= g_gns_msl_alt_m;
+				l_gns_speed_kmPh	= g_gns_speed_kmPh;
 				cpu_irq_restore(flags);
 
 				float l_gns_msl_alt_ft = l_gns_msl_alt_m >= 0.f ?  (0.5f + (l_gns_msl_alt_m / 0.3048f)) : (-0.5f + (l_gns_msl_alt_m / 0.3048f));
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_N5, (long)l_gns_msl_alt_ft, l_gns_msl_alt_m, l_gns_speed_kmPh, l_reason);
-				g_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__NOOP;
+				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__NOOP;
+				l_aprs_alert_reason		= APRS_ALERT_REASON__NONE;
 			}
 			break;
 
 			default:
-				g_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__NOOP;
+				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__NOOP;
+				l_aprs_alert_reason		= APRS_ALERT_REASON__NONE;
 		}
 	} while (false);
 
+	/* Write back to the global variables */
+	{
+		flags = cpu_irq_save();
+		g_aprs_alert_last		= l_aprs_alert_last;
+		g_aprs_alert_fsm_state	= l_aprs_alert_fsm_state;
+		g_aprs_alert_reason		= l_aprs_alert_reason;
+		cpu_irq_restore(flags);
+	}
+
 	/* Message content ready */
 	if (len) {
+		udi_write_tx_buf(g_prepare_buf, len, false);
+
+		strcpy(g_prepare_buf, "\r\n");
+		udi_write_tx_buf(g_prepare_buf, 2, false);
 	}
 }
 

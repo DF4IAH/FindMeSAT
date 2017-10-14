@@ -139,7 +139,7 @@ const char					PM_TWI1_INIT_ONBOARD_SIM808_IPR[]		= "AT+IPR=%ld\r\n";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_IFC[]		= "AT+IFC=2,2\r\n";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_CMEE2[]		= "AT+CMEE=2\r\n";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_CREG2[]		= "AT+CREG=2\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_CFUN1[]		= "AT+CFUN=1\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_CFUN1[]		= "AT+CFUN=%d\r\n";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_01[]	= "ATI\r\n";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_02[]	= "AT+GSV\r\n";
 const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_03[]	= "AT+CIMI\r\n";
@@ -315,7 +315,7 @@ void serial_start(void)
 
 #if 1
 	/* Activation of all functionalities */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_CFUN1);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_CFUN1, 1);  // TODO: EEPROM
 	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 	yield_ms(500);
 #endif
@@ -345,8 +345,8 @@ void serial_send_gns_urc(uint8_t val)
 	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 }
 
-const char					PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF[] = "GNSINF:";
-PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF[]);
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_GPS_UGNSINF[] = "+UGNSINF:";
+PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_UGNSINF[]);
 static bool serial_filter_inStream(const char* buf, uint16_t len)
 {
 	/* Sanity check for minimum length */
@@ -354,13 +354,13 @@ static bool serial_filter_inStream(const char* buf, uint16_t len)
 		return true;
 	}
 
-	/* Check for AT+CGNSINF sentence reply */
-	const int gnsInf_len = strlen_P(PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF);
+	/* Check for +UGNSINF sentence reply */
+	const int gnsInf_len = strlen_P(PM_TWI1_UTIL_ONBOARD_SIM808_GPS_UGNSINF);
 
 	const char* lineEnd_ptr = strchr(buf, '\n');
 	const int lineEnd_idx = lineEnd_ptr ?  (lineEnd_ptr - buf) : (len - 1);
 
-	const char* gnsInf_ptr = strstr_P(buf, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_GNSINF);
+	const char* gnsInf_ptr = strstr_P(buf, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_UGNSINF);
 	const int gnsInf_idx = gnsInf_ptr ?  (gnsInf_ptr - buf) : (len - 1);
 
 	char* ptr = (char*) gnsInf_ptr;
@@ -521,7 +521,6 @@ void task_serial(uint32_t now)
 
 			/* Process line and get data */
 			bool l_doNotPrint = serial_filter_inStream(g_usart1_rx_buf, len_out);
-			l_doNotPrint = false;		// TODO: remove me!
 
 			/* Copy chunk of data to USB_CDC */
 			if (!l_doNotPrint && (!s_doNotPrint || (len_out > 3)) && g_usb_cdc_printStatusLines_sim808) {

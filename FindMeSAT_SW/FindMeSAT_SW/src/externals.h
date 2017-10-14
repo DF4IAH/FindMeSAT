@@ -58,6 +58,9 @@ extern uint8_t						g_gns_cPn0_dBHz;
 //extern uint16_t						g_gns_hpa_m;
 //extern uint16_t						g_gns_vpa_m;
 
+extern float						g_aprs_pos_anchor_lat;
+extern float						g_aprs_pos_anchor_lon;
+
 extern bool							g_usb_cdc_stdout_enabled;
 extern bool							g_usb_cdc_printStatusLines_atxmega;
 extern bool							g_usb_cdc_printStatusLines_sim808;

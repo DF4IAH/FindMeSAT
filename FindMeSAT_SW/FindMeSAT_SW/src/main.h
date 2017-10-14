@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													  9
+#define VERSION_LOW													 14
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -35,7 +35,7 @@
 #define C_VCC_5V0_VOLTS												4.890f
 #define C_VCC_5V0_MULT												2.41948528f
 #define C_VCC_VBAT_MULT												2.42614048f
-#define C_TEMPSENSE_MULT											629.20f
+#define C_TEMPSENSE_MULT											629.65f
 
 #define C_TCC1_PERIOD												30000
 #define C_TCC1_MEAN_OFFSET											1000
@@ -184,6 +184,16 @@ typedef enum APRS_ALERT_FSM_STATE_ENUM {
 	APRS_ALERT_FSM_STATE__DO_N5,
 } APRS_ALERT_FSM_STATE_ENUM_t;
 
+#define C_APRS_ALERT_TIME_SEC				1800
+#define C_APRS_ALERT_POS_DELTA_M			50
+#define C_APRS_ALERT_POS_HOLDOFF_SEC		30
+#define C_APRS_ALERT_GYRO_DPS_1000			5000
+#define C_APRS_ALERT_GYRO_HOLDOFF_SEC		30
+#define C_APRS_ALERT_ACCEL_G_1000			8
+#define C_APRS_ALERT_ACCEL_HOLDOFF_SEC		30
+#define C_APRS_ALERT_MAG_DELTA_NT			7500
+#define C_APRS_ALERT_MAG_HOLDOFF_SEC		30
+
 typedef enum APRS_ALERT_REASON_ENUM {		// Shorthand in APRS message
 	APRS_ALERT_REASON__NONE			= 0,	// '?'
 	APRS_ALERT_REASON__TIME,				// 't'
@@ -215,6 +225,12 @@ void pitchTone_mode(uint8_t mode);
 void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf);
 void xoPwm_set(int32_t mode_pwm);
 void halt(void);
+
+uint16_t aprs_pos_delta_m(void);
+void aprs_pos_anchor(void);
+uint16_t aprs_gyro_total_dps_1000(void);
+uint16_t aprs_accel_xy_delta_g_1000(void);
+uint16_t aprs_mag_delta_nT(void);
 
 bool sched_getLock(volatile uint8_t* lockVar);
 void sched_freeLock(volatile uint8_t* lockVar);
