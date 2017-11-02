@@ -14,7 +14,10 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													  9
+#define VERSION_LOW													102
+
+#define APPLICATION_NAME											"FindMeSAT"
+#define APPLICATION_VERSION											"1.0"
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -35,7 +38,7 @@
 #define C_VCC_5V0_VOLTS												4.890f
 #define C_VCC_5V0_MULT												2.41948528f
 #define C_VCC_VBAT_MULT												2.42614048f
-#define C_TEMPSENSE_MULT											629.20f
+#define C_TEMPSENSE_MULT											629.65f
 
 #define C_TCC1_PERIOD												30000
 #define C_TCC1_MEAN_OFFSET											1000
@@ -116,6 +119,11 @@ typedef enum DMA_CHANNEL_ENUM {
 	DMA_CHANNEL_DACB_CH0_B,
 } DMA_CHANNEL_ENUM_t;
 
+typedef enum APRS_MODE_ENUM {
+	APRS_MODE__OFF					= 0,
+	APRS_MODE__ON,
+} APRS_MODE_ENUM_t;
+
 typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__VERSION			= 0x0000,						// i32
 	EEPROM_ADDR__VCTCXO				= 0x0010,						// i32
@@ -150,6 +158,12 @@ typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__9AXIS_MAG_FACT_X	= 0x0048,						// i16
 	EEPROM_ADDR__9AXIS_MAG_FACT_Y	= 0x004A,						// i16
 	EEPROM_ADDR__9AXIS_MAG_FACT_Z	= 0x004C,						// i16
+
+	EEPROM_ADDR__APRS_CALLSIGN		= 0x0080,						// char[12]
+	EEPROM_ADDR__APRS_SSID			= 0x008C,						// char[4]
+	EEPROM_ADDR__APRS_LOGIN			= 0x0090,						// char[10]
+	EEPROM_ADDR__APRS_PWD			= 0x009A,						// char[6]
+	EEPROM_ADDR__APRS_MODE			= 0x00A0,						// ui8
 } EEPROM_ADDR_ENUM_t;
 
 typedef enum EEPROM_SAVE_BF_ENUM {
@@ -159,6 +173,7 @@ typedef enum EEPROM_SAVE_BF_ENUM {
 	EEPROM_SAVE_BF__PITCHTONE		= 0b00001000,
 	EEPROM_SAVE_BF__PRINT_STATUS	= 0b00010000,
 	EEPROM_SAVE_BF__9AXIS_OFFSETS	= 0b00100000,
+	EEPROM_SAVE_BF__APRS			= 0b01000000,
 } EEPROM_SAVE_BF_ENUM_t;
 
 
@@ -184,6 +199,16 @@ typedef enum APRS_ALERT_FSM_STATE_ENUM {
 	APRS_ALERT_FSM_STATE__DO_N5,
 } APRS_ALERT_FSM_STATE_ENUM_t;
 
+#define C_APRS_ALERT_TIME_SEC				1800
+#define C_APRS_ALERT_POS_DELTA_M			50
+#define C_APRS_ALERT_POS_HOLDOFF_SEC		30
+#define C_APRS_ALERT_GYRO_DPS_1000			5000
+#define C_APRS_ALERT_GYRO_HOLDOFF_SEC		30
+#define C_APRS_ALERT_ACCEL_G_1000			8
+#define C_APRS_ALERT_ACCEL_HOLDOFF_SEC		30
+#define C_APRS_ALERT_MAG_DELTA_NT			7500
+#define C_APRS_ALERT_MAG_HOLDOFF_SEC		30
+
 typedef enum APRS_ALERT_REASON_ENUM {		// Shorthand in APRS message
 	APRS_ALERT_REASON__NONE			= 0,	// '?'
 	APRS_ALERT_REASON__TIME,				// 't'
@@ -204,6 +229,11 @@ int myStringToFloat(const char* ptr, float* out);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
 
 void adc_app_enable(bool enable);
+void aprs_num_update(uint8_t mode);
+void aprs_call_update(const char call[]);
+void aprs_ssid_update(const char ssid[]);
+void aprs_user_update(const char user[]);
+void aprs_pwd_update(const char pwd[]);
 void backlight_mode_pwm(int16_t mode_pwm);
 void bias_update(uint8_t bias);
 void calibration_mode(CALIBRATION_MODE_ENUM_t mode);
@@ -213,8 +243,21 @@ void errorBeep_enable(bool enable);
 void keyBeep_enable(bool enable);
 void pitchTone_mode(uint8_t mode);
 void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf);
+void shutdown(void);
 void xoPwm_set(int32_t mode_pwm);
+
+uint32_t tcc1_get_time(void);
 void halt(void);
+
+uint16_t aprs_pos_delta_m(void);
+void aprs_pos_anchor(void);
+uint16_t aprs_gyro_total_dps_1000(void);
+uint16_t aprs_accel_xy_delta_g_1000(void);
+uint16_t aprs_mag_delta_nT(void);
+
+void aprs_message_begin(void);
+void aprs_message_end(void);
+void aprs_message_send(const char* msg, int len);
 
 bool sched_getLock(volatile uint8_t* lockVar);
 void sched_freeLock(volatile uint8_t* lockVar);

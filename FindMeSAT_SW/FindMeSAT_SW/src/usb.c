@@ -128,12 +128,12 @@ void udi_write_serial_line(const char* buf, uint16_t len)
 
 
 const char					PM_USBINIT_HEADER_1[]				= "\r\n\r\n\r\n";
-const char					PM_USBINIT_HEADER_2[]				= "%c\r\n===============================\r\n";
-const char					PM_USBINIT_HEADER_3[]				= "FindMeSAT - USB logging started\r\n";
-const char					PM_USBINIT_HEADER_4[]				= "===============================\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_1[]);
+const char					PM_USBINIT_HEADER_2[]				= "%c\r\n===============================\r\n";
 PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_2[]);
+const char					PM_USBINIT_HEADER_3[]				=       "FindMeSAT - USB logging started\r\n";
 PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_3[]);
+const char					PM_USBINIT_HEADER_4[]				=       "===============================\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_4[]);
 
 void usb_init(void)
@@ -316,34 +316,44 @@ static void usb_rx_process(uint32_t thisTime)
 const char					PM_INFO_PART_L1P1A[]				= "Time = %06ld: Uvco=%4d mV, U5v=%4d mV, Ubat=%4d mV, ";
 const char					PM_INFO_PART_L1P1B[]				= "Uadc4=%4d mV, Uadc5=%4d mV, Usil=%4d mV, ";
 const char					PM_INFO_PART_L1P1C[]				= "mP_Temp=%+06.2fC\t \t";
-const char					PM_INFO_PART_L1P2[]					= "Baro_Temp=%+06.2fC, Baro_P=%7.2fhPa\t \t";
-const char					PM_INFO_PART_L1P3[]					= "Hygro_Temp=%+06.2fC, Hygro_RelH=%05.2f%%\r\n";
-const char					PM_INFO_PART_L2P1A[]				= "\tAx=%+05.3fg (%+06d), Ay=%+05.3fg (%+06d), ";
-const char					PM_INFO_PART_L2P1B[]				= "Az=%+05.3fg (%+06d)\t \t";
-const char					PM_INFO_PART_L2P2A[]				= "Gx=%+07.2fdps (%+06d), Gy=%+07.2fdps (%+06d), ";
-const char					PM_INFO_PART_L2P2B[]				= "Gz=%+07.2fdps (%06d)\t \t";
-const char					PM_INFO_PART_L2P3A[]				= "Mx=%+07.3fuT (%+06d), My=%+07.3fuT (%+06d), ";
-const char					PM_INFO_PART_L2P3B[]				= "Mz=%+07.3fuT (%+06d)\t \t";
-const char					PM_INFO_PART_L2P4[]					= "Gyro_Temp=%+06.2fC (%+06d)\r\n\r\n";
-const char					PM_INFO_PART_PLL1[]					= "PLL: time=%6ld.%03ld + %05d/30E+6 sec, ";
-const char					PM_INFO_PART_PLL2[]					= "1pps_deviation=%+10f, ";
-const char					PM_INFO_PART_PLL3[]					= "XO_PWM=%05ldd : 0x%02x\r\n\r\n";
-
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1B[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1C[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_L1P2[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_L1P3[]);
+
+const char					PM_INFO_PART_L1P2A[]				= "Baro_Temp=%+06.2fC, Baro_P=%7.2fhPa, ";
+const char					PM_INFO_PART_L1P2B[]				= "Baro_QNH=%7.2fhPa\t \t";
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P2A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P2B[]);
+
+const char					PM_INFO_PART_L1P3A[]				= "Hygro_Temp=%+06.2fC, Hygro_RelH=%05.2f%%, ";
+const char					PM_INFO_PART_L1P3B[]				= "Hygro_DewPoint_Temp=%+06.2fC\r\n";
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P3A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P3B[]);
+
+const char					PM_INFO_PART_L2P1A[]				= "\tAx=%+05.3fg (%+06d), Ay=%+05.3fg (%+06d), ";
+const char					PM_INFO_PART_L2P1B[]				= "Az=%+05.3fg (%+06d)\t \t";
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P1A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P1B[]);
+
+const char					PM_INFO_PART_L2P2A[]				= "Gx=%+07.2fdps (%+06d), Gy=%+07.2fdps (%+06d), ";
+const char					PM_INFO_PART_L2P2B[]				= "Gz=%+07.2fdps (%06d)\t \t";
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P2A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P2B[]);
+
+const char					PM_INFO_PART_L2P3A[]				= "Mx=%+07.3fuT (%+06d), My=%+07.3fuT (%+06d), ";
+const char					PM_INFO_PART_L2P3B[]				= "Mz=%+07.3fuT (%+06d)\t \t";
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3B[]);
+
+const char					PM_INFO_PART_L2P4[]					= "Gyro_Temp=%+06.2fC (%+06d)\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_INFO_PART_L2P4[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_PLL2[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_PLL3[]);
+
+const char					PM_INFO_PART_PLL1A[]				= "PLL: time=%6ld.%03ld + %05d/30E+6 sec, ";
+const char					PM_INFO_PART_PLL1B[]				= "1pps_deviation=%+10f, ";
+const char					PM_INFO_PART_PLL1C[]				= "XO_PWM=%05ldd : 0x%02x\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1B[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1C[]);
 
 void task_usb(uint32_t now)
 {
@@ -374,13 +384,13 @@ void task_usb(uint32_t now)
 				g_1pps_printusb_avail	= false;
 			}
 
-			int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_PLL1, (uint32_t)(l_pll_hi / 1000U), (uint32_t) (l_pll_hi % 1000), l_pll_lo);
+			int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_PLL1A, (uint32_t)(l_pll_hi / 1000U), (uint32_t) (l_pll_hi % 1000), l_pll_lo);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_PLL2, l_1pps_deviation);
+			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_PLL1B, l_1pps_deviation);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_PLL3, (l_xo_mode_pwm & C_XO_VAL_INT_MASK) >> C_XO_VAL_INT_SHIFT, l_xo_mode_pwm & C_XO_VAL_FRAC_MASK);
+			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_PLL1C, (l_xo_mode_pwm & C_XO_VAL_INT_MASK) >> C_XO_VAL_INT_SHIFT, l_xo_mode_pwm & C_XO_VAL_FRAC_MASK);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 		}
 
@@ -396,7 +406,9 @@ void task_usb(uint32_t now)
 				int16_t l_adc_temp_deg_100;
 				int32_t l_twi1_baro_temp_100;
 				int32_t l_twi1_baro_p_100;
+				int32_t l_twi1_baro_p_h_100;
 				int16_t l_twi1_hygro_T_100;
+				int16_t	l_twi1_hygro_DP_100;
 				int16_t l_twi1_hygro_RH_100;
 				int16_t	l_twi1_gyro_1_accel_x;
 				int16_t	l_twi1_gyro_1_accel_y;
@@ -431,7 +443,9 @@ void task_usb(uint32_t now)
 					l_adc_temp_deg_100			= g_adc_temp_deg_100;
 					l_twi1_baro_temp_100		= g_twi1_baro_temp_100;
 					l_twi1_baro_p_100			= g_twi1_baro_p_100;
+					l_twi1_baro_p_h_100			= g_twi1_baro_p_h_100;
 					l_twi1_hygro_T_100			= g_twi1_hygro_T_100;
+					l_twi1_hygro_DP_100			= g_twi1_hygro_DP_100;
 					l_twi1_hygro_RH_100			= g_twi1_hygro_RH_100;
 					l_twi1_gyro_1_accel_x		= g_twi1_gyro_1_accel_x;
 					l_twi1_gyro_1_accel_y		= g_twi1_gyro_1_accel_y;
@@ -469,12 +483,20 @@ void task_usb(uint32_t now)
 				l_adc_temp_deg_100 / 100.f);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P2,
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P2A,
 				l_twi1_baro_temp_100 / 100.f, l_twi1_baro_p_100 / 100.f);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P3,
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P2B,
+				l_twi1_baro_p_h_100 / 100.f);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P3A,
 				l_twi1_hygro_T_100 / 100.f, l_twi1_hygro_RH_100 / 100.f);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P3B,
+				l_twi1_hygro_DP_100 / 100.f);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 
