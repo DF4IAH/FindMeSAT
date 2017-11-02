@@ -99,6 +99,8 @@ uint8_t						g_gns_cPn0_dBHz						= 0;
 uint8_t						g_aprs_mode							= 0;
 char						g_aprs_source_callsign[12]			= "";
 char						g_aprs_source_ssid[4]				= "";
+char						g_aprs_login_user[10]				= "";
+char						g_aprs_login_pwd[6]			= "";
 uint64_t					g_aprs_alert_last					= 0ULL;
 APRS_ALERT_FSM_STATE_ENUM_t	g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
 APRS_ALERT_REASON_ENUM_t	g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
@@ -175,6 +177,7 @@ volatile uint32_t			g_twi1_baro_d1						= 0UL;
 volatile uint32_t			g_twi1_baro_d2						= 0UL;
 volatile int32_t			g_twi1_baro_temp_100				= 0L;
 volatile int32_t			g_twi1_baro_p_100					= 0L;
+volatile int32_t			g_twi1_baro_p_h_100					= 0L;
 
 bool						g_twi1_hygro_valid					= false;
 uint8_t						g_twi1_hygro_status					= 0;
@@ -182,6 +185,7 @@ volatile uint16_t			g_twi1_hygro_S_T					= 0;
 volatile uint16_t			g_twi1_hygro_S_RH					= 0;
 volatile int16_t			g_twi1_hygro_T_100					= 0;
 volatile int16_t			g_twi1_hygro_RH_100					= 0;
+volatile int16_t			g_twi1_hygro_DP_100					= 0;
 
 uint8_t						g_twi2_lcd_version					= 0;
 volatile bool				g_twi2_lcd_repaint					= false;
@@ -249,15 +253,15 @@ const uint16_t				 C_APRS_TX_HTTP_TARGET1_PORT		= 8080U;
 const char					PM_APRS_TX_HTTP_TARGET2_NM[]		= "nuremberg.aprs2.net";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_TARGET2_NM[]);
 const uint16_t				 C_APRS_TX_HTTP_TARGET2_PORT		= 8080U;
-const char					PM_APRS_TX_HTTP_L1[]				= "POST / HTTP/1.1\n";
+const char					PM_APRS_TX_HTTP_L1[]				= "POST / HTTP/1.1\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L1[]);
-const char					PM_APRS_TX_HTTP_L2[]				= "Content-Length: %d\n";
+const char					PM_APRS_TX_HTTP_L2[]				= "Content-Length: %d\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L2[]);
-const char					PM_APRS_TX_HTTP_L3[]				= "Content-Type: application/octet-stream\n";
+const char					PM_APRS_TX_HTTP_L3[]				= "Content-Type: application/octet-stream\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L3[]);
-const char					PM_APRS_TX_HTTP_L4[]				= "Accept-Type: text/plain\n\n";
+const char					PM_APRS_TX_HTTP_L4[]				= "Accept-Type: text/plain\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L4[]);
-const char					PM_APRS_TX_LOGIN[]					= "user %s pass %s vers %s";
+const char					PM_APRS_TX_LOGIN[]					= "user %s pass %s vers %s %s\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_LOGIN[]);
 const char					PM_APRS_TX_FORWARD[]				= "%s%s>APRS,TCPIP*:";							// USER, SSID with prefixing "-"
 PROGMEM_DECLARE(const char, PM_APRS_TX_FORWARD[]);
@@ -271,7 +275,7 @@ const char					PM_APRS_TX_N2[]						= " N2 ax=%+6.3fg ay=%+6.3fg az=%+6.3fg";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N2[]);
 const char					PM_APRS_TX_N3[]						= " N3 mx=%+6.1fm my=%+6.1fm mz=%+6.1fm";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N3[]);
-const char					PM_APRS_TX_N4[]						= " N4 t=%+5.2fC pa=%7.2fh rh=%5.2f%%";
+const char					PM_APRS_TX_N4[]						= " N4 t=%+5.2fC dp=%+5.2fC qnh=%7.2fh";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N4[]);
 const char					PM_APRS_TX_N5[]						= " N5 /A=%06ld a=%+07.1fm s=%5.1fk R=%c";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N5[]);
@@ -421,6 +425,8 @@ static void init_globals(void)
 		g_aprs_mode							= 0;
 		*g_aprs_source_callsign				= 0;
 		*g_aprs_source_ssid					= 0;
+		*g_aprs_login_user					= 0;
+		*g_aprs_login_pwd					= 0;
 		g_aprs_alert_last					= 0ULL;
 		g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
 		g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
@@ -558,6 +564,8 @@ static void init_globals(void)
 	{
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_CALLSIGN,	(void*)&g_aprs_source_callsign,	sizeof(g_aprs_source_callsign));
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_SSID,		(void*)&g_aprs_source_ssid,		sizeof(g_aprs_source_ssid));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_LOGIN,		(void*)&g_aprs_login_user,		sizeof(g_aprs_login_user));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_PWD,			(void*)&g_aprs_login_pwd,	sizeof(g_aprs_login_pwd));
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_MODE,		(void*)&g_aprs_mode,			sizeof(g_aprs_mode));
 	}
 }
@@ -671,6 +679,8 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 	if (bf & EEPROM_SAVE_BF__APRS) {
 		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_CALLSIGN,	(void*)&g_aprs_source_callsign,	sizeof(g_aprs_source_callsign));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_SSID,		(void*)&g_aprs_source_ssid,		sizeof(g_aprs_source_ssid));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_LOGIN,		(void*)&g_aprs_login_user,		sizeof(g_aprs_login_user));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_PWD,		(void*)&g_aprs_login_pwd,	sizeof(g_aprs_login_pwd));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_MODE,		(void*)&g_aprs_mode,			sizeof(g_aprs_mode));
 	}
 }
@@ -847,7 +857,7 @@ void aprs_call_update(const char call[])
 	if (!call) {
 		g_aprs_source_callsign[idx++] = 0;
 
-	} else if (strlen(call) < 12) {
+	} else if (strlen(call) < sizeof(g_aprs_source_callsign)) {
 		for (; idx < (sizeof(g_aprs_source_callsign) - 1); idx++) {
 			if (((('/' <= call[idx]) && (call[idx]) <= '9')) || (('A' <= toupper(call[idx])) && (toupper(call[idx]) <= 'Z'))) {
 				g_aprs_source_callsign[idx] = (char) toupper(call[idx]);
@@ -898,6 +908,64 @@ void aprs_ssid_update(const char ssid[])
 				g_aprs_source_ssid[2] = ssid[1];
 			}
 		}
+	}
+
+	save_globals(EEPROM_SAVE_BF__APRS);
+}
+
+void aprs_user_update(const char user[])
+{
+	uint8_t idx = 0;
+
+	if (!user) {
+		g_aprs_login_user[idx++] = 0;
+
+	} else if (strlen(user) < sizeof(g_aprs_login_user)) {
+		for (; idx < (sizeof(g_aprs_login_user) - 1); idx++) {
+			if (0x20 <= user[idx]) {
+				g_aprs_login_user[idx] = (char)user[idx];
+			} else {
+				g_aprs_login_user[idx++] = 0;
+				break;
+			}
+		}
+
+	} else {
+		g_aprs_login_user[0] = 0;
+	}
+
+	/* Fill up to the end of the field */
+	while (idx < sizeof(g_aprs_login_user)) {
+		g_aprs_login_user[idx++] = 0;
+	}
+
+	save_globals(EEPROM_SAVE_BF__APRS);
+}
+
+void aprs_pwd_update(const char pwd[])
+{
+	uint8_t idx = 0;
+
+	if (!pwd) {
+		g_aprs_login_pwd[idx++] = 0;
+
+	} else if ((strlen(pwd) - 1) < sizeof(g_aprs_login_pwd)) {
+		for (; idx < (sizeof(g_aprs_login_pwd) - 1); idx++) {
+			if (0x20 <= pwd[idx]) {
+				g_aprs_login_pwd[idx] = (char)pwd[idx];
+			} else {
+				g_aprs_login_pwd[idx++] = 0;
+				break;
+			}
+		}
+
+	} else {
+		g_aprs_login_pwd[0] = 0;
+	}
+
+	/* Fill up to the end of the field */
+	while (idx < sizeof(g_aprs_login_pwd)) {
+		g_aprs_login_pwd[idx++] = 0;
 	}
 
 	save_globals(EEPROM_SAVE_BF__APRS);
@@ -1160,6 +1228,19 @@ void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf)
 	g_usb_cdc_printStatusLines_1pps		= bf & PRINT_STATUS_LINES__1PPS		?  true : false;
 
 	save_globals(EEPROM_SAVE_BF__PRINT_STATUS);
+}
+
+void shutdown(void)
+{
+	/* Shutdown SIM808 */
+	//if (g_gsm_mode != OFF) {
+	{
+		serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_OFF);
+		serial_sim808_gsm_shutdown();
+	}
+
+	/* Stop main loop */
+	halt();
 }
 
 void xoPwm_set(int32_t mode_pwm)
@@ -1463,6 +1544,67 @@ uint16_t aprs_mag_delta_nT(void)
 	s_twi1_gyro_2_mag_z_nT = l_twi1_gyro_2_mag_z_nT;
 
 	return (uint16_t) (0.5f + l_mag_delta_total);
+}
+
+void aprs_message_begin(void)
+{
+	/* GSM DPRS transportation */
+	if (true) {
+
+	}
+}
+
+void aprs_message_end(void)
+{
+	/* GSM DPRS transportation */
+	if (true) {
+
+	}
+}
+
+void aprs_message_send(const char* msg, int content_message_len)
+{
+	/* GSM DPRS transportation */
+	if (true) {
+		char l_content_hdr[64];
+		int content_hdr_len  = snprintf_P(l_content_hdr, sizeof(l_content_hdr), PM_APRS_TX_LOGIN, g_aprs_login_user, g_aprs_login_pwd, APPLICATION_NAME, APPLICATION_VERSION);
+		int len = content_hdr_len + content_message_len;
+
+		/* Transport message */
+		{
+			char l_msg[64];
+			int msg_len;
+
+			/* establish TCP/IP connection */
+			//gsm_dprs_tcpip_connect();
+
+			/* Line 1 */
+			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L1);
+			serial_sim808_send(l_msg, msg_len);
+
+			/* Line 2 */
+			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L2, len);
+			serial_sim808_send(l_msg, msg_len);
+
+			/* Line 3 */
+			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L3);
+			serial_sim808_send(l_msg, msg_len);
+
+			/* Line 4 */
+			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L4);
+			serial_sim808_send(l_msg, msg_len);
+
+			/* Content header - authentication */
+			serial_sim808_send(l_content_hdr, content_hdr_len);
+
+			/* Content message */
+			serial_sim808_send(msg, content_message_len);
+
+			/* release TCP/IP connection */
+			//gsm_dprs_tcpip_disconnect();
+		}
+
+	}
 }
 
 
@@ -2556,6 +2698,9 @@ static void task_main_aprs(uint32_t now)
 
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N1, l_twi1_gyro_1_gyro_x_mdps / 1000.f, l_twi1_gyro_1_gyro_y_mdps / 1000.f, l_twi1_gyro_1_gyro_z_mdps / 1000.f);
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
+
+				/* Begin a new message block */
+				aprs_message_begin();
 			}
 			break;
 
@@ -2596,16 +2741,20 @@ static void task_main_aprs(uint32_t now)
 			case APRS_ALERT_FSM_STATE__DO_N4:
 			{
 				int16_t l_twi1_hygro_T_100;
-				int32_t l_twi1_baro_p_100;
-				int16_t l_twi1_hygro_RH_100;
+				//int16_t l_twi1_hygro_RH_100;
+				int16_t l_twi1_hygro_DP_100;
+				//int32_t l_twi1_baro_p_100;
+				int32_t l_twi1_baro_p_h_100;
 
 				flags = cpu_irq_save();
 				l_twi1_hygro_T_100	= g_twi1_hygro_T_100;
-				l_twi1_baro_p_100	= g_twi1_baro_p_100;
-				l_twi1_hygro_RH_100	= g_twi1_hygro_RH_100;
+				// l_twi1_hygro_RH_100	= g_twi1_hygro_RH_100;
+				l_twi1_hygro_DP_100	= g_twi1_hygro_DP_100;
+				//l_twi1_baro_p_100	= g_twi1_baro_p_100;
+				l_twi1_baro_p_h_100	= g_twi1_baro_p_h_100;
 				cpu_irq_restore(flags);
 
-				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N4, l_twi1_hygro_T_100 / 100.f, l_twi1_baro_p_100 / 100.f, l_twi1_hygro_RH_100 / 100.f);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N4, l_twi1_hygro_T_100 / 100.f, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N5;
 			}
 			break;
@@ -2655,7 +2804,20 @@ static void task_main_aprs(uint32_t now)
 	/* Message content ready */
 	if (len) {
 		len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_MSGEND);
+
+		/* Transport APRS message to network */
+		aprs_message_send(g_prepare_buf, len);
+
+		/* Logging to the USB console */
 		udi_write_tx_buf(g_prepare_buf, len, false);
+
+		/* End of message block */
+		if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
+			aprs_message_end();
+
+			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_MSGEND);
+			udi_write_tx_buf(g_prepare_buf, len, false);
+		}
 	}
 }
 

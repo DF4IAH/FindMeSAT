@@ -42,6 +42,8 @@ const char					PM_HELP_ADC_2[]							=	"1: turn ADCA and ADCB on\r\n";
 const char					PM_HELP_APRS_1[]						= "aprs=\t\t0: OFF, 1: ON\r\n";
 const char					PM_HELP_APRS_2[]						=	"\t\tcall=<str>: callsign\r\n";
 const char					PM_HELP_APRS_3[]						=	"\t\tssid=[-]0-15: SSID\r\n";
+const char					PM_HELP_APRS_4[]						=	"\t\tuser=<str>: user login\r\n";
+const char					PM_HELP_APRS_5[]						=	"\t\tpwd=<str>: password\r\n";
 const char					PM_HELP_AT_1[]							= "AT\t\tCMD to send to the SIM808\r\n";
 const char					PM_HELP_BIAS_1[]						= "bias=\t\t0-63: bias voltage ";
 const char					PM_HELP_BIAS_2[]						=	"for LCD contrast\r\n";
@@ -58,6 +60,7 @@ const char					PM_HELP_DAC_2[]							=	"1: turn DACB on\r\n";
 const char					PM_HELP_DDS_1[]							= "dds=a,b,c\ta: DDS0 frequency mHz, ";
 const char					PM_HELP_DDS_2[]							=	"b: DDS1 mHz, ";
 const char					PM_HELP_DDS_3[]							=	"c: starting phase of DDS1-DDS0 deg\r\n";
+const char					PM_HELP_DOWN_1[]						= "down\t\tShutdown this device\r\n";
 const char					PM_HELP_EB_1[]							= "eb=\t\t0: error beep OFF, 1: ON\r\n";
 const char					PM_HELP_HELP_1[]						= "help\t\tThis information page ";
 const char					PM_HELP_HELP_2[]						=	"about all available commands\r\n";
@@ -79,6 +82,8 @@ PROGMEM_DECLARE(const char, PM_HELP_ADC_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_APRS_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_APRS_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_APRS_3[]);
+PROGMEM_DECLARE(const char, PM_HELP_APRS_4[]);
+PROGMEM_DECLARE(const char, PM_HELP_APRS_5[]);
 PROGMEM_DECLARE(const char, PM_HELP_AT_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_BIAS_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_BIAS_2[]);
@@ -95,6 +100,7 @@ PROGMEM_DECLARE(const char, PM_HELP_DAC_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_DDS_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_DDS_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_DDS_3[]);
+PROGMEM_DECLARE(const char, PM_HELP_DOWN_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_EB_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_HELP_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_HELP_2[]);
@@ -129,6 +135,10 @@ void printHelp(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_APRS_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_APRS_3);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_APRS_4);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_APRS_5);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_AT_1);
@@ -167,6 +177,9 @@ void printHelp(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DDS_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DDS_3);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_DOWN_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_EB_1);
@@ -215,6 +228,8 @@ const char					PM_IP_CMD_adc[]							= "adc=";
 const char					PM_IP_CMD_aprs_num[]					= "aprs=";
 const char					PM_IP_CMD_aprs_call[]					= "aprs=call=";
 const char					PM_IP_CMD_aprs_ssid[]					= "aprs=ssid=";
+const char					PM_IP_CMD_aprs_user[]					= "aprs=user=";
+const char					PM_IP_CMD_aprs_pwd[]					= "aprs=pwd=";
 const char					PM_IP_CMD_AT[]							= "AT";
 const char					PM_IP_CMD_A_slash[]						= "A/";
 const char					PM_IP_CMD_bias[]						= "bias=";
@@ -226,6 +241,7 @@ const char					PM_IP_CMD_cal_defaults[]				= "cal=defaults";
 const char					PM_IP_CMD_cal_gyro[]					= "cal=gyro";
 const char					PM_IP_CMD_dac[]							= "dac=";
 const char					PM_IP_CMD_dds[]							= "dds=";
+const char					PM_IP_CMD_down[]						= "down";
 const char					PM_IP_CMD_eb[]							= "eb=";
 const char					PM_IP_CMD_info[]						= "info=";
 const char					PM_IP_CMD_help[]						= "help";
@@ -238,6 +254,8 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_adc[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_num[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_call[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_ssid[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_user[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_pwd[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_AT[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_A_slash[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_bias[]);
@@ -249,6 +267,7 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_cal_defaults[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_cal_gyro[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_dac[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_dds[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_down[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_eb[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_info[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_help[]);
@@ -273,6 +292,12 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_aprs_ssid,	sizeof(PM_IP_CMD_aprs_ssid) - 1)) {
 			aprs_ssid_update(cmdLine_buf + (sizeof(PM_IP_CMD_aprs_ssid) - 1));
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_aprs_user,	sizeof(PM_IP_CMD_aprs_user) - 1)) {
+			aprs_user_update(cmdLine_buf + (sizeof(PM_IP_CMD_aprs_user) - 1));
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_aprs_pwd,	sizeof(PM_IP_CMD_aprs_pwd) - 1)) {
+			aprs_pwd_update(cmdLine_buf + (sizeof(PM_IP_CMD_aprs_pwd) - 1));
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_aprs_num,	sizeof(PM_IP_CMD_aprs_num) - 1)) {
 			int val[1] = { 0 };
@@ -322,6 +347,9 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_dds) - 1), MY_STRING_TO_VAR_FLOAT | (MY_STRING_TO_VAR_FLOAT << 2) | (MY_STRING_TO_VAR_FLOAT << 4), &(val[0]), NULL, NULL)) {
 				dds_update(val[0], val[1], val[2]);
 			}
+
+		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_down, sizeof(PM_IP_CMD_down) - 1)) {
+			shutdown();
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_eb, sizeof(PM_IP_CMD_eb) - 1)) {
 			int val[1] = { 0 };

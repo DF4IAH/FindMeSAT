@@ -14,7 +14,10 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													 14
+#define VERSION_LOW													102
+
+#define APPLICATION_NAME											"FindMeSAT"
+#define APPLICATION_VERSION											"1.0"
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -158,7 +161,9 @@ typedef enum EEPROM_ADDR_ENUM {
 
 	EEPROM_ADDR__APRS_CALLSIGN		= 0x0080,						// char[12]
 	EEPROM_ADDR__APRS_SSID			= 0x008C,						// char[4]
-	EEPROM_ADDR__APRS_MODE			= 0x0090,						// ui8
+	EEPROM_ADDR__APRS_LOGIN			= 0x0090,						// char[10]
+	EEPROM_ADDR__APRS_PWD			= 0x009A,						// char[6]
+	EEPROM_ADDR__APRS_MODE			= 0x00A0,						// ui8
 } EEPROM_ADDR_ENUM_t;
 
 typedef enum EEPROM_SAVE_BF_ENUM {
@@ -227,6 +232,8 @@ void adc_app_enable(bool enable);
 void aprs_num_update(uint8_t mode);
 void aprs_call_update(const char call[]);
 void aprs_ssid_update(const char ssid[]);
+void aprs_user_update(const char user[]);
+void aprs_pwd_update(const char pwd[]);
 void backlight_mode_pwm(int16_t mode_pwm);
 void bias_update(uint8_t bias);
 void calibration_mode(CALIBRATION_MODE_ENUM_t mode);
@@ -236,6 +243,7 @@ void errorBeep_enable(bool enable);
 void keyBeep_enable(bool enable);
 void pitchTone_mode(uint8_t mode);
 void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf);
+void shutdown(void);
 void xoPwm_set(int32_t mode_pwm);
 
 uint32_t tcc1_get_time(void);
@@ -246,6 +254,10 @@ void aprs_pos_anchor(void);
 uint16_t aprs_gyro_total_dps_1000(void);
 uint16_t aprs_accel_xy_delta_g_1000(void);
 uint16_t aprs_mag_delta_nT(void);
+
+void aprs_message_begin(void);
+void aprs_message_end(void);
+void aprs_message_send(const char* msg, int len);
 
 bool sched_getLock(volatile uint8_t* lockVar);
 void sched_freeLock(volatile uint8_t* lockVar);

@@ -31,6 +31,13 @@
 #include "externals.h"
 
 
+/* Global string store in program memory */
+const char					PM_SET_FUNC_1[]							= "AT+CFUN=%d";
+PROGMEM_DECLARE(const char, PM_SET_FUNC_1[]);
+const char					PM_SHUTDOWN_1[]							= "AT+CPOWD=1";
+PROGMEM_DECLARE(const char, PM_SHUTDOWN_1[]);
+
+
 /* ISR routines */
 
 /* Serial data received */
@@ -58,16 +65,37 @@ ISR(USARTF0_RXC_vect)
 
 void serial_sim808_send(const char* cmd, uint8_t len)
 {
+	char l_tx_buf[C_TX_BUF_SIZE];
+
 	/* Make a copy */
 	for (uint8_t cnt = len, idx = len - 1; cnt; --cnt, --idx) {
-		g_prepare_buf[idx] = cmd[idx];
+		l_tx_buf[idx] = cmd[idx];
 	}
-	g_prepare_buf[len]		= '\r';
-	g_prepare_buf[len + 1]	= 0;
+	l_tx_buf[len]		= '\r';
+	l_tx_buf[len + 1]	= 0;
+
+	/* Send the string to the SIM808 */
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_tx_buf, len);
+}
+
+void serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode)
+{
+	/* Prepare message to the SIM808 */
+	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SET_FUNC_1, funcMode);
 
 	/* Send the string to the SIM808 */
 	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 }
+
+void serial_sim808_gsm_shutdown(void)
+{
+	/* Prepare message to the SIM808 */
+	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SHUTDOWN_1);
+
+	/* Send the string to the SIM808 */
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+}
+
 
 /* Set up serial connection to the SIM808 */
 void serial_init(void)

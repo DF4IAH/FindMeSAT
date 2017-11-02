@@ -1113,36 +1113,70 @@ static void task_twi1_hygro(uint32_t now)
 {	// Calculations for the presentation layer
 	static uint16_t s_twi1_hygro_S_T	= 0UL;
 	static uint16_t s_twi1_hygro_S_RH	= 0UL;
+	int16_t l_twi1_hygro_T_100, l_twi1_hygro_RH_100;
 	uint16_t l_twi1_hygro_S_T, l_twi1_hygro_S_RH;
+	bool hasChanged = false;
 
 	/* Getting the global values */
 	{
-		irqflags_t flags							= cpu_irq_save();
-		l_twi1_hygro_S_T							= g_twi1_hygro_S_T;
-		l_twi1_hygro_S_RH							= g_twi1_hygro_S_RH;
+		irqflags_t flags = cpu_irq_save();
+		l_twi1_hygro_T_100	= g_twi1_hygro_T_100;	// last value
+		l_twi1_hygro_RH_100	= g_twi1_hygro_RH_100;	// last value
+		l_twi1_hygro_S_T	= g_twi1_hygro_S_T;
+		l_twi1_hygro_S_RH	= g_twi1_hygro_S_RH;
 		cpu_irq_restore(flags);
 	}
 
 	/* Calculate and present Temp value when a different measurement has arrived */
-	if (l_twi1_hygro_S_T != s_twi1_hygro_S_T) {
-		int16_t temp_100 = (int16_t)((((int32_t)l_twi1_hygro_S_T  * 17500) / 0xFFFF) - 4500);
+	int16_t temp_100 = l_twi1_hygro_T_100;
+	if (s_twi1_hygro_S_T != l_twi1_hygro_S_T) {
+		temp_100 = (int16_t)((((int32_t)l_twi1_hygro_S_T  * 17500) / 0xFFFF) - 4500);
 
 		/* Setting the global value */
 		{
-			irqflags_t flags						= cpu_irq_save();
-			g_twi1_hygro_T_100						= temp_100;
+			irqflags_t flags = cpu_irq_save();
+			g_twi1_hygro_T_100 = temp_100;
 			cpu_irq_restore(flags);
 		}
+
+		hasChanged = true;
+		s_twi1_hygro_S_T = l_twi1_hygro_S_T;
 	}
 
 	/* Calculate and present Hygro value when a different measurement has arrived */
-	if (l_twi1_hygro_S_RH != s_twi1_hygro_S_RH) {
-		int16_t rh_100 = (int16_t)( ((int32_t)l_twi1_hygro_S_RH * 10000) / 0xFFFF);
+	int16_t rh_100 = l_twi1_hygro_RH_100;
+	if (s_twi1_hygro_S_RH != l_twi1_hygro_S_RH) {
+		rh_100 = (int16_t)( ((int32_t)l_twi1_hygro_S_RH * 10000) / 0xFFFF);
 
 		/* Setting the global value */
 		{
-			irqflags_t flags						= cpu_irq_save();
-			g_twi1_hygro_RH_100						= rh_100;
+			irqflags_t flags = cpu_irq_save();
+			g_twi1_hygro_RH_100 = rh_100;
+			cpu_irq_restore(flags);
+		}
+
+		hasChanged = true;
+		s_twi1_hygro_S_RH = l_twi1_hygro_S_RH;
+	}
+
+	/* Calculate the dew point temperature */
+	if (hasChanged)
+	{
+		//const float K1	= 6.112f;
+		const float K2		= 17.62f;
+		const float K3		= 243.12f;
+		const float K2_m_K3 = 4283.7744f;	// = K2 * K3;
+		float ln_phi		= log(rh_100 / 10000.f);
+		float k2_m_theta	= K2 * (temp_100 / 100.f);
+		float k3_p_theta	= K3 + (temp_100 / 100.f);
+		float term_z		= k2_m_theta / k3_p_theta + ln_phi;
+		float term_n		= K2_m_K3    / k3_p_theta - ln_phi;
+		float tau_100		= 0.5f + ((100.f * K3) * term_z) / term_n;
+
+		/* Setting the global value */
+		{
+			irqflags_t flags = cpu_irq_save();
+			g_twi1_hygro_DP_100 = (int16_t)tau_100;
 			cpu_irq_restore(flags);
 		}
 	}
@@ -1156,7 +1190,7 @@ static void task_twi1_gyro(uint32_t now)
 
 		/* Getting the global values */
 		{
-			irqflags_t flags						= cpu_irq_save();
+			irqflags_t flags = cpu_irq_save();
 			l_twi1_gyro_1_accel_x					= g_twi1_gyro_1_accel_x;
 			l_twi1_gyro_1_accel_y					= g_twi1_gyro_1_accel_y;
 			l_twi1_gyro_1_accel_z					= g_twi1_gyro_1_accel_z;
@@ -1173,7 +1207,7 @@ static void task_twi1_gyro(uint32_t now)
 
 		/* Setting the global values */
 		{
-			irqflags_t flags						= cpu_irq_save();
+			irqflags_t flags = cpu_irq_save();
 			g_twi1_gyro_1_accel_x_mg				= l_twi1_gyro_1_accel_x_mg;
 			g_twi1_gyro_1_accel_y_mg				= l_twi1_gyro_1_accel_y_mg;
 			g_twi1_gyro_1_accel_z_mg				= l_twi1_gyro_1_accel_z_mg;
@@ -1186,7 +1220,7 @@ static void task_twi1_gyro(uint32_t now)
 
 		/* Getting the global values */
 		{
-			irqflags_t flags						= cpu_irq_save();
+			irqflags_t flags = cpu_irq_save();
 			l_twi1_gyro_1_gyro_x					= g_twi1_gyro_1_gyro_x;
 			l_twi1_gyro_1_gyro_y					= g_twi1_gyro_1_gyro_y;
 			l_twi1_gyro_1_gyro_z					= g_twi1_gyro_1_gyro_z;
@@ -1199,7 +1233,7 @@ static void task_twi1_gyro(uint32_t now)
 
 		/* Setting the global values */
 		{
-			irqflags_t flags						= cpu_irq_save();
+			irqflags_t flags = cpu_irq_save();
 			g_twi1_gyro_1_gyro_x_mdps				= l_twi1_gyro_1_gyro_x_mdps;
 			g_twi1_gyro_1_gyro_y_mdps				= l_twi1_gyro_1_gyro_y_mdps;
 			g_twi1_gyro_1_gyro_z_mdps				= l_twi1_gyro_1_gyro_z_mdps;
@@ -1239,7 +1273,7 @@ static void task_twi1_gyro(uint32_t now)
 
 		/* Setting the global values */
 		{
-			irqflags_t flags						= cpu_irq_save();
+			irqflags_t flags = cpu_irq_save();
 			g_twi1_gyro_2_mag_x_nT					= l_twi1_gyro_2_mag_x_nT;
 			g_twi1_gyro_2_mag_y_nT					= l_twi1_gyro_2_mag_y_nT;
 			g_twi1_gyro_2_mag_z_nT					= l_twi1_gyro_2_mag_z_nT;
@@ -1251,13 +1285,15 @@ static void task_twi1_gyro(uint32_t now)
 
 static void task_twi1_baro(uint32_t now)
 {	// Calculations for the presentation layer
-	static uint32_t s_twi1_baro_d1 = 0UL;
-	static uint32_t s_twi1_baro_d2 = 0UL;
+	static uint32_t s_twi1_baro_d1	= 0UL;
+	static uint32_t s_twi1_baro_d2	= 0UL;
+	static int32_t	s_p				= 0L;
+	static int32_t	s_p_h			= 0L;
 	uint32_t l_twi1_baro_d1, l_twi1_baro_d2;
 
 	/* Getting the global values */
 	{
-		irqflags_t flags							= cpu_irq_save();
+		irqflags_t flags = cpu_irq_save();
 		l_twi1_baro_d1								= g_twi1_baro_d1;
 		l_twi1_baro_d2								= g_twi1_baro_d2;
 		cpu_irq_restore(flags);
@@ -1288,13 +1324,35 @@ static void task_twi1_baro(uint32_t now)
 			off  -= off2;
 			sens -= sens2;
 		}
-		int32_t p = (int32_t)((((l_twi1_baro_d1 * sens) >> 21) - off) >> 15);
+		int32_t l_p = (int32_t)((((l_twi1_baro_d1 * sens) >> 21) - off) >> 15);
+
+		/* Calculate QNH when satellite data is available */
+		float l_p_h = s_p_h;
+		if ((s_p != l_p) && (g_gns_fix_status >= 1)) {
+			float l_gns_msl_alt_m;
+			int32_t l_twi1_baro_temp_100;
+
+			irqflags_t flags = cpu_irq_save();
+			l_gns_msl_alt_m			= g_gns_msl_alt_m;
+			l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
+			cpu_irq_restore(flags);
+
+			/* A valid height value (3D navigation) seems to be access able */
+			if (l_gns_msl_alt_m) {
+				float a_m_h		= 0.0065f * l_gns_msl_alt_m;
+				float Th0		= C_0DEGC_K + (l_twi1_baro_temp_100 / 100.f);
+				float term		= 1.f + (a_m_h / Th0);
+				s_p_h = l_p_h	= l_p * pow(term, 5.255f);
+			}
+			s_p = l_p;
+		}
 
 		/* Setting the global values */
 		{
-			irqflags_t flags						= cpu_irq_save();
+			irqflags_t flags = cpu_irq_save();
 			g_twi1_baro_temp_100					= temp;
-			g_twi1_baro_p_100						= p;
+			g_twi1_baro_p_100						= l_p;
+			g_twi1_baro_p_h_100						= l_p_h;
 			cpu_irq_restore(flags);
 		}
 	}

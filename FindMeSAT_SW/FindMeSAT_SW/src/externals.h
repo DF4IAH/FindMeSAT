@@ -61,6 +61,8 @@ extern uint8_t						g_gns_cPn0_dBHz;
 extern uint8_t						g_aprs_mode;
 extern char							g_aprs_source_callsign[12];
 extern char							g_aprs_source_ssid[4];
+extern char							g_aprs_login_user[10];
+extern char							g_aprs_login_pwd[6];
 extern uint64_t						g_aprs_alert_last;
 extern APRS_ALERT_FSM_STATE_ENUM_t	g_aprs_alert_fsm_state;
 extern APRS_ALERT_REASON_ENUM_t		g_aprs_alert_reason;
@@ -138,6 +140,7 @@ extern uint32_t						g_twi1_baro_d1;
 extern uint32_t						g_twi1_baro_d2;
 extern int32_t						g_twi1_baro_temp_100;
 extern int32_t						g_twi1_baro_p_100;
+extern int32_t						g_twi1_baro_p_h_100;
 
 extern bool							g_twi1_hygro_valid;
 extern uint8_t						g_twi1_hygro_status;
@@ -145,6 +148,7 @@ extern uint16_t						g_twi1_hygro_S_T;
 extern uint16_t						g_twi1_hygro_S_RH;
 extern int16_t						g_twi1_hygro_T_100;
 extern int16_t						g_twi1_hygro_RH_100;
+extern int16_t						g_twi1_hygro_DP_100;
 
 extern uint8_t						g_twi2_lcd_version;
 extern bool							g_twi2_lcd_repaint;
