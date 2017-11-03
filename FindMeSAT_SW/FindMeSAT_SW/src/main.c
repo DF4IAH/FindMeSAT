@@ -1022,9 +1022,9 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 				g_twi1_gyro_1_gyro_ofsy		= ( -80 / 4);					//  4LSB / OFS
 				g_twi1_gyro_1_gyro_ofsz		= (+148 / 4);					//  4LSB / OFS
 
-				g_twi1_gyro_2_mag_factx		=  9250;						// X = Xchip * factx / 10000
-				g_twi1_gyro_2_mag_facty		=  9250;						// Y = Ychip * facty / 10000
-				g_twi1_gyro_2_mag_factz		=  9250;						// Z = Zchip * factz / 10000
+				g_twi1_gyro_2_mag_factx		=   7760;						// X = Xchip * factx / 10000
+				g_twi1_gyro_2_mag_facty		=   8390;						// Y = Ychip * facty / 10000
+				g_twi1_gyro_2_mag_factz		=   9490;						// Z = Zchip * factz / 10000
 
 				/* Update the offset registers in the I2C device */
 				g_twi1_gyro_gyro_offset_set__flag	= true;
