@@ -192,6 +192,7 @@ extern int16_t						g_adc_io_adc5_volt_1000;
 extern int16_t						g_adc_silence_volt_1000;
 extern int16_t						g_adc_temp_deg_100;
 
+extern int16_t						g_env_temp_delta_100;
 extern int16_t						g_env_temp_deg_100;
 extern int16_t						g_env_hygro_RH_100;
 

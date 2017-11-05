@@ -49,8 +49,6 @@
 
 #define C_1PPS_PWM_DIFF_ARY_CNT										16
 
-#define C_ENV_TEMP_DELTA_K											(4.865f)
-
 
 /* FIFO */
 #define FIFO_SCHED_BUFFER_LENGTH									32
@@ -128,6 +126,7 @@ typedef enum APRS_MODE_ENUM {
 
 typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__VERSION			= 0x0000,						// i32
+	EEPROM_ADDR__ENV_TEMP_DELTA		= 0x000C,						// i32
 	EEPROM_ADDR__VCTCXO				= 0x0010,						// i32
 	EEPROM_ADDR__LCDBL				= 0x0014,						// i16
 	EEPROM_ADDR__BEEP				= 0x0016,						// ui8
@@ -244,6 +243,7 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode);
 void dac_app_enable(bool enable);
 void dds_update(float dds0_hz, float dds1_hz, float phase);
 void errorBeep_enable(bool enable);
+void env_temp(float temp);
 void keyBeep_enable(bool enable);
 void pitchTone_mode(uint8_t mode);
 void qnh_setAuto(void);

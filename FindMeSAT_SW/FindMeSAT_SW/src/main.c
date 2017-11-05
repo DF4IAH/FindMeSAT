@@ -229,6 +229,7 @@ volatile int16_t			g_adc_io_adc5_volt_1000				= 0;
 volatile int16_t			g_adc_silence_volt_1000				= 0;
 volatile int16_t			g_adc_temp_deg_100					= 0;
 
+volatile int16_t			g_env_temp_delta_100				= 0;
 volatile int16_t			g_env_temp_deg_100					= 0;
 volatile int16_t			g_env_hygro_RH_100					= 0;
 
@@ -487,8 +488,8 @@ static void init_globals(void)
 
 	/* Environment and QNH settings */
 	{
-		uint8_t val_ui8	= 0;
 		int16_t val_i16	= 0;
+		uint8_t val_ui8	= 0;
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_QNH_AUTO, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
 			irqflags_t flags = cpu_irq_save();
@@ -498,8 +499,27 @@ static void init_globals(void)
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS, &val_i16, sizeof(val_i16)) == STATUS_OK) {
 			irqflags_t flags = cpu_irq_save();
+			g_env_temp_delta_100 = val_i16;
+			cpu_irq_restore(flags);
+
+			/* Validity check */
+			if (g_env_temp_delta_100 < -1000 || g_env_temp_delta_100 > 10000) {
+				g_env_temp_delta_100 = 0;
+				save_globals(EEPROM_SAVE_BF__ENV);
+			}
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
 			g_qnh_height_m = val_i16;
 			cpu_irq_restore(flags);
+
+			/* Validity check */
+			if (g_qnh_height_m < -1000 || g_qnh_height_m > 30000) {
+				g_qnh_is_auto	= true;
+				g_qnh_height_m	= 0;
+				save_globals(EEPROM_SAVE_BF__ENV);
+			}
 		}
 	}
 
@@ -645,12 +665,14 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 	/* Environment and QNH settings */
 	if (bf & EEPROM_SAVE_BF__ENV) {
 		irqflags_t flags = cpu_irq_save();
-		uint8_t val_ui8	= g_qnh_is_auto;
-		int16_t val_i16	= g_qnh_height_m;
+		int16_t val_i16_1	= g_env_temp_delta_100;
+		uint8_t val_ui8		= g_qnh_is_auto;
+		int16_t val_i16_2	= g_qnh_height_m;
 		cpu_irq_restore(flags);
 
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_TEMP_DELTA,	(void*)&val_i16_1, sizeof(val_i16_1));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_AUTO,	(void*)&val_ui8, sizeof(val_ui8));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS,	(void*)&val_i16, sizeof(val_i16));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS,	(void*)&val_i16_2, sizeof(val_i16_2));
 	}
 
 	/* Status lines */
@@ -1237,6 +1259,22 @@ void errorBeep_enable(bool enable)
 	g_errorBeep_enable = enable;
 
 	save_globals(EEPROM_SAVE_BF__BEEP);
+}
+
+void env_temp(float temp)
+{
+	irqflags_t flags = cpu_irq_save();
+	int16_t l_env_temp_delta_100	= g_env_temp_delta_100;
+	int16_t l_env_temp_deg_100		= g_env_temp_deg_100;
+	cpu_irq_restore(flags);
+
+	l_env_temp_delta_100 = (int16_t) ((l_env_temp_deg_100 + l_env_temp_delta_100) - (100.f * temp));
+
+	flags = cpu_irq_save();
+	g_env_temp_delta_100 = l_env_temp_delta_100;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__ENV);
 }
 
 void keyBeep_enable(bool enable)
@@ -2642,17 +2680,19 @@ static void task_env_calc(uint32_t now)
 		int16_t	l_env_temp_deg_100;
 		int16_t	l_env_hygro_RH_100;
 		int16_t l_twi1_hygro_DP_100;
+		int16_t l_env_temp_delta_100;
 
 		/* Get the global data */
 		flags = cpu_irq_save();
 		l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
 		l_twi1_hygro_T_100		= g_twi1_hygro_T_100;
 		l_twi1_hygro_DP_100		= g_twi1_hygro_DP_100;
+		l_env_temp_delta_100	= g_env_temp_delta_100;
 		cpu_irq_restore(flags);
 
 		/* Mean temperature of the Barometer and the Hygrometer chip */
 		temp_twi1_mean		= ((float)l_twi1_baro_temp_100 + (float)l_twi1_hygro_T_100) / 200.f;
-		temp_env			= temp_twi1_mean - C_ENV_TEMP_DELTA_K;
+		temp_env			= temp_twi1_mean - (l_env_temp_delta_100 / 100.f);
 		temp_env_round		= (temp_env >= 0.f) ?  0.5f : -0.5f;
 		l_env_temp_deg_100	= (int16_t) (temp_env_round + 100.f * temp_env);
 
