@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													103
+#define VERSION_LOW													105
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -48,6 +48,8 @@
 #define C_TCC1_SPAN_HALF											50  // 30 equals to 1 µs
 
 #define C_1PPS_PWM_DIFF_ARY_CNT										16
+
+#define C_ENV_TEMP_DELTA_K											(4.865f)
 
 
 /* FIFO */

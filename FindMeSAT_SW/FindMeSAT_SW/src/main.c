@@ -230,6 +230,9 @@ volatile int16_t			g_adc_io_adc5_volt_1000				= 0;
 volatile int16_t			g_adc_silence_volt_1000				= 0;
 volatile int16_t			g_adc_temp_deg_100					= 0;
 
+volatile int16_t			g_env_temp_deg_100					= 0;
+volatile int16_t			g_env_hygro_RH_100					= 0;
+
 fifo_desc_t					g_fifo_sched_desc;
 uint32_t					g_fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH];
 
@@ -2574,6 +2577,77 @@ static void task_main_pll(uint32_t now)
 	}
 }
 
+static void task_env_calc(uint32_t now)
+{
+	static uint32_t s_last = 0;
+
+	/* No more than 2 calculations per sec */
+	if (s_last + 500 <= now) {
+		irqflags_t flags;
+		int32_t l_twi1_baro_temp_100;
+		int16_t l_twi1_hygro_T_100;
+		float temp_twi1_mean;
+		float temp_env;
+		float temp_env_round;
+		int16_t	l_env_temp_deg_100;
+		int16_t	l_env_hygro_RH_100;
+		int16_t l_twi1_hygro_DP_100;
+
+		/* Get the global data */
+		flags = cpu_irq_save();
+		l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
+		l_twi1_hygro_T_100		= g_twi1_hygro_T_100;
+		l_twi1_hygro_DP_100		= g_twi1_hygro_DP_100;
+		cpu_irq_restore(flags);
+
+		/* Mean temperature of the Barometer and the Hygrometer chip */
+		temp_twi1_mean		= ((float)l_twi1_baro_temp_100 + (float)l_twi1_hygro_T_100) / 200.f;
+		temp_env			= temp_twi1_mean - C_ENV_TEMP_DELTA_K;
+		temp_env_round		= (temp_env >= 0.f) ?  0.5f : -0.5f;
+		l_env_temp_deg_100	= (int16_t) (temp_env_round + 100.f * temp_env);
+
+		/* Rel. humidity correction for environment temperature */
+		/* @see https://www.wetterochs.de/wetter/feuchte.html */
+		{
+			// const float K1	= 6.1078f;
+			float td			= l_twi1_hygro_DP_100 / 100.f;
+			float calc_a;
+			float calc_b;
+			float sdd_td;
+			float sdd_tenv;
+
+			/* Temperature over water or ice */
+			if (temp_env >= 0.f) {
+				/* over water */
+				calc_a = 7.5f;
+				calc_b = 237.3f;
+
+			} else if (temp_env >= -5.f) {  // this temperature is a value given by the programmers will, only ...
+				/* over water */
+				calc_a = 7.6f;
+				calc_b = 240.7f;
+
+			} else {
+				/* over ice */
+				calc_a = 9.5f;
+				calc_b = 265.5f;
+			}
+
+			sdd_td				= /* K1* */ pow(10.f, (calc_a * td)			/ (calc_b + td));
+			sdd_tenv			= /* K1* */ pow(10.f, (calc_a * temp_env)	/ (calc_b + temp_env));
+			l_env_hygro_RH_100	= (int16_t) (0.5f + 10000.f * sdd_td / sdd_tenv);
+		}
+
+		/* Pushing global data */
+		flags = cpu_irq_save();
+		g_env_temp_deg_100	= l_env_temp_deg_100;
+		g_env_hygro_RH_100	= l_env_hygro_RH_100;
+		cpu_irq_restore(flags);
+
+		s_last = now;
+	}
+}
+
 static void task_main_aprs(uint32_t now)
 {
 	static uint32_t				s_now_sec				= 0UL;
@@ -2832,6 +2906,7 @@ static void task(void)
 		task_twi(now);										// Handle (TWI1 and) TWI2 communications
 		task_usb(now);										// Handling the USB connection
 		task_main_pll(now);									// Handling the 1PPS PLL system
+		task_env_calc(now);									// Environment simulation calculations
 		task_main_aprs(now);								// Handling the APRS alerts
 	}
 }
