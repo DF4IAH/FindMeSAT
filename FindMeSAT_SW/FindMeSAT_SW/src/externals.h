@@ -140,7 +140,6 @@ extern uint32_t						g_twi1_baro_d1;
 extern uint32_t						g_twi1_baro_d2;
 extern int32_t						g_twi1_baro_temp_100;
 extern int32_t						g_twi1_baro_p_100;
-extern int32_t						g_twi1_baro_p_h_100;
 
 extern bool							g_twi1_hygro_valid;
 extern uint8_t						g_twi1_hygro_status;
@@ -195,6 +194,10 @@ extern int16_t						g_adc_temp_deg_100;
 
 extern int16_t						g_env_temp_deg_100;
 extern int16_t						g_env_hygro_RH_100;
+
+extern bool							g_qnh_is_auto;
+extern int16_t						g_qnh_height_m;
+extern int32_t						g_qnh_p_h_100;
 
 extern fifo_desc_t					g_fifo_sched_desc;
 extern uint32_t						g_fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH];

@@ -133,7 +133,8 @@ typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__BEEP				= 0x0016,						// ui8
 	EEPROM_ADDR__PITCHTONE			= 0x0017,						// i8
 	EEPROM_ADDR__PRINT_STATUS		= 0x0018,						// ui8
-
+	EEPROM_ADDR__ENV_QNH_AUTO		= 0x0019,						// ui8
+	EEPROM_ADDR__ENV_QNH_METERS		= 0x001A,						// i16
 	EEPROM_ADDR__9AXIS_TEMP_RTOFS	= 0x001C,						// i16
 	EEPROM_ADDR__9AXIS_TEMP_SENS	= 0x001E,						// i16
 
@@ -169,13 +170,14 @@ typedef enum EEPROM_ADDR_ENUM {
 } EEPROM_ADDR_ENUM_t;
 
 typedef enum EEPROM_SAVE_BF_ENUM {
-	EEPROM_SAVE_BF__VCTCXO			= 0b00000001,
-	EEPROM_SAVE_BF__LCDBL			= 0b00000010,
-	EEPROM_SAVE_BF__BEEP			= 0b00000100,
-	EEPROM_SAVE_BF__PITCHTONE		= 0b00001000,
-	EEPROM_SAVE_BF__PRINT_STATUS	= 0b00010000,
-	EEPROM_SAVE_BF__9AXIS_OFFSETS	= 0b00100000,
-	EEPROM_SAVE_BF__APRS			= 0b01000000,
+	EEPROM_SAVE_BF__VCTCXO			= 0b0000000000000001,
+	EEPROM_SAVE_BF__LCDBL			= 0b0000000000000010,
+	EEPROM_SAVE_BF__BEEP			= 0b0000000000000100,
+	EEPROM_SAVE_BF__PITCHTONE		= 0b0000000000001000,
+	EEPROM_SAVE_BF__PRINT_STATUS	= 0b0000000000010000,
+	EEPROM_SAVE_BF__9AXIS_OFFSETS	= 0b0000000000100000,
+	EEPROM_SAVE_BF__APRS			= 0b0000000001000000,
+	EEPROM_SAVE_BF__ENV				= 0b0000000010000000,
 } EEPROM_SAVE_BF_ENUM_t;
 
 
@@ -244,6 +246,8 @@ void dds_update(float dds0_hz, float dds1_hz, float phase);
 void errorBeep_enable(bool enable);
 void keyBeep_enable(bool enable);
 void pitchTone_mode(uint8_t mode);
+void qnh_setAuto(void);
+void qnh_setHeightM(int16_t heightM);
 void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf);
 void shutdown(void);
 void xoPwm_set(int32_t mode_pwm);

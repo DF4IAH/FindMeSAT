@@ -177,7 +177,6 @@ volatile uint32_t			g_twi1_baro_d1						= 0UL;
 volatile uint32_t			g_twi1_baro_d2						= 0UL;
 volatile int32_t			g_twi1_baro_temp_100				= 0L;
 volatile int32_t			g_twi1_baro_p_100					= 0L;
-volatile int32_t			g_twi1_baro_p_h_100					= 0L;
 
 bool						g_twi1_hygro_valid					= false;
 uint8_t						g_twi1_hygro_status					= 0;
@@ -232,6 +231,10 @@ volatile int16_t			g_adc_temp_deg_100					= 0;
 
 volatile int16_t			g_env_temp_deg_100					= 0;
 volatile int16_t			g_env_hygro_RH_100					= 0;
+
+volatile bool				g_qnh_is_auto						= false;
+volatile int16_t			g_qnh_height_m						= 0;
+volatile int32_t			g_qnh_p_h_100						= 0L;
 
 fifo_desc_t					g_fifo_sched_desc;
 uint32_t					g_fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH];
@@ -482,6 +485,24 @@ static void init_globals(void)
 		}
 	}
 
+	/* Environment and QNH settings */
+	{
+		uint8_t val_ui8	= 0;
+		int16_t val_i16	= 0;
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_QNH_AUTO, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_qnh_is_auto = (val_ui8 != 0);
+			cpu_irq_restore(flags);
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_qnh_height_m = val_i16;
+			cpu_irq_restore(flags);
+		}
+	}
+
 	/* Status lines */
 	{
 		uint8_t val_ui8 = 0;
@@ -568,7 +589,7 @@ static void init_globals(void)
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_CALLSIGN,	(void*)&g_aprs_source_callsign,	sizeof(g_aprs_source_callsign));
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_SSID,		(void*)&g_aprs_source_ssid,		sizeof(g_aprs_source_ssid));
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_LOGIN,		(void*)&g_aprs_login_user,		sizeof(g_aprs_login_user));
-		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_PWD,			(void*)&g_aprs_login_pwd,	sizeof(g_aprs_login_pwd));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_PWD,			(void*)&g_aprs_login_pwd,		sizeof(g_aprs_login_pwd));
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_MODE,		(void*)&g_aprs_mode,			sizeof(g_aprs_mode));
 	}
 }
@@ -619,6 +640,17 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		cpu_irq_restore(flags);
 
 		nvm_write(INT_EEPROM, EEPROM_ADDR__PITCHTONE, (void*)&val_i8, sizeof(val_i8));
+	}
+
+	/* Environment and QNH settings */
+	if (bf & EEPROM_SAVE_BF__ENV) {
+		irqflags_t flags = cpu_irq_save();
+		uint8_t val_ui8	= g_qnh_is_auto;
+		int16_t val_i16	= g_qnh_height_m;
+		cpu_irq_restore(flags);
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_AUTO,	(void*)&val_ui8, sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS,	(void*)&val_i16, sizeof(val_i16));
 	}
 
 	/* Status lines */
@@ -1221,6 +1253,24 @@ void pitchTone_mode(uint8_t mode)
 	g_pitch_tone_mode = mode;
 
 	save_globals(EEPROM_SAVE_BF__PITCHTONE);
+}
+
+void qnh_setAuto(void)
+{
+	/* atomic */
+	g_qnh_is_auto	= true;
+
+	save_globals(EEPROM_SAVE_BF__ENV);
+}
+
+void qnh_setHeightM(int16_t heightM)
+{
+	irqflags_t flags = cpu_irq_save();
+	g_qnh_is_auto	= false;
+	g_qnh_height_m	= heightM;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__ENV);
 }
 
 void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf)
@@ -2825,7 +2875,7 @@ static void task_main_aprs(uint32_t now)
 				// l_twi1_hygro_RH_100	= g_twi1_hygro_RH_100;
 				l_twi1_hygro_DP_100	= g_twi1_hygro_DP_100;
 				//l_twi1_baro_p_100	= g_twi1_baro_p_100;
-				l_twi1_baro_p_h_100	= g_twi1_baro_p_h_100;
+				l_twi1_baro_p_h_100	= g_qnh_p_h_100;
 				cpu_irq_restore(flags);
 
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N4, l_twi1_hygro_T_100 / 100.f, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);

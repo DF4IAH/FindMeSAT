@@ -495,6 +495,9 @@ static bool serial_filter_inStream(const char* buf, uint16_t len)
 
 					} else if (idx ==  5) {
 						g_gns_msl_alt_m = fVal;
+						if (g_qnh_is_auto) {
+							g_qnh_height_m = (int16_t) (0.5f + fVal);
+						}
 
 					} else if (idx ==  6) {
 						g_gns_speed_kmPh = fVal;
