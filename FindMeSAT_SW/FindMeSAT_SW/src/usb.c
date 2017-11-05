@@ -326,9 +326,12 @@ PROGMEM_DECLARE(const char, PM_INFO_PART_L1P2A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P2B[]);
 
 const char					PM_INFO_PART_L1P3A[]				= "Hygro_Temp=%+06.2fC, Hygro_RelH=%05.2f%%, ";
-const char					PM_INFO_PART_L1P3B[]				= "Hygro_DewPoint_Temp=%+06.2fC\r\n";
+const char					PM_INFO_PART_L1P3B[]				= "Hygro_DewPoint_Temp=%+06.2fC\t \t";
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P3A[]);
 PROGMEM_DECLARE(const char, PM_INFO_PART_L1P3B[]);
+
+const char					PM_INFO_PART_L1P4A[]				= "Env_Temp=%+06.2fC, Env_RelH=%05.2f%%\r\n";
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P4A[]);
 
 const char					PM_INFO_PART_L2P1A[]				= "\tAx=%+05.3fg (%+06d), Ay=%+05.3fg (%+06d), ";
 const char					PM_INFO_PART_L2P1B[]				= "Az=%+05.3fg (%+06d)\t \t";
@@ -410,6 +413,8 @@ void task_usb(uint32_t now)
 				int16_t l_twi1_hygro_T_100;
 				int16_t	l_twi1_hygro_DP_100;
 				int16_t l_twi1_hygro_RH_100;
+				int16_t l_env_temp_deg_100;
+				int16_t l_env_hygro_RH_100;
 				int16_t	l_twi1_gyro_1_accel_x;
 				int16_t	l_twi1_gyro_1_accel_y;
 				int16_t	l_twi1_gyro_1_accel_z;
@@ -447,6 +452,8 @@ void task_usb(uint32_t now)
 					l_twi1_hygro_T_100			= g_twi1_hygro_T_100;
 					l_twi1_hygro_DP_100			= g_twi1_hygro_DP_100;
 					l_twi1_hygro_RH_100			= g_twi1_hygro_RH_100;
+					l_env_temp_deg_100			= g_env_temp_deg_100;
+					l_env_hygro_RH_100			= g_env_hygro_RH_100;
 					l_twi1_gyro_1_accel_x		= g_twi1_gyro_1_accel_x;
 					l_twi1_gyro_1_accel_y		= g_twi1_gyro_1_accel_y;
 					l_twi1_gyro_1_accel_z		= g_twi1_gyro_1_accel_z;
@@ -497,6 +504,10 @@ void task_usb(uint32_t now)
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P3B,
 				l_twi1_hygro_DP_100 / 100.f);
+				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_INFO_PART_L1P4A,
+				l_env_temp_deg_100 / 100.f, l_env_hygro_RH_100 / 100.f);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 

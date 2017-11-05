@@ -131,22 +131,30 @@ PROGMEM_DECLARE(const char, PM_TWIINIT_MP_UVCTCXO[]);
 //PROGMEM_DECLARE(const char, PM_TWIINIT_MP_UIOADC5[]);
 //const char				PM_TWIINIT_MP_USILEN[]				= "Usilen. =";
 //PROGMEM_DECLARE(const char, PM_TWIINIT_MP_USILEN[]);
-const char					PM_TWIINIT_BA_TEMP[]				= "Ba_Temp =";
-PROGMEM_DECLARE(const char, PM_TWIINIT_BA_TEMP[]);
-const char					PM_TWIINIT_BA_PRES[]				= "Ba_Pres =";
-PROGMEM_DECLARE(const char, PM_TWIINIT_BA_PRES[]);
-const char					PM_TWIINIT_HY_TEMP[]				= "Hy_Temp =";
-PROGMEM_DECLARE(const char, PM_TWIINIT_HY_TEMP[]);
-const char					PM_TWIINIT_HY_RELH[]				= "Hy_RelH =";
-PROGMEM_DECLARE(const char, PM_TWIINIT_HY_RELH[]);
+//const char					PM_TWIINIT_BA_TEMP[]				= "Ba_Temp =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_BA_TEMP[]);
+//const char					PM_TWIINIT_BA_PRES[]				= "Ba_Pres =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_BA_PRES[]);
+//const char					PM_TWIINIT_HY_TEMP[]				= "Hy_Temp =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_HY_TEMP[]);
+//const char					PM_TWIINIT_HY_RELH[]				= "Hy_RelH =";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_HY_RELH[]);
+const char					PM_TWIINIT_ENV_TEMP[]				= "EnvTemp =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_ENV_TEMP[]);
+const char					PM_TWIINIT_ENV_RELH[]				= "EnvRelH =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_ENV_RELH[]);
+const char					PM_TWIINIT_DP_TEMP[]				= "DP_Temp =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_DP_TEMP[]);
+const char					PM_TWIINIT_QNH[]					= "QNH hPa =";
+PROGMEM_DECLARE(const char, PM_TWIINIT_QNH[]);
 const char					PM_TWIINIT_C[]						= "C";
 PROGMEM_DECLARE(const char, PM_TWIINIT_C[]);
 const char					PM_TWIINIT_V[]						= "V";
 PROGMEM_DECLARE(const char, PM_TWIINIT_V[]);
 const char					PM_TWIINIT_P100[]					= "%";
 PROGMEM_DECLARE(const char, PM_TWIINIT_P100[]);
-const char					PM_TWIINIT_HPA[]					= "hPa";
-PROGMEM_DECLARE(const char, PM_TWIINIT_HPA[]);
+//const char					PM_TWIINIT_HPA[]					= "hPa";
+//PROGMEM_DECLARE(const char, PM_TWIINIT_HPA[]);
 const char					PM_TWIINIT_GX[]						= "Gx";
 PROGMEM_DECLARE(const char, PM_TWIINIT_GX[]);
 const char					PM_TWIINIT_GY[]						= "Gy";
@@ -1087,7 +1095,7 @@ void isr_500ms_twi1_onboard(uint32_t now)
 
 	if (g_twi1_hygro_valid) {
 		if (service_twi1_hygro(now, true)) {
-			sched_push(task_twi1_hygro, SCHED_ENTRY_CB_TYPE__LISTTIME, 70, true, false, false);
+			sched_push(task_twi1_hygro, SCHED_ENTRY_CB_TYPE__LISTTIME,  70, true, false, false);
 		}
 	}
 
@@ -1160,6 +1168,7 @@ static void task_twi1_hygro(uint32_t now)
 	}
 
 	/* Calculate the dew point temperature */
+	/* @see https://de.wikipedia.org/wiki/Taupunkt  formula (15) */
 	if (hasChanged)
 	{
 		//const float K1	= 6.112f;
@@ -1518,10 +1527,10 @@ static void task_twi2_lcd_template(void)
 	}
 
 	line = 9;
-	task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_BA_TEMP));
-	task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_BA_PRES));
-	task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_HY_TEMP));
-	task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_HY_RELH));
+	task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_ENV_TEMP));
+	task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_ENV_RELH));
+	task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_DP_TEMP));
+	task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_QNH));
 
 	if (g_adc_enabled) {
 		/* Left measurement units */
@@ -1537,9 +1546,9 @@ static void task_twi2_lcd_template(void)
 
 	line = 9;
 	task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_C));
-	task_twi2_lcd_str(6 * 18, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_HPA));
-	task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_C));
 	task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_P100));
+	task_twi2_lcd_str(6 * 16, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_C));
+	//task_twi2_lcd_str(6 * 18, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_HPA));
 
 	/* Gyro: plot circles */
 	{
@@ -1660,10 +1669,10 @@ static void task_twi2_lcd__pll(void)
 void task_twi2_lcd__cpu1(uint8_t col_left)
 {
 	static uint32_t	s_epoch_secs		= 0UL;
-	static uint8_t	s_minute			= 0;
-	static uint8_t	s_hour				= 0;
-	static uint8_t	s_date				= 0;
-	static uint8_t	s_month				= 0;
+	static uint8_t	s_minute			= 255;
+	static uint8_t	s_hour				= 255;
+	static uint8_t	s_date				= 255;
+	static uint8_t	s_month				= 255;
 	static uint16_t	s_year				= 0;
 	static int16_t	s_adc_temp_deg_100	= 0;
 	static int16_t	s_adc_5v0_volt_1000	= 0;
@@ -1717,10 +1726,10 @@ void task_twi2_lcd__cpu1(uint8_t col_left)
 	} else {
 		/* Reset static vars */
 		s_epoch_secs	= 0UL;
-		s_minute		= 0;
-		s_hour			= 0;
-		s_date			= 0;
-		s_month			= 0;
+		s_minute		= 255;
+		s_hour			= 255;
+		s_date			= 255;
+		s_month			= 255;
 		s_year			= 0;
 	}
 
@@ -1899,19 +1908,28 @@ void task_twi2_lcd__sim1(uint8_t col_left)
 
 void task_twi2_lcd__hygro(uint8_t col_left)
 {
+	#if 0
 	static int16_t s_twi1_hygro_T_100 = 0;
 	static int16_t s_twi1_hygro_RH_100 = 0;
 	int16_t l_twi1_hygro_T_100;
 	int16_t l_twi1_hygro_RH_100;
+	#endif
+	static int16_t s_twi1_hygro_DP_100 = 0;
+	int16_t l_twi1_hygro_DP_100;
 
 	/* Get up-to-date global data */
 	{
 		irqflags_t flags = cpu_irq_save();
+		#if 0
 		l_twi1_hygro_T_100				= g_twi1_hygro_T_100;
 		l_twi1_hygro_RH_100				= g_twi1_hygro_RH_100;
+		#endif
+
+		l_twi1_hygro_DP_100				= g_twi1_hygro_DP_100;
 		cpu_irq_restore(flags);
 	}
 
+	#if 0
 	if (s_twi1_hygro_T_100 != l_twi1_hygro_T_100) {
 		s_twi1_hygro_T_100 = l_twi1_hygro_T_100;
 
@@ -1924,6 +1942,13 @@ void task_twi2_lcd__hygro(uint8_t col_left)
 
 		/* Hygro_RH */
 		task_twi2_lcd_print_format_float_P(col_left, 12 * 10, l_twi1_hygro_RH_100 / 100.f, PM_FORMAT_05F2);
+	}
+	#endif
+
+	/* Dew Point temperature */
+	if (s_twi1_hygro_DP_100 != l_twi1_hygro_DP_100) {
+		s_twi1_hygro_DP_100 = l_twi1_hygro_DP_100;
+		task_twi2_lcd_print_format_float_P(col_left, 11 * 10, l_twi1_hygro_DP_100 / 100.f, PM_FORMAT_05F2);
 	}
 }
 
@@ -2205,19 +2230,31 @@ void task_twi2_lcd__gyro(void)
 
 void task_twi2_lcd__baro(uint8_t col_left)
 {
+	#if 0
 	static int32_t s_twi1_baro_temp_100 = 0;
 	static int32_t s_twi1_baro_p_100 = 0;
 	int32_t l_twi1_baro_temp_100;
 	int32_t l_twi1_baro_p_100;
+	#endif
+	static int32_t s_twi1_baro_p_h_100 = 0;
+	int32_t l_twi1_baro_p_h_100;
 
 	/* Get up-to-date global data */
 	{
-		irqflags_t flags				= cpu_irq_save();
+		irqflags_t flags = cpu_irq_save();
+		#if 0
 		l_twi1_baro_temp_100			= g_twi1_baro_temp_100;
 		l_twi1_baro_p_100				= g_twi1_baro_p_100;
+		#endif
+
+		l_twi1_baro_p_h_100				= g_twi1_baro_p_h_100;
+		if (!l_twi1_baro_p_h_100) {
+			l_twi1_baro_p_h_100			= g_twi1_baro_p_100;		// As long as no height is available use relative pressure instead
+		}
 		cpu_irq_restore(flags);
 	}
 
+	#if 0
 	/* Baro_Temp */
 	if (s_twi1_baro_temp_100 != l_twi1_baro_temp_100) {
 		s_twi1_baro_temp_100 = l_twi1_baro_temp_100;
@@ -2228,6 +2265,41 @@ void task_twi2_lcd__baro(uint8_t col_left)
 	if (s_twi1_baro_p_100 != l_twi1_baro_p_100) {
 		s_twi1_baro_p_100 = l_twi1_baro_p_100;
 		task_twi2_lcd_print_format_float_P(col_left, 10 * 10, l_twi1_baro_p_100 / 100.f, PM_FORMAT_07F2);
+	}
+	#endif
+
+	/* QNH */
+	if (s_twi1_baro_p_h_100 != l_twi1_baro_p_h_100) {
+		s_twi1_baro_p_h_100 = l_twi1_baro_p_h_100;
+		task_twi2_lcd_print_format_float_P(col_left, 12 * 10, l_twi1_baro_p_h_100 / 100.f, PM_FORMAT_07F2);
+	}
+}
+
+void task_twi2_lcd__environment(uint8_t col_left)
+{
+	static int16_t s_env_temp_deg_100 = 0;
+	static int16_t s_env_hygro_RH_100 = 0;
+	int16_t l_env_temp_deg_100;
+	int16_t l_env_hygro_RH_100;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags = cpu_irq_save();
+		l_env_temp_deg_100				= g_env_temp_deg_100;
+		l_env_hygro_RH_100				= g_env_hygro_RH_100;
+		cpu_irq_restore(flags);
+	}
+
+	/* Environmental Temp */
+	if (s_env_temp_deg_100 != l_env_temp_deg_100) {
+		s_env_temp_deg_100 = l_env_temp_deg_100;
+		task_twi2_lcd_print_format_float_P(col_left,  9 * 10, l_env_temp_deg_100 / 100.f, PM_FORMAT_05F2);
+	}
+
+	/* Environmental relative humidity */
+	if (s_env_hygro_RH_100 != l_env_hygro_RH_100) {
+		s_env_hygro_RH_100 = l_env_hygro_RH_100;
+		task_twi2_lcd_print_format_float_P(col_left, 10 * 10, l_env_hygro_RH_100 / 100.f, PM_FORMAT_05F2);
 	}
 }
 
@@ -2265,6 +2337,7 @@ static void task_twi2_lcd(uint32_t now)
 			break;
 
 			case 3:
+				task_twi2_lcd__environment(col_left);
 				task_twi2_lcd__baro(col_left);
 				++s_lcd_entry_state;
 			break;
