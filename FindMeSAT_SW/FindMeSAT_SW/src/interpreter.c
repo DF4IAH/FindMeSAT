@@ -400,7 +400,7 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_env_t, sizeof(PM_IP_CMD_env_t) - 1)) {
 			float val[3] = { -1.f, -1.f, -1.f };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_env_t) - 1), MY_STRING_TO_VAR_FLOAT, &(val[0]), NULL, NULL)) {
-				env_temp(val[0] != 0);
+				env_temp(val[0]);
 			}
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_gsm_aprs,	sizeof(PM_IP_CMD_gsm_aprs) - 1)) {
