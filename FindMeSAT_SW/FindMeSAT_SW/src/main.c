@@ -97,10 +97,10 @@ uint8_t						g_gns_cPn0_dBHz						= 0;
 //uint16_t					g_gns_vpa_m							= 0;
 
 uint8_t						g_aprs_mode							= 0;
-char						g_aprs_source_callsign[12]			= "";
-char						g_aprs_source_ssid[4]				= "";
-char						g_aprs_login_user[10]				= "";
-char						g_aprs_login_pwd[6]			= "";
+char						g_aprs_source_callsign[C_APRS_S_LEN]= { 0 };	// EEPROM
+char						g_aprs_source_ssid[C_APRS_SSID_LEN]	= { 0 };	// EEPROM
+char						g_aprs_login_user[C_APRS_USER_LEN]	= { 0 };	// EEPROM
+char						g_aprs_login_pwd[C_APRS_PWD_LEN]	= { 0 };	// EEPROM
 uint64_t					g_aprs_alert_last					= 0ULL;
 APRS_ALERT_FSM_STATE_ENUM_t	g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
 APRS_ALERT_REASON_ENUM_t	g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
@@ -118,8 +118,13 @@ WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 
 usart_serial_options_t		g_usart1_options					= { 0 };
 bool						g_usart1_rx_ready					= false;
+bool						g_usart1_rx_OK						= false;
 uint16_t					g_usart1_rx_idx						= 0;
 char						g_usart1_rx_buf[C_USART1_RX_BUF_LEN]= { 0 };
+
+bool						g_gsm_enable						= false;	// EEPROM
+bool						g_gsm_aprs_enable					= false;	// EEPROM
+char						g_gsm_login_pwd[C_GSM_PIN_BUF_LEN]	= { 0 };	// EEPROM
 
 bool						g_twi1_gsm_valid					= false;
 uint8_t						g_twi1_gsm_version					= 0;
@@ -229,16 +234,16 @@ volatile int16_t			g_adc_io_adc5_volt_1000				= 0;
 volatile int16_t			g_adc_silence_volt_1000				= 0;
 volatile int16_t			g_adc_temp_deg_100					= 0;
 
-volatile int16_t			g_env_temp_delta_100				= 0;
+volatile int16_t			g_env_temp_delta_100				= 0;		// EEPROM
 volatile int16_t			g_env_temp_deg_100					= 0;
 volatile int16_t			g_env_hygro_RH_100					= 0;
 
-volatile bool				g_qnh_is_auto						= false;
-volatile int16_t			g_qnh_height_m						= 0;
+volatile bool				g_qnh_is_auto						= false;	// EEPROM
+volatile int16_t			g_qnh_height_m						= 0;		// EEPROM
 volatile int32_t			g_qnh_p_h_100						= 0L;
 
 fifo_desc_t					g_fifo_sched_desc;
-uint32_t					g_fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH];
+uint32_t					g_fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH]	= { 0 };
 
 struct pwm_config			g_pwm_vctcxo_cfg					= { 0 };
 struct pwm_config			g_pwm_ctr_pll_cfg					= { 0 };
@@ -251,7 +256,7 @@ volatile bool				g_sched_pop_again					= false;
 volatile sched_entry_t		g_sched_data[C_SCH_SLOT_CNT]		= { 0 };
 volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
 
-char						g_prepare_buf[C_TX_BUF_SIZE]		= "";
+char						g_prepare_buf[C_TX_BUF_SIZE]		= { 0 };
 
 
 const char					PM_APRS_TX_HTTP_TARGET1_NM[]		= "karlsruhe.aprs2.net";
@@ -406,6 +411,13 @@ static void init_globals(void)
 		g_1pps_twi_new						= false;
 	}
 
+	/* USART */
+	{
+		g_usart1_rx_ready					= false;
+		g_usart1_rx_OK						= false;
+		g_usart1_rx_idx						= 0;
+	}
+
 	/* GNS */
 	{
 		g_gns_run_status					= 0;
@@ -425,20 +437,6 @@ static void init_globals(void)
 		g_gns_cPn0_dBHz						= 0;
 //		g_gns_hpa_m							= 0;
 //		g_gns_vpa_m							= 0;
-	}
-
-	/* APRS */
-	{
-		g_aprs_mode							= 0;
-		*g_aprs_source_callsign				= 0;
-		*g_aprs_source_ssid					= 0;
-		*g_aprs_login_user					= 0;
-		*g_aprs_login_pwd					= 0;
-		g_aprs_alert_last					= 0ULL;
-		g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
-		g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
-		g_aprs_pos_anchor_lat				= 0.f;
-		g_aprs_pos_anchor_lon				= 0.f;
 	}
 
 	/* VCTCXO */
@@ -604,8 +602,30 @@ static void init_globals(void)
 		cpu_irq_restore(flags);
 	}
 
+	/* GSM */
+	{
+		uint8_t val_ui8 = 0;
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__GSM_BF, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
+			g_gsm_enable			= val_ui8 & GSM__ENABLE;
+			g_gsm_aprs_enable		= val_ui8 & GSM__APRS_ENABLE;
+		}
+		nvm_read(INT_EEPROM, EEPROM_ADDR__GSM_PIN,			(void*)&g_gsm_login_pwd,		sizeof(g_gsm_login_pwd));
+	}
+
 	/* APRS */
 	{
+		g_aprs_mode							= 0;
+		*g_aprs_source_callsign				= 0;
+		*g_aprs_source_ssid					= 0;
+		*g_aprs_login_user					= 0;
+		*g_aprs_login_pwd					= 0;
+		g_aprs_alert_last					= 0ULL;
+		g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
+		g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
+		g_aprs_pos_anchor_lat				= 0.f;
+		g_aprs_pos_anchor_lon				= 0.f;
+
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_CALLSIGN,	(void*)&g_aprs_source_callsign,	sizeof(g_aprs_source_callsign));
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_SSID,		(void*)&g_aprs_source_ssid,		sizeof(g_aprs_source_ssid));
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_LOGIN,		(void*)&g_aprs_login_user,		sizeof(g_aprs_login_user));
@@ -730,6 +750,15 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_X, (void*)&l_twi1_gyro_2_mag_factx, sizeof(l_twi1_gyro_2_mag_factx));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Y, (void*)&l_twi1_gyro_2_mag_facty, sizeof(l_twi1_gyro_2_mag_facty));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Z, (void*)&l_twi1_gyro_2_mag_factz, sizeof(l_twi1_gyro_2_mag_factz));
+	}
+
+	/* GSM */
+	if (bf & EEPROM_SAVE_BF__GSM) {
+		uint8_t val_ui8 = (g_gsm_enable			?  GSM__ENABLE		: 0x00)
+						| (g_gsm_aprs_enable	?  GSM__APRS_ENABLE	: 0x00);
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_BF, &val_ui8, sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_PIN,			(void*)&g_gsm_login_pwd,		sizeof(g_gsm_login_pwd));
 	}
 
 	/* APRS */
@@ -1277,6 +1306,54 @@ void env_temp(float temp)
 	save_globals(EEPROM_SAVE_BF__ENV);
 }
 
+void gsm_aprs_enable(bool enable)
+{
+	/* atomic */
+	g_gsm_aprs_enable = enable;
+
+	save_globals(EEPROM_SAVE_BF__GSM);
+}
+
+void gsm_pin_update(const char pin[])
+{
+	uint8_t idx = 0;
+
+	if (!pin) {
+		g_gsm_login_pwd[idx++] = 0;
+
+	} else if ((strlen(pin) - 1) < sizeof(g_gsm_login_pwd)) {
+		for (; idx < (sizeof(g_gsm_login_pwd) - 1); idx++) {
+			if (0x20 <= pin[idx]) {
+				g_gsm_login_pwd[idx] = (char)pin[idx];
+			} else {
+				g_gsm_login_pwd[idx++] = 0;
+				break;
+			}
+		}
+
+	} else {
+		g_gsm_login_pwd[0] = 0;
+	}
+
+	/* Fill up to the end of the field */
+	while (idx < sizeof(g_gsm_login_pwd)) {
+		g_gsm_login_pwd[idx++] = 0;
+	}
+
+	save_globals(EEPROM_SAVE_BF__GSM);
+}
+
+void gsm_enable(bool enable)
+{
+	/* atomic */
+	g_gsm_enable = enable;
+
+	save_globals(EEPROM_SAVE_BF__GSM);
+
+	/* Switch to the desired activation */
+	serial_gsm_activation(enable);
+}
+
 void keyBeep_enable(bool enable)
 {
 	/* atomic */
@@ -1655,6 +1732,7 @@ void aprs_message_end(void)
 
 void aprs_message_send(const char* msg, int content_message_len)
 {
+#if 0
 	/* GSM DPRS transportation */
 	if (true) {
 		char l_content_hdr[64];
@@ -1663,7 +1741,7 @@ void aprs_message_send(const char* msg, int content_message_len)
 
 		/* Transport message */
 		{
-			char l_msg[64];
+			char l_msg[C_TX_BUF_SIZE];
 			int msg_len;
 
 			/* establish TCP/IP connection */
@@ -1671,31 +1749,31 @@ void aprs_message_send(const char* msg, int content_message_len)
 
 			/* Line 1 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L1);
-			serial_sim808_send(l_msg, msg_len);
+			serial_sim808_sendAndResponse(l_msg, msg_len, false);
 
 			/* Line 2 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L2, len);
-			serial_sim808_send(l_msg, msg_len);
+			serial_sim808_sendAndResponse(l_msg, msg_len, false);
 
 			/* Line 3 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L3);
-			serial_sim808_send(l_msg, msg_len);
+			serial_sim808_sendAndResponse(l_msg, msg_len, false);
 
 			/* Line 4 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L4);
-			serial_sim808_send(l_msg, msg_len);
+			serial_sim808_sendAndResponse(l_msg, msg_len, false);
 
 			/* Content header - authentication */
-			serial_sim808_send(l_content_hdr, content_hdr_len);
+			serial_sim808_sendAndResponse(l_content_hdr, content_hdr_len, false);
 
 			/* Content message */
-			serial_sim808_send(msg, content_message_len);
+			serial_sim808_sendAndResponse(msg, content_message_len, false);
 
 			/* release TCP/IP connection */
 			//gsm_dprs_tcpip_disconnect();
 		}
-
 	}
+#endif
 }
 
 

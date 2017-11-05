@@ -47,13 +47,19 @@
 #define C_USART1_RX_BUF_DIFF_OFF	16
 #define C_USART1_RX_BUF_DIFF_ON		32
 
+#define C_GSM_PIN_BUF_LEN			14
+
+
 typedef enum SERIAL_SIM808_GSM_SETFUNC_ENUM {
 	SERIAL_SIM808_GSM_SETFUNC_OFF					= 0,
 	SERIAL_SIM808_GSM_SETFUNC_ON					= 1,
 } SERIAL_SIM808_GSM_SETFUNC_ENUM_t;
 
 void serial_sim808_send(const char*, uint8_t len);
+bool serial_sim808_sendAndResponse(const char* cmd, uint8_t len, bool doCopy);
 void serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode);
+void serial_sim808_gsm_setPin(const char* pin);
+void serial_gsm_activation(bool enable);
 void serial_sim808_gsm_shutdown(void);
 
 

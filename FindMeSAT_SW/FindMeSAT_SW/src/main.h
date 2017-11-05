@@ -49,6 +49,11 @@
 
 #define C_1PPS_PWM_DIFF_ARY_CNT										16
 
+#define C_APRS_S_LEN												12
+#define C_APRS_SSID_LEN												4
+#define C_APRS_USER_LEN												10
+#define C_APRS_PWD_LEN												6
+
 
 /* FIFO */
 #define FIFO_SCHED_BUFFER_LENGTH									32
@@ -119,6 +124,11 @@ typedef enum DMA_CHANNEL_ENUM {
 	DMA_CHANNEL_DACB_CH0_B,
 } DMA_CHANNEL_ENUM_t;
 
+typedef enum GSM_BF_ENUM {
+	GSM__ENABLE						= 0b00000001,
+	GSM__APRS_ENABLE				= 0b00000010,
+} GSM_BF_ENUM_t;
+
 typedef enum APRS_MODE_ENUM {
 	APRS_MODE__OFF					= 0,
 	APRS_MODE__ON,
@@ -126,6 +136,7 @@ typedef enum APRS_MODE_ENUM {
 
 typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__VERSION			= 0x0000,						// i32
+	EEPROM_ADDR__GSM_BF				= 0x0008,						// ui8
 	EEPROM_ADDR__ENV_TEMP_DELTA		= 0x000C,						// i32
 	EEPROM_ADDR__VCTCXO				= 0x0010,						// i32
 	EEPROM_ADDR__LCDBL				= 0x0014,						// i16
@@ -166,17 +177,20 @@ typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__APRS_LOGIN			= 0x0090,						// char[10]
 	EEPROM_ADDR__APRS_PWD			= 0x009A,						// char[6]
 	EEPROM_ADDR__APRS_MODE			= 0x00A0,						// ui8
+
+	EEPROM_ADDR__GSM_PIN			= 0x00A2,						// char[14]
 } EEPROM_ADDR_ENUM_t;
 
 typedef enum EEPROM_SAVE_BF_ENUM {
 	EEPROM_SAVE_BF__VCTCXO			= 0b0000000000000001,
-	EEPROM_SAVE_BF__LCDBL			= 0b0000000000000010,
-	EEPROM_SAVE_BF__BEEP			= 0b0000000000000100,
-	EEPROM_SAVE_BF__PITCHTONE		= 0b0000000000001000,
-	EEPROM_SAVE_BF__PRINT_STATUS	= 0b0000000000010000,
-	EEPROM_SAVE_BF__9AXIS_OFFSETS	= 0b0000000000100000,
-	EEPROM_SAVE_BF__APRS			= 0b0000000001000000,
-	EEPROM_SAVE_BF__ENV				= 0b0000000010000000,
+	EEPROM_SAVE_BF__9AXIS_OFFSETS	= 0b0000000000000010,
+	EEPROM_SAVE_BF__LCDBL			= 0b0000000000000100,
+	EEPROM_SAVE_BF__PRINT_STATUS	= 0b0000000000001000,
+	EEPROM_SAVE_BF__BEEP			= 0b0000000000010000,
+	EEPROM_SAVE_BF__PITCHTONE		= 0b0000000000100000,
+	EEPROM_SAVE_BF__ENV				= 0b0000000001000000,
+	EEPROM_SAVE_BF__GSM				= 0b0000000010000000,
+	EEPROM_SAVE_BF__APRS			= 0b0000000100000000,
 } EEPROM_SAVE_BF_ENUM_t;
 
 
@@ -244,6 +258,9 @@ void dac_app_enable(bool enable);
 void dds_update(float dds0_hz, float dds1_hz, float phase);
 void errorBeep_enable(bool enable);
 void env_temp(float temp);
+void gsm_aprs_enable(bool enable);
+void gsm_pin_update(const char pin[]);
+void gsm_enable(bool enable);
 void keyBeep_enable(bool enable);
 void pitchTone_mode(uint8_t mode);
 void qnh_setAuto(void);

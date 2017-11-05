@@ -63,6 +63,9 @@ const char					PM_HELP_DDS_3[]							=	"c: starting phase of DDS1-DDS0 deg\r\n";
 const char					PM_HELP_DOWN_1[]						= "down\t\tShutdown this device\r\n";
 const char					PM_HELP_EB_1[]							= "eb=\t\t0: error beep OFF, 1: ON\r\n";
 const char					PM_HELP_ENV_T_1[]						= "env_t=\t\ttemp: of environment in degC\r\n";
+const char					PM_HELP_GSM_1[]							= "gsm=\t\t0: OFF, 1: ON\r\n";
+const char					PM_HELP_GSM_2[]							=	"\t\taprs=0: APRS via GSM OFF, 1: ON\r\n";
+const char					PM_HELP_GSM_3[]							=	"\t\tpin=<pin>: the PIN of the GSM smart card\r\n";
 const char					PM_HELP_HELP_1[]						= "help\t\tThis information page ";
 const char					PM_HELP_HELP_2[]						=	"about all available commands\r\n";
 const char					PM_HELP_INFO_1[]						= "info=\t\t0: OFF, 0x01: ATxmega, ";
@@ -106,6 +109,9 @@ PROGMEM_DECLARE(const char, PM_HELP_DDS_3[]);
 PROGMEM_DECLARE(const char, PM_HELP_DOWN_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_EB_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_ENV_T_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_GSM_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_GSM_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_GSM_3[]);
 PROGMEM_DECLARE(const char, PM_HELP_HELP_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_HELP_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_INFO_1[]);
@@ -194,6 +200,13 @@ void printHelp(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_ENV_T_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_GSM_1);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_GSM_2);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_GSM_3);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_HELP_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_HELP_HELP_2);
@@ -259,6 +272,9 @@ const char					PM_IP_CMD_dds[]							= "dds=";
 const char					PM_IP_CMD_down[]						= "down";
 const char					PM_IP_CMD_eb[]							= "eb=";
 const char					PM_IP_CMD_env_t[]						= "env_t=";
+const char					PM_IP_CMD_gsm_num[]						= "gsm=";
+const char					PM_IP_CMD_gsm_aprs[]					= "gsm=aprs=";
+const char					PM_IP_CMD_gsm_pin[]						= "gsm=pin=";
 const char					PM_IP_CMD_help[]						= "help";
 const char					PM_IP_CMD_info[]						= "info=";
 const char					PM_IP_CMD_kb[]							= "kb=";
@@ -288,6 +304,9 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_dds[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_down[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_eb[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_env_t[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_gsm_num[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_gsm_aprs[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_gsm_pin[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_help[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_info[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_kb[]);
@@ -305,7 +324,7 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 		if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_adc, sizeof(PM_IP_CMD_adc) - 1)) {
 			int val[1] = { 0 };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_adc) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
-				adc_app_enable(val[0]);
+				adc_app_enable(val[0] != 0);
 			}
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_aprs_call,	sizeof(PM_IP_CMD_aprs_call) - 1)) {
@@ -328,7 +347,7 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 
 		} else if ((!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_AT,		sizeof(PM_IP_CMD_AT) - 1))		||
 				   (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_A_slash,	sizeof(PM_IP_CMD_A_slash) - 1))) {
-				serial_sim808_send(cmdLine_buf, cmdLine_len);
+				usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) cmdLine_buf, cmdLine_len);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_bias, sizeof(PM_IP_CMD_bias) - 1)) {
 			int val[1] = { 0 };
@@ -360,7 +379,7 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_dac, sizeof(PM_IP_CMD_dac) - 1)) {
 			int val[1] = { 0 };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_dac) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
-				dac_app_enable(val[0]);
+				dac_app_enable(val[0] != 0);
 			}
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_dds, sizeof(PM_IP_CMD_dds) - 1)) {
@@ -375,13 +394,28 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_eb, sizeof(PM_IP_CMD_eb) - 1)) {
 			int val[1] = { 0 };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_eb) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
-				errorBeep_enable(val[0]);
+				errorBeep_enable(val[0] != 0);
 			}
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_env_t, sizeof(PM_IP_CMD_env_t) - 1)) {
 			float val[3] = { -1.f, -1.f, -1.f };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_env_t) - 1), MY_STRING_TO_VAR_FLOAT, &(val[0]), NULL, NULL)) {
-				env_temp(val[0]);
+				env_temp(val[0] != 0);
+			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_gsm_aprs,	sizeof(PM_IP_CMD_gsm_aprs) - 1)) {
+			int val[1] = { 0 };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_gsm_aprs) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
+				gsm_aprs_enable(val[0] != 0);
+			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_gsm_pin,	sizeof(PM_IP_CMD_gsm_pin) - 1)) {
+			gsm_pin_update(cmdLine_buf + (sizeof(PM_IP_CMD_gsm_pin) - 1));
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_gsm_num,	sizeof(PM_IP_CMD_gsm_num) - 1)) {
+			int val[1] = { 0 };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_gsm_num) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
+				gsm_enable(val[0] != 0);
 			}
 
 		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_help, sizeof(PM_IP_CMD_help) - 1)) {
@@ -396,7 +430,7 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_kb, sizeof(PM_IP_CMD_kb) - 1)) {
 			int val[1] = { 0 };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_kb) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
-				keyBeep_enable(val[0]);
+				keyBeep_enable(val[0] != 0);
 			}
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_pt, sizeof(PM_IP_CMD_pt) - 1)) {

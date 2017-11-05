@@ -32,10 +32,54 @@
 
 
 /* Global string store in program memory */
-const char					PM_SET_FUNC_1[]							= "AT+CFUN=%d";
+const char					PM_SET_FUNC_1[]							= "AT+CFUN=%d\r\n";
 PROGMEM_DECLARE(const char, PM_SET_FUNC_1[]);
-const char					PM_SHUTDOWN_1[]							= "AT+CPOWD=1";
+const char					PM_SET_PIN_1[]							= "AT+CPIN=\"%.14s\"\r\n";
+PROGMEM_DECLARE(const char, PM_SET_PIN_1[]);
+const char					PM_SHUTDOWN_1[]							= "AT+CPOWD=1\r\n";
 PROGMEM_DECLARE(const char, PM_SHUTDOWN_1[]);
+const char					PM_SIM808_OK[]							= "OK";
+PROGMEM_DECLARE(const char, PM_SIM808_OK[]);
+const char					PM_SIM808_RDY[]							= "RDY";
+PROGMEM_DECLARE(const char, PM_SIM808_RDY[]);
+const char					PM_SIM808_INFO_START[]					= "SIM808 ser1:  Starting the device ...\r\n";
+PROGMEM_DECLARE(const char, PM_SIM808_INFO_START[]);
+const char					PM_SIM808_INFO_RESTART[]				= "SIM808 ser1:  Starting the device ...\r\n";
+PROGMEM_DECLARE(const char, PM_SIM808_INFO_RESTART[]);
+const char					PM_SIM808_INFO_SYNCED[]					= "SIM808 ser1:   baud rate synced\r\n";
+PROGMEM_DECLARE(const char, PM_SIM808_INFO_SYNCED[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_START[]		= "Init: SIM808 starting ...";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_START[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_RESTART[]	= "Init: SIM808 restarting ...";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_RESTART[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_OK[]		= "Init: SIM808 success";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_OK[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_IPR[]		= "AT+IPR=%ld\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_IPR[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_IFC[]		= "AT+IFC=2,2\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_IFC[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_CMEE2[]		= "AT+CMEE=2\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CMEE2[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_CREG2[]		= "AT+CREG=2\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CREG2[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_CFUN1[]		= "AT+CFUN=%d\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CFUN1[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_01[]	= "ATI\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_01[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_02[]	= "AT+GSV\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_02[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_03[]	= "AT+CIMI\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_03[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_04[]	= "AT+COPN\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_04[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_05[]	= "AT+CNETSCAN=1;+CNETSCAN\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_05[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_01[]	= "AT+CGNSPWR=%d\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_01[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_02[]	= "AT+CGNSINF\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_02[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_03[]	= "AT+CGNSURC=%d\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_03[]);
 
 
 /* ISR routines */
@@ -74,8 +118,42 @@ void serial_sim808_send(const char* cmd, uint8_t len)
 	l_tx_buf[len]		= '\r';
 	l_tx_buf[len + 1]	= 0;
 
+	/* Reset the OK response flag */
+	g_usart1_rx_OK = false;
+
 	/* Send the string to the SIM808 */
 	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_tx_buf, len);
+}
+
+bool serial_sim808_sendAndResponse(const char* cmd, uint8_t len, bool doCopy)
+{
+	for (uint8_t cnt = 2; cnt; --cnt) {
+		if (doCopy) {
+			/* Prepare and send from copy buffer */
+			serial_sim808_send(cmd, len);
+
+		} else {
+			/* Reset the OK response flag */
+			g_usart1_rx_OK = false;
+
+			/* Send the string direct to the SIM808 */
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) cmd, len);
+		}
+
+		/* Wait until 2 s for the response */
+		for (uint8_t ycnt = 40; ycnt; --ycnt) {
+			yield_ms(50);
+			task_serial(tcc1_get_time());
+
+			if (g_usart1_rx_OK) {
+				/* OK response received */
+				return true;
+			}
+		}
+	}
+
+	/* No OK response */
+	return false;
 }
 
 void serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode)
@@ -84,7 +162,31 @@ void serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode)
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SET_FUNC_1, funcMode);
 
 	/* Send the string to the SIM808 */
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+	if (len) {
+		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+	}
+}
+
+void serial_sim808_gsm_setPin(const char* pin)
+{
+	/* Prepare message to the SIM808 */
+	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SET_PIN_1, pin);
+
+	/* Send the string to the SIM808 */
+	if (len) {
+		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+	}
+}
+
+void serial_gsm_activation(bool enable)
+{
+	if (enable) {
+		serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_ON);
+		serial_sim808_gsm_setPin(g_gsm_login_pwd);
+
+	} else {
+		serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_OFF);
+	}
 }
 
 void serial_sim808_gsm_shutdown(void)
@@ -93,7 +195,7 @@ void serial_sim808_gsm_shutdown(void)
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SHUTDOWN_1);
 
 	/* Send the string to the SIM808 */
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 }
 
 
@@ -155,48 +257,6 @@ void serial_init(void)
 }
 
 
-const char					PM_SIM808_OK[]							= "OK";
-const char					PM_SIM808_RDY[]							= "RDY";
-const char					PM_SIM808_INFO_START[]					= "SIM808 ser1:  Starting the device ...\r\n";
-const char					PM_SIM808_INFO_RESTART[]				= "SIM808 ser1:  Starting the device ...\r\n";
-const char					PM_SIM808_INFO_SYNCED[]					= "SIM808 ser1:   baud rate synced\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_START[]		= "Init: SIM808 starting ...";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_RESTART[]	= "Init: SIM808 restarting ...";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_OK[]		= "Init: SIM808 success";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_IPR[]		= "AT+IPR=%ld\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_IFC[]		= "AT+IFC=2,2\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_CMEE2[]		= "AT+CMEE=2\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_CREG2[]		= "AT+CREG=2\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_CFUN1[]		= "AT+CFUN=%d\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_01[]	= "ATI\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_02[]	= "AT+GSV\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_03[]	= "AT+CIMI\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_04[]	= "AT+COPN\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_05[]	= "AT+CNETSCAN=1;+CNETSCAN\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_01[]	= "AT+CGNSPWR=%d\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_02[]	= "AT+CGNSINF\r\n";
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_03[]	= "AT+CGNSURC=%d\r\n";
-PROGMEM_DECLARE(const char, PM_SIM808_OK[]);
-PROGMEM_DECLARE(const char, PM_SIM808_RDY[]);
-PROGMEM_DECLARE(const char, PM_SIM808_INFO_START[]);
-PROGMEM_DECLARE(const char, PM_SIM808_INFO_RESTART[]);
-PROGMEM_DECLARE(const char, PM_SIM808_INFO_SYNCED[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_START[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_RESTART[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_OK[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_IPR[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_IFC[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CMEE2[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CREG2[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CFUN1[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_01[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_02[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_03[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_04[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_05[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_01[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_02[]);
-PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_03[]);
 
 /* USB device stack start function to enable stack and start USB */
 void serial_start(void)
@@ -279,84 +339,55 @@ void serial_start(void)
 		}
 	}
 
-#if 1
 	/* Set the baud rate to AUTO or fixed rate */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_IPR, USART_SIM808_BAUDRATE);
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
-	yield_ms(500);
-#endif
+	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 
 	/* Set handshaking of both directions to hardware CTS/RTS */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_IFC);
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
-	yield_ms(500);
+	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 
-#if 1
+	/* Turn on error descriptions */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_CMEE2);
+	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+
+	/* Turn on registering information */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_CREG2);
+	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+
+	/* Activation of all functionalities */
+	serial_gsm_activation(g_gsm_enable);
+
 	/* Request the version number of the firmware */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_01);
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
-	yield_ms(500);
-#endif
+	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 
-#if 1
 	/* Request more details about the firmware */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_02);
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
-	yield_ms(500);
-#endif
+	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 
-#if 0
 	/* Request the IMSI number of the GSM device */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_03);
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
-	yield_ms(500);
-#endif
+	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+
+	/* Enable GNSS (GPS, Glonass, ...) and send a position fix request */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_01, 1);
+	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_02);
+	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 
 #if 0
 	/* Show providers of the GSM networks */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_04);
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
-	yield_ms(500);
+	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 #endif
 
 #if 0
 	/* Scan all networks */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_05);
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
-	yield_ms(500);
+	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 #endif
 
-
-#if 1
-	/* Turn on error descriptions */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_CMEE2);
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
-	yield_ms(500);
-#endif
-
-#if 1
-	/* Turn on registering information */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_CREG2);
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
-	yield_ms(500);
-#endif
-
-#if 1
-	/* Activation of all functionalities */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_CFUN1, 1);  // TODO: EEPROM
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
-	yield_ms(500);
-#endif
-
-#if 1
-	/* Enable GNSS (GPS, Glonass, ...) and send a position fix request */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_01, 1);
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
-	yield_ms(500);
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_02);
-	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
-	yield_ms(500);
-#endif
 
 	/* Inform about baud rate match - LCD */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_OK);
@@ -390,6 +421,11 @@ static bool serial_filter_inStream(const char* buf, uint16_t len)
 
 	const char* gnsInf_ptr = strstr_P(buf, PM_TWI1_UTIL_ONBOARD_SIM808_GPS_UGNSINF);
 	const int gnsInf_idx = gnsInf_ptr ?  (gnsInf_ptr - buf) : (len - 1);
+
+	const char* rxOk_ptr = strstr_P(buf, PM_SIM808_OK);
+	if (rxOk_ptr) {
+		g_usart1_rx_OK = true;
+	}
 
 	char* ptr = (char*) gnsInf_ptr;
 	if (!gnsInf_ptr) {
