@@ -80,6 +80,7 @@ extern bool							g_usb_cdc_access_blocked;
 extern WORKMODE_ENUM_t				g_workmode;
 
 extern usart_serial_options_t		g_usart1_options;
+extern uint8_t						g_usart_gprs_auto_response_state;
 extern bool							g_usart1_rx_ready;
 extern bool							g_usart1_rx_OK;
 extern uint16_t						g_usart1_rx_idx;

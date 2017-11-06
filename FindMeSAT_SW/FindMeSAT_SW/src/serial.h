@@ -60,12 +60,17 @@ bool serial_sim808_sendAndResponse(const char* cmd, uint8_t len, bool doCopy);
 void serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode);
 void serial_sim808_gsm_setPin(const char* pin);
 void serial_gsm_activation(bool enable);
+void serial_gsm_rx_creg(uint8_t val);
+void serial_gsm_rx_cgatt(uint8_t val);
+void serial_gsm_gprs_openClose(bool isStart);
 void serial_sim808_gsm_shutdown(void);
 
 
 void serial_init(void);
 void serial_start(void);
+void serial_gprs_establish(void);
 
+void serial_send_gprs_open(void);
 void serial_send_gns_urc(uint8_t val);
 
 void task_serial(uint32_t now);

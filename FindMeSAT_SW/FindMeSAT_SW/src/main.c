@@ -117,6 +117,7 @@ bool						g_usb_cdc_access_blocked			= false;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 
 usart_serial_options_t		g_usart1_options					= { 0 };
+uint8_t						g_usart_gprs_auto_response_state	= 0;
 bool						g_usart1_rx_ready					= false;
 bool						g_usart1_rx_OK						= false;
 uint16_t					g_usart1_rx_idx						= 0;
@@ -3144,6 +3145,9 @@ int main(void)
 
 	/* Show help page of command set */
 	printHelp();
+
+	/* Establish GPRS connection */
+	serial_gprs_establish();
 
 	/* Calibration of TWI1 devices */
 	calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
