@@ -68,7 +68,15 @@ extern APRS_ALERT_FSM_STATE_ENUM_t	g_aprs_alert_fsm_state;
 extern APRS_ALERT_REASON_ENUM_t		g_aprs_alert_reason;
 extern float						g_aprs_pos_anchor_lat;
 extern float						g_aprs_pos_anchor_lon;
-
+extern int32_t						g_aprs_alert_1_gyro_x_mdps;
+extern int32_t						g_aprs_alert_1_gyro_y_mdps;
+extern int32_t						g_aprs_alert_1_gyro_z_mdps;
+extern int16_t						g_aprs_alert_1_accel_x_mg;
+extern int16_t						g_aprs_alert_1_accel_y_mg;
+extern int16_t						g_aprs_alert_1_accel_z_mg;
+extern int32_t						g_aprs_alert_2_mag_x_nT;
+extern int32_t						g_aprs_alert_2_mag_y_nT;
+extern int32_t						g_aprs_alert_2_mag_z_nT;
 
 extern bool							g_usb_cdc_stdout_enabled;
 extern bool							g_usb_cdc_printStatusLines_atxmega;
