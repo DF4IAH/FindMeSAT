@@ -288,7 +288,7 @@ PROGMEM_DECLARE(const char, PM_APRS_TX_LOGIN[]);
 const char					PM_APRS_TX_FORWARD[]				= "%s%s>APRS,TCPIP*:";							// USER, SSID with prefixing "-"
 PROGMEM_DECLARE(const char, PM_APRS_TX_FORWARD[]);
 const char					PM_APRS_TX_SYMBOL_TABLE_ID			= '/';
-const char					PM_APRS_TX_SYMBOL_CODE				= '$';	// /$:Phone  /j:Jeep
+const char					PM_APRS_TX_SYMBOL_CODE				= 'j';	// /$:Phone  /j:Jeep
 const char					PM_APRS_TX_POS[]					= "!%02d%5.2f%c%c%03d%5.2f%c%c%03d/%03d";
 PROGMEM_DECLARE(const char, PM_APRS_TX_POS[]);
 const char					PM_APRS_TX_N1[]						= " N1 gx=%+06.1fd gy=%+06.1fd gz=%+06.1fd";
@@ -1371,6 +1371,10 @@ void gsm_enable(bool enable)
 
 	/* Switch to the desired activation */
 	serial_gsm_activation(enable);
+
+	if (enable && g_gsm_aprs_enable) {
+		serial_gprs_establish();
+	}
 }
 
 void keyBeep_enable(bool enable)
@@ -1736,24 +1740,23 @@ uint16_t aprs_mag_delta_nT(void)
 void aprs_message_begin(void)
 {
 	/* GSM DPRS transportation */
-	if (true) {
-
+	if (g_gsm_enable && g_gsm_aprs_enable) {
+		serial_gsm_gprs_openClose(true);
 	}
 }
 
 void aprs_message_end(void)
 {
 	/* GSM DPRS transportation */
-	if (true) {
-
+	if (g_gsm_enable && g_gsm_aprs_enable) {
+		serial_gsm_gprs_openClose(false);
 	}
 }
 
 void aprs_message_send(const char* msg, int content_message_len)
 {
-#if 0
 	/* GSM DPRS transportation */
-	if (true) {
+	if (g_gsm_enable && g_gsm_aprs_enable) {
 		char l_content_hdr[64];
 		int content_hdr_len  = snprintf_P(l_content_hdr, sizeof(l_content_hdr), PM_APRS_TX_LOGIN, g_aprs_login_user, g_aprs_login_pwd, APPLICATION_NAME, APPLICATION_VERSION);
 		int len = content_hdr_len + content_message_len;
@@ -1763,36 +1766,29 @@ void aprs_message_send(const char* msg, int content_message_len)
 			char l_msg[C_TX_BUF_SIZE];
 			int msg_len;
 
-			/* establish TCP/IP connection */
-			//gsm_dprs_tcpip_connect();
-
 			/* Line 1 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L1);
-			serial_sim808_sendAndResponse(l_msg, msg_len, false);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_msg, msg_len);
 
 			/* Line 2 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L2, len);
-			serial_sim808_sendAndResponse(l_msg, msg_len, false);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_msg, msg_len);
 
 			/* Line 3 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L3);
-			serial_sim808_sendAndResponse(l_msg, msg_len, false);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_msg, msg_len);
 
 			/* Line 4 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L4);
-			serial_sim808_sendAndResponse(l_msg, msg_len, false);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_msg, msg_len);
 
 			/* Content header - authentication */
-			serial_sim808_sendAndResponse(l_content_hdr, content_hdr_len, false);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_content_hdr, content_hdr_len);
 
 			/* Content message */
-			serial_sim808_sendAndResponse(msg, content_message_len, false);
-
-			/* release TCP/IP connection */
-			//gsm_dprs_tcpip_disconnect();
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) msg, content_message_len);
 		}
 	}
-#endif
 }
 
 
@@ -2981,9 +2977,6 @@ static void task_main_aprs(uint32_t now)
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N1, l_aprs_alert_1_gyro_x_mdps / 1000.f, l_aprs_alert_1_gyro_y_mdps / 1000.f, l_aprs_alert_1_gyro_z_mdps / 1000.f);
 
-				/* Begin a new message block */
-				aprs_message_begin();
-
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
 			}
 			break;
@@ -3099,20 +3092,14 @@ static void task_main_aprs(uint32_t now)
 
 	/* Message content ready */
 	if (len) {
-		len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_MSGEND);
-
 		/* Transport APRS message to network */
-		aprs_message_send(g_prepare_buf, len);
+		{
+			aprs_message_begin();
 
-		/* Logging to the USB console */
-		udi_write_tx_buf(g_prepare_buf, len, false);
+			/* Sending APRS information to the server */
+			aprs_message_send(g_prepare_buf, len);
 
-		/* End of message block */
-		if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
 			aprs_message_end();
-
-			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_MSGEND);
-			udi_write_tx_buf(g_prepare_buf, len, false);
 		}
 	}
 }
@@ -3200,7 +3187,9 @@ int main(void)
 	printHelp();
 
 	/* Establish GPRS connection */
-	serial_gprs_establish();
+	if (g_gsm_enable) {
+		serial_gprs_establish();
+	}
 
 	/* Calibration of TWI1 devices */
 	calibration_mode(CALIBRATION_MODE_ENUM__GYRO);

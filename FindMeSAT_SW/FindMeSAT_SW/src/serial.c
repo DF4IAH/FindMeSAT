@@ -96,6 +96,20 @@ const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT[]	= "AT+CGATT?\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT[]);
 const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT[]		= "AT+CSTT=\"%s\",\"%s\",\"%s\"\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIICR[]	= "AT+CIICR\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIICR[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIFSR[]	= "AT+CIFSR\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIFSR[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSTART[]	= "AT+CIPSTART=\"%s\",\"%s\",\"%s\"\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSTART[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSEND[]	= "AT+CIPSEND\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSEND[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CTRL_Z[]	= "\x1A\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CTRL_Z[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPCLOSE[]	= "AT+CIPCLOSE\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPCLOSE[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSERVER0[]	= "AT+CIPSERVER=0\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSERVER0[]);
 const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSHUT[]	= "AT+CIPSHUT\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSHUT[]);
 
@@ -203,6 +217,9 @@ void serial_gsm_activation(bool enable)
 		serial_sim808_gsm_setPin(g_gsm_login_pwd);
 
 	} else {
+		if (g_gsm_aprs_enable) {
+			serial_gsm_gprs_openClose(false);
+		}
 		serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_OFF);
 	}
 }
@@ -214,7 +231,7 @@ void serial_send_gprs_open(void)
 	/* Enable auto reply chain */
 	g_usart_gprs_auto_response_state = 1;
 
-	#if 0
+	#if 1
 	len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#11 DEBUG: +CREG? sending ...\r\n");
 	udi_write_tx_buf(g_prepare_buf, len, false);
 	#endif
@@ -222,6 +239,7 @@ void serial_send_gprs_open(void)
 	/* GPRS activation - check for registration, first */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG);
 	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+	yield_ms(100);
 }
 
 void serial_gsm_rx_creg(uint8_t val)
@@ -238,14 +256,14 @@ void serial_gsm_rx_creg(uint8_t val)
 	if ((1 <= val) && (val <= 2)) {
 		s_done = true;
 
-		#if 0
+		#if 1
 		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#21 DEBUG: +CREG: x received.\r\n");
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
 
 		g_usart_gprs_auto_response_state = 2;
 
-		#if 0
+		#if 1
 		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#22 DEBUG: +CGATT? sending ...\r\n");
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
@@ -254,11 +272,12 @@ void serial_gsm_rx_creg(uint8_t val)
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT);
 		s_lock = false;
 		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+		yield_ms(100);
 
 	} else {
 		yield_ms(2500);
 
-		#if 0
+		#if 1
 		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#29 DEBUG: repeated +CREG? sending ...\r\n");
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
@@ -267,6 +286,7 @@ void serial_gsm_rx_creg(uint8_t val)
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG);
 		s_lock = false;
 		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+		yield_ms(100);
 	}
 }
 
@@ -284,19 +304,38 @@ void serial_gsm_rx_cgatt(uint8_t val)
 	if (1 <= val) {
 		s_done = true;
 
-		#if 0
+		#if 1
 		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#31 DEBUG: +CGATT: x received.\r\n");
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
 
+		#if 1
+		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#32 DEBUG: +CSTT sending ...\r\n");
+		udi_write_tx_buf(g_prepare_buf, len, false);
+		#endif
+
+		/* Start task for GPRS service */
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT, "web.vodafone.de", "", "");
+		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+		yield_ms(100);
+
+		/* Establish GPRS connection */
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIICR);
+		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+		yield_ms(2000);
+
+		/* Request local IP address */
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIFSR);
+		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+		yield_ms(100);
+
 		g_usart_gprs_auto_response_state = 0;
 		s_lock = false;
-		serial_gsm_gprs_openClose(true);
 
 	} else {
 		yield_ms(2500);
 
-		#if 0
+		#if 1
 		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#39 DEBUG: repeated +CGATT? sending ...\r\n");
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
@@ -305,37 +344,69 @@ void serial_gsm_rx_cgatt(uint8_t val)
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT);
 		s_lock = false;
 		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+		yield_ms(100);
 	}
 }
 
 void serial_gsm_gprs_openClose(bool isStart)
 {
 	static bool s_isOpen = false;
+	char buf[C_TX_BUF_SIZE];
 
-	if (g_gsm_enable  || g_usart_gprs_auto_response_state) {
+	if (!g_usart_gprs_auto_response_state) {
 		int len;
 
 		if (isStart && !s_isOpen) {
-			#if 0
-			len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#41 DEBUG: +CSTT sending ...\r\n");
-			udi_write_tx_buf(g_prepare_buf, len, false);
+			#if 1
+			len = snprintf(buf, sizeof(buf), "#41 DEBUG: Opening TCP connection ...\r\n");
+			udi_write_tx_buf(buf, len, false);
 			#endif
 
-			/* Connect to GPRS service */
-			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT, "web.vodafone.de", "", "");
-			serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+			/* Connect TCP/IP port */
+			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSTART, "TCP", "nuremberg.aprs2.net", "8080");
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
+			yield_ms(1500);
+
+			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSEND);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
+			yield_ms(100);
+
+			s_isOpen = true;
 
 		} else if (!isStart && s_isOpen) {
-			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSHUT);
-			serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+
+			/* Stop message block by a ^Z character (0x1a) */
+			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CTRL_Z);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
+
+			#if 1
+			len = snprintf(buf, sizeof(buf), "#46 DEBUG: Closing TCP connection ...\r\n");
+			udi_write_tx_buf(buf, len, false);
+			#endif
+
+			/* Close TCP/IP port */
+			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPCLOSE);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
+
+			s_isOpen = false;
 		}
 	}
 }
 
 void serial_sim808_gsm_shutdown(void)
 {
-	/* Shut down GPRS */
-	serial_gsm_gprs_openClose(false);
+	if (g_gsm_aprs_enable) {
+		/* Shut down TCP/IP connection */
+		serial_gsm_gprs_openClose(false);
+
+		/* Close any listening servers */
+		int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSERVER0);
+		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+
+		/* Shutdown any open connections */
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSHUT);
+		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+	}
 
 	/* Prepare message to the SIM808 */
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SHUTDOWN_1);
@@ -550,7 +621,7 @@ void serial_gprs_establish(void)
 	udi_write_tx_buf(g_prepare_buf, len, false);
 
 	/* Establish GPRS connection */
-	yield_ms(10000);
+	yield_ms(15000);
 	serial_send_gprs_open();
 }
 

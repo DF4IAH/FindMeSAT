@@ -346,7 +346,8 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			}
 
 		} else if ((!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_AT,		sizeof(PM_IP_CMD_AT) - 1))		||
-				   (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_A_slash,	sizeof(PM_IP_CMD_A_slash) - 1))) {
+				   (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_A_slash,	sizeof(PM_IP_CMD_A_slash) - 1)) ||
+				   ((1 <= cmdLine_buf[0]) && (cmdLine_buf[0] <= 26))) {
 				usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) cmdLine_buf, cmdLine_len);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_bias, sizeof(PM_IP_CMD_bias) - 1)) {
@@ -494,8 +495,13 @@ void interpreter_doProcess(char rx_buf[], iram_size_t rx_len)
 		return;
 	}
 
-	/* Look for line termination */
+	/* Look for line termination or control characters */
 	char* pos = memchr(rx_buf, '\r', rx_len);
+	if (!pos) {
+		if (1 <= rx_buf[rx_len - 1] && rx_buf[rx_len - 1] <= 26) {
+			pos = &(rx_buf[rx_len - 1]);
+		}
+	}
 
 	/* Clipping */
 	if ((s_rx_cmdLine_idx + rx_len) >= C_RX_CMDLINE_BUF_SIZE) {
