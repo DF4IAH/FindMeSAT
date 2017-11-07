@@ -1110,20 +1110,20 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 				g_twi1_gyro_1_temp_RTofs	= 0;
 				g_twi1_gyro_1_temp_sens		= 413;
 
-				g_twi1_gyro_1_accel_ofsx	= ((int16_t) (-46672L / 16));	// 16LSB / OFS
-				g_twi1_gyro_1_accel_ofsy	= ((int16_t) (+41120L / 16));	// 16LSB / OFS
-				g_twi1_gyro_1_accel_ofsz	= ((int16_t) (+76672L / 16));	// 16LSB / OFS
-				g_twi1_gyro_1_accel_factx	=  9980;						// X = Xchip * factx / 10000
-				g_twi1_gyro_1_accel_facty	=  9975;						// Y = Ychip * facty / 10000
-				g_twi1_gyro_1_accel_factz	=  9950;						// Z = Zchip * factz / 10000
+				g_twi1_gyro_1_accel_ofsx	= C_TWI1_GYRO_1_ACCEL_OFSX_DEFAULT;		// 16LSB / OFS
+				g_twi1_gyro_1_accel_ofsy	= C_TWI1_GYRO_1_ACCEL_OFSY_DEFAULT;		// 16LSB / OFS
+				g_twi1_gyro_1_accel_ofsz	= C_TWI1_GYRO_1_ACCEL_OFSZ_DEFAULT;		// 16LSB / OFS
+				g_twi1_gyro_1_accel_factx	= C_TWI1_GYRO_1_ACCEL_FACTX_DEFAULT;	// X = Xchip * factx / 10000
+				g_twi1_gyro_1_accel_facty	= C_TWI1_GYRO_1_ACCEL_FACTY_DEFAULT;	// Y = Ychip * facty / 10000
+				g_twi1_gyro_1_accel_factz	= C_TWI1_GYRO_1_ACCEL_FACTZ_DEFAULT;	// Z = Zchip * factz / 10000
 
-				g_twi1_gyro_1_gyro_ofsx		= ( -32 / 4);					//  4LSB / OFS
-				g_twi1_gyro_1_gyro_ofsy		= ( -80 / 4);					//  4LSB / OFS
-				g_twi1_gyro_1_gyro_ofsz		= (+148 / 4);					//  4LSB / OFS
+				g_twi1_gyro_1_gyro_ofsx		= C_TWI1_GYRO_1_GYRO_OFSX_DEFAULT;		//  4LSB / OFS
+				g_twi1_gyro_1_gyro_ofsy		= C_TWI1_GYRO_1_GYRO_OFSY_DEFAULT;		//  4LSB / OFS
+				g_twi1_gyro_1_gyro_ofsz		= C_TWI1_GYRO_1_GYRO_OFSZ_DEFAULT;		//  4LSB / OFS
 
-				g_twi1_gyro_2_mag_factx		=   7760;						// X = Xchip * factx / 10000
-				g_twi1_gyro_2_mag_facty		=   8390;						// Y = Ychip * facty / 10000
-				g_twi1_gyro_2_mag_factz		=   9490;						// Z = Zchip * factz / 10000
+				g_twi1_gyro_2_mag_factx		= C_TWI1_GYRO_2_MAG_FACTX_DEFAULT;		// X = Xchip * factx / 10000
+				g_twi1_gyro_2_mag_facty		= C_TWI1_GYRO_2_MAG_FACTY_DEFAULT;		// Y = Ychip * facty / 10000
+				g_twi1_gyro_2_mag_factz		= C_TWI1_GYRO_2_MAG_FACTZ_DEFAULT;		// Z = Zchip * factz / 10000
 
 				/* Update the offset registers in the I2C device */
 				g_twi1_gyro_gyro_offset_set__flag	= true;
@@ -1160,7 +1160,11 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 				irqflags_t flags = cpu_irq_save();
 
 				/* Adjust X factor */
-				g_twi1_gyro_1_accel_factx = (int16_t) (((int32_t)g_twi1_gyro_1_accel_factx * 1000L) / g_twi1_gyro_1_accel_x_mg);
+				if (g_twi1_gyro_1_accel_x_mg) {
+					g_twi1_gyro_1_accel_factx = (int16_t) (((int32_t)g_twi1_gyro_1_accel_factx * 1000L) / g_twi1_gyro_1_accel_x_mg);
+				} else {
+					g_twi1_gyro_1_accel_factx = C_TWI1_GYRO_1_ACCEL_FACTX_DEFAULT;
+				}
 
 				/* Adjust Y/Z offsets */
 				g_twi1_gyro_1_accel_ofsy -= (g_twi1_gyro_1_accel_y >> 4);
@@ -1181,7 +1185,11 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 				irqflags_t flags = cpu_irq_save();
 
 				/* Adjust Y factor */
-				g_twi1_gyro_1_accel_facty = (int16_t) (((int32_t)g_twi1_gyro_1_accel_facty * 1000L) / g_twi1_gyro_1_accel_y_mg);
+				if (g_twi1_gyro_1_accel_y_mg) {
+					g_twi1_gyro_1_accel_facty = (int16_t) (((int32_t)g_twi1_gyro_1_accel_facty * 1000L) / g_twi1_gyro_1_accel_y_mg);
+				} else {
+					g_twi1_gyro_1_accel_facty = C_TWI1_GYRO_1_ACCEL_FACTY_DEFAULT;
+				}
 
 				/* Adjust X/Z offsets */
 				g_twi1_gyro_1_accel_ofsx -= (g_twi1_gyro_1_accel_x >> 4);
@@ -1202,7 +1210,11 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 				irqflags_t flags = cpu_irq_save();
 
 				/* Adjust Z factor */
-				g_twi1_gyro_1_accel_factz = (int16_t) (((int32_t)g_twi1_gyro_1_accel_factz * 1000L) / g_twi1_gyro_1_accel_z_mg);
+				if (g_twi1_gyro_1_accel_z_mg) {
+					g_twi1_gyro_1_accel_factz = (int16_t) (((int32_t)g_twi1_gyro_1_accel_factz * 1000L) / g_twi1_gyro_1_accel_z_mg);
+				} else {
+					g_twi1_gyro_1_accel_factz = C_TWI1_GYRO_1_ACCEL_FACTZ_DEFAULT;
+				}
 
 				/* Adjust X/Y offsets */
 				g_twi1_gyro_1_accel_ofsx -= (g_twi1_gyro_1_accel_x >> 4);

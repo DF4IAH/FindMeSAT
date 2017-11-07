@@ -47,12 +47,23 @@
 #define C_TCC1_CLOCKSETTING_OFFSET									11U
 #define C_TCC1_SPAN_HALF											50  // 30 equals to 1 µs
 
-#define C_1PPS_PWM_DIFF_ARY_CNT										16
 
-#define C_APRS_S_LEN												12
-#define C_APRS_SSID_LEN												4
-#define C_APRS_USER_LEN												10
-#define C_APRS_PWD_LEN												6
+/* DEFAULT VALUES for the Sensors */
+
+#define C_TWI1_GYRO_1_ACCEL_OFSX_DEFAULT							((int16_t) (-46672L / 16))
+#define C_TWI1_GYRO_1_ACCEL_OFSY_DEFAULT							((int16_t) (+41120L / 16))
+#define C_TWI1_GYRO_1_ACCEL_OFSZ_DEFAULT							((int16_t) (+76672L / 16))
+#define C_TWI1_GYRO_1_ACCEL_FACTX_DEFAULT							9980
+#define C_TWI1_GYRO_1_ACCEL_FACTY_DEFAULT							9975
+#define C_TWI1_GYRO_1_ACCEL_FACTZ_DEFAULT							9950
+#define C_TWI1_GYRO_1_GYRO_OFSX_DEFAULT								( -32 / 4)
+#define C_TWI1_GYRO_1_GYRO_OFSY_DEFAULT								( -80 / 4)
+#define C_TWI1_GYRO_1_GYRO_OFSZ_DEFAULT								(+148 / 4)
+#define C_TWI1_GYRO_2_MAG_FACTX_DEFAULT								7760
+#define C_TWI1_GYRO_2_MAG_FACTY_DEFAULT								8390
+#define C_TWI1_GYRO_2_MAG_FACTZ_DEFAULT								9490
+
+#define C_1PPS_PWM_DIFF_ARY_CNT										16
 
 
 /* FIFO */
@@ -218,6 +229,10 @@ typedef enum APRS_ALERT_FSM_STATE_ENUM {
 	APRS_ALERT_FSM_STATE__DO_N5,
 } APRS_ALERT_FSM_STATE_ENUM_t;
 
+#define C_APRS_S_LEN						12
+#define C_APRS_SSID_LEN						4
+#define C_APRS_USER_LEN						10
+#define C_APRS_PWD_LEN						6
 #define C_APRS_ALERT_MESSAGE_DELAY_SEC		8
 #define C_APRS_ALERT_TIME_SEC				1800
 #define C_APRS_ALERT_POS_DELTA_M			300

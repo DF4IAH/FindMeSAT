@@ -1042,7 +1042,7 @@ static bool service_twi1_baro(uint32_t now, bool sync)
 
 				/* Setting the global values */
 				{
-					irqflags_t flags				= cpu_irq_save();
+					irqflags_t flags = cpu_irq_save();
 					g_twi1_baro_d1					= s_twi1_baro_d1;
 					g_twi1_baro_d2					= s_twi1_baro_d2;
 					cpu_irq_restore(flags);
@@ -1258,7 +1258,7 @@ static void task_twi1_gyro(uint32_t now)
 
 		/* Getting the global values */
 		{
-			irqflags_t flags						= cpu_irq_save();
+			irqflags_t flags = cpu_irq_save();
 			l_twi1_gyro_2_mag_x						= g_twi1_gyro_2_mag_x;
 			l_twi1_gyro_2_mag_y						= g_twi1_gyro_2_mag_y;
 			l_twi1_gyro_2_mag_z						= g_twi1_gyro_2_mag_z;
@@ -2060,7 +2060,7 @@ void task_twi2_lcd__gyro_gfxaccel(void)
 
 	/* Get up-to-date global data */
 	{
-		irqflags_t flags			= cpu_irq_save();
+		irqflags_t flags = cpu_irq_save();
 		l_twi1_gyro_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
 		l_twi1_gyro_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
 		l_twi1_gyro_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
