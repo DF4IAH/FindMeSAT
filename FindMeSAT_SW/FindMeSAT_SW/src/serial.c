@@ -260,8 +260,7 @@ void serial_send_gprs_open(void)
 
 	/* GPRS activation - check for registration, first */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG);
-	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-	yield_ms(100);
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 }
 
 void serial_gsm_rx_creg(uint8_t val)
@@ -293,8 +292,7 @@ void serial_gsm_rx_creg(uint8_t val)
 		/* Check and push device to activate GPRS */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT);
 		s_lock = false;
-		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-		yield_ms(100);
+		usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 
 	} else {
 		yield_ms(2500);
@@ -307,8 +305,7 @@ void serial_gsm_rx_creg(uint8_t val)
 		/* Repeat: check for registration  */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG);
 		s_lock = false;
-		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-		yield_ms(100);
+		usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 	}
 }
 
@@ -339,17 +336,16 @@ void serial_gsm_rx_cgatt(uint8_t val)
 		/* Start task for GPRS service */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT, "web.vodafone.de", "", "");
 		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-		yield_ms(100);
 
 		/* Establish GPRS connection */
+		yield_ms(100);
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIICR);
 		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-		yield_ms(2000);
 
 		/* Request local IP address */
+		yield_ms(2000);
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIFSR);
 		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-		yield_ms(100);
 
 		/* LCD information */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_READY);
@@ -358,6 +354,8 @@ void serial_gsm_rx_cgatt(uint8_t val)
 		/* USB information */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_READY);
 		udi_write_tx_buf(g_prepare_buf, len, false);
+
+		yield_ms(500);
 
 		g_usart_gprs_auto_response_state = 0;
 		s_lock = false;
@@ -373,8 +371,7 @@ void serial_gsm_rx_cgatt(uint8_t val)
 		/* Check and push device to activate GPRS */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT);
 		s_lock = false;
-		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-		yield_ms(100);
+		usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 	}
 }
 
@@ -395,8 +392,8 @@ void serial_gsm_gprs_openClose(bool isStart)
 			/* Connect TCP/IP port */
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSTART, C_APRS_TX_HTTP_TARGET2_PROT, C_APRS_TX_HTTP_TARGET2_NM, C_APRS_TX_HTTP_TARGET2_PORT);
 			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
-			yield_ms(2500);
 
+			yield_ms(2500);
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSEND);
 			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
 			yield_ms(500);
@@ -417,7 +414,6 @@ void serial_gsm_gprs_openClose(bool isStart)
 			/* Close TCP/IP port */
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPCLOSE);
 			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
-			yield_ms(500);
 
 			s_isOpen = false;
 		}
@@ -439,10 +435,8 @@ void serial_sim808_gsm_shutdown(void)
 		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 	}
 
-	/* Prepare message to the SIM808 */
+	/* Power down the SIM808 device */
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SET_CPOWD_X, 1);
-
-	/* Send the string to the SIM808 */
 	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 }
 
