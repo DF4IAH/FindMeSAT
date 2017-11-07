@@ -1297,8 +1297,8 @@ static void task_twi1_baro(uint32_t now)
 	static uint32_t s_twi1_baro_d1	= 0UL;
 	static uint32_t s_twi1_baro_d2	= 0UL;
 	static int32_t	s_p				= 0L;
-	static int32_t	s_p_h			= 0L;
-	uint32_t l_twi1_baro_d1, l_twi1_baro_d2;
+	uint32_t		l_twi1_baro_d1, l_twi1_baro_d2;
+	int32_t			l_p_h;
 
 	/* Getting the global values */
 	{
@@ -1335,34 +1335,37 @@ static void task_twi1_baro(uint32_t now)
 		}
 		int32_t l_p = (int32_t)((((l_twi1_baro_d1 * sens) >> 21) - off) >> 15);
 
-		/* Calculate QNH when satellite data is available */
-		float l_p_h = s_p_h;
-		if ((s_p != l_p) && (g_gns_fix_status >= 1)) {
-			float l_gns_msl_alt_m;
-			int32_t l_twi1_baro_temp_100;
+		/* Store data and calculate QNH within valid data range, only */
+		if ((-3000 < temp) && (temp < 8000) && (30000L < l_p) && (l_p < 120000L)) {
+			/* Setting the global values */
+			{
+				irqflags_t flags = cpu_irq_save();
+				g_twi1_baro_temp_100	= temp;
+				g_twi1_baro_p_100		= l_p;
+				cpu_irq_restore(flags);
+			}
 
 			irqflags_t flags = cpu_irq_save();
-			l_gns_msl_alt_m			= g_gns_msl_alt_m;
-			l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
+			int16_t l_qnh_height_m			= g_qnh_height_m;
+			int32_t l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
 			cpu_irq_restore(flags);
 
 			/* A valid height value (3D navigation) seems to be access able */
-			if (l_gns_msl_alt_m) {
-				float a_m_h		= 0.0065f * l_gns_msl_alt_m;
+			if (s_p != l_p) {
+				float a_m_h		= 0.0065f * l_qnh_height_m;
 				float Th0		= C_0DEGC_K + (l_twi1_baro_temp_100 / 100.f);
 				float term		= 1.f + (a_m_h / Th0);
-				s_p_h = l_p_h	= l_p * pow(term, 5.255f);
-			}
-			s_p = l_p;
-		}
+				l_p_h			= l_p * pow(term, 5.255f);
 
-		/* Setting the global values */
-		{
-			irqflags_t flags = cpu_irq_save();
-			g_twi1_baro_temp_100					= temp;
-			g_twi1_baro_p_100						= l_p;
-			g_twi1_baro_p_h_100						= l_p_h;
-			cpu_irq_restore(flags);
+				/* Setting the global values */
+				{
+					irqflags_t flags = cpu_irq_save();
+					g_qnh_p_h_100 = l_p_h;
+					cpu_irq_restore(flags);
+				}
+
+				s_p = l_p;
+			}
 		}
 	}
 }
@@ -2247,7 +2250,7 @@ void task_twi2_lcd__baro(uint8_t col_left)
 		l_twi1_baro_p_100				= g_twi1_baro_p_100;
 		#endif
 
-		l_twi1_baro_p_h_100				= g_twi1_baro_p_h_100;
+		l_twi1_baro_p_h_100				= g_qnh_p_h_100;
 		if (!l_twi1_baro_p_h_100) {
 			l_twi1_baro_p_h_100			= g_twi1_baro_p_100;		// As long as no height is available use relative pressure instead
 		}

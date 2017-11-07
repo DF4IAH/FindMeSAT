@@ -448,7 +448,7 @@ void task_usb(uint32_t now)
 					l_adc_temp_deg_100			= g_adc_temp_deg_100;
 					l_twi1_baro_temp_100		= g_twi1_baro_temp_100;
 					l_twi1_baro_p_100			= g_twi1_baro_p_100;
-					l_twi1_baro_p_h_100			= g_twi1_baro_p_h_100;
+					l_twi1_baro_p_h_100			= g_qnh_p_h_100;
 					l_twi1_hygro_T_100			= g_twi1_hygro_T_100;
 					l_twi1_hygro_DP_100			= g_twi1_hygro_DP_100;
 					l_twi1_hygro_RH_100			= g_twi1_hygro_RH_100;

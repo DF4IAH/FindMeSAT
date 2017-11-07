@@ -68,7 +68,15 @@ extern APRS_ALERT_FSM_STATE_ENUM_t	g_aprs_alert_fsm_state;
 extern APRS_ALERT_REASON_ENUM_t		g_aprs_alert_reason;
 extern float						g_aprs_pos_anchor_lat;
 extern float						g_aprs_pos_anchor_lon;
-
+extern int32_t						g_aprs_alert_1_gyro_x_mdps;
+extern int32_t						g_aprs_alert_1_gyro_y_mdps;
+extern int32_t						g_aprs_alert_1_gyro_z_mdps;
+extern int16_t						g_aprs_alert_1_accel_x_mg;
+extern int16_t						g_aprs_alert_1_accel_y_mg;
+extern int16_t						g_aprs_alert_1_accel_z_mg;
+extern int32_t						g_aprs_alert_2_mag_x_nT;
+extern int32_t						g_aprs_alert_2_mag_y_nT;
+extern int32_t						g_aprs_alert_2_mag_z_nT;
 
 extern bool							g_usb_cdc_stdout_enabled;
 extern bool							g_usb_cdc_printStatusLines_atxmega;
@@ -80,9 +88,15 @@ extern bool							g_usb_cdc_access_blocked;
 extern WORKMODE_ENUM_t				g_workmode;
 
 extern usart_serial_options_t		g_usart1_options;
+extern uint8_t						g_usart_gprs_auto_response_state;
 extern bool							g_usart1_rx_ready;
+extern bool							g_usart1_rx_OK;
 extern uint16_t						g_usart1_rx_idx;
 extern char							g_usart1_rx_buf[C_USART1_RX_BUF_LEN];
+
+extern bool							g_gsm_enable;
+extern bool							g_gsm_aprs_enable;
+extern char							g_gsm_login_pwd[C_GSM_PIN_BUF_LEN];
 
 extern bool							g_twi1_gsm_valid;
 extern uint8_t						g_twi1_gsm_version;
@@ -140,7 +154,6 @@ extern uint32_t						g_twi1_baro_d1;
 extern uint32_t						g_twi1_baro_d2;
 extern int32_t						g_twi1_baro_temp_100;
 extern int32_t						g_twi1_baro_p_100;
-extern int32_t						g_twi1_baro_p_h_100;
 
 extern bool							g_twi1_hygro_valid;
 extern uint8_t						g_twi1_hygro_status;
@@ -193,8 +206,13 @@ extern int16_t						g_adc_io_adc5_volt_1000;
 extern int16_t						g_adc_silence_volt_1000;
 extern int16_t						g_adc_temp_deg_100;
 
+extern int16_t						g_env_temp_delta_100;
 extern int16_t						g_env_temp_deg_100;
 extern int16_t						g_env_hygro_RH_100;
+
+extern bool							g_qnh_is_auto;
+extern int16_t						g_qnh_height_m;
+extern int32_t						g_qnh_p_h_100;
 
 extern fifo_desc_t					g_fifo_sched_desc;
 extern uint32_t						g_fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH];

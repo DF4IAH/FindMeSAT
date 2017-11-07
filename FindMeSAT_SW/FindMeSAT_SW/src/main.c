@@ -97,15 +97,24 @@ uint8_t						g_gns_cPn0_dBHz						= 0;
 //uint16_t					g_gns_vpa_m							= 0;
 
 uint8_t						g_aprs_mode							= 0;
-char						g_aprs_source_callsign[12]			= "";
-char						g_aprs_source_ssid[4]				= "";
-char						g_aprs_login_user[10]				= "";
-char						g_aprs_login_pwd[6]			= "";
+char						g_aprs_source_callsign[C_APRS_S_LEN]= { 0 };	// EEPROM
+char						g_aprs_source_ssid[C_APRS_SSID_LEN]	= { 0 };	// EEPROM
+char						g_aprs_login_user[C_APRS_USER_LEN]	= { 0 };	// EEPROM
+char						g_aprs_login_pwd[C_APRS_PWD_LEN]	= { 0 };	// EEPROM
 uint64_t					g_aprs_alert_last					= 0ULL;
 APRS_ALERT_FSM_STATE_ENUM_t	g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
 APRS_ALERT_REASON_ENUM_t	g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
 float						g_aprs_pos_anchor_lat				= 0.f;
 float						g_aprs_pos_anchor_lon				= 0.f;
+int32_t						g_aprs_alert_1_gyro_x_mdps			= 0L;
+int32_t						g_aprs_alert_1_gyro_y_mdps			= 0L;
+int32_t						g_aprs_alert_1_gyro_z_mdps			= 0L;
+int16_t						g_aprs_alert_1_accel_x_mg			= 0;
+int16_t						g_aprs_alert_1_accel_y_mg			= 0;
+int16_t						g_aprs_alert_1_accel_z_mg			= 0;
+int32_t						g_aprs_alert_2_mag_x_nT				= 0L;
+int32_t						g_aprs_alert_2_mag_y_nT				= 0L;
+int32_t						g_aprs_alert_2_mag_z_nT				= 0L;
 
 bool						g_usb_cdc_stdout_enabled			= false;
 bool						g_usb_cdc_printStatusLines_atxmega	= false;	// EEPROM
@@ -117,9 +126,15 @@ bool						g_usb_cdc_access_blocked			= false;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 
 usart_serial_options_t		g_usart1_options					= { 0 };
+uint8_t						g_usart_gprs_auto_response_state	= 0;
 bool						g_usart1_rx_ready					= false;
+bool						g_usart1_rx_OK						= false;
 uint16_t					g_usart1_rx_idx						= 0;
 char						g_usart1_rx_buf[C_USART1_RX_BUF_LEN]= { 0 };
+
+bool						g_gsm_enable						= false;	// EEPROM
+bool						g_gsm_aprs_enable					= false;	// EEPROM
+char						g_gsm_login_pwd[C_GSM_PIN_BUF_LEN]	= { 0 };	// EEPROM
 
 bool						g_twi1_gsm_valid					= false;
 uint8_t						g_twi1_gsm_version					= 0;
@@ -177,7 +192,6 @@ volatile uint32_t			g_twi1_baro_d1						= 0UL;
 volatile uint32_t			g_twi1_baro_d2						= 0UL;
 volatile int32_t			g_twi1_baro_temp_100				= 0L;
 volatile int32_t			g_twi1_baro_p_100					= 0L;
-volatile int32_t			g_twi1_baro_p_h_100					= 0L;
 
 bool						g_twi1_hygro_valid					= false;
 uint8_t						g_twi1_hygro_status					= 0;
@@ -230,11 +244,16 @@ volatile int16_t			g_adc_io_adc5_volt_1000				= 0;
 volatile int16_t			g_adc_silence_volt_1000				= 0;
 volatile int16_t			g_adc_temp_deg_100					= 0;
 
+volatile int16_t			g_env_temp_delta_100				= 0;		// EEPROM
 volatile int16_t			g_env_temp_deg_100					= 0;
 volatile int16_t			g_env_hygro_RH_100					= 0;
 
+volatile bool				g_qnh_is_auto						= false;	// EEPROM
+volatile int16_t			g_qnh_height_m						= 0;		// EEPROM
+volatile int32_t			g_qnh_p_h_100						= 0L;
+
 fifo_desc_t					g_fifo_sched_desc;
-uint32_t					g_fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH];
+uint32_t					g_fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH]	= { 0 };
 
 struct pwm_config			g_pwm_vctcxo_cfg					= { 0 };
 struct pwm_config			g_pwm_ctr_pll_cfg					= { 0 };
@@ -247,7 +266,7 @@ volatile bool				g_sched_pop_again					= false;
 volatile sched_entry_t		g_sched_data[C_SCH_SLOT_CNT]		= { 0 };
 volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
 
-char						g_prepare_buf[C_TX_BUF_SIZE]		= "";
+char						g_prepare_buf[C_TX_BUF_SIZE]		= { 0 };
 
 
 const char					PM_APRS_TX_HTTP_TARGET1_NM[]		= "karlsruhe.aprs2.net";
@@ -269,7 +288,7 @@ PROGMEM_DECLARE(const char, PM_APRS_TX_LOGIN[]);
 const char					PM_APRS_TX_FORWARD[]				= "%s%s>APRS,TCPIP*:";							// USER, SSID with prefixing "-"
 PROGMEM_DECLARE(const char, PM_APRS_TX_FORWARD[]);
 const char					PM_APRS_TX_SYMBOL_TABLE_ID			= '/';
-const char					PM_APRS_TX_SYMBOL_CODE				= '$';	// /$:Phone  /j:Jeep
+const char					PM_APRS_TX_SYMBOL_CODE				= 'j';	// /$:Phone  /j:Jeep
 const char					PM_APRS_TX_POS[]					= "!%02d%5.2f%c%c%03d%5.2f%c%c%03d/%03d";
 PROGMEM_DECLARE(const char, PM_APRS_TX_POS[]);
 const char					PM_APRS_TX_N1[]						= " N1 gx=%+06.1fd gy=%+06.1fd gz=%+06.1fd";
@@ -402,6 +421,13 @@ static void init_globals(void)
 		g_1pps_twi_new						= false;
 	}
 
+	/* USART */
+	{
+		g_usart1_rx_ready					= false;
+		g_usart1_rx_OK						= false;
+		g_usart1_rx_idx						= 0;
+	}
+
 	/* GNS */
 	{
 		g_gns_run_status					= 0;
@@ -421,20 +447,6 @@ static void init_globals(void)
 		g_gns_cPn0_dBHz						= 0;
 //		g_gns_hpa_m							= 0;
 //		g_gns_vpa_m							= 0;
-	}
-
-	/* APRS */
-	{
-		g_aprs_mode							= 0;
-		*g_aprs_source_callsign				= 0;
-		*g_aprs_source_ssid					= 0;
-		*g_aprs_login_user					= 0;
-		*g_aprs_login_pwd					= 0;
-		g_aprs_alert_last					= 0ULL;
-		g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
-		g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
-		g_aprs_pos_anchor_lat				= 0.f;
-		g_aprs_pos_anchor_lon				= 0.f;
 	}
 
 	/* VCTCXO */
@@ -479,6 +491,43 @@ static void init_globals(void)
 			irqflags_t flags = cpu_irq_save();
 			g_pitch_tone_mode = val_i8;
 			cpu_irq_restore(flags);
+		}
+	}
+
+	/* Environment and QNH settings */
+	{
+		int16_t val_i16	= 0;
+		uint8_t val_ui8	= 0;
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_TEMP_DELTA, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_env_temp_delta_100 = val_i16;
+			cpu_irq_restore(flags);
+
+			/* Validity check */
+			if (g_env_temp_delta_100 < -1000 || g_env_temp_delta_100 > 10000) {
+				g_env_temp_delta_100 = 0;
+				save_globals(EEPROM_SAVE_BF__ENV);
+			}
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_QNH_AUTO, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_qnh_is_auto = (val_ui8 != 0);
+			cpu_irq_restore(flags);
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_qnh_height_m = val_i16;
+			cpu_irq_restore(flags);
+
+			/* Validity check */
+			if (g_qnh_height_m < -1000 || g_qnh_height_m > 30000) {
+				g_qnh_is_auto	= true;
+				g_qnh_height_m	= 0;
+				save_globals(EEPROM_SAVE_BF__ENV);
+			}
 		}
 	}
 
@@ -563,12 +612,43 @@ static void init_globals(void)
 		cpu_irq_restore(flags);
 	}
 
+	/* GSM */
+	{
+		uint8_t val_ui8 = 0;
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__GSM_BF, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
+			g_gsm_enable			= val_ui8 & GSM__ENABLE;
+			g_gsm_aprs_enable		= val_ui8 & GSM__APRS_ENABLE;
+		}
+		nvm_read(INT_EEPROM, EEPROM_ADDR__GSM_PIN,			(void*)&g_gsm_login_pwd,		sizeof(g_gsm_login_pwd));
+	}
+
 	/* APRS */
 	{
+		g_aprs_mode							= 0;
+		*g_aprs_source_callsign				= 0;
+		*g_aprs_source_ssid					= 0;
+		*g_aprs_login_user					= 0;
+		*g_aprs_login_pwd					= 0;
+		g_aprs_alert_last					= 0ULL;
+		g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
+		g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
+		g_aprs_pos_anchor_lat				= 0.f;
+		g_aprs_pos_anchor_lon				= 0.f;
+		g_aprs_alert_1_gyro_x_mdps			= 0L;
+		g_aprs_alert_1_gyro_y_mdps			= 0L;
+		g_aprs_alert_1_gyro_z_mdps			= 0L;
+		g_aprs_alert_1_accel_x_mg			= 0;
+		g_aprs_alert_1_accel_y_mg			= 0;
+		g_aprs_alert_1_accel_z_mg			= 0;
+		g_aprs_alert_2_mag_x_nT				= 0L;
+		g_aprs_alert_2_mag_y_nT				= 0L;
+		g_aprs_alert_2_mag_z_nT				= 0L;
+
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_CALLSIGN,	(void*)&g_aprs_source_callsign,	sizeof(g_aprs_source_callsign));
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_SSID,		(void*)&g_aprs_source_ssid,		sizeof(g_aprs_source_ssid));
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_LOGIN,		(void*)&g_aprs_login_user,		sizeof(g_aprs_login_user));
-		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_PWD,			(void*)&g_aprs_login_pwd,	sizeof(g_aprs_login_pwd));
+		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_PWD,			(void*)&g_aprs_login_pwd,		sizeof(g_aprs_login_pwd));
 		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_MODE,		(void*)&g_aprs_mode,			sizeof(g_aprs_mode));
 	}
 }
@@ -619,6 +699,19 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		cpu_irq_restore(flags);
 
 		nvm_write(INT_EEPROM, EEPROM_ADDR__PITCHTONE, (void*)&val_i8, sizeof(val_i8));
+	}
+
+	/* Environment and QNH settings */
+	if (bf & EEPROM_SAVE_BF__ENV) {
+		irqflags_t flags = cpu_irq_save();
+		int16_t val_i16_1	= g_env_temp_delta_100;
+		uint8_t val_ui8		= g_qnh_is_auto;
+		int16_t val_i16_2	= g_qnh_height_m;
+		cpu_irq_restore(flags);
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_TEMP_DELTA,	(void*)&val_i16_1, sizeof(val_i16_1));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_AUTO,	(void*)&val_ui8, sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS,	(void*)&val_i16_2, sizeof(val_i16_2));
 	}
 
 	/* Status lines */
@@ -676,6 +769,15 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_X, (void*)&l_twi1_gyro_2_mag_factx, sizeof(l_twi1_gyro_2_mag_factx));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Y, (void*)&l_twi1_gyro_2_mag_facty, sizeof(l_twi1_gyro_2_mag_facty));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Z, (void*)&l_twi1_gyro_2_mag_factz, sizeof(l_twi1_gyro_2_mag_factz));
+	}
+
+	/* GSM */
+	if (bf & EEPROM_SAVE_BF__GSM) {
+		uint8_t val_ui8 = (g_gsm_enable			?  GSM__ENABLE		: 0x00)
+						| (g_gsm_aprs_enable	?  GSM__APRS_ENABLE	: 0x00);
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_BF, &val_ui8, sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_PIN,			(void*)&g_gsm_login_pwd,		sizeof(g_gsm_login_pwd));
 	}
 
 	/* APRS */
@@ -1207,6 +1309,74 @@ void errorBeep_enable(bool enable)
 	save_globals(EEPROM_SAVE_BF__BEEP);
 }
 
+void env_temp(float temp)
+{
+	irqflags_t flags = cpu_irq_save();
+	int16_t l_env_temp_delta_100	= g_env_temp_delta_100;
+	int16_t l_env_temp_deg_100		= g_env_temp_deg_100;
+	cpu_irq_restore(flags);
+
+	l_env_temp_delta_100 = (int16_t) ((l_env_temp_deg_100 + l_env_temp_delta_100) - (100.f * temp));
+
+	flags = cpu_irq_save();
+	g_env_temp_delta_100 = l_env_temp_delta_100;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__ENV);
+}
+
+void gsm_aprs_enable(bool enable)
+{
+	/* atomic */
+	g_gsm_aprs_enable = enable;
+
+	save_globals(EEPROM_SAVE_BF__GSM);
+}
+
+void gsm_pin_update(const char pin[])
+{
+	uint8_t idx = 0;
+
+	if (!pin) {
+		g_gsm_login_pwd[idx++] = 0;
+
+	} else if ((strlen(pin) - 1) < sizeof(g_gsm_login_pwd)) {
+		for (; idx < (sizeof(g_gsm_login_pwd) - 1); idx++) {
+			if (0x20 <= pin[idx]) {
+				g_gsm_login_pwd[idx] = (char)pin[idx];
+			} else {
+				g_gsm_login_pwd[idx++] = 0;
+				break;
+			}
+		}
+
+	} else {
+		g_gsm_login_pwd[0] = 0;
+	}
+
+	/* Fill up to the end of the field */
+	while (idx < sizeof(g_gsm_login_pwd)) {
+		g_gsm_login_pwd[idx++] = 0;
+	}
+
+	save_globals(EEPROM_SAVE_BF__GSM);
+}
+
+void gsm_enable(bool enable)
+{
+	/* atomic */
+	g_gsm_enable = enable;
+
+	save_globals(EEPROM_SAVE_BF__GSM);
+
+	/* Switch to the desired activation */
+	serial_gsm_activation(enable);
+
+	if (enable && g_gsm_aprs_enable) {
+		serial_gprs_establish();
+	}
+}
+
 void keyBeep_enable(bool enable)
 {
 	/* atomic */
@@ -1221,6 +1391,24 @@ void pitchTone_mode(uint8_t mode)
 	g_pitch_tone_mode = mode;
 
 	save_globals(EEPROM_SAVE_BF__PITCHTONE);
+}
+
+void qnh_setAuto(void)
+{
+	/* atomic */
+	g_qnh_is_auto	= true;
+
+	save_globals(EEPROM_SAVE_BF__ENV);
+}
+
+void qnh_setHeightM(int16_t heightM)
+{
+	irqflags_t flags = cpu_irq_save();
+	g_qnh_is_auto	= false;
+	g_qnh_height_m	= heightM;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__ENV);
 }
 
 void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf)
@@ -1552,61 +1740,54 @@ uint16_t aprs_mag_delta_nT(void)
 void aprs_message_begin(void)
 {
 	/* GSM DPRS transportation */
-	if (true) {
-
+	if (g_gsm_enable && g_gsm_aprs_enable) {
+		serial_gsm_gprs_openClose(true);
 	}
 }
 
 void aprs_message_end(void)
 {
 	/* GSM DPRS transportation */
-	if (true) {
-
+	if (g_gsm_enable && g_gsm_aprs_enable) {
+		serial_gsm_gprs_openClose(false);
 	}
 }
 
 void aprs_message_send(const char* msg, int content_message_len)
 {
 	/* GSM DPRS transportation */
-	if (true) {
+	if (g_gsm_enable && g_gsm_aprs_enable) {
 		char l_content_hdr[64];
 		int content_hdr_len  = snprintf_P(l_content_hdr, sizeof(l_content_hdr), PM_APRS_TX_LOGIN, g_aprs_login_user, g_aprs_login_pwd, APPLICATION_NAME, APPLICATION_VERSION);
 		int len = content_hdr_len + content_message_len;
 
 		/* Transport message */
 		{
-			char l_msg[64];
+			char l_msg[C_TX_BUF_SIZE];
 			int msg_len;
-
-			/* establish TCP/IP connection */
-			//gsm_dprs_tcpip_connect();
 
 			/* Line 1 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L1);
-			serial_sim808_send(l_msg, msg_len);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_msg, msg_len);
 
 			/* Line 2 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L2, len);
-			serial_sim808_send(l_msg, msg_len);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_msg, msg_len);
 
 			/* Line 3 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L3);
-			serial_sim808_send(l_msg, msg_len);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_msg, msg_len);
 
 			/* Line 4 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L4);
-			serial_sim808_send(l_msg, msg_len);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_msg, msg_len);
 
 			/* Content header - authentication */
-			serial_sim808_send(l_content_hdr, content_hdr_len);
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_content_hdr, content_hdr_len);
 
 			/* Content message */
-			serial_sim808_send(msg, content_message_len);
-
-			/* release TCP/IP connection */
-			//gsm_dprs_tcpip_disconnect();
+			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) msg, content_message_len);
 		}
-
 	}
 }
 
@@ -2592,17 +2773,19 @@ static void task_env_calc(uint32_t now)
 		int16_t	l_env_temp_deg_100;
 		int16_t	l_env_hygro_RH_100;
 		int16_t l_twi1_hygro_DP_100;
+		int16_t l_env_temp_delta_100;
 
 		/* Get the global data */
 		flags = cpu_irq_save();
 		l_twi1_baro_temp_100	= g_twi1_baro_temp_100;
 		l_twi1_hygro_T_100		= g_twi1_hygro_T_100;
 		l_twi1_hygro_DP_100		= g_twi1_hygro_DP_100;
+		l_env_temp_delta_100	= g_env_temp_delta_100;
 		cpu_irq_restore(flags);
 
 		/* Mean temperature of the Barometer and the Hygrometer chip */
 		temp_twi1_mean		= ((float)l_twi1_baro_temp_100 + (float)l_twi1_hygro_T_100) / 200.f;
-		temp_env			= temp_twi1_mean - C_ENV_TEMP_DELTA_K;
+		temp_env			= temp_twi1_mean - (l_env_temp_delta_100 / 100.f);
 		temp_env_round		= (temp_env >= 0.f) ?  0.5f : -0.5f;
 		l_env_temp_deg_100	= (int16_t) (temp_env_round + 100.f * temp_env);
 
@@ -2717,6 +2900,29 @@ static void task_main_aprs(uint32_t now)
 
 			if (l_aprs_alert_reason != APRS_ALERT_REASON__NONE) {
 				l_aprs_alert_last		= l_now_sec;
+
+				/* Make snapshot of alert environment */
+				{
+					flags = cpu_irq_save();
+
+					/* Gyroscope */
+					g_aprs_alert_1_gyro_x_mdps	= g_twi1_gyro_1_gyro_x_mdps;
+					g_aprs_alert_1_gyro_y_mdps	= g_twi1_gyro_1_gyro_y_mdps;
+					g_aprs_alert_1_gyro_z_mdps	= g_twi1_gyro_1_gyro_z_mdps;
+
+					/* Acceleration */
+					g_aprs_alert_1_accel_x_mg	= g_twi1_gyro_1_accel_x_mg;
+					g_aprs_alert_1_accel_y_mg	= g_twi1_gyro_1_accel_y_mg;
+					g_aprs_alert_1_accel_z_mg	= g_twi1_gyro_1_accel_z_mg;
+
+					/* Magnetics */
+					g_aprs_alert_2_mag_x_nT		= g_twi1_gyro_2_mag_x_nT;
+					g_aprs_alert_2_mag_y_nT		= g_twi1_gyro_2_mag_y_nT;
+					g_aprs_alert_2_mag_z_nT		= g_twi1_gyro_2_mag_z_nT;
+
+					cpu_irq_restore(flags);
+				}
+
 				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N1;
 			}
 		}
@@ -2750,91 +2956,96 @@ static void task_main_aprs(uint32_t now)
 
 				l_speed_kn			= (uint16_t) (0.5f + l_gns_speed_kmPh / 1.852f);
 			}
-
-			/* Message content */
-			len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-			len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 		}
 
 		/* Check for reporting interval */
 		switch (l_aprs_alert_fsm_state) {
 			case APRS_ALERT_FSM_STATE__DO_N1:
 			{
-				int32_t l_twi1_gyro_1_gyro_x_mdps;
-				int32_t l_twi1_gyro_1_gyro_y_mdps;
-				int32_t l_twi1_gyro_1_gyro_z_mdps;
+				int32_t l_aprs_alert_1_gyro_x_mdps;
+				int32_t l_aprs_alert_1_gyro_y_mdps;
+				int32_t l_aprs_alert_1_gyro_z_mdps;
 
 				flags = cpu_irq_save();
-				l_twi1_gyro_1_gyro_x_mdps = g_twi1_gyro_1_gyro_x_mdps;
-				l_twi1_gyro_1_gyro_y_mdps = g_twi1_gyro_1_gyro_y_mdps;
-				l_twi1_gyro_1_gyro_z_mdps = g_twi1_gyro_1_gyro_z_mdps;
+				l_aprs_alert_1_gyro_x_mdps = g_aprs_alert_1_gyro_x_mdps;
+				l_aprs_alert_1_gyro_y_mdps = g_aprs_alert_1_gyro_y_mdps;
+				l_aprs_alert_1_gyro_z_mdps = g_aprs_alert_1_gyro_z_mdps;
 				cpu_irq_restore(flags);
 
-				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N1, l_twi1_gyro_1_gyro_x_mdps / 1000.f, l_twi1_gyro_1_gyro_y_mdps / 1000.f, l_twi1_gyro_1_gyro_z_mdps / 1000.f);
-				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
+				/* Message content */
+				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N1, l_aprs_alert_1_gyro_x_mdps / 1000.f, l_aprs_alert_1_gyro_y_mdps / 1000.f, l_aprs_alert_1_gyro_z_mdps / 1000.f);
 
-				/* Begin a new message block */
-				aprs_message_begin();
+				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N2:
-			{
-				int16_t l_twi1_gyro_1_accel_x_mg;
-				int16_t l_twi1_gyro_1_accel_y_mg;
-				int16_t l_twi1_gyro_1_accel_z_mg;
+			if ((l_aprs_alert_last + 1 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
+				int16_t l_aprs_alert_1_accel_x_mg;
+				int16_t l_aprs_alert_1_accel_y_mg;
+				int16_t l_aprs_alert_1_accel_z_mg;
 
 				flags = cpu_irq_save();
-				l_twi1_gyro_1_accel_x_mg = g_twi1_gyro_1_accel_x_mg;
-				l_twi1_gyro_1_accel_y_mg = g_twi1_gyro_1_accel_y_mg;
-				l_twi1_gyro_1_accel_z_mg = g_twi1_gyro_1_accel_z_mg;
+				l_aprs_alert_1_accel_x_mg = g_aprs_alert_1_accel_x_mg;
+				l_aprs_alert_1_accel_y_mg = g_aprs_alert_1_accel_y_mg;
+				l_aprs_alert_1_accel_z_mg = g_aprs_alert_1_accel_z_mg;
 				cpu_irq_restore(flags);
 
-				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N2, l_twi1_gyro_1_accel_x_mg / 1000.f, l_twi1_gyro_1_accel_y_mg / 1000.f, l_twi1_gyro_1_accel_z_mg / 1000.f);
+				/* Message content */
+				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N2, l_aprs_alert_1_accel_x_mg / 1000.f, l_aprs_alert_1_accel_y_mg / 1000.f, l_aprs_alert_1_accel_z_mg / 1000.f);
+
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N3;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N3:
-			{
-				int32_t l_twi1_gyro_2_mag_x_nT;
-				int32_t l_twi1_gyro_2_mag_y_nT;
-				int32_t l_twi1_gyro_2_mag_z_nT;
+			if ((l_aprs_alert_last + 2 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
+				int32_t l_aprs_alert_2_mag_x_nT;
+				int32_t l_aprs_alert_2_mag_y_nT;
+				int32_t l_aprs_alert_2_mag_z_nT;
 
 				flags = cpu_irq_save();
-				l_twi1_gyro_2_mag_x_nT = g_twi1_gyro_2_mag_x_nT;
-				l_twi1_gyro_2_mag_y_nT = g_twi1_gyro_2_mag_y_nT;
-				l_twi1_gyro_2_mag_z_nT = g_twi1_gyro_2_mag_z_nT;
+				l_aprs_alert_2_mag_x_nT = g_aprs_alert_2_mag_x_nT;
+				l_aprs_alert_2_mag_y_nT = g_aprs_alert_2_mag_y_nT;
+				l_aprs_alert_2_mag_z_nT = g_aprs_alert_2_mag_z_nT;
 				cpu_irq_restore(flags);
 
-				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N3, l_twi1_gyro_2_mag_x_nT / 1000.f, l_twi1_gyro_2_mag_y_nT / 1000.f, l_twi1_gyro_2_mag_z_nT / 1000.f);
+				/* Message content */
+				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N3, l_aprs_alert_2_mag_x_nT / 1000.f, l_aprs_alert_2_mag_y_nT / 1000.f, l_aprs_alert_2_mag_z_nT / 1000.f);
+
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N4:
-			{
+			if ((l_aprs_alert_last + 3 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
 				int16_t l_twi1_hygro_T_100;
-				//int16_t l_twi1_hygro_RH_100;
 				int16_t l_twi1_hygro_DP_100;
-				//int32_t l_twi1_baro_p_100;
 				int32_t l_twi1_baro_p_h_100;
 
 				flags = cpu_irq_save();
 				l_twi1_hygro_T_100	= g_twi1_hygro_T_100;
-				// l_twi1_hygro_RH_100	= g_twi1_hygro_RH_100;
 				l_twi1_hygro_DP_100	= g_twi1_hygro_DP_100;
-				//l_twi1_baro_p_100	= g_twi1_baro_p_100;
-				l_twi1_baro_p_h_100	= g_twi1_baro_p_h_100;
+				l_twi1_baro_p_h_100	= g_qnh_p_h_100;
 				cpu_irq_restore(flags);
 
+				/* Message content */
+				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N4, l_twi1_hygro_T_100 / 100.f, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);
+
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N5;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N5:
-			{
+			if ((l_aprs_alert_last + 4 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
 				const char	l_reason_ary[]		= APRS_ALERT_REASON_SHORTHAND;
 				float		l_gns_msl_alt_m		= g_gns_msl_alt_m;
 				float		l_gns_speed_kmPh	= g_gns_speed_kmPh;
@@ -2854,7 +3065,11 @@ static void task_main_aprs(uint32_t now)
 
 				float l_gns_msl_alt_ft = l_gns_msl_alt_m >= 0.f ?  (0.5f + (l_gns_msl_alt_m / 0.3048f)) : (-0.5f + (l_gns_msl_alt_m / 0.3048f));
 
+				/* Message content */
+				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N5, (long)l_gns_msl_alt_ft, l_gns_msl_alt_m, l_gns_speed_kmPh, l_reason);
+
 				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__NOOP;
 				l_aprs_alert_reason		= APRS_ALERT_REASON__NONE;
 			}
@@ -2877,20 +3092,14 @@ static void task_main_aprs(uint32_t now)
 
 	/* Message content ready */
 	if (len) {
-		len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_MSGEND);
-
 		/* Transport APRS message to network */
-		aprs_message_send(g_prepare_buf, len);
+		{
+			aprs_message_begin();
 
-		/* Logging to the USB console */
-		udi_write_tx_buf(g_prepare_buf, len, false);
+			/* Sending APRS information to the server */
+			aprs_message_send(g_prepare_buf, len);
 
-		/* End of message block */
-		if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
 			aprs_message_end();
-
-			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_MSGEND);
-			udi_write_tx_buf(g_prepare_buf, len, false);
 		}
 	}
 }
@@ -2976,6 +3185,11 @@ int main(void)
 
 	/* Show help page of command set */
 	printHelp();
+
+	/* Establish GPRS connection */
+	if (g_gsm_enable) {
+		serial_gprs_establish();
+	}
 
 	/* Calibration of TWI1 devices */
 	calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
