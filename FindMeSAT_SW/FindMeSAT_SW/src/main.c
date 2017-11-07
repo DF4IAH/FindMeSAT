@@ -269,12 +269,6 @@ volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
 char						g_prepare_buf[C_TX_BUF_SIZE]		= { 0 };
 
 
-const char					PM_APRS_TX_HTTP_TARGET1_NM[]		= "karlsruhe.aprs2.net";
-PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_TARGET1_NM[]);
-const uint16_t				 C_APRS_TX_HTTP_TARGET1_PORT		= 8080U;
-const char					PM_APRS_TX_HTTP_TARGET2_NM[]		= "nuremberg.aprs2.net";
-PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_TARGET2_NM[]);
-const uint16_t				 C_APRS_TX_HTTP_TARGET2_PORT		= 8080U;
 const char					PM_APRS_TX_HTTP_L1[]				= "POST / HTTP/1.1\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L1[]);
 const char					PM_APRS_TX_HTTP_L2[]				= "Content-Length: %d\r\n";
@@ -291,15 +285,15 @@ const char					PM_APRS_TX_SYMBOL_TABLE_ID			= '/';
 const char					PM_APRS_TX_SYMBOL_CODE				= 'j';	// /$:Phone  /j:Jeep
 const char					PM_APRS_TX_POS[]					= "!%02d%5.2f%c%c%03d%5.2f%c%c%03d/%03d";
 PROGMEM_DECLARE(const char, PM_APRS_TX_POS[]);
-const char					PM_APRS_TX_N1[]						= " N1 gx=%+06.1fd gy=%+06.1fd gz=%+06.1fd";
+const char					PM_APRS_TX_N1[]						= " N1 Gx=%+06.1fd Gy=%+06.1fd Gz=%+06.1fd";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N1[]);
-const char					PM_APRS_TX_N2[]						= " N2 ax=%+6.3fg ay=%+6.3fg az=%+6.3fg";
+const char					PM_APRS_TX_N2[]						= " N2 Ax=%+6.3fg Ay=%+6.3fg Az=%+6.3fg";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N2[]);
-const char					PM_APRS_TX_N3[]						= " N3 mx=%+6.1fm my=%+6.1fm mz=%+6.1fm";
+const char					PM_APRS_TX_N3[]						= " N3 Mx=%+6.1fm My=%+6.1fm Mz=%+6.1fm";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N3[]);
-const char					PM_APRS_TX_N4[]						= " N4 t=%+5.2fC dp=%+5.2fC qnh=%7.2fh";
+const char					PM_APRS_TX_N4[]						= " N4 T=%+5.2fC DP=%+5.2fC QNH=%7.2fh";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N4[]);
-const char					PM_APRS_TX_N5[]						= " N5 /A=%06ld a=%+07.1fm s=%5.1fk R=%c";
+const char					PM_APRS_TX_N5[]						= " N5 /A=%06ld a=%+07.1fm s=%5.1fk r=%c";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N5[]);
 const char					PM_APRS_TX_MSGEND[]					= "\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_MSGEND[]);
@@ -2878,24 +2872,29 @@ static void task_main_aprs(uint32_t now)
 		if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
 			/* APRS messaging started */
 			if ((l_aprs_alert_last + C_APRS_ALERT_TIME_SEC) <= l_now_sec) {
-				l_aprs_alert_reason = APRS_ALERT_REASON__TIME;
+				l_aprs_alert_reason		= APRS_ALERT_REASON__TIME;
+				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N4;
 
 			} else if ((aprs_pos_delta_m() > C_APRS_ALERT_POS_DELTA_M) &&
 				((l_aprs_alert_last + C_APRS_ALERT_POS_HOLDOFF_SEC) <= l_now_sec)) {
-				l_aprs_alert_reason = APRS_ALERT_REASON__POSITION;
+				l_aprs_alert_reason		= APRS_ALERT_REASON__POSITION;
+				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N4;
 				aprs_pos_anchor();
 
 			} else if ((aprs_gyro_total_dps_1000() > C_APRS_ALERT_GYRO_DPS_1000) &&
 				((l_aprs_alert_last + C_APRS_ALERT_GYRO_HOLDOFF_SEC) <= l_now_sec)) {
-				l_aprs_alert_reason = APRS_ALERT_REASON__GYRO;
+				l_aprs_alert_reason		= APRS_ALERT_REASON__GYRO;
+				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N1;
 
 			} else if ((aprs_accel_xy_delta_g_1000() > C_APRS_ALERT_ACCEL_G_1000) &&
 				((l_aprs_alert_last + C_APRS_ALERT_ACCEL_HOLDOFF_SEC) <= l_now_sec)) {
-				l_aprs_alert_reason = APRS_ALERT_REASON__ACCEL;
+				l_aprs_alert_reason		= APRS_ALERT_REASON__ACCEL;
+				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N2;
 
 			} else if ((aprs_mag_delta_nT() > C_APRS_ALERT_MAG_DELTA_NT) &&
 				((l_aprs_alert_last + C_APRS_ALERT_MAG_HOLDOFF_SEC) <= l_now_sec)) {
-				l_aprs_alert_reason = APRS_ALERT_REASON__MAGNET;
+				l_aprs_alert_reason		= APRS_ALERT_REASON__MAGNET;
+				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N3;
 			}
 
 			if (l_aprs_alert_reason != APRS_ALERT_REASON__NONE) {
@@ -2922,8 +2921,6 @@ static void task_main_aprs(uint32_t now)
 
 					cpu_irq_restore(flags);
 				}
-
-				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N1;
 			}
 		}
 
@@ -2977,12 +2974,12 @@ static void task_main_aprs(uint32_t now)
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N1, l_aprs_alert_1_gyro_x_mdps / 1000.f, l_aprs_alert_1_gyro_y_mdps / 1000.f, l_aprs_alert_1_gyro_z_mdps / 1000.f);
 
-				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
+				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N2:
-			if ((l_aprs_alert_last + 1 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
+			{
 				int16_t l_aprs_alert_1_accel_x_mg;
 				int16_t l_aprs_alert_1_accel_y_mg;
 				int16_t l_aprs_alert_1_accel_z_mg;
@@ -2998,12 +2995,12 @@ static void task_main_aprs(uint32_t now)
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N2, l_aprs_alert_1_accel_x_mg / 1000.f, l_aprs_alert_1_accel_y_mg / 1000.f, l_aprs_alert_1_accel_z_mg / 1000.f);
 
-				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N3;
+				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N3:
-			if ((l_aprs_alert_last + 2 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
+			{
 				int32_t l_aprs_alert_2_mag_x_nT;
 				int32_t l_aprs_alert_2_mag_y_nT;
 				int32_t l_aprs_alert_2_mag_z_nT;
@@ -3024,13 +3021,13 @@ static void task_main_aprs(uint32_t now)
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N4:
-			if ((l_aprs_alert_last + 3 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
-				int16_t l_twi1_hygro_T_100;
+			if ((l_aprs_alert_last + 1 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
+				int16_t l_env_temp_deg_100;
 				int16_t l_twi1_hygro_DP_100;
 				int32_t l_twi1_baro_p_h_100;
 
 				flags = cpu_irq_save();
-				l_twi1_hygro_T_100	= g_twi1_hygro_T_100;
+				l_env_temp_deg_100	= g_env_temp_deg_100;
 				l_twi1_hygro_DP_100	= g_twi1_hygro_DP_100;
 				l_twi1_baro_p_h_100	= g_qnh_p_h_100;
 				cpu_irq_restore(flags);
@@ -3038,14 +3035,14 @@ static void task_main_aprs(uint32_t now)
 				/* Message content */
 				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
-				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N4, l_twi1_hygro_T_100 / 100.f, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N4, l_env_temp_deg_100 / 100.f, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N5;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N5:
-			if ((l_aprs_alert_last + 4 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
+			if ((l_aprs_alert_last + 2 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
 				const char	l_reason_ary[]		= APRS_ALERT_REASON_SHORTHAND;
 				float		l_gns_msl_alt_m		= g_gns_msl_alt_m;
 				float		l_gns_speed_kmPh	= g_gns_speed_kmPh;
@@ -3183,6 +3180,10 @@ int main(void)
 	/* Start serial1 */
 	serial_start();		// Start communication with the SIM808 */
 
+	/* Calibration of TWI1 devices */
+	calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
+	calibration_mode(CALIBRATION_MODE_ENUM__ACCEL_Z);
+
 	/* Show help page of command set */
 	printHelp();
 
@@ -3190,10 +3191,6 @@ int main(void)
 	if (g_gsm_enable) {
 		serial_gprs_establish();
 	}
-
-	/* Calibration of TWI1 devices */
-	calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
-	calibration_mode(CALIBRATION_MODE_ENUM__ACCEL_Z);
 
 	/* LED green */
 	twi2_set_leds(0x02);
