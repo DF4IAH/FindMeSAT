@@ -363,11 +363,12 @@
 #define TWI2_SLAVE_ADDR												TWI_SMART_LCD_ADDR
 #define TWI2_SPEED													400000
 #define TWI2_STR_MAXLEN												6
+#define TWI2_DISPLAY_TIMEOUT_MS										50U
 
 #define TWI_DATA_LENGTH												TWIS_SEND_BUFFER_SIZE
 
 
-void twi2_waitUntilReady(void);
+bool twi2_waitUntilReady(bool retry);
 
 void twi2_set_leds(uint8_t leds);
 void twi2_set_ledbl(uint8_t mode, uint8_t pwm_p100);
@@ -386,6 +387,7 @@ status_code_t twi1_gyro_gyro_offset_set(void);
 status_code_t twi1_gyro_accel_offset_set(void);
 void init_twi1_gyro(void);
 // void task_twi1_onboard(uint32_t now);
+void start_twi2_lcd(void);
 
 void task_twi2_lcd_cls(void);
 void task_twi2_lcd_pos_xy(uint8_t x, uint8_t y);

@@ -371,6 +371,7 @@ void serial_gsm_rx_cgatt(uint8_t val)
 		/* Open the channel for the first time */
 		yield_ms(1500);
 		serial_gsm_gprs_openClose(true);
+		serial_gsm_gprs_openClose(false);
 
 	} else {
 		yield_ms(2500);
@@ -412,7 +413,7 @@ void serial_gsm_gprs_openClose(bool isStart)
 			yield_ms(2500);
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSEND);
 			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
-			yield_ms(500);
+			yield_ms(1000);
 
 			s_isOpen = true;
 
