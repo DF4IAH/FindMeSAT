@@ -20,7 +20,7 @@
 #define APPLICATION_VERSION											"1.0"
 
 
-#define C_TWI1_BARO_C_CNT											8
+#define C_TWI1_BARO_C_CNT											10
 
 #define C_0DEGC_K													273.15f
 

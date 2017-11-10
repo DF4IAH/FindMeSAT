@@ -416,10 +416,10 @@ void serial_gsm_gprs_openClose(bool isStart)
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSTART, C_APRS_TX_HTTP_TARGET2_PROT, C_APRS_TX_HTTP_TARGET2_NM, C_APRS_TX_HTTP_TARGET2_PORT);
 			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
 
-			yield_ms(2500);
+			yield_ms(2750);
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSEND);
 			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
-			yield_ms(1000);
+			yield_ms(250);
 
 			s_isOpen = true;
 
@@ -429,6 +429,7 @@ void serial_gsm_gprs_openClose(bool isStart)
 			/* Stop message block by a ^Z character (0x1a) */
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CTRL_Z);
 			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
+			yield_ms(500);
 
 			#if 1
 			len = snprintf(buf, sizeof(buf), "#46 DEBUG: Closing TCP connection ...\r\n");
