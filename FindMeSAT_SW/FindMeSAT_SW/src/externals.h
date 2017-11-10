@@ -96,6 +96,7 @@ extern char							g_usart1_rx_buf[C_USART1_RX_BUF_LEN];
 
 extern bool							g_gsm_enable;
 extern bool							g_gsm_aprs_enable;
+extern bool							g_gsm_aprs_connected;
 extern char							g_gsm_login_pwd[C_GSM_PIN_BUF_LEN];
 
 extern bool							g_twi1_gsm_valid;

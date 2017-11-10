@@ -39,9 +39,9 @@ const char					C_APRS_TX_HTTP_TARGET2_PROT[]					= "TCP";
 const char					C_APRS_TX_HTTP_TARGET2_NM[]						= "nuremberg.aprs2.net";
 const uint16_t				C_APRS_TX_HTTP_TARGET2_PORT						= 8080U;
 
-const char					PM_SIM808_INFO_LCD_START[]						= "Init: SIM808 Starting ...";
+const char					PM_SIM808_INFO_LCD_START[]						= "Init: SIM808 Starting  ...";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_START[]);
-const char					PM_SIM808_INFO_LCD_RESTART[]					= "Init: SIM808 Restarting ...";
+const char					PM_SIM808_INFO_LCD_RESTART[]					= "Init: SIM808 Restarting...";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_RESTART[]);
 const char					PM_SIM808_INFO_LCD_INITED[]						= "Init: SIM808 - init'ed ...";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_INITED[]);
@@ -134,6 +134,8 @@ const char					PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R[]			= "+CREG: ";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R[]);
 const char					PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R[]			= "+CGATT: ";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R[]);
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_RING_R[]			= "RING";
+PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_RING_R[]);
 
 
 /* ISR routines */
@@ -235,10 +237,13 @@ void serial_sim808_gsm_setPin(const char* pin)
 void serial_gsm_activation(bool enable)
 {
 	if (enable) {
-		serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_ON);
-		serial_sim808_gsm_setPin(g_gsm_login_pwd);
+		if (g_gsm_enable) {
+			serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_ON);
+			serial_sim808_gsm_setPin(g_gsm_login_pwd);
+		}
 
 	} else {
+		g_gsm_aprs_connected = false;
 		if (g_gsm_aprs_enable) {
 			serial_gsm_gprs_openClose(false);
 		}
@@ -250,8 +255,21 @@ void serial_send_gprs_open(void)
 {
 	int len;
 
+	if (!g_gsm_enable || !g_gsm_aprs_enable) {
+		g_gsm_aprs_connected = false;
+		return;
+	}
+
 	/* Enable auto reply chain */
 	g_usart_gprs_auto_response_state = 1;
+
+	/* LCD information */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_READY);
+	task_twi2_lcd_str(8, 10 * 10, g_prepare_buf);
+
+	/* USB information */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_READY);
+	udi_write_tx_buf(g_prepare_buf, len, false);
 
 	#if 1
 	len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#11 DEBUG: +CREG? sending ...\r\n");
@@ -260,8 +278,9 @@ void serial_send_gprs_open(void)
 
 	/* GPRS activation - check for registration, first */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG);
-	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-	yield_ms(100);
+	usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
+
+	yield_ms(500);
 }
 
 void serial_gsm_rx_creg(uint8_t val)
@@ -270,9 +289,10 @@ void serial_gsm_rx_creg(uint8_t val)
 	static bool s_lock = false;
 	int len;
 
-	if (s_done || s_lock || (g_usart_gprs_auto_response_state != 1)) {
+	if (!g_gsm_enable || !g_gsm_aprs_enable || s_done || s_lock || (g_usart_gprs_auto_response_state != 1)) {
 		return;
 	}
+
 	s_lock = true;
 
 	if ((1 <= val) && (val <= 2)) {
@@ -293,8 +313,7 @@ void serial_gsm_rx_creg(uint8_t val)
 		/* Check and push device to activate GPRS */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT);
 		s_lock = false;
-		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-		yield_ms(100);
+		usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 
 	} else {
 		yield_ms(2500);
@@ -307,8 +326,7 @@ void serial_gsm_rx_creg(uint8_t val)
 		/* Repeat: check for registration  */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG);
 		s_lock = false;
-		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-		yield_ms(100);
+		usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 	}
 }
 
@@ -318,9 +336,10 @@ void serial_gsm_rx_cgatt(uint8_t val)
 	static bool s_lock = false;
 	int len;
 
-	if (s_done || s_lock || (g_usart_gprs_auto_response_state != 2)) {
+	if (!g_gsm_enable || !g_gsm_aprs_enable || s_done || s_lock || (g_usart_gprs_auto_response_state != 2)) {
 		return;
 	}
+
 	s_lock = true;
 
 	if (1 <= val) {
@@ -339,28 +358,25 @@ void serial_gsm_rx_cgatt(uint8_t val)
 		/* Start task for GPRS service */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT, "web.vodafone.de", "", "");
 		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-		yield_ms(100);
 
 		/* Establish GPRS connection */
+		yield_ms(500);
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIICR);
 		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-		yield_ms(2000);
 
 		/* Request local IP address */
+		yield_ms(1500);
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIFSR);
 		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-		yield_ms(100);
-
-		/* LCD information */
-		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_READY);
-		task_twi2_lcd_str(8, 11 * 10, g_prepare_buf);
-
-		/* USB information */
-		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_READY);
-		udi_write_tx_buf(g_prepare_buf, len, false);
 
 		g_usart_gprs_auto_response_state = 0;
 		s_lock = false;
+
+		/* Open the channel for the first time */
+		yield_ms(1500);
+		//serial_gsm_gprs_openClose(true);
+		//serial_gsm_gprs_openClose(false);
+		g_gsm_aprs_connected = true;
 
 	} else {
 		yield_ms(2500);
@@ -373,8 +389,7 @@ void serial_gsm_rx_cgatt(uint8_t val)
 		/* Check and push device to activate GPRS */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT);
 		s_lock = false;
-		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
-		yield_ms(100);
+		usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) g_prepare_buf, len);
 	}
 }
 
@@ -382,6 +397,11 @@ void serial_gsm_gprs_openClose(bool isStart)
 {
 	static bool s_isOpen = false;
 	char buf[C_TX_BUF_SIZE];
+
+	if (!g_gsm_enable || !g_gsm_aprs_enable) {
+		g_gsm_aprs_connected = false;
+		return;
+	}
 
 	if (!g_usart_gprs_auto_response_state) {
 		int len;
@@ -395,19 +415,21 @@ void serial_gsm_gprs_openClose(bool isStart)
 			/* Connect TCP/IP port */
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSTART, C_APRS_TX_HTTP_TARGET2_PROT, C_APRS_TX_HTTP_TARGET2_NM, C_APRS_TX_HTTP_TARGET2_PORT);
 			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
-			yield_ms(2500);
 
+			yield_ms(2750);
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSEND);
 			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
-			yield_ms(500);
+			yield_ms(250);
 
 			s_isOpen = true;
 
 		} else if (!isStart && s_isOpen) {
+			g_gsm_aprs_connected = false;
 
 			/* Stop message block by a ^Z character (0x1a) */
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CTRL_Z);
 			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
+			yield_ms(500);
 
 			#if 1
 			len = snprintf(buf, sizeof(buf), "#46 DEBUG: Closing TCP connection ...\r\n");
@@ -417,7 +439,6 @@ void serial_gsm_gprs_openClose(bool isStart)
 			/* Close TCP/IP port */
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPCLOSE);
 			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) buf, len);
-			yield_ms(500);
 
 			s_isOpen = false;
 		}
@@ -426,7 +447,9 @@ void serial_gsm_gprs_openClose(bool isStart)
 
 void serial_sim808_gsm_shutdown(void)
 {
-	if (g_gsm_aprs_enable) {
+	g_gsm_aprs_connected = false;
+
+	if (g_gsm_enable && g_gsm_aprs_enable) {
 		/* Shut down TCP/IP connection */
 		serial_gsm_gprs_openClose(false);
 
@@ -439,10 +462,8 @@ void serial_sim808_gsm_shutdown(void)
 		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 	}
 
-	/* Prepare message to the SIM808 */
+	/* Power down the SIM808 device */
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SET_CPOWD_X, 1);
-
-	/* Send the string to the SIM808 */
 	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 }
 
@@ -520,7 +541,7 @@ void serial_start(void)
 
 	/* Inform about to start the SIM808 - LCD */
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_START);
-	task_twi2_lcd_str(8, (line++) * 10, g_prepare_buf);
+	task_twi2_lcd_str(8,  7 * 10, g_prepare_buf);
 
 	/* Inform about to start the SIM808 - USB */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_START);
@@ -570,7 +591,7 @@ void serial_start(void)
 					line = 3;
 				}
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_RESTART);
-				task_twi2_lcd_str(8, (line++) * 10, g_prepare_buf);
+				task_twi2_lcd_str(8,  7 * 10, g_prepare_buf);
 
 				/* Inform about restart - USB */
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_RESTART);
@@ -623,9 +644,11 @@ void serial_start(void)
 	#endif
 
 	#if 0
-	/* Request the IMSI number of the GSM device */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_03);
-	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+	if (g_gsm_enable) {
+		/* Request the IMSI number of the GSM device */
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_03);
+		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+	}
 	#endif
 
 	/* Enable GNSS (GPS, Glonass, ...) and send a position fix request */
@@ -635,21 +658,25 @@ void serial_start(void)
 	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
 
 	#if 0
-	/* Show providers of the GSM networks */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_04);
-	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+	if (g_gsm_enable) {
+		/* Show providers of the GSM networks */
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_04);
+		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+	}
 	#endif
 
 	#if 0
-	/* Scan all networks */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_05);
-	serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+	if (g_gsm_enable) {
+		/* Scan all networks */
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_05);
+		serial_sim808_sendAndResponse(g_prepare_buf, len, false);
+	}
 	#endif
 
 
 	/* Inform about baud rate match - LCD */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_INITED);
-	task_twi2_lcd_str(8,  9 * 10, g_prepare_buf);
+	task_twi2_lcd_str(8,  8 * 10, g_prepare_buf);
 
 	/* Inform about baud rate match - USB */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_SYNCED);
@@ -658,19 +685,24 @@ void serial_start(void)
 
 void serial_gprs_establish(void)
 {
-	int len;
+	if (g_gsm_enable && g_gsm_aprs_enable) {
+		int len;
 
-	/* LCD information */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_WAIT);
-	task_twi2_lcd_str(8, 10 * 10, g_prepare_buf);
+		/* LCD information */
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_WAIT);
+		task_twi2_lcd_str(8,  9 * 10, g_prepare_buf);
 
-	/* USB information */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_WAIT_CONNECT);
-	udi_write_tx_buf(g_prepare_buf, len, false);
+		/* USB information */
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_WAIT_CONNECT);
+		udi_write_tx_buf(g_prepare_buf, len, false);
 
-	/* Establish GPRS connection */
-	yield_ms(15000);
-	serial_send_gprs_open();
+		/* Establish GPRS connection */
+		yield_ms(15000);
+		serial_send_gprs_open();
+
+	} else {
+		g_gsm_aprs_connected = false;
+	}
 }
 
 void serial_send_gns_urc(uint8_t val)
@@ -700,16 +732,25 @@ static bool serial_filter_inStream(const char* buf, uint16_t len)
 		g_usart1_rx_OK = true;
 	}
 
-	if (!strncmp_P((char*)buf, PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R, sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R) - 1)) {
+	/* Responders for SIM808 initiated requests/status */
+	if (g_gsm_enable && g_gsm_aprs_enable) {
+		if (!strncmp_P((char*)buf, PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R, sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R) - 1)) {
 			int val[1] = { 0 };
 			if (myStringToVar((char*)buf + (sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
 				serial_gsm_rx_creg((uint8_t)val[0]);
 			}
-	} else if (!strncmp_P((char*)buf, PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R, sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R) - 1)) {
+
+		} else if (!strncmp_P((char*)buf, PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R, sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R) - 1)) {
 			int val[1] = { 0 };
 			if (myStringToVar((char*)buf + (sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
 				serial_gsm_rx_cgatt((uint8_t)val[0]);
 			}
+
+		} else if (!strncmp_P((char*)buf, PM_TWI1_UTIL_ONBOARD_SIM808_RING_R, sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_RING_R) - 1)) {
+			if (g_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
+				g_aprs_alert_reason = APRS_ALERT_REASON__REQUEST;
+			}
+		}
 	}
 
 	char* ptr = (char*) gnsInf_ptr;
@@ -809,15 +850,21 @@ static bool serial_filter_inStream(const char* buf, uint16_t len)
 				case 12:
 					ptr += myStringToFloat(ptr, &fVal);
 					if        (idx ==  3) {
-						g_gns_lat = fVal;
+						if (fVal) {
+							g_gns_lat = fVal;
+						}
 
 					} else if (idx ==  4) {
-						g_gns_lon = fVal;
+						if (fVal) {
+							g_gns_lon = fVal;
+						}
 
 					} else if (idx ==  5) {
-						g_gns_msl_alt_m = fVal;
-						if (g_qnh_is_auto) {
-							g_qnh_height_m = (int16_t) (0.5f + fVal);
+						if (fVal) {
+							g_gns_msl_alt_m = fVal;
+							if (g_qnh_is_auto) {
+								g_qnh_height_m = (int16_t) (0.5f + fVal);
+							}
 						}
 
 					} else if (idx ==  6) {
@@ -879,6 +926,7 @@ void task_serial(uint32_t now)
 				udi_write_serial_line(g_usart1_rx_buf, len_out);
 			}
 
+			/* Store last line state */
 			s_doNotPrint = l_doNotPrint;
 		}
 
