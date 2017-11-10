@@ -134,6 +134,8 @@ const char					PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R[]			= "+CREG: ";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R[]);
 const char					PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R[]			= "+CGATT: ";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R[]);
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_RING_R[]			= "RING";
+PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_RING_R[]);
 
 
 /* ISR routines */
@@ -241,6 +243,7 @@ void serial_gsm_activation(bool enable)
 		}
 
 	} else {
+		g_gsm_aprs_connected = false;
 		if (g_gsm_aprs_enable) {
 			serial_gsm_gprs_openClose(false);
 		}
@@ -253,6 +256,7 @@ void serial_send_gprs_open(void)
 	int len;
 
 	if (!g_gsm_enable || !g_gsm_aprs_enable) {
+		g_gsm_aprs_connected = false;
 		return;
 	}
 
@@ -370,8 +374,9 @@ void serial_gsm_rx_cgatt(uint8_t val)
 
 		/* Open the channel for the first time */
 		yield_ms(1500);
-		serial_gsm_gprs_openClose(true);
-		serial_gsm_gprs_openClose(false);
+		//serial_gsm_gprs_openClose(true);
+		//serial_gsm_gprs_openClose(false);
+		g_gsm_aprs_connected = true;
 
 	} else {
 		yield_ms(2500);
@@ -394,6 +399,7 @@ void serial_gsm_gprs_openClose(bool isStart)
 	char buf[C_TX_BUF_SIZE];
 
 	if (!g_gsm_enable || !g_gsm_aprs_enable) {
+		g_gsm_aprs_connected = false;
 		return;
 	}
 
@@ -418,6 +424,7 @@ void serial_gsm_gprs_openClose(bool isStart)
 			s_isOpen = true;
 
 		} else if (!isStart && s_isOpen) {
+			g_gsm_aprs_connected = false;
 
 			/* Stop message block by a ^Z character (0x1a) */
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CTRL_Z);
@@ -439,6 +446,8 @@ void serial_gsm_gprs_openClose(bool isStart)
 
 void serial_sim808_gsm_shutdown(void)
 {
+	g_gsm_aprs_connected = false;
+
 	if (g_gsm_enable && g_gsm_aprs_enable) {
 		/* Shut down TCP/IP connection */
 		serial_gsm_gprs_openClose(false);
@@ -689,6 +698,9 @@ void serial_gprs_establish(void)
 		/* Establish GPRS connection */
 		yield_ms(15000);
 		serial_send_gprs_open();
+
+	} else {
+		g_gsm_aprs_connected = false;
 	}
 }
 
@@ -719,19 +731,24 @@ static bool serial_filter_inStream(const char* buf, uint16_t len)
 		g_usart1_rx_OK = true;
 	}
 
-	/* Responders for setting up GPRS connection */
+	/* Responders for SIM808 initiated requests/status */
 	if (g_gsm_enable && g_gsm_aprs_enable) {
 		if (!strncmp_P((char*)buf, PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R, sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R) - 1)) {
-				int val[1] = { 0 };
-				if (myStringToVar((char*)buf + (sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
-					serial_gsm_rx_creg((uint8_t)val[0]);
-				}
+			int val[1] = { 0 };
+			if (myStringToVar((char*)buf + (sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
+				serial_gsm_rx_creg((uint8_t)val[0]);
+			}
 
 		} else if (!strncmp_P((char*)buf, PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R, sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R) - 1)) {
-				int val[1] = { 0 };
-				if (myStringToVar((char*)buf + (sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
-					serial_gsm_rx_cgatt((uint8_t)val[0]);
-				}
+			int val[1] = { 0 };
+			if (myStringToVar((char*)buf + (sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
+				serial_gsm_rx_cgatt((uint8_t)val[0]);
+			}
+
+		} else if (!strncmp_P((char*)buf, PM_TWI1_UTIL_ONBOARD_SIM808_RING_R, sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_RING_R) - 1)) {
+			if (g_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
+				g_aprs_alert_reason = APRS_ALERT_REASON__REQUEST;
+			}
 		}
 	}
 
@@ -832,15 +849,21 @@ static bool serial_filter_inStream(const char* buf, uint16_t len)
 				case 12:
 					ptr += myStringToFloat(ptr, &fVal);
 					if        (idx ==  3) {
-						g_gns_lat = fVal;
+						if (fVal) {
+							g_gns_lat = fVal;
+						}
 
 					} else if (idx ==  4) {
-						g_gns_lon = fVal;
+						if (fVal) {
+							g_gns_lon = fVal;
+						}
 
 					} else if (idx ==  5) {
-						g_gns_msl_alt_m = fVal;
-						if (g_qnh_is_auto) {
-							g_qnh_height_m = (int16_t) (0.5f + fVal);
+						if (fVal) {
+							g_gns_msl_alt_m = fVal;
+							if (g_qnh_is_auto) {
+								g_qnh_height_m = (int16_t) (0.5f + fVal);
+							}
 						}
 
 					} else if (idx ==  6) {

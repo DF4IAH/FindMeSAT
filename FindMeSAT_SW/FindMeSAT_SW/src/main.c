@@ -134,6 +134,7 @@ char						g_usart1_rx_buf[C_USART1_RX_BUF_LEN]= { 0 };
 
 bool						g_gsm_enable						= false;	// EEPROM
 bool						g_gsm_aprs_enable					= false;	// EEPROM
+bool						g_gsm_aprs_connected				= false;
 char						g_gsm_login_pwd[C_GSM_PIN_BUF_LEN]	= { 0 };	// EEPROM
 
 bool						g_twi1_gsm_valid					= false;
@@ -285,16 +286,14 @@ const char					PM_APRS_TX_SYMBOL_TABLE_ID			= '/';
 const char					PM_APRS_TX_SYMBOL_CODE				= 'j';	// /$:Phone  /j:Jeep
 const char					PM_APRS_TX_POS[]					= "!%02d%5.2f%c%c%03d%5.2f%c%c%03d/%03d";
 PROGMEM_DECLARE(const char, PM_APRS_TX_POS[]);
-const char					PM_APRS_TX_N1[]						= " N1 Gx=%+06.1fd Gy=%+06.1fd Gz=%+06.1fd";
+const char					PM_APRS_TX_N1[]						= "%cGx=%+06.1fd Gy=%+06.1fd Gz=%+06.1fd";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N1[]);
-const char					PM_APRS_TX_N2[]						= " N2 Ax=%+6.3fg Ay=%+6.3fg Az=%+6.3fg";
+const char					PM_APRS_TX_N2[]						= "%cAx=%+6.3fg Ay=%+6.3fg Az=%+6.3fg";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N2[]);
-const char					PM_APRS_TX_N3[]						= " N3 Mx=%+6.1fm My=%+6.1fm Mz=%+6.1fm";
+const char					PM_APRS_TX_N3[]						= "%cMx=%+6.1fuT My=%+6.1fuT Mz=%+6.1fuT";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N3[]);
-const char					PM_APRS_TX_N4[]						= " N4 T=%+5.2fC DP=%+5.2fC QNH=%7.2fh";
+const char					PM_APRS_TX_N4[]						= "%c/A=%06ld DP=%+5.2fC QNH=%7.2fhPa";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N4[]);
-const char					PM_APRS_TX_N5[]						= " N5 /A=%06ld a=%+07.1fm s=%5.1fk r=%c";
-PROGMEM_DECLARE(const char, PM_APRS_TX_N5[]);
 const char					PM_APRS_TX_MSGEND[]					= "\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_MSGEND[]);
 
@@ -609,6 +608,8 @@ static void init_globals(void)
 	/* GSM */
 	{
 		uint8_t val_ui8 = 0;
+
+		g_gsm_aprs_connected = false;
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__GSM_BF, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
 			g_gsm_enable			= val_ui8 & GSM__ENABLE;
@@ -2860,6 +2861,12 @@ static void task_main_aprs(uint32_t now)
 	int							len						= 0;
 	irqflags_t					flags;
 
+	/* Once a second to be processed - do not send when APRS is disabled nor GPS ready */
+	if ((s_now_sec == l_now_sec) || !g_gsm_enable || !g_gsm_aprs_enable || !g_gns_fix_status) {
+		return;
+	}
+	s_now_sec = l_now_sec;
+
 	/* Get a copy from the global variables */
 	{
 		flags = cpu_irq_save();
@@ -2870,14 +2877,13 @@ static void task_main_aprs(uint32_t now)
 		cpu_irq_restore(flags);
 	}
 
-	do {
-		/* Once a second to be processed - GNSS has to be up */
-		if ((s_now_sec == l_now_sec) || !l_boot_time_ts) {
-			return;
-		}
+	/* GNSS has to set the clock first */
+	if (!l_boot_time_ts) {
+		return;
+	}
 
+	do {
 		/* Preparation of time and used buffers */
-		s_now_sec = l_now_sec;
 		*g_prepare_buf = 0;
 
 		/* Check for sensor and time boundaries */
@@ -2885,31 +2891,27 @@ static void task_main_aprs(uint32_t now)
 			/* APRS messaging started */
 			if ((l_aprs_alert_last + C_APRS_ALERT_TIME_SEC) <= l_now_sec) {
 				l_aprs_alert_reason		= APRS_ALERT_REASON__TIME;
-				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N4;
 
 			} else if ((aprs_pos_delta_m() > C_APRS_ALERT_POS_DELTA_M) &&
 				((l_aprs_alert_last + C_APRS_ALERT_POS_HOLDOFF_SEC) <= l_now_sec)) {
 				l_aprs_alert_reason		= APRS_ALERT_REASON__POSITION;
-				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N4;
 				aprs_pos_anchor();
 
 			} else if ((aprs_gyro_total_dps_1000() > C_APRS_ALERT_GYRO_DPS_1000) &&
 				((l_aprs_alert_last + C_APRS_ALERT_GYRO_HOLDOFF_SEC) <= l_now_sec)) {
 				l_aprs_alert_reason		= APRS_ALERT_REASON__GYRO;
-				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N1;
 
 			} else if ((aprs_accel_xy_delta_g_1000() > C_APRS_ALERT_ACCEL_G_1000) &&
 				((l_aprs_alert_last + C_APRS_ALERT_ACCEL_HOLDOFF_SEC) <= l_now_sec)) {
 				l_aprs_alert_reason		= APRS_ALERT_REASON__ACCEL;
-				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N2;
 
 			} else if ((aprs_mag_delta_nT() > C_APRS_ALERT_MAG_DELTA_NT) &&
 				((l_aprs_alert_last + C_APRS_ALERT_MAG_HOLDOFF_SEC) <= l_now_sec)) {
 				l_aprs_alert_reason		= APRS_ALERT_REASON__MAGNET;
-				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N3;
 			}
 
 			if (l_aprs_alert_reason != APRS_ALERT_REASON__NONE) {
+				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__DO_N1;
 				l_aprs_alert_last		= l_now_sec;
 
 				/* Make snapshot of alert environment */
@@ -2967,6 +2969,8 @@ static void task_main_aprs(uint32_t now)
 			}
 		}
 
+		char l_mark = ' ';
+
 		/* Check for reporting interval */
 		switch (l_aprs_alert_fsm_state) {
 			case APRS_ALERT_FSM_STATE__DO_N1:
@@ -2981,17 +2985,21 @@ static void task_main_aprs(uint32_t now)
 				l_aprs_alert_1_gyro_z_mdps = g_aprs_alert_1_gyro_z_mdps;
 				cpu_irq_restore(flags);
 
+				if ((l_aprs_alert_reason == APRS_ALERT_REASON__GYRO) || (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST)) {
+					l_mark = '*';
+				}
+
 				/* Message content */
 				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
-				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N1, l_aprs_alert_1_gyro_x_mdps / 1000.f, l_aprs_alert_1_gyro_y_mdps / 1000.f, l_aprs_alert_1_gyro_z_mdps / 1000.f);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N1, l_mark, l_aprs_alert_1_gyro_x_mdps / 1000.f, l_aprs_alert_1_gyro_y_mdps / 1000.f, l_aprs_alert_1_gyro_z_mdps / 1000.f);
 
-				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
+				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N2:
-			{
+			if ((l_aprs_alert_last + 1 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
 				int16_t l_aprs_alert_1_accel_x_mg;
 				int16_t l_aprs_alert_1_accel_y_mg;
 				int16_t l_aprs_alert_1_accel_z_mg;
@@ -3002,17 +3010,21 @@ static void task_main_aprs(uint32_t now)
 				l_aprs_alert_1_accel_z_mg = g_aprs_alert_1_accel_z_mg;
 				cpu_irq_restore(flags);
 
+				if ((l_aprs_alert_reason == APRS_ALERT_REASON__ACCEL) || (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST)) {
+					l_mark = '*';
+				}
+
 				/* Message content */
 				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
-				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N2, l_aprs_alert_1_accel_x_mg / 1000.f, l_aprs_alert_1_accel_y_mg / 1000.f, l_aprs_alert_1_accel_z_mg / 1000.f);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N2, l_mark, l_aprs_alert_1_accel_x_mg / 1000.f, l_aprs_alert_1_accel_y_mg / 1000.f, l_aprs_alert_1_accel_z_mg / 1000.f);
 
-				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
+				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N3;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N3:
-			{
+			if ((l_aprs_alert_last + 2 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
 				int32_t l_aprs_alert_2_mag_x_nT;
 				int32_t l_aprs_alert_2_mag_y_nT;
 				int32_t l_aprs_alert_2_mag_z_nT;
@@ -3023,61 +3035,41 @@ static void task_main_aprs(uint32_t now)
 				l_aprs_alert_2_mag_z_nT = g_aprs_alert_2_mag_z_nT;
 				cpu_irq_restore(flags);
 
+				if ((l_aprs_alert_reason == APRS_ALERT_REASON__MAGNET) || (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST)) {
+					l_mark = '*';
+				}
+
 				/* Message content */
 				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
-				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N3, l_aprs_alert_2_mag_x_nT / 1000.f, l_aprs_alert_2_mag_y_nT / 1000.f, l_aprs_alert_2_mag_z_nT / 1000.f);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N3, l_mark, l_aprs_alert_2_mag_x_nT / 1000.f, l_aprs_alert_2_mag_y_nT / 1000.f, l_aprs_alert_2_mag_z_nT / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
 			}
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N4:
-			if ((l_aprs_alert_last + 1 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
-				int16_t l_env_temp_deg_100;
+			if ((l_aprs_alert_last + 3 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
+				float l_gns_msl_alt_m;
 				int16_t l_twi1_hygro_DP_100;
 				int32_t l_twi1_baro_p_h_100;
 
 				flags = cpu_irq_save();
-				l_env_temp_deg_100	= g_env_temp_deg_100;
+				l_gns_msl_alt_m		= g_gns_msl_alt_m;
 				l_twi1_hygro_DP_100	= g_twi1_hygro_DP_100;
 				l_twi1_baro_p_h_100	= g_qnh_p_h_100;
 				cpu_irq_restore(flags);
 
-				/* Message content */
-				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
-				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N4, l_env_temp_deg_100 / 100.f, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);
-
-				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N5;
-			}
-			break;
-
-			case APRS_ALERT_FSM_STATE__DO_N5:
-			if ((l_aprs_alert_last + 2 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
-				const char	l_reason_ary[]		= APRS_ALERT_REASON_SHORTHAND;
-				float		l_gns_msl_alt_m		= g_gns_msl_alt_m;
-				float		l_gns_speed_kmPh	= g_gns_speed_kmPh;
-				char		l_reason;
-
-				/* Get character of reason */
-				if (l_aprs_alert_reason < APRS_ALERT_REASON_COUNT) {
-					l_reason = l_reason_ary[l_aprs_alert_reason];
-				} else {
-					l_reason = l_reason_ary[APRS_ALERT_REASON__NONE];
-				}
-
-				flags = cpu_irq_save();
-				l_gns_msl_alt_m		= g_gns_msl_alt_m;
-				l_gns_speed_kmPh	= g_gns_speed_kmPh;
-				cpu_irq_restore(flags);
-
 				float l_gns_msl_alt_ft = l_gns_msl_alt_m >= 0.f ?  (0.5f + (l_gns_msl_alt_m / 0.3048f)) : (-0.5f + (l_gns_msl_alt_m / 0.3048f));
 
+				if (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST) {
+					l_mark = '*';
+				}
+
 				/* Message content */
 				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
-				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N5, (long)l_gns_msl_alt_ft, l_gns_msl_alt_m, l_gns_speed_kmPh, l_reason);
+				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N4, l_mark, (long)l_gns_msl_alt_ft, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);
 
 				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__NOOP;
 				l_aprs_alert_reason		= APRS_ALERT_REASON__NONE;
