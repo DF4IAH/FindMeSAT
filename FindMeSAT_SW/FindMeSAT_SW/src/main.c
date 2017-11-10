@@ -2976,7 +2976,7 @@ static void task_main_aprs(uint32_t now)
 		/* Check for reporting interval */
 		switch (l_aprs_alert_fsm_state) {
 			case APRS_ALERT_FSM_STATE__DO_N1:
-			{
+			if (l_aprs_alert_last < l_now_sec) {
 				int32_t l_aprs_alert_1_gyro_x_mdps;
 				int32_t l_aprs_alert_1_gyro_y_mdps;
 				int32_t l_aprs_alert_1_gyro_z_mdps;
@@ -2991,12 +2991,30 @@ static void task_main_aprs(uint32_t now)
 					l_mark = '*';
 				}
 
+				/* Debug info at USB console */
+				len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#81 DEBUG: message N1 in queue ...\r\n");
+				udi_write_tx_buf(g_prepare_buf, len, false);
+
 				/* Message content */
 				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N1_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N1_CODE, l_course_deg, l_speed_kn);
 				len += snprintf_P(g_prepare_buf + len, sizeof(g_prepare_buf), PM_APRS_TX_N1, l_mark, l_aprs_alert_1_gyro_x_mdps / 1000.f, l_aprs_alert_1_gyro_y_mdps / 1000.f, l_aprs_alert_1_gyro_z_mdps / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
+
+				/* Re-activate GPRS when call came in */
+				if (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST) {
+					static uint8_t s_count = 0;
+
+					if (++s_count < 2) {
+						/* Repeat same packet twice */
+						l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N1;
+						l_aprs_alert_last = l_now_sec + C_APRS_ALERT_MESSAGE_DELAY_SEC;
+
+					} else {
+						s_count = 0;
+					}
+				}
 			}
 			break;
 
@@ -3015,6 +3033,10 @@ static void task_main_aprs(uint32_t now)
 				if ((l_aprs_alert_reason == APRS_ALERT_REASON__ACCEL) || (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST)) {
 					l_mark = '*';
 				}
+
+				/* Debug info at USB console */
+				len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#82 DEBUG: message N2 in queue ...\r\n");
+				udi_write_tx_buf(g_prepare_buf, len, false);
 
 				/* Message content */
 				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
@@ -3040,6 +3062,10 @@ static void task_main_aprs(uint32_t now)
 				if ((l_aprs_alert_reason == APRS_ALERT_REASON__MAGNET) || (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST)) {
 					l_mark = '*';
 				}
+
+				/* Debug info at USB console */
+				len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#83 DEBUG: message N3 in queue ...\r\n");
+				udi_write_tx_buf(g_prepare_buf, len, false);
 
 				/* Message content */
 				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
@@ -3067,6 +3093,10 @@ static void task_main_aprs(uint32_t now)
 				if (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST) {
 					l_mark = '*';
 				}
+
+				/* Debug info at USB console */
+				len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#84 DEBUG: message N4 in queue ...\r\n");
+				udi_write_tx_buf(g_prepare_buf, len, false);
 
 				/* Message content */
 				len  = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
