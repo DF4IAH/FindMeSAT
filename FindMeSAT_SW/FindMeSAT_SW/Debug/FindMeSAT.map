@@ -7458,7 +7458,7 @@ END GROUP
                 0x008022ac                _edata = .
                 0x008022ac                PROVIDE (__data_end, .)
 
-.bss            0x008022ac      0xf47
+.bss            0x008022ac      0xf43
                 0x008022ac                PROVIDE (__bss_start, .)
  *(.bss)
  *(.bss*)
@@ -8042,342 +8042,342 @@ END GROUP
                 0x008028e6        0x2 src/main.o
                 0x008028e6                g_twi1_baro_version
  .bss.g_twi1_baro_c
-                0x008028e8       0x14 src/main.o
+                0x008028e8       0x10 src/main.o
                 0x008028e8                g_twi1_baro_c
  .bss.g_twi1_baro_d1
-                0x008028fc        0x4 src/main.o
-                0x008028fc                g_twi1_baro_d1
+                0x008028f8        0x4 src/main.o
+                0x008028f8                g_twi1_baro_d1
  .bss.g_twi1_baro_d2
-                0x00802900        0x4 src/main.o
-                0x00802900                g_twi1_baro_d2
+                0x008028fc        0x4 src/main.o
+                0x008028fc                g_twi1_baro_d2
  .bss.g_twi1_baro_temp_100
-                0x00802904        0x4 src/main.o
-                0x00802904                g_twi1_baro_temp_100
+                0x00802900        0x4 src/main.o
+                0x00802900                g_twi1_baro_temp_100
  .bss.g_twi1_baro_p_100
-                0x00802908        0x4 src/main.o
-                0x00802908                g_twi1_baro_p_100
+                0x00802904        0x4 src/main.o
+                0x00802904                g_twi1_baro_p_100
  .bss.g_twi1_hygro_valid
-                0x0080290c        0x1 src/main.o
-                0x0080290c                g_twi1_hygro_valid
+                0x00802908        0x1 src/main.o
+                0x00802908                g_twi1_hygro_valid
  .bss.g_twi1_hygro_status
-                0x0080290d        0x1 src/main.o
-                0x0080290d                g_twi1_hygro_status
+                0x00802909        0x1 src/main.o
+                0x00802909                g_twi1_hygro_status
  .bss.g_twi1_hygro_S_T
-                0x0080290e        0x2 src/main.o
-                0x0080290e                g_twi1_hygro_S_T
+                0x0080290a        0x2 src/main.o
+                0x0080290a                g_twi1_hygro_S_T
  .bss.g_twi1_hygro_S_RH
-                0x00802910        0x2 src/main.o
-                0x00802910                g_twi1_hygro_S_RH
+                0x0080290c        0x2 src/main.o
+                0x0080290c                g_twi1_hygro_S_RH
  .bss.g_twi1_hygro_T_100
-                0x00802912        0x2 src/main.o
-                0x00802912                g_twi1_hygro_T_100
+                0x0080290e        0x2 src/main.o
+                0x0080290e                g_twi1_hygro_T_100
  .bss.g_twi1_hygro_RH_100
-                0x00802914        0x2 src/main.o
-                0x00802914                g_twi1_hygro_RH_100
+                0x00802910        0x2 src/main.o
+                0x00802910                g_twi1_hygro_RH_100
  .bss.g_twi1_hygro_DP_100
-                0x00802916        0x2 src/main.o
-                0x00802916                g_twi1_hygro_DP_100
+                0x00802912        0x2 src/main.o
+                0x00802912                g_twi1_hygro_DP_100
  .bss.g_twi2_lcd_version
-                0x00802918        0x1 src/main.o
-                0x00802918                g_twi2_lcd_version
+                0x00802914        0x1 src/main.o
+                0x00802914                g_twi2_lcd_version
  .bss.g_twi2_lcd_repaint
-                0x00802919        0x1 src/main.o
-                0x00802919                g_twi2_lcd_repaint
+                0x00802915        0x1 src/main.o
+                0x00802915                g_twi2_lcd_repaint
  .bss.g_xo_mode_pwm
-                0x0080291a        0x4 src/main.o
-                0x0080291a                g_xo_mode_pwm
+                0x00802916        0x4 src/main.o
+                0x00802916                g_xo_mode_pwm
  .bss.g_adc_a_conf
-                0x0080291e        0x7 src/main.o
-                0x0080291e                g_adc_a_conf
+                0x0080291a        0x7 src/main.o
+                0x0080291a                g_adc_a_conf
  .bss.g_adcch_vctcxo_5v0_vbat_conf
-                0x00802925        0x4 src/main.o
-                0x00802925                g_adcch_vctcxo_5v0_vbat_conf
+                0x00802921        0x4 src/main.o
+                0x00802921                g_adcch_vctcxo_5v0_vbat_conf
  .bss.g_adcch_io_adc4_conf
-                0x00802929        0x4 src/main.o
-                0x00802929                g_adcch_io_adc4_conf
+                0x00802925        0x4 src/main.o
+                0x00802925                g_adcch_io_adc4_conf
  .bss.g_adcch_io_adc5_conf
-                0x0080292d        0x4 src/main.o
-                0x0080292d                g_adcch_io_adc5_conf
+                0x00802929        0x4 src/main.o
+                0x00802929                g_adcch_io_adc5_conf
  .bss.g_adcch_silence_conf
-                0x00802931        0x4 src/main.o
-                0x00802931                g_adcch_silence_conf
+                0x0080292d        0x4 src/main.o
+                0x0080292d                g_adcch_silence_conf
  .bss.g_adc_b_conf
-                0x00802935        0x7 src/main.o
-                0x00802935                g_adc_b_conf
+                0x00802931        0x7 src/main.o
+                0x00802931                g_adc_b_conf
  .bss.g_adcch_temp_conf
-                0x0080293c        0x4 src/main.o
-                0x0080293c                g_adcch_temp_conf
+                0x00802938        0x4 src/main.o
+                0x00802938                g_adcch_temp_conf
  .bss.g_adc_vctcxo_cur
-                0x00802940        0x4 src/main.o
-                0x00802940                g_adc_vctcxo_cur
+                0x0080293c        0x4 src/main.o
+                0x0080293c                g_adc_vctcxo_cur
  .bss.g_adc_vctcxo_sum
-                0x00802944        0x4 src/main.o
-                0x00802944                g_adc_vctcxo_sum
+                0x00802940        0x4 src/main.o
+                0x00802940                g_adc_vctcxo_sum
  .bss.g_adc_vctcxo_cnt
-                0x00802948        0x2 src/main.o
-                0x00802948                g_adc_vctcxo_cnt
+                0x00802944        0x2 src/main.o
+                0x00802944                g_adc_vctcxo_cnt
  .bss.g_adc_5v0_cur
-                0x0080294a        0x4 src/main.o
-                0x0080294a                g_adc_5v0_cur
+                0x00802946        0x4 src/main.o
+                0x00802946                g_adc_5v0_cur
  .bss.g_adc_5v0_sum
-                0x0080294e        0x4 src/main.o
-                0x0080294e                g_adc_5v0_sum
+                0x0080294a        0x4 src/main.o
+                0x0080294a                g_adc_5v0_sum
  .bss.g_adc_5v0_cnt
-                0x00802952        0x2 src/main.o
-                0x00802952                g_adc_5v0_cnt
+                0x0080294e        0x2 src/main.o
+                0x0080294e                g_adc_5v0_cnt
  .bss.g_adc_vbat_cur
-                0x00802954        0x4 src/main.o
-                0x00802954                g_adc_vbat_cur
+                0x00802950        0x4 src/main.o
+                0x00802950                g_adc_vbat_cur
  .bss.g_adc_vbat_sum
-                0x00802958        0x4 src/main.o
-                0x00802958                g_adc_vbat_sum
+                0x00802954        0x4 src/main.o
+                0x00802954                g_adc_vbat_sum
  .bss.g_adc_vbat_cnt
-                0x0080295c        0x2 src/main.o
-                0x0080295c                g_adc_vbat_cnt
+                0x00802958        0x2 src/main.o
+                0x00802958                g_adc_vbat_cnt
  .bss.g_adc_io_adc4_cur
-                0x0080295e        0x4 src/main.o
-                0x0080295e                g_adc_io_adc4_cur
+                0x0080295a        0x4 src/main.o
+                0x0080295a                g_adc_io_adc4_cur
  .bss.g_adc_io_adc4_sum
-                0x00802962        0x4 src/main.o
-                0x00802962                g_adc_io_adc4_sum
+                0x0080295e        0x4 src/main.o
+                0x0080295e                g_adc_io_adc4_sum
  .bss.g_adc_io_adc4_cnt
-                0x00802966        0x2 src/main.o
-                0x00802966                g_adc_io_adc4_cnt
+                0x00802962        0x2 src/main.o
+                0x00802962                g_adc_io_adc4_cnt
  .bss.g_adc_io_adc5_cur
-                0x00802968        0x4 src/main.o
-                0x00802968                g_adc_io_adc5_cur
+                0x00802964        0x4 src/main.o
+                0x00802964                g_adc_io_adc5_cur
  .bss.g_adc_io_adc5_sum
-                0x0080296c        0x4 src/main.o
-                0x0080296c                g_adc_io_adc5_sum
+                0x00802968        0x4 src/main.o
+                0x00802968                g_adc_io_adc5_sum
  .bss.g_adc_io_adc5_cnt
-                0x00802970        0x2 src/main.o
-                0x00802970                g_adc_io_adc5_cnt
+                0x0080296c        0x2 src/main.o
+                0x0080296c                g_adc_io_adc5_cnt
  .bss.g_adc_silence_cur
-                0x00802972        0x4 src/main.o
-                0x00802972                g_adc_silence_cur
+                0x0080296e        0x4 src/main.o
+                0x0080296e                g_adc_silence_cur
  .bss.g_adc_silence_sum
-                0x00802976        0x4 src/main.o
-                0x00802976                g_adc_silence_sum
+                0x00802972        0x4 src/main.o
+                0x00802972                g_adc_silence_sum
  .bss.g_adc_silence_cnt
-                0x0080297a        0x2 src/main.o
-                0x0080297a                g_adc_silence_cnt
+                0x00802976        0x2 src/main.o
+                0x00802976                g_adc_silence_cnt
  .bss.g_adc_temp_cur
-                0x0080297c        0x4 src/main.o
-                0x0080297c                g_adc_temp_cur
+                0x00802978        0x4 src/main.o
+                0x00802978                g_adc_temp_cur
  .bss.g_adc_temp_sum
-                0x00802980        0x4 src/main.o
-                0x00802980                g_adc_temp_sum
+                0x0080297c        0x4 src/main.o
+                0x0080297c                g_adc_temp_sum
  .bss.g_adc_temp_cnt
-                0x00802984        0x2 src/main.o
-                0x00802984                g_adc_temp_cnt
+                0x00802980        0x2 src/main.o
+                0x00802980                g_adc_temp_cnt
  .bss.g_adc_vctcxo_volt_1000
-                0x00802986        0x2 src/main.o
-                0x00802986                g_adc_vctcxo_volt_1000
+                0x00802982        0x2 src/main.o
+                0x00802982                g_adc_vctcxo_volt_1000
  .bss.g_adc_5v0_volt_1000
-                0x00802988        0x2 src/main.o
-                0x00802988                g_adc_5v0_volt_1000
+                0x00802984        0x2 src/main.o
+                0x00802984                g_adc_5v0_volt_1000
  .bss.g_adc_vbat_volt_1000
-                0x0080298a        0x2 src/main.o
-                0x0080298a                g_adc_vbat_volt_1000
+                0x00802986        0x2 src/main.o
+                0x00802986                g_adc_vbat_volt_1000
  .bss.g_adc_io_adc4_volt_1000
-                0x0080298c        0x2 src/main.o
-                0x0080298c                g_adc_io_adc4_volt_1000
+                0x00802988        0x2 src/main.o
+                0x00802988                g_adc_io_adc4_volt_1000
  .bss.g_adc_io_adc5_volt_1000
-                0x0080298e        0x2 src/main.o
-                0x0080298e                g_adc_io_adc5_volt_1000
+                0x0080298a        0x2 src/main.o
+                0x0080298a                g_adc_io_adc5_volt_1000
  .bss.g_adc_silence_volt_1000
-                0x00802990        0x2 src/main.o
-                0x00802990                g_adc_silence_volt_1000
+                0x0080298c        0x2 src/main.o
+                0x0080298c                g_adc_silence_volt_1000
  .bss.g_adc_temp_deg_100
-                0x00802992        0x2 src/main.o
-                0x00802992                g_adc_temp_deg_100
+                0x0080298e        0x2 src/main.o
+                0x0080298e                g_adc_temp_deg_100
  .bss.g_env_temp_delta_100
-                0x00802994        0x2 src/main.o
-                0x00802994                g_env_temp_delta_100
+                0x00802990        0x2 src/main.o
+                0x00802990                g_env_temp_delta_100
  .bss.g_env_temp_deg_100
-                0x00802996        0x2 src/main.o
-                0x00802996                g_env_temp_deg_100
+                0x00802992        0x2 src/main.o
+                0x00802992                g_env_temp_deg_100
  .bss.g_env_hygro_RH_100
-                0x00802998        0x2 src/main.o
-                0x00802998                g_env_hygro_RH_100
+                0x00802994        0x2 src/main.o
+                0x00802994                g_env_hygro_RH_100
  .bss.g_qnh_is_auto
-                0x0080299a        0x1 src/main.o
-                0x0080299a                g_qnh_is_auto
+                0x00802996        0x1 src/main.o
+                0x00802996                g_qnh_is_auto
  .bss.g_qnh_height_m
-                0x0080299b        0x2 src/main.o
-                0x0080299b                g_qnh_height_m
+                0x00802997        0x2 src/main.o
+                0x00802997                g_qnh_height_m
  .bss.g_qnh_p_h_100
-                0x0080299d        0x4 src/main.o
-                0x0080299d                g_qnh_p_h_100
+                0x00802999        0x4 src/main.o
+                0x00802999                g_qnh_p_h_100
  .bss.g_fifo_sched_buffer
-                0x008029a1       0x80 src/main.o
-                0x008029a1                g_fifo_sched_buffer
+                0x0080299d       0x80 src/main.o
+                0x0080299d                g_fifo_sched_buffer
  .bss.g_pwm_vctcxo_cfg
-                0x00802a21        0x7 src/main.o
-                0x00802a21                g_pwm_vctcxo_cfg
+                0x00802a1d        0x7 src/main.o
+                0x00802a1d                g_pwm_vctcxo_cfg
  .bss.g_pwm_ctr_pll_cfg
-                0x00802a28        0x7 src/main.o
-                0x00802a28                g_pwm_ctr_pll_cfg
+                0x00802a24        0x7 src/main.o
+                0x00802a24                g_pwm_ctr_pll_cfg
  .bss.g_sched_lock
-                0x00802a2f        0x1 src/main.o
-                0x00802a2f                g_sched_lock
+                0x00802a2b        0x1 src/main.o
+                0x00802a2b                g_sched_lock
  .bss.g_interpreter_lock
-                0x00802a30        0x1 src/main.o
-                0x00802a30                g_interpreter_lock
+                0x00802a2c        0x1 src/main.o
+                0x00802a2c                g_interpreter_lock
  .bss.g_twi1_lock
-                0x00802a31        0x1 src/main.o
-                0x00802a31                g_twi1_lock
+                0x00802a2d        0x1 src/main.o
+                0x00802a2d                g_twi1_lock
  .bss.g_sched_yield
-                0x00802a32        0x1 src/main.o
-                0x00802a32                g_sched_yield
+                0x00802a2e        0x1 src/main.o
+                0x00802a2e                g_sched_yield
  .bss.g_sched_pop_again
-                0x00802a33        0x1 src/main.o
-                0x00802a33                g_sched_pop_again
+                0x00802a2f        0x1 src/main.o
+                0x00802a2f                g_sched_pop_again
  .bss.g_sched_data
-                0x00802a34       0xe0 src/main.o
-                0x00802a34                g_sched_data
+                0x00802a30       0xe0 src/main.o
+                0x00802a30                g_sched_data
  .bss.g_sched_sort
-                0x00802b14       0x20 src/main.o
-                0x00802b14                g_sched_sort
+                0x00802b10       0x20 src/main.o
+                0x00802b10                g_sched_sort
  .bss.g_prepare_buf
-                0x00802b34       0x80 src/main.o
-                0x00802b34                g_prepare_buf
+                0x00802b30       0x80 src/main.o
+                0x00802b30                g_prepare_buf
  .bss.g_twi1_m_data
-                0x00802bb4        0x8 src/main.o
-                0x00802bb4                g_twi1_m_data
+                0x00802bb0        0x8 src/main.o
+                0x00802bb0                g_twi1_m_data
  .bss.g_twi2_m_data
-                0x00802bbc        0x8 src/main.o
-                0x00802bbc                g_twi2_m_data
- .bss.dac_conf  0x00802bc4        0x4 src/main.o
+                0x00802bb8        0x8 src/main.o
+                0x00802bb8                g_twi2_m_data
+ .bss.dac_conf  0x00802bc0        0x4 src/main.o
  .bss.dmach_dma0_conf
-                0x00802bc8        0xb src/main.o
+                0x00802bc4        0xb src/main.o
  .bss.dmach_dma1_conf
-                0x00802bd3        0xb src/main.o
- .bss.dds0_inc  0x00802bde        0x4 src/main.o
- .bss.dds0_reg  0x00802be2        0x4 src/main.o
- .bss.dds1_inc  0x00802be6        0x4 src/main.o
+                0x00802bcf        0xb src/main.o
+ .bss.dds0_inc  0x00802bda        0x4 src/main.o
+ .bss.dds0_reg  0x00802bde        0x4 src/main.o
+ .bss.dds1_inc  0x00802be2        0x4 src/main.o
  .bss.dac_io_dac0_buf
-                0x00802bea       0x40 src/main.o
+                0x00802be6       0x40 src/main.o
  .bss.s_twi1_gyro_1_accel_x_mg.8548
-                0x00802c2a        0x4 src/main.o
+                0x00802c26        0x4 src/main.o
  .bss.s_twi1_gyro_1_accel_y_mg.8549
-                0x00802c2e        0x4 src/main.o
+                0x00802c2a        0x4 src/main.o
  .bss.s_twi1_gyro_2_mag_x_nT.8560
-                0x00802c32        0x4 src/main.o
+                0x00802c2e        0x4 src/main.o
  .bss.s_twi1_gyro_2_mag_y_nT.8561
-                0x00802c36        0x4 src/main.o
+                0x00802c32        0x4 src/main.o
  .bss.s_twi1_gyro_2_mag_z_nT.8562
-                0x00802c3a        0x4 src/main.o
+                0x00802c36        0x4 src/main.o
  .bss.last_100ms.8694
-                0x00802c3e        0x4 src/main.o
+                0x00802c3a        0x4 src/main.o
  .bss.last_500ms.8695
-                0x00802c42        0x4 src/main.o
+                0x00802c3e        0x4 src/main.o
  .bss.s_dds0_freq_mHz.8771
-                0x00802c46        0x4 src/main.o
+                0x00802c42        0x4 src/main.o
  .bss.s_dds1_freq_mHz.8772
-                0x00802c4a        0x4 src/main.o
+                0x00802c46        0x4 src/main.o
  .bss.adc_last.8782
-                0x00802c4e        0x4 src/main.o
+                0x00802c4a        0x4 src/main.o
  .bss.s_diff_ary_idx.8804
-                0x00802c52        0x1 src/main.o
+                0x00802c4e        0x1 src/main.o
  .bss.s_diff_ary.8803
-                0x00802c53       0x20 src/main.o
+                0x00802c4f       0x20 src/main.o
  .bss.s_xo_mode_pwm_val_frac.8802
-                0x00802c73        0x2 src/main.o
+                0x00802c6f        0x2 src/main.o
  .bss.s_last.8822
-                0x00802c75        0x4 src/main.o
+                0x00802c71        0x4 src/main.o
  .bss.s_now_sec.8841
-                0x00802c79        0x4 src/main.o
- *fill*         0x00802c7d        0x1 
+                0x00802c75        0x4 src/main.o
+ *fill*         0x00802c79        0x1 
  .bss.udi_cdc_line_coding
-                0x00802c7e        0x8 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802c7a        0x8 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_state
-                0x00802c86        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802c82        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.uid_cdc_state_msg
-                0x00802c88        0xa src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802c84        0xa src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_nb_comm_enabled
-                0x00802c92        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802c8e        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_nb_data_enabled
-                0x00802c93        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802c8f        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_data_running
-                0x00802c94        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
- *fill*         0x00802c95        0x1 
+                0x00802c90        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+ *fill*         0x00802c91        0x1 
  .bss.udi_cdc_rx_buf
-                0x00802c96      0x280 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802c92      0x280 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_rx_buf_nb
-                0x00802f16        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802f12        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_rx_buf_sel
-                0x00802f1a        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802f16        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_rx_pos
-                0x00802f1b        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802f17        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_rx_trans_ongoing
-                0x00802f1d        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802f19        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_tx_buf
-                0x00802f1e      0x280 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x00802f1a      0x280 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_tx_buf_nb
-                0x0080319e        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0080319a        0x4 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_tx_buf_sel
-                0x008031a2        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0080319e        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_tx_sof_num
-                0x008031a3        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x0080319f        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_tx_trans_ongoing
-                0x008031a5        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x008031a1        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udi_cdc_tx_both_buf_to_send
-                0x008031a6        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x008031a2        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.port_notify.4989
-                0x008031a7        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x008031a3        0x1 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.sof_zlp_counter.5059
-                0x008031a8        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
+                0x008031a4        0x2 src/ASF/common/services/usb/class/cdc/device/udi_cdc.o
  .bss.udc_device_status
-                0x008031aa        0x2 src/ASF/common/services/usb/udc/udc.o
+                0x008031a6        0x2 src/ASF/common/services/usb/udc/udc.o
  .bss.udc_iface_setting
-                0x008031ac        0x2 src/ASF/common/services/usb/udc/udc.o
+                0x008031a8        0x2 src/ASF/common/services/usb/udc/udc.o
  .bss.udc_num_configuration
-                0x008031ae        0x2 src/ASF/common/services/usb/udc/udc.o
+                0x008031aa        0x2 src/ASF/common/services/usb/udc/udc.o
  .bss.udc_ptr_conf
-                0x008031b0        0x2 src/ASF/common/services/usb/udc/udc.o
+                0x008031ac        0x2 src/ASF/common/services/usb/udc/udc.o
  .bss.udc_ptr_iface
-                0x008031b2        0x2 src/ASF/common/services/usb/udc/udc.o
+                0x008031ae        0x2 src/ASF/common/services/usb/udc/udc.o
  .bss.udc_ep_status.4757
-                0x008031b4        0x2 src/ASF/common/services/usb/udc/udc.o
+                0x008031b0        0x2 src/ASF/common/services/usb/udc/udc.o
  .bss.stdio_usb_interface_enable
-                0x008031b6        0x1 src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
+                0x008031b2        0x1 src/ASF/common/utils/stdio/stdio_usb/stdio_usb.o
  *(COMMON)
- COMMON         0x008031b7        0x8 src/ASF/xmega/drivers/dma/dma.o
-                0x008031b7                dma_data
- COMMON         0x008031bf        0x2 src/ASF/xmega/drivers/rtc32/rtc32.o
-                0x008031bf                rtc_data
- COMMON         0x008031c1        0x4 src/ASF/xmega/drivers/adc/adc.o
-                0x008031c1                adcb_callback
-                0x008031c3                adca_callback
- COMMON         0x008031c5       0x10 src/ASF/xmega/drivers/usb/usb_device.o
-                0x008031c5                udd_g_ctrlreq
- COMMON         0x008031d5        0x6 src/main.o
-                0x008031d5                g_fifo_sched_desc
- COMMON         0x008031db        0x6 src/ASF/common/services/sleepmgr/xmega/sleepmgr.o
-                0x008031db                sleepmgr_locks
- COMMON         0x008031e1        0x2 src/ASF/common/utils/stdio/read.o
-                0x008031e1                ptr_get
- COMMON         0x008031e3        0x4 src/ASF/common/utils/stdio/write.o
-                0x008031e3                ptr_put
-                0x008031e5                stdio_base
- COMMON         0x008031e7        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(iob.o)
-                0x008031e7                __iob
- COMMON         0x008031ed        0x2 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(errno.o)
-                0x008031ed                errno
- COMMON         0x008031ef        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(malloc.o)
-                0x008031ef                __brkval
-                0x008031f1                __flp
-                0x008031f3                PROVIDE (__bss_end, .)
+ COMMON         0x008031b3        0x8 src/ASF/xmega/drivers/dma/dma.o
+                0x008031b3                dma_data
+ COMMON         0x008031bb        0x2 src/ASF/xmega/drivers/rtc32/rtc32.o
+                0x008031bb                rtc_data
+ COMMON         0x008031bd        0x4 src/ASF/xmega/drivers/adc/adc.o
+                0x008031bd                adcb_callback
+                0x008031bf                adca_callback
+ COMMON         0x008031c1       0x10 src/ASF/xmega/drivers/usb/usb_device.o
+                0x008031c1                udd_g_ctrlreq
+ COMMON         0x008031d1        0x6 src/main.o
+                0x008031d1                g_fifo_sched_desc
+ COMMON         0x008031d7        0x6 src/ASF/common/services/sleepmgr/xmega/sleepmgr.o
+                0x008031d7                sleepmgr_locks
+ COMMON         0x008031dd        0x2 src/ASF/common/utils/stdio/read.o
+                0x008031dd                ptr_get
+ COMMON         0x008031df        0x4 src/ASF/common/utils/stdio/write.o
+                0x008031df                ptr_put
+                0x008031e1                stdio_base
+ COMMON         0x008031e3        0x6 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(iob.o)
+                0x008031e3                __iob
+ COMMON         0x008031e9        0x2 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(errno.o)
+                0x008031e9                errno
+ COMMON         0x008031eb        0x4 c:/program files (x86)/atmel/studio/7.0/toolchain/avr8/avr8-gnu-toolchain/bin/../lib/gcc/avr/5.4.0/../../../../avr/lib/avrxmega6\libc.a(malloc.o)
+                0x008031eb                __brkval
+                0x008031ed                __flp
+                0x008031ef                PROVIDE (__bss_end, .)
                 0x00027096                __data_load_start = LOADADDR (.data)
                 0x00027342                __data_load_end = (__data_load_start + SIZEOF (.data))
 
-.noinit         0x008031f3        0x0
+.noinit         0x008031ef        0x0
                 [!provide]                PROVIDE (__noinit_start, .)
  *(.noinit*)
                 [!provide]                PROVIDE (__noinit_end, .)
-                0x008031f3                _end = .
-                0x008031f3                PROVIDE (__heap_start, .)
+                0x008031ef                _end = .
+                0x008031ef                PROVIDE (__heap_start, .)
 
 .eeprom         0x00810000        0x0
  *(.eeprom*)

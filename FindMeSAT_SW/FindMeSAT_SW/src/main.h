@@ -20,7 +20,7 @@
 #define APPLICATION_VERSION											"1.0"
 
 
-#define C_TWI1_BARO_C_CNT											10
+#define C_TWI1_BARO_C_CNT											8
 
 #define C_0DEGC_K													273.15f
 
@@ -232,7 +232,7 @@ typedef enum APRS_ALERT_FSM_STATE_ENUM {
 #define C_APRS_SSID_LEN						4
 #define C_APRS_USER_LEN						10
 #define C_APRS_PWD_LEN						6
-#define C_APRS_ALERT_MESSAGE_DELAY_SEC		8
+#define C_APRS_ALERT_MESSAGE_DELAY_SEC		10
 #define C_APRS_ALERT_TIME_SEC				900
 #define C_APRS_ALERT_POS_DELTA_M			2500
 #define C_APRS_ALERT_POS_HOLDOFF_SEC		33
