@@ -348,7 +348,7 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 		} else if ((!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_AT,		sizeof(PM_IP_CMD_AT) - 1))		||
 				   (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_A_slash,	sizeof(PM_IP_CMD_A_slash) - 1)) ||
 				   ((1 <= cmdLine_buf[0]) && (cmdLine_buf[0] <= 26))) {
-				usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) cmdLine_buf, cmdLine_len);
+				serial_sim808_send(cmdLine_buf, cmdLine_len);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_bias, sizeof(PM_IP_CMD_bias) - 1)) {
 			int val[1] = { 0 };

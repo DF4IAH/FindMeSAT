@@ -14,10 +14,12 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													110
+#define VERSION_LOW													113
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
+
+#define C_CLOCK_MHZ_F												30e6
 
 
 #define C_TWI1_BARO_C_CNT											8

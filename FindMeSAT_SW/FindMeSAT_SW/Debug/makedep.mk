@@ -2,10 +2,6 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
-src\ASF\common\services\serial\usart_serial.c
-
-src\ASF\xmega\drivers\usart\usart.c
-
 src\serial.c
 
 src\usb.c

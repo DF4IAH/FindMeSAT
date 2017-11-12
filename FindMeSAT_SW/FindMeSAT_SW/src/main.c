@@ -43,7 +43,6 @@
 #include "usb.h"
 #include "twi.h"
 #include "interpreter.h"
-#include "usart_serial.h"
 
 #include "main.h"
 
@@ -125,12 +124,13 @@ bool						g_usb_cdc_transfers_authorized		= false;
 bool						g_usb_cdc_access_blocked			= false;
 WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
 
-usart_serial_options_t		g_usart1_options					= { 0 };
 uint8_t						g_usart_gprs_auto_response_state	= 0;
 bool						g_usart1_rx_ready					= false;
 bool						g_usart1_rx_OK						= false;
 uint16_t					g_usart1_rx_idx						= 0;
 char						g_usart1_rx_buf[C_USART1_RX_BUF_LEN]= { 0 };
+uint16_t					g_usart1_tx_len						= 0;
+char						g_usart1_tx_buf[C_USART1_TX_BUF_LEN]= { 0 };
 
 bool						g_gsm_enable						= false;	// EEPROM
 bool						g_gsm_aprs_enable					= false;	// EEPROM
@@ -425,6 +425,7 @@ static void init_globals(void)
 		g_usart1_rx_ready					= false;
 		g_usart1_rx_OK						= false;
 		g_usart1_rx_idx						= 0;
+		g_usart1_tx_len						= 0;
 	}
 
 	/* GNS */
@@ -1777,25 +1778,25 @@ void aprs_message_send(const char* msg, int content_message_len)
 
 			/* Line 1 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L1);
-			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_msg, msg_len);
+			serial_sim808_send(l_msg, msg_len);
 
 			/* Line 2 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L2, len);
-			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_msg, msg_len);
+			serial_sim808_send(l_msg, msg_len);
 
 			/* Line 3 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L3);
-			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_msg, msg_len);
+			serial_sim808_send(l_msg, msg_len);
 
 			/* Line 4 */
 			msg_len = snprintf_P(l_msg, sizeof(l_msg), PM_APRS_TX_HTTP_L4);
-			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_msg, msg_len);
+			serial_sim808_send(l_msg, msg_len);
 
 			/* Content header - authentication */
-			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) l_content_hdr, content_hdr_len);
+			serial_sim808_send(l_content_hdr, content_hdr_len);
 
 			/* Content message */
-			usart_serial_write_packet(USART_SERIAL1, (const uint8_t*) msg, content_message_len);
+			serial_sim808_send(msg, content_message_len);
 		}
 	}
 }
@@ -3213,7 +3214,7 @@ int main(void)
 	/* Start TWI channels */
 	twi_start();		// Start TWI
 
-	/* Start serial1 */
+	/* Start serial */
 	serial_start();		// Start communication with the SIM808 */
 
 	/* Calibration of TWI1 devices */
