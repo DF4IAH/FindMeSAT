@@ -98,8 +98,11 @@ extern char							g_usart1_tx_buf[C_USART1_TX_BUF_LEN];
 
 extern bool							g_gsm_enable;
 extern bool							g_gsm_aprs_enable;
-extern bool							g_gsm_aprs_connected;
+extern bool							g_gsm_aprs_gprs_connected;
+extern bool							g_gsm_aprs_ip_connected;
 extern char							g_gsm_login_pwd[C_GSM_PIN_BUF_LEN];
+extern char							s_gsm_cell_lac[4];
+extern char							s_gsm_cell_ci[4];
 
 extern bool							g_twi1_gsm_valid;
 extern uint8_t						g_twi1_gsm_version;

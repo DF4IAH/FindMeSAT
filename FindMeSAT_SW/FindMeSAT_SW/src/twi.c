@@ -787,8 +787,8 @@ void start_twi2_lcd(void)
 		twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 		delay_ms(50);
 
-		/* LED red */
-		twi2_set_leds(0x01);
+		/* LEDs off */
+		twi2_set_leds(0x00);
 
 		/* Set the pixel type to SET pixels */
 		twi2_waitUntilReady(false);
@@ -824,9 +824,6 @@ void start_twi2_lcd(void)
 
 		/* Set the backlight level exactly */
 		twi2_set_ledbl(0, l_my_pwm);
-
-		/* LED yellow */
-		twi2_set_leds(0x03);
 	}
 }
 

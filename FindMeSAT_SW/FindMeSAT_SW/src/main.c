@@ -134,8 +134,12 @@ char						g_usart1_tx_buf[C_USART1_TX_BUF_LEN]= { 0 };
 
 bool						g_gsm_enable						= false;	// EEPROM
 bool						g_gsm_aprs_enable					= false;	// EEPROM
-bool						g_gsm_aprs_connected				= false;
+bool						g_gsm_aprs_gprs_connected			= false;
+bool						g_gsm_aprs_ip_connected				= false;
 char						g_gsm_login_pwd[C_GSM_PIN_BUF_LEN]	= { 0 };	// EEPROM
+char						s_gsm_cell_lac[4]					= { 0 };
+char						s_gsm_cell_ci[4]					= { 0 };
+
 
 bool						g_twi1_gsm_valid					= false;
 uint8_t						g_twi1_gsm_version					= 0;
@@ -616,13 +620,16 @@ static void init_globals(void)
 	{
 		uint8_t val_ui8 = 0;
 
-		g_gsm_aprs_connected = false;
+		g_gsm_aprs_gprs_connected	= false;
+		g_gsm_aprs_ip_connected		= false;
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__GSM_BF, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
 			g_gsm_enable			= val_ui8 & GSM__ENABLE;
 			g_gsm_aprs_enable		= val_ui8 & GSM__APRS_ENABLE;
 		}
 		nvm_read(INT_EEPROM, EEPROM_ADDR__GSM_PIN,			(void*)&g_gsm_login_pwd,		sizeof(g_gsm_login_pwd));
+		memset(s_gsm_cell_lac, 0, sizeof(s_gsm_cell_lac));
+		memset(s_gsm_cell_ci,  0, sizeof(s_gsm_cell_ci));
 	}
 
 	/* APRS */
@@ -1386,8 +1393,9 @@ void gsm_enable(bool enable)
 	/* Switch to the desired activation */
 	serial_gsm_activation(enable);
 
+	/* Activate GPRS link*/
 	if (enable && g_gsm_aprs_enable) {
-		serial_gprs_establish();
+		serial_gsm_gprs_link_openClose(true);
 	}
 }
 
@@ -1598,6 +1606,8 @@ static void isr_100ms_main_1pps(void)
 		g_1pps_last_inSpan		= inSpan;
 		g_1pps_printtwi_avail	= true;
 		g_1pps_printusb_avail	= true;
+
+		/* Blink when new second starts */
 		g_1pps_led				= inSpan ?  0x02 : 0x01;  // Green / Red
 
 		/* Show PLL inter-calculation values and states */
@@ -1754,13 +1764,13 @@ uint16_t aprs_mag_delta_nT(void)
 void aprs_message_begin(void)
 {
 	/* GSM DPRS transportation */
-	serial_gsm_gprs_openClose(true);
+	serial_gsm_gprs_ip_openClose(true);
 }
 
 void aprs_message_end(void)
 {
 	/* GSM DPRS transportation */
-	serial_gsm_gprs_openClose(false);
+	serial_gsm_gprs_ip_openClose(false);
 }
 
 void aprs_message_send(const char* msg, int content_message_len)
@@ -2977,7 +2987,7 @@ static void task_main_aprs(uint32_t now)
 		/* Check for reporting interval */
 		switch (l_aprs_alert_fsm_state) {
 			case APRS_ALERT_FSM_STATE__DO_N1:
-			if (l_aprs_alert_last < l_now_sec) {
+			{
 				int32_t l_aprs_alert_1_gyro_x_mdps;
 				int32_t l_aprs_alert_1_gyro_y_mdps;
 				int32_t l_aprs_alert_1_gyro_z_mdps;
@@ -3020,7 +3030,7 @@ static void task_main_aprs(uint32_t now)
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N2:
-			if ((l_aprs_alert_last + 1 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
+			if ((l_aprs_alert_last + C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
 				int16_t l_aprs_alert_1_accel_x_mg;
 				int16_t l_aprs_alert_1_accel_y_mg;
 				int16_t l_aprs_alert_1_accel_z_mg;
@@ -3049,7 +3059,7 @@ static void task_main_aprs(uint32_t now)
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N3:
-			if ((l_aprs_alert_last + 2 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
+			if ((l_aprs_alert_last + C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
 				int32_t l_aprs_alert_2_mag_x_nT;
 				int32_t l_aprs_alert_2_mag_y_nT;
 				int32_t l_aprs_alert_2_mag_z_nT;
@@ -3078,7 +3088,7 @@ static void task_main_aprs(uint32_t now)
 			break;
 
 			case APRS_ALERT_FSM_STATE__DO_N4:
-			if ((l_aprs_alert_last + 3 * C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
+			if ((l_aprs_alert_last + C_APRS_ALERT_MESSAGE_DELAY_SEC) < l_now_sec) {
 				float l_gns_msl_alt_m;
 				int16_t l_twi1_hygro_DP_100;
 				int32_t l_twi1_baro_p_h_100;
@@ -3115,6 +3125,31 @@ static void task_main_aprs(uint32_t now)
 		}
 	} while (false);
 
+	/* Message content ready */
+	if (len) {
+		/* Transport APRS message to network */
+		{
+			if (!g_gsm_aprs_gprs_connected) {
+				serial_gsm_gprs_link_openClose(true);
+			}
+
+			aprs_message_begin();
+
+			/* Sending APRS information to the server */
+			aprs_message_send(g_prepare_buf, len);
+
+			aprs_message_end();
+
+			// Mark end of message as last transmission time
+			l_aprs_alert_last = tcc1_get_time() >> 10;
+		}
+	}
+
+	/* Shutdown GPRS link when state machine is idling */
+	if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
+		serial_gsm_gprs_link_openClose(false);
+	}
+
 	/* Write back to the global variables */
 	{
 		flags = cpu_irq_save();
@@ -3122,19 +3157,6 @@ static void task_main_aprs(uint32_t now)
 		g_aprs_alert_fsm_state	= l_aprs_alert_fsm_state;
 		g_aprs_alert_reason		= l_aprs_alert_reason;
 		cpu_irq_restore(flags);
-	}
-
-	/* Message content ready */
-	if (len) {
-		/* Transport APRS message to network */
-		{
-			aprs_message_begin();
-
-			/* Sending APRS information to the server */
-			aprs_message_send(g_prepare_buf, len);
-
-			aprs_message_end();
-		}
 	}
 }
 
@@ -3157,6 +3179,30 @@ static void task(void)
 
 int main(void)
 {
+#if 0
+	g_gsm_enable = g_gsm_aprs_enable = true;
+
+	#if 1
+	const char test1[] = "+CREG: 2,2";
+	serial_filter_inStream(test1, sizeof(test1));
+	#endif
+
+	#if 0
+	const char test2[] = "+CREG: 1,\"1C56\",\"2DD3\"";
+	serial_filter_inStream(test2, sizeof(test2));
+	#endif
+
+	#if 0
+	const char test3[] = "+CREG: 2,1,\"1C56\",\"2DD3\"";
+	serial_filter_inStream(test3, sizeof(test3));
+	#endif
+
+	while (true) {
+		nop();
+	}
+#endif
+
+
 	uint8_t retcode = 0;
 
 	/* Init the IOPORT */
@@ -3214,6 +3260,9 @@ int main(void)
 	/* Start TWI channels */
 	twi_start();		// Start TWI
 
+	/* LED red */
+	twi2_set_leds(0x01);
+
 	/* Start serial */
 	serial_start();		// Start communication with the SIM808 */
 
@@ -3224,13 +3273,16 @@ int main(void)
 	/* Show help page of command set */
 	printHelp();
 
-	/* Establish GPRS connection */
-	if (g_gsm_enable) {
-		serial_gprs_establish();
-	}
-
 	/* LED green */
 	twi2_set_leds(0x02);
+
+	/* Establish GPRS connection */
+	if (g_gsm_enable && g_gsm_aprs_enable) {
+		serial_gsm_gprs_link_openClose(true);
+	}
+
+	/* LEDs off */
+	twi2_set_leds(0x00);
 
 	/* The application code */
 	g_twi2_lcd_repaint = true;
@@ -3243,7 +3295,7 @@ int main(void)
 		yield_ms(0);
     }
 
-	/* LED off */
+	/* LEDs off */
 	twi2_set_leds(0x00);
 
 	cpu_irq_disable();
