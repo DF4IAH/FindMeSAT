@@ -49,6 +49,8 @@
 #define C_USART1_TX_BUF_LEN			64
 
 #define C_USART_SERIAL1_BAUDRATE	9600
+#define C_USART_SIM808_RESP_MS		25
+#define C_USART_SIM808_RESP_ITER	80
 
 #define C_GSM_PIN_BUF_LEN			14
 
@@ -61,21 +63,26 @@ typedef enum C_GSM_CREG_STAT_ENUM {
 	C_GSM_CREG_STAT_REGROAMING						= 5
 } C_GSM_CREG_STAT_ENUM_t;
 
+typedef enum C_GSM_CGATT_STAT_ENUM {
+	C_GSM_CREG_STAT_DETACHED						= 0,
+	C_GSM_CREG_STAT_ATTACHED						= 1
+} C_GSM_CGATT_STAT_ENUM_t;
+
 
 typedef enum SERIAL_SIM808_GSM_SETFUNC_ENUM {
 	SERIAL_SIM808_GSM_SETFUNC_OFF					= 0,
 	SERIAL_SIM808_GSM_SETFUNC_ON,
 } SERIAL_SIM808_GSM_SETFUNC_ENUM_t;
 
-void serial_sim808_send(const char* msg, uint8_t len);
+void serial_sim808_send(const char* msg, uint8_t len, bool doWait);
 bool serial_sim808_sendAndResponse(const char* msg, uint8_t len);
 void serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode);
 void serial_sim808_gsm_setPin(const char* pin);
 
 void serial_gsm_activation(bool enable);
 void serial_gsm_gprs_link_openClose(bool isStart);
-void serial_gsm_rx_creg(uint8_t val);
-void serial_gsm_rx_cgatt(uint8_t val);
+void serial_gsm_rx_creg(C_GSM_CREG_STAT_ENUM_t stat);
+void serial_gsm_rx_cgatt(C_GSM_CGATT_STAT_ENUM_t stat);
 void serial_gsm_gprs_ip_openClose(bool isStart);
 void serial_sim808_gsm_shutdown(void);
 
@@ -86,7 +93,8 @@ void serial_start(void);
 void serial_send_gns_urc(uint8_t val);
 bool serial_filter_inStream(const char* buf, uint16_t len);
 
-void task_serial(uint32_t now);
+void task_serial(void);
+void task(void);
 
 
 #endif /* SERIAL_H_ */

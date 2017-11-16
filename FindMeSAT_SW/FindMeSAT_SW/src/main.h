@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													115
+#define VERSION_LOW													116
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -297,9 +297,7 @@ uint16_t aprs_gyro_total_dps_1000(void);
 uint16_t aprs_accel_xy_delta_g_1000(void);
 uint16_t aprs_mag_delta_nT(void);
 
-void aprs_message_begin(void);
-void aprs_message_end(void);
-void aprs_message_send(const char* msg, int len);
+void aprs_message_send(const char* msg, uint8_t len);
 
 bool sched_getLock(volatile uint8_t* lockVar);
 void sched_freeLock(volatile uint8_t* lockVar);

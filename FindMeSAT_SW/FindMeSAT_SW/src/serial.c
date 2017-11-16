@@ -106,7 +106,9 @@ const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG[]		= "AT+CREG?\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG[]);
 const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT[]	= "AT+CGATT?\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT[]		= "AT+CSTT=\"%s\",\"%s\",\"%s\"\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT_PARAM[]		= "AT+CSTT=\"%s\",\"%s\",\"%s\"\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT_PARAM[]);
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT[]		= "AT+CSTT\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT[]);
 const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIICR[]	= "AT+CIICR\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIICR[]);
@@ -173,12 +175,12 @@ ISR(USARTF0_TXC_vect, ISR_BLOCK)
 			USARTF0_DATA = g_usart1_tx_buf[0];
 
 			/* Move string one position ahead */
-			for (uint8_t idx = 0; idx < g_usart1_tx_len; idx++) {
+			for (uint8_t idx = 0; idx < (g_usart1_tx_len - 1); idx++) {
 				g_usart1_tx_buf[idx] = g_usart1_tx_buf[idx + 1];
 			}
 
 			/* Finish TX string and resize length to be sent */
-			g_usart1_tx_buf[g_usart1_tx_len--] = 0;
+			g_usart1_tx_buf[--g_usart1_tx_len] = 0;
 		}
 	}
 }
@@ -194,55 +196,64 @@ static void isr_serial_tx_kickstart(void)
 		USARTF0_DATA = g_usart1_tx_buf[0];
 
 		/* Move string one position ahead */
-		for (uint8_t idx = 0; idx < g_usart1_tx_len; idx++) {
+		for (uint8_t idx = 0; idx < (g_usart1_tx_len - 1); idx++) {
 			g_usart1_tx_buf[idx] = g_usart1_tx_buf[idx + 1];
 		}
 
 		/* Finish TX string and resize length to be sent */
-		g_usart1_tx_buf[g_usart1_tx_len--] = 0;
+		g_usart1_tx_buf[--g_usart1_tx_len] = 0;
 	}
 }
 
-void serial_sim808_send(const char* msg, uint8_t len)
+void serial_sim808_send(const char* msg, uint8_t len, bool doWait)
 {
-	irqflags_t flags = cpu_irq_save();
+	int16_t max;
 
-	/* Append message to TX buffer */
-	int16_t max = min(g_usart1_tx_len + len, C_USART1_TX_BUF_LEN - 3);
+	/* IRQ disabled section */
+	{
+		irqflags_t flags = cpu_irq_save();
 
-	int16_t idx_s = g_usart1_tx_len;
-	for (uint8_t idx_b = 0; idx_s < max; idx_b++) {
-		g_usart1_tx_buf[idx_s++] = msg[idx_b];
+		/* Append message to TX buffer */
+		max = min(g_usart1_tx_len + len, sizeof(g_usart1_tx_buf) - 3);
+
+		int16_t idx_s = g_usart1_tx_len;
+		for (uint8_t idx_b = 0; idx_s < max; idx_b++) {
+			g_usart1_tx_buf[idx_s++] = msg[idx_b];
+		}
+		g_usart1_tx_buf[idx_s++]	= '\r';
+		g_usart1_tx_buf[idx_s]		= 0;
+		g_usart1_tx_len				= idx_s;
+
+		/* No ongoing transmission, but data is available to be transfered and SIM808 is ready for that */
+		isr_serial_tx_kickstart();
+
+		cpu_irq_restore(flags);
 	}
-	g_usart1_tx_buf[idx_s++]	= '\r';
-	g_usart1_tx_buf[idx_s]		= 0;
-	g_usart1_tx_len				= idx_s;
 
-	/* No ongoing transmission, but data is available to be transfered and SIM808 is ready for that */
-	isr_serial_tx_kickstart();
-
-	cpu_irq_restore(flags);
+	/* Wait for message to be sent */
+	if (doWait) {
+		yield_ms(C_USART_SIM808_RESP_MS + max);
+		task();
+	}
 }
 
 bool serial_sim808_sendAndResponse(const char* msg, uint8_t len)
 {
-	for (uint8_t cnt = 2; cnt; --cnt) {
-		/* Reset the OK response flag */
-		g_usart1_rx_OK = false;
+	/* Reset the OK response flag */
+	g_usart1_rx_OK = false;
 
-		/* Send the string direct to the SIM808 */
-		serial_sim808_send(msg, len);
+	/* Send the string direct to the SIM808 */
+	serial_sim808_send(msg, len, true);
 
-		/* Wait until 2 s for the response */
-		for (uint8_t ycnt = 40; ycnt; --ycnt) {
-			yield_ms(50);
-			task_serial(tcc1_get_time());
-
-			if (g_usart1_rx_OK) {
-				/* OK response received */
-				return true;
-			}
+	/* Wait until 2 s for the response */
+	for (uint8_t ycnt = C_USART_SIM808_RESP_ITER; ycnt; --ycnt) {
+		if (g_usart1_rx_OK) {
+			/* OK response received */
+			return true;
 		}
+
+		yield_ms(C_USART_SIM808_RESP_MS);
+		task_serial();
 	}
 
 	/* No OK response */
@@ -316,6 +327,10 @@ void serial_gsm_gprs_link_openClose(bool isStart) {
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
 
+		/* Shutdown any open connections and drop GPRS link, just in case */
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSHUT);
+		serial_sim808_sendAndResponse(g_prepare_buf, len);
+
 		/* GPRS activation - check for registration, first */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG);
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
@@ -355,7 +370,7 @@ void serial_gsm_gprs_link_openClose(bool isStart) {
 	}
 }
 
-void serial_gsm_rx_creg(uint8_t val)
+void serial_gsm_rx_creg(C_GSM_CREG_STAT_ENUM_t stat)
 {
 	static bool s_done = false;
 	static bool s_lock = false;
@@ -365,13 +380,13 @@ void serial_gsm_rx_creg(uint8_t val)
 		return;
 	}
 
-	s_lock = true;
-
-	if ((val == C_GSM_CREG_STAT_REGHOME) || (val == C_GSM_CREG_STAT_REGROAMING)) {
+	if ((stat == C_GSM_CREG_STAT_REGHOME) || (stat == C_GSM_CREG_STAT_REGROAMING)) {
+		s_lock = true;
+		barrier();
 		s_done = true;
 
 		#if 1
-		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#21 DEBUG: +CREG: x received.\r\n");
+		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#21 DEBUG: +CREG: 1 (REGHOME) / 5 (REGROAMING) received.\r\n");
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
 
@@ -386,25 +401,10 @@ void serial_gsm_rx_creg(uint8_t val)
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT);
 		s_lock = false;
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
-
-	} else {
-		#if 0
-		yield_ms(2500);
-
-		#if 1
-		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#29 DEBUG: repeated +CREG? sending ...\r\n");
-		udi_write_tx_buf(g_prepare_buf, len, false);
-		#endif
-
-		/* Repeat: check for registration  */
-		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG);
-		s_lock = false;
-		serial_sim808_sendAndResponse(g_prepare_buf, len);
-		#endif
 	}
 }
 
-void serial_gsm_rx_cgatt(uint8_t val)
+void serial_gsm_rx_cgatt(C_GSM_CGATT_STAT_ENUM_t stat)
 {
 	static bool s_done = false;
 	static bool s_lock = false;
@@ -414,13 +414,14 @@ void serial_gsm_rx_cgatt(uint8_t val)
 		return;
 	}
 
-	s_lock = true;
 
-	if (1 <= val) {
+	if (stat == C_GSM_CREG_STAT_ATTACHED) {
+		s_lock = true;
+		barrier();
 		s_done = true;
 
 		#if 1
-		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#31 DEBUG: +CGATT: x received.\r\n");
+		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#31 DEBUG: +CGATT: 1 (ATTACHED) received.\r\n");
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
 
@@ -430,39 +431,26 @@ void serial_gsm_rx_cgatt(uint8_t val)
 		#endif
 
 		/* Start task for GPRS service */
-		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT, "web.vodafone.de", "", "");
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT_PARAM, "web.vodafone.de", "", "");
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT);
+		serial_sim808_sendAndResponse(g_prepare_buf, len);
+		yield_ms(500);
 
 		/* Establish GPRS connection */
-		yield_ms(500);
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIICR);
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
+		yield_ms(1500);
 
 		/* Request local IP address */
-		yield_ms(1500);
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIFSR);
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
+		yield_ms(500);
 
 		g_usart_gprs_auto_response_state = 0;
 		s_lock = false;
 
 		g_gsm_aprs_gprs_connected = true;
-
-	} else {
-		#if 0
-		yield_ms(2500);
-
-		#if 1
-		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#39 DEBUG: repeated +CGATT? sending ...\r\n");
-		udi_write_tx_buf(g_prepare_buf, len, false);
-		#endif
-
-		/* Check and push device to activate GPRS */
-		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT);
-		s_lock = false;
-
-		serial_sim808_sendAndResponse(g_prepare_buf, len);
-		#endif
 	}
 }
 
@@ -495,11 +483,11 @@ void serial_gsm_gprs_ip_openClose(bool isStart)
 			/* Connect TCP/IP port */
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSTART, C_APRS_TX_HTTP_TARGET2_PROT, C_APRS_TX_HTTP_TARGET2_NM, C_APRS_TX_HTTP_TARGET2_PORT);
 			serial_sim808_sendAndResponse(buf, len);
+			yield_ms(2750);
 
-			//yield_ms(2750);
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSEND);
 			serial_sim808_sendAndResponse(buf, len);
-			//yield_ms(250);
+			yield_ms(250);
 
 			s_ip_isOpen = true;
 
@@ -508,9 +496,8 @@ void serial_gsm_gprs_ip_openClose(bool isStart)
 
 			/* Stop message block by a ^Z character (0x1a) */
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CTRL_Z);
-			//serial_sim808_send(buf, len);
-			//yield_ms(500);
-			serial_sim808_sendAndResponse(buf, len);
+			serial_sim808_send(buf, len, true);
+			yield_ms(500);
 
 			#if 1
 			len = snprintf(buf, sizeof(buf), "#46 DEBUG: Closing TCP connection ...\r\n");
@@ -519,7 +506,6 @@ void serial_gsm_gprs_ip_openClose(bool isStart)
 
 			/* Close TCP/IP port */
 			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPCLOSE);
-			//serial_sim808_send(buf, len);
 			serial_sim808_sendAndResponse(buf, len);
 
 			s_ip_isOpen = false;
@@ -664,7 +650,7 @@ void serial_start(void)
 
 	/* Synchronize with SIM808 */
 	while (true) {
-		serial_sim808_send("AT\r", 3);
+		serial_sim808_send("AT\r", 3, false);
 		delay_ms(100);
 		if (g_usart1_rx_ready) {
 			{
@@ -678,8 +664,9 @@ void serial_start(void)
 			}
 
 			/* Leave loop when SIM808 responds */
-			if (g_prepare_buf[0] && strstr_P(g_prepare_buf, PM_TWI1_UTIL_ONBOARD_SIM808_OK_R))
+			if (g_prepare_buf[0] && strstr_P(g_prepare_buf, PM_TWI1_UTIL_ONBOARD_SIM808_OK_R)) {
 				break;
+			}
 
 			if (loop_ctr++ > 10) {
 				loop_ctr = 0;
@@ -714,7 +701,7 @@ void serial_start(void)
 	}
 
 	/* Set the baud rate to AUTO or fixed rate */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_IPR_X, C_USART_SERIAL1_BAUDRATE);
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_IPR_X, (long) C_USART_SERIAL1_BAUDRATE);
 	serial_sim808_sendAndResponse(g_prepare_buf, len);
 
 	/* Set handshaking of both directions to hardware CTS/RTS */
@@ -824,7 +811,7 @@ void serial_send_gns_urc(uint8_t val)
 		if (10 == sscanf_P(buf, PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R_DDSS,
 			&(val[0]), &(val[1]),
 			&(outStr[0][0]), &(outStr[0][1]), &(outStr[0][2]), &(outStr[0][3]), &(outStr[1][0]), &(outStr[1][1]), &(outStr[1][2]), &(outStr[1][3]))) {
-			if ((val[1] != 1 C_GSM_CREG_STAT_REGHOME) && (val[1] != C_GSM_CREG_STAT_REGROAMING)) {
+			if ((val[1] != C_GSM_CREG_STAT_REGHOME) && (val[1] != C_GSM_CREG_STAT_REGROAMING)) {
 				irqflags_t flags = cpu_irq_save();
 				memset(s_gsm_cell_lac, 0, sizeof(s_gsm_cell_lac));
 				memset(s_gsm_cell_ci,  0, sizeof(s_gsm_cell_ci));
@@ -1018,7 +1005,7 @@ void serial_send_gns_urc(uint8_t val)
 }
 
 
-void task_serial(uint32_t now)
+void task_serial(void /*uint32_t now*/)
 {
 	uint16_t len_out = 0;
 

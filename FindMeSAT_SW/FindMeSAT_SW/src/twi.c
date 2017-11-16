@@ -169,9 +169,9 @@ PROGMEM_DECLARE(const char, PM_TWIINIT_ACCEL[]);
 
 /* Forward declarations */
 
-static void task_twi1_hygro(uint32_t now);
-static void task_twi1_gyro(uint32_t now);
-static void task_twi1_baro(uint32_t now);
+static void task_twi1_hygro(void);
+static void task_twi1_gyro(void);
+static void task_twi1_baro(void);
 static void task_twi2_lcd_template(void);
 
 
@@ -787,8 +787,8 @@ void start_twi2_lcd(void)
 		twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 		delay_ms(50);
 
-		/* LEDs off */
-		twi2_set_leds(0x00);
+		/* LED red */
+		twi2_set_leds(0x01);
 
 		/* Set the pixel type to SET pixels */
 		twi2_waitUntilReady(false);
@@ -885,7 +885,7 @@ void twi_start(void) {
 }
 
 
-static bool service_twi1_hygro(uint32_t now, bool sync)
+static bool service_twi1_hygro(bool sync)
 {
 	/* Real time usage: < 1 ms */
 
@@ -924,7 +924,7 @@ static bool service_twi1_hygro(uint32_t now, bool sync)
 	return false;
 }
 
-static bool service_twi1_gyro(uint32_t now, bool sync)
+static bool service_twi1_gyro(bool sync)
 {
 	/* Real time usage: abt. 1 ms */
 
@@ -1018,7 +1018,7 @@ static bool service_twi1_gyro(uint32_t now, bool sync)
 	return true;
 }
 
-static bool service_twi1_baro(uint32_t now, bool sync)
+static bool service_twi1_baro(bool sync)
 {
 	/* Real time usage: abt. 22 ms */
 
@@ -1111,53 +1111,53 @@ static bool service_twi1_baro(uint32_t now, bool sync)
 
 
 /* 10ms TWI1 - Gyro device */
-void isr_10ms_twi1_onboard(uint32_t now)
+void isr_10ms_twi1_onboard(void)
 {	/* Service time slot */
 	// not in use yet
 }
 
 /* 100ms TWI1 - Gyro device */
-void isr_100ms_twi1_onboard(uint32_t now)
+void isr_100ms_twi1_onboard(void)
 {	/* Service time slot */
 	cpu_irq_enable();
 
 	if (g_twi1_gyro_valid) {
-		if (service_twi1_gyro(now, true)) {
+		if (service_twi1_gyro(true)) {
 			sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
 		}
 	}
 }
 
 /* 500ms TWI1 - Baro, Hygro devices */
-void isr_500ms_twi1_onboard(uint32_t now)
+void isr_500ms_twi1_onboard(void)
 {	/* Service time slot */
 	cpu_irq_enable();
 
 	if (g_twi1_hygro_valid) {
-		if (service_twi1_hygro(now, true)) {
+		if (service_twi1_hygro(true)) {
 			sched_push(task_twi1_hygro, SCHED_ENTRY_CB_TYPE__LISTTIME,  70, true, false, false);
 		}
 	}
 
 	if (g_twi1_baro_valid) {
-		service_twi1_baro(now, true);
+		service_twi1_baro(true);
 	}
 }
 
 /* 2560 cycles per second */
-void isr_sparetime_twi1_onboard(uint32_t now)
+void isr_sparetime_twi1_onboard(void)
 {	/* Service time slot */
 	cpu_irq_enable();
 
 	if (g_twi1_baro_valid) {
-		if (service_twi1_baro(now, false)) {
+		if (service_twi1_baro(false)) {
 			/* Every 500ms */
 			sched_push(task_twi1_baro, SCHED_ENTRY_CB_TYPE__LISTTIME, 70, true, false, false);
 		}
 	}
 }
 
-static void task_twi1_hygro(uint32_t now)
+static void task_twi1_hygro(void)
 {	// Calculations for the presentation layer
 	static uint16_t s_twi1_hygro_S_T	= 0UL;
 	static uint16_t s_twi1_hygro_S_RH	= 0UL;
@@ -1231,7 +1231,7 @@ static void task_twi1_hygro(uint32_t now)
 	}
 }
 
-static void task_twi1_gyro(uint32_t now)
+static void task_twi1_gyro(void)
 {	// Calculations for the presentation layer
 	{
 		int16_t l_twi1_gyro_1_accel_x, l_twi1_gyro_1_accel_y, l_twi1_gyro_1_accel_z;
@@ -1332,7 +1332,7 @@ static void task_twi1_gyro(uint32_t now)
 	}
 }
 
-static void task_twi1_baro(uint32_t now)
+static void task_twi1_baro(void)
 {	// Calculations for the presentation layer
 	static uint32_t s_twi1_baro_d1	= 0UL;
 	static uint32_t s_twi1_baro_d2	= 0UL;
@@ -1413,18 +1413,18 @@ static void task_twi1_baro(uint32_t now)
 /* TWI1 - onboard devices */
 // hint: not called anymore, now done by  isr_500ms_twi1_onboard()
 #if 0
-static void task_twi1_onboard(uint32_t now)
+static void task_twi1_onboard(void)
 {
 	if (g_twi1_hygro_valid) {
-		task_twi1_hygro(now);
+		task_twi1_hygro();
 	}
 
 	if (g_twi1_gyro_valid) {
-		task_twi1_gyro(now);
+		task_twi1_gyro();
 	}
 
 	if (g_twi1_baro_valid) {
-		task_twi1_baro(now);
+		task_twi1_baro();
 	}
 }
 #endif
@@ -2346,7 +2346,7 @@ void task_twi2_lcd__environment(uint8_t col_left)
 	}
 }
 
-static void task_twi2_lcd(uint32_t now)
+static void task_twi2_lcd(void)
 {
 	static uint8_t s_lcd_entry_state =  0;
 
@@ -2420,17 +2420,19 @@ static void task_twi2_lcd(uint32_t now)
 }
 
 
-void task_twi(uint32_t now)
+void task_twi(void)
 {	/* Calculations for the presentation layer and display */
 	#if 0
 	// now to be called by the scheduler by  isr_500ms_twi1_onboard()
 
 	/* TWI1 - SIM808, Hygro, Gyro, Baro devices */
-	task_twi1_onboard(now);
+	task_twi1_onboard();
 	#endif
 
 	/* TWI2 - LCD Port */
-	task_twi2_lcd(now);
+	if (g_workmode == WORKMODE_RUN) {
+		task_twi2_lcd();
+	}
 
 	/* LED off */
 	twi2_set_leds(0x00);

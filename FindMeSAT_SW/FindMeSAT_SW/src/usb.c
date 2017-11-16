@@ -29,6 +29,61 @@
 #include "externals.h"
 
 
+const char					PM_USBINIT_HEADER_1[]				= "\r\n\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_1[]);
+const char					PM_USBINIT_HEADER_2[]				= "%c\r\n===============================\r\n";
+PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_2[]);
+const char					PM_USBINIT_HEADER_3[]				=       "FindMeSAT - USB logging started\r\n";
+PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_3[]);
+const char					PM_USBINIT_HEADER_4[]				=       "===============================\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_4[]);
+
+const char					PM_INFO_PART_L1P1A[]				= "Time = %06ld: Uvco=%4d mV, U5v=%4d mV, Ubat=%4d mV, ";
+const char					PM_INFO_PART_L1P1B[]				= "Uadc4=%4d mV, Uadc5=%4d mV, Usil=%4d mV, ";
+const char					PM_INFO_PART_L1P1C[]				= "mP_Temp=%+06.2fC\t \t";
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1B[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1C[]);
+
+const char					PM_INFO_PART_L1P2A[]				= "Baro_Temp=%+06.2fC, Baro_P=%7.2fhPa, ";
+const char					PM_INFO_PART_L1P2B[]				= "Baro_QNH=%7.2fhPa\t \t";
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P2A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P2B[]);
+
+const char					PM_INFO_PART_L1P3A[]				= "Hygro_Temp=%+06.2fC, Hygro_RelH=%05.2f%%, ";
+const char					PM_INFO_PART_L1P3B[]				= "Hygro_DewPoint_Temp=%+06.2fC\t \t";
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P3A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P3B[]);
+
+const char					PM_INFO_PART_L1P4A[]				= "Env_Temp=%+06.2fC, Env_RelH=%05.2f%%\r\n";
+PROGMEM_DECLARE(const char, PM_INFO_PART_L1P4A[]);
+
+const char					PM_INFO_PART_L2P1A[]				= "\tAx=%+05.3fg (%+06d), Ay=%+05.3fg (%+06d), ";
+const char					PM_INFO_PART_L2P1B[]				= "Az=%+05.3fg (%+06d)\t \t";
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P1A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P1B[]);
+
+const char					PM_INFO_PART_L2P2A[]				= "Gx=%+07.2fdps (%+06d), Gy=%+07.2fdps (%+06d), ";
+const char					PM_INFO_PART_L2P2B[]				= "Gz=%+07.2fdps (%06d)\t \t";
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P2A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P2B[]);
+
+const char					PM_INFO_PART_L2P3A[]				= "Mx=%+07.3fuT (%+06d), My=%+07.3fuT (%+06d), ";
+const char					PM_INFO_PART_L2P3B[]				= "Mz=%+07.3fuT (%+06d)\t \t";
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3B[]);
+
+const char					PM_INFO_PART_L2P4[]					= "Gyro_Temp=%+06.2fC (%+06d)\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_INFO_PART_L2P4[]);
+
+const char					PM_INFO_PART_PLL1A[]				= "PLL: time=%6ld.%03ld + %05d/30E+6 sec, ";
+const char					PM_INFO_PART_PLL1B[]				= "1pps_deviation=%+10f, ";
+const char					PM_INFO_PART_PLL1C[]				= "XO_PWM=%05ldd : 0x%02x\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1A[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1B[]);
+PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1C[]);
+
+
 /* Functions */
 
 static bool udi_write_tx_char(int chr, bool stripControl)
@@ -126,35 +181,25 @@ void udi_write_serial_line(const char* buf, uint16_t len)
 	yield_ms(30);
 }
 
-
-const char					PM_USBINIT_HEADER_1[]				= "\r\n\r\n\r\n";
-PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_1[]);
-const char					PM_USBINIT_HEADER_2[]				= "%c\r\n===============================\r\n";
-PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_2[]);
-const char					PM_USBINIT_HEADER_3[]				=       "FindMeSAT - USB logging started\r\n";
-PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_3[]);
-const char					PM_USBINIT_HEADER_4[]				=       "===============================\r\n\r\n";
-PROGMEM_DECLARE(const char, PM_USBINIT_HEADER_4[]);
-
 void usb_init(void)
 {
 	stdio_usb_init();	// Init and enable stdio_usb
 	if (g_usb_cdc_stdout_enabled) {
 		stdio_usb_enable();
 	}
-	yield_ms(1000);
+	delay_ms(500);
 
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-	yield_ms(500);
+	delay_ms(100);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_2, 0x0c);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-	yield_ms(250);
+	delay_ms(100);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_3);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-	yield_ms(250);
+	delay_ms(100);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_4);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -167,7 +212,11 @@ void usb_callback_suspend_action(void)
 	// Disable hardware component to reduce power consumption
 	// Reduce power consumption in suspend mode (max. 2.5mA on VBUS)
 
-	g_workmode = WORKMODE_SUSPENDED;
+	#if 0
+	if (g_workmode == WORKMODE_RUN) {
+		g_workmode = WORKMODE_SUSPENDED;
+	}
+	#endif
 }
 
 void usb_callback_resume_action(void)
@@ -202,10 +251,10 @@ void usb_callback_resume_action(void)
 
 	/* Start TWI channels */
 	twi_start();		// Start TWI
-	#endif
 
 	/* The application code */
 	g_workmode = WORKMODE_RUN;
+	#endif
 }
 
 void usb_callback_remotewakeup_enable(void)
@@ -270,7 +319,7 @@ void usb_callback_tx_empty_notify(uint8_t port)
 }
 
 
-static void usb_rx_process(uint32_t thisTime)
+static void usb_rx_process(void)
 {
 	char cdc_rx_buf[4];
 
@@ -313,61 +362,18 @@ static void usb_rx_process(uint32_t thisTime)
 }
 
 
-const char					PM_INFO_PART_L1P1A[]				= "Time = %06ld: Uvco=%4d mV, U5v=%4d mV, Ubat=%4d mV, ";
-const char					PM_INFO_PART_L1P1B[]				= "Uadc4=%4d mV, Uadc5=%4d mV, Usil=%4d mV, ";
-const char					PM_INFO_PART_L1P1C[]				= "mP_Temp=%+06.2fC\t \t";
-PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1A[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1B[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_L1P1C[]);
-
-const char					PM_INFO_PART_L1P2A[]				= "Baro_Temp=%+06.2fC, Baro_P=%7.2fhPa, ";
-const char					PM_INFO_PART_L1P2B[]				= "Baro_QNH=%7.2fhPa\t \t";
-PROGMEM_DECLARE(const char, PM_INFO_PART_L1P2A[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_L1P2B[]);
-
-const char					PM_INFO_PART_L1P3A[]				= "Hygro_Temp=%+06.2fC, Hygro_RelH=%05.2f%%, ";
-const char					PM_INFO_PART_L1P3B[]				= "Hygro_DewPoint_Temp=%+06.2fC\t \t";
-PROGMEM_DECLARE(const char, PM_INFO_PART_L1P3A[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_L1P3B[]);
-
-const char					PM_INFO_PART_L1P4A[]				= "Env_Temp=%+06.2fC, Env_RelH=%05.2f%%\r\n";
-PROGMEM_DECLARE(const char, PM_INFO_PART_L1P4A[]);
-
-const char					PM_INFO_PART_L2P1A[]				= "\tAx=%+05.3fg (%+06d), Ay=%+05.3fg (%+06d), ";
-const char					PM_INFO_PART_L2P1B[]				= "Az=%+05.3fg (%+06d)\t \t";
-PROGMEM_DECLARE(const char, PM_INFO_PART_L2P1A[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_L2P1B[]);
-
-const char					PM_INFO_PART_L2P2A[]				= "Gx=%+07.2fdps (%+06d), Gy=%+07.2fdps (%+06d), ";
-const char					PM_INFO_PART_L2P2B[]				= "Gz=%+07.2fdps (%06d)\t \t";
-PROGMEM_DECLARE(const char, PM_INFO_PART_L2P2A[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_L2P2B[]);
-
-const char					PM_INFO_PART_L2P3A[]				= "Mx=%+07.3fuT (%+06d), My=%+07.3fuT (%+06d), ";
-const char					PM_INFO_PART_L2P3B[]				= "Mz=%+07.3fuT (%+06d)\t \t";
-PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3A[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_L2P3B[]);
-
-const char					PM_INFO_PART_L2P4[]					= "Gyro_Temp=%+06.2fC (%+06d)\r\n\r\n";
-PROGMEM_DECLARE(const char, PM_INFO_PART_L2P4[]);
-
-const char					PM_INFO_PART_PLL1A[]				= "PLL: time=%6ld.%03ld + %05d/30E+6 sec, ";
-const char					PM_INFO_PART_PLL1B[]				= "1pps_deviation=%+10f, ";
-const char					PM_INFO_PART_PLL1C[]				= "XO_PWM=%05ldd : 0x%02x\r\n\r\n";
-PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1A[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1B[]);
-PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1C[]);
-
-void task_usb(uint32_t now)
+void task_usb(void)
 {
+	uint32_t now = tcc1_get_time();
+
 	/* Monitoring at the USB serial terminal */
 	if (g_usb_cdc_transfers_authorized) {
-		static uint32_t usb_last = 0UL;
+		static uint32_t s_usb_last = 0UL;
 
 		/* Get command lines from the USB host */
 		if (g_usb_cdc_rx_received) {
 			g_usb_cdc_rx_received = false;
-			usb_rx_process(now);
+			usb_rx_process();
 		}
 
 		/* Status of the PLL unit */
@@ -399,7 +405,7 @@ void task_usb(uint32_t now)
 
 		/* Status output when requested */
 		if (g_usb_cdc_printStatusLines_atxmega) {
-			if (((now - usb_last) >= 512) || (now < usb_last)) {
+			if (((now - s_usb_last) >= 512) || (now < s_usb_last)) {
 				int16_t l_adc_vctcxo_volt_1000;
 				int16_t l_adc_5v0_volt_1000;
 				int16_t l_adc_vbat_volt_1000;
@@ -543,7 +549,7 @@ void task_usb(uint32_t now)
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 				/* Store last time of status line */
-				usb_last = now;
+				s_usb_last = now;
 			}
 		}
 	}
