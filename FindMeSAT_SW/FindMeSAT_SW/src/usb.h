@@ -34,7 +34,7 @@ void usb_callback_cdc_set_rts(uint8_t port, bool b_enable);
 void usb_callback_rx_notify(uint8_t port);
 void usb_callback_tx_empty_notify(uint8_t port);
 
-void task_usb(uint32_t now);
+void task_usb(void);
 
 
 #endif /* USB_H_ */

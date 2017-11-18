@@ -9,7 +9,8 @@
 #ifndef EXTERNALS_H_
 #define EXTERNALS_H_
 
-#include "usart_serial.h"
+
+#include "serial.h"
 
 
 extern bool							g_adc_enabled;
@@ -87,17 +88,21 @@ extern bool							g_usb_cdc_transfers_authorized;
 extern bool							g_usb_cdc_access_blocked;
 extern WORKMODE_ENUM_t				g_workmode;
 
-extern usart_serial_options_t		g_usart1_options;
 extern uint8_t						g_usart_gprs_auto_response_state;
 extern bool							g_usart1_rx_ready;
 extern bool							g_usart1_rx_OK;
 extern uint16_t						g_usart1_rx_idx;
 extern char							g_usart1_rx_buf[C_USART1_RX_BUF_LEN];
+extern uint16_t						g_usart1_tx_len;
+extern char							g_usart1_tx_buf[C_USART1_TX_BUF_LEN];
 
 extern bool							g_gsm_enable;
 extern bool							g_gsm_aprs_enable;
-extern bool							g_gsm_aprs_connected;
+extern bool							g_gsm_aprs_gprs_connected;
+extern bool							g_gsm_aprs_ip_connected;
 extern char							g_gsm_login_pwd[C_GSM_PIN_BUF_LEN];
+extern char							s_gsm_cell_lac[4];
+extern char							s_gsm_cell_ci[4];
 
 extern bool							g_twi1_gsm_valid;
 extern uint8_t						g_twi1_gsm_version;
