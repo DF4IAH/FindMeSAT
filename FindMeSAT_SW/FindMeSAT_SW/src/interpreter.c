@@ -321,7 +321,11 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 {
 	/* Process command */
 	{
-		if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_adc, sizeof(PM_IP_CMD_adc) - 1)) {
+		if (cmdLine_buf[0] == '#') {
+			/* Send every line starting with # to the SIM808 device, excluding the first character itself */
+			serial_sim808_send(&(cmdLine_buf[1]), cmdLine_len - 1, false);
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_adc, sizeof(PM_IP_CMD_adc) - 1)) {
 			int val[1] = { 0 };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_adc) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
 				adc_app_enable(val[0] != 0);

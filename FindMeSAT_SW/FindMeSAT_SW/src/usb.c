@@ -191,15 +191,15 @@ void usb_init(void)
 
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-	delay_ms(100);
+	delay_ms(25);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_2, 0x0c);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-	delay_ms(100);
+	delay_ms(25);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_3);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-	delay_ms(100);
+	delay_ms(25);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_4);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);

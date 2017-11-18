@@ -1765,13 +1765,13 @@ void aprs_message_send(const char* msg, uint8_t content_message_len)
 {
 	/* GSM DPRS transportation */
 	if (g_gsm_enable && g_gsm_aprs_enable) {
-		char l_content_hdr[64];
+		char l_content_hdr[C_USART1_TX_BUF_LEN];
 		uint8_t content_hdr_len = (uint8_t) snprintf_P(l_content_hdr, sizeof(l_content_hdr), PM_APRS_TX_LOGIN, g_aprs_login_user, g_aprs_login_pwd, APPLICATION_NAME, APPLICATION_VERSION);
-		uint8_t len = content_hdr_len + content_message_len;
+		uint8_t len = content_hdr_len + 2 + content_message_len;
 
 		/* Transport message */
 		{
-			char	l_msg_buf[C_TX_BUF_SIZE];
+			char	l_msg_buf[C_USART1_TX_BUF_LEN];
 			uint8_t	l_msg_buf_len;
 
 			/* Line 1 */
@@ -1795,6 +1795,10 @@ void aprs_message_send(const char* msg, uint8_t content_message_len)
 
 			/* Content message */
 			serial_sim808_send(msg, content_message_len, true);
+
+			/* Ending line */
+			l_msg_buf_len = (uint8_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_MSGEND);
+			serial_sim808_send(l_msg_buf, l_msg_buf_len, true);
 		}
 	}
 }
@@ -2842,9 +2846,9 @@ static void task_env_calc(void)
 
 static void task_main_aprs(void)
 {
-	static uint32_t				s_now_sec				= 0UL;
-	static bool					s_lock					= false;
-	uint32_t					l_now_sec				= tcc1_get_time() >> 10;
+	static uint32_t				s_now_sec					= 0UL;
+	static bool					s_lock						= false;
+	uint32_t					l_now_sec					= tcc1_get_time() >> 10;
 	uint32_t					l_boot_time_ts;
 	float						l_gns_lat;
 	uint8_t						l_lat_deg;
@@ -2861,10 +2865,10 @@ static void task_main_aprs(void)
 	uint64_t					l_aprs_alert_last;
 	APRS_ALERT_FSM_STATE_ENUM_t	l_aprs_alert_fsm_state;
 	APRS_ALERT_REASON_ENUM_t	l_aprs_alert_reason;
-	int							len						= 0;
+	int							len							= 0;
 	irqflags_t					flags;
 	char						l_msg_buf[C_TX_BUF_SIZE];
-	int							l_msg_len				= 0;
+	int							l_msg_buf_len				= 0;
 
 	/* Once a second to be processed - do not send when APRS is disabled nor GPS ready */
 	if (s_lock || (s_now_sec == l_now_sec) || !g_gsm_enable || !g_gsm_aprs_enable || !g_gns_fix_status) {
@@ -3003,9 +3007,9 @@ static void task_main_aprs(void)
 				udi_write_tx_buf(g_prepare_buf, len, false);
 
 				/* Message content */
-				l_msg_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_len += snprintf_P(l_msg_buf + l_msg_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N1_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N1_CODE, l_course_deg, l_speed_kn);
-				l_msg_len += snprintf_P(l_msg_buf + l_msg_len, sizeof(l_msg_buf), PM_APRS_TX_N1, l_mark, l_aprs_alert_1_gyro_x_mdps / 1000.f, l_aprs_alert_1_gyro_y_mdps / 1000.f, l_aprs_alert_1_gyro_z_mdps / 1000.f);
+				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N1_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N1_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_N1, l_mark, l_aprs_alert_1_gyro_x_mdps / 1000.f, l_aprs_alert_1_gyro_y_mdps / 1000.f, l_aprs_alert_1_gyro_z_mdps / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
 
@@ -3046,9 +3050,9 @@ static void task_main_aprs(void)
 				udi_write_tx_buf(g_prepare_buf, len, false);
 
 				/* Message content */
-				l_msg_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_len += snprintf_P(l_msg_buf + l_msg_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N2_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N2_CODE, l_course_deg, l_speed_kn);
-				l_msg_len += snprintf_P(l_msg_buf + l_msg_len, sizeof(l_msg_buf), PM_APRS_TX_N2, l_mark, l_aprs_alert_1_accel_x_mg / 1000.f, l_aprs_alert_1_accel_y_mg / 1000.f, l_aprs_alert_1_accel_z_mg / 1000.f);
+				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N2_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N2_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_N2, l_mark, l_aprs_alert_1_accel_x_mg / 1000.f, l_aprs_alert_1_accel_y_mg / 1000.f, l_aprs_alert_1_accel_z_mg / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N3;
 			}
@@ -3075,9 +3079,9 @@ static void task_main_aprs(void)
 				udi_write_tx_buf(g_prepare_buf, len, false);
 
 				/* Message content */
-				l_msg_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_len += snprintf_P(l_msg_buf + l_msg_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N3_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N3_CODE, l_course_deg, l_speed_kn);
-				l_msg_len += snprintf_P(l_msg_buf + l_msg_len, sizeof(l_msg_buf), PM_APRS_TX_N3, l_mark, l_aprs_alert_2_mag_x_nT / 1000.f, l_aprs_alert_2_mag_y_nT / 1000.f, l_aprs_alert_2_mag_z_nT / 1000.f);
+				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N3_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N3_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_N3, l_mark, l_aprs_alert_2_mag_x_nT / 1000.f, l_aprs_alert_2_mag_y_nT / 1000.f, l_aprs_alert_2_mag_z_nT / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
 			}
@@ -3106,9 +3110,9 @@ static void task_main_aprs(void)
 				udi_write_tx_buf(g_prepare_buf, len, false);
 
 				/* Message content */
-				l_msg_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, "-11");  // Hard coded source SSID = 11 (Balloon)
-				l_msg_len += snprintf_P(l_msg_buf + l_msg_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N4_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N4_CODE, l_course_deg, l_speed_kn);
-				l_msg_len += snprintf_P(l_msg_buf + l_msg_len, sizeof(l_msg_buf), PM_APRS_TX_N4, l_mark, (long)l_gns_msl_alt_ft, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);
+				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, "-11");  // Hard coded source SSID = 11 (Balloon)
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N4_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N4_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_N4, l_mark, (long)l_gns_msl_alt_ft, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);
 
 				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__NOOP;
 				l_aprs_alert_reason		= APRS_ALERT_REASON__NONE;
@@ -3122,20 +3126,23 @@ static void task_main_aprs(void)
 	} while (false);
 
 	/* Message content ready */
-	if (l_msg_len) {
-		l_msg_len += snprintf_P(l_msg_buf + l_msg_len, sizeof(l_msg_buf), PM_APRS_TX_MSGEND);
+	if (l_msg_buf_len) {
+		l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_MSGEND);
 
 		/* Transport APRS message to network */
 		{
 			if (!g_gsm_aprs_gprs_connected) {
+				/* Init GPRS link opening */
 				serial_gsm_gprs_link_openClose(true);
 			}
 
-			/* GPRS IP transportation open */
+			/* GPRS IP transportation open - blocking */
 			serial_gsm_gprs_ip_openClose(true);
 
 			/* Sending APRS information to the server */
-			aprs_message_send(l_msg_buf, l_msg_len);
+			if (g_gsm_aprs_ip_connected) {
+				aprs_message_send(l_msg_buf, l_msg_buf_len);
+			}
 
 			/* GPRS IP transportation close */
 			serial_gsm_gprs_ip_openClose(false);
