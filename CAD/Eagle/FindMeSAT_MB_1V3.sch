@@ -10688,6 +10688,13 @@ Diameter = 1mm, Clearance = 3R</description>
 <text x="5.08" y="109.22" size="1.778" layer="97">2x DAC B Audio</text>
 <text x="39.624" y="70.612" size="1.778" layer="94" ratio="10">LCD</text>
 <text x="94.234" y="157.226" size="1.778" layer="94" ratio="10">I/O</text>
+<text x="162.56" y="45.72" size="1.778" layer="97">X121 cable assignment
+.1 black
+.2 green
+.3 white
+.4 yellow
+.5 red
+.6 blue</text>
 </plain>
 <instances>
 <instance part="FRAME1" gate="G$1" x="0" y="0"/>
