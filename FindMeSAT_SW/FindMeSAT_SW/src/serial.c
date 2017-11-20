@@ -33,6 +33,7 @@
 
 
 /* Global string store in program memory */
+#if 0  // TODO: remove this block
 const char					C_APRS_TX_HTTP_TARGET0_PROT[]					= "TCP";
 const char					C_APRS_TX_HTTP_TARGET0_NM[]						= "bg8.dyndns.org";
 const uint16_t				C_APRS_TX_HTTP_TARGET0_PORT						= 22222U;
@@ -42,107 +43,108 @@ const uint16_t				C_APRS_TX_HTTP_TARGET1_PORT						= 8080U;
 const char					C_APRS_TX_HTTP_TARGET2_PROT[]					= "TCP";
 const char					C_APRS_TX_HTTP_TARGET2_NM[]						= "nuremberg.aprs2.net";
 const uint16_t				C_APRS_TX_HTTP_TARGET2_PORT						= 8080U;
+#endif
 
-const char					PM_SIM808_INFO_LCD_START[]						= "Init: SIM808 Starting  ...";
+const char					PM_SIM808_INFO_LCD_START[]								= "Init: SIM808 Starting  ...";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_START[]);
-const char					PM_SIM808_INFO_LCD_RESTART[]					= "Init: SIM808 Restarting...";
+const char					PM_SIM808_INFO_LCD_RESTART[]							= "Init: SIM808 Restarting...";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_RESTART[]);
-const char					PM_SIM808_INFO_LCD_INITED[]						= "Init: SIM808 - init'ed ...";
+const char					PM_SIM808_INFO_LCD_INITED[]								= "Init: SIM808 - init'ed ...";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_INITED[]);
-const char					PM_SIM808_INFO_LCD_WAIT[]						= "Init: SIM808 - GPRS up ...";
+const char					PM_SIM808_INFO_LCD_WAIT[]								= "Init: SIM808 - GPRS up ...";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_WAIT[]);
-const char					PM_SIM808_INFO_LCD_READY[]						= "Init: SIM808 - READY.";
+const char					PM_SIM808_INFO_LCD_READY[]								= "Init: SIM808 - READY.";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_READY[]);
 
-const char					PM_SIM808_INFO_START[]							= "SIM808 ser1:  Starting the device ...\r\n";
+const char					PM_SIM808_INFO_START[]									= "SIM808 ser1:  Starting the device ...\r\n";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_START[]);
-const char					PM_SIM808_INFO_RESTART[]						= "SIM808 ser1:  Restarting the device ...\r\n";
+const char					PM_SIM808_INFO_RESTART[]								= "SIM808 ser1:  Restarting the device ...\r\n";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_RESTART[]);
-const char					PM_SIM808_INFO_SYNCED[]							= "SIM808 ser1:  --> now synced ....\r\n";
+const char					PM_SIM808_INFO_SYNCED[]									= "SIM808 ser1:  --> now synced ....\r\n";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_SYNCED[]);
-const char					PM_SIM808_INFO_WAIT_CONNECT[]					= "SIM808 ser1:  --> device registering and enabling GPRS connection ...\r\n";
+const char					PM_SIM808_INFO_WAIT_CONNECT[]							= "SIM808 ser1:  --> device registering and enabling GPRS connection ...\r\n";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_WAIT_CONNECT[]);
-const char					PM_SIM808_INFO_READY[]							= "SIM808 ser1:  --> READY.\r\n\r\n";
+const char					PM_SIM808_INFO_READY[]									= "SIM808 ser1:  --> READY.\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_READY[]);
 
-const char					PM_SET_FUNC_1[]									= "AT+CFUN=%d\r\n";
+const char					PM_SET_FUNC_1[]											= "AT+CFUN=%d\r\n";
 PROGMEM_DECLARE(const char, PM_SET_FUNC_1[]);
-const char					PM_SET_PIN_1[]									= "AT+CPIN=\"%.14s\"\r\n";
+const char					PM_SET_PIN_1[]											= "AT+CPIN=\"%.14s\"\r\n";
 PROGMEM_DECLARE(const char, PM_SET_PIN_1[]);
-const char					PM_SET_CPOWD_X[]								= "AT+CPOWD=%d\r\n";
+const char					PM_SET_CPOWD_X[]										= "AT+CPOWD=%d\r\n";
 PROGMEM_DECLARE(const char, PM_SET_CPOWD_X[]);
 
-const char					PM_TWI1_INIT_ONBOARD_SIM808_IPR_X[]				= "AT+IPR=%ld\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_IPR_X[]						= "AT+IPR=%ld\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_IPR_X[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_IFC_XX[]			= "AT+IFC=%d,%d\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_IFC_XX[]					= "AT+IFC=%d,%d\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_IFC_XX[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_ATE_X[]				= "ATE%d\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_ATE_X[]						= "ATE%d\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_ATE_X[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_CMEE_X[]			= "AT+CMEE=%d\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_CMEE_X[]					= "AT+CMEE=%d\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CMEE_X[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_CREG_X[]			= "AT+CREG=%d\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_CREG_X[]					= "AT+CREG=%d\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CREG_X[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_CFUN_X[]			= "AT+CFUN=%d\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_CFUN_X[]					= "AT+CFUN=%d\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CFUN_X[]);
 
-const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_01[]			= "ATI\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_01[]					= "ATI\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_01[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_02[]			= "AT+GSV\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_02[]					= "AT+GSV\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_02[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_03[]			= "AT+CIMI\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_03[]					= "AT+CIMI\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_03[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_04[]			= "AT+COPN\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_04[]					= "AT+COPN\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_04[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_05[]			= "AT+CNETSCAN=1;+CNETSCAN\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_INFO_05[]					= "AT+CNETSCAN=1;+CNETSCAN\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_INFO_05[]);
 
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_01[]			= "AT+CGNSPWR=%d\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_01[]					= "AT+CGNSPWR=%d\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_01[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_02[]			= "AT+CGNSINF\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_02[]					= "AT+CGNSINF\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_02[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_03[]			= "AT+CGNSURC=%d\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GPS_03[]					= "AT+CGNSURC=%d\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GPS_03[]);
 
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSQ[]		= "AT+CSQ\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSQ[]				= "AT+CSQ\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSQ[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG[]		= "AT+CREG?\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG[]				= "AT+CREG?\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CREG[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT[]	= "AT+CGATT?\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT[]			= "AT+CGATT?\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CGATT[]);
 const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT_PARAM[]		= "AT+CSTT=\"%s\",\"%s\",\"%s\"\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT_PARAM[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIICR[]	= "AT+CIICR\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIICR[]			= "AT+CIICR\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIICR[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIFSR[]	= "AT+CIFSR\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIFSR[]			= "AT+CIFSR\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIFSR[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSTART[]	= "AT+CIPSTART=\"%s\",\"%s\",\"%d\"\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSTART[]			= "AT+CIPSTART=\"%s\",\"%s\",\"%d\"\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSTART[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSEND[]	= "AT+CIPSEND\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSEND[]			= "AT+CIPSEND\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSEND[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CTRL_Z[]	= "\x1A\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CTRL_Z[]			= "\x1A\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CTRL_Z[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPCLOSE[]	= "AT+CIPCLOSE\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPCLOSE[]			= "AT+CIPCLOSE\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPCLOSE[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSERVER[]= "AT+CIPSERVER=%d\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSERVER[]		= "AT+CIPSERVER=%d\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSERVER[]);
-const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSHUT[]	= "AT+CIPSHUT\r\n";
+const char					PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSHUT[]			= "AT+CIPSHUT\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSHUT[]);
 
-const char					PM_TWI1_UTIL_ONBOARD_SIM808_OK_R[]				= "OK";
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_OK_R[]						= "OK";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_OK_R[]);
-const char					PM_TWI1_UTIL_ONBOARD_SIM808_RDY_R[]				= "RDY";
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_RDY_R[]						= "RDY";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_RDY_R[]);
-const char					PM_TWI1_UTIL_ONBOARD_SIM808_UGNSINF_R[]			= "+UGNSINF:";
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_UGNSINF_R[]					= "+UGNSINF:";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_UGNSINF_R[]);
-const char					PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R_DD[]			= "+CREG: %d,%d";
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R_DD[]					= "+CREG: %d,%d";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R_DD[]);
-const char					PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R_DSS[]		= "+CREG: %d,\"%c%c%c%c\",\"%c%c%c%c\"";
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R_DSS[]				= "+CREG: %d,\"%c%c%c%c\",\"%c%c%c%c\"";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R_DSS[]);
-const char					PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R_DDSS[]		= "+CREG: %d,%d,\"%c%c%c%c\",\"%c%c%c%c\"";
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R_DDSS[]				= "+CREG: %d,%d,\"%c%c%c%c\",\"%c%c%c%c\"";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_CREG_R_DDSS[]);
-const char					PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R[]			= "+CGATT: ";
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R[]					= "+CGATT: ";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_CGATT_R[]);
-const char					PM_TWI1_UTIL_ONBOARD_SIM808_RING_R[]			= "RING";
+const char					PM_TWI1_UTIL_ONBOARD_SIM808_RING_R[]					= "RING";
 PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_RING_R[]);
 
 
@@ -260,7 +262,7 @@ bool serial_sim808_sendAndResponse(const char* msg, uint8_t len)
 	return false;
 }
 
-void serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode)
+void serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode)
 {
 	/* Prepare message to the SIM808 */
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SET_FUNC_1, funcMode);
@@ -286,7 +288,7 @@ void serial_gsm_activation(bool enable)
 {
 	if (enable) {
 		if (g_gsm_enable) {
-			serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_ON);
+			serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_ON);
 			serial_sim808_gsm_setPin(g_gsm_login_pwd);
 		}
 
@@ -294,7 +296,7 @@ void serial_gsm_activation(bool enable)
 		if (g_gsm_enable && g_gsm_aprs_enable) {
 			serial_gsm_gprs_link_openClose(false);
 		}
-		serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_OFF);
+		serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_OFF);
 	}
 }
 
@@ -447,7 +449,7 @@ void serial_gsm_rx_cgatt(C_GSM_CGATT_STAT_ENUM_t stat)
 		#endif
 
 		/* Start task for GPRS service */
-		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT_PARAM, "web.vodafone.de", "", "");
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CSTT_PARAM, g_aprs_link_service, g_aprs_link_user, g_aprs_link_pwd);  // "web.vodafone.de"
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
 
 		/* Establish GPRS connection */
@@ -485,16 +487,20 @@ void serial_gsm_gprs_ip_openClose(bool isStart)
 
 	/* Activation of IP not during GPRS link set-up */
 	{
-		int len;
-
 		if (isStart && !s_ip_isOpen) {
+			int len;
+
+			irqflags_t flags = cpu_irq_save();
+			uint16_t l_aprs_ip_port = g_aprs_ip_port;
+			cpu_irq_restore(flags);
+
 			#if 1
 			len = snprintf(buf, sizeof(buf), "#41 DEBUG: Opening TCP connection ...\r\n");
 			udi_write_tx_buf(buf, len, false);
 			#endif
 
 			/* Connect TCP/IP port */
-			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSTART, C_APRS_TX_HTTP_TARGET2_PROT, C_APRS_TX_HTTP_TARGET2_NM, C_APRS_TX_HTTP_TARGET2_PORT);
+			len = snprintf_P(buf, sizeof(buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSTART, ipProto_2_ca(g_aprs_ip_proto), g_aprs_ip_name, l_aprs_ip_port);
 			serial_sim808_sendAndResponse(buf, len);
 			yield_ms(2750);
 
@@ -507,6 +513,8 @@ void serial_gsm_gprs_ip_openClose(bool isStart)
 			s_ip_isOpen = true;
 
 		} else if (!isStart && s_ip_isOpen) {
+			int len;
+
 			g_gsm_aprs_ip_connected = false;
 
 			/* Stop message block by a ^Z character (0x1a) */
@@ -827,13 +835,13 @@ void serial_send_gns_urc(uint8_t val)
 			&(outStr[0][0]), &(outStr[0][1]), &(outStr[0][2]), &(outStr[0][3]), &(outStr[1][0]), &(outStr[1][1]), &(outStr[1][2]), &(outStr[1][3]))) {
 			if ((val[1] != C_GSM_CREG_STAT_REGHOME) && (val[1] != C_GSM_CREG_STAT_REGROAMING)) {
 				irqflags_t flags = cpu_irq_save();
-				memset(s_gsm_cell_lac, 0, sizeof(s_gsm_cell_lac));
-				memset(s_gsm_cell_ci,  0, sizeof(s_gsm_cell_ci));
+				memset(g_gsm_cell_lac, 0, sizeof(g_gsm_cell_lac));
+				memset(g_gsm_cell_ci,  0, sizeof(g_gsm_cell_ci));
 				cpu_irq_restore(flags);
 			} else {
 				irqflags_t flags = cpu_irq_save();
-				memcpy(s_gsm_cell_lac, &(outStr[0][0]), sizeof(s_gsm_cell_lac));
-				memcpy(s_gsm_cell_ci,  &(outStr[1][0]), sizeof(s_gsm_cell_ci));
+				memcpy(g_gsm_cell_lac, &(outStr[0][0]), sizeof(g_gsm_cell_lac));
+				memcpy(g_gsm_cell_ci,  &(outStr[1][0]), sizeof(g_gsm_cell_ci));
 				cpu_irq_restore(flags);
 			}
 			serial_gsm_rx_creg((uint8_t)val[1]);
@@ -843,13 +851,13 @@ void serial_send_gns_urc(uint8_t val)
 			&(outStr[0][0]), &(outStr[0][1]), &(outStr[0][2]), &(outStr[0][3]), &(outStr[1][0]), &(outStr[1][1]), &(outStr[1][2]), &(outStr[1][3]))) {
 			if ((val[0] != C_GSM_CREG_STAT_REGHOME) && (val[0] != C_GSM_CREG_STAT_REGROAMING)) {
 				irqflags_t flags = cpu_irq_save();
-				memset(s_gsm_cell_lac, 0, sizeof(s_gsm_cell_lac));
-				memset(s_gsm_cell_ci,  0, sizeof(s_gsm_cell_ci));
+				memset(g_gsm_cell_lac, 0, sizeof(g_gsm_cell_lac));
+				memset(g_gsm_cell_ci,  0, sizeof(g_gsm_cell_ci));
 				cpu_irq_restore(flags);
 			} else {
 				irqflags_t flags = cpu_irq_save();
-				memcpy(s_gsm_cell_lac, &(outStr[0][0]), sizeof(s_gsm_cell_lac));
-				memcpy(s_gsm_cell_ci,  &(outStr[1][0]), sizeof(s_gsm_cell_ci));
+				memcpy(g_gsm_cell_lac, &(outStr[0][0]), sizeof(g_gsm_cell_lac));
+				memcpy(g_gsm_cell_ci,  &(outStr[1][0]), sizeof(g_gsm_cell_ci));
 				cpu_irq_restore(flags);
 			}
 			serial_gsm_rx_creg((uint8_t)val[0]);
@@ -858,8 +866,8 @@ void serial_send_gns_urc(uint8_t val)
 			&(val[0]), &(val[1]))) {
 			if ((val[1] != C_GSM_CREG_STAT_REGHOME) && (val[1] != C_GSM_CREG_STAT_REGROAMING)) {
 				irqflags_t flags = cpu_irq_save();
-				memset(s_gsm_cell_lac, 0, sizeof(s_gsm_cell_lac));
-				memset(s_gsm_cell_ci,  0, sizeof(s_gsm_cell_ci));
+				memset(g_gsm_cell_lac, 0, sizeof(g_gsm_cell_lac));
+				memset(g_gsm_cell_ci,  0, sizeof(g_gsm_cell_ci));
 				cpu_irq_restore(flags);
 			}
 			serial_gsm_rx_creg((uint8_t)val[1]);

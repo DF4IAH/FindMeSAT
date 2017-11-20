@@ -49,263 +49,268 @@
 
 /* GLOBAL section */
 
-bool						g_adc_enabled						= true;
-bool						g_dac_enabled						= false;
-int16_t						g_backlight_mode_pwm				= 0;		// EEPROM
-uint8_t						g_bias_pm							= 22;
-uint8_t						g_pitch_tone_mode					= 0;		// EEPROM
-bool						g_errorBeep_enable					= false;	// EEPROM
-bool						g_keyBeep_enable					= false;	// EEPROM
+bool						g_adc_enabled									= true;
+bool						g_dac_enabled									= false;
+int16_t						g_backlight_mode_pwm							= 0;		// EEPROM
+uint8_t						g_bias_pm										= 22;
+uint8_t						g_pitch_tone_mode								= 0;		// EEPROM
+bool						g_errorBeep_enable								= false;	// EEPROM
+bool						g_keyBeep_enable								= false;	// EEPROM
 
-uint64_t					g_milliseconds_cnt64				= 0ULL;
-uint32_t					g_boot_time_ts						= 0UL;
+uint64_t					g_milliseconds_cnt64							= 0ULL;
+uint32_t					g_boot_time_ts									= 0UL;
 
-uint16_t					g_1pps_last_lo						= 0U;		// measuring time
-uint64_t					g_1pps_last_hi						= 0ULL;
-int16_t						g_1pps_last_diff					= 0;
-bool						g_1pps_last_inSpan					= false;
-bool						g_1pps_last_new						= false;
-bool						g_1pps_last_adjust					= false;
-uint16_t					g_1pps_processed_lo					= 0U;		// corrected time to use
-uint64_t					g_1pps_processed_hi					= 0ULL;
-bool						g_1pps_proceeded_avail				= false;
-uint8_t						g_1pps_processed_outOfSync			= 0;
-int16_t						g_1pps_deviation					= 0;
-bool						g_1pps_printtwi_avail				= false;
-bool						g_1pps_printusb_avail				= false;
-uint8_t						g_1pps_phased_cntr					= 0;
-uint8_t						g_1pps_led							= 0;
-bool						g_1pps_twi_new						= false;
+uint16_t					g_1pps_last_lo									= 0U;		// measuring time
+uint64_t					g_1pps_last_hi									= 0ULL;
+int16_t						g_1pps_last_diff								= 0;
+bool						g_1pps_last_inSpan								= false;
+bool						g_1pps_last_new									= false;
+bool						g_1pps_last_adjust								= false;
+uint16_t					g_1pps_processed_lo								= 0U;		// corrected time to use
+uint64_t					g_1pps_processed_hi								= 0ULL;
+bool						g_1pps_proceeded_avail							= false;
+uint8_t						g_1pps_processed_outOfSync						= 0;
+int16_t						g_1pps_deviation								= 0;
+bool						g_1pps_printtwi_avail							= false;
+bool						g_1pps_printusb_avail							= false;
+uint8_t						g_1pps_phased_cntr								= 0;
+uint8_t						g_1pps_led										= 0;
+bool						g_1pps_twi_new									= false;
 
-uint8_t						g_gns_run_status					= 0;
-uint8_t						g_gns_fix_status					= 0;
-float						g_gns_lat							= 0.;
-float						g_gns_lon							= 0.;
-float						g_gns_msl_alt_m						= 0.;
-float						g_gns_speed_kmPh					= 0.;
-float						g_gns_course_deg					= 0.;
-uint8_t						g_gns_fix_mode						= 0;
-float						g_gns_dop_h							= 0.;
-float						g_gns_dop_p							= 0.;
-float						g_gns_dop_v							= 0.;
-uint8_t						g_gns_gps_sats_inView				= 0;
-uint8_t						g_gns_gnss_sats_used				= 0;
-uint8_t						g_gns_glonass_sats_inView			= 0;
-uint8_t						g_gns_cPn0_dBHz						= 0;
-//uint16_t					g_gns_hpa_m							= 0;
-//uint16_t					g_gns_vpa_m							= 0;
+uint8_t						g_gns_run_status								= 0;
+uint8_t						g_gns_fix_status								= 0;
+float						g_gns_lat										= 0.;
+float						g_gns_lon										= 0.;
+float						g_gns_msl_alt_m									= 0.;
+float						g_gns_speed_kmPh								= 0.;
+float						g_gns_course_deg								= 0.;
+uint8_t						g_gns_fix_mode									= 0;
+float						g_gns_dop_h										= 0.;
+float						g_gns_dop_p										= 0.;
+float						g_gns_dop_v										= 0.;
+uint8_t						g_gns_gps_sats_inView							= 0;
+uint8_t						g_gns_gnss_sats_used							= 0;
+uint8_t						g_gns_glonass_sats_inView						= 0;
+uint8_t						g_gns_cPn0_dBHz									= 0;
+//uint16_t					g_gns_hpa_m										= 0;
+//uint16_t					g_gns_vpa_m										= 0;
 
-uint8_t						g_aprs_mode							= 0;
-char						g_aprs_source_callsign[C_APRS_S_LEN]= { 0 };	// EEPROM
-char						g_aprs_source_ssid[C_APRS_SSID_LEN]	= { 0 };	// EEPROM
-char						g_aprs_login_user[C_APRS_USER_LEN]	= { 0 };	// EEPROM
-char						g_aprs_login_pwd[C_APRS_PWD_LEN]	= { 0 };	// EEPROM
-uint64_t					g_aprs_alert_last					= 0ULL;
-APRS_ALERT_FSM_STATE_ENUM_t	g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
-APRS_ALERT_REASON_ENUM_t	g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
-float						g_aprs_pos_anchor_lat				= 0.f;
-float						g_aprs_pos_anchor_lon				= 0.f;
-int32_t						g_aprs_alert_1_gyro_x_mdps			= 0L;
-int32_t						g_aprs_alert_1_gyro_y_mdps			= 0L;
-int32_t						g_aprs_alert_1_gyro_z_mdps			= 0L;
-int16_t						g_aprs_alert_1_accel_x_mg			= 0;
-int16_t						g_aprs_alert_1_accel_y_mg			= 0;
-int16_t						g_aprs_alert_1_accel_z_mg			= 0;
-int32_t						g_aprs_alert_2_mag_x_nT				= 0L;
-int32_t						g_aprs_alert_2_mag_y_nT				= 0L;
-int32_t						g_aprs_alert_2_mag_z_nT				= 0L;
+uint8_t						g_aprs_mode										= 0;
+char						g_aprs_link_service[C_APRS_LINK_SERVICE_LEN]	= { 0 };
+char						g_aprs_link_user[C_APRS_LINK_USER_LEN]			= { 0 };
+char						g_aprs_link_pwd[C_APRS_LINK_PWD_LEN]			= { 0 };
+uint8_t						g_aprs_ip_proto									= C_GSM_IP_PROTO_NONE;
+char						g_aprs_ip_name[C_APRS_IP_NAME_LEN]				= { 0 };
+uint16_t					g_aprs_ip_port									= 0U;
+char						g_aprs_source_callsign[C_APRS_S_LEN]			= { 0 };	// EEPROM
+char						g_aprs_source_ssid[C_APRS_SSID_LEN]				= { 0 };	// EEPROM
+char						g_aprs_login_user[C_APRS_USER_LEN]				= { 0 };	// EEPROM
+char						g_aprs_login_pwd[C_APRS_PWD_LEN]				= { 0 };	// EEPROM
+uint64_t					g_aprs_alert_last								= 0ULL;
+APRS_ALERT_FSM_STATE_ENUM_t	g_aprs_alert_fsm_state							= APRS_ALERT_FSM_STATE__NOOP;
+APRS_ALERT_REASON_ENUM_t	g_aprs_alert_reason								= APRS_ALERT_REASON__NONE;
+float						g_aprs_pos_anchor_lat							= 0.f;
+float						g_aprs_pos_anchor_lon							= 0.f;
+int32_t						g_aprs_alert_1_gyro_x_mdps						= 0L;
+int32_t						g_aprs_alert_1_gyro_y_mdps						= 0L;
+int32_t						g_aprs_alert_1_gyro_z_mdps						= 0L;
+int16_t						g_aprs_alert_1_accel_x_mg						= 0;
+int16_t						g_aprs_alert_1_accel_y_mg						= 0;
+int16_t						g_aprs_alert_1_accel_z_mg						= 0;
+int32_t						g_aprs_alert_2_mag_x_nT							= 0L;
+int32_t						g_aprs_alert_2_mag_y_nT							= 0L;
+int32_t						g_aprs_alert_2_mag_z_nT							= 0L;
 
-bool						g_usb_cdc_stdout_enabled			= false;
-bool						g_usb_cdc_printStatusLines_atxmega	= false;	// EEPROM
-bool						g_usb_cdc_printStatusLines_sim808	= false;	// EEPROM
-bool						g_usb_cdc_printStatusLines_1pps		= false;	// EEPROM
-bool						g_usb_cdc_rx_received				= false;
-bool						g_usb_cdc_transfers_authorized		= false;
-bool						g_usb_cdc_access_blocked			= false;
-WORKMODE_ENUM_t				g_workmode							= WORKMODE_OFF;
+bool						g_usb_cdc_stdout_enabled						= false;
+bool						g_usb_cdc_printStatusLines_atxmega				= false;	// EEPROM
+bool						g_usb_cdc_printStatusLines_sim808				= false;	// EEPROM
+bool						g_usb_cdc_printStatusLines_1pps					= false;	// EEPROM
+bool						g_usb_cdc_rx_received							= false;
+bool						g_usb_cdc_transfers_authorized					= false;
+bool						g_usb_cdc_access_blocked						= false;
+WORKMODE_ENUM_t				g_workmode										= WORKMODE_OFF;
 
-uint8_t						g_usart_gprs_auto_response_state	= 0;
-bool						g_usart1_rx_ready					= false;
-bool						g_usart1_rx_OK						= false;
-uint16_t					g_usart1_rx_idx						= 0;
-char						g_usart1_rx_buf[C_USART1_RX_BUF_LEN]= { 0 };
-uint16_t					g_usart1_tx_len						= 0;
-char						g_usart1_tx_buf[C_USART1_TX_BUF_LEN]= { 0 };
+uint8_t						g_usart_gprs_auto_response_state				= 0;
+bool						g_usart1_rx_ready								= false;
+bool						g_usart1_rx_OK									= false;
+uint16_t					g_usart1_rx_idx									= 0;
+char						g_usart1_rx_buf[C_USART1_RX_BUF_LEN]			= { 0 };
+uint16_t					g_usart1_tx_len									= 0;
+char						g_usart1_tx_buf[C_USART1_TX_BUF_LEN]			= { 0 };
 
-bool						g_gsm_enable						= false;	// EEPROM
-bool						g_gsm_aprs_enable					= false;	// EEPROM
-bool						g_gsm_aprs_gprs_connected			= false;
-bool						g_gsm_aprs_ip_connected				= false;
-char						g_gsm_login_pwd[C_GSM_PIN_BUF_LEN]	= { 0 };	// EEPROM
-char						s_gsm_cell_lac[4]					= { 0 };
-char						s_gsm_cell_ci[4]					= { 0 };
+bool						g_gsm_enable									= false;	// EEPROM
+bool						g_gsm_aprs_enable								= false;	// EEPROM
+bool						g_gsm_aprs_gprs_connected						= false;
+bool						g_gsm_aprs_ip_connected							= false;
+char						g_gsm_cell_lac[C_GSM_CELL_LAC_LEN]				= { 0 };
+char						g_gsm_cell_ci[C_GSM_CELL_CI_LEN]				= { 0 };
+char						g_gsm_login_pwd[C_GSM_PIN_BUF_LEN]				= { 0 };	// EEPROM
 
 
-bool						g_twi1_gsm_valid					= false;
-uint8_t						g_twi1_gsm_version					= 0;
+bool						g_twi1_gsm_valid								= false;
+uint8_t						g_twi1_gsm_version								= 0;
 
-bool						g_twi1_gyro_valid					= false;
-uint8_t						g_twi1_gyro_1_version				= 0;
-volatile int16_t			g_twi1_gyro_1_temp					= 0;
-volatile int16_t			g_twi1_gyro_1_temp_RTofs			= 0;		// EEPROM
-volatile int16_t			g_twi1_gyro_1_temp_sens				= 0;		// EEPROM
-volatile int16_t			g_twi1_gyro_1_temp_deg_100			= 0;
-volatile int16_t			g_twi1_gyro_1_accel_x				= 0;
-volatile int16_t			g_twi1_gyro_1_accel_y				= 0;
-volatile int16_t			g_twi1_gyro_1_accel_z				= 0;
-volatile int16_t			g_twi1_gyro_1_accel_ofsx			= 0;		// EEPROM
-volatile int16_t			g_twi1_gyro_1_accel_ofsy			= 0;		// EEPROM
-volatile int16_t			g_twi1_gyro_1_accel_ofsz			= 0;		// EEPROM
-volatile int16_t			g_twi1_gyro_1_accel_factx			= 0;		// EEPROM
-volatile int16_t			g_twi1_gyro_1_accel_facty			= 0;		// EEPROM
-volatile int16_t			g_twi1_gyro_1_accel_factz			= 0;		// EEPROM
-volatile int16_t			g_twi1_gyro_1_accel_x_mg			= 0;
-volatile int16_t			g_twi1_gyro_1_accel_y_mg			= 0;
-volatile int16_t			g_twi1_gyro_1_accel_z_mg			= 0;
-volatile int16_t			g_twi1_gyro_1_gyro_x				= 0;
-volatile int16_t			g_twi1_gyro_1_gyro_y				= 0;
-volatile int16_t			g_twi1_gyro_1_gyro_z				= 0;
-volatile int16_t			g_twi1_gyro_1_gyro_ofsx				= 0;		// EEPROM
-volatile int16_t			g_twi1_gyro_1_gyro_ofsy				= 0;		// EEPROM
-volatile int16_t			g_twi1_gyro_1_gyro_ofsz				= 0;		// EEPROM
-volatile int32_t			g_twi1_gyro_1_gyro_x_mdps			= 0;
-volatile int32_t			g_twi1_gyro_1_gyro_y_mdps			= 0;
-volatile int32_t			g_twi1_gyro_1_gyro_z_mdps			= 0;
-volatile bool				g_twi1_gyro_gyro_offset_set__flag	= false;
-volatile bool				g_twi1_gyro_accel_offset_set__flag	= false;
-uint8_t						g_twi1_gyro_2_version				= 0;
-volatile int8_t				g_twi1_gyro_2_asax					= 0;
-volatile int8_t				g_twi1_gyro_2_asay					= 0;
-volatile int8_t				g_twi1_gyro_2_asaz					= 0;
-volatile int16_t			g_twi1_gyro_2_ofsx					= 0;
-volatile int16_t			g_twi1_gyro_2_ofsy					= 0;
-volatile int16_t			g_twi1_gyro_2_ofsz					= 0;
-volatile int16_t			g_twi1_gyro_2_mag_x					= 0;
-volatile int16_t			g_twi1_gyro_2_mag_y					= 0;
-volatile int16_t			g_twi1_gyro_2_mag_z					= 0;
-volatile int16_t			g_twi1_gyro_2_mag_factx				= 0;		// EEPROM
-volatile int16_t			g_twi1_gyro_2_mag_facty				= 0;		// EEPROM
-volatile int16_t			g_twi1_gyro_2_mag_factz				= 0;		// EEPROM
-volatile int32_t			g_twi1_gyro_2_mag_x_nT				= 0;
-volatile int32_t			g_twi1_gyro_2_mag_y_nT				= 0;
-volatile int32_t			g_twi1_gyro_2_mag_z_nT				= 0;
+bool						g_twi1_gyro_valid								= false;
+uint8_t						g_twi1_gyro_1_version							= 0;
+volatile int16_t			g_twi1_gyro_1_temp								= 0;
+volatile int16_t			g_twi1_gyro_1_temp_RTofs						= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_temp_sens							= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_temp_deg_100						= 0;
+volatile int16_t			g_twi1_gyro_1_accel_x							= 0;
+volatile int16_t			g_twi1_gyro_1_accel_y							= 0;
+volatile int16_t			g_twi1_gyro_1_accel_z							= 0;
+volatile int16_t			g_twi1_gyro_1_accel_ofsx						= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_accel_ofsy						= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_accel_ofsz						= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_accel_factx						= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_accel_facty						= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_accel_factz						= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_accel_x_mg						= 0;
+volatile int16_t			g_twi1_gyro_1_accel_y_mg						= 0;
+volatile int16_t			g_twi1_gyro_1_accel_z_mg						= 0;
+volatile int16_t			g_twi1_gyro_1_gyro_x							= 0;
+volatile int16_t			g_twi1_gyro_1_gyro_y							= 0;
+volatile int16_t			g_twi1_gyro_1_gyro_z							= 0;
+volatile int16_t			g_twi1_gyro_1_gyro_ofsx							= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_gyro_ofsy							= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_1_gyro_ofsz							= 0;		// EEPROM
+volatile int32_t			g_twi1_gyro_1_gyro_x_mdps						= 0;
+volatile int32_t			g_twi1_gyro_1_gyro_y_mdps						= 0;
+volatile int32_t			g_twi1_gyro_1_gyro_z_mdps						= 0;
+volatile bool				g_twi1_gyro_gyro_offset_set__flag				= false;
+volatile bool				g_twi1_gyro_accel_offset_set__flag				= false;
+uint8_t						g_twi1_gyro_2_version							= 0;
+volatile int8_t				g_twi1_gyro_2_asax								= 0;
+volatile int8_t				g_twi1_gyro_2_asay								= 0;
+volatile int8_t				g_twi1_gyro_2_asaz								= 0;
+volatile int16_t			g_twi1_gyro_2_ofsx								= 0;
+volatile int16_t			g_twi1_gyro_2_ofsy								= 0;
+volatile int16_t			g_twi1_gyro_2_ofsz								= 0;
+volatile int16_t			g_twi1_gyro_2_mag_x								= 0;
+volatile int16_t			g_twi1_gyro_2_mag_y								= 0;
+volatile int16_t			g_twi1_gyro_2_mag_z								= 0;
+volatile int16_t			g_twi1_gyro_2_mag_factx							= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_2_mag_facty							= 0;		// EEPROM
+volatile int16_t			g_twi1_gyro_2_mag_factz							= 0;		// EEPROM
+volatile int32_t			g_twi1_gyro_2_mag_x_nT							= 0;
+volatile int32_t			g_twi1_gyro_2_mag_y_nT							= 0;
+volatile int32_t			g_twi1_gyro_2_mag_z_nT							= 0;
 
-bool						g_twi1_baro_valid					= false;
-uint16_t					g_twi1_baro_version					= 0;
-volatile uint16_t			g_twi1_baro_c[C_TWI1_BARO_C_CNT]	= { 0 };
-volatile uint32_t			g_twi1_baro_d1						= 0UL;
-volatile uint32_t			g_twi1_baro_d2						= 0UL;
-volatile int32_t			g_twi1_baro_temp_100				= 0L;
-volatile int32_t			g_twi1_baro_p_100					= 0L;
+bool						g_twi1_baro_valid								= false;
+uint16_t					g_twi1_baro_version								= 0;
+volatile uint16_t			g_twi1_baro_c[C_TWI1_BARO_C_CNT]				= { 0 };
+volatile uint32_t			g_twi1_baro_d1									= 0UL;
+volatile uint32_t			g_twi1_baro_d2									= 0UL;
+volatile int32_t			g_twi1_baro_temp_100							= 0L;
+volatile int32_t			g_twi1_baro_p_100								= 0L;
 
-bool						g_twi1_hygro_valid					= false;
-uint8_t						g_twi1_hygro_status					= 0;
-volatile uint16_t			g_twi1_hygro_S_T					= 0;
-volatile uint16_t			g_twi1_hygro_S_RH					= 0;
-volatile int16_t			g_twi1_hygro_T_100					= 0;
-volatile int16_t			g_twi1_hygro_RH_100					= 0;
-volatile int16_t			g_twi1_hygro_DP_100					= 0;
+bool						g_twi1_hygro_valid								= false;
+uint8_t						g_twi1_hygro_status								= 0;
+volatile uint16_t			g_twi1_hygro_S_T								= 0;
+volatile uint16_t			g_twi1_hygro_S_RH								= 0;
+volatile int16_t			g_twi1_hygro_T_100								= 0;
+volatile int16_t			g_twi1_hygro_RH_100								= 0;
+volatile int16_t			g_twi1_hygro_DP_100								= 0;
 
-uint8_t						g_twi2_lcd_version					= 0;
-volatile bool				g_twi2_lcd_repaint					= false;
+uint8_t						g_twi2_lcd_version								= 0;
+volatile bool				g_twi2_lcd_repaint								= false;
 
-volatile int32_t			g_xo_mode_pwm						= 0L;		// EEPROM
+volatile int32_t			g_xo_mode_pwm									= 0L;		// EEPROM
 
-struct adc_config			g_adc_a_conf						= { 0 };
-struct adc_channel_config	g_adcch_vctcxo_5v0_vbat_conf		= { 0 };
-struct adc_channel_config	g_adcch_io_adc4_conf				= { 0 };
-struct adc_channel_config	g_adcch_io_adc5_conf				= { 0 };
-struct adc_channel_config	g_adcch_silence_conf				= { 0 };
+struct adc_config			g_adc_a_conf									= { 0 };
+struct adc_channel_config	g_adcch_vctcxo_5v0_vbat_conf					= { 0 };
+struct adc_channel_config	g_adcch_io_adc4_conf							= { 0 };
+struct adc_channel_config	g_adcch_io_adc5_conf							= { 0 };
+struct adc_channel_config	g_adcch_silence_conf							= { 0 };
 
-struct adc_config			g_adc_b_conf						= { 0 };
-struct adc_channel_config	g_adcch_temp_conf					= { 0 };
+struct adc_config			g_adc_b_conf									= { 0 };
+struct adc_channel_config	g_adcch_temp_conf								= { 0 };
 
-volatile uint32_t			g_adc_vctcxo_cur					= 0;
-volatile uint32_t			g_adc_vctcxo_sum					= 0;
-volatile uint16_t			g_adc_vctcxo_cnt					= 0;
-volatile uint32_t			g_adc_5v0_cur						= 0;
-volatile uint32_t			g_adc_5v0_sum						= 0;
-volatile uint16_t			g_adc_5v0_cnt						= 0;
-volatile uint32_t			g_adc_vbat_cur						= 0;
-volatile uint32_t			g_adc_vbat_sum						= 0;
-volatile uint16_t			g_adc_vbat_cnt						= 0;
-volatile uint32_t			g_adc_io_adc4_cur					= 0;
-volatile uint32_t			g_adc_io_adc4_sum					= 0;
-volatile uint16_t			g_adc_io_adc4_cnt					= 0;
-volatile uint32_t			g_adc_io_adc5_cur					= 0;
-volatile uint32_t			g_adc_io_adc5_sum					= 0;
-volatile uint16_t			g_adc_io_adc5_cnt					= 0;
-volatile uint32_t			g_adc_silence_cur					= 0;
-volatile uint32_t			g_adc_silence_sum					= 0;
-volatile uint16_t			g_adc_silence_cnt					= 0;
-volatile uint32_t			g_adc_temp_cur						= 0;
-volatile uint32_t			g_adc_temp_sum						= 0;
-volatile uint16_t			g_adc_temp_cnt						= 0;
-volatile int16_t			g_adc_vctcxo_volt_1000				= 0;
-volatile int16_t			g_adc_5v0_volt_1000					= 0;
-volatile int16_t			g_adc_vbat_volt_1000				= 0;
-volatile int16_t			g_adc_io_adc4_volt_1000				= 0;
-volatile int16_t			g_adc_io_adc5_volt_1000				= 0;
-volatile int16_t			g_adc_silence_volt_1000				= 0;
-volatile int16_t			g_adc_temp_deg_100					= 0;
+volatile uint32_t			g_adc_vctcxo_cur								= 0;
+volatile uint32_t			g_adc_vctcxo_sum								= 0;
+volatile uint16_t			g_adc_vctcxo_cnt								= 0;
+volatile uint32_t			g_adc_5v0_cur									= 0;
+volatile uint32_t			g_adc_5v0_sum									= 0;
+volatile uint16_t			g_adc_5v0_cnt									= 0;
+volatile uint32_t			g_adc_vbat_cur									= 0;
+volatile uint32_t			g_adc_vbat_sum									= 0;
+volatile uint16_t			g_adc_vbat_cnt									= 0;
+volatile uint32_t			g_adc_io_adc4_cur								= 0;
+volatile uint32_t			g_adc_io_adc4_sum								= 0;
+volatile uint16_t			g_adc_io_adc4_cnt								= 0;
+volatile uint32_t			g_adc_io_adc5_cur								= 0;
+volatile uint32_t			g_adc_io_adc5_sum								= 0;
+volatile uint16_t			g_adc_io_adc5_cnt								= 0;
+volatile uint32_t			g_adc_silence_cur								= 0;
+volatile uint32_t			g_adc_silence_sum								= 0;
+volatile uint16_t			g_adc_silence_cnt								= 0;
+volatile uint32_t			g_adc_temp_cur									= 0;
+volatile uint32_t			g_adc_temp_sum									= 0;
+volatile uint16_t			g_adc_temp_cnt									= 0;
+volatile int16_t			g_adc_vctcxo_volt_1000							= 0;
+volatile int16_t			g_adc_5v0_volt_1000								= 0;
+volatile int16_t			g_adc_vbat_volt_1000							= 0;
+volatile int16_t			g_adc_io_adc4_volt_1000							= 0;
+volatile int16_t			g_adc_io_adc5_volt_1000							= 0;
+volatile int16_t			g_adc_silence_volt_1000							= 0;
+volatile int16_t			g_adc_temp_deg_100								= 0;
 
-volatile int16_t			g_env_temp_delta_100				= 0;		// EEPROM
-volatile int16_t			g_env_temp_deg_100					= 0;
-volatile int16_t			g_env_hygro_RH_100					= 0;
+volatile int16_t			g_env_temp_delta_100							= 0;		// EEPROM
+volatile int16_t			g_env_temp_deg_100								= 0;
+volatile int16_t			g_env_hygro_RH_100								= 0;
 
-volatile bool				g_qnh_is_auto						= false;	// EEPROM
-volatile int16_t			g_qnh_height_m						= 0;		// EEPROM
-volatile int32_t			g_qnh_p_h_100						= 0L;
+volatile bool				g_qnh_is_auto									= false;	// EEPROM
+volatile int16_t			g_qnh_height_m									= 0;		// EEPROM
+volatile int32_t			g_qnh_p_h_100									= 0L;
 
 fifo_desc_t					g_fifo_sched_desc;
 uint32_t					g_fifo_sched_buffer[FIFO_SCHED_BUFFER_LENGTH]	= { 0 };
 
-struct pwm_config			g_pwm_vctcxo_cfg					= { 0 };
-struct pwm_config			g_pwm_ctr_pll_cfg					= { 0 };
+struct pwm_config			g_pwm_vctcxo_cfg								= { 0 };
+struct pwm_config			g_pwm_ctr_pll_cfg								= { 0 };
 
-volatile uint8_t			g_sched_lock						= 0;
-volatile uint8_t			g_interpreter_lock					= 0;
-volatile uint8_t			g_twi1_lock							= 0;
-volatile bool				g_sched_yield						= false;
-volatile bool				g_sched_pop_again					= false;
-volatile sched_entry_t		g_sched_data[C_SCH_SLOT_CNT]		= { 0 };
-volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]		= { 0 };
+volatile uint8_t			g_sched_lock									= 0;
+volatile uint8_t			g_interpreter_lock								= 0;
+volatile uint8_t			g_twi1_lock										= 0;
+volatile bool				g_sched_yield									= false;
+volatile bool				g_sched_pop_again								= false;
+volatile sched_entry_t		g_sched_data[C_SCH_SLOT_CNT]					= { 0 };
+volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]					= { 0 };
 
-char						g_prepare_buf[C_TX_BUF_SIZE]		= { 0 };
+char						g_prepare_buf[C_TX_BUF_SIZE]					= { 0 };
 
 
-const char					PM_APRS_TX_HTTP_L1[]				= "POST / HTTP/1.1\r\n";
+const char					PM_APRS_TX_HTTP_L1[]							= "POST / HTTP/1.1\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L1[]);
-const char					PM_APRS_TX_HTTP_L2[]				= "Content-Length: %d\r\n";
+const char					PM_APRS_TX_HTTP_L2[]							= "Content-Length: %d\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L2[]);
-const char					PM_APRS_TX_HTTP_L3[]				= "Content-Type: application/octet-stream\r\n";
+const char					PM_APRS_TX_HTTP_L3[]							= "Content-Type: application/octet-stream\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L3[]);
-const char					PM_APRS_TX_HTTP_L4[]				= "Accept-Type: text/plain\r\n\r\n";
+const char					PM_APRS_TX_HTTP_L4[]							= "Accept-Type: text/plain\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L4[]);
-const char					PM_APRS_TX_LOGIN[]					= "user %s pass %s vers %s %s\r\n";
+const char					PM_APRS_TX_LOGIN[]								= "user %s pass %s vers %s %s\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_LOGIN[]);
-const char					PM_APRS_TX_FORWARD[]				= "%s%s>APRS,TCPIP*:";							// USER, SSID with prefixing "-"
+const char					PM_APRS_TX_FORWARD[]							= "%s%s>APRS,TCPIP*:";							// USER, SSID with prefixing "-"
 PROGMEM_DECLARE(const char, PM_APRS_TX_FORWARD[]);
-const char					PM_APRS_TX_SYMBOL_N1_TABLE_ID		= '/';
-const char					PM_APRS_TX_SYMBOL_N1_CODE			= 'j';	// /j: Jeep
-const char					PM_APRS_TX_SYMBOL_N2_TABLE_ID		= '/';
-const char					PM_APRS_TX_SYMBOL_N2_CODE			= 'j';	// /R: RV
-const char					PM_APRS_TX_SYMBOL_N3_TABLE_ID		= '/';
-const char					PM_APRS_TX_SYMBOL_N3_CODE			= 'j';	// \k: SUV
-const char					PM_APRS_TX_SYMBOL_N4_TABLE_ID		= '/';
-const char					PM_APRS_TX_SYMBOL_N4_CODE			= 'W';	// /W: WX
-const char					PM_APRS_TX_POS[]					= "!%02d%5.2f%c%c%03d%5.2f%c%c%03d/%03d";
+const char					PM_APRS_TX_SYMBOL_TABLE_ID						= '/';
+const char					PM_APRS_TX_SYMBOL_CODE							= 'j';	// /j: Jeep, /R: RV, \k: SUV, /W: WX
+const char					PM_APRS_TX_POS[]								= "!%02d%5.2f%c%c%03d%5.2f%c%c%03d/%03d";
 PROGMEM_DECLARE(const char, PM_APRS_TX_POS[]);
-const char					PM_APRS_TX_N1[]						= "%cGx=%+06.1fd Gy=%+06.1fd Gz=%+06.1fd";
+const char					PM_APRS_TX_N1[]									= "%cGx=%+06.1fd Gy=%+06.1fd Gz=%+06.1fd";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N1[]);
-const char					PM_APRS_TX_N2[]						= "%cAx=%+6.3fg Ay=%+6.3fg Az=%+6.3fg";
+const char					PM_APRS_TX_N2[]									= "%cAx=%+6.3fg Ay=%+6.3fg Az=%+6.3fg";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N2[]);
-const char					PM_APRS_TX_N3[]						= "%cMx=%+6.1fuT My=%+6.1fuT Mz=%+6.1fuT";
+const char					PM_APRS_TX_N3[]									= "%cMx=%+6.1fuT My=%+6.1fuT Mz=%+6.1fuT";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N3[]);
-const char					PM_APRS_TX_N4[]						= "%c/A=%06ld DP=%+5.2fC QNH=%7.2fhPa";
+const char					PM_APRS_TX_N4[]									= "%c/A=%06ld DP=%+5.2fC QNH=%7.2fhPa";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N4[]);
-const char					PM_APRS_TX_MSGEND[]					= "\r\n";
+const char					PM_APRS_TX_MSGEND[]								= "\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_MSGEND[]);
+
+const char					PM_GSM_IP_PROTO_TCP_STR[]						= "TCP";
+PROGMEM_DECLARE(const char, PM_GSM_IP_PROTO_TCP_STR[]);
+const char					PM_GSM_IP_PROTO_UDP_STR[]						= "UDP";
+PROGMEM_DECLARE(const char, PM_GSM_IP_PROTO_UDP_STR[]);
 
 
 twi_options_t g_twi1_options = {
@@ -618,7 +623,7 @@ static void init_globals(void)
 
 	/* GSM */
 	{
-		uint8_t val_ui8 = 0;
+		uint8_t		val_ui8		= 0U;
 
 		g_gsm_aprs_gprs_connected	= false;
 		g_gsm_aprs_ip_connected		= false;
@@ -628,17 +633,13 @@ static void init_globals(void)
 			g_gsm_aprs_enable		= val_ui8 & GSM__APRS_ENABLE;
 		}
 		nvm_read(INT_EEPROM, EEPROM_ADDR__GSM_PIN,			(void*)&g_gsm_login_pwd,		sizeof(g_gsm_login_pwd));
-		memset(s_gsm_cell_lac, 0, sizeof(s_gsm_cell_lac));
-		memset(s_gsm_cell_ci,  0, sizeof(s_gsm_cell_ci));
+
+		memset(g_gsm_cell_lac, 0, sizeof(g_gsm_cell_lac));
+		memset(g_gsm_cell_ci,  0, sizeof(g_gsm_cell_ci));
 	}
 
 	/* APRS */
 	{
-		g_aprs_mode							= 0;
-		*g_aprs_source_callsign				= 0;
-		*g_aprs_source_ssid					= 0;
-		*g_aprs_login_user					= 0;
-		*g_aprs_login_pwd					= 0;
 		g_aprs_alert_last					= 0ULL;
 		g_aprs_alert_fsm_state				= APRS_ALERT_FSM_STATE__NOOP;
 		g_aprs_alert_reason					= APRS_ALERT_REASON__NONE;
@@ -654,11 +655,49 @@ static void init_globals(void)
 		g_aprs_alert_2_mag_y_nT				= 0L;
 		g_aprs_alert_2_mag_z_nT				= 0L;
 
-		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_CALLSIGN,	(void*)&g_aprs_source_callsign,	sizeof(g_aprs_source_callsign));
-		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_SSID,		(void*)&g_aprs_source_ssid,		sizeof(g_aprs_source_ssid));
-		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_LOGIN,		(void*)&g_aprs_login_user,		sizeof(g_aprs_login_user));
-		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_PWD,			(void*)&g_aprs_login_pwd,		sizeof(g_aprs_login_pwd));
-		nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_MODE,		(void*)&g_aprs_mode,			sizeof(g_aprs_mode));
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_LINK_SERVICE, &g_aprs_link_service, sizeof(g_aprs_link_service)) != STATUS_OK) {
+			memset(g_aprs_link_service, 0, sizeof(g_aprs_link_service));
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_LINK_USER, &g_aprs_link_user, sizeof(g_aprs_link_user)) != STATUS_OK) {
+			memset(g_aprs_link_user, 0, sizeof(g_aprs_link_user));
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_LINK_PWD, &g_aprs_link_pwd, sizeof(g_aprs_link_pwd)) != STATUS_OK) {
+			memset(g_aprs_link_pwd, 0, sizeof(g_aprs_link_pwd));
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_IP_PROTO, &g_aprs_ip_proto, sizeof(g_aprs_ip_proto)) != STATUS_OK) {
+			g_aprs_ip_proto = C_GSM_IP_PROTO_NONE;
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_IP_NAME, &g_aprs_ip_name, sizeof(g_aprs_ip_name)) != STATUS_OK) {
+			memset(g_aprs_ip_name, 0, sizeof(g_aprs_ip_name));
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_IP_PORT, &g_aprs_ip_port, sizeof(g_aprs_ip_port)) != STATUS_OK) {
+			g_aprs_ip_port = 0U;
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_CALLSIGN, &g_aprs_source_callsign, sizeof(g_aprs_source_callsign)) != STATUS_OK) {
+			memset(g_aprs_source_callsign, 0, sizeof(g_aprs_source_callsign));
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_SSID, &g_aprs_source_ssid, sizeof(g_aprs_source_ssid)) != STATUS_OK) {
+			memset(g_aprs_source_ssid, 0, sizeof(g_aprs_source_ssid));
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_LOGIN, &g_aprs_login_user, sizeof(g_aprs_login_user)) != STATUS_OK) {
+			memset(g_aprs_login_user, 0, sizeof(g_aprs_login_user));
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_PWD, &g_aprs_login_pwd, sizeof(g_aprs_login_pwd)) != STATUS_OK) {
+			memset(g_aprs_login_pwd, 0, sizeof(g_aprs_login_pwd));
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__APRS_MODE, &g_aprs_mode, sizeof(g_aprs_mode)) != STATUS_OK) {
+			g_aprs_mode = 0U;
+		}
 	}
 }
 
@@ -669,7 +708,7 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		uint32_t version_ui32 = ((uint32_t)(20000 + VERSION_HIGH) * 1000) + (uint32_t)VERSION_LOW;
 		for (uint8_t idx = 0; idx < 8; ++idx) {
 			uint8_t pad = '0' + (version_ui32 % 10);
-			nvm_write(INT_EEPROM, EEPROM_ADDR__VERSION + (7 - idx), (void*)&pad, sizeof(pad));
+			nvm_write(INT_EEPROM, EEPROM_ADDR__VERSION + (7 - idx), (void*)&pad,					sizeof(pad));
 			version_ui32 /= 10;
 		}
 	}
@@ -680,7 +719,7 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		int32_t val_i32 = g_xo_mode_pwm;
 		cpu_irq_restore(flags);
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__VCTCXO, (void*)&val_i32, sizeof(val_i32));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__VCTCXO,				(void*)&val_i32,					sizeof(val_i32));
 	}
 
 	/* LCD backlight */
@@ -689,7 +728,7 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		int16_t val_i16 = g_backlight_mode_pwm;
 		cpu_irq_restore(flags);
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__LCDBL, (void*)&val_i16, sizeof(val_i16));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__LCDBL,				(void*)&val_i16,					sizeof(val_i16));
 	}
 
 	/* Beepers */
@@ -698,7 +737,7 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		uint8_t val_ui8 = (g_keyBeep_enable ?  0x02 : 0x00) | (g_errorBeep_enable ?  0x01 : 0x00);
 		cpu_irq_restore(flags);
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__BEEP, (void*)&val_ui8, sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__BEEP,				(void*)&val_ui8,					sizeof(val_ui8));
 	}
 
 	/* Pitch tone variants */
@@ -707,7 +746,7 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		int8_t val_i8 = g_pitch_tone_mode;
 		cpu_irq_restore(flags);
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__PITCHTONE, (void*)&val_i8, sizeof(val_i8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__PITCHTONE,			(void*)&val_i8,						sizeof(val_i8));
 	}
 
 	/* Environment and QNH settings */
@@ -718,9 +757,9 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		int16_t val_i16_2	= g_qnh_height_m;
 		cpu_irq_restore(flags);
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_TEMP_DELTA,	(void*)&val_i16_1, sizeof(val_i16_1));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_AUTO,	(void*)&val_ui8, sizeof(val_ui8));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS,	(void*)&val_i16_2, sizeof(val_i16_2));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_TEMP_DELTA,		(void*)&val_i16_1,					sizeof(val_i16_1));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_AUTO,		(void*)&val_ui8,					sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS,		(void*)&val_i16_2,					sizeof(val_i16_2));
 	}
 
 	/* Status lines */
@@ -731,7 +770,7 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 						| (g_usb_cdc_printStatusLines_1pps		?  PRINT_STATUS_LINES__1PPS		: 0x00);
 		cpu_irq_restore(flags);
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__PRINT_STATUS, (void*)&val_ui8, sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__PRINT_STATUS,		(void*)&val_ui8,					sizeof(val_ui8));
 	}
 
 	/* 9-axis offset and gain corrections */
@@ -757,27 +796,27 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		int16_t l_twi1_gyro_2_mag_factz		= g_twi1_gyro_2_mag_factz;
 		cpu_irq_restore(flags);
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_TEMP_RTOFS, (void*)&l_twi1_gyro_1_temp_RTofs, sizeof(l_twi1_gyro_1_temp_RTofs));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_TEMP_SENS,  (void*)&l_twi1_gyro_1_temp_sens, sizeof(l_twi1_gyro_1_temp_sens));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_TEMP_RTOFS,	(void*)&l_twi1_gyro_1_temp_RTofs,	sizeof(l_twi1_gyro_1_temp_RTofs));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_TEMP_SENS,		(void*)&l_twi1_gyro_1_temp_sens,	sizeof(l_twi1_gyro_1_temp_sens));
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_OFS_X, (void*)&l_twi1_gyro_1_accel_ofsx, sizeof(l_twi1_gyro_1_accel_ofsx));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_OFS_Y, (void*)&l_twi1_gyro_1_accel_ofsy, sizeof(l_twi1_gyro_1_accel_ofsy));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_OFS_Z, (void*)&l_twi1_gyro_1_accel_ofsz, sizeof(l_twi1_gyro_1_accel_ofsz));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_OFS_X,	(void*)&l_twi1_gyro_1_accel_ofsx,	sizeof(l_twi1_gyro_1_accel_ofsx));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_OFS_Y,	(void*)&l_twi1_gyro_1_accel_ofsy,	sizeof(l_twi1_gyro_1_accel_ofsy));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_OFS_Z,	(void*)&l_twi1_gyro_1_accel_ofsz,	sizeof(l_twi1_gyro_1_accel_ofsz));
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_FACT_X, (void*)&l_twi1_gyro_1_accel_factx, sizeof(l_twi1_gyro_1_accel_factx));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_FACT_Y, (void*)&l_twi1_gyro_1_accel_facty, sizeof(l_twi1_gyro_1_accel_facty));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_FACT_Z, (void*)&l_twi1_gyro_1_accel_factz, sizeof(l_twi1_gyro_1_accel_factz));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_FACT_X,	(void*)&l_twi1_gyro_1_accel_factx,	sizeof(l_twi1_gyro_1_accel_factx));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_FACT_Y,	(void*)&l_twi1_gyro_1_accel_facty,	sizeof(l_twi1_gyro_1_accel_facty));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_ACCEL_FACT_Z,	(void*)&l_twi1_gyro_1_accel_factz,	sizeof(l_twi1_gyro_1_accel_factz));
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_GYRO_OFS_X, (void*)&l_twi1_gyro_1_gyro_ofsx, sizeof(l_twi1_gyro_1_gyro_ofsx));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_GYRO_OFS_Y, (void*)&l_twi1_gyro_1_gyro_ofsy, sizeof(l_twi1_gyro_1_gyro_ofsy));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_GYRO_OFS_Z, (void*)&l_twi1_gyro_1_gyro_ofsz, sizeof(l_twi1_gyro_1_gyro_ofsz));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_GYRO_OFS_X,	(void*)&l_twi1_gyro_1_gyro_ofsx,	sizeof(l_twi1_gyro_1_gyro_ofsx));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_GYRO_OFS_Y,	(void*)&l_twi1_gyro_1_gyro_ofsy,	sizeof(l_twi1_gyro_1_gyro_ofsy));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_GYRO_OFS_Z,	(void*)&l_twi1_gyro_1_gyro_ofsz,	sizeof(l_twi1_gyro_1_gyro_ofsz));
 
 		// EEPROM_ADDR__9AXIS_GYRO_FACT_XYZ
 		// EEPROM_ADDR__9AXIS_MAG_OFS_XYZ
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_X, (void*)&l_twi1_gyro_2_mag_factx, sizeof(l_twi1_gyro_2_mag_factx));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Y, (void*)&l_twi1_gyro_2_mag_facty, sizeof(l_twi1_gyro_2_mag_facty));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Z, (void*)&l_twi1_gyro_2_mag_factz, sizeof(l_twi1_gyro_2_mag_factz));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_X,	(void*)&l_twi1_gyro_2_mag_factx,	sizeof(l_twi1_gyro_2_mag_factx));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Y,	(void*)&l_twi1_gyro_2_mag_facty,	sizeof(l_twi1_gyro_2_mag_facty));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Z,	(void*)&l_twi1_gyro_2_mag_factz,	sizeof(l_twi1_gyro_2_mag_factz));
 	}
 
 	/* GSM */
@@ -785,17 +824,23 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		uint8_t val_ui8 = (g_gsm_enable			?  GSM__ENABLE		: 0x00)
 						| (g_gsm_aprs_enable	?  GSM__APRS_ENABLE	: 0x00);
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_BF,			&val_ui8,						sizeof(val_ui8));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_PIN,			(void*)&g_gsm_login_pwd,		sizeof(g_gsm_login_pwd));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_BF,				&val_ui8,							sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_PIN,				(void*)&g_gsm_login_pwd,			sizeof(g_gsm_login_pwd));
 	}
 
 	/* APRS */
 	if (bf & EEPROM_SAVE_BF__APRS) {
-		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_CALLSIGN,	(void*)&g_aprs_source_callsign,	sizeof(g_aprs_source_callsign));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_SSID,		(void*)&g_aprs_source_ssid,		sizeof(g_aprs_source_ssid));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_LOGIN,		(void*)&g_aprs_login_user,		sizeof(g_aprs_login_user));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_PWD,		(void*)&g_aprs_login_pwd,		sizeof(g_aprs_login_pwd));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_MODE,		(void*)&g_aprs_mode,			sizeof(g_aprs_mode));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_LINK_SERVICE,	(void*)&g_aprs_link_service,		sizeof(g_aprs_link_service));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_LINK_USER,		(void*)&g_aprs_link_user,			sizeof(g_aprs_link_user));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_LINK_PWD,		(void*)&g_aprs_link_pwd,			sizeof(g_aprs_link_pwd));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_IP_PROTO,		(void*)&g_aprs_ip_proto,			sizeof(g_aprs_ip_proto));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_IP_NAME,		(void*)&g_aprs_ip_name,				sizeof(g_aprs_ip_name));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_IP_PORT,		(void*)&g_aprs_ip_port,				sizeof(g_aprs_ip_port));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_CALLSIGN,		(void*)&g_aprs_source_callsign,		sizeof(g_aprs_source_callsign));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_SSID,			(void*)&g_aprs_source_ssid,			sizeof(g_aprs_source_ssid));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_LOGIN,			(void*)&g_aprs_login_user,			sizeof(g_aprs_login_user));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_PWD,			(void*)&g_aprs_login_pwd,			sizeof(g_aprs_login_pwd));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__APRS_MODE,			(void*)&g_aprs_mode,				sizeof(g_aprs_mode));
 	}
 }
 
@@ -931,6 +976,42 @@ int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int o
 	return ret;
 }
 
+char* ipProto_2_ca(uint8_t aprs_ip_proto)
+{
+	switch (aprs_ip_proto) {
+		case C_GSM_IP_PROTO_TCP:
+			return "TCP";
+		break;
+
+		case C_GSM_IP_PROTO_UDP:
+			return "UDP";
+		break;
+
+		default:
+			return "";
+	}
+}
+
+char* copyStr(char* target, uint8_t targetSize, const char* source)
+{
+	if (target && targetSize && source) {
+		irqflags_t flags = cpu_irq_save();
+
+		memset(target, 0, targetSize);
+
+		for (uint8_t idx = 0; idx < targetSize; idx++) {
+			char c = *(source + idx);
+			if (c < 0x20) {
+				break;
+			}
+			*(target + idx) = c;
+		}
+
+		cpu_irq_restore(flags);
+	}
+	return target;
+}
+
 
 void adc_app_enable(bool enable)
 {
@@ -964,33 +1045,57 @@ void aprs_num_update(uint8_t mode)
 	save_globals(EEPROM_SAVE_BF__APRS);
 }
 
+void aprs_link_service_update(const char service[])
+{
+	if (copyStr(g_aprs_link_service, sizeof(g_aprs_link_service), service)) {
+		save_globals(EEPROM_SAVE_BF__APRS);
+	}
+}
+
+void aprs_link_user_update(const char user[])
+{
+	if (copyStr(g_aprs_link_user, sizeof(g_aprs_link_user), user)) {
+		save_globals(EEPROM_SAVE_BF__APRS);
+	}
+}
+
+void aprs_link_pwd_update(const char pwd[])
+{
+	if (copyStr(g_aprs_link_pwd, sizeof(g_aprs_link_pwd), pwd)) {
+		save_globals(EEPROM_SAVE_BF__APRS);
+	}
+}
+
+void aprs_ip_proto_update(const char proto[])
+{
+	if (!strncmp_P(proto, PM_GSM_IP_PROTO_TCP_STR, 3)) {
+		g_aprs_ip_proto = C_GSM_IP_PROTO_TCP;
+		save_globals(EEPROM_SAVE_BF__APRS);
+
+	} else if (!strncmp_P(proto, PM_GSM_IP_PROTO_UDP_STR, 3)) {
+		g_aprs_ip_proto = C_GSM_IP_PROTO_UDP;
+		save_globals(EEPROM_SAVE_BF__APRS);
+	}
+}
+
+void aprs_ip_name_update(const char name[])
+{
+	if (copyStr(g_aprs_ip_name, sizeof(g_aprs_ip_name), name)) {
+		save_globals(EEPROM_SAVE_BF__APRS);
+	}
+}
+
+void aprs_ip_port_update(uint16_t port)
+{
+	g_aprs_ip_port = port;
+	save_globals(EEPROM_SAVE_BF__APRS);
+}
+
 void aprs_call_update(const char call[])
 {
-	uint8_t idx = 0;
-
-	if (!call) {
-		g_aprs_source_callsign[idx++] = 0;
-
-	} else if (strlen(call) < sizeof(g_aprs_source_callsign)) {
-		for (; idx < (sizeof(g_aprs_source_callsign) - 1); idx++) {
-			if (((('/' <= call[idx]) && (call[idx]) <= '9')) || (('A' <= toupper(call[idx])) && (toupper(call[idx]) <= 'Z'))) {
-				g_aprs_source_callsign[idx] = (char) toupper(call[idx]);
-			} else {
-				g_aprs_source_callsign[idx++] = 0;
-				break;
-			}
-		}
-
-	} else {
-		g_aprs_source_callsign[0] = 0;
+	if (copyStr(g_aprs_source_callsign, sizeof(g_aprs_source_callsign), call)) {
+		save_globals(EEPROM_SAVE_BF__APRS);
 	}
-
-	/* Fill up to the end of the field */
-	while (idx < sizeof(g_aprs_source_callsign)) {
-		g_aprs_source_callsign[idx++] = 0;
-	}
-
-	save_globals(EEPROM_SAVE_BF__APRS);
 }
 
 void aprs_ssid_update(const char ssid[])
@@ -1029,60 +1134,16 @@ void aprs_ssid_update(const char ssid[])
 
 void aprs_user_update(const char user[])
 {
-	uint8_t idx = 0;
-
-	if (!user) {
-		g_aprs_login_user[idx++] = 0;
-
-	} else if (strlen(user) < sizeof(g_aprs_login_user)) {
-		for (; idx < (sizeof(g_aprs_login_user) - 1); idx++) {
-			if (0x20 <= user[idx]) {
-				g_aprs_login_user[idx] = (char)user[idx];
-			} else {
-				g_aprs_login_user[idx++] = 0;
-				break;
-			}
-		}
-
-	} else {
-		g_aprs_login_user[0] = 0;
+	if (copyStr(g_aprs_login_user, sizeof(g_aprs_login_user), user)) {
+		save_globals(EEPROM_SAVE_BF__APRS);
 	}
-
-	/* Fill up to the end of the field */
-	while (idx < sizeof(g_aprs_login_user)) {
-		g_aprs_login_user[idx++] = 0;
-	}
-
-	save_globals(EEPROM_SAVE_BF__APRS);
 }
 
 void aprs_pwd_update(const char pwd[])
 {
-	uint8_t idx = 0;
-
-	if (!pwd) {
-		g_aprs_login_pwd[idx++] = 0;
-
-	} else if ((strlen(pwd) - 1) < sizeof(g_aprs_login_pwd)) {
-		for (; idx < (sizeof(g_aprs_login_pwd) - 1); idx++) {
-			if (0x20 <= pwd[idx]) {
-				g_aprs_login_pwd[idx] = (char)pwd[idx];
-			} else {
-				g_aprs_login_pwd[idx++] = 0;
-				break;
-			}
-		}
-
-	} else {
-		g_aprs_login_pwd[0] = 0;
+	if (copyStr(g_aprs_login_pwd, sizeof(g_aprs_login_pwd), pwd)) {
+		save_globals(EEPROM_SAVE_BF__APRS);
 	}
-
-	/* Fill up to the end of the field */
-	while (idx < sizeof(g_aprs_login_pwd)) {
-		g_aprs_login_pwd[idx++] = 0;
-	}
-
-	save_globals(EEPROM_SAVE_BF__APRS);
 }
 
 void backlight_mode_pwm(int16_t mode_pwm)
@@ -1356,31 +1417,9 @@ void gsm_aprs_enable(bool enable)
 
 void gsm_pin_update(const char pin[])
 {
-	uint8_t idx = 0;
-
-	if (!pin) {
-		g_gsm_login_pwd[idx++] = 0;
-
-	} else if ((strlen(pin) - 1) < sizeof(g_gsm_login_pwd)) {
-		for (; idx < (sizeof(g_gsm_login_pwd) - 1); idx++) {
-			if (0x20 <= pin[idx]) {
-				g_gsm_login_pwd[idx] = (char)pin[idx];
-			} else {
-				g_gsm_login_pwd[idx++] = 0;
-				break;
-			}
-		}
-
-	} else {
-		g_gsm_login_pwd[0] = 0;
+	if (copyStr(g_gsm_login_pwd, (uint8_t) sizeof(g_gsm_login_pwd), pin)) {
+		save_globals(EEPROM_SAVE_BF__GSM);
 	}
-
-	/* Fill up to the end of the field */
-	while (idx < sizeof(g_gsm_login_pwd)) {
-		g_gsm_login_pwd[idx++] = 0;
-	}
-
-	save_globals(EEPROM_SAVE_BF__GSM);
 }
 
 void gsm_enable(bool enable)
@@ -1448,7 +1487,7 @@ void shutdown(void)
 	/* Shutdown SIM808 */
 	//if (g_gsm_mode != OFF) {
 	{
-		serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_OFF);
+		serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_OFF);
 		serial_sim808_gsm_shutdown();
 	}
 
@@ -2869,6 +2908,8 @@ static void task_main_aprs(void)
 	irqflags_t					flags;
 	char						l_msg_buf[C_TX_BUF_SIZE];
 	int							l_msg_buf_len				= 0;
+	char						l_mark						= ' ';
+
 
 	/* Once a second to be processed - do not send when APRS is disabled nor GPS ready */
 	if (s_lock || (s_now_sec == l_now_sec) || !g_gsm_enable || !g_gsm_aprs_enable || !g_gns_fix_status) {
@@ -2982,8 +3023,6 @@ static void task_main_aprs(void)
 			}
 		}
 
-		char l_mark = ' ';
-
 		/* Check for reporting interval */
 		switch (l_aprs_alert_fsm_state) {
 			case APRS_ALERT_FSM_STATE__DO_N1:
@@ -3008,7 +3047,7 @@ static void task_main_aprs(void)
 
 				/* Message content */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N1_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N1_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_N1, l_mark, l_aprs_alert_1_gyro_x_mdps / 1000.f, l_aprs_alert_1_gyro_y_mdps / 1000.f, l_aprs_alert_1_gyro_z_mdps / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
@@ -3051,7 +3090,7 @@ static void task_main_aprs(void)
 
 				/* Message content */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N2_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N2_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_N2, l_mark, l_aprs_alert_1_accel_x_mg / 1000.f, l_aprs_alert_1_accel_y_mg / 1000.f, l_aprs_alert_1_accel_z_mg / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N3;
@@ -3080,7 +3119,7 @@ static void task_main_aprs(void)
 
 				/* Message content */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N3_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N3_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_N3, l_mark, l_aprs_alert_2_mag_x_nT / 1000.f, l_aprs_alert_2_mag_y_nT / 1000.f, l_aprs_alert_2_mag_z_nT / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
@@ -3110,8 +3149,8 @@ static void task_main_aprs(void)
 				udi_write_tx_buf(g_prepare_buf, len, false);
 
 				/* Message content */
-				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, "-11");  // Hard coded source SSID = 11 (Balloon)
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_N4_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_N4_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_N4, l_mark, (long)l_gns_msl_alt_ft, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);
 
 				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__NOOP;
