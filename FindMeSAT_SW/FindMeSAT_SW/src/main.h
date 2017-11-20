@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													118
+#define VERSION_LOW													120
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -149,7 +149,14 @@ typedef enum APRS_MODE_ENUM {
 
 typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__VERSION			= 0x0000,						// i32
+	//						next:	= 0x0004,
+
 	EEPROM_ADDR__GSM_BF				= 0x0008,						// ui8
+	EEPROM_ADDR__APRS_MODE			= 0x0009,						// ui8
+	EEPROM_ADDR__APRS_IP_PROTO		= 0x000A,						// ui8
+	//						next:	= 0x000B,
+
+	EEPROM_ADDR__APRS_IP_PORT		= 0x000C,						// ui16
 	EEPROM_ADDR__ENV_TEMP_DELTA		= 0x000E,						// i16
 	EEPROM_ADDR__VCTCXO				= 0x0010,						// i32
 	EEPROM_ADDR__LCDBL				= 0x0014,						// i16
@@ -160,38 +167,50 @@ typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__ENV_QNH_METERS		= 0x001A,						// i16
 	EEPROM_ADDR__9AXIS_TEMP_RTOFS	= 0x001C,						// i16
 	EEPROM_ADDR__9AXIS_TEMP_SENS	= 0x001E,						// i16
-
 	EEPROM_ADDR__9AXIS_ACCEL_OFS_X	= 0x0020,						// i16
 	EEPROM_ADDR__9AXIS_ACCEL_OFS_Y	= 0x0022,						// i16
 	EEPROM_ADDR__9AXIS_ACCEL_OFS_Z	= 0x0024,						// i16
+	//						next:	= 0x0026,
 
 	EEPROM_ADDR__9AXIS_ACCEL_FACT_X	= 0x0028,						// i16
 	EEPROM_ADDR__9AXIS_ACCEL_FACT_Y	= 0x002A,						// i16
 	EEPROM_ADDR__9AXIS_ACCEL_FACT_Z	= 0x002C,						// i16
+	//						next:	= 0x002E,
 
 	EEPROM_ADDR__9AXIS_GYRO_OFS_X	= 0x0030,						// i16
 	EEPROM_ADDR__9AXIS_GYRO_OFS_Y	= 0x0032,						// i16
 	EEPROM_ADDR__9AXIS_GYRO_OFS_Z	= 0x0034,						// i16
+	//						next:	= 0x0036,
 
 	EEPROM_ADDR__9AXIS_GYRO_FACT_X	= 0x0038,						// i16
 	EEPROM_ADDR__9AXIS_GYRO_FACT_Y	= 0x003A,						// i16
 	EEPROM_ADDR__9AXIS_GYRO_FACT_Z	= 0x003C,						// i16
+	//						next:	= 0x003E,
 
 	EEPROM_ADDR__9AXIS_MAG_OFS_X	= 0x0040,						// i16
 	EEPROM_ADDR__9AXIS_MAG_OFS_Y	= 0x0042,						// i16
 	EEPROM_ADDR__9AXIS_MAG_OFS_Z	= 0x0044,						// i16
+	//						next:	= 0x0046,
 
 	EEPROM_ADDR__9AXIS_MAG_FACT_X	= 0x0048,						// i16
 	EEPROM_ADDR__9AXIS_MAG_FACT_Y	= 0x004A,						// i16
 	EEPROM_ADDR__9AXIS_MAG_FACT_Z	= 0x004C,						// i16
+	//						next:	= 0x004E,
 
 	EEPROM_ADDR__APRS_CALLSIGN		= 0x0080,						// char[12]
 	EEPROM_ADDR__APRS_SSID			= 0x008C,						// char[4]
 	EEPROM_ADDR__APRS_LOGIN			= 0x0090,						// char[10]
 	EEPROM_ADDR__APRS_PWD			= 0x009A,						// char[6]
-	EEPROM_ADDR__APRS_MODE			= 0x00A0,						// ui8
 
 	EEPROM_ADDR__GSM_PIN			= 0x00A2,						// char[14]
+	//						next:	= 0x00B0,
+
+	EEPROM_ADDR__APRS_LINK_SERVICE	= 0x0100,						// char[32]
+	EEPROM_ADDR__APRS_LINK_USER		= 0x0120,						// char[16]
+	EEPROM_ADDR__APRS_LINK_PWD		= 0x0130,						// char[16]
+	EEPROM_ADDR__APRS_IP_NAME		= 0x0140,						// char[32]
+	//						next:	= 0x0160,
+
 } EEPROM_ADDR_ENUM_t;
 
 typedef enum EEPROM_SAVE_BF_ENUM {
@@ -230,6 +249,12 @@ typedef enum APRS_ALERT_FSM_STATE_ENUM {
 	APRS_ALERT_FSM_STATE__DO_N4,
 } APRS_ALERT_FSM_STATE_ENUM_t;
 
+#define C_APRS_LINK_SERVICE_LEN				32
+#define C_APRS_LINK_USER_LEN				16
+#define C_APRS_LINK_PWD_LEN					16
+#define C_APRS_IP_PROTO_LEN					4
+#define C_APRS_IP_NAME_LEN					32
+#define C_APRS_IP_PORT_LEN					6
 #define C_APRS_S_LEN						12
 #define C_APRS_SSID_LEN						4
 #define C_APRS_USER_LEN						10
@@ -263,9 +288,16 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf);
 char* cueBehind(char* ptr, char delim);
 int myStringToFloat(const char* ptr, float* out);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
-
+char* ipProto_2_ca(uint8_t aprs_ip_proto);
+char* copyStr(char* target, uint8_t targetSize, const char* source);
 void adc_app_enable(bool enable);
 void aprs_num_update(uint8_t mode);
+void aprs_link_service_update(const char service[]);
+void aprs_link_user_update(const char user[]);
+void aprs_link_pwd_update(const char pwd[]);
+void aprs_ip_proto_update(const char proto[]);
+void aprs_ip_name_update(const char name[]);
+void aprs_ip_port_update(uint16_t port);
 void aprs_call_update(const char call[]);
 void aprs_ssid_update(const char ssid[]);
 void aprs_user_update(const char user[]);

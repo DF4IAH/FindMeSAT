@@ -102,6 +102,14 @@ static bool udi_write_tx_char(int chr, bool stripControl)
 	return true;	// write to nowhere
 }
 
+uint8_t udi_write_tx_msg_P(const char* msg_P)
+{
+	char l_buf[C_TX_BUF_SIZE];
+
+	int len = snprintf_P(l_buf, sizeof(l_buf), msg_P);
+	return udi_write_tx_buf(l_buf, min(len, sizeof(l_buf)), false);
+}
+
 uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl)
 {
 	uint8_t ret = 0;

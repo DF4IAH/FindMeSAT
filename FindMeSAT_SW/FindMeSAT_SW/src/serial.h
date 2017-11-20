@@ -53,6 +53,15 @@
 #define C_USART_SIM808_RESP_ITER	80
 
 #define C_GSM_PIN_BUF_LEN			14
+#define C_GSM_CELL_LAC_LEN			4
+#define C_GSM_CELL_CI_LEN			4
+
+
+typedef enum C_GSM_IP_PROTO_ENUM {
+	C_GSM_IP_PROTO_NONE								= 0,
+	C_GSM_IP_PROTO_TCP,
+	C_GSM_IP_PROTO_UDP,
+} C_GSM_IP_PROTO_ENUM_t;
 
 typedef enum C_GSM_CREG_STAT_ENUM {
 	C_GSM_CREG_STAT_DISABLED						= 0,
@@ -69,14 +78,15 @@ typedef enum C_GSM_CGATT_STAT_ENUM {
 } C_GSM_CGATT_STAT_ENUM_t;
 
 
-typedef enum SERIAL_SIM808_GSM_SETFUNC_ENUM {
-	SERIAL_SIM808_GSM_SETFUNC_OFF					= 0,
-	SERIAL_SIM808_GSM_SETFUNC_ON,
-} SERIAL_SIM808_GSM_SETFUNC_ENUM_t;
+typedef enum C_SERIAL_SIM808_GSM_SETFUNC_ENUM {
+	C_SERIAL_SIM808_GSM_SETFUNC_OFF					= 0,
+	C_SERIAL_SIM808_GSM_SETFUNC_ON,
+} C_SERIAL_SIM808_GSM_SETFUNC_ENUM_t;
+
 
 void serial_sim808_send(const char* msg, uint8_t len, bool doWait);
 bool serial_sim808_sendAndResponse(const char* msg, uint8_t len);
-void serial_sim808_gsm_setFunc(SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode);
+void serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode);
 void serial_sim808_gsm_setPin(const char* pin);
 
 void serial_gsm_activation(bool enable);
