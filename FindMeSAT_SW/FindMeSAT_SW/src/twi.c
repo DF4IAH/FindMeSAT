@@ -2341,7 +2341,9 @@ void task_twi2_lcd__environment(uint8_t col_left)
 		/* Environmental relative humidity */
 		if (s_env_hygro_RH_100 != l_env_hygro_RH_100) {
 			s_env_hygro_RH_100 = l_env_hygro_RH_100;
-			task_twi2_lcd_print_format_float_P(col_left, 10 * 10, l_env_hygro_RH_100 / 100.f, PM_FORMAT_05F2);
+			if ((0 <= l_env_hygro_RH_100) && (l_env_hygro_RH_100 < 10000)) {
+				task_twi2_lcd_print_format_float_P(col_left, 10 * 10, l_env_hygro_RH_100 / 100.f, PM_FORMAT_05F2);
+			}
 		}
 	}
 }
