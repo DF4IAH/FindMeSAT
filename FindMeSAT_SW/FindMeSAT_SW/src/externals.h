@@ -109,6 +109,7 @@ extern bool							g_gsm_aprs_ip_connected;
 extern char							g_gsm_cell_lac[C_GSM_CELL_LAC_LEN];
 extern char							g_gsm_cell_ci[C_GSM_CELL_CI_LEN];
 extern char							g_gsm_login_pwd[C_GSM_PIN_BUF_LEN];
+extern bool							g_gsm_ring;
 
 extern bool							g_twi1_gsm_valid;
 extern uint8_t						g_twi1_gsm_version;

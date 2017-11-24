@@ -32,19 +32,12 @@
 #include "externals.h"
 
 
-/* Global string store in program memory */
-#if 0  // TODO: remove this block
-const char					C_APRS_TX_HTTP_TARGET0_PROT[]					= "TCP";
-const char					C_APRS_TX_HTTP_TARGET0_NM[]						= "bg8.dyndns.org";
-const uint16_t				C_APRS_TX_HTTP_TARGET0_PORT						= 22222U;
-const char					C_APRS_TX_HTTP_TARGET1_PROT[]					= "TCP";
-const char					C_APRS_TX_HTTP_TARGET1_NM[]						= "karlsruhe.aprs2.net";
-const uint16_t				C_APRS_TX_HTTP_TARGET1_PORT						= 8080U;
-const char					C_APRS_TX_HTTP_TARGET2_PROT[]					= "TCP";
-const char					C_APRS_TX_HTTP_TARGET2_NM[]						= "nuremberg.aprs2.net";
-const uint16_t				C_APRS_TX_HTTP_TARGET2_PORT						= 8080U;
-#endif
+/* Note: APRS hosts of SW-Germany */
+// TCP: nuremberg.aprs2.net 8080
+// TCP: karlsruhe.aprs2.net 8080
 
+
+/* Global string store in program memory */
 const char					PM_SIM808_INFO_LCD_START[]								= "Init: SIM808 Starting  ...";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_START[]);
 const char					PM_SIM808_INFO_LCD_RESTART[]							= "Init: SIM808 Restarting...";
@@ -53,8 +46,6 @@ const char					PM_SIM808_INFO_LCD_INITED[]								= "Init: SIM808 - init'ed ..."
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_INITED[]);
 const char					PM_SIM808_INFO_LCD_WAIT[]								= "Init: SIM808 - GPRS up ...";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_WAIT[]);
-const char					PM_SIM808_INFO_LCD_READY[]								= "Init: SIM808 - READY.";
-PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_READY[]);
 
 const char					PM_SIM808_INFO_START[]									= "SIM808 ser1:  Starting the device ...\r\n";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_START[]);
@@ -64,8 +55,6 @@ const char					PM_SIM808_INFO_SYNCED[]									= "SIM808 ser1:  --> now synced .
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_SYNCED[]);
 const char					PM_SIM808_INFO_WAIT_CONNECT[]							= "SIM808 ser1:  --> device registering and enabling GPRS connection ...\r\n";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_WAIT_CONNECT[]);
-const char					PM_SIM808_INFO_READY[]									= "SIM808 ser1:  --> READY.\r\n\r\n";
-PROGMEM_DECLARE(const char, PM_SIM808_INFO_READY[]);
 
 const char					PM_SET_FUNC_1[]											= "AT+CFUN=%d\r\n";
 PROGMEM_DECLARE(const char, PM_SET_FUNC_1[]);
@@ -329,7 +318,7 @@ void serial_gsm_gprs_link_openClose(bool isStart) {
 			udi_write_tx_buf(g_prepare_buf, len, false);
 		}
 
-		#if 1
+		#if 0
 		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#11 DEBUG: +CREG? sending ...\r\n");
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
@@ -345,9 +334,9 @@ void serial_gsm_gprs_link_openClose(bool isStart) {
 		/* Wait until the auto_responder chain has ended */
 		{
 			uint32_t l_now		= tcc1_get_time();
-			uint32_t l_latest	= 5000 + l_now;
+			uint32_t l_until	= l_now + 5000;
 
-			while (l_latest > l_now) {
+			while (l_until > l_now) {
 				if (g_gsm_aprs_gprs_connected) {
 					s_gprs_isOpen = true;
 					break;
@@ -357,21 +346,6 @@ void serial_gsm_gprs_link_openClose(bool isStart) {
 			}
 		}
 
-		/* Inform about the serial communication success */
-		{
-			int len;
-
-			/* LCD information */
-			if (g_workmode != WORKMODE_RUN) {
-				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_READY);
-				task_twi2_lcd_str(8, 10 * 10, g_prepare_buf);
-			}
-
-			/* USB information */
-			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_READY);
-			udi_write_tx_buf(g_prepare_buf, len, false);
-		}
-
 	} else if (!isStart && s_gprs_isOpen) {
 		s_gprs_isOpen = false;
 
@@ -379,7 +353,7 @@ void serial_gsm_gprs_link_openClose(bool isStart) {
 		serial_gsm_gprs_ip_openClose(false);
 
 		/* Close any listening servers */
-		int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSERVER, 0);
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSERVER, 0);
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
 
 		/* Shutdown any open connections and drop GPRS link */
@@ -403,14 +377,14 @@ void serial_gsm_rx_creg(C_GSM_CREG_STAT_ENUM_t stat)
 		barrier();
 		s_done = true;
 
-		#if 1
+		#if 0
 		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#21 DEBUG: +CREG: 1 (REGHOME) / 5 (REGROAMING) received.\r\n");
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
 
 		g_usart_gprs_auto_response_state = 2;
 
-		#if 1
+		#if 0
 		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#22 DEBUG: +CGATT? sending ...\r\n");
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
@@ -438,12 +412,12 @@ void serial_gsm_rx_cgatt(C_GSM_CGATT_STAT_ENUM_t stat)
 		barrier();
 		s_done = true;
 
-		#if 1
+		#if 0
 		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#31 DEBUG: +CGATT: 1 (ATTACHED) received.\r\n");
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
 
-		#if 1
+		#if 0
 		len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#32 DEBUG: +CSTT, +CIICR, +CIFSR sending ...\r\n");
 		udi_write_tx_buf(g_prepare_buf, len, false);
 		#endif
@@ -494,7 +468,7 @@ void serial_gsm_gprs_ip_openClose(bool isStart)
 			uint16_t l_aprs_ip_port = g_aprs_ip_port;
 			cpu_irq_restore(flags);
 
-			#if 1
+			#if 0
 			len = snprintf(buf, sizeof(buf), "#41 DEBUG: Opening TCP connection ...\r\n");
 			udi_write_tx_buf(buf, len, false);
 			#endif
@@ -522,7 +496,7 @@ void serial_gsm_gprs_ip_openClose(bool isStart)
 			serial_sim808_send(buf, len, true);
 			yield_ms(1000);
 
-			#if 1
+			#if 0
 			len = snprintf(buf, sizeof(buf), "#46 DEBUG: Closing TCP connection ...\r\n");
 			udi_write_tx_buf(buf, len, false);
 			#endif
@@ -879,9 +853,7 @@ void serial_send_gns_urc(uint8_t val)
 			}
 
 		} else if (!strncmp_P((char*)buf, PM_TWI1_UTIL_ONBOARD_SIM808_RING_R, sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_RING_R) - 1)) {
-			if (g_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
-				g_aprs_alert_reason = APRS_ALERT_REASON__REQUEST;
-			}
+			g_gsm_ring = true;
 		}
 	}
 

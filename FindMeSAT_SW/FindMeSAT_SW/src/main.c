@@ -145,6 +145,7 @@ bool						g_gsm_aprs_ip_connected							= false;
 char						g_gsm_cell_lac[C_GSM_CELL_LAC_LEN]				= { 0 };
 char						g_gsm_cell_ci[C_GSM_CELL_CI_LEN]				= { 0 };
 char						g_gsm_login_pwd[C_GSM_PIN_BUF_LEN]				= { 0 };	// EEPROM
+bool						g_gsm_ring										= false;
 
 
 bool						g_twi1_gsm_valid								= false;
@@ -311,6 +312,12 @@ const char					PM_GSM_IP_PROTO_TCP_STR[]						= "TCP";
 PROGMEM_DECLARE(const char, PM_GSM_IP_PROTO_TCP_STR[]);
 const char					PM_GSM_IP_PROTO_UDP_STR[]						= "UDP";
 PROGMEM_DECLARE(const char, PM_GSM_IP_PROTO_UDP_STR[]);
+
+const char					PM_SIM808_INFO_LCD_READY[]						= "Init: SIM808 - READY.";
+PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_READY[]);
+
+const char					PM_SIM808_INFO_READY[]							= "SIM808 ser1:  --> READY.\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_SIM808_INFO_READY[]);
 
 
 twi_options_t g_twi1_options = {
@@ -627,6 +634,7 @@ static void init_globals(void)
 
 		g_gsm_aprs_gprs_connected	= false;
 		g_gsm_aprs_ip_connected		= false;
+		g_gsm_ring					= false;
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__GSM_BF, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
 			g_gsm_enable			= val_ui8 & GSM__ENABLE;
@@ -1435,6 +1443,21 @@ void gsm_enable(bool enable)
 	/* Activate GPRS link*/
 	if (enable && g_gsm_aprs_enable) {
 		serial_gsm_gprs_link_openClose(true);
+
+		/* Inform about the serial communication success */
+		{
+			int len;
+
+			/* LCD information */
+			if (g_workmode != WORKMODE_RUN) {
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_READY);
+				task_twi2_lcd_str(8, 10 * 10, g_prepare_buf);
+			}
+
+			/* USB information */
+			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_READY);
+			udi_write_tx_buf(g_prepare_buf, len, false);
+		}
 	}
 }
 
@@ -2904,7 +2927,6 @@ static void task_main_aprs(void)
 	uint64_t					l_aprs_alert_last;
 	APRS_ALERT_FSM_STATE_ENUM_t	l_aprs_alert_fsm_state;
 	APRS_ALERT_REASON_ENUM_t	l_aprs_alert_reason;
-	int							len							= 0;
 	irqflags_t					flags;
 	char						l_msg_buf[C_TX_BUF_SIZE];
 	int							l_msg_buf_len				= 0;
@@ -2943,7 +2965,12 @@ static void task_main_aprs(void)
 		/* Check for sensor and time boundaries */
 		if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
 			/* APRS messaging started */
-			if ((l_aprs_alert_last + C_APRS_ALERT_TIME_SEC) <= l_now_sec) {
+			if (g_gsm_ring &&
+				((l_aprs_alert_last + C_APRS_ALERT_REQ_HOLDOFF_SEC) <= l_now_sec)) {
+				g_gsm_ring = false;
+				l_aprs_alert_reason		= APRS_ALERT_REASON__REQUEST;
+
+			} else if ((l_aprs_alert_last + C_APRS_ALERT_TIME_SEC) <= l_now_sec) {
 				l_aprs_alert_reason		= APRS_ALERT_REASON__TIME;
 
 			} else if ((aprs_pos_delta_m() > C_APRS_ALERT_POS_DELTA_M) &&
@@ -3041,9 +3068,11 @@ static void task_main_aprs(void)
 					l_mark = '*';
 				}
 
+				#if 0
 				/* Debug info at USB console */
-				len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#81 DEBUG: message N1 in queue ...\r\n");
+				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#81 DEBUG: message N1 in queue ...\r\n");
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				#endif
 
 				/* Message content */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
@@ -3084,9 +3113,11 @@ static void task_main_aprs(void)
 					l_mark = '*';
 				}
 
+				#if 0
 				/* Debug info at USB console */
-				len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#82 DEBUG: message N2 in queue ...\r\n");
+				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#82 DEBUG: message N2 in queue ...\r\n");
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				#endif
 
 				/* Message content */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
@@ -3113,9 +3144,11 @@ static void task_main_aprs(void)
 					l_mark = '*';
 				}
 
+				#if 0
 				/* Debug info at USB console */
-				len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#83 DEBUG: message N3 in queue ...\r\n");
+				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#83 DEBUG: message N3 in queue ...\r\n");
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				#endif
 
 				/* Message content */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
@@ -3144,9 +3177,11 @@ static void task_main_aprs(void)
 					l_mark = '*';
 				}
 
+				#if 0
 				/* Debug info at USB console */
-				len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#84 DEBUG: message N4 in queue ...\r\n");
+				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "#84 DEBUG: message N4 in queue ...\r\n");
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				#endif
 
 				/* Message content */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
