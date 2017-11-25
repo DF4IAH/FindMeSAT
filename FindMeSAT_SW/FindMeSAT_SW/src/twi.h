@@ -389,6 +389,7 @@ void init_twi1_gyro(void);
 // void task_twi1_onboard(void);
 void start_twi2_lcd(void);
 
+void task_twi2_lcd_reset(void);
 void task_twi2_lcd_cls(void);
 void task_twi2_lcd_pos_xy(uint8_t x, uint8_t y);
 void task_twi2_lcd_str(uint8_t x, uint8_t y, const char* str);

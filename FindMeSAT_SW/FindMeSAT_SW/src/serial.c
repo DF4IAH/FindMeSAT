@@ -308,7 +308,7 @@ void serial_gsm_gprs_link_openClose(bool isStart) {
 			int len;
 
 			/* LCD information */
-			if (g_workmode != WORKMODE_RUN) {
+			if (g_workmode == WORKMODE_INIT) {
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_WAIT);
 				task_twi2_lcd_str(8,  9 * 10, g_prepare_buf);
 			}
@@ -618,8 +618,7 @@ void serial_start(void)
 		USARTF0_CTRLC = USART_CMODE_ASYNCHRONOUS_gc | USART_PMODE_DISABLED_gc | USART_CHSIZE_8BIT_gc;
 
 		/* ISR interrupt levels */
-		USARTF0_CTRLA = USART_RXCINTLVL_LO_gc | USART_TXCINTLVL_LO_gc | USART_DREINTLVL_OFF_gc;
-		//USARTF0_CTRLA = USART_RXCINTLVL_OFF_gc | USART_TXCINTLVL_OFF_gc | USART_DREINTLVL_OFF_gc;
+		USARTF0_CTRLA = USART_RXCINTLVL_MED_gc | USART_TXCINTLVL_LO_gc | USART_DREINTLVL_OFF_gc;
 
 		/* RX and TX enable */
 		USARTF0_CTRLB = USART_RXEN_bm | USART_TXEN_bm;
@@ -697,8 +696,12 @@ void serial_start(void)
 		}
 	}
 
+	#if 0
 	/* Set the baud rate to AUTO or fixed rate */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_IPR_X, (long) C_USART_SERIAL1_BAUDRATE);
+	#else
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_IPR_X, 0L);
+	#endif
 	serial_sim808_sendAndResponse(g_prepare_buf, len);
 
 	/* Set handshaking of both directions to hardware CTS/RTS */

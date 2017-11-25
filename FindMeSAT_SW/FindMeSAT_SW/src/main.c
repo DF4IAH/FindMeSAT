@@ -319,6 +319,9 @@ PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_READY[]);
 const char					PM_SIM808_INFO_READY[]							= "SIM808 ser1:  --> READY.\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_READY[]);
 
+const char					PM_TWI1_SHUT_01[]								= "Shutting down ...";
+PROGMEM_DECLARE(const char, PM_TWI1_SHUT_01[]);
+
 
 twi_options_t g_twi1_options = {
 	.speed     = TWI1_SPEED,
@@ -1505,8 +1508,16 @@ void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf)
 	save_globals(EEPROM_SAVE_BF__PRINT_STATUS);
 }
 
-void shutdown(void)
+void shutdown(bool doReset)
 {
+	/* Print the information */
+	{
+		task_twi2_lcd_cls();
+		task_twi2_lcd_str(70, 5 * 10, strcpy_P(g_prepare_buf, PM_TWI1_SHUT_01));
+
+		g_workmode = WORKMODE_END;
+	}
+
 	/* Shutdown SIM808 */
 	//if (g_gsm_mode != OFF) {
 	{
@@ -1514,8 +1525,36 @@ void shutdown(void)
 		serial_sim808_gsm_shutdown();
 	}
 
-	/* Stop main loop */
-	halt();
+	/* Terminate the USB connection */
+	{
+		stdio_usb_disable();
+		udc_stop();
+	}
+
+	/* Reset the LCD */
+	{
+		/* Turn LED off */
+		twi2_set_leds(0);
+
+		/* Switch backlight off */
+		twi2_set_ledbl(0, 0);
+
+		/* Short high voltage of LCD */
+		task_twi2_lcd_reset();
+	}
+
+	if (doReset) {
+		asm volatile(
+			"jmp 0 \n\t"
+			:
+			:
+			:
+		);
+
+	} else {
+		/* Stop main loop */
+		halt();
+	}
 }
 
 void xoPwm_set(int32_t mode_pwm)

@@ -1430,17 +1430,15 @@ static void task_twi1_onboard(void)
 #endif
 
 
-#if 0
-static void task_twi2_lcd_reset(void)
+void task_twi2_lcd_reset(void)
 {
 	if (twi2_waitUntilReady(true)) {
-		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_RESET;
-		twi2_packet.length = 0;
-		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_RESET;
+		g_twi2_packet.length = 0;
+		twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 		delay_ms(50);
 	}
 }
-#endif
 
 void task_twi2_lcd_cls(void)
 {

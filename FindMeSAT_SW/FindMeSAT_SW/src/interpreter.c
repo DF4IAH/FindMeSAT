@@ -308,6 +308,7 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_shut[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_xo[]);
 PROGMEM_DECLARE(const char, PM_UNKNOWN_01[]);
 
+
 static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 {
 	/* Process command */
@@ -466,29 +467,12 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			int val[1] = { 0 };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_reset) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
 				if (val[0] == 1) {
-					/* Stop the GSM connection */
-					{
-						serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_OFF);
-						serial_sim808_gsm_shutdown();
-					}
-
-					/* Terminate the USB connection */
-					{
-						stdio_usb_disable();
-						udc_stop();
-					}
-
-					asm volatile(
-						"jmp 0 \n\t"
-						:
-						:
-						:
-					);
+					shutdown(true);
 				}
 			}
 
 		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_shut,		sizeof(PM_IP_CMD_shut) - 1)) {
-			shutdown();
+			shutdown(false);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_xo,				sizeof(PM_IP_CMD_xo) - 1)) {
 			long val[1] = { 0 };
