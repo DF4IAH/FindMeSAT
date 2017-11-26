@@ -157,6 +157,9 @@ static inline void twi_master_disable(TWI_t *twi)
   twi->MASTER.CTRLA &= (~TWI_MASTER_ENABLE_bm);
 }
 
+// TODO: added by DF4IAH
+status_code_t twim_release(void);
+
 
 #ifdef __cplusplus
 }

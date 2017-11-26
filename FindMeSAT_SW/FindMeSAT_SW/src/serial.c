@@ -775,6 +775,21 @@ void serial_start(void)
 	udi_write_tx_buf(g_prepare_buf, len, false);
 }
 
+void serial_shutdown(void)
+{
+	ioport_set_pin_level(GSM_RTS1_DRV, HIGH);	// Serial line not ready
+	delay_ms(10);
+
+	ioport_set_pin_level(GSM_DTR1_DRV, HIGH);	// Disable SIM808 (SLEEP mode)
+	delay_ms(100);
+
+	/* Enable the GSM_RESETn */
+	ioport_set_pin_level(GSM_RESET_DRV_GPIO, LOW);
+
+	/* Power reduction: disable power of USARTF0 */
+	PR_PRPF |= PR_USART0_bm;
+}
+
 void serial_send_gns_urc(uint8_t val)
 {
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_03, val);
