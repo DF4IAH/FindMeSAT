@@ -246,22 +246,28 @@ extern char							g_prepare_buf[C_TX_BUF_SIZE];
 
 /* TWI communications  */
 
+#ifdef TWI1_MASTER
 extern twi_options_t				g_twi1_options;
-extern uint8_t						g_twi1_m_data[TWI_DATA_LENGTH];
-extern twi_package_t				g_twi1_packet;
+//extern uint8_t					g_twi1_m_data[TWIS_SEND_BUFFER_SIZE];
+//extern twi_package_t				g_twi1_packet;
+extern TWI_Master_t					g_twi1_master;
+#endif
 
+#ifdef TWI2_MASTER
 extern twi_options_t				g_twi2_options;
-extern uint8_t						g_twi2_m_data[TWI_DATA_LENGTH];
-extern twi_package_t				g_twi2_packet;
+//extern uint8_t					g_twi2_m_data[TWIS_SEND_BUFFER_SIZE];
+//extern twi_package_t				g_twi2_packet;
+extern TWI_Master_t					g_twi2_master;
+#endif
 
 #ifdef TWI1_SLAVE
 extern TWI_Slave_t					g_twi1_slave;
-extern uint8_t						g_twi1_recv_data[DATA_LENGTH];
+//extern uint8_t					g_twi1_recv_data[TWIS_RECEIVE_BUFFER_SIZE];
 #endif
 
 #ifdef TWI2_SLAVE
 extern TWI_Slave_t					g_twi2_slave;
-extern uint8_t						g_twi2_recv_data[DATA_LENGTH];
+//extern uint8_t					g_twi2_recv_data[TWIS_RECEIVE_BUFFER_SIZE];
 #endif
 
 

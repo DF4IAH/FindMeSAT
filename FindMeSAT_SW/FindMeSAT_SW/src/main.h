@@ -14,12 +14,12 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													125
+#define VERSION_LOW													127
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
 
-#define C_CLOCK_MHZ_F												30e6
+#define C_CLOCK_HZ_F												30e6
 
 
 #define C_TWI1_BARO_C_CNT											8
@@ -283,6 +283,39 @@ typedef enum APRS_ALERT_REASON_ENUM {		// Shorthand in APRS message
 	APRS_ALERT_REASON_COUNT
 } APRS_ALERT_REASON_ENUM_t;
 #define APRS_ALERT_REASON_SHORTHAND			"?TPGAMR"
+
+
+/* Forward declaration */
+void yield_ms(uint16_t ms);
+
+inline
+static void getLock(volatile uint8_t *lock)
+{
+	irqflags_t flags;
+
+	while (true) {
+		flags = cpu_irq_save();
+		if (!*lock) {
+			/* Lock it */
+			(*lock)++;
+			cpu_irq_restore(flags);
+			break;
+
+			} else {
+			/* Still locked */
+			cpu_irq_restore(flags);
+			yield_ms(0);
+		}
+	}
+}
+
+inline
+static void putLock(volatile uint8_t *lock)
+{
+	irqflags_t flags = cpu_irq_save();
+	*lock = 0;
+	cpu_irq_restore(flags);
+}
 
 
 void save_globals(EEPROM_SAVE_BF_ENUM_t bf);
