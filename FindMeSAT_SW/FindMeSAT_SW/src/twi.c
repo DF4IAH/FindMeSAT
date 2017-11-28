@@ -260,8 +260,8 @@ void isr_twi_masters(TWI_Master_t *twi_m)
 
 			//getLock(&(twi_m->lock));
 
-			if (twi_m->status & TWI_MASTER_RXACK_bm) {
-				/* ACK received */
+			if (((twi_m->state <  TWI_MASTER_FSM_STATE__TX_RX_SR) && (twi_m->status & TWI_MASTER_RXACK_bm)) ||		// ACK received
+				((twi_m->state >= TWI_MASTER_FSM_STATE__TX_RX_SR))){												// receiving data
 
 				/* TWI bus status */
 				switch (twi_m->status & 0x03) {
@@ -276,7 +276,7 @@ void isr_twi_masters(TWI_Master_t *twi_m)
 					case TWI_MASTER_BUSSTATE_IDLE_gc:
 					{
 						/* Transport finished */
-						if (twi_m->state == TWI_MASTER_FSM_STATE_TX__DATA) {
+						if (twi_m->state == TWI_MASTER_FSM_STATE__TX_DATA) {
 							twi_m->state = TWI_MASTER_FSM_STATE_NOOP;
 							twi_m->result =	STATUS_OK;
 						}
@@ -287,37 +287,42 @@ void isr_twi_masters(TWI_Master_t *twi_m)
 					{
 						/* Transport is going on */
 						switch (twi_m->state) {
-							case TWI_MASTER_FSM_STATE_TX__CHIP:
+							case TWI_MASTER_FSM_STATE__TX_CHIP:
 							{
 								/* Next send first address byte */
 								twi_m->ifc->MASTER.DATA = twi_m->addr[twi_m->addrIdx++];
-								twi_m->state = TWI_MASTER_FSM_STATE_TX__ADDR;
+								twi_m->state = TWI_MASTER_FSM_STATE__TX_ADDR;
 								twi_m->result =	OPERATION_IN_PROGRESS;
 							}
 							break;
 
-							case TWI_MASTER_FSM_STATE_TX__ADDR:
+							case TWI_MASTER_FSM_STATE__TX_ADDR:
 							{
 								if (twi_m->addrIdx < twi_m->addrLength) {
 									/* Next send another address byte */
 									twi_m->ifc->MASTER.DATA = twi_m->addr[twi_m->addrIdx++];
-									twi_m->state = TWI_MASTER_FSM_STATE_TX__ADDR;
+									//twi_m->state = TWI_MASTER_FSM_STATE__ADDR;
 
-								} else {
+								} else if (twi_m->bytesTx) {
 									/* First data byte follows */
-									twi_m->ifc->MASTER.DATA = twi_m->dataToSend[twi_m->bytesTxIdx++];
-									twi_m->state = TWI_MASTER_FSM_STATE_TX__DATA;
+									twi_m->ifc->MASTER.DATA = twi_m->dataTx[twi_m->bytesTxIdx++];
+									twi_m->state = TWI_MASTER_FSM_STATE__TX_DATA;
+
+								} else if (twi_m->bytesRx) {
+									/* Data to receive - first do a Sr with read address */
+									twi_m->ifc->MASTER.CTRLC |= TWI_MASTER_CMD_REPSTART_gc;
+									twi_m->state = TWI_MASTER_FSM_STATE__TX_RX_SR;
 								}
 								twi_m->result =	OPERATION_IN_PROGRESS;
 							}
 							break;
 
-							case TWI_MASTER_FSM_STATE_TX__DATA:
+							case TWI_MASTER_FSM_STATE__TX_DATA:
 							{
 								if (twi_m->bytesTxIdx < twi_m->bytesTx) {
 									/* Next send another data byte */
-									twi_m->ifc->MASTER.DATA = twi_m->dataToSend[twi_m->bytesTxIdx++];
-									twi_m->state = TWI_MASTER_FSM_STATE_TX__DATA;
+									twi_m->ifc->MASTER.DATA = twi_m->dataTx[twi_m->bytesTxIdx++];
+									twi_m->state = TWI_MASTER_FSM_STATE__TX_DATA;
 
 								} else {
 									/* No more data to be sent */
@@ -325,6 +330,31 @@ void isr_twi_masters(TWI_Master_t *twi_m)
 									twi_m->state = TWI_MASTER_FSM_STATE_NOOP;
 								}
 								twi_m->result =	OPERATION_IN_PROGRESS;
+							}
+							break;
+
+							case TWI_MASTER_FSM_STATE__TX_RX_SR:
+							{
+								twi_m->ifc->MASTER.ADDR = (twi_m->destChip << 1) | 0x01;		// read from TWI chip
+								twi_m->state = TWI_MASTER_FSM_STATE__RX_CHIP;
+								twi_m->result =	OPERATION_IN_PROGRESS;
+							}
+							break;
+
+							case TWI_MASTER_FSM_STATE__RX_CHIP:
+							case TWI_MASTER_FSM_STATE__RX_DATA:
+							{
+								if (twi_m->bytesRxIdx < twi_m->bytesRx) {
+									twi_m->ifc->MASTER.CTRLC = TWI_MASTER_CMD_RECVTRANS_gc;
+									twi_m->dataRx[twi_m->bytesRxIdx++] = twi_m->ifc->MASTER.DATA;
+									twi_m->state = TWI_MASTER_FSM_STATE__RX_DATA;
+									twi_m->result =	OPERATION_IN_PROGRESS;
+
+								} else {
+									twi_m->ifc->MASTER.CTRLC = TWI_MASTER_ACKACT_bm | TWI_MASTER_CMD_STOP_gc;
+									twi_m->state = TWI_MASTER_FSM_STATE_NOOP;
+									twi_m->result =	ERR_PROTOCOL;
+								}
 							}
 							break;
 
@@ -342,7 +372,7 @@ void isr_twi_masters(TWI_Master_t *twi_m)
 					case TWI_MASTER_BUSSTATE_BUSY_gc:
 					{
 						/* Arbitration lost - retry */
-						if (twi_m->state == TWI_MASTER_FSM_STATE_TX__ADDR) {
+						if (twi_m->state == TWI_MASTER_FSM_STATE__TX_ADDR) {
 							twi_m->ifc->MASTER.ADDR = (twi_m->destChip << 1);	// write to TWI chip
 
 						} else {
@@ -439,44 +469,7 @@ void twi_master_shutdown(TWI_Master_t *ifcCtx)
 	memset(ifcCtx, 0, sizeof(TWI_Master_t));
 }
 
-status_code_t twi_master_write(TWI_Master_t *ifcCtx, const TWI_Master_Transaction_t *ta_send)
-{
-	while (ifcCtx->state != TWI_MASTER_FSM_STATE_NOOP) {
-		/* Delay until ongoing operation has ended */
-		yield_ms(1);
-	}
-
-	/* Locking */
-	getLock(&(ifcCtx->lock));
-
-	/* Prepare interface */
-	{
-		/* Copy data */
-		ifcCtx->destChip		= ta_send->destChip;
-		ifcCtx->addrLength		= ta_send->addrLength;
-		memcpy((void*)(ifcCtx->addr), (void*)(ta_send->addr), ta_send->addrLength);
-		ifcCtx->bytesTx			= ta_send->dataLength;
-		memcpy((void*)(ifcCtx->dataToSend), (void*)(ta_send->data), ta_send->dataLength);
-	}
-
-	/* Start transmission chain */
-	{
-		irqflags_t flags = cpu_irq_save();
-
-		/* FSM: IDLE --> ADDR */
-		ifcCtx->state = TWI_MASTER_FSM_STATE_TX__ADDR;
-		ifcCtx->ifc->MASTER.ADDR = (ifcCtx->destChip << 1);	// write to TWI chip
-
-		cpu_irq_restore(flags);
-	}
-
-	/* Unlocking */
-	putLock(&(ifcCtx->lock));
-
-	return STATUS_OK;
-}
-
-status_code_t twi_master_read(TWI_Master_t *ifcCtx, TWI_Master_Transaction_t *ta_receive)
+status_code_t twi_master_start_transaction(TWI_Master_t *ifcCtx, TWI_Master_Transaction_t *ta)
 {
 	status_code_t ret;
 
@@ -491,11 +484,16 @@ status_code_t twi_master_read(TWI_Master_t *ifcCtx, TWI_Master_Transaction_t *ta
 	/* Prepare interface */
 	{
 		/* Copy data */
-		ifcCtx->destChip		= ta_receive->destChip;
-		ifcCtx->addrLength		= ta_receive->addrLength;
-		memcpy((void*)(ifcCtx->addr), (void*)(ta_receive->addr), ta_receive->addrLength);
-		ifcCtx->bytesTx			= ta_receive->dataLength;
-		memcpy((void*)(ifcCtx->dataToSend), (void*)(ta_receive->data), ta_receive->dataLength);
+		ifcCtx->destChip	= ta->destChip;
+
+		ifcCtx->addrLength	= ta->addrLength;
+		memcpy((void*)(ifcCtx->addr), (void*)(ta->addr), ta->addrLength);
+
+		ifcCtx->bytesTx		= ta->bytesToSend;
+		memcpy((void*)(ifcCtx->dataTx), (void*)(ta->data), ta->bytesToSend);
+
+		ifcCtx->bytesRx		= ta->bytesToReceive;
+		memset((void*)(ifcCtx->dataRx), 0, ta->bytesToReceive);
 	}
 
 	/* Start transmission chain */
@@ -503,8 +501,8 @@ status_code_t twi_master_read(TWI_Master_t *ifcCtx, TWI_Master_Transaction_t *ta
 		irqflags_t flags = cpu_irq_save();
 
 		/* FSM: IDLE --> ADDR */
-		ifcCtx->state = TWI_MASTER_FSM_STATE_RX__ADDR;
-		ifcCtx->ifc->MASTER.ADDR = (ifcCtx->destChip << 1) | 0x01;		// read from TWI chip
+		ifcCtx->state = TWI_MASTER_FSM_STATE__TX_CHIP;
+		ifcCtx->ifc->MASTER.ADDR = (ifcCtx->destChip << 1) & 0xfe;		// write to TWI chip
 
 		cpu_irq_restore(flags);
 	}
@@ -522,8 +520,8 @@ status_code_t twi_master_read(TWI_Master_t *ifcCtx, TWI_Master_Transaction_t *ta
 
 	ret = ifcCtx->status;
 	if (ret == STATUS_OK) {
-		memcpy((void*)(ta_receive->data), (void*)(ifcCtx->dataReceived), ifcCtx->bytesRx);
-		ta_receive->dataLength = ifcCtx->bytesRx;
+		memcpy((void*)(ta->data), (void*)(ifcCtx->dataRx), ifcCtx->bytesRxIdx);
+		ta->bytesToSend = ifcCtx->bytesRxIdx;
 	}
 
 	/* Unlocking */
@@ -566,12 +564,12 @@ bool twi2_waitUntilReady(bool retry)
 	l_timeout = TWI2_DISPLAY_TIMEOUT_MS + tcc1_get_time();
 
 	l_mt.addr[0]	= TWI_SMART_LCD_CMD_GET_STATE;
-	l_mt.dataLength	= 1;
+	l_mt.bytesToSend	= 1;
 
 	/* Wait until not BUSY */
 	l_cnt = c_cntNum;
 	do {
-		status = twi_master_read(&g_twi2_master, &l_mt);
+		status = twi_master_start_transaction(&g_twi2_master, &l_mt);
 		isValid = l_mt.data[0] & 0x80;
 		isBusy  = l_mt.data[0] & 0x01;
 
@@ -605,12 +603,13 @@ void twi2_set_leds(uint8_t leds)
 	if (twi2_waitUntilReady(false)) {
 		/* Show green LED */
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= TWI_SMART_LCD_CMD_SET_LEDS,
-			.addrLength	= 1,
-			.data[0]	= leds & 0x03,
-			.dataLength	= 1};
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= TWI_SMART_LCD_CMD_SET_LEDS,
+			.addrLength		= 1,
+			.data[0]		= leds & 0x03,
+			.bytesToSend	= 1,
+			.bytesToReceive	= 0};
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -619,13 +618,14 @@ void twi2_set_ledbl(uint8_t mode, uint8_t pwm)
 {
 	if (twi2_waitUntilReady(false)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= TWI_SMART_LCD_CMD_SET_BACKLIGHT,
-			.addrLength	= 1,
-			.data[0]	= mode,
-			.data[1]	= pwm,
-			.dataLength	= 2};
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= TWI_SMART_LCD_CMD_SET_BACKLIGHT,
+			.addrLength		= 1,
+			.data[0]		= mode,
+			.data[1]		= pwm,
+			.bytesToSend	= 2,
+			.bytesToReceive	= 0};
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -634,12 +634,13 @@ void twi2_set_bias(uint8_t bias)
 {
 	if (twi2_waitUntilReady(false)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= TWI_SMART_LCD_CMD_SET_CONTRAST,
-			.addrLength	= 1,
-			.data[0]	= bias,
-			.dataLength	= 1};
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= TWI_SMART_LCD_CMD_SET_CONTRAST,
+			.addrLength		= 1,
+			.data[0]		= bias,
+			.bytesToSend	= 1,
+			.bytesToReceive	= 0};
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -648,13 +649,14 @@ void twi2_set_beep(uint8_t pitch_10hz, uint8_t len_10ms)
 {
 	if (twi2_waitUntilReady(false)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= TWI_SMART_LCD_CMD_SET_BEEP,
-			.addrLength	= 1,
-			.data[0]	= len_10ms,
-			.data[1]	= pitch_10hz,
-			.dataLength	= 2};
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= TWI_SMART_LCD_CMD_SET_BEEP,
+			.addrLength		= 1,
+			.data[0]		= len_10ms,
+			.data[1]		= pitch_10hz,
+			.bytesToSend	= 2,
+			.bytesToReceive	= 0};
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -673,12 +675,13 @@ static void init_twi1_hygro(void)
 	do {
 		/* SHT31-DIS hygro: stop any running jobs */
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI1_SLAVE_HYGRO_ADDR,
-			.addr[0]	= TWI1_SLAVE_HYGRO_REG_BREAK_HI,
-			.addr[1]	= TWI1_SLAVE_HYGRO_REG_BREAK_LO,
-			.addrLength	= 2,
-			.dataLength	= 0};
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+			.destChip		= TWI1_SLAVE_HYGRO_ADDR,
+			.addr[0]		= TWI1_SLAVE_HYGRO_REG_BREAK_HI,
+			.addr[1]		= TWI1_SLAVE_HYGRO_REG_BREAK_LO,
+			.addrLength		= 2,
+			.bytesToSend	= 0,
+			.bytesToReceive	= 0};
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_HYGRO_02);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -687,19 +690,19 @@ static void init_twi1_hygro(void)
 		delay_ms(2);
 
 		/* SHT31-DIS hygro: reset */
-		l_mt.addr[0]	= TWI1_SLAVE_HYGRO_REG_RESET_HI,
-		l_mt.addr[1]	= TWI1_SLAVE_HYGRO_REG_RESET_LO,
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		l_mt.addr[0]	= TWI1_SLAVE_HYGRO_REG_RESET_HI;
+		l_mt.addr[1]	= TWI1_SLAVE_HYGRO_REG_RESET_LO;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
 		delay_ms(2);
 
 		/* SHT31-DIS hygro: return current status */
-		l_mt.addr[0]	= TWI1_SLAVE_HYGRO_REG_STATUS_HI,
-		l_mt.addr[1]	= TWI1_SLAVE_HYGRO_REG_STATUS_LO,
-		l_mt.dataLength	= 2;
-		sc = twi_master_read(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_HYGRO_REG_STATUS_HI;
+		l_mt.addr[1]		= TWI1_SLAVE_HYGRO_REG_STATUS_LO;
+		l_mt.bytesToReceive	= 2;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -708,10 +711,10 @@ static void init_twi1_hygro(void)
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 		/* SHT31-DIS hygro: start next measurement */
-		l_mt.addr[0]	= TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_HI,
-		l_mt.addr[1]	= TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_LO,
-		l_mt.dataLength	= 0;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_HI;
+		l_mt.addr[1]		= TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_LO;
+		l_mt.bytesToReceive	= 0;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -733,32 +736,34 @@ static void init_twi1_hygro(void)
 status_code_t twi1_gyro_gyro_offset_set(void)
 {
 	TWI_Master_Transaction_t l_mt = {
-		.destChip	= TWI1_SLAVE_GYRO_ADDR_1,
-		.addr[0]	= TWI1_SLAVE_GYRO_REG_1_GYRO_XG_OFFSET_H,
-		.addrLength	= 1,
-		.data[0]	= (uint8_t) (g_twi1_gyro_1_gyro_ofsx >> 8),
-		.data[1]	= (uint8_t) (g_twi1_gyro_1_gyro_ofsx & 0xFF),
-		.data[2]	= (uint8_t) (g_twi1_gyro_1_gyro_ofsy >> 8),
-		.data[3]	= (uint8_t) (g_twi1_gyro_1_gyro_ofsy & 0xFF),
-		.data[4]	= (uint8_t) (g_twi1_gyro_1_gyro_ofsz >> 8),
-		.data[5]	= (uint8_t) (g_twi1_gyro_1_gyro_ofsz & 0xFF),
-		.dataLength	= 6};
-	return twi_master_write(&g_twi1_master, &l_mt);
+		.destChip		= TWI1_SLAVE_GYRO_ADDR_1,
+		.addr[0]		= TWI1_SLAVE_GYRO_REG_1_GYRO_XG_OFFSET_H,
+		.addrLength		= 1,
+		.data[0]		= (uint8_t) (g_twi1_gyro_1_gyro_ofsx >> 8),
+		.data[1]		= (uint8_t) (g_twi1_gyro_1_gyro_ofsx & 0xFF),
+		.data[2]		= (uint8_t) (g_twi1_gyro_1_gyro_ofsy >> 8),
+		.data[3]		= (uint8_t) (g_twi1_gyro_1_gyro_ofsy & 0xFF),
+		.data[4]		= (uint8_t) (g_twi1_gyro_1_gyro_ofsz >> 8),
+		.data[5]		= (uint8_t) (g_twi1_gyro_1_gyro_ofsz & 0xFF),
+		.bytesToSend	= 6,
+		.bytesToReceive	= 0};
+	return twi_master_start_transaction(&g_twi1_master, &l_mt);
 }
 
 status_code_t twi1_gyro_accel_offset_set(void)
 {
 	status_code_t sc;
 	TWI_Master_Transaction_t l_mt = {
-		.destChip	= TWI1_SLAVE_GYRO_ADDR_1,
-		.addrLength	= 1,
-		.dataLength	= 2};
+		.destChip		= TWI1_SLAVE_GYRO_ADDR_1,
+		.addrLength		= 1,
+		.bytesToSend	= 2,
+		.bytesToReceive	= 0};
 
 	do {
 			l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_1_XA_OFFSET_H;
 			l_mt.data[0]	= (uint8_t) ((g_twi1_gyro_1_accel_ofsx & 0x7F80) >> 7);
 			l_mt.data[1]	= (uint8_t) ((g_twi1_gyro_1_accel_ofsx &   0x7F) << 1);
-			sc = twi_master_write(&g_twi1_master, &l_mt);
+			sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 			if (sc != STATUS_OK) {
 				break;
 			}
@@ -766,7 +771,7 @@ status_code_t twi1_gyro_accel_offset_set(void)
 			l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_1_YA_OFFSET_H;
 			l_mt.data[0]	= (uint8_t) ((g_twi1_gyro_1_accel_ofsy & 0x7F80) >> 7);
 			l_mt.data[1]	= (uint8_t) ((g_twi1_gyro_1_accel_ofsy &   0x7F) << 1);
-			sc = twi_master_write(&g_twi1_master, &l_mt);
+			sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 			if (sc != STATUS_OK) {
 				break;
 			}
@@ -774,7 +779,7 @@ status_code_t twi1_gyro_accel_offset_set(void)
 			l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_1_ZA_OFFSET_H;
 			l_mt.data[0]	=  (uint8_t) ((g_twi1_gyro_1_accel_ofsz & 0x7F80) >> 7);
 			l_mt.data[1]	=  (uint8_t) ((g_twi1_gyro_1_accel_ofsz &   0x7F) << 1);
-			sc = twi_master_write(&g_twi1_master, &l_mt);
+			sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 	} while (false);
 
 	return sc;
@@ -784,9 +789,10 @@ void init_twi1_gyro(void)
 {
 	status_code_t sc;
 	TWI_Master_Transaction_t l_mt = {
-		.destChip	= TWI1_SLAVE_GYRO_ADDR_1,
-		.addrLength	= 1,
-		.dataLength	= 1};
+		.destChip		= TWI1_SLAVE_GYRO_ADDR_1,
+		.addrLength		= 1,
+		.bytesToSend	= 1,
+		.bytesToReceive	= 0};
 
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_GYRO_01, TWI1_SLAVE_GYRO_ADDR_1, TWI1_SLAVE_GYRO_ADDR_2);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -797,7 +803,7 @@ void init_twi1_gyro(void)
 		/* MPU-9250 6 axis: RESET */
 		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_1_PWR_MGMT_1;
 		l_mt.data[0]	= TWI1_SLAVE_GYRO_DTA_1_PWR_MGMT_1__HRESET | TWI1_SLAVE_GYRO_DTA_1_PWR_MGMT_1__CLKSEL_VAL;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_GYRO_02);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -806,34 +812,37 @@ void init_twi1_gyro(void)
 		delay_ms(10);
 
 		/* MPU-9250 6 axis: read Who Am I control value */
-		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_1_WHOAMI;
-		sc = twi_master_read(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_GYRO_REG_1_WHOAMI;
+		l_mt.bytesToSend	= 0;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
 		g_twi1_gyro_1_version = l_mt.data[0];
 
 		/* MPU-9250 6 axis: I2C bypass on to access the Magnetometer chip */
-		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_1_INT_PIN_CFG;
-		l_mt.data[0]	= TWI1_SLAVE_GYRO_DTA_1_INT_PIN_CFG__BYPASS_EN;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_GYRO_REG_1_INT_PIN_CFG;
+		l_mt.data[0]		= TWI1_SLAVE_GYRO_DTA_1_INT_PIN_CFG__BYPASS_EN;
+		l_mt.bytesToSend	= 1;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
 
 		/* Magnetometer: soft reset */
-		l_mt.destChip	= TWI1_SLAVE_GYRO_ADDR_2;
-		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_2_CNTL2;
-		l_mt.data[0]	= TWI1_SLAVE_GYRO_DTA_2_CNTL2__SRST;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		l_mt.destChip		= TWI1_SLAVE_GYRO_ADDR_2;
+		l_mt.addr[0]		= TWI1_SLAVE_GYRO_REG_2_CNTL2;
+		l_mt.data[0]		= TWI1_SLAVE_GYRO_DTA_2_CNTL2__SRST;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
 		delay_ms(10);
 
 		/* Magnetometer: read Device ID */
-		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_2_WIA;
-		sc = twi_master_read(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_GYRO_REG_2_WIA;
+		l_mt.bytesToSend	= 0;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -843,17 +852,18 @@ void init_twi1_gyro(void)
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 		/* Magnetometer: 16 bit access and prepare for PROM access */
-		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_2_CNTL1;
-		l_mt.data[0]	= TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_PROM_VAL;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_GYRO_REG_2_CNTL1;
+		l_mt.data[0]		= TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_PROM_VAL;
+		l_mt.bytesToSend	= 1;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
 
 		/* Magnetometer: read correction data for X, Y and Z */
-		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_2_ASAX;
-		l_mt.dataLength	= 3;
-		sc = twi_master_read(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_GYRO_REG_2_ASAX;
+		l_mt.bytesToSend	= 3;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -862,19 +872,19 @@ void init_twi1_gyro(void)
 		g_twi1_gyro_2_asaz = l_mt.data[2];
 
 		/* Magnetometer: mode change via power-down mode */
-		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_2_CNTL1;
-		l_mt.data[0]	= TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_16B_POWER_DOWN;
-		l_mt.dataLength	= 1;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_GYRO_REG_2_CNTL1;
+		l_mt.data[0]		= TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_16B_POWER_DOWN;
+		l_mt.bytesToSend	= 1;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
 		delay_ms(10);
 
 		/* Magnetometer: mode change for 16bit and run all axis at 8 Hz */
-		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_2_CNTL1;
-		l_mt.data[0]	= TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_16B_RUN_8HZ_VAL;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_GYRO_REG_2_CNTL1;
+		l_mt.data[0]		= TWI1_SLAVE_GYRO_DTA_2_CNTL1__MODE_16B_RUN_8HZ_VAL;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -895,7 +905,7 @@ void init_twi1_gyro(void)
 		l_mt.destChip	= TWI1_SLAVE_GYRO_ADDR_1;
 		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_1_SMPLRT_DIV;
 		l_mt.data[0]	= 99;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -903,7 +913,7 @@ void init_twi1_gyro(void)
 		/* MPU-9250 6 axis: GYRO Bandwidth = 5 Hz, Fs = 1 kHz */
 		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_1_CONFIG;
 		l_mt.data[0]	= 6;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -911,7 +921,7 @@ void init_twi1_gyro(void)
 		/* MPU-9250 6 axis: ACCEL Bandwidth = 5 Hz, Fs = 1 kHz */
 		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_1_ACCEL_CONFIG2;
 		l_mt.data[0]	= 6;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -919,7 +929,7 @@ void init_twi1_gyro(void)
 		/* MPU-9250 6 axis: Wake On Motion interrupt = 0.1 g (1 LSB = 4 mg) */
 		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_1_WOM_THR;
 		l_mt.data[0]	= 25;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -927,7 +937,7 @@ void init_twi1_gyro(void)
 		/* MPU-9250 6 axis: RESET all internal data paths */
 		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_1_USER_CTRL;
 		l_mt.data[0]	= TWI1_SLAVE_GYRO_DTA_1_USER_CTRL__SIG_COND_RST;	// | TWI1_SLAVE_GYRO_DTA_1_USER_CTRL__FIFO_EN;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
@@ -951,27 +961,27 @@ static void init_twi1_baro(void)
 {
 	status_code_t sc;
 	TWI_Master_Transaction_t l_mt = {
-		.destChip	= TWI1_SLAVE_BARO_ADDR,
-		.addrLength	= 1,
-		.dataLength	= 1};
+		.destChip		= TWI1_SLAVE_BARO_ADDR,
+		.addrLength		= 1,
+		.bytesToReceive	= 0};
 
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_BARO_01, TWI1_SLAVE_BARO_ADDR);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	do {
 		/* MS560702BA03-50 Baro: RESET all internal data paths */
-		l_mt.addr[0]	= TWI1_SLAVE_BARO_REG_RESET;
-		l_mt.dataLength	= 0;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_BARO_REG_RESET;
+		l_mt.bytesToSend	= 0;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			break;
 		}
 		delay_ms(3);
 
 		/* MS560702BA03-50 Baro: get version information */
-		l_mt.addr[0]	= TWI1_SLAVE_BARO_REG_VERSION;
-		l_mt.dataLength	= 2;
-		sc = twi_master_read(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_BARO_REG_VERSION;
+		l_mt.bytesToReceive	= 2;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_BARO_02, sc);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -984,7 +994,7 @@ static void init_twi1_baro(void)
 		/* MS560702BA03-50 Baro: get correction data from the PROM */
 		for (int adr = 1; adr < C_TWI1_BARO_C_CNT; ++adr) {
 			l_mt.addr[0]	= TWI1_SLAVE_BARO_REG_PROM | (adr << 1);
-			sc = twi_master_read(&g_twi1_master, &l_mt);
+			sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 			if (sc != STATUS_OK) {
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_BARO_04, adr, sc);
 				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -1033,11 +1043,12 @@ void start_twi2_lcd(void)
 {
 	/* Read the version number */
 	TWI_Master_Transaction_t l_mt = {
-		.destChip	= TWI_SMART_LCD_ADDR,
-		.addr[0]	= TWI_SMART_LCD_CMD_GET_VER,
-		.addrLength	= 1,
-		.dataLength	= 1};
-	twi_master_read(&g_twi2_master, &l_mt);
+		.destChip		= TWI_SMART_LCD_ADDR,
+		.addr[0]		= TWI_SMART_LCD_CMD_GET_VER,
+		.addrLength		= 1,
+		.bytesToSend	= 0,
+		.bytesToReceive	= 1};
+	twi_master_start_transaction(&g_twi2_master, &l_mt);
 	g_twi2_lcd_version = l_mt.data[0];
 
 	if (g_twi2_lcd_version >= 0x11) {
@@ -1046,17 +1057,18 @@ void start_twi2_lcd(void)
 
 		/* Select "Smart-LCD draw box" mode
 		 * that includes a clear screen     */
-		l_mt.addr[0]	= TWI_SMART_LCD_CMD_SET_MODE;
-		l_mt.data[0]	= 0x10;
-		l_mt.dataLength	= 1;
-		twi_master_write(&g_twi2_master, &l_mt);
+		l_mt.addr[0]		= TWI_SMART_LCD_CMD_SET_MODE;
+		l_mt.data[0]		= 0x10;
+		l_mt.bytesToSend	= 1;
+		l_mt.bytesToReceive	= 0;
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
 		/* Reset the LCD to bring it up in case of a bad POR */
 		twi2_waitUntilReady(true);
-		l_mt.addr[0]	= TWI_SMART_LCD_CMD_RESET;
-		l_mt.dataLength	= 0;
-		twi_master_write(&g_twi2_master, &l_mt);
+		l_mt.addr[0]		= TWI_SMART_LCD_CMD_RESET;
+		l_mt.bytesToSend	= 0;
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_ms(50);
 
 		/* LED red */
@@ -1064,10 +1076,10 @@ void start_twi2_lcd(void)
 
 		/* Set the pixel type to SET pixels */
 		twi2_waitUntilReady(false);
-		l_mt.addr[0]	= TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
-		l_mt.data[0]	= GFX_PIXEL_SET;
-		l_mt.dataLength	= 1;
-		twi_master_write(&g_twi2_master, &l_mt);
+		l_mt.addr[0]		= TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
+		l_mt.data[0]		= GFX_PIXEL_SET;
+		l_mt.bytesToSend	= 1;
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
 		/* Set optimum contrast voltage */
@@ -1183,22 +1195,23 @@ static bool service_twi1_hygro(bool sync)
 	{
 		/* Read current measurement data */
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI1_SLAVE_HYGRO_ADDR,
-			.addr[0]	= TWI1_SLAVE_HYGRO_REG_FETCH_DATA_HI,
-			.addr[1]	= TWI1_SLAVE_HYGRO_REG_FETCH_DATA_LO,
-			.addrLength	= 2,
-			.dataLength	= 5};
-		status_code_t sc = twi_master_read(&g_twi1_master, &l_mt);
+			.destChip		= TWI1_SLAVE_HYGRO_ADDR,
+			.addr[0]		= TWI1_SLAVE_HYGRO_REG_FETCH_DATA_HI,
+			.addr[1]		= TWI1_SLAVE_HYGRO_REG_FETCH_DATA_LO,
+			.addrLength		= 2,
+			.bytesToSend	= 0,
+			.bytesToReceive	= 5};
+		status_code_t sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc == STATUS_OK) {
 			g_twi1_hygro_S_T	= ((uint16_t)l_mt.data[0] << 8) | l_mt.data[1];
 			g_twi1_hygro_S_RH	= ((uint16_t)l_mt.data[3] << 8) | l_mt.data[4];
 		}
 
 		/* Start next measurement - available 15ms later */
-		l_mt.addr[0]	= TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_HI;
-		l_mt.addr[1]	= TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_LO;
-		l_mt.dataLength	= 0;
-		sc = twi_master_write(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_HI;
+		l_mt.addr[1]		= TWI1_SLAVE_HYGRO_REG_ONESHOT_HIPREC_NOCLKSTRETCH_LO;
+		l_mt.bytesToReceive	= 0;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc == STATUS_OK) {
 			return true;
 		}
@@ -1222,11 +1235,12 @@ bool service_twi1_gyro(bool sync)
 
 	{
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI1_SLAVE_GYRO_ADDR_1,
-			.addr[0]	= TWI1_SLAVE_GYRO_REG_1_ACCEL_XOUT_H,	// Starting with this address (big endian)
-			.addrLength	= 1,
-			.dataLength	= 8};									// Auto incrementation
-		status_code_t sc = twi_master_read(&g_twi1_master, &l_mt);
+			.destChip		= TWI1_SLAVE_GYRO_ADDR_1,
+			.addr[0]		= TWI1_SLAVE_GYRO_REG_1_ACCEL_XOUT_H,	// Starting with this address (big endian)
+			.addrLength		= 1,
+			.bytesToSend	= 0,
+			.bytesToReceive	= 8};									// Auto incrementation
+		status_code_t sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			return false;
 		}
@@ -1235,9 +1249,9 @@ bool service_twi1_gyro(bool sync)
 		g_twi1_gyro_1_accel_z = (int16_t) (((uint16_t)l_mt.data[4] << 8) | l_mt.data[5]);
 		g_twi1_gyro_1_temp    = (int16_t) (((uint16_t)l_mt.data[6] << 8) | l_mt.data[7]);
 
-		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_1_GYRO_XOUT_H;
-		l_mt.dataLength	= 6;
-		sc = twi_master_read(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_GYRO_REG_1_GYRO_XOUT_H;
+		l_mt.bytesToReceive	= 6;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			return false;
 		}
@@ -1258,10 +1272,10 @@ bool service_twi1_gyro(bool sync)
 		}
 
 		/* Magnetometer: check if new data is available */
-		l_mt.destChip	= TWI1_SLAVE_GYRO_ADDR_2;
-		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_2_ST1;
-		l_mt.dataLength	= 1;
-		sc = twi_master_read(&g_twi1_master, &l_mt);
+		l_mt.destChip		= TWI1_SLAVE_GYRO_ADDR_2;
+		l_mt.addr[0]		= TWI1_SLAVE_GYRO_REG_2_ST1;
+		l_mt.bytesToReceive	= 1;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			return false;
 		}
@@ -1270,9 +1284,9 @@ bool service_twi1_gyro(bool sync)
 			return false;
 		}
 
-		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_2_HX_L;			// Starting with this address (little endian)
-		l_mt.dataLength	= 6;									// Auto incrementation
-		sc = twi_master_read(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_GYRO_REG_2_HX_L;			// Starting with this address (little endian)
+		l_mt.bytesToReceive	= 6;									// Auto incrementation
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			return false;
 		}
@@ -1281,9 +1295,9 @@ bool service_twi1_gyro(bool sync)
 		g_twi1_gyro_2_mag_z = ((int16_t) ((((uint16_t)l_mt.data[5]) << 8) | l_mt.data[4])) + g_twi1_gyro_2_ofsz;
 
 		/* Magnetometer: check for data validity and release cycle */
-		l_mt.addr[0]	= TWI1_SLAVE_GYRO_REG_2_ST2;
-		l_mt.dataLength	= 1;
-		sc = twi_master_read(&g_twi1_master, &l_mt);
+		l_mt.addr[0]		= TWI1_SLAVE_GYRO_REG_2_ST2;
+		l_mt.bytesToReceive	= 1;
+		sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 		if (sc != STATUS_OK) {
 			return false;
 		}
@@ -1303,10 +1317,12 @@ static bool service_twi1_baro(bool sync)
 	static uint8_t  s_step = 100;								// FSM: stopped mode
 	static uint32_t s_twi1_baro_d1 = 0UL;
 	static uint32_t s_twi1_baro_d2 = 0UL;
+	status_code_t sc;
 
 	TWI_Master_Transaction_t l_mt = {
-		.destChip	= TWI1_SLAVE_BARO_ADDR,
-		.addrLength	= 1};
+		.destChip		= TWI1_SLAVE_BARO_ADDR,
+		.addrLength		= 1,
+		.bytesToSend	= 0};
 
 	/* Spare-time handling is in use: finite state machine (FSM) follows */
 
@@ -1319,9 +1335,9 @@ static bool service_twi1_baro(bool sync)
 	switch (s_step) {
 		case 0:
 			/* Request D1 */
-			l_mt.addr[0]	= TWI1_SLAVE_BARO_REG_CONV_D1_4096;
-			l_mt.dataLength	= 0;
-			status_code_t sc = twi_master_write(&g_twi1_master, &l_mt);
+			l_mt.addr[0]		= TWI1_SLAVE_BARO_REG_CONV_D1_4096;
+			l_mt.bytesToReceive	= 0;
+			sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 			if (sc == STATUS_OK) {
 				s_step = 1;
 				return false;
@@ -1333,16 +1349,16 @@ static bool service_twi1_baro(bool sync)
 
 		case 21:
 			/* Get data */
-			l_mt.addr[0]	= TWI1_SLAVE_BARO_REG_ADC_READ;
-			l_mt.dataLength	= 3;
-			sc = twi_master_read(&g_twi1_master, &l_mt);
+			l_mt.addr[0]		= TWI1_SLAVE_BARO_REG_ADC_READ;
+			l_mt.bytesToReceive	= 3;
+			sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 			if (sc == STATUS_OK) {
 				s_twi1_baro_d1 = ((uint32_t)l_mt.data[0] << 16) | ((uint32_t)l_mt.data[1] << 8) | l_mt.data[2];
 
 				/* Request D2 */
-				l_mt.addr[0]	= TWI1_SLAVE_BARO_REG_CONV_D2_4096;
-				l_mt.dataLength	= 0;
-				sc = twi_master_write(&g_twi1_master, &l_mt);
+				l_mt.addr[0]		= TWI1_SLAVE_BARO_REG_CONV_D2_4096;
+				l_mt.bytesToReceive	= 0;
+				sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 				if (sc == STATUS_OK) {
 					s_step = 22;
 					return false;
@@ -1354,9 +1370,9 @@ static bool service_twi1_baro(bool sync)
 		break;
 
 		case 43:
-			l_mt.addr[0]	= TWI1_SLAVE_BARO_REG_ADC_READ;
-			l_mt.dataLength	= 3;
-			sc = twi_master_read(&g_twi1_master, &l_mt);
+			l_mt.addr[0]		= TWI1_SLAVE_BARO_REG_ADC_READ;
+			l_mt.bytesToReceive	= 3;
+			sc = twi_master_start_transaction(&g_twi1_master, &l_mt);
 			if (sc == STATUS_OK) {
 				s_twi1_baro_d2 = ((uint32_t)l_mt.data[0] << 16) | ((uint32_t)l_mt.data[1] << 8) | l_mt.data[2];
 
@@ -1714,11 +1730,12 @@ void task_twi2_lcd_reset(void)
 {
 	if (twi2_waitUntilReady(true)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= TWI_SMART_LCD_CMD_RESET,
-			.addrLength	= 1,
-			.dataLength	= 0};
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= TWI_SMART_LCD_CMD_RESET,
+			.addrLength		= 1,
+			.bytesToSend	= 0,
+			.bytesToReceive	= 0};
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_ms(50);
 	}
 }
@@ -1727,11 +1744,12 @@ void task_twi2_lcd_cls(void)
 {
 	if (twi2_waitUntilReady(true)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= TWI_SMART_LCD_CMD_CLS,
-			.addrLength	= 1,
-			.dataLength	= 0};
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= TWI_SMART_LCD_CMD_CLS,
+			.addrLength		= 1,
+			.bytesToSend	= 0,
+			.bytesToReceive	= 0};
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -1740,13 +1758,14 @@ void task_twi2_lcd_pos_xy(uint8_t x, uint8_t y)
 {
 	if (twi2_waitUntilReady(false)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= TWI_SMART_LCD_CMD_SET_POS_X_Y,
-			.addrLength	= 1,
-			.data[0]	= x,
-			.data[0]	= y,
-			.dataLength	= 2};
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= TWI_SMART_LCD_CMD_SET_POS_X_Y,
+			.addrLength		= 1,
+			.data[0]		= x,
+			.data[1]		= y,
+			.bytesToSend	= 2,
+			.bytesToReceive	= 0};
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -1771,15 +1790,16 @@ void task_twi2_lcd_str(uint8_t x, uint8_t y, const char* str)
 				twi2_waitUntilReady(false);
 
 				TWI_Master_Transaction_t l_mt = {
-					.destChip	= TWI_SMART_LCD_ADDR,
-					.addr[0]	= TWI_SMART_LCD_CMD_WRITE,
-					.addrLength	= 1,
-					.data[0]	= this_len};
+					.destChip		= TWI_SMART_LCD_ADDR,
+					.addr[0]		= TWI_SMART_LCD_CMD_WRITE,
+					.addrLength		= 1,
+					.data[0]		= this_len,
+					.bytesToReceive	= 0};
 				for (uint8_t idx = 1; idx <= this_len; ++idx) {
-					l_mt.data[idx] = *(str++);
+					l_mt.data[idx]	= *(str++);
 				}
-				l_mt.dataLength = this_len + 1;
-				twi_master_write(&g_twi2_master, &l_mt);
+				l_mt.bytesToSend	= this_len + 1;
+				twi_master_start_transaction(&g_twi2_master, &l_mt);
 				delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 			}
 
@@ -1795,14 +1815,15 @@ void task_twi2_lcd_line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t 
 
 	if (twi2_waitUntilReady(false)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= TWI_SMART_LCD_CMD_DRAW_LINE,
-			.addrLength	= 1,
-			.data[0]	= x2,
-			.data[1]	= y2,
-			.data[2]	= color,
-			.dataLength	= 3};
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= TWI_SMART_LCD_CMD_DRAW_LINE,
+			.addrLength		= 1,
+			.data[0]		= x2,
+			.data[1]		= y2,
+			.data[2]		= color,
+			.bytesToSend	= 3,
+			.bytesToReceive	= 0};
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -1813,14 +1834,15 @@ void task_twi2_lcd_rect(uint8_t x, uint8_t y, uint8_t width, uint8_t height, boo
 
 	if (twi2_waitUntilReady(false)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= filled ?  TWI_SMART_LCD_CMD_DRAW_FILLED_RECT : TWI_SMART_LCD_CMD_DRAW_RECT,
-			.addrLength	= 1,
-			.data[0]	= width,
-			.data[1]	= height,
-			.data[2]	= color,
-			.dataLength	= 3};
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= filled ?  TWI_SMART_LCD_CMD_DRAW_FILLED_RECT : TWI_SMART_LCD_CMD_DRAW_RECT,
+			.addrLength		= 1,
+			.data[0]		= width,
+			.data[1]		= height,
+			.data[2]		= color,
+			.bytesToSend	= 3,
+			.bytesToReceive	= 0};
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -1831,13 +1853,14 @@ void task_twi2_lcd_circ(uint8_t x, uint8_t y, uint8_t radius, bool filled, uint8
 
 	if (twi2_waitUntilReady(false)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= filled ?  TWI_SMART_LCD_CMD_DRAW_FILLED_CIRC : TWI_SMART_LCD_CMD_DRAW_CIRC,
-			.addrLength	= 1,
-			.data[0]	= radius,
-			.data[1]	= color,
-			.dataLength	= 2};
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= filled ?  TWI_SMART_LCD_CMD_DRAW_FILLED_CIRC : TWI_SMART_LCD_CMD_DRAW_CIRC,
+			.addrLength		= 1,
+			.data[0]		= radius,
+			.data[1]		= color,
+			.bytesToSend	= 2,
+			.bytesToReceive	= 0};
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -1934,12 +1957,13 @@ void task_twi2_lcd_print_format_P(uint8_t x, uint8_t y, const char* fmt_P)
 
 	if (twi2_waitUntilReady(false)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= TWI_SMART_LCD_CMD_WRITE,
-			.addrLength	= 1};
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= TWI_SMART_LCD_CMD_WRITE,
+			.addrLength		= 1,
+			.bytesToReceive	= 0};
 		l_mt.data[0] = sprintf_P((char*)&(l_mt.data[1]), fmt_P);
-		l_mt.dataLength = l_mt.data[0] + 1;
-		twi_master_write(&g_twi2_master, &l_mt);
+		l_mt.bytesToSend = l_mt.data[0] + 1;
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -1950,13 +1974,14 @@ static void task_twi2_lcd_print_format_c(uint8_t x, uint8_t y, char val)
 
 	if (twi2_waitUntilReady(false)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= TWI_SMART_LCD_CMD_WRITE,
-			.addrLength	= 1,
-			.data[0]	= 1,
-			.data[1]	= (uint8_t)val};
-		l_mt.dataLength	= l_mt.data[0] + 1;
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= TWI_SMART_LCD_CMD_WRITE,
+			.addrLength		= 1,
+			.data[0]		= 1,
+			.data[1]		= (uint8_t)val,
+			.bytesToReceive	= 0};
+		l_mt.bytesToSend	= l_mt.data[0] + 1;
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -1967,12 +1992,13 @@ static void task_twi2_lcd_print_format_long_P(uint8_t x, uint8_t y, long val, co
 
 	if (twi2_waitUntilReady(false)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= TWI_SMART_LCD_CMD_WRITE,
-			.addrLength	= 1};
-		l_mt.data[0]	= sprintf_P((char*)&(l_mt.data[1]), fmt_P, val);
-		l_mt.dataLength	= l_mt.data[0] + 1;
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= TWI_SMART_LCD_CMD_WRITE,
+			.addrLength		= 1,
+			.bytesToReceive	= 0};
+		l_mt.data[0]		= sprintf_P((char*)&(l_mt.data[1]), fmt_P, val);
+		l_mt.bytesToSend	= l_mt.data[0] + 1;
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -1983,12 +2009,13 @@ static void task_twi2_lcd_print_format_float_P(uint8_t x, uint8_t y, float flt, 
 
 	if (twi2_waitUntilReady(false)) {
 		TWI_Master_Transaction_t l_mt = {
-			.destChip	= TWI_SMART_LCD_ADDR,
-			.addr[0]	= TWI_SMART_LCD_CMD_WRITE,
-			.addrLength	= 1};
-		l_mt.data[0]	= sprintf_P((char*)&(l_mt.data[1]), fmt_P, flt);
-		l_mt.dataLength	= l_mt.data[0] + 1;
-		twi_master_write(&g_twi2_master, &l_mt);
+			.destChip		= TWI_SMART_LCD_ADDR,
+			.addr[0]		= TWI_SMART_LCD_CMD_WRITE,
+			.addrLength		= 1,
+			.bytesToReceive	= 0};
+		l_mt.data[0]		= sprintf_P((char*)&(l_mt.data[1]), fmt_P, flt);
+		l_mt.bytesToSend	= l_mt.data[0] + 1;
+		twi_master_start_transaction(&g_twi2_master, &l_mt);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 	}
 }
@@ -2723,13 +2750,14 @@ static void task_twi2_lcd(void)
 		/* Show PWM in % when version is V1.0 and mode==0x20 selected */
 		if (twi2_waitUntilReady(true)) {
 			TWI_Master_Transaction_t l_mt = {
-				.destChip	= TWI_SMART_LCD_ADDR,
-				.addr[0]	= TWI_SMART_LCD_CMD_SHOW_TCXO_PWM,
-				.addrLength	= 1,
-				.data[0]	= 1,
-				.data[1]	= 128,
-				.dataLength	= 2};
-			twi_master_write(&g_twi2_master, &l_mt);
+				.destChip		= TWI_SMART_LCD_ADDR,
+				.addr[0]		= TWI_SMART_LCD_CMD_SHOW_TCXO_PWM,
+				.addrLength		= 1,
+				.data[0]		= 1,
+				.data[1]		= 128,
+				.bytesToSend	= 2,
+				.bytesToReceive	= 0};
+			twi_master_start_transaction(&g_twi2_master, &l_mt);
 			delay_us(TWI_SMART_LCD_DEVICE_TCXOPWM_DELAY_MIN_US);
 		}
 	}
