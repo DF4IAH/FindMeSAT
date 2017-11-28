@@ -37,7 +37,6 @@
     <option id="common.services.gfx_mono.font" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.ioport" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.basic.sleepmgr" value="Add" config="" content-id="Atmel.ASF" />
-    <option id="common.services.basic.twi" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.services.usb.class.device" value="Add" config="cdc_stdio" content-id="Atmel.ASF" />
     <option id="common.utils.interrupt" value="Add" config="" content-id="Atmel.ASF" />
     <option id="xmega.drivers.adc" value="Add" config="" content-id="Atmel.ASF" />
@@ -46,7 +45,6 @@
     <option id="xmega.drivers.pmic" value="Add" config="" content-id="Atmel.ASF" />
     <option id="xmega.drivers.rtc32" value="Add" config="" content-id="Atmel.ASF" />
     <option id="xmega.drivers.tc" value="Add" config="" content-id="Atmel.ASF" />
-    <option id="xmega.drivers.twi" value="Add" config="both" content-id="Atmel.ASF" />
     <option id="xmega.services.pwm" value="Add" config="" content-id="Atmel.ASF" />
     <option id="common.boards.user_board.common" value="Add" config="" content-id="Atmel.ASF" />
   </options>
@@ -149,16 +147,6 @@
     <file path="src/ASF/common/services/ioport/xmega/ioport_compat.h" framework="" version="3.34.1" source="common\services\ioport\xmega\ioport_compat.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/common/services/ioport/xmega/ioport.h" framework="" version="3.34.1" source="common\services\ioport\xmega\ioport.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/common/services/ioport/ioport.h" framework="" version="3.34.1" source="common\services\ioport\ioport.h" changed="False" content-id="Atmel.ASF" />
-    <file path="src/ASF/common/services/twi/twi_slave.h" framework="" version="3.34.1" source="common\services\twi\twi_slave.h" changed="False" content-id="Atmel.ASF" />
-    <file path="src/ASF/common/services/twi/xmega_twi/twi_master.h" framework="" version="3.34.1" source="common\services\twi\xmega_twi\twi_master.h" changed="False" content-id="Atmel.ASF" />
-    <file path="src/ASF/common/services/twi/xmega_twi/twi_slave.h" framework="" version="3.34.1" source="common\services\twi\xmega_twi\twi_slave.h" changed="False" content-id="Atmel.ASF" />
-    <file path="src/ASF/common/services/twi/twi_master.h" framework="" version="3.34.1" source="common\services\twi\twi_master.h" changed="False" content-id="Atmel.ASF" />
-    <file path="src/ASF/xmega/drivers/twi/twim.c" framework="" version="3.34.1" source="xmega\drivers\twi\twim.c" changed="False" content-id="Atmel.ASF" />
-    <file path="src/ASF/xmega/drivers/twi/twis.c" framework="" version="3.34.1" source="xmega\drivers\twi\twis.c" changed="False" content-id="Atmel.ASF" />
-    <file path="src/ASF/xmega/drivers/twi/twim.h" framework="" version="3.34.1" source="xmega\drivers\twi\twim.h" changed="False" content-id="Atmel.ASF" />
-    <file path="src/ASF/xmega/drivers/twi/twis.h" framework="" version="3.34.1" source="xmega\drivers\twi\twis.h" changed="False" content-id="Atmel.ASF" />
-    <file path="src/ASF/xmega/drivers/twi/twi_common.h" framework="" version="3.34.1" source="xmega\drivers\twi\twi_common.h" changed="False" content-id="Atmel.ASF" />
-    <file path="src/Config/conf_twim.h" framework="" version="3.34.1" source="xmega\drivers\twi\module_config\conf_twim.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/xmega/drivers/rtc32/rtc32.h" framework="" version="3.34.1" source="xmega\drivers\rtc32\rtc32.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/Config/conf_rtc32.h" framework="" version="3.34.1" source="xmega\drivers\rtc32\module_config\conf_rtc32.h" changed="False" content-id="Atmel.ASF" />
     <file path="src/ASF/common/services/delay/delay.h" framework="" version="3.34.1" source="common\services\delay\delay.h" changed="False" content-id="Atmel.ASF" />
@@ -271,8 +259,6 @@
       <Value>../src/ASF/xmega/utils</Value>
       <Value>../src/ASF/common/utils</Value>
       <Value>../src/ASF/common/services/ioport</Value>
-      <Value>../src/ASF/common/services/twi</Value>
-      <Value>../src/ASF/xmega/drivers/twi</Value>
       <Value>../src/ASF/xmega/drivers/rtc32</Value>
       <Value>../src/ASF/common/services/delay</Value>
       <Value>../src/ASF/common/services/calendar</Value>
@@ -325,8 +311,6 @@
       <Value>../src/ASF/xmega/utils</Value>
       <Value>../src/ASF/common/utils</Value>
       <Value>../src/ASF/common/services/ioport</Value>
-      <Value>../src/ASF/common/services/twi</Value>
-      <Value>../src/ASF/xmega/drivers/twi</Value>
       <Value>../src/ASF/xmega/drivers/rtc32</Value>
       <Value>../src/ASF/common/services/delay</Value>
       <Value>../src/ASF/common/services/calendar</Value>
@@ -381,8 +365,6 @@
       <Value>../src/ASF/xmega/utils</Value>
       <Value>../src/ASF/common/utils</Value>
       <Value>../src/ASF/common/services/ioport</Value>
-      <Value>../src/ASF/common/services/twi</Value>
-      <Value>../src/ASF/xmega/drivers/twi</Value>
       <Value>../src/ASF/xmega/drivers/rtc32</Value>
       <Value>../src/ASF/common/services/delay</Value>
       <Value>../src/ASF/common/services/calendar</Value>
@@ -435,8 +417,6 @@
       <Value>../src/ASF/xmega/utils</Value>
       <Value>../src/ASF/common/utils</Value>
       <Value>../src/ASF/common/services/ioport</Value>
-      <Value>../src/ASF/common/services/twi</Value>
-      <Value>../src/ASF/xmega/drivers/twi</Value>
       <Value>../src/ASF/xmega/drivers/rtc32</Value>
       <Value>../src/ASF/common/services/delay</Value>
       <Value>../src/ASF/common/services/calendar</Value>
@@ -624,18 +604,6 @@
     <None Include="src\ASF\common\services\ioport\xmega\ioport_compat.h">
       <SubType>compile</SubType>
     </None>
-    <None Include="src\ASF\common\services\twi\twi_slave.h">
-      <SubType>compile</SubType>
-    </None>
-    <None Include="src\ASF\common\services\twi\xmega_twi\twi_master.h">
-      <SubType>compile</SubType>
-    </None>
-    <None Include="src\ASF\common\services\twi\xmega_twi\twi_slave.h">
-      <SubType>compile</SubType>
-    </None>
-    <None Include="src\ASF\common\services\twi\twi_master.h">
-      <SubType>compile</SubType>
-    </None>
     <Compile Include="src\ASF\xmega\drivers\adc\adc.c">
       <SubType>compile</SubType>
     </Compile>
@@ -652,21 +620,6 @@
       <SubType>compile</SubType>
     </Compile>
     <None Include="src\ASF\xmega\drivers\tc\tc.h">
-      <SubType>compile</SubType>
-    </None>
-    <Compile Include="src\ASF\xmega\drivers\twi\twim.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <None Include="src\ASF\xmega\drivers\twi\twim.h">
-      <SubType>compile</SubType>
-    </None>
-    <Compile Include="src\ASF\xmega\drivers\twi\twis.c">
-      <SubType>compile</SubType>
-    </Compile>
-    <None Include="src\ASF\xmega\drivers\twi\twis.h">
-      <SubType>compile</SubType>
-    </None>
-    <None Include="src\ASF\xmega\drivers\twi\twi_common.h">
       <SubType>compile</SubType>
     </None>
     <Compile Include="src\ASF\xmega\drivers\usb\usb_device.c">
@@ -715,9 +668,6 @@
       <SubType>compile</SubType>
     </Compile>
     <None Include="src\config\conf_sysfont.h">
-      <SubType>compile</SubType>
-    </None>
-    <None Include="src\config\conf_twim.h">
       <SubType>compile</SubType>
     </None>
     <Compile Include="src\main.c">
@@ -879,8 +829,6 @@
     <Folder Include="src\ASF\common\services\ioport\xmega\" />
     <Folder Include="src\ASF\common\services\sleepmgr\" />
     <Folder Include="src\ASF\common\services\sleepmgr\xmega\" />
-    <Folder Include="src\ASF\common\services\twi\" />
-    <Folder Include="src\ASF\common\services\twi\xmega_twi\" />
     <Folder Include="src\ASF\common\services\usb\" />
     <Folder Include="src\ASF\common\services\usb\class\" />
     <Folder Include="src\ASF\common\services\usb\class\cdc\" />
@@ -903,7 +851,6 @@
     <Folder Include="src\ASF\xmega\drivers\rtc32\" />
     <Folder Include="src\ASF\xmega\drivers\sleep\" />
     <Folder Include="src\ASF\xmega\drivers\tc\" />
-    <Folder Include="src\ASF\xmega\drivers\twi\" />
     <Folder Include="src\ASF\xmega\drivers\usb\" />
     <Folder Include="src\ASF\xmega\services\" />
     <Folder Include="src\ASF\xmega\services\pwm\" />
