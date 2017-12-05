@@ -368,6 +368,8 @@
 #define TWI_DATA_LENGTH												TWIS_SEND_BUFFER_SIZE
 
 
+int16_t calc_gyro1_accel_raw2mg(int16_t raw, int16_t factor);
+
 bool twi2_waitUntilReady(bool retry);
 
 void twi2_set_leds(uint8_t leds);
@@ -384,6 +386,10 @@ void isr_10ms_twi1_onboard(void);
 void isr_100ms_twi1_onboard(void);
 void isr_500ms_twi1_onboard(void);
 void isr_sparetime_twi1_onboard(void);
+
+// void task_twi1_hygro(void);
+void task_twi1_gyro(void);
+// void task_twi1_baro(void);
 
 void twi1_gyro_get_mean_values(uint8_t iterations, bool isGyro, int32_t *sum_x, int32_t *sum_y, int32_t *sum_z);
 status_code_t twi1_gyro_gyro_offset_set(void);

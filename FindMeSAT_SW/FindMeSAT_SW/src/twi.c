@@ -170,7 +170,7 @@ PROGMEM_DECLARE(const char, PM_TWIINIT_ACCEL[]);
 /* Forward declarations */
 
 static void task_twi1_hygro(void);
-static void task_twi1_gyro(void);
+// static void task_twi1_gyro(void);
 static void task_twi1_baro(void);
 static void task_twi2_lcd_template(void);
 
@@ -206,8 +206,7 @@ ISR(TWIC_TWIS_vect) {
 #endif
 
 
-inline
-static int16_t calc_gyro1_accel_raw2mg(int16_t raw, int16_t factor)
+int16_t calc_gyro1_accel_raw2mg(int16_t raw, int16_t factor)
 {
 	return (((1000 * TWI1_SLAVE_GYRO_DTA_1_ACCEL_CONFIG__02G) * (int64_t)raw * (int64_t)factor) / 10000LL) >> 15;
 }
@@ -790,15 +789,12 @@ static void start_twi1_onboard(void)
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_01);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
-#if 0 /*HERE*/
 	/* Calibration of TWI1 devices */
 	{
-		irqflags_t flags;
-
 		/* Assuming the board is not rotating during calibration of the GYRO */
 		calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
 
-		flags = cpu_irq_save();
+		irqflags_t flags = cpu_irq_save();
 		if (((-100 < g_twi1_gyro_1_accel_x_mg) && (g_twi1_gyro_1_accel_x_mg <  100)) &&
 		    ((-100 < g_twi1_gyro_1_accel_y_mg) && (g_twi1_gyro_1_accel_y_mg <  100)) &&
 		    (( 900 < g_twi1_gyro_1_accel_z_mg) && (g_twi1_gyro_1_accel_z_mg < 1100))) {
@@ -810,7 +806,6 @@ static void start_twi1_onboard(void)
 			cpu_irq_restore(flags);
 		}
 	}
-#endif
 }
 
 /* TWI2 - LCD Port */
@@ -1286,7 +1281,7 @@ static void task_twi1_hygro(void)
 	}
 }
 
-static void task_twi1_gyro(void)
+void task_twi1_gyro(void)
 {	// Calculations for the presentation layer
 	{
 		int16_t l_twi1_gyro_1_accel_x, l_twi1_gyro_1_accel_y, l_twi1_gyro_1_accel_z;
