@@ -322,6 +322,23 @@ PROGMEM_DECLARE(const char, PM_SIM808_INFO_READY[]);
 const char					PM_TWI1_SHUT_01[]								= "Shutting down ...";
 PROGMEM_DECLARE(const char, PM_TWI1_SHUT_01[]);
 
+const char					PM_CALIBRATION_GYRO_START[]						= "GYRO calibration starts ...\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_GYRO_START[]);
+const char					PM_CALIBRATION_GYRO_END[]						= "GYRO calibration has ended.\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_GYRO_END[]);
+const char					PM_CALIBRATION_ACCELX_START[]					= "ACCELX calibration starts ...\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELX_START[]);
+const char					PM_CALIBRATION_ACCELX_END[]						= "ACCELX calibration has ended.\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELX_END[]);
+const char					PM_CALIBRATION_ACCELY_START[]					= "ACCELY calibration starts ...\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELY_START[]);
+const char					PM_CALIBRATION_ACCELY_END[]						= "ACCELY calibration has ended.\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELY_END[]);
+const char					PM_CALIBRATION_ACCELZ_START[]					= "ACCELZ calibration starts ...\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELZ_START[]);
+const char					PM_CALIBRATION_ACCELZ_END[]						= "ACCELZ calibration has ended.\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELZ_END[]);
+
 
 twi_options_t g_twi1_options = {
 	.speed     = TWI1_SPEED,
@@ -1187,40 +1204,6 @@ void bias_update(uint8_t bias)
 	twi2_set_bias(l_bias_pm);
 }
 
-static void calibration_mode_get_mean_values(uint8_t iterations, bool isGyro, int32_t *sum_x, int32_t *sum_y, int32_t *sum_z)
-{
-	irqflags_t flags;
-
-	for (uint8_t cnt = iterations; cnt; cnt--) {
-		/* Get new measurements */
-		service_twi1_gyro(true);
-
-		/* Sum registers */
-		if (isGyro) {
-			flags = cpu_irq_save();
-			*sum_x += g_twi1_gyro_1_gyro_x;
-			*sum_y += g_twi1_gyro_1_gyro_y;
-			*sum_z += g_twi1_gyro_1_gyro_z;
-			cpu_irq_restore(flags);
-
-		} else {
-			flags = cpu_irq_save();
-			*sum_x += g_twi1_gyro_1_accel_x;
-			*sum_y += g_twi1_gyro_1_accel_y;
-			*sum_z += g_twi1_gyro_1_accel_z;
-			cpu_irq_restore(flags);
-		}
-
-		/* Delay for new data in the device (update frequency 10 Hz) */
-		delay_ms(100);
-	}
-
-	/* Mean values */
-	*sum_x /= iterations;
-	*sum_y /= iterations;
-	*sum_z /= iterations;
-}
-
 void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 {
 	switch (mode) {
@@ -1261,18 +1244,57 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 			{
 				irqflags_t flags = cpu_irq_save();
 
+#ifdef NEW
+				const uint8_t iterations = 8;
+				int32_t l_twi1_gyro_1_gyro_mean_x = 0L, l_twi1_gyro_1_gyro_mean_y = 0L, l_twi1_gyro_1_gyro_mean_z = 0L;
+				int len;
+				irqflags_t flags;
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_GYRO_START);
+				udi_write_tx_buf(g_prepare_buf, len, false);
+
+				twi1_gyro_get_mean_values(iterations, true, &l_twi1_gyro_1_gyro_mean_x, &l_twi1_gyro_1_gyro_mean_y, &l_twi1_gyro_1_gyro_mean_z);
+#endif
+
+#ifndef OLD
 				/* Adjust the settings */
 				g_twi1_gyro_1_gyro_ofsx -= (g_twi1_gyro_1_gyro_x >> 2);
 				g_twi1_gyro_1_gyro_ofsy -= (g_twi1_gyro_1_gyro_y >> 2);
 				g_twi1_gyro_1_gyro_ofsz -= (g_twi1_gyro_1_gyro_z >> 2);
+#endif
 
+#ifdef NEW
+				{
+					flags = cpu_irq_save();
+
+					g_twi1_gyro_1_gyro_ofsx -= (l_twi1_gyro_1_gyro_mean_x >> 2);  // offset value have 1/4th precision
+					g_twi1_gyro_1_gyro_ofsy -= (l_twi1_gyro_1_gyro_mean_y >> 2);
+					g_twi1_gyro_1_gyro_ofsz -= (l_twi1_gyro_1_gyro_mean_z >> 2);
+
+					cpu_irq_restore(flags);
+				}
+#endif
+
+#ifndef OLD
 				/* Update the offset registers in the I2C device */
 				g_twi1_gyro_gyro_offset_set__flag = true;
 
 				cpu_irq_restore(flags);
+#endif
 
 				/* Write back current offset values to the EEPROM */
 				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+
+#ifdef NEW
+				/* Update the offset registers in the I2C device */
+				g_twi1_gyro_gyro_offset_set__flag = true;
+				if (service_twi1_gyro(true)) {
+					sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
+				}
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_GYRO_END);
+				udi_write_tx_buf(g_prepare_buf, len, false);
+#endif
 			}
 		break;
 
@@ -1328,6 +1350,7 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 
 		case CALIBRATION_MODE_ENUM__ACCEL_Z:
 			{
+#ifndef OLD
 				irqflags_t flags = cpu_irq_save();
 
 				/* Adjust Z factor */
@@ -1348,6 +1371,49 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 
 				/* Write back current offset values to the EEPROM */
 				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+#else
+				const uint8_t iterations = 8;
+				int32_t l_twi1_gyro_1_accel_mean_x = 0L, l_twi1_gyro_1_accel_mean_y = 0L, l_twi1_gyro_1_accel_mean_z = 0L;
+				int len;
+				irqflags_t flags;
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELZ_START);
+				udi_write_tx_buf(g_prepare_buf, len, false);
+
+				twi1_gyro_get_mean_values(iterations, false, &l_twi1_gyro_1_accel_mean_x, &l_twi1_gyro_1_accel_mean_y, &l_twi1_gyro_1_accel_mean_z);
+
+				/* Adjust the settings */
+				{
+					flags = cpu_irq_save();
+
+					/* Adjust Z factor */
+					if (g_twi1_gyro_1_accel_z_mg) {
+						int16_t l_twi1_gyro_1_accel_mean_z_mg = calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_mean_z, g_twi1_gyro_1_accel_factz);
+						g_twi1_gyro_1_accel_factz = (int16_t) (((int32_t)g_twi1_gyro_1_accel_factz * 1000L) / l_twi1_gyro_1_accel_mean_z_mg);
+
+					} else {
+						g_twi1_gyro_1_accel_factz = C_TWI1_GYRO_1_ACCEL_FACTZ_DEFAULT;
+					}
+
+					/* Adjust X/Y offsets */
+					g_twi1_gyro_1_accel_ofsx -= (l_twi1_gyro_1_accel_mean_x >> 4);
+					g_twi1_gyro_1_accel_ofsy -= (l_twi1_gyro_1_accel_mean_y >> 4);
+
+					cpu_irq_restore(flags);
+				}
+
+				/* Write back current offset values to the EEPROM */
+				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+
+				/* Update the offset registers in the I2C device */
+				g_twi1_gyro_accel_offset_set__flag = true;
+				if (service_twi1_gyro(true)) {
+					sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
+				}
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELZ_END);
+				udi_write_tx_buf(g_prepare_buf, len, false);
+#endif
 			}
 		break;
 	}
@@ -2415,13 +2481,22 @@ void isr_tcc0_ovfl(void)
 
 uint32_t tcc1_get_time(void)
 {
-	uint64_t now;
+	static uint64_t	last = 0ULL;
+	uint64_t		now;
+	irqflags_t		flags;
+	uint8_t			sureCtr = 0;
 
-	irqflags_t flags = cpu_irq_save();
-	now = g_milliseconds_cnt64;
-	cpu_irq_restore(flags);
+	do {
+		flags = cpu_irq_save();
+		now = g_milliseconds_cnt64;
+		cpu_irq_restore(flags);
 
-	return (uint32_t)now;
+		/* Avoid to return wrong value */
+		if (((now >= last) && ((now - last) < 0x00100000)) || !++sureCtr) {
+			last = now;
+			return (uint32_t)now;
+		}
+	} while(true);
 }
 
 #if 0
@@ -2923,7 +2998,7 @@ static void task_main_pll(void)
 
 static void task_env_calc(void)
 {
-	static uint32_t s_last = 0;
+	static uint32_t s_last = 0UL;
 	uint32_t now = tcc1_get_time();
 
 	/* No more than 2 calculations per sec */

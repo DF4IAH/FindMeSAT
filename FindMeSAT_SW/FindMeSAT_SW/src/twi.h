@@ -385,6 +385,7 @@ void isr_100ms_twi1_onboard(void);
 void isr_500ms_twi1_onboard(void);
 void isr_sparetime_twi1_onboard(void);
 
+void twi1_gyro_get_mean_values(uint8_t iterations, bool isGyro, int32_t *sum_x, int32_t *sum_y, int32_t *sum_z);
 status_code_t twi1_gyro_gyro_offset_set(void);
 status_code_t twi1_gyro_accel_offset_set(void);
 void init_twi1_gyro(void);

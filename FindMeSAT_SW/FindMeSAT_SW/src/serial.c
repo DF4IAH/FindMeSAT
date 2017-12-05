@@ -352,9 +352,11 @@ void serial_gsm_gprs_link_openClose(bool isStart) {
 		/* Shut down IP connection */
 		serial_gsm_gprs_ip_openClose(false);
 
+		#if 0
 		/* Close any listening servers */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSERVER, 0);
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
+		#endif
 
 		/* Shutdown any open connections and drop GPRS link */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GSM_GPRS_CIPSHUT);
