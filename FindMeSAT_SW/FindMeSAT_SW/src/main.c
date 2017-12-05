@@ -206,7 +206,7 @@ volatile int32_t			g_twi1_baro_temp_100							= 0L;
 volatile int32_t			g_twi1_baro_p_100								= 0L;
 
 bool						g_twi1_hygro_valid								= false;
-uint8_t						g_twi1_hygro_status								= 0;
+volatile uint16_t			g_twi1_hygro_status								= 0;
 volatile uint16_t			g_twi1_hygro_S_T								= 0;
 volatile uint16_t			g_twi1_hygro_S_RH								= 0;
 volatile int16_t			g_twi1_hygro_T_100								= 0;
@@ -1187,6 +1187,40 @@ void bias_update(uint8_t bias)
 	twi2_set_bias(l_bias_pm);
 }
 
+static void calibration_mode_get_mean_values(uint8_t iterations, bool isGyro, int32_t *sum_x, int32_t *sum_y, int32_t *sum_z)
+{
+	irqflags_t flags;
+
+	for (uint8_t cnt = iterations; cnt; cnt--) {
+		/* Get new measurements */
+		service_twi1_gyro(true);
+
+		/* Sum registers */
+		if (isGyro) {
+			flags = cpu_irq_save();
+			*sum_x += g_twi1_gyro_1_gyro_x;
+			*sum_y += g_twi1_gyro_1_gyro_y;
+			*sum_z += g_twi1_gyro_1_gyro_z;
+			cpu_irq_restore(flags);
+
+		} else {
+			flags = cpu_irq_save();
+			*sum_x += g_twi1_gyro_1_accel_x;
+			*sum_y += g_twi1_gyro_1_accel_y;
+			*sum_z += g_twi1_gyro_1_accel_z;
+			cpu_irq_restore(flags);
+		}
+
+		/* Delay for new data in the device (update frequency 10 Hz) */
+		delay_ms(100);
+	}
+
+	/* Mean values */
+	*sum_x /= iterations;
+	*sum_y /= iterations;
+	*sum_z /= iterations;
+}
+
 void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 {
 	switch (mode) {
@@ -1523,12 +1557,16 @@ void shutdown(bool doReset)
 	{
 		serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_OFF);
 		serial_sim808_gsm_shutdown();
+		serial_shutdown();
 	}
 
 	/* Terminate the USB connection */
 	{
 		stdio_usb_disable();
 		udc_stop();
+
+		/* Power reduction: disable power of the USB */
+		PR_PRPF |= PR_USB_bm;
 	}
 
 	/* Reset the LCD */
@@ -1541,6 +1579,18 @@ void shutdown(bool doReset)
 
 		/* Short high voltage of LCD */
 		task_twi2_lcd_reset();
+	}
+
+	/* Power off subsystems */
+	{
+		PR_PRPF |= PR_TWI_bm;
+		PR_PRPF |= PR_SPI_bm;
+		PR_PRPF |= PR_AC_bm;
+		PR_PRPF |= PR_ADC_bm;
+		PR_PRPF |= PR_DAC_bm;
+		PR_PRPF |= PR_DMA_bm;
+		PR_PRPF |= PR_RTC_bm;
+		PR_PRPF |= PR_EVSYS_bm;
 	}
 
 	if (doReset) {
@@ -3363,10 +3413,6 @@ int main(void)
 	/* LED green */
 	twi2_set_leds(0x02);
 
-	/* Calibration of TWI1 devices */
-	calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
-	calibration_mode(CALIBRATION_MODE_ENUM__ACCEL_Z);
-
 	/* Show help page of command set */
 	printHelp();
 
@@ -3376,7 +3422,7 @@ int main(void)
 	/* The application code */
 	g_twi2_lcd_repaint = true;
 	g_workmode = WORKMODE_RUN;
-    while (g_workmode) {
+    while (g_workmode == WORKMODE_RUN) {
 		/* Process all user space tasks */
 		task();
 

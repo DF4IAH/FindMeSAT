@@ -378,6 +378,8 @@ void twi2_set_beep(uint8_t pitch_10hz, uint8_t len_10ms);
 void twi_init(void);
 void twi_start(void);
 
+bool service_twi1_gyro(bool sync);
+
 void isr_10ms_twi1_onboard(void);
 void isr_100ms_twi1_onboard(void);
 void isr_500ms_twi1_onboard(void);

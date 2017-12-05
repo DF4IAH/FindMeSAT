@@ -70,7 +70,7 @@ const char					PM_TWI1_INIT_HYGRO_01[]				= "\r\nTWI-onboard: Hygro SHT31-DIS - 
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_01[]);
 const char					PM_TWI1_INIT_HYGRO_02[]				= "TWI-onboard: Hygro SHT31-DIS -   address NACK / 'break' bad response\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_02[]);
-const char					PM_TWI1_INIT_HYGRO_03[]				= "TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n";
+const char					PM_TWI1_INIT_HYGRO_03[]				= "TWI-onboard: Hygro SHT31-DIS -      status: 0x%04X\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_03[]);
 const char					PM_TWI1_INIT_HYGRO_04[]				= "TWI-onboard:  INIT success.\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_04[]);
@@ -756,6 +756,28 @@ static void start_twi1_onboard(void)
 
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_01);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+#if 0 /*HERE*/
+	/* Calibration of TWI1 devices */
+	{
+		irqflags_t flags;
+
+		/* Assuming the board is not rotating during calibration of the GYRO */
+		calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
+
+		flags = cpu_irq_save();
+		if (((-100 < g_twi1_gyro_1_accel_x_mg) && (g_twi1_gyro_1_accel_x_mg <  100)) &&
+		    ((-100 < g_twi1_gyro_1_accel_y_mg) && (g_twi1_gyro_1_accel_y_mg <  100)) &&
+		    (( 900 < g_twi1_gyro_1_accel_z_mg) && (g_twi1_gyro_1_accel_z_mg < 1100))) {
+			/* Do calibrate ACCEL-Z only when board is placed horizontally */
+			cpu_irq_restore(flags);
+			calibration_mode(CALIBRATION_MODE_ENUM__ACCEL_Z);
+
+		} else {
+			cpu_irq_restore(flags);
+		}
+	}
+#endif
 }
 
 /* TWI2 - LCD Port */
@@ -924,7 +946,7 @@ static bool service_twi1_hygro(bool sync)
 	return false;
 }
 
-static bool service_twi1_gyro(bool sync)
+bool service_twi1_gyro(bool sync)
 {
 	/* Real time usage: abt. 1 ms */
 

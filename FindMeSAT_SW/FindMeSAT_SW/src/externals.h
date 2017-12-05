@@ -169,7 +169,7 @@ extern int32_t						g_twi1_baro_temp_100;
 extern int32_t						g_twi1_baro_p_100;
 
 extern bool							g_twi1_hygro_valid;
-extern uint8_t						g_twi1_hygro_status;
+extern uint16_t						g_twi1_hygro_status;
 extern uint16_t						g_twi1_hygro_S_T;
 extern uint16_t						g_twi1_hygro_S_RH;
 extern int16_t						g_twi1_hygro_T_100;
