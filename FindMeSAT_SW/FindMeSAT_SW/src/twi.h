@@ -368,6 +368,8 @@
 #define TWI_DATA_LENGTH												TWIS_SEND_BUFFER_SIZE
 
 
+int16_t calc_gyro1_accel_raw2mg(int16_t raw, int16_t factor);
+
 bool twi2_waitUntilReady(bool retry);
 
 void twi2_set_leds(uint8_t leds);

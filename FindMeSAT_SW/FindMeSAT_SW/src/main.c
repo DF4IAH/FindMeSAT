@@ -1244,7 +1244,6 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 			{
 				const uint8_t	iterations = 8;
 				int32_t			l_twi1_gyro_1_gyro_mean_x = 0L, l_twi1_gyro_1_gyro_mean_y = 0L, l_twi1_gyro_1_gyro_mean_z = 0L;
-				irqflags_t		flags;
 				int				len;
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_GYRO_START);
@@ -1254,6 +1253,13 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 
 				/* Adjust the settings */
 				{
+					irqflags_t flags;
+
+					/* Add rounding values */
+					l_twi1_gyro_1_gyro_mean_x += (l_twi1_gyro_1_gyro_mean_x >= 0) ?  2 : -2;
+					l_twi1_gyro_1_gyro_mean_y += (l_twi1_gyro_1_gyro_mean_y >= 0) ?  2 : -2;
+					l_twi1_gyro_1_gyro_mean_z += (l_twi1_gyro_1_gyro_mean_z >= 0) ?  2 : -2;
+
 					flags = cpu_irq_save();
 
 					g_twi1_gyro_1_gyro_ofsx -= (l_twi1_gyro_1_gyro_mean_x >> 2);  // offset value have 1/4th precision
@@ -1280,82 +1286,111 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 
 		case CALIBRATION_MODE_ENUM__ACCEL_X:
 			{
-				irqflags_t flags = cpu_irq_save();
+				const uint8_t	iterations = 8;
+				int32_t			l_twi1_gyro_1_accel_mean_x = 0L, l_twi1_gyro_1_accel_mean_y = 0L, l_twi1_gyro_1_accel_mean_z = 0L;
+				int				len;
 
-				/* Adjust X factor */
-				if (g_twi1_gyro_1_accel_x_mg) {
-					g_twi1_gyro_1_accel_factx = (int16_t) (((int32_t)g_twi1_gyro_1_accel_factx * 1000L) / g_twi1_gyro_1_accel_x_mg);
-				} else {
-					g_twi1_gyro_1_accel_factx = C_TWI1_GYRO_1_ACCEL_FACTX_DEFAULT;
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELX_START);
+				udi_write_tx_buf(g_prepare_buf, len, false);
+
+				twi1_gyro_get_mean_values(iterations, false, &l_twi1_gyro_1_accel_mean_x, &l_twi1_gyro_1_accel_mean_y, &l_twi1_gyro_1_accel_mean_z);
+
+				/* Adjust the settings */
+				{
+					irqflags_t flags;
+
+					/* Add rounding values */
+					l_twi1_gyro_1_accel_mean_y += (l_twi1_gyro_1_accel_mean_y >= 0) ?  8 : -8;
+					l_twi1_gyro_1_accel_mean_z += (l_twi1_gyro_1_accel_mean_z >= 0) ?  8 : -8;
+
+					flags = cpu_irq_save();
+
+					/* Adjust X factor */
+					if (g_twi1_gyro_1_accel_x_mg) {
+						int16_t l_twi1_gyro_1_accel_mean_x_mg = calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_mean_x, g_twi1_gyro_1_accel_factx);
+						g_twi1_gyro_1_accel_factx = (int16_t) (((int32_t)g_twi1_gyro_1_accel_factx * 1000L) / l_twi1_gyro_1_accel_mean_x_mg);
+
+					} else {
+						g_twi1_gyro_1_accel_factx = C_TWI1_GYRO_1_ACCEL_FACTX_DEFAULT;
+					}
+
+					/* Adjust Y/Z offsets */
+					g_twi1_gyro_1_accel_ofsy -= (l_twi1_gyro_1_accel_mean_y >> 4);
+					g_twi1_gyro_1_accel_ofsz -= (l_twi1_gyro_1_accel_mean_z >> 4);
+
+					cpu_irq_restore(flags);
 				}
-
-				/* Adjust Y/Z offsets */
-				g_twi1_gyro_1_accel_ofsy -= (g_twi1_gyro_1_accel_y >> 4);
-				g_twi1_gyro_1_accel_ofsz -= (g_twi1_gyro_1_accel_z >> 4);
-
-				/* Update the offset registers in the I2C device */
-				g_twi1_gyro_accel_offset_set__flag = true;
-
-				cpu_irq_restore(flags);
 
 				/* Write back current offset values to the EEPROM */
 				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+
+				/* Update the offset registers in the I2C device */
+				g_twi1_gyro_accel_offset_set__flag = true;
+				if (service_twi1_gyro(true)) {
+					sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
+				}
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELX_END);
+				udi_write_tx_buf(g_prepare_buf, len, false);
 			}
 		break;
 
 		case CALIBRATION_MODE_ENUM__ACCEL_Y:
 			{
-				irqflags_t flags = cpu_irq_save();
+				const uint8_t	iterations = 8;
+				int32_t			l_twi1_gyro_1_accel_mean_x = 0L, l_twi1_gyro_1_accel_mean_y = 0L, l_twi1_gyro_1_accel_mean_z = 0L;
+				int				len;
 
-				/* Adjust Y factor */
-				if (g_twi1_gyro_1_accel_y_mg) {
-					g_twi1_gyro_1_accel_facty = (int16_t) (((int32_t)g_twi1_gyro_1_accel_facty * 1000L) / g_twi1_gyro_1_accel_y_mg);
-				} else {
-					g_twi1_gyro_1_accel_facty = C_TWI1_GYRO_1_ACCEL_FACTY_DEFAULT;
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELY_START);
+				udi_write_tx_buf(g_prepare_buf, len, false);
+
+				twi1_gyro_get_mean_values(iterations, false, &l_twi1_gyro_1_accel_mean_x, &l_twi1_gyro_1_accel_mean_y, &l_twi1_gyro_1_accel_mean_z);
+
+				/* Adjust the settings */
+				{
+					irqflags_t flags;
+
+					/* Add rounding values */
+					l_twi1_gyro_1_accel_mean_x += (l_twi1_gyro_1_accel_mean_x >= 0) ?  8 : -8;
+					l_twi1_gyro_1_accel_mean_z += (l_twi1_gyro_1_accel_mean_z >= 0) ?  8 : -8;
+
+					flags = cpu_irq_save();
+
+					/* Adjust Y factor */
+					if (g_twi1_gyro_1_accel_y_mg) {
+						int16_t l_twi1_gyro_1_accel_mean_y_mg = calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_mean_y, g_twi1_gyro_1_accel_facty);
+						g_twi1_gyro_1_accel_facty = (int16_t) (((int32_t)g_twi1_gyro_1_accel_facty * 1000L) / l_twi1_gyro_1_accel_mean_y_mg);
+
+					} else {
+						g_twi1_gyro_1_accel_facty = C_TWI1_GYRO_1_ACCEL_FACTY_DEFAULT;
+					}
+
+					/* Adjust X/Z offsets */
+					g_twi1_gyro_1_accel_ofsx -= (l_twi1_gyro_1_accel_mean_x >> 4);
+					g_twi1_gyro_1_accel_ofsz -= (l_twi1_gyro_1_accel_mean_z >> 4);
+
+					cpu_irq_restore(flags);
 				}
-
-				/* Adjust X/Z offsets */
-				g_twi1_gyro_1_accel_ofsx -= (g_twi1_gyro_1_accel_x >> 4);
-				g_twi1_gyro_1_accel_ofsz -= (g_twi1_gyro_1_accel_z >> 4);
-
-				/* Update the offset registers in the I2C device */
-				g_twi1_gyro_accel_offset_set__flag = true;
-
-				cpu_irq_restore(flags);
 
 				/* Write back current offset values to the EEPROM */
 				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+
+				/* Update the offset registers in the I2C device */
+				g_twi1_gyro_accel_offset_set__flag = true;
+				if (service_twi1_gyro(true)) {
+					sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
+				}
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELY_END);
+				udi_write_tx_buf(g_prepare_buf, len, false);
 			}
 		break;
 
 		case CALIBRATION_MODE_ENUM__ACCEL_Z:
 			{
-#ifndef OLD
-				irqflags_t flags = cpu_irq_save();
-
-				/* Adjust Z factor */
-				if (g_twi1_gyro_1_accel_z_mg) {
-					g_twi1_gyro_1_accel_factz = (int16_t) (((int32_t)g_twi1_gyro_1_accel_factz * 1000L) / g_twi1_gyro_1_accel_z_mg);
-				} else {
-					g_twi1_gyro_1_accel_factz = C_TWI1_GYRO_1_ACCEL_FACTZ_DEFAULT;
-				}
-
-				/* Adjust X/Y offsets */
-				g_twi1_gyro_1_accel_ofsx -= (g_twi1_gyro_1_accel_x >> 4);
-				g_twi1_gyro_1_accel_ofsy -= (g_twi1_gyro_1_accel_y >> 4);
-
-				/* Update the offset registers in the I2C device */
-				g_twi1_gyro_accel_offset_set__flag = true;
-
-				cpu_irq_restore(flags);
-
-				/* Write back current offset values to the EEPROM */
-				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
-#else
-				const uint8_t iterations = 8;
-				int32_t l_twi1_gyro_1_accel_mean_x = 0L, l_twi1_gyro_1_accel_mean_y = 0L, l_twi1_gyro_1_accel_mean_z = 0L;
-				int len;
-				irqflags_t flags;
+				const uint8_t	iterations = 8;
+				int32_t			l_twi1_gyro_1_accel_mean_x = 0L, l_twi1_gyro_1_accel_mean_y = 0L, l_twi1_gyro_1_accel_mean_z = 0L;
+				int				len;
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELZ_START);
 				udi_write_tx_buf(g_prepare_buf, len, false);
@@ -1364,6 +1399,12 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 
 				/* Adjust the settings */
 				{
+					irqflags_t flags;
+
+					/* Add rounding values */
+					l_twi1_gyro_1_accel_mean_x += (l_twi1_gyro_1_accel_mean_x >= 0) ?  8 : -8;
+					l_twi1_gyro_1_accel_mean_y += (l_twi1_gyro_1_accel_mean_y >= 0) ?  8 : -8;
+
 					flags = cpu_irq_save();
 
 					/* Adjust Z factor */
@@ -1393,7 +1434,6 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELZ_END);
 				udi_write_tx_buf(g_prepare_buf, len, false);
-#endif
 			}
 		break;
 	}

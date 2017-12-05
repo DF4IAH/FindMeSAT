@@ -206,8 +206,7 @@ ISR(TWIC_TWIS_vect) {
 #endif
 
 
-inline
-static int16_t calc_gyro1_accel_raw2mg(int16_t raw, int16_t factor)
+int16_t calc_gyro1_accel_raw2mg(int16_t raw, int16_t factor)
 {
 	return (((1000 * TWI1_SLAVE_GYRO_DTA_1_ACCEL_CONFIG__02G) * (int64_t)raw * (int64_t)factor) / 10000LL) >> 15;
 }
@@ -795,7 +794,6 @@ static void start_twi1_onboard(void)
 		/* Assuming the board is not rotating during calibration of the GYRO */
 		calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
 
-#if 0 /*HERE*/
 		irqflags_t flags = cpu_irq_save();
 		if (((-100 < g_twi1_gyro_1_accel_x_mg) && (g_twi1_gyro_1_accel_x_mg <  100)) &&
 		    ((-100 < g_twi1_gyro_1_accel_y_mg) && (g_twi1_gyro_1_accel_y_mg <  100)) &&
@@ -807,7 +805,6 @@ static void start_twi1_onboard(void)
 		} else {
 			cpu_irq_restore(flags);
 		}
-#endif
 	}
 }
 
