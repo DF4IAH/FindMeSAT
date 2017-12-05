@@ -377,13 +377,21 @@
 typedef enum TWI_MASTER_FSM_STATE {
 	TWI_MASTER_FSM_STATE_NOOP			= 0x00,
 
-	TWI_MASTER_FSM_STATE__TX_CHIP		= 0x01,
-	TWI_MASTER_FSM_STATE__TX_ADDR		= 0x02,
-	TWI_MASTER_FSM_STATE__TX_DATA		= 0x03,
+	TWI_MASTER_FSM_STATE_TX__CHIP		= 0x01,
+	TWI_MASTER_FSM_STATE_TX__ADDR		= 0x02,
+	TWI_MASTER_FSM_STATE_TX__ADDR_ACK	= 0x22,
+	TWI_MASTER_FSM_STATE_TX__ADDR_NACK	= 0x42,
+	TWI_MASTER_FSM_STATE_TX__DATA		= 0x03,
+	TWI_MASTER_FSM_STATE_TX__DATA_ACK	= 0x23,
+	TWI_MASTER_FSM_STATE_TX__DATA_NACK	= 0x43,
 
-	TWI_MASTER_FSM_STATE__TX_RX_SR		= 0x08,
-	TWI_MASTER_FSM_STATE__RX_CHIP		= 0x09,
-	TWI_MASTER_FSM_STATE__RX_DATA		= 0x0A,
+	TWI_MASTER_FSM_STATE_RX__CHIP		= 0x81,
+	TWI_MASTER_FSM_STATE_RX__ADDR		= 0x82,
+	TWI_MASTER_FSM_STATE_RX__ADDR_ACK	= 0xA2,
+	TWI_MASTER_FSM_STATE_RX__ADDR_NACK	= 0xC2,
+	TWI_MASTER_FSM_STATE_RX__DATA		= 0x83,
+	TWI_MASTER_FSM_STATE_RX__DATA_ACK	= 0xA3,
+	TWI_MASTER_FSM_STATE_RX__DATA_NACK	= 0xC3,
 } TWI_MASTER_FSM_STATE_t;
 
 
@@ -396,7 +404,7 @@ typedef enum TWI_SLAVE_FSM_STATE {
 typedef struct twi_options {
 	/* INIT MASTER/SLAVE */
 	TWI_t							   *ifc;										// Pointer to what interface to use
-	uint32_t							speed;										// baud rate of the TWI bus
+	uint32_t							speed;										// baudrate of the TWI bus
 
 	/* INIT SLAVE only */
 	uint8_t								ownChip;									// SLAVE mode: own chip address
@@ -404,13 +412,12 @@ typedef struct twi_options {
 
 /* Information concerning the data transmission */
 typedef struct TWI_Master_Transaction {
-	register8_t							destChip;									// TWI chip address to communicate with
-	register8_t							addr[3];									// TWI address/commands to issue to the other chip (node)
-	register8_t							addrLength;									// length of the TWI data address segment (1-3 bytes)
+	uint8_t								destChip;									// TWI chip address to communicate with
+	uint8_t								addr[3];									// TWI address/commands to issue to the other chip (node)
+	uint8_t								addrLength;									// length of the TWI data address segment (1-3 bytes)
 
-	register8_t							bytesToSend;								// how many bytes to write
-	register8_t							bytesToReceive;								// how many bytes do we want to read
-	register8_t						    data[TWI_DATA_LENGTH];						// data to be sent or received
+	uint8_t								dataLength;									// how many bytes do we want to write
+	volatile uint8_t				    data[TWI_DATA_LENGTH];						// data to be sent or received
 } TWI_Master_Transaction_t;
 
 
@@ -428,14 +435,13 @@ typedef struct TWI_Master {
 	register8_t							bytesTx;									// Number of bytes to be sent
 	register8_t							bytesTxIdx;									// Current transmit position of the data field
 	register8_t							bytesRx;									// Number of bytes received
-	register8_t							bytesRxIdx;									// Current receive position of the data field
 
 	register8_t							status;										// Last status of transaction
 	register8_t							result;										// Last result of transaction
 	volatile bool						abort;										// Strobe to abort
 
-	register8_t							dataTx[TWIS_SEND_BUFFER_SIZE];				// Data to write
-	register8_t							dataRx[TWIS_RECEIVE_BUFFER_SIZE];			// Read data
+	register8_t							dataToSend[TWIS_SEND_BUFFER_SIZE];			// Data to write
+	register8_t							dataReceived[TWIS_RECEIVE_BUFFER_SIZE];		// Read data
 } TWI_Master_t;
 
 
@@ -479,7 +485,9 @@ static inline void twi_master_disable(TWI_Master_t *ifcCtx)
   ifcCtx->ifc->MASTER.CTRLA &= (~TWI_MASTER_ENABLE_bm);
 }
 
-status_code_t twi_master_start_transaction(TWI_Master_t *ifcCtx, TWI_Master_Transaction_t *ta);
+status_code_t twi_master_write(TWI_Master_t *ifcCtx, const TWI_Master_Transaction_t *ta_send   );
+status_code_t twi_master_read (TWI_Master_t *ifcCtx,       TWI_Master_Transaction_t *ta_receive);
+
 
 bool twi2_waitUntilReady(bool retry);
 
