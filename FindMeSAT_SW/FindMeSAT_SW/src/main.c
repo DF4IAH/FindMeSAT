@@ -340,30 +340,48 @@ const char					PM_CALIBRATION_ACCELZ_END[]						= "ACCELZ calibration has ended.
 PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELZ_END[]);
 
 
-#ifdef TWI1_MASTER
-twi_options_t						g_twi1_options	= {
-										.ifc		= &TWI1_MASTER,
-										.speed		= TWI1_SPEED
+twi_options_t g_twi1_options = {
+	.speed     = TWI1_SPEED,
+//	.speed_reg = TWI_BAUD(sysclk_get_cpu_hz(), TWI1_SPEED),
+	.speed_reg = TWI_BAUD((BOARD_XOSC_HZ * CONFIG_PLL0_MUL) / 2, TWI1_SPEED),
+	.chip      = TWI1_MASTER_ADDR
 };
 
-TWI_Master_t						g_twi1_master	= { 0 };
-#endif
-
-#ifdef TWI2_MASTER
-twi_options_t						g_twi2_options	= {
-										.ifc		= &TWI2_MASTER,
-										.speed		= TWI2_SPEED
+uint8_t g_twi1_m_data[TWI_DATA_LENGTH] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
 };
 
-TWI_Master_t						g_twi2_master	= { 0 };
-#endif
+twi_package_t g_twi1_packet = {
+	.buffer      = (void *)g_twi1_m_data,
+	.no_wait     = true
+};
+
+
+twi_options_t g_twi2_options = {
+	.speed     = TWI2_SPEED,
+//	.speed_reg = TWI_BAUD(sysclk_get_cpu_hz(), TWI2_SPEED),
+	.speed_reg = TWI_BAUD((BOARD_XOSC_HZ * CONFIG_PLL0_MUL) / 2, TWI2_SPEED),
+	.chip      = TWI2_MASTER_ADDR
+};
+
+uint8_t g_twi2_m_data[TWI_DATA_LENGTH] = {
+	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+
+twi_package_t g_twi2_packet = {
+	.chip        = TWI2_SLAVE_ADDR,
+	.buffer      = (void *)g_twi2_m_data,
+	.no_wait     = true
+};
 
 #ifdef TWI1_SLAVE
-TWI_Slave_t							g_twi1_slave	= { 0 };
+TWI_Slave_t		g_twi1_slave;
+uint8_t			g_twi1_recv_data[DATA_LENGTH];
 #endif
 
 #ifdef TWI2_SLAVE
-TWI_Slave_t							g_twi2_slave	= { 0 };
+TWI_Slave_t		g_twi2_slave;
+uint8_t			g_twi2_recv_data[DATA_LENGTH];
 #endif
 
 
@@ -1646,7 +1664,7 @@ void shutdown(bool doReset)
 		udc_stop();
 
 		/* Power reduction: disable power of the USB */
-		sysclk_disable_usb();
+		PR_PRPF |= PR_USB_bm;
 	}
 
 	/* Reset the LCD */
@@ -1663,18 +1681,14 @@ void shutdown(bool doReset)
 
 	/* Power off subsystems */
 	{
-		sysclk_disable_peripheral_clock(&TWIC);
-		sysclk_disable_peripheral_clock(&TWIE);
-
-		sysclk_disable_peripheral_clock(&ADCA);
-		sysclk_disable_peripheral_clock(&ADCB);
-
-		sysclk_disable_peripheral_clock(&DACB);
-
-		sysclk_disable_peripheral_clock(&DMA);
-
-		sysclk_disable_peripheral_clock(&RTC32);
-		sysclk_disable_peripheral_clock(&EVSYS);
+		PR_PRPF |= PR_TWI_bm;
+		PR_PRPF |= PR_SPI_bm;
+		PR_PRPF |= PR_AC_bm;
+		PR_PRPF |= PR_ADC_bm;
+		PR_PRPF |= PR_DAC_bm;
+		PR_PRPF |= PR_DMA_bm;
+		PR_PRPF |= PR_RTC_bm;
+		PR_PRPF |= PR_EVSYS_bm;
 	}
 
 	if (doReset) {

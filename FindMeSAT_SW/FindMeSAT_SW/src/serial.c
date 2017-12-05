@@ -589,16 +589,16 @@ void serial_start(void)
 		irqflags_t flags = cpu_irq_save();
 
 		/* Power reduction: enable power of USARTF0 */
-		sysclk_enable_peripheral_clock(&USARTF0);
+		PR_PRPF &= ~PR_USART0_bm;
 
 		/* Baud rate setting */
 		{
 			for (bscale = -7; bscale <= 7; bscale++) {
 				if (bscale < 0) {
-					float bsel_f = ((C_CLOCK_HZ_F / (16.f * (float)C_USART_SERIAL1_BAUDRATE)) - 1.f) / pow(2., (double)bscale);
+					float bsel_f = ((C_CLOCK_MHZ_F / (16.f * (float)C_USART_SERIAL1_BAUDRATE)) - 1.f) / pow(2., (double)bscale);
 					bsel = (uint32_t) (bsel_f + 0.5f);
 				} else {
-					float bsel_f = (C_CLOCK_HZ_F / (pow(2., (double)bscale) * 16.f * (float)C_USART_SERIAL1_BAUDRATE)) - 1.f;
+					float bsel_f = (C_CLOCK_MHZ_F / (pow(2., (double)bscale) * 16.f * (float)C_USART_SERIAL1_BAUDRATE)) - 1.f;
 					bsel = (uint32_t) (bsel_f + 0.5f);
 				}
 
@@ -787,7 +787,7 @@ void serial_shutdown(void)
 	ioport_set_pin_level(GSM_RESET_DRV_GPIO, LOW);
 
 	/* Power reduction: disable power of USARTF0 */
-	sysclk_disable_peripheral_clock(&USARTF0);
+	PR_PRPF |= PR_USART0_bm;
 }
 
 void serial_send_gns_urc(uint8_t val)
