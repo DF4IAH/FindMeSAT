@@ -101,7 +101,6 @@ void serial_sim808_gsm_shutdown(void);
 
 void serial_init(void);
 void serial_start(void);
-void serial_shutdown(void);
 
 void serial_send_gns_urc(uint8_t val);
 bool serial_filter_inStream(const char* buf, uint16_t len);

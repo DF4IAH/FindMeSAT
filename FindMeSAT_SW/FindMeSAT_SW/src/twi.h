@@ -368,8 +368,6 @@
 #define TWI_DATA_LENGTH												TWIS_SEND_BUFFER_SIZE
 
 
-int16_t calc_gyro1_accel_raw2mg(int16_t raw, int16_t factor);
-
 bool twi2_waitUntilReady(bool retry);
 
 void twi2_set_leds(uint8_t leds);
@@ -380,8 +378,6 @@ void twi2_set_beep(uint8_t pitch_10hz, uint8_t len_10ms);
 void twi_init(void);
 void twi_start(void);
 
-bool service_twi1_gyro(bool sync);
-
 void isr_10ms_twi1_onboard(void);
 void isr_100ms_twi1_onboard(void);
 void isr_500ms_twi1_onboard(void);
@@ -390,7 +386,6 @@ void isr_sparetime_twi1_onboard(void);
 status_code_t twi1_gyro_gyro_offset_set(void);
 status_code_t twi1_gyro_accel_offset_set(void);
 void init_twi1_gyro(void);
-void task_twi1_gyro(void);
 // void task_twi1_onboard(void);
 void start_twi2_lcd(void);
 

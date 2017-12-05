@@ -158,41 +158,18 @@ static inline status_code_t twim_acquire(bool no_wait)
  *      - ERR_NO_MEMORY to indicate buffer errors
  *      - ERR_PROTOCOL to indicate an unexpected bus state
  */
-// static inline status_code_t twim_release(void)
-status_code_t twim_release(void)  // TODO: modified by DF4IAH
+static inline status_code_t twim_release(void)
 {
 	/* First wait for the driver event handler to indicate something
 	 * other than a transfer in-progress, then test the bus interface
 	 * for an Idle bus state.
 	 */
+	while (OPERATION_IN_PROGRESS == transfer.status);
 
-	//while (OPERATION_IN_PROGRESS == transfer.status);
-	uint32_t count;
-	for (count = 1000000L; count; count--) {
-		if (OPERATION_IN_PROGRESS != transfer.status) {
-			break;
-		}
-		barrier();
-	}
-	if (!count) {
-		transfer.locked = false;
-		return ERR_BUSY;
-	}
-
-	//while (! twim_idle(transfer.bus)) { barrier(); }
-	//status_code_t const status = transfer.status;
-	for (count = 1000000L; count; count--) {
-		if (twim_idle(transfer.bus)) {
-			break;
-		}
-		barrier();
-	}
-	if (!count) {
-		transfer.locked = false;
-		return ERR_IO_ERROR;
-	}
+	while (! twim_idle(transfer.bus)) { barrier(); }
 
 	status_code_t const status = transfer.status;
+
 	transfer.locked = false;
 
 	return status;

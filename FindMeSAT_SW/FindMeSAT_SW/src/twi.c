@@ -170,7 +170,7 @@ PROGMEM_DECLARE(const char, PM_TWIINIT_ACCEL[]);
 /* Forward declarations */
 
 static void task_twi1_hygro(void);
-//static void task_twi1_gyro(void);
+static void task_twi1_gyro(void);
 static void task_twi1_baro(void);
 static void task_twi2_lcd_template(void);
 
@@ -206,7 +206,8 @@ ISR(TWIC_TWIS_vect) {
 #endif
 
 
-int16_t calc_gyro1_accel_raw2mg(int16_t raw, int16_t factor)
+inline
+static int16_t calc_gyro1_accel_raw2mg(int16_t raw, int16_t factor)
 {
 	return (((1000 * TWI1_SLAVE_GYRO_DTA_1_ACCEL_CONFIG__02G) * (int64_t)raw * (int64_t)factor) / 10000LL) >> 15;
 }
@@ -923,7 +924,7 @@ static bool service_twi1_hygro(bool sync)
 	return false;
 }
 
-bool service_twi1_gyro(bool sync)
+static bool service_twi1_gyro(bool sync)
 {
 	/* Real time usage: abt. 1 ms */
 
@@ -940,7 +941,7 @@ bool service_twi1_gyro(bool sync)
 	g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_1;
 	g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_1_ACCEL_XOUT_H;		// Starting with this address (big endian)
 	g_twi1_packet.addr_length = 1;
-	g_twi1_packet.length = 8;										// Auto incrementation
+	g_twi1_packet.length = 8;											// Auto incrementation
 	status_code_t sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 	if (sc != STATUS_OK) {
 		return false;
@@ -991,7 +992,7 @@ bool service_twi1_gyro(bool sync)
 	g_twi1_packet.chip = TWI1_SLAVE_GYRO_ADDR_2;
 	g_twi1_packet.addr[0] = TWI1_SLAVE_GYRO_REG_2_HX_L;			// Starting with this address (little endian)
 	g_twi1_packet.addr_length = 1;
-	g_twi1_packet.length = 6;									// Auto incrementation
+	g_twi1_packet.length = 6;										// Auto incrementation
 	sc = twi_master_read(&TWI1_MASTER, &g_twi1_packet);
 	if (sc != STATUS_OK) {
 		return false;
@@ -1230,7 +1231,7 @@ static void task_twi1_hygro(void)
 	}
 }
 
-void task_twi1_gyro(void)
+static void task_twi1_gyro(void)
 {	// Calculations for the presentation layer
 	{
 		int16_t l_twi1_gyro_1_accel_x, l_twi1_gyro_1_accel_y, l_twi1_gyro_1_accel_z;
