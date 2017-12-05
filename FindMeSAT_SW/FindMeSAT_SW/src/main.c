@@ -145,7 +145,7 @@ bool						g_gsm_aprs_ip_connected							= false;
 char						g_gsm_cell_lac[C_GSM_CELL_LAC_LEN]				= { 0 };
 char						g_gsm_cell_ci[C_GSM_CELL_CI_LEN]				= { 0 };
 char						g_gsm_login_pwd[C_GSM_PIN_BUF_LEN]				= { 0 };	// EEPROM
-bool						g_gsm_ring										= false;
+uint8_t						g_gsm_ring										= 0;
 
 
 bool						g_twi1_gsm_valid								= false;
@@ -654,7 +654,7 @@ static void init_globals(void)
 
 		g_gsm_aprs_gprs_connected	= false;
 		g_gsm_aprs_ip_connected		= false;
-		g_gsm_ring					= false;
+		g_gsm_ring					= 0;
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__GSM_BF, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
 			g_gsm_enable			= val_ui8 & GSM__ENABLE;
@@ -3131,7 +3131,6 @@ static void task_main_aprs(void)
 			/* APRS messaging started */
 			if (g_gsm_ring &&
 				((l_aprs_alert_last + C_APRS_ALERT_REQ_HOLDOFF_SEC) <= l_now_sec)) {
-				g_gsm_ring = false;
 				l_aprs_alert_reason		= APRS_ALERT_REASON__REQUEST;
 
 			} else if ((l_aprs_alert_last + C_APRS_ALERT_TIME_SEC) <= l_now_sec) {
@@ -3249,14 +3248,17 @@ static void task_main_aprs(void)
 				if (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST) {
 					static uint8_t s_count = 0;
 
-					if (++s_count < 2) {
-						/* Repeat same packet twice */
+					if (++s_count < g_gsm_ring) {
+						/* Repeat that packet as requested number of times */
 						l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N1;
 						l_aprs_alert_last = l_now_sec + C_APRS_ALERT_MESSAGE_DELAY_SEC;
 
 					} else {
 						s_count = 0;
 					}
+
+					/* Reset the RING info */
+					g_gsm_ring = 0;
 				}
 			}
 			break;

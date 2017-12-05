@@ -329,7 +329,7 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			}
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_aprs_ring,		sizeof(PM_IP_CMD_aprs_ring) - 1)) {
-			g_gsm_ring = true;
+			g_gsm_ring = 1;  // Number of repeats of first APRS packet
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_aprs_call,		sizeof(PM_IP_CMD_aprs_call) - 1)) {
 			aprs_call_update(cmdLine_buf + (sizeof(PM_IP_CMD_aprs_call) - 1));

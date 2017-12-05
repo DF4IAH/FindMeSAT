@@ -873,7 +873,7 @@ void serial_send_gns_urc(uint8_t val)
 			}
 
 		} else if (!strncmp_P((char*)buf, PM_TWI1_UTIL_ONBOARD_SIM808_RING_R, sizeof(PM_TWI1_UTIL_ONBOARD_SIM808_RING_R) - 1)) {
-			g_gsm_ring = true;
+			g_gsm_ring = 2;  // Number of repeats of first APRS packet
 		}
 	}
 
