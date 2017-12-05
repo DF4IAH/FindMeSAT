@@ -45,10 +45,12 @@
 
 #define C_USART1_RX_BUF_LEN			512U
 #define C_USART1_RX_BUF_DIFF_OFF	16
-#define C_USART1_RX_BUF_DIFF_ON		32
+#define C_USART1_RX_BUF_DIFF_ON		128
 #define C_USART1_TX_BUF_LEN			128
 
-#define C_USART_SERIAL1_BAUDRATE	9600
+//#define C_USART_SERIAL1_BAUDRATE	9600
+#define C_USART_SERIAL1_BAUDRATE	19200
+//#define C_USART_SERIAL1_BAUDRATE	38400
 #define C_USART_SIM808_RESP_MS		25
 #define C_USART_SIM808_RESP_ITER	80
 
@@ -99,6 +101,7 @@ void serial_sim808_gsm_shutdown(void);
 
 void serial_init(void);
 void serial_start(void);
+void serial_shutdown(void);
 
 void serial_send_gns_urc(uint8_t val);
 bool serial_filter_inStream(const char* buf, uint16_t len);

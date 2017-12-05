@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													124
+#define VERSION_LOW													205
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -318,7 +318,7 @@ void pitchTone_mode(uint8_t mode);
 void qnh_setAuto(void);
 void qnh_setHeightM(int16_t heightM);
 void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf);
-void shutdown(void);
+void shutdown(bool doReset);
 void xoPwm_set(int32_t mode_pwm);
 
 uint32_t tcc1_get_time(void);

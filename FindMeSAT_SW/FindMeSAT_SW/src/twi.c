@@ -70,7 +70,7 @@ const char					PM_TWI1_INIT_HYGRO_01[]				= "\r\nTWI-onboard: Hygro SHT31-DIS - 
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_01[]);
 const char					PM_TWI1_INIT_HYGRO_02[]				= "TWI-onboard: Hygro SHT31-DIS -   address NACK / 'break' bad response\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_02[]);
-const char					PM_TWI1_INIT_HYGRO_03[]				= "TWI-onboard: Hygro SHT31-DIS -   status: 0x%02X\r\n";
+const char					PM_TWI1_INIT_HYGRO_03[]				= "TWI-onboard: Hygro SHT31-DIS -      status: 0x%04X\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_03[]);
 const char					PM_TWI1_INIT_HYGRO_04[]				= "TWI-onboard:  INIT success.\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_04[]);
@@ -79,11 +79,11 @@ PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_05[]);
 const char					PM_TWI1_INIT_ONBOARD_HYGRO_OK[]		= "Init: Hygro success";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_HYGRO_OK[]);
 
-const char					PM_TWI1_INIT_GYRO_01[]				= "\r\nTWI-onboard: Gyro MPU-9250 - I2C address: 0x%02X, 0x%02X\r\n";
+const char					PM_TWI1_INIT_GYRO_01[]				= "\r\nTWI-onboard: Gyro MPU-9250 -   I2C address: 0x%02X, 0x%02X\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_01[]);
-const char					PM_TWI1_INIT_GYRO_02[]				= "TWI-onboard: Gyro MPU-9250   -   'reset 1' bad response\r\n";
+const char					PM_TWI1_INIT_GYRO_02[]				= "TWI-onboard: Gyro MPU-9250 -       'reset 1' bad response\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_02[]);
-const char					PM_TWI1_INIT_GYRO_03[]				= "TWI-onboard: Gyro MPU-9250 -     version: 0x%02X, 0x%02X\r\n";
+const char					PM_TWI1_INIT_GYRO_03[]				= "TWI-onboard: Gyro MPU-9250 -       version: 0x%02X, 0x%02X\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_03[]);
 const char					PM_TWI1_INIT_GYRO_04[]				= "TWI-onboard:  INIT success.\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_04[]);
@@ -92,11 +92,11 @@ PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_05[]);
 const char					PM_TWI1_INIT_ONBOARD_GYRO_OK[]		= "Init: Gyro  success";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_GYRO_OK[]);
 
-const char					PM_TWI1_INIT_BARO_01[]				= "\r\nTWI-onboard: Baro MS560702BA03-50 - I2C address: 0x%02X\r\n";
+const char					PM_TWI1_INIT_BARO_01[]				= "\r\nTWI-onboard: Baro MS560702BA03-50 -  I2C address: 0x%02X\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_01[]);
 const char					PM_TWI1_INIT_BARO_02[]				= "TWI-onboard:  BAD reading serial/CRC word. (sc=%d)\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_02[]);
-const char					PM_TWI1_INIT_BARO_03[]				= "TWI-onboard: Baro MS560702BA03-50 -     serial#: %d\r\n";
+const char					PM_TWI1_INIT_BARO_03[]				= "TWI-onboard: Baro MS560702BA03-50 -      serial#: %d\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_03[]);
 const char					PM_TWI1_INIT_BARO_04[]				= "TWI-onboard:  BAD reading PROM address %d. (sc=%d)\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_04[]);
@@ -236,7 +236,6 @@ static int32_t calc_gyro2_correct_mag_2_nT(int16_t raw, int8_t asa, int16_t fact
 		return (((int32_t)raw * factor * ((int32_t)asa + 128) / 10) - 128) >> 8;
 	}
 }
-
 
 bool twi2_waitUntilReady(bool retry)
 {
@@ -423,6 +422,40 @@ static void init_twi1_hygro(void)
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_HYGRO_05, sc);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+}
+
+void twi1_gyro_get_mean_values(uint8_t iterations, bool isGyro, int32_t *sum_x, int32_t *sum_y, int32_t *sum_z)
+{
+	irqflags_t flags;
+
+	for (uint8_t cnt = iterations; cnt; cnt--) {
+		/* Get new measurements */
+		service_twi1_gyro(true);
+
+		/* Sum registers */
+		if (isGyro) {
+			flags = cpu_irq_save();
+			*sum_x += g_twi1_gyro_1_gyro_x;
+			*sum_y += g_twi1_gyro_1_gyro_y;
+			*sum_z += g_twi1_gyro_1_gyro_z;
+			cpu_irq_restore(flags);
+
+		} else {
+			flags = cpu_irq_save();
+			*sum_x += g_twi1_gyro_1_accel_x;
+			*sum_y += g_twi1_gyro_1_accel_y;
+			*sum_z += g_twi1_gyro_1_accel_z;
+			cpu_irq_restore(flags);
+		}
+
+		/* Delay for new data in the device (update frequency 10 Hz) */
+		delay_ms(100);
+	}
+
+	/* Mean values */
+	*sum_x /= iterations;
+	*sum_y /= iterations;
+	*sum_z /= iterations;
 }
 
 status_code_t twi1_gyro_gyro_offset_set(void)
@@ -756,6 +789,28 @@ static void start_twi1_onboard(void)
 
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_01);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+#if 0 /*HERE*/
+	/* Calibration of TWI1 devices */
+	{
+		irqflags_t flags;
+
+		/* Assuming the board is not rotating during calibration of the GYRO */
+		calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
+
+		flags = cpu_irq_save();
+		if (((-100 < g_twi1_gyro_1_accel_x_mg) && (g_twi1_gyro_1_accel_x_mg <  100)) &&
+		    ((-100 < g_twi1_gyro_1_accel_y_mg) && (g_twi1_gyro_1_accel_y_mg <  100)) &&
+		    (( 900 < g_twi1_gyro_1_accel_z_mg) && (g_twi1_gyro_1_accel_z_mg < 1100))) {
+			/* Do calibrate ACCEL-Z only when board is placed horizontally */
+			cpu_irq_restore(flags);
+			calibration_mode(CALIBRATION_MODE_ENUM__ACCEL_Z);
+
+		} else {
+			cpu_irq_restore(flags);
+		}
+	}
+#endif
 }
 
 /* TWI2 - LCD Port */
@@ -924,7 +979,7 @@ static bool service_twi1_hygro(bool sync)
 	return false;
 }
 
-static bool service_twi1_gyro(bool sync)
+bool service_twi1_gyro(bool sync)
 {
 	/* Real time usage: abt. 1 ms */
 
@@ -1430,17 +1485,15 @@ static void task_twi1_onboard(void)
 #endif
 
 
-#if 0
-static void task_twi2_lcd_reset(void)
+void task_twi2_lcd_reset(void)
 {
 	if (twi2_waitUntilReady(true)) {
-		twi2_packet.addr[0] = TWI_SMART_LCD_CMD_RESET;
-		twi2_packet.length = 0;
-		twi_master_write(&TWI2_MASTER, &twi2_packet);
+		g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_RESET;
+		g_twi2_packet.length = 0;
+		twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 		delay_ms(50);
 	}
 }
-#endif
 
 void task_twi2_lcd_cls(void)
 {

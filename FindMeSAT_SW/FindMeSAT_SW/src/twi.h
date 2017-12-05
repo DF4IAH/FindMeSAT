@@ -378,17 +378,21 @@ void twi2_set_beep(uint8_t pitch_10hz, uint8_t len_10ms);
 void twi_init(void);
 void twi_start(void);
 
+bool service_twi1_gyro(bool sync);
+
 void isr_10ms_twi1_onboard(void);
 void isr_100ms_twi1_onboard(void);
 void isr_500ms_twi1_onboard(void);
 void isr_sparetime_twi1_onboard(void);
 
+void twi1_gyro_get_mean_values(uint8_t iterations, bool isGyro, int32_t *sum_x, int32_t *sum_y, int32_t *sum_z);
 status_code_t twi1_gyro_gyro_offset_set(void);
 status_code_t twi1_gyro_accel_offset_set(void);
 void init_twi1_gyro(void);
 // void task_twi1_onboard(void);
 void start_twi2_lcd(void);
 
+void task_twi2_lcd_reset(void);
 void task_twi2_lcd_cls(void);
 void task_twi2_lcd_pos_xy(uint8_t x, uint8_t y);
 void task_twi2_lcd_str(uint8_t x, uint8_t y, const char* str);

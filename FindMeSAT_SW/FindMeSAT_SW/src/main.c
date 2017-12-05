@@ -145,7 +145,7 @@ bool						g_gsm_aprs_ip_connected							= false;
 char						g_gsm_cell_lac[C_GSM_CELL_LAC_LEN]				= { 0 };
 char						g_gsm_cell_ci[C_GSM_CELL_CI_LEN]				= { 0 };
 char						g_gsm_login_pwd[C_GSM_PIN_BUF_LEN]				= { 0 };	// EEPROM
-bool						g_gsm_ring										= false;
+uint8_t						g_gsm_ring										= 0;
 
 
 bool						g_twi1_gsm_valid								= false;
@@ -206,7 +206,7 @@ volatile int32_t			g_twi1_baro_temp_100							= 0L;
 volatile int32_t			g_twi1_baro_p_100								= 0L;
 
 bool						g_twi1_hygro_valid								= false;
-uint8_t						g_twi1_hygro_status								= 0;
+volatile uint16_t			g_twi1_hygro_status								= 0;
 volatile uint16_t			g_twi1_hygro_S_T								= 0;
 volatile uint16_t			g_twi1_hygro_S_RH								= 0;
 volatile int16_t			g_twi1_hygro_T_100								= 0;
@@ -318,6 +318,26 @@ PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_READY[]);
 
 const char					PM_SIM808_INFO_READY[]							= "SIM808 ser1:  --> READY.\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_READY[]);
+
+const char					PM_TWI1_SHUT_01[]								= "Shutting down ...";
+PROGMEM_DECLARE(const char, PM_TWI1_SHUT_01[]);
+
+const char					PM_CALIBRATION_GYRO_START[]						= "GYRO calibration starts ...\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_GYRO_START[]);
+const char					PM_CALIBRATION_GYRO_END[]						= "GYRO calibration has ended.\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_GYRO_END[]);
+const char					PM_CALIBRATION_ACCELX_START[]					= "ACCELX calibration starts ...\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELX_START[]);
+const char					PM_CALIBRATION_ACCELX_END[]						= "ACCELX calibration has ended.\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELX_END[]);
+const char					PM_CALIBRATION_ACCELY_START[]					= "ACCELY calibration starts ...\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELY_START[]);
+const char					PM_CALIBRATION_ACCELY_END[]						= "ACCELY calibration has ended.\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELY_END[]);
+const char					PM_CALIBRATION_ACCELZ_START[]					= "ACCELZ calibration starts ...\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELZ_START[]);
+const char					PM_CALIBRATION_ACCELZ_END[]						= "ACCELZ calibration has ended.\r\n\r\n";
+PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELZ_END[]);
 
 
 twi_options_t g_twi1_options = {
@@ -634,7 +654,7 @@ static void init_globals(void)
 
 		g_gsm_aprs_gprs_connected	= false;
 		g_gsm_aprs_ip_connected		= false;
-		g_gsm_ring					= false;
+		g_gsm_ring					= 0;
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__GSM_BF, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
 			g_gsm_enable			= val_ui8 & GSM__ENABLE;
@@ -1224,18 +1244,57 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 			{
 				irqflags_t flags = cpu_irq_save();
 
+#ifdef NEW
+				const uint8_t iterations = 8;
+				int32_t l_twi1_gyro_1_gyro_mean_x = 0L, l_twi1_gyro_1_gyro_mean_y = 0L, l_twi1_gyro_1_gyro_mean_z = 0L;
+				int len;
+				irqflags_t flags;
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_GYRO_START);
+				udi_write_tx_buf(g_prepare_buf, len, false);
+
+				twi1_gyro_get_mean_values(iterations, true, &l_twi1_gyro_1_gyro_mean_x, &l_twi1_gyro_1_gyro_mean_y, &l_twi1_gyro_1_gyro_mean_z);
+#endif
+
+#ifndef OLD
 				/* Adjust the settings */
 				g_twi1_gyro_1_gyro_ofsx -= (g_twi1_gyro_1_gyro_x >> 2);
 				g_twi1_gyro_1_gyro_ofsy -= (g_twi1_gyro_1_gyro_y >> 2);
 				g_twi1_gyro_1_gyro_ofsz -= (g_twi1_gyro_1_gyro_z >> 2);
+#endif
 
+#ifdef NEW
+				{
+					flags = cpu_irq_save();
+
+					g_twi1_gyro_1_gyro_ofsx -= (l_twi1_gyro_1_gyro_mean_x >> 2);  // offset value have 1/4th precision
+					g_twi1_gyro_1_gyro_ofsy -= (l_twi1_gyro_1_gyro_mean_y >> 2);
+					g_twi1_gyro_1_gyro_ofsz -= (l_twi1_gyro_1_gyro_mean_z >> 2);
+
+					cpu_irq_restore(flags);
+				}
+#endif
+
+#ifndef OLD
 				/* Update the offset registers in the I2C device */
 				g_twi1_gyro_gyro_offset_set__flag = true;
 
 				cpu_irq_restore(flags);
+#endif
 
 				/* Write back current offset values to the EEPROM */
 				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+
+#ifdef NEW
+				/* Update the offset registers in the I2C device */
+				g_twi1_gyro_gyro_offset_set__flag = true;
+				if (service_twi1_gyro(true)) {
+					sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
+				}
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_GYRO_END);
+				udi_write_tx_buf(g_prepare_buf, len, false);
+#endif
 			}
 		break;
 
@@ -1291,6 +1350,7 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 
 		case CALIBRATION_MODE_ENUM__ACCEL_Z:
 			{
+#ifndef OLD
 				irqflags_t flags = cpu_irq_save();
 
 				/* Adjust Z factor */
@@ -1311,6 +1371,49 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 
 				/* Write back current offset values to the EEPROM */
 				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+#else
+				const uint8_t iterations = 8;
+				int32_t l_twi1_gyro_1_accel_mean_x = 0L, l_twi1_gyro_1_accel_mean_y = 0L, l_twi1_gyro_1_accel_mean_z = 0L;
+				int len;
+				irqflags_t flags;
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELZ_START);
+				udi_write_tx_buf(g_prepare_buf, len, false);
+
+				twi1_gyro_get_mean_values(iterations, false, &l_twi1_gyro_1_accel_mean_x, &l_twi1_gyro_1_accel_mean_y, &l_twi1_gyro_1_accel_mean_z);
+
+				/* Adjust the settings */
+				{
+					flags = cpu_irq_save();
+
+					/* Adjust Z factor */
+					if (g_twi1_gyro_1_accel_z_mg) {
+						int16_t l_twi1_gyro_1_accel_mean_z_mg = calc_gyro1_accel_raw2mg(l_twi1_gyro_1_accel_mean_z, g_twi1_gyro_1_accel_factz);
+						g_twi1_gyro_1_accel_factz = (int16_t) (((int32_t)g_twi1_gyro_1_accel_factz * 1000L) / l_twi1_gyro_1_accel_mean_z_mg);
+
+					} else {
+						g_twi1_gyro_1_accel_factz = C_TWI1_GYRO_1_ACCEL_FACTZ_DEFAULT;
+					}
+
+					/* Adjust X/Y offsets */
+					g_twi1_gyro_1_accel_ofsx -= (l_twi1_gyro_1_accel_mean_x >> 4);
+					g_twi1_gyro_1_accel_ofsy -= (l_twi1_gyro_1_accel_mean_y >> 4);
+
+					cpu_irq_restore(flags);
+				}
+
+				/* Write back current offset values to the EEPROM */
+				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
+
+				/* Update the offset registers in the I2C device */
+				g_twi1_gyro_accel_offset_set__flag = true;
+				if (service_twi1_gyro(true)) {
+					sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
+				}
+
+				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELZ_END);
+				udi_write_tx_buf(g_prepare_buf, len, false);
+#endif
 			}
 		break;
 	}
@@ -1505,17 +1608,69 @@ void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf)
 	save_globals(EEPROM_SAVE_BF__PRINT_STATUS);
 }
 
-void shutdown(void)
+void shutdown(bool doReset)
 {
+	/* Print the information */
+	{
+		task_twi2_lcd_cls();
+		task_twi2_lcd_str(70, 5 * 10, strcpy_P(g_prepare_buf, PM_TWI1_SHUT_01));
+
+		g_workmode = WORKMODE_END;
+	}
+
 	/* Shutdown SIM808 */
 	//if (g_gsm_mode != OFF) {
 	{
 		serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_OFF);
 		serial_sim808_gsm_shutdown();
+		serial_shutdown();
 	}
 
-	/* Stop main loop */
-	halt();
+	/* Terminate the USB connection */
+	{
+		stdio_usb_disable();
+		udc_stop();
+
+		/* Power reduction: disable power of the USB */
+		PR_PRPF |= PR_USB_bm;
+	}
+
+	/* Reset the LCD */
+	{
+		/* Turn LED off */
+		twi2_set_leds(0);
+
+		/* Switch backlight off */
+		twi2_set_ledbl(0, 0);
+
+		/* Short high voltage of LCD */
+		task_twi2_lcd_reset();
+	}
+
+	/* Power off subsystems */
+	{
+		PR_PRPF |= PR_TWI_bm;
+		PR_PRPF |= PR_SPI_bm;
+		PR_PRPF |= PR_AC_bm;
+		PR_PRPF |= PR_ADC_bm;
+		PR_PRPF |= PR_DAC_bm;
+		PR_PRPF |= PR_DMA_bm;
+		PR_PRPF |= PR_RTC_bm;
+		PR_PRPF |= PR_EVSYS_bm;
+	}
+
+	if (doReset) {
+		asm volatile(
+			"jmp 0 \n\t"
+			:
+			:
+			:
+		);
+
+	} else {
+		/* Stop main loop */
+		halt();
+	}
 }
 
 void xoPwm_set(int32_t mode_pwm)
@@ -2326,13 +2481,22 @@ void isr_tcc0_ovfl(void)
 
 uint32_t tcc1_get_time(void)
 {
-	uint64_t now;
+	static uint64_t	last = 0ULL;
+	uint64_t		now;
+	irqflags_t		flags;
+	uint8_t			sureCtr = 0;
 
-	irqflags_t flags = cpu_irq_save();
-	now = g_milliseconds_cnt64;
-	cpu_irq_restore(flags);
+	do {
+		flags = cpu_irq_save();
+		now = g_milliseconds_cnt64;
+		cpu_irq_restore(flags);
 
-	return (uint32_t)now;
+		/* Avoid to return wrong value */
+		if (((now >= last) && ((now - last) < 0x00100000)) || !++sureCtr) {
+			last = now;
+			return (uint32_t)now;
+		}
+	} while(true);
 }
 
 #if 0
@@ -2834,7 +2998,7 @@ static void task_main_pll(void)
 
 static void task_env_calc(void)
 {
-	static uint32_t s_last = 0;
+	static uint32_t s_last = 0UL;
 	uint32_t now = tcc1_get_time();
 
 	/* No more than 2 calculations per sec */
@@ -2967,7 +3131,6 @@ static void task_main_aprs(void)
 			/* APRS messaging started */
 			if (g_gsm_ring &&
 				((l_aprs_alert_last + C_APRS_ALERT_REQ_HOLDOFF_SEC) <= l_now_sec)) {
-				g_gsm_ring = false;
 				l_aprs_alert_reason		= APRS_ALERT_REASON__REQUEST;
 
 			} else if ((l_aprs_alert_last + C_APRS_ALERT_TIME_SEC) <= l_now_sec) {
@@ -3085,14 +3248,17 @@ static void task_main_aprs(void)
 				if (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST) {
 					static uint8_t s_count = 0;
 
-					if (++s_count < 2) {
-						/* Repeat same packet twice */
+					if (++s_count < g_gsm_ring) {
+						/* Repeat that packet as requested number of times */
 						l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N1;
 						l_aprs_alert_last = l_now_sec + C_APRS_ALERT_MESSAGE_DELAY_SEC;
 
 					} else {
 						s_count = 0;
 					}
+
+					/* Reset the RING info */
+					g_gsm_ring = 0;
 				}
 			}
 			break;
@@ -3324,10 +3490,6 @@ int main(void)
 	/* LED green */
 	twi2_set_leds(0x02);
 
-	/* Calibration of TWI1 devices */
-	calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
-	calibration_mode(CALIBRATION_MODE_ENUM__ACCEL_Z);
-
 	/* Show help page of command set */
 	printHelp();
 
@@ -3337,7 +3499,7 @@ int main(void)
 	/* The application code */
 	g_twi2_lcd_repaint = true;
 	g_workmode = WORKMODE_RUN;
-    while (g_workmode) {
+    while (g_workmode == WORKMODE_RUN) {
 		/* Process all user space tasks */
 		task();
 

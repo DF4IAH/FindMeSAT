@@ -41,16 +41,17 @@ const char					PM_HELP__HASH_1[]						= "#\t\tany text is transfered to the SIM8
 const char					PM_HELP_ADC_1[]							= "adc=\t\t0: turn ADCA and ADCB off, ";
 const char					PM_HELP_ADC_2[]							=	"1: turn ADCA and ADCB on.\r\n";
 const char					PM_HELP_APRS_1[]						= "aprs=\t\t0: OFF, 1: ON.\r\n";
-const char					PM_HELP_APRS_2[]						=	"\t\tcall=<str>: callsign.\r\n";
-const char					PM_HELP_APRS_3[]						=	"\t\tssid=[-]0-15: SSID.\r\n";
-const char					PM_HELP_APRS_4[]						=	"\t\ts_name=<str>: APRS Service name.\r\n";
-const char					PM_HELP_APRS_5[]						=	"\t\ts_user=<str>: APRS Service user login.\r\n";
-const char					PM_HELP_APRS_6[]						=	"\t\ts_pwd=<str>: APRS Service password.\r\n";
-const char					PM_HELP_APRS_7[]						=	"\t\tip_proto=<str>: APRS IP protocol (TCP, UDP).\r\n";
-const char					PM_HELP_APRS_8[]						=	"\t\tip_name=<str>: APRS IP host name.\r\n";
-const char					PM_HELP_APRS_9[]						=	"\t\tip_port=0-65535: APRS IP port.\r\n";
-const char					PM_HELP_APRS_10[]						=	"\t\th_user=<str>: APRS Host user login.\r\n";
-const char					PM_HELP_APRS_11[]						=	"\t\th_pwd=<str>: APRS Host password.\r\n";
+const char					PM_HELP_APRS_2[]						=	"\t\tring: Simulate RING and do APRS messaging.\r\n";
+const char					PM_HELP_APRS_3[]						=	"\t\tcall=<str>: callsign.\r\n";
+const char					PM_HELP_APRS_4[]						=	"\t\tssid=[-]0-15: SSID.\r\n";
+const char					PM_HELP_APRS_5[]						=	"\t\ts_name=<str>: APRS Service name.\r\n";
+const char					PM_HELP_APRS_6[]						=	"\t\ts_user=<str>: APRS Service user login.\r\n";
+const char					PM_HELP_APRS_7[]						=	"\t\ts_pwd=<str>: APRS Service password.\r\n";
+const char					PM_HELP_APRS_8[]						=	"\t\tip_proto=<str>: APRS IP protocol (TCP, UDP).\r\n";
+const char					PM_HELP_APRS_9[]						=	"\t\tip_name=<str>: APRS IP host name.\r\n";
+const char					PM_HELP_APRS_10[]						=	"\t\tip_port=0-65535: APRS IP port.\r\n";
+const char					PM_HELP_APRS_11[]						=	"\t\th_user=<str>: APRS Host user login.\r\n";
+const char					PM_HELP_APRS_12[]						=	"\t\th_pwd=<str>: APRS Host password.\r\n";
 const char					PM_HELP_AT_1[]							= "AT\t\tCMD to send to the SIM808.\r\n";
 const char					PM_HELP_BIAS_1[]						= "bias=\t\t0-63: bias voltage ";
 const char					PM_HELP_BIAS_2[]						=	"for LCD contrast.\r\n";
@@ -105,6 +106,7 @@ PROGMEM_DECLARE(const char, PM_HELP_APRS_8[]);
 PROGMEM_DECLARE(const char, PM_HELP_APRS_9[]);
 PROGMEM_DECLARE(const char, PM_HELP_APRS_10[]);
 PROGMEM_DECLARE(const char, PM_HELP_APRS_11[]);
+PROGMEM_DECLARE(const char, PM_HELP_APRS_12[]);
 PROGMEM_DECLARE(const char, PM_HELP_AT_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_BIAS_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_BIAS_2[]);
@@ -167,6 +169,7 @@ void printHelp(void)
 	udi_write_tx_msg_P(PM_HELP_APRS_9);
 	udi_write_tx_msg_P(PM_HELP_APRS_10);
 	udi_write_tx_msg_P(PM_HELP_APRS_11);
+	udi_write_tx_msg_P(PM_HELP_APRS_12);
 
 	udi_write_tx_msg_P(PM_HELP_AT_1);
 
@@ -233,6 +236,7 @@ void printHelp(void)
 
 const char					PM_IP_CMD_adc[]							= "adc=";
 const char					PM_IP_CMD_aprs_num[]					= "aprs=";
+const char					PM_IP_CMD_aprs_ring[]					= "aprs=ring";
 const char					PM_IP_CMD_aprs_call[]					= "aprs=call=";
 const char					PM_IP_CMD_aprs_ssid[]					= "aprs=ssid=";
 const char					PM_IP_CMD_aprs_link_name[]				= "aprs=s_name=";
@@ -271,6 +275,7 @@ const char					PM_IP_CMD_xo[]							= "xo=";
 const char					PM_UNKNOWN_01[]							= "\r\n??? unknown command - for assistance enter  help\r\n";
 PROGMEM_DECLARE(const char, PM_IP_CMD_adc[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_num[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_ring[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_call[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_ssid[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_link_name[]);
@@ -308,6 +313,7 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_shut[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_xo[]);
 PROGMEM_DECLARE(const char, PM_UNKNOWN_01[]);
 
+
 static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 {
 	/* Process command */
@@ -321,6 +327,9 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_adc) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
 				adc_app_enable(val[0] != 0);
 			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_aprs_ring,		sizeof(PM_IP_CMD_aprs_ring) - 1)) {
+			g_gsm_ring = 1;  // Number of repeats of first APRS packet
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_aprs_call,		sizeof(PM_IP_CMD_aprs_call) - 1)) {
 			aprs_call_update(cmdLine_buf + (sizeof(PM_IP_CMD_aprs_call) - 1));
@@ -466,29 +475,12 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			int val[1] = { 0 };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_reset) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
 				if (val[0] == 1) {
-					/* Stop the GSM connection */
-					{
-						serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_OFF);
-						serial_sim808_gsm_shutdown();
-					}
-
-					/* Terminate the USB connection */
-					{
-						stdio_usb_disable();
-						udc_stop();
-					}
-
-					asm volatile(
-						"jmp 0 \n\t"
-						:
-						:
-						:
-					);
+					shutdown(true);
 				}
 			}
 
 		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_shut,		sizeof(PM_IP_CMD_shut) - 1)) {
-			shutdown();
+			shutdown(false);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_xo,				sizeof(PM_IP_CMD_xo) - 1)) {
 			long val[1] = { 0 };
