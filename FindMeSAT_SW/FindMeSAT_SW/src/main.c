@@ -1242,28 +1242,17 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 
 		case CALIBRATION_MODE_ENUM__GYRO:
 			{
-				irqflags_t flags = cpu_irq_save();
-
-#ifdef NEW
-				const uint8_t iterations = 8;
-				int32_t l_twi1_gyro_1_gyro_mean_x = 0L, l_twi1_gyro_1_gyro_mean_y = 0L, l_twi1_gyro_1_gyro_mean_z = 0L;
-				int len;
-				irqflags_t flags;
+				const uint8_t	iterations = 8;
+				int32_t			l_twi1_gyro_1_gyro_mean_x = 0L, l_twi1_gyro_1_gyro_mean_y = 0L, l_twi1_gyro_1_gyro_mean_z = 0L;
+				irqflags_t		flags;
+				int				len;
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_GYRO_START);
 				udi_write_tx_buf(g_prepare_buf, len, false);
 
 				twi1_gyro_get_mean_values(iterations, true, &l_twi1_gyro_1_gyro_mean_x, &l_twi1_gyro_1_gyro_mean_y, &l_twi1_gyro_1_gyro_mean_z);
-#endif
 
-#ifndef OLD
 				/* Adjust the settings */
-				g_twi1_gyro_1_gyro_ofsx -= (g_twi1_gyro_1_gyro_x >> 2);
-				g_twi1_gyro_1_gyro_ofsy -= (g_twi1_gyro_1_gyro_y >> 2);
-				g_twi1_gyro_1_gyro_ofsz -= (g_twi1_gyro_1_gyro_z >> 2);
-#endif
-
-#ifdef NEW
 				{
 					flags = cpu_irq_save();
 
@@ -1273,28 +1262,19 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 
 					cpu_irq_restore(flags);
 				}
-#endif
-
-#ifndef OLD
-				/* Update the offset registers in the I2C device */
-				g_twi1_gyro_gyro_offset_set__flag = true;
-
-				cpu_irq_restore(flags);
-#endif
 
 				/* Write back current offset values to the EEPROM */
 				save_globals(EEPROM_SAVE_BF__9AXIS_OFFSETS);
 
-#ifdef NEW
 				/* Update the offset registers in the I2C device */
 				g_twi1_gyro_gyro_offset_set__flag = true;
+
 				if (service_twi1_gyro(true)) {
 					sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
 				}
 
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_GYRO_END);
 				udi_write_tx_buf(g_prepare_buf, len, false);
-#endif
 			}
 		break;
 
