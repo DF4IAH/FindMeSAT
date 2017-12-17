@@ -171,7 +171,7 @@ uint16_t isr_dma_uart_rx_ch2_switch(void)
 	volatile uint16_t trfcnt = DMA_CH2_TRFCNT;
 
 	ret = g_usart1_rx_dma_buf_cnt[idx] = C_USART1_RX_DMA_LEN - trfcnt;
-	if (ret) {
+	if (ret && g_usart1_rx_dma_buf[idx][0]) {
 		/* switch over to alternate buffer */
 		g_usart1_rx_dma_buf_alt = !g_usart1_rx_dma_buf_alt;
 		idx = g_usart1_rx_dma_buf_alt ?  1 : 0;
@@ -1112,7 +1112,14 @@ void task_serial(void /*uint32_t now*/)
 		}
 	}
 
-	while (g_usart1_rx_isr_ready) {
+	while (g_usart1_rx_dma_ready || g_usart1_rx_isr_ready) {
+		/* Move serial data from DMA buffers to target buffer */
+		if (g_usart1_rx_dma_ready) {
+			irqflags_t flags = cpu_irq_save();
+			g_usart1_rx_idx += moveSerialDMA2Target(&(g_usart1_rx_buf[g_usart1_rx_idx]), C_USART1_RX_BUF_LEN - g_usart1_rx_idx);
+			cpu_irq_restore(flags);
+		}
+
 		/* Find delimiter as line end indicator - IRQ allowed */
 		{
 			const char* p = strchr(g_usart1_rx_buf, '\n');	// g_usart1_rx_buf has to be 0 terminated
