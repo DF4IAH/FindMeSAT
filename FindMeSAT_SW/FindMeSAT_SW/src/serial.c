@@ -139,9 +139,62 @@ PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_RING_R[]);
 
 /* ISR routines */
 
+/* DMA_CH2 - Complete */
+//ISR(DMA_CH2_vect, ISR_BLOCK)
+void isr_dma_uart_rx_ch2(enum dma_channel_status status)
+{
+	/* This callback is called only when the buffer overflows */
+
+	ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_HIGH);
+
+	/* Switch over to alternating buffer */
+	(void) isr_dma_uart_rx_ch2_switch();
+};
+
+void isr_100ms_usart1_rx_dma(void)
+{
+	if (dma_channel_is_enabled(DMA_CHANNEL_UART_CH2)) {
+		/* Swap the target buffer when data has been captured */
+		isr_dma_uart_rx_ch2_switch();
+	}
+}
+
+uint16_t isr_dma_uart_rx_ch2_switch(void)
+{
+	uint16_t ret;
+	uint8_t idx = g_usart1_rx_dma_buf_alt ?  1 : 0;
+
+	/* Disable channel */
+	dma_channel_disable(DMA_CHANNEL_UART_CH2);
+
+	/* Calculate length of data received */
+	volatile uint16_t trfcnt = DMA_CH2_TRFCNT;
+
+	ret = g_usart1_rx_dma_buf_cnt[idx] = C_USART1_RX_DMA_LEN - trfcnt;
+	if (ret) {
+		/* switch over to alternate buffer */
+		g_usart1_rx_dma_buf_alt = !g_usart1_rx_dma_buf_alt;
+		idx = g_usart1_rx_dma_buf_alt ?  1 : 0;
+		dma_channel_set_destination_address(&g_usart1_rx_dma_conf,	(uint16_t)(uintptr_t) &g_usart1_rx_dma_buf[idx][0]);
+		dma_channel_write_config(DMA_CHANNEL_UART_CH2, &g_usart1_rx_dma_conf);
+
+		/* Input string ready to read */
+		g_usart1_rx_dma_ready = true;
+	}
+
+	/* Activate again */
+	dma_channel_enable(DMA_CHANNEL_UART_CH2);
+
+	return ret;
+}
+
 /* USART, RX - Complete */
 ISR(USARTF0_RXC_vect, ISR_BLOCK)
 {
+	nop();
+	//dma_channel_trigger_block_transfer(DMA_CHANNEL_UART_CH2);
+
+#if 0
 	uint8_t ser1_rxd = USARTF0_DATA;
 
 	if (g_usart1_rx_idx < (C_USART1_RX_BUF_LEN - 1)) {
@@ -155,7 +208,8 @@ ISR(USARTF0_RXC_vect, ISR_BLOCK)
 	}
 
 	/* Input string ready to read */
-	g_usart1_rx_ready = true;
+	g_usart1_rx_isr_ready = true;
+#endif
 }
 
 /* USART, TX - Complete */
@@ -582,7 +636,7 @@ void serial_start(void)
 {
 	uint16_t loop_ctr = 0;
 	uint8_t  line = 7;
-	uint8_t ctrl_a, ctrl_b;
+	uint8_t  ctrl_a, ctrl_b;
 
 	/* Init and start of the ASF USART service/device */
 	{
@@ -620,12 +674,19 @@ void serial_start(void)
 		USARTF0_CTRLC = USART_CMODE_ASYNCHRONOUS_gc | USART_PMODE_DISABLED_gc | USART_CHSIZE_8BIT_gc;
 
 		/* ISR interrupt levels */
-		USARTF0_CTRLA = USART_RXCINTLVL_MED_gc | USART_TXCINTLVL_LO_gc | USART_DREINTLVL_OFF_gc;
+		//USARTF0_CTRLA = USART_RXCINTLVL_MED_gc | USART_TXCINTLVL_LO_gc | USART_DREINTLVL_OFF_gc;
+		USARTF0_CTRLA = USART_TXCINTLVL_LO_gc | USART_DREINTLVL_OFF_gc;
 
 		/* RX and TX enable */
 		USARTF0_CTRLB = USART_RXEN_bm | USART_TXEN_bm;
 
 		cpu_irq_restore(flags);
+	}
+
+	/* Activate DMA */
+	{
+		dma_channel_usart_rx_start();
+		dma_channel_enable(DMA_CHANNEL_UART_CH2);
 	}
 
 	/* Inform about to start the SIM808 - LCD */
@@ -650,14 +711,21 @@ void serial_start(void)
 	while (true) {
 		serial_sim808_send("AT\r", 3, false);
 		delay_ms(100);
-		if (g_usart1_rx_ready) {
+		if (g_usart1_rx_dma_ready || g_usart1_rx_isr_ready) {
+			/* Move serial data from DMA buffers to target buffer */
+			if (g_usart1_rx_dma_ready) {
+				irqflags_t flags = cpu_irq_save();
+				g_usart1_rx_idx += moveSerialDMA2Target(&(g_usart1_rx_buf[g_usart1_rx_idx]), C_USART1_RX_BUF_LEN - g_usart1_rx_idx);
+				cpu_irq_restore(flags);
+			}
+
 			{
 				irqflags_t flags = cpu_irq_save();
 				for (int16_t idx = g_usart1_rx_idx - 1; idx >= 0; --idx) {
 					g_prepare_buf[idx] = g_usart1_rx_buf[idx];
 				}
 				g_usart1_rx_idx = 0;
-				g_usart1_rx_ready = false;
+				g_usart1_rx_isr_ready = false;
 				cpu_irq_restore(flags);
 			}
 
@@ -1044,7 +1112,7 @@ void task_serial(void /*uint32_t now*/)
 		}
 	}
 
-	while (g_usart1_rx_ready) {
+	while (g_usart1_rx_isr_ready) {
 		/* Find delimiter as line end indicator - IRQ allowed */
 		{
 			const char* p = strchr(g_usart1_rx_buf, '\n');	// g_usart1_rx_buf has to be 0 terminated
@@ -1091,7 +1159,7 @@ void task_serial(void /*uint32_t now*/)
 			/* Adjust index or reset buffer when stuck */
 			if (g_usart1_rx_idx <= len_out) {
 				g_usart1_rx_idx		= 0;
-				g_usart1_rx_ready	= false;
+				g_usart1_rx_isr_ready	= false;
 
 			} else {
 				g_usart1_rx_idx	   -= len_out;

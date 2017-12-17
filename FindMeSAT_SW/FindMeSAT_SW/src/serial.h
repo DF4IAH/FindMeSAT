@@ -43,10 +43,11 @@
 #define SERIAL_H_
 
 
-#define C_USART1_RX_BUF_LEN			512U
+#define C_USART1_RX_DMA_LEN			512U
+#define C_USART1_RX_BUF_LEN			1024U
 #define C_USART1_RX_BUF_DIFF_OFF	16
 #define C_USART1_RX_BUF_DIFF_ON		128
-#define C_USART1_TX_BUF_LEN			128
+#define C_USART1_TX_BUF_LEN			128U
 
 //#define C_USART_SERIAL1_BAUDRATE	9600
 #define C_USART_SERIAL1_BAUDRATE	19200
@@ -85,6 +86,10 @@ typedef enum C_SERIAL_SIM808_GSM_SETFUNC_ENUM {
 	C_SERIAL_SIM808_GSM_SETFUNC_ON,
 } C_SERIAL_SIM808_GSM_SETFUNC_ENUM_t;
 
+
+void isr_dma_uart_rx_ch2(enum dma_channel_status status);
+void isr_100ms_usart1_rx_dma(void);
+uint16_t isr_dma_uart_rx_ch2_switch(void);
 
 void serial_sim808_send(const char* msg, uint8_t len, bool doWait);
 bool serial_sim808_sendAndResponse(const char* msg, uint8_t len);

@@ -95,7 +95,12 @@ extern bool							g_usb_cdc_access_blocked;
 extern WORKMODE_ENUM_t				g_workmode;
 
 extern uint8_t						g_usart_gprs_auto_response_state;
-extern bool							g_usart1_rx_ready;
+extern struct dma_channel_config	g_usart1_rx_dma_conf;
+extern bool							g_usart1_rx_dma_buf_alt;
+extern uint16_t						g_usart1_rx_dma_buf_cnt[2];
+extern char							g_usart1_rx_dma_buf[2][C_USART1_RX_DMA_LEN];
+extern bool							g_usart1_rx_dma_ready;
+extern bool							g_usart1_rx_isr_ready;
 extern bool							g_usart1_rx_OK;
 extern uint16_t						g_usart1_rx_idx;
 extern char							g_usart1_rx_buf[C_USART1_RX_BUF_LEN];

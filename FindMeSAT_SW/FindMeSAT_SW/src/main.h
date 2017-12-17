@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												171
-#define VERSION_LOW													206
+#define VERSION_LOW													217
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -133,8 +133,9 @@ typedef enum ADC_CH0_SCAN_ENUM {
 } ADC_CH0_SCAN_ENUM_t;
 
 typedef enum DMA_CHANNEL_ENUM {
-	DMA_CHANNEL_DACB_CH0_A = 0,
-	DMA_CHANNEL_DACB_CH0_B,
+	DMA_CHANNEL_DACB_CH01_A = 0,
+	DMA_CHANNEL_DACB_CH01_B,
+	DMA_CHANNEL_UART_CH2,
 } DMA_CHANNEL_ENUM_t;
 
 typedef enum GSM_BF_ENUM {
@@ -291,6 +292,7 @@ int myStringToFloat(const char* ptr, float* out);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
 char* ipProto_2_ca(uint8_t aprs_ip_proto);
 char* copyStr(char* target, uint8_t targetSize, const char* source);
+uint16_t moveSerialDMA2Target(char* target, uint16_t maxlen);
 void adc_app_enable(bool enable);
 void aprs_num_update(uint8_t mode);
 void aprs_link_service_update(const char service[]);
@@ -346,6 +348,7 @@ void isr_tcc1_ovfl(void);
 void isr_rtc_alarm(uint32_t rtc_time);
 void isr_adc_a(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
 void isr_adc_b(ADC_t* adc, uint8_t ch_mask, adc_result_t res);
+void dma_channel_usart_rx_start(void);
 
 int main(void);
 
