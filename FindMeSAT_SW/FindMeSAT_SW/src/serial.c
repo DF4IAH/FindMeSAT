@@ -145,6 +145,8 @@ void isr_dma_uart_rx_ch2(enum dma_channel_status status)
 {
 	/* This callback is called only when the buffer overflows */
 
+	ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_HIGH);
+
 	/* Switch over to alternating buffer */
 	(void) isr_dma_uart_rx_ch2_switch();
 };
@@ -162,10 +164,6 @@ uint16_t isr_dma_uart_rx_ch2_switch(void)
 	uint16_t ret;
 	uint8_t idx = g_usart1_rx_dma_buf_alt ?  1 : 0;
 
-	/* Handshake STOP */
-	ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_HIGH);
-	delay_ms(1);
-
 	/* Disable channel */
 	dma_channel_disable(DMA_CHANNEL_UART_CH2);
 
@@ -173,7 +171,7 @@ uint16_t isr_dma_uart_rx_ch2_switch(void)
 	volatile uint16_t trfcnt = DMA_CH2_TRFCNT;
 
 	ret = g_usart1_rx_dma_buf_cnt[idx] = C_USART1_RX_DMA_LEN - trfcnt;
-	if (ret) {
+	if (ret && g_usart1_rx_dma_buf[idx][0]) {
 		/* switch over to alternate buffer */
 		g_usart1_rx_dma_buf_alt = !g_usart1_rx_dma_buf_alt;
 		idx = g_usart1_rx_dma_buf_alt ?  1 : 0;
@@ -188,22 +186,15 @@ uint16_t isr_dma_uart_rx_ch2_switch(void)
 	/* Activate again */
 	dma_channel_enable(DMA_CHANNEL_UART_CH2);
 
-	/* Check if serial buffer is filled, then fire single-shot DMA */
-	if (USARTF0_STATUS & USART_RXCIF_bm) {
-		dma_channel_trigger_block_transfer(DMA_CHANNEL_UART_CH2);
-	}
-
-	if ((ret + g_usart1_rx_idx) < (C_USART1_RX_BUF_LEN - C_USART1_RX_BUF_DIFF_ON)) {
-		/* Handshake START */
-		ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_LOW);
-	}
+	/* Allow SIM808 to send data */
+	ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_LOW);
 
 	return ret;
 }
 
 /* USART, RX - Complete */
 ISR(USARTF0_RXC_vect, ISR_BLOCK)
-{  // NOT IN USE - DMA IN USE INSTEAD
+{
 	//dma_channel_trigger_block_transfer(DMA_CHANNEL_UART_CH2);
 	uint8_t ser1_rxd = USARTF0_DATA;
 
@@ -1110,24 +1101,24 @@ void task_serial(void /*uint32_t now*/)
 		cpu_irq_restore(flags);
 	}
 
-	do {
+	/* Handshaking MPU --> SIM808, START data - IRQ disabled */
+	{
+		irqflags_t flags = cpu_irq_save();
+		uint16_t l_usart1_rx_idx = g_usart1_rx_idx;
+		cpu_irq_restore(flags);
+
+		if (l_usart1_rx_idx < (C_USART1_RX_BUF_LEN - C_USART1_RX_BUF_DIFF_ON)) {
+			ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_LOW);
+		}
+	}
+
+	while (g_usart1_rx_dma_ready || g_usart1_rx_isr_ready) {
 		/* Move serial data from DMA buffers to target buffer */
 		if (g_usart1_rx_dma_ready) {
 			irqflags_t flags = cpu_irq_save();
-
-			char* begPtr = &(g_usart1_rx_buf[g_usart1_rx_idx]);
-			uint16_t len = moveSerialDMA2Target(begPtr, C_USART1_RX_BUF_LEN - g_usart1_rx_idx);
-			g_usart1_rx_buf[g_usart1_rx_idx + len]		= '#';
-			g_usart1_rx_buf[g_usart1_rx_idx + len + 1]	= 0;
-			g_usart1_rx_idx += len;
-
-			/* Flag for new data moved */
+			g_usart1_rx_idx += moveSerialDMA2Target(&(g_usart1_rx_buf[g_usart1_rx_idx]), C_USART1_RX_BUF_LEN - g_usart1_rx_idx);
 			g_usart1_rx_dma_ready = false;
-			g_usart1_rx_isr_ready = true;
-
 			cpu_irq_restore(flags);
-
-			udi_write_serial_line(begPtr, len + 1);
 		}
 
 		/* Find delimiter as line end indicator - IRQ allowed */
@@ -1136,11 +1127,11 @@ void task_serial(void /*uint32_t now*/)
 			if (p) {
 				len_out = 1 + (p - g_usart1_rx_buf);
 
-			} else if (g_usart1_rx_idx >= (C_USART1_RX_BUF_LEN - C_USART1_RX_BUF_DIFF_OFF)) {
+			} else if (g_usart1_rx_idx >= (C_USART1_RX_BUF_LEN - C_USART1_RX_BUF_DIFF_ON)) {
 				len_out = C_USART1_RX_BUF_LEN;	// indicates to flush the read buffer
 
 			} else {
-				return;  // not complete yet
+				return;	// not complete yet
 			}
 		}
 
@@ -1153,7 +1144,7 @@ void task_serial(void /*uint32_t now*/)
 
 			/* Copy chunk of data to USB_CDC */
 			if (!l_doNotPrint && (!s_doNotPrint || (len_out > 3)) && g_usb_cdc_printStatusLines_sim808) {
-				//udi_write_serial_line(g_usart1_rx_buf, len_out);
+				udi_write_serial_line(g_usart1_rx_buf, len_out);
 			}
 
 			/* Store last line state */
@@ -1175,11 +1166,11 @@ void task_serial(void /*uint32_t now*/)
 
 			/* Adjust index or reset buffer when stuck */
 			if (g_usart1_rx_idx <= len_out) {
-				g_usart1_rx_idx			= 0;
+				g_usart1_rx_idx		= 0;
 				g_usart1_rx_isr_ready	= false;
 
 			} else {
-				g_usart1_rx_idx		   -= len_out;
+				g_usart1_rx_idx	   -= len_out;
 			}
 
 			/* Clean operation (for debugging) */
@@ -1192,7 +1183,7 @@ void task_serial(void /*uint32_t now*/)
 		}
 
 		/* Handshaking, START data - IRQ disabled */
-		if (ioport_get_pin_level(GSM_RTS1_DRV_GPIO) == IOPORT_PIN_LEVEL_HIGH) {
+		{
 			irqflags_t flags = cpu_irq_save();
 			uint16_t l_usart1_rx_idx = g_usart1_rx_idx;
 			cpu_irq_restore(flags);
@@ -1201,5 +1192,5 @@ void task_serial(void /*uint32_t now*/)
 				ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_LOW);
 			}
 		}
-	} while (g_usart1_rx_dma_ready || g_usart1_rx_isr_ready);
+	}
 }
