@@ -131,12 +131,7 @@ bool						g_usb_cdc_access_blocked						= false;
 WORKMODE_ENUM_t				g_workmode										= WORKMODE_OFF;
 
 uint8_t						g_usart_gprs_auto_response_state				= 0;
-struct dma_channel_config	g_usart1_rx_dma_conf							= { 0 };
-bool						g_usart1_rx_dma_buf_alt							= false;
-uint16_t					g_usart1_rx_dma_buf_cnt[2]						= { 0 };
-char						g_usart1_rx_dma_buf[2][C_USART1_RX_DMA_LEN]		= { 0 };
-bool						g_usart1_rx_dma_ready							= false;
-bool						g_usart1_rx_isr_ready							= false;
+bool						g_usart1_rx_ready								= false;
 bool						g_usart1_rx_OK									= false;
 uint16_t					g_usart1_rx_idx									= 0;
 char						g_usart1_rx_buf[C_USART1_RX_BUF_LEN]			= { 0 };
@@ -426,9 +421,9 @@ static void isr_500ms(void);
 static void isr_sparetime(void);
 
 static void dma_init(void);
-static void dma_channel_dac_start(void);
-static void isr_dma_dac_ch01_A(enum dma_channel_status status);
-static void isr_dma_dac_ch01_B(enum dma_channel_status status);
+static void dma_start(void);
+static void isr_dma_dac_ch0_A(enum dma_channel_status status);
+static void isr_dma_dac_ch0_B(enum dma_channel_status status);
 
 static void task_dac(uint32_t now);
 static void task_adc(uint32_t now);
@@ -463,19 +458,10 @@ static void init_globals(void)
 
 	/* USART */
 	{
-		g_usart_gprs_auto_response_state	= 0;
-		memset(&g_usart1_rx_dma_conf, 0, sizeof(g_usart1_rx_dma_conf));
-		g_usart1_rx_dma_buf_alt				= false;
-		g_usart1_rx_dma_buf_cnt[0]			= 0;
-		g_usart1_rx_dma_buf_cnt[1]			= 0;
-		memset(g_usart1_rx_dma_buf, 0, 2 * C_USART1_RX_DMA_LEN);
-		g_usart1_rx_dma_ready				= false;
-		g_usart1_rx_isr_ready				= false;
+		g_usart1_rx_ready					= false;
 		g_usart1_rx_OK						= false;
 		g_usart1_rx_idx						= 0;
-		memset(g_usart1_rx_buf, 0, C_USART1_RX_BUF_LEN);
 		g_usart1_tx_len						= 0;
-		memset(g_usart1_tx_buf, 0, C_USART1_TX_BUF_LEN);
 	}
 
 	/* GNS */
@@ -1053,44 +1039,6 @@ char* copyStr(char* target, uint8_t targetSize, const char* source)
 	}
 	return target;
 }
-
-uint16_t moveSerialDMA2Target(char* target, uint16_t maxlen)
-{
-	uint16_t len = 0;
-
-	if (!target || maxlen <= 1) {
-		return len;
-	}
-
-	/* Turn off UART RX DMA */
-	dma_channel_disable(DMA_CHANNEL_UART_CH2);
-
-	/* Check each RX DMA buffer */
-	for (uint8_t idx = 0; idx < 2; idx++) {
-		const uint16_t srcLen = g_usart1_rx_dma_buf_cnt[idx];
-
-		/* Source buffer is filled */
-		if (srcLen) {
-			const uint16_t cnt = min(--maxlen, srcLen);
-			memcpy(target, g_usart1_rx_dma_buf[idx], cnt);
-			*(target + cnt + 1) = 0;
-			len += cnt;
-
-			/* Wipe source buffer */
-			memset(&(g_usart1_rx_dma_buf[idx][0]), 0, C_USART1_RX_DMA_LEN);
-		}
-	}
-
-	/* Turn on UART RX DMA */
-	dma_channel_enable(DMA_CHANNEL_UART_CH2);
-
-	/* Check if serial buffer is filled, then fire single-shot DMA */
-	if (USARTF0_STATUS & USART_RXCIF_bm) {
-		dma_channel_trigger_block_transfer(DMA_CHANNEL_UART_CH2);
-	}
-
-	return len;
-};
 
 
 void adc_app_enable(bool enable)
@@ -2523,30 +2471,32 @@ void isr_tcc0_ovfl(void)
 	/* Clear IF bit to allow interrupt enabled section */
 	TCC0_INTFLAGS = TC0_OVFIF_bm;
 
+	if (g_workmode == WORKMODE_RUN) {
 #if 0
-	/* Group, which needs to be called about 100x per second */
-	if (((now - last_10ms) >= 10) || (now < last_10ms)) {
-		last_10ms = now;
-		isr_10ms();
-		return;
-	}
+		/* Group, which needs to be called about 100x per second */
+		if (((now - last_10ms) >= 10) || (now < last_10ms)) {
+			last_10ms = now;
+			isr_10ms();
+			return;
+		}
 #endif
 
-	/* Group, which needs to be called about 10x per second */
-	if (((now - last_100ms) >= 102) || (now < last_100ms)) {
-		last_100ms = now;
-		isr_100ms();
-		return;
-	}
+		/* Group, which needs to be called about 10x per second */
+		if (((now - last_100ms) >= 102) || (now < last_100ms)) {
+			last_100ms = now;
+			isr_100ms();
+			return;
+		}
 
-	/* Group, which needs to be called about 2x per second */
-	if (((now - last_500ms) >= 500) || (now < last_500ms)) {
-		last_500ms = now;
-		isr_500ms();
-		return;
-	}
+		/* Group, which needs to be called about 2x per second */
+		if (((now - last_500ms) >= 500) || (now < last_500ms)) {
+			last_500ms = now;
+			isr_500ms();
+			return;
+		}
 
-	isr_sparetime();
+		isr_sparetime();
+	}
 }
 
 uint32_t tcc1_get_time(void)
@@ -2578,35 +2528,27 @@ static void isr_10ms(void)
 
 static void isr_100ms(void)
 {
-	isr_100ms_usart1_rx_dma();
-
-	if (g_workmode == WORKMODE_RUN) {
-		isr_100ms_main_1pps();
-		isr_100ms_twi1_onboard();
-	}
+	isr_100ms_main_1pps();
+	isr_100ms_twi1_onboard();
 }
 
 static void isr_500ms(void)
 {
-	if (g_workmode == WORKMODE_RUN) {
-		isr_500ms_twi1_onboard();
+	isr_500ms_twi1_onboard();
 
-		/* CPU ADC values */
-		sched_push(task_adc, SCHED_ENTRY_CB_TYPE__LISTTIME, 100, true, false, false);
+	/* CPU ADC values */
+	sched_push(task_adc, SCHED_ENTRY_CB_TYPE__LISTTIME, 100, true, false, false);
 
-		/* CPU DAC reconfiguration */
-		sched_push(task_dac, SCHED_ENTRY_CB_TYPE__LISTTIME, 100, true, false, false);
+	/* CPU DAC reconfiguration */
+	sched_push(task_dac, SCHED_ENTRY_CB_TYPE__LISTTIME, 100, true, false, false);
 
-		/* Kick RTC32 */
-		rtc_set_alarm(rtc_get_time() + 2);
-	}
+	/* Kick RTC32 */
+	rtc_set_alarm(rtc_get_time() + 2);
 }
 
 static void isr_sparetime(void)
 {
-	if (g_workmode == WORKMODE_RUN) {
-		isr_sparetime_twi1_onboard();
-	}
+	isr_sparetime_twi1_onboard();
 }
 
 //ISR(TCC1_OVF_vect)
@@ -2809,6 +2751,8 @@ static void dac_init(void)
 	DACB_CH0GAINCAL		= dac_get_calibration_data(DAC_CAL_DACB0_GAIN);
 	DACB_CH1OFFSETCAL	= dac_get_calibration_data(DAC_CAL_DACB1_OFFSET);
 	DACB_CH1GAINCAL		= dac_get_calibration_data(DAC_CAL_DACB1_GAIN);
+
+	dma_init();
 }
 
 static void dac_start(void)
@@ -2816,7 +2760,7 @@ static void dac_start(void)
 	dac_enable(&DACB);
 
 	/* Connect the DMA to the DAC periphery */
-	dma_channel_dac_start();
+	dma_start();
 
 	/* IRQ disabled section */
 	{
@@ -2827,7 +2771,7 @@ static void dac_start(void)
 		calc_next_frame(&dac_io_dac0_buf[1][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
 
 		/* DMA channels activation */
-		dma_channel_enable(DMA_CHANNEL_DACB_CH01_A);
+		dma_channel_enable(DMA_CHANNEL_DACB_CH0_A);
 
 		cpu_irq_restore(flags);
 	}
@@ -2842,97 +2786,66 @@ static void dac_stop(void)
 
 static void dma_init(void)
 {
-	memset(&dmach_dma0_conf,		0, sizeof(dmach_dma0_conf));										// DACB channel 0 - linked with dma1
-	memset(&dmach_dma1_conf,		0, sizeof(dmach_dma1_conf));										// DACB channel 1 - linked with dma0
-	memset(&g_usart1_rx_dma_conf,	0, sizeof(g_usart1_rx_dma_conf));
+	memset(&dmach_dma0_conf, 0, sizeof(dmach_dma0_conf));	// DACB channel 0 - linked with dma1
+	memset(&dmach_dma1_conf, 0, sizeof(dmach_dma1_conf));	// DACB channel 1 - linked with dma0
 
-	/* DMA channels DACs */
-	{
-		dma_channel_set_burst_length(&dmach_dma0_conf,				DMA_CH_BURSTLEN_4BYTE_gc);
-		dma_channel_set_burst_length(&dmach_dma1_conf,				DMA_CH_BURSTLEN_4BYTE_gc);
+	dma_channel_set_burst_length(&dmach_dma0_conf, DMA_CH_BURSTLEN_4BYTE_gc);
+	dma_channel_set_burst_length(&dmach_dma1_conf, DMA_CH_BURSTLEN_4BYTE_gc);
 
-		dma_channel_set_transfer_count(&dmach_dma0_conf,			DAC_NR_OF_SAMPLES * sizeof(dma_dac_buf_t));
-		dma_channel_set_transfer_count(&dmach_dma1_conf,			DAC_NR_OF_SAMPLES * sizeof(dma_dac_buf_t));
+	dma_channel_set_transfer_count(&dmach_dma0_conf, DAC_NR_OF_SAMPLES * sizeof(dma_dac_buf_t));
+	dma_channel_set_transfer_count(&dmach_dma1_conf, DAC_NR_OF_SAMPLES * sizeof(dma_dac_buf_t));
 
-		dma_channel_set_src_reload_mode(&dmach_dma0_conf,			DMA_CH_SRCRELOAD_TRANSACTION_gc);
-		dma_channel_set_src_dir_mode(&dmach_dma0_conf,				DMA_CH_SRCDIR_INC_gc);
-		dma_channel_set_source_address(&dmach_dma0_conf,			(uint16_t)(uintptr_t) &dac_io_dac0_buf[0][0]);
-		dma_channel_set_dest_reload_mode(&dmach_dma0_conf,			DMA_CH_DESTRELOAD_BURST_gc);
-		dma_channel_set_dest_dir_mode(&dmach_dma0_conf,				DMA_CH_DESTDIR_INC_gc);
-		dma_channel_set_destination_address(&dmach_dma0_conf,		(uint16_t)(uintptr_t) &DACB_CH0DATA);		// Access to CH0 and CH1
+	dma_channel_set_src_reload_mode(&dmach_dma0_conf, DMA_CH_SRCRELOAD_TRANSACTION_gc);
+	dma_channel_set_src_dir_mode(&dmach_dma0_conf, DMA_CH_SRCDIR_INC_gc);
+	dma_channel_set_source_address(&dmach_dma0_conf, (uint16_t)(uintptr_t) &dac_io_dac0_buf[0][0]);
+	dma_channel_set_dest_reload_mode(&dmach_dma0_conf, DMA_CH_DESTRELOAD_BURST_gc);
+	dma_channel_set_dest_dir_mode(&dmach_dma0_conf, DMA_CH_DESTDIR_INC_gc);
+	dma_channel_set_destination_address(&dmach_dma0_conf, (uint16_t)(uintptr_t) &DACB_CH0DATA);		// Access to CH0 and CH1
 
-		dma_channel_set_src_reload_mode(&dmach_dma1_conf,			DMA_CH_SRCRELOAD_TRANSACTION_gc);
-		dma_channel_set_src_dir_mode(&dmach_dma1_conf,				DMA_CH_SRCDIR_INC_gc);
-		dma_channel_set_source_address(&dmach_dma1_conf,			(uint16_t)(uintptr_t) &dac_io_dac0_buf[1][0]);
-		dma_channel_set_dest_reload_mode(&dmach_dma1_conf,			DMA_CH_DESTRELOAD_BURST_gc);
-		dma_channel_set_dest_dir_mode(&dmach_dma1_conf,				DMA_CH_DESTDIR_INC_gc);
-		dma_channel_set_destination_address(&dmach_dma1_conf,		(uint16_t)(uintptr_t) &DACB_CH0DATA);		// Access to CH0 and CH1
+	dma_channel_set_src_reload_mode(&dmach_dma1_conf, DMA_CH_SRCRELOAD_TRANSACTION_gc);
+	dma_channel_set_src_dir_mode(&dmach_dma1_conf, DMA_CH_SRCDIR_INC_gc);
+	dma_channel_set_source_address(&dmach_dma1_conf, (uint16_t)(uintptr_t) &dac_io_dac0_buf[1][0]);
+	dma_channel_set_dest_reload_mode(&dmach_dma1_conf, DMA_CH_DESTRELOAD_BURST_gc);
+	dma_channel_set_dest_dir_mode(&dmach_dma1_conf, DMA_CH_DESTDIR_INC_gc);
+	dma_channel_set_destination_address(&dmach_dma1_conf, (uint16_t)(uintptr_t) &DACB_CH0DATA);		// Access to CH0 and CH1
 
-		dma_channel_set_trigger_source(&dmach_dma1_conf,			DMA_CH_TRIGSRC_DACB_CH0_gc);
-		dma_channel_set_single_shot(&dmach_dma1_conf);
+	dma_channel_set_trigger_source(&dmach_dma0_conf, DMA_CH_TRIGSRC_DACB_CH0_gc);
+	dma_channel_set_single_shot(&dmach_dma0_conf);
 
-		dma_channel_set_trigger_source(&dmach_dma0_conf,			DMA_CH_TRIGSRC_DACB_CH0_gc);
-		dma_channel_set_single_shot(&dmach_dma0_conf);
+	dma_channel_set_trigger_source(&dmach_dma1_conf, DMA_CH_TRIGSRC_DACB_CH0_gc);
+	dma_channel_set_single_shot(&dmach_dma1_conf);
 
-		task_dac(tcc1_get_time());																		// Calculate DDS increments
-	}
-
-	/* DMA channel USART RX */
-	{
-		dma_channel_set_burst_length(&g_usart1_rx_dma_conf,			DMA_CH_BURSTLEN_1BYTE_gc);
-		dma_channel_set_transfer_count(&g_usart1_rx_dma_conf,		C_USART1_RX_DMA_LEN);
-		dma_channel_set_repeats(&g_usart1_rx_dma_conf,				1);
-		dma_channel_set_src_reload_mode(&g_usart1_rx_dma_conf,		DMA_CH_SRCRELOAD_BURST_gc);
-		dma_channel_set_src_dir_mode(&g_usart1_rx_dma_conf,			DMA_CH_SRCDIR_FIXED_gc);
-		dma_channel_set_source_address(&g_usart1_rx_dma_conf,		(uint16_t)(uintptr_t) &USARTF0_DATA);
-		dma_channel_set_dest_reload_mode(&g_usart1_rx_dma_conf,		DMA_CH_DESTRELOAD_TRANSACTION_gc);
-		dma_channel_set_dest_dir_mode(&g_usart1_rx_dma_conf,		DMA_CH_DESTDIR_INC_gc);
-		dma_channel_set_destination_address(&g_usart1_rx_dma_conf,	(uint16_t)(uintptr_t) &g_usart1_rx_dma_buf[0][0]);
-		dma_channel_set_trigger_source(&g_usart1_rx_dma_conf,		DMA_CH_TRIGSRC_USARTF0_RXC_gc);
-		dma_channel_set_single_shot(&g_usart1_rx_dma_conf);
-	}
-
-	/* DMA main settings */
-	{
-		dma_enable();
-
-		dma_set_priority_mode(DMA_PRIMODE_CH01RR23_gc);
-		dma_set_double_buffer_mode(DMA_DBUFMODE_CH01_gc);
-	}
+	task_dac(tcc1_get_time());																		// Calculate DDS increments
 }
 
-static void dma_channel_dac_start(void)
+static void dma_start(void)
 {
-	/* DMA channel: DAC */
-	dma_set_callback(DMA_CHANNEL_DACB_CH01_A, isr_dma_dac_ch01_A);
+	dma_enable();
+
+	dma_set_callback(DMA_CHANNEL_DACB_CH0_A, isr_dma_dac_ch0_A);
 	dma_channel_set_interrupt_level(&dmach_dma0_conf, DMA_INT_LVL_MED);
 
-	dma_set_callback(DMA_CHANNEL_DACB_CH01_B, isr_dma_dac_ch01_B);
+	dma_set_callback(DMA_CHANNEL_DACB_CH0_B, isr_dma_dac_ch0_B);
 	dma_channel_set_interrupt_level(&dmach_dma1_conf, DMA_INT_LVL_MED);
 
-	dma_channel_write_config(DMA_CHANNEL_DACB_CH01_A, &dmach_dma0_conf);
-	dma_channel_write_config(DMA_CHANNEL_DACB_CH01_B, &dmach_dma1_conf);
+	dma_set_priority_mode(DMA_PRIMODE_CH01RR23_gc);
+	dma_set_double_buffer_mode(DMA_DBUFMODE_CH01_gc);
+
+	dma_channel_write_config(DMA_CHANNEL_DACB_CH0_A, &dmach_dma0_conf);
+	dma_channel_write_config(DMA_CHANNEL_DACB_CH0_B, &dmach_dma1_conf);
 }
 
-void dma_channel_usart_rx_start(void)
+static void isr_dma_dac_ch0_A(enum dma_channel_status status)
 {
-	/* DMA channel: SIM808 Serial */
-	dma_set_callback(DMA_CHANNEL_UART_CH2, isr_dma_uart_rx_ch2);
-	dma_channel_set_interrupt_level(&g_usart1_rx_dma_conf, DMA_INT_LVL_LO);
-	dma_channel_write_config(DMA_CHANNEL_UART_CH2, &g_usart1_rx_dma_conf);
-}
-
-static void isr_dma_dac_ch01_A(enum dma_channel_status status)
-{
-	dma_channel_enable(DMA_CHANNEL_DACB_CH01_B);
+	dma_channel_enable(DMA_CHANNEL_DACB_CH0_B);
 
 	cpu_irq_enable();
 	calc_next_frame(&dac_io_dac0_buf[0][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
 }
 
-static void isr_dma_dac_ch01_B(enum dma_channel_status status)
+static void isr_dma_dac_ch0_B(enum dma_channel_status status)
 {
-	dma_channel_enable(DMA_CHANNEL_DACB_CH01_A);
+	dma_channel_enable(DMA_CHANNEL_DACB_CH0_A);
 
 	cpu_irq_enable();
 	calc_next_frame(&dac_io_dac0_buf[1][0], &dds0_reg, &dds0_inc, &dds1_reg, &dds1_inc);
@@ -3567,7 +3480,6 @@ int main(void)
 	if (g_dac_enabled) {
 		dac_init();		// DAC
 	}
-	dma_init();			// DAC and USART channels
 	twi_init();			// I2C / TWI
 
 	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
