@@ -1077,7 +1077,6 @@ uint16_t moveSerialDMA2Target(char* target, uint16_t maxlen)
 			len += cnt;
 
 			/* Wipe source buffer */
-			g_usart1_rx_dma_buf_cnt[idx] = 0;
 			memset(&(g_usart1_rx_dma_buf[idx][0]), 0, C_USART1_RX_DMA_LEN);
 		}
 	}
