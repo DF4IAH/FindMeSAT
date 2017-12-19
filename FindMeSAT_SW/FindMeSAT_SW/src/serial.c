@@ -163,8 +163,8 @@ uint16_t isr_dma_uart_rx_ch2_switch(void)
 	uint8_t idx = g_usart1_rx_dma_buf_alt ?  1 : 0;
 
 	/* Handshake STOP */
-	//ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_HIGH);
-	//delay_ms(1);
+	ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_HIGH);
+	delay_ms(1);
 
 	/* Disable channel */
 	dma_channel_disable(DMA_CHANNEL_UART_CH2);
