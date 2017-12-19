@@ -1067,35 +1067,25 @@ uint16_t moveSerialDMA2Target(char* target, uint16_t maxlen)
 	/* Turn off UART RX DMA */
 	dma_channel_disable(DMA_CHANNEL_UART_CH2);
 
-	do {
+	{
 		irqflags_t flag = cpu_irq_save();
 
-		uint8_t nextIdx			= g_usart1_rx_dma_buf_nextsrv_idx;
-		const uint16_t srcLen	= g_usart1_rx_dma_buf_cnt[nextIdx];
+		const uint8_t  idx	= g_usart1_rx_dma_buf_alt ?  0 : 1;
+		const uint16_t cnt	= g_usart1_rx_dma_buf_cnt[idx];
 
 		/* Source buffer is filled */
-		if (srcLen) {
-			const uint16_t cnt = min(--maxlen, srcLen);
-			memcpy(target, g_usart1_rx_dma_buf[nextIdx], cnt);
+		if (cnt) {
+			memcpy(target, g_usart1_rx_dma_buf[idx], cnt);
 			*(target + cnt) = 0;
 			len += cnt;
 
 			/* Wipe out source buffer */
-			g_usart1_rx_dma_buf_cnt[nextIdx] = 0;
-			memset(&(g_usart1_rx_dma_buf[nextIdx][0]), 0, C_USART1_RX_DMA_LEN);
-
-			/* Update next idx to serve */
-			g_usart1_rx_dma_buf_nextsrv_idx	= ++nextIdx % 2;
-
-		} else {
-			cpu_irq_restore(flag);
-
-			/* Nothing more available */
-			break;
+			g_usart1_rx_dma_buf_cnt[idx] = 0;
+			memset(&(g_usart1_rx_dma_buf[idx][0]), 0, C_USART1_RX_DMA_LEN);
 		}
 
 		cpu_irq_restore(flag);
-	} while (true);
+	}
 
 	/* Turn on UART RX DMA */
 	dma_channel_enable(DMA_CHANNEL_UART_CH2);
@@ -1106,7 +1096,7 @@ uint16_t moveSerialDMA2Target(char* target, uint16_t maxlen)
 	}
 
 	return len;
-};
+}
 
 
 void adc_app_enable(bool enable)
@@ -2896,7 +2886,7 @@ static void dma_init(void)
 	/* DMA channel USART RX */
 	{
 		dma_channel_set_burst_length(&g_usart1_rx_dma_conf,			DMA_CH_BURSTLEN_1BYTE_gc);
-		dma_channel_set_transfer_count(&g_usart1_rx_dma_conf,		C_USART1_RX_DMA_LEN);
+		dma_channel_set_transfer_count(&g_usart1_rx_dma_conf,		C_USART1_RX_DMA_LEN - 1);
 		dma_channel_set_repeats(&g_usart1_rx_dma_conf,				1);
 		dma_channel_set_src_reload_mode(&g_usart1_rx_dma_conf,		DMA_CH_SRCRELOAD_BURST_gc);
 		dma_channel_set_src_dir_mode(&g_usart1_rx_dma_conf,			DMA_CH_SRCDIR_FIXED_gc);

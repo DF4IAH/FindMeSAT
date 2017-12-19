@@ -172,13 +172,12 @@ uint16_t isr_dma_uart_rx_ch2_switch(void)
 	/* Calculate length of data received */
 	volatile uint16_t trfcnt = DMA_CH2_TRFCNT;
 
-	ret = g_usart1_rx_dma_buf_cnt[idx] = C_USART1_RX_DMA_LEN - trfcnt;
+	ret = g_usart1_rx_dma_buf_cnt[idx] = (C_USART1_RX_DMA_LEN - 1) - trfcnt;
 	if (ret) {
 		/* switch over to alternate buffer */
 		g_usart1_rx_dma_buf_alt = !g_usart1_rx_dma_buf_alt;
 		idx = g_usart1_rx_dma_buf_alt ?  1 : 0;
 		dma_channel_set_destination_address(&g_usart1_rx_dma_conf,	(uint16_t)(uintptr_t) &g_usart1_rx_dma_buf[idx][0]);
-		//dma_channel_reset(DMA_CHANNEL_UART_CH2);
 		dma_channel_write_config(DMA_CHANNEL_UART_CH2, &g_usart1_rx_dma_conf);
 
 		/* Input string ready to read */
