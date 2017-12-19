@@ -176,7 +176,6 @@ uint16_t isr_dma_uart_rx_ch2_switch(void)
 		g_usart1_rx_dma_buf_alt = !g_usart1_rx_dma_buf_alt;
 		idx = g_usart1_rx_dma_buf_alt ?  1 : 0;
 		dma_channel_set_destination_address(&g_usart1_rx_dma_conf,	(uint16_t)(uintptr_t) &g_usart1_rx_dma_buf[idx][0]);
-		//dma_channel_reset(DMA_CHANNEL_UART_CH2);
 		dma_channel_write_config(DMA_CHANNEL_UART_CH2, &g_usart1_rx_dma_conf);
 
 		/* Input string ready to read */
@@ -186,16 +185,16 @@ uint16_t isr_dma_uart_rx_ch2_switch(void)
 	/* Activate again */
 	dma_channel_enable(DMA_CHANNEL_UART_CH2);
 
-	/* Allow SIM808 to send data */
-	ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_LOW);
-
 	return ret;
 }
 
 /* USART, RX - Complete */
 ISR(USARTF0_RXC_vect, ISR_BLOCK)
 {
+	nop();
 	//dma_channel_trigger_block_transfer(DMA_CHANNEL_UART_CH2);
+
+#if 0
 	uint8_t ser1_rxd = USARTF0_DATA;
 
 	if (g_usart1_rx_idx < (C_USART1_RX_BUF_LEN - 1)) {
@@ -210,6 +209,7 @@ ISR(USARTF0_RXC_vect, ISR_BLOCK)
 
 	/* Input string ready to read */
 	g_usart1_rx_isr_ready = true;
+#endif
 }
 
 /* USART, TX - Complete */
@@ -1117,7 +1117,6 @@ void task_serial(void /*uint32_t now*/)
 		if (g_usart1_rx_dma_ready) {
 			irqflags_t flags = cpu_irq_save();
 			g_usart1_rx_idx += moveSerialDMA2Target(&(g_usart1_rx_buf[g_usart1_rx_idx]), C_USART1_RX_BUF_LEN - g_usart1_rx_idx);
-			g_usart1_rx_dma_ready = false;
 			cpu_irq_restore(flags);
 		}
 
