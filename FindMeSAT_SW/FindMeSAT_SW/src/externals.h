@@ -99,6 +99,7 @@ extern struct dma_channel_config	g_usart1_rx_dma_conf;
 extern bool							g_usart1_rx_dma_buf_alt;
 extern uint16_t						g_usart1_rx_dma_buf_cnt[2];
 extern char							g_usart1_rx_dma_buf[2][C_USART1_RX_DMA_LEN];
+extern uint8_t						g_usart1_rx_dma_buf_nextsrv_idx;
 extern bool							g_usart1_rx_dma_ready;
 extern bool							g_usart1_rx_isr_ready;
 extern bool							g_usart1_rx_OK;

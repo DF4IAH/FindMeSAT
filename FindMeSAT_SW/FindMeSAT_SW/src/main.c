@@ -135,6 +135,7 @@ struct dma_channel_config	g_usart1_rx_dma_conf							= { 0 };
 bool						g_usart1_rx_dma_buf_alt							= false;
 uint16_t					g_usart1_rx_dma_buf_cnt[2]						= { 0 };
 char						g_usart1_rx_dma_buf[2][C_USART1_RX_DMA_LEN]		= { 0 };
+uint8_t						g_usart1_rx_dma_buf_nextsrv_idx					= 0;
 bool						g_usart1_rx_dma_ready							= false;
 bool						g_usart1_rx_isr_ready							= false;
 bool						g_usart1_rx_OK									= false;
@@ -469,6 +470,7 @@ static void init_globals(void)
 		g_usart1_rx_dma_buf_cnt[0]			= 0;
 		g_usart1_rx_dma_buf_cnt[1]			= 0;
 		memset(g_usart1_rx_dma_buf, 0, 2 * C_USART1_RX_DMA_LEN);
+		g_usart1_rx_dma_buf_nextsrv_idx		= 0;
 		g_usart1_rx_dma_ready				= false;
 		g_usart1_rx_isr_ready				= false;
 		g_usart1_rx_OK						= false;
@@ -1065,22 +1067,35 @@ uint16_t moveSerialDMA2Target(char* target, uint16_t maxlen)
 	/* Turn off UART RX DMA */
 	dma_channel_disable(DMA_CHANNEL_UART_CH2);
 
-	/* Check each RX DMA buffer */
-	for (uint8_t idx = 0; idx < 2; idx++) {
-		const uint16_t srcLen = g_usart1_rx_dma_buf_cnt[idx];
+	do {
+		irqflags_t flag = cpu_irq_save();
+
+		uint8_t nextIdx			= g_usart1_rx_dma_buf_nextsrv_idx;
+		const uint16_t srcLen	= g_usart1_rx_dma_buf_cnt[nextIdx];
 
 		/* Source buffer is filled */
 		if (srcLen) {
 			const uint16_t cnt = min(--maxlen, srcLen);
-			memcpy(target, g_usart1_rx_dma_buf[idx], cnt);
-			*(target + cnt + 1) = 0;
+			memcpy(target, g_usart1_rx_dma_buf[nextIdx], cnt);
+			*(target + cnt) = 0;
 			len += cnt;
 
-			/* Wipe source buffer */
-			g_usart1_rx_dma_buf_cnt[idx] = 0;
-			memset(&(g_usart1_rx_dma_buf[idx][0]), 0, C_USART1_RX_DMA_LEN);
+			/* Wipe out source buffer */
+			g_usart1_rx_dma_buf_cnt[nextIdx] = 0;
+			memset(&(g_usart1_rx_dma_buf[nextIdx][0]), 0, C_USART1_RX_DMA_LEN);
+
+			/* Update next idx to serve */
+			g_usart1_rx_dma_buf_nextsrv_idx	= ++nextIdx % 2;
+
+		} else {
+			cpu_irq_restore(flag);
+
+			/* Nothing more available */
+			break;
 		}
-	}
+
+		cpu_irq_restore(flag);
+	} while (true);
 
 	/* Turn on UART RX DMA */
 	dma_channel_enable(DMA_CHANNEL_UART_CH2);
