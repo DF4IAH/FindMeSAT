@@ -20,7 +20,7 @@
 
 #include "main.h"
 #include "interpreter.h"
-#include "twi.h"
+#include "twi_1_2.h"
 
 #include "usb.h"
 

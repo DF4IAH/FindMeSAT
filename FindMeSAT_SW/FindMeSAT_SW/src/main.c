@@ -39,9 +39,10 @@
 
 #include "conf_dac.h"
 #include "dds.h"
-#include "serial.h"
 #include "usb.h"
-#include "twi.h"
+#include "serial_sim.h"
+#include "twi_1_2.h"
+#include "spi_ax.h"
 #include "interpreter.h"
 
 #include "main.h"
@@ -215,6 +216,8 @@ volatile int16_t			g_twi1_hygro_DP_100								= 0;
 
 uint8_t						g_twi2_lcd_version								= 0;
 volatile bool				g_twi2_lcd_repaint								= false;
+
+struct spi_device			g_ax_spi_device_conf							= { 0 };
 
 volatile int32_t			g_xo_mode_pwm									= 0L;		// EEPROM
 

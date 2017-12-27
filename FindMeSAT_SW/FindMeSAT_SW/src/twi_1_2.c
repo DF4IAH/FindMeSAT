@@ -24,7 +24,7 @@
 #include "interpreter.h"
 #include "usb.h"
 
-#include "twi.h"
+#include "twi_1_2.h"
 
 
 /* Add access to the global vars */

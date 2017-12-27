@@ -23,9 +23,9 @@
 #include "main.h"
 #include "interpreter.h"
 #include "usb.h"
-#include "twi.h"
+#include "twi_1_2.h"
 
-#include "serial.h"
+#include "serial_sim.h"
 
 
 /* Add access to the global vars */
@@ -546,11 +546,24 @@ void serial_init(void)
 	ioport_set_pin_mode(GSM_TXD1_DRV,				IOPORT_MODE_TOTEM    | IOPORT_MODE_SLEW_RATE_LIMIT);
 	ioport_set_pin_mode(GSM_RTS1_DRV,				IOPORT_MODE_TOTEM    | IOPORT_MODE_SLEW_RATE_LIMIT);
 
-	ioport_set_pin_mode(GSM_RESET_DRV_GPIO,			IOPORT_MODE_PULLDOWN | IOPORT_MODE_SLEW_RATE_LIMIT);
-	ioport_set_pin_mode(GSM_PWRKEY_DRV_GPIO,		IOPORT_MODE_PULLDOWN | IOPORT_MODE_SLEW_RATE_LIMIT);
+	ioport_set_pin_mode(GSM_RESET_DRV_GPIO,			IOPORT_MODE_TOTEM	 | IOPORT_MODE_SLEW_RATE_LIMIT);
+	ioport_set_pin_mode(GSM_PWRKEY_DRV_GPIO,		IOPORT_MODE_TOTEM	 | IOPORT_MODE_SLEW_RATE_LIMIT);
 
-	ioport_set_pin_mode(GSM_PCM_CLK_DRV_GPIO,		IOPORT_MODE_PULLDOWN | IOPORT_MODE_SLEW_RATE_LIMIT);
-	ioport_set_pin_mode(GSM_PCM_IN_DRV_GPIO,		IOPORT_MODE_PULLDOWN | IOPORT_MODE_SLEW_RATE_LIMIT);
+	ioport_set_pin_mode(GSM_PCM_CLK_DRV_GPIO,		IOPORT_MODE_TOTEM	 | IOPORT_MODE_SLEW_RATE_LIMIT);
+	ioport_set_pin_mode(GSM_PCM_IN_DRV_GPIO,		IOPORT_MODE_TOTEM	 | IOPORT_MODE_SLEW_RATE_LIMIT);
+
+
+	/* Set input pulling resistors */
+	ioport_set_pin_mode(GSM_RXD1,					IOPORT_MODE_PULLUP);
+	ioport_set_pin_mode(GSM_CTS1,					IOPORT_MODE_BUSKEEPER);
+	ioport_set_pin_mode(GSM_RI1,					IOPORT_MODE_BUSKEEPER);
+	ioport_set_pin_mode(GSM_DCD1,					IOPORT_MODE_BUSKEEPER);
+	ioport_set_pin_mode(GSM_POWERED,				IOPORT_MODE_BUSKEEPER);
+	ioport_set_pin_mode(GSM_NETLIGHT,				IOPORT_MODE_BUSKEEPER);
+	ioport_set_pin_mode(GSM_RF_SYNC,				IOPORT_MODE_BUSKEEPER);
+	ioport_set_pin_mode(GSM_PCM_OUT_GPIO,			IOPORT_MODE_BUSKEEPER);
+	ioport_set_pin_mode(GSM_PCM_SYNC_GPIO,			IOPORT_MODE_BUSKEEPER);
+	ioport_set_pin_mode(GPS_GSM_1PPS_GPIO,			IOPORT_MODE_PULLDOWN);
 
 
 	/* Set TXD line as output PIN */

@@ -22,7 +22,7 @@
 
 #include "main.h"
 #include "usb.h"
-#include "twi.h"
+#include "twi_1_2.h"
 
 #include "interpreter.h"
 

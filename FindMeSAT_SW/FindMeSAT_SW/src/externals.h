@@ -10,7 +10,9 @@
 #define EXTERNALS_H_
 
 
-#include "serial.h"
+#include "interpreter.h"
+#include "serial_sim.h"
+#include "twi_1_2.h"
 
 
 extern bool							g_adc_enabled;
@@ -178,6 +180,8 @@ extern int16_t						g_twi1_hygro_DP_100;
 
 extern uint8_t						g_twi2_lcd_version;
 extern bool							g_twi2_lcd_repaint;
+
+extern struct spi_device			g_ax_spi_device_conf;
 
 extern int32_t						g_xo_mode_pwm;
 
