@@ -218,6 +218,7 @@ uint8_t						g_twi2_lcd_version								= 0;
 volatile bool				g_twi2_lcd_repaint								= false;
 
 struct spi_device			g_ax_spi_device_conf							= { 0 };
+volatile uint8_t			g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH]	= { 0 };
 
 volatile int32_t			g_xo_mode_pwm									= 0L;		// EEPROM
 
@@ -3483,7 +3484,8 @@ int main(void)
 	if (g_dac_enabled) {
 		dac_init();		// DAC
 	}
-	twi_init();			// I2C / TWI
+	twi_init();			// I2C / TWI to 1:Baro,Hygro,9axis 2:LCD
+	spi_init();			// SPI to AX5243
 
 	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
 
@@ -3500,6 +3502,7 @@ int main(void)
 	if (g_adc_enabled) {
 		adc_start();	// Start AD convertions
 	}
+	spi_start();		// Start SPI communication with the AX5243
 
 	/* Init of USB system */
 	usb_init();			// USB device stack start function to enable stack and start USB

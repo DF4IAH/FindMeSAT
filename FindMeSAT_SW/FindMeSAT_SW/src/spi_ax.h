@@ -16,14 +16,13 @@
 
 
 #if 0
-
 # define USART_SPI_AX												USARTC1
-
 #else
-
 # define SPI_AX														SPIC
-
 #endif
+
+
+#define C_SPI_AX_BUFFER_LENGTH										256
 
 
 void spi_init(void);

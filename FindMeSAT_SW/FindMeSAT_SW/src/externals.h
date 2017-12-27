@@ -13,6 +13,7 @@
 #include "interpreter.h"
 #include "serial_sim.h"
 #include "twi_1_2.h"
+#include "spi_ax.h"
 
 
 extern bool							g_adc_enabled;
@@ -182,6 +183,7 @@ extern uint8_t						g_twi2_lcd_version;
 extern bool							g_twi2_lcd_repaint;
 
 extern struct spi_device			g_ax_spi_device_conf;
+extern uint8_t						g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH];
 
 extern int32_t						g_xo_mode_pwm;
 
