@@ -249,7 +249,7 @@
   <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
   <avrgcc.compiler.symbols.DefSymbols><ListValues>
   <Value>BOARD=USER_BOARD</Value>
-  <Value>CONFIG_SPI_MASTER_DUMMY=0x00</Value>
+  <Value>CONFIG_SPI_MASTER_DUMMY=0x71</Value>
   <Value>NDEBUG</Value>
 </ListValues></avrgcc.compiler.symbols.DefSymbols>
   <avrgcc.compiler.directories.IncludePaths><ListValues>
@@ -315,62 +315,112 @@
   <avrgcc.common.outputfiles.eep>True</avrgcc.common.outputfiles.eep>
   <avrgcc.common.outputfiles.srec>True</avrgcc.common.outputfiles.srec>
   <avrgcc.common.outputfiles.usersignatures>False</avrgcc.common.outputfiles.usersignatures>
-  <avrgcc.compiler.symbols.DefSymbols><ListValues>
-  <Value>BOARD=USER_BOARD</Value>
-  <Value>CONFIG_SPI_MASTER_DUMMY=0x00</Value>
-  <Value>DEBUG</Value>
-</ListValues></avrgcc.compiler.symbols.DefSymbols>
-  <avrgcc.compiler.directories.IncludePaths><ListValues>
-  <Value>../src</Value>
-  <Value>../src/config</Value>
-  <Value>../src/ASF/xmega/drivers/cpu</Value>
-  <Value>../src/ASF/xmega/drivers/nvm</Value>
-  <Value>../src/ASF/xmega/drivers/sleep</Value>
-  <Value>../src/ASF/common/services/clock</Value>
-  <Value>../src/ASF/common/services/sleepmgr</Value>
-  <Value>../src/ASF/common/services/usb</Value>
-  <Value>../src/ASF/common/services/usb/class/cdc</Value>
-  <Value>../src/ASF/common/services/usb/class/cdc/device</Value>
-  <Value>../src/ASF/common/services/usb/udc</Value>
-  <Value>../src/ASF/common/utils/stdio/stdio_usb</Value>
-  <Value>../src/ASF/xmega/drivers/usb</Value>
-  <Value>../src/ASF/xmega/drivers/pmic</Value>
-  <Value>../src/ASF/xmega/drivers/tc</Value>
-  <Value>../src/ASF/xmega/services/pwm</Value>
-  <Value>../src/ASF/xmega/drivers/dac</Value>
-  <Value>../src/ASF/xmega/drivers/adc</Value>
-  <Value>../src/ASF/common/services/gfx_mono</Value>
-  <Value>../src/ASF/common/boards/user_board</Value>
-  <Value>../src/ASF/common/boards</Value>
-  <Value>../src/ASF/xmega/utils/preprocessor</Value>
-  <Value>../src/ASF/xmega/utils</Value>
-  <Value>../src/ASF/common/utils</Value>
-  <Value>../src/ASF/common/services/ioport</Value>
-  <Value>../src/ASF/common/services/twi</Value>
-  <Value>../src/ASF/xmega/drivers/twi</Value>
-  <Value>../src/ASF/xmega/drivers/rtc32</Value>
-  <Value>../src/ASF/common/services/delay</Value>
-  <Value>../src/ASF/common/services/calendar</Value>
-  <Value>../src/ASF/common/services/hugemem</Value>
-  <Value>../src/ASF/xmega/drivers/dma</Value>
-  <Value>../src/ASF/common/drivers/nvm</Value>
-  <Value>../src/ASF/common/services/fifo</Value>
-  <Value>../src/ASF/common/services/spi</Value>
-  <Value>../src/ASF/xmega/drivers/spi</Value>
-  <Value>../src/ASF/common/services/spi/xmega_spi</Value>
-  <Value>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include\</Value>
-</ListValues></avrgcc.compiler.directories.IncludePaths>
+  <avrgcc.compiler.symbols.DefSymbols>
+    <ListValues>
+      <Value>BOARD=USER_BOARD</Value>
+      <Value>CONFIG_SPI_MASTER_DUMMY=0x71</Value>
+      <Value>DEBUG</Value>
+      <Value>AX_VCO_INTERNAL__OFF</Value>
+    </ListValues>
+  </avrgcc.compiler.symbols.DefSymbols>
+  <avrgcc.compiler.directories.IncludePaths>
+    <ListValues>
+      <Value>../src</Value>
+      <Value>../src/config</Value>
+      <Value>../src/ASF/xmega/drivers/cpu</Value>
+      <Value>../src/ASF/xmega/drivers/nvm</Value>
+      <Value>../src/ASF/xmega/drivers/sleep</Value>
+      <Value>../src/ASF/common/services/clock</Value>
+      <Value>../src/ASF/common/services/sleepmgr</Value>
+      <Value>../src/ASF/common/services/usb</Value>
+      <Value>../src/ASF/common/services/usb/class/cdc</Value>
+      <Value>../src/ASF/common/services/usb/class/cdc/device</Value>
+      <Value>../src/ASF/common/services/usb/udc</Value>
+      <Value>../src/ASF/common/utils/stdio/stdio_usb</Value>
+      <Value>../src/ASF/xmega/drivers/usb</Value>
+      <Value>../src/ASF/xmega/drivers/pmic</Value>
+      <Value>../src/ASF/xmega/drivers/tc</Value>
+      <Value>../src/ASF/xmega/services/pwm</Value>
+      <Value>../src/ASF/xmega/drivers/dac</Value>
+      <Value>../src/ASF/xmega/drivers/adc</Value>
+      <Value>../src/ASF/common/services/gfx_mono</Value>
+      <Value>../src/ASF/common/boards/user_board</Value>
+      <Value>../src/ASF/common/boards</Value>
+      <Value>../src/ASF/xmega/utils/preprocessor</Value>
+      <Value>../src/ASF/xmega/utils</Value>
+      <Value>../src/ASF/common/utils</Value>
+      <Value>../src/ASF/common/services/ioport</Value>
+      <Value>../src/ASF/common/services/twi</Value>
+      <Value>../src/ASF/xmega/drivers/twi</Value>
+      <Value>../src/ASF/xmega/drivers/rtc32</Value>
+      <Value>../src/ASF/common/services/delay</Value>
+      <Value>../src/ASF/common/services/calendar</Value>
+      <Value>../src/ASF/common/services/hugemem</Value>
+      <Value>../src/ASF/xmega/drivers/dma</Value>
+      <Value>../src/ASF/common/drivers/nvm</Value>
+      <Value>../src/ASF/common/services/fifo</Value>
+      <Value>../src/ASF/common/services/spi</Value>
+      <Value>../src/ASF/xmega/drivers/spi</Value>
+      <Value>../src/ASF/common/services/spi/xmega_spi</Value>
+      <Value>C:/Program Files (x86)\Atmel\Studio\7.0\Packs\Atmel\XMEGAA_DFP\1.1.68\include\</Value>
+    </ListValues>
+  </avrgcc.compiler.directories.IncludePaths>
   <avrgcc.compiler.optimization.OtherFlags>-fdata-sections</avrgcc.compiler.optimization.OtherFlags>
   <avrgcc.compiler.optimization.PackStructureMembers>True</avrgcc.compiler.optimization.PackStructureMembers>
   <avrgcc.compiler.optimization.AllocateBytesNeededForEnum>True</avrgcc.compiler.optimization.AllocateBytesNeededForEnum>
+  <avrgcc.compiler.optimization.DebugLevel>Maximum (-g3)</avrgcc.compiler.optimization.DebugLevel>
   <avrgcc.compiler.warnings.AllWarnings>True</avrgcc.compiler.warnings.AllWarnings>
   <avrgcc.compiler.miscellaneous.OtherFlags>-std=gnu99 -fno-strict-aliasing -Wstrict-prototypes -Wmissing-prototypes -Werror-implicit-function-declaration -Wpointer-arith -mrelax</avrgcc.compiler.miscellaneous.OtherFlags>
   <avrgcc.linker.general.UseVprintfLibrary>True</avrgcc.linker.general.UseVprintfLibrary>
-  <avrgcc.linker.libraries.Libraries><ListValues><Value>m</Value></ListValues></avrgcc.linker.libraries.Libraries>
+  <avrgcc.linker.libraries.Libraries>
+    <ListValues>
+      <Value>m</Value>
+    </ListValues>
+  </avrgcc.linker.libraries.Libraries>
   <avrgcc.linker.miscellaneous.LinkerFlags>-Wl,--relax -Wl,-u,vfprintf -lprintf_flt</avrgcc.linker.miscellaneous.LinkerFlags>
   <avrgcc.assembler.general.AssemblerFlags>-mrelax -DBOARD=USER_BOARD</avrgcc.assembler.general.AssemblerFlags>
-  <avrgcc.assembler.general.IncludePaths><ListValues><Value>../src</Value><Value>../src/config</Value><Value>../src/ASF/xmega/drivers/cpu</Value><Value>../src/ASF/xmega/drivers/nvm</Value><Value>../src/ASF/xmega/drivers/sleep</Value><Value>../src/ASF/common/services/clock</Value><Value>../src/ASF/common/services/sleepmgr</Value><Value>../src/ASF/common/services/usb</Value><Value>../src/ASF/common/services/usb/class/cdc</Value><Value>../src/ASF/common/services/usb/class/cdc/device</Value><Value>../src/ASF/common/services/usb/udc</Value><Value>../src/ASF/common/utils/stdio/stdio_usb</Value><Value>../src/ASF/xmega/drivers/usb</Value><Value>../src/ASF/xmega/drivers/pmic</Value><Value>../src/ASF/xmega/drivers/tc</Value><Value>../src/ASF/xmega/services/pwm</Value><Value>../src/ASF/xmega/drivers/dac</Value><Value>../src/ASF/xmega/drivers/adc</Value><Value>../src/ASF/common/services/gfx_mono</Value><Value>%24(PackRepoDir)\Atmel\XMEGAA_DFP\1.1.68\include</Value><Value>../src/ASF/common/boards/user_board</Value><Value>../src/ASF/common/boards</Value><Value>../src/ASF/xmega/utils/preprocessor</Value><Value>../src/ASF/xmega/utils</Value><Value>../src/ASF/common/utils</Value><Value>../src/ASF/common/services/ioport</Value><Value>../src/ASF/common/services/twi</Value><Value>../src/ASF/xmega/drivers/twi</Value><Value>../src/ASF/xmega/drivers/rtc32</Value><Value>../src/ASF/common/services/delay</Value><Value>../src/ASF/common/services/calendar</Value><Value>../src/ASF/common/services/hugemem</Value><Value>../src/ASF/xmega/drivers/dma</Value><Value>../src/ASF/common/drivers/nvm</Value><Value>../src/ASF/common/services/fifo</Value><Value>../src/ASF/common/services/spi</Value><Value>../src/ASF/xmega/drivers/spi</Value><Value>../src/ASF/common/services/spi/xmega_spi</Value></ListValues></avrgcc.assembler.general.IncludePaths>
-  <avrgcc.compiler.optimization.DebugLevel>Maximum (-g3)</avrgcc.compiler.optimization.DebugLevel>
+  <avrgcc.assembler.general.IncludePaths>
+    <ListValues>
+      <Value>../src</Value>
+      <Value>../src/config</Value>
+      <Value>../src/ASF/xmega/drivers/cpu</Value>
+      <Value>../src/ASF/xmega/drivers/nvm</Value>
+      <Value>../src/ASF/xmega/drivers/sleep</Value>
+      <Value>../src/ASF/common/services/clock</Value>
+      <Value>../src/ASF/common/services/sleepmgr</Value>
+      <Value>../src/ASF/common/services/usb</Value>
+      <Value>../src/ASF/common/services/usb/class/cdc</Value>
+      <Value>../src/ASF/common/services/usb/class/cdc/device</Value>
+      <Value>../src/ASF/common/services/usb/udc</Value>
+      <Value>../src/ASF/common/utils/stdio/stdio_usb</Value>
+      <Value>../src/ASF/xmega/drivers/usb</Value>
+      <Value>../src/ASF/xmega/drivers/pmic</Value>
+      <Value>../src/ASF/xmega/drivers/tc</Value>
+      <Value>../src/ASF/xmega/services/pwm</Value>
+      <Value>../src/ASF/xmega/drivers/dac</Value>
+      <Value>../src/ASF/xmega/drivers/adc</Value>
+      <Value>../src/ASF/common/services/gfx_mono</Value>
+      <Value>%24(PackRepoDir)\Atmel\XMEGAA_DFP\1.1.68\include</Value>
+      <Value>../src/ASF/common/boards/user_board</Value>
+      <Value>../src/ASF/common/boards</Value>
+      <Value>../src/ASF/xmega/utils/preprocessor</Value>
+      <Value>../src/ASF/xmega/utils</Value>
+      <Value>../src/ASF/common/utils</Value>
+      <Value>../src/ASF/common/services/ioport</Value>
+      <Value>../src/ASF/common/services/twi</Value>
+      <Value>../src/ASF/xmega/drivers/twi</Value>
+      <Value>../src/ASF/xmega/drivers/rtc32</Value>
+      <Value>../src/ASF/common/services/delay</Value>
+      <Value>../src/ASF/common/services/calendar</Value>
+      <Value>../src/ASF/common/services/hugemem</Value>
+      <Value>../src/ASF/xmega/drivers/dma</Value>
+      <Value>../src/ASF/common/drivers/nvm</Value>
+      <Value>../src/ASF/common/services/fifo</Value>
+      <Value>../src/ASF/common/services/spi</Value>
+      <Value>../src/ASF/xmega/drivers/spi</Value>
+      <Value>../src/ASF/common/services/spi/xmega_spi</Value>
+    </ListValues>
+  </avrgcc.assembler.general.IncludePaths>
   <avrgcc.assembler.debugging.DebugLevel>Default (-Wa,-g)</avrgcc.assembler.debugging.DebugLevel>
 </AvrGcc>
     </ToolchainSettings>
