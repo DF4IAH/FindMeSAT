@@ -219,6 +219,9 @@ volatile bool				g_twi2_lcd_repaint								= false;
 
 struct spi_device			g_ax_spi_device_conf							= { 0 };
 volatile uint8_t			g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH]	= { 0 };
+volatile uint32_t			g_ax_spi_freq_chan[2]							= { 0 };
+volatile uint8_t			g_ax_spi_range_chan[2]							= { 0 };
+volatile uint8_t			g_ax_spi_vcoi_chan[2]							= { 0 };
 
 volatile int32_t			g_xo_mode_pwm									= 0L;		// EEPROM
 
@@ -650,6 +653,16 @@ static void init_globals(void)
 		g_twi1_gyro_2_mag_facty		= l_twi1_gyro_2_mag_facty;
 		g_twi1_gyro_2_mag_factz		= l_twi1_gyro_2_mag_factz;
 		cpu_irq_restore(flags);
+	}
+
+	/* AX5243 */
+	{
+		g_ax_spi_freq_chan[0]	= 0;
+		g_ax_spi_freq_chan[1]	= 0;
+		g_ax_spi_range_chan[0]	= 0x08;
+		g_ax_spi_range_chan[1]	= 0x08;
+		g_ax_spi_vcoi_chan[0]	= 0;
+		g_ax_spi_vcoi_chan[1]	= 0;
 	}
 
 	/* GSM */

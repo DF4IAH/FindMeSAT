@@ -40,7 +40,8 @@ typedef enum SPI_AX_TRPT_STATE_ENUM {
 
 
 bool spi_ax_transport(bool isProgMem, const char* packet);
-void spi_ax_setFrequency_MHz(bool isFreqB, float f_mhz);
+uint32_t spi_ax_calcFrequency_Mhz2Regs(float f_mhz);
+void spi_ax_setFrequency2Regs(uint8_t chan, bool isFreqB);
 void spi_ax_initRegisters(void);
 void spi_ax_initRegistersRx(void);
 void spi_ax_initRegistersTx(void);

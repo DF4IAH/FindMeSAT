@@ -211,14 +211,25 @@ bool spi_ax_transport(bool isProgMem, const char* packet)
 	} while (l_state != SPI_AX_TRPT_STATE_END);
 
 	return true;
-};
+}
 
-void spi_ax_setFrequency_MHz(bool isFreqB, float f_mhz)
+uint32_t spi_ax_calcFrequency_Mhz2Regs(float f_mhz)
 {
 	const float xtal_hz = 16E+6f;																// XTAL = 16 MHz
 	const float reg_per_mhz = (1LL << 24) * 1E+6f / xtal_hz;
-	uint32_t f_reg = (uint32_t) (0.5f + f_mhz * reg_per_mhz);
+	return (uint32_t) (0.5f + f_mhz * reg_per_mhz);
+}
+
+void spi_ax_setFrequency2Regs(uint8_t chan, bool isFreqB)
+{
+	uint32_t f_reg;
 	uint8_t l_packet[5];
+
+	if (chan > 2) {
+		/* ERROR */
+		return;
+	}
+	f_reg = g_ax_spi_freq_chan[chan];
 
 	/* Prepare packet */
 	l_packet[0] = isFreqB ?  0xBC : 0xB4;														// WR Address 0x34 or 0x3C
@@ -300,7 +311,7 @@ void spi_ax_initRegistersRx(void)
 #endif
 
 	/* XTALCAP */
-	spi_ax_transport(false, "< f1 84 0a >");													// WR address 0x184: XTALCAP - DF4IAH: adjusted from 0x08 to 0x0a
+	spi_ax_transport(false, "< f1 84 0c >");													// WR address 0x184: XTALCAP - DF4IAH: adjusted from 0x08 to 0x0c
 
 
 	/* 0xF00 */
@@ -445,6 +456,112 @@ void spi_ax_setModulationFM(bool isFull)
 	}
 }
 
+#if defined(AX_GPADC13_ENABLED)
+static void spi_ax_adcCtrlSet(uint8_t val)
+{
+	g_ax_spi_packet_buffer[0] = 0xF3;															// WR Address 0x300: GPADCCTRL
+	g_ax_spi_packet_buffer[1] = 0x30;
+	g_ax_spi_packet_buffer[2] = val;
+	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 3);
+}
+
+static uint8_t spi_ax_adcCtrlGet(void)
+{
+	/* GPADCCTRL */
+	spi_ax_transport(false, "< 73 30 R1 >");													// RD address 0x300: GPADCCTRL
+	return g_ax_spi_packet_buffer[0];
+}
+
+static uint16_t spi_ax_adcValGet(void)
+{
+	/* GPADC13VALUE */
+	spi_ax_transport(false, "< 73 08 R2 >");													// RD address 0x308: GPADC13VALUE
+
+	uint16_t val = g_ax_spi_packet_buffer[0] & 0x03;
+	val <<= 8;
+	val  |= g_ax_spi_packet_buffer[1];
+	return val;
+}
+
+inline
+static void spi_ax_adcConvertionWait(void)
+{
+	do { }  while (spi_ax_adcCtrlGet() & 0x80);													// GPADCCTRL - BUSY Conversion ongoing when 1
+}
+
+static uint16_t spi_axr_getVcoTuneVoltage(void)
+{
+    int16_t tuneVoltage = 0;
+
+	/* Prepare the ADC */
+    uint8_t cnt = 64;
+    do {
+		spi_ax_adcCtrlSet(0x84);																// GPADCCTRL - BUSY When writing 1, a single conversion is started - GPADC13 Enable Sampling GPADC1?GPADC3
+        spi_ax_adcConvertionWait();
+    } while (--cnt);
+
+    cnt = 32;
+    do {
+		spi_ax_adcCtrlSet(0x84);																// GPADCCTRL - BUSY When writing 1, a single conversion is started - GPADC13 Enable Sampling GPADC1?GPADC3
+        spi_ax_adcConvertionWait();
+		tuneVoltage += spi_ax_adcValGet();
+    } while (--cnt);
+
+    return tuneVoltage;
+}
+
+/* REMARKS: the AX5243 has got an automatic VCOI adjustment built in - in contrast this function does the setting manually with the help of the GPADC13 */
+static uint8_t s_spi_ax_cal_vcoi(void)
+{
+    uint8_t vcoiRet = 0;
+    uint16_t vmin = 0xffff;
+    uint16_t vmax = 0x0000;
+
+    for (uint8_t vcoiCurrentIdx = 0x40; vcoiCurrentIdx; ) {
+        --vcoiCurrentIdx;
+        uint8_t vcoiNew = 0x80 | vcoiCurrentIdx;												// VCOIE - Enable manual VCOI
+
+		/* PLLVCOI */
+		g_ax_spi_packet_buffer[0] = 0xf1;														// WR address 0x180: PLLVCOI
+		g_ax_spi_packet_buffer[1] = 0x80;
+		g_ax_spi_packet_buffer[2] = vcoiNew;
+		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 3);									// Write back with modified value
+
+        /* Clear STICKY LOCK */
+		spi_ax_transport(false, "< 33 R1 >");													// RD Address 0x33: PLLRANGINGA
+
+        uint16_t curTuneVoltage = spi_axr_getVcoTuneVoltage();
+
+        /* Clear STICKY LOCK again */
+		spi_ax_transport(false, "< 33 R1 >");													// RD Address 0x33: PLLRANGINGA
+
+        //global_var[vcoiCurrentIdx] = curTuneVoltage;											// For debugging VCO_TuneVoltage = f(VCOI)
+        if (curTuneVoltage > vmax) {
+            vmax = curTuneVoltage;
+		}
+
+        if (curTuneVoltage < vmin) {
+            vmin = curTuneVoltage;
+
+            /* Check whether the PLL is still locked */
+			spi_ax_transport(false, "< 33 R1 >");												// RD Address 0x33: PLLRANGINGA
+			uint8_t curPllrangingA = g_ax_spi_packet_buffer[0];
+
+			/* Both flags STICKY LOCK and PLL LOCK are set */
+            if (!(0xc0 & ~curPllrangingA)) {
+                vcoiRet = vcoiCurrentIdx;
+			}
+        }
+    }
+
+	/* Security checks */
+    if (!vcoiRet || (vmax >= 0xFF00) || (vmin < 0x0100) || ((vmax - vmin) < 0x6000)) {
+        return 0;
+	}
+    return vcoiRet;
+}
+#endif
+
 
 void spi_init(void) {
 	/* Set init level */
@@ -501,29 +618,32 @@ void spi_start(void) {
 	/*
 	3. Program parameters. It is recommended that
 	suitable parameters are calculated using the
-	AX_RadioLab tool available from Axsem.
+	AX_RadioLab tool available from ON Semiconductors (former Axsem).
 	*/
 	{
 		/* Setting default values */
 		spi_ax_initRegisters();
 		spi_ax_initRegistersRx();
 
-#if defined(AX_VCO_INTERNAL)
+		#if defined(AX_VCO_INTERNAL)
 		/* VCO A/B settings */
-		spi_ax_setFrequency_MHz(false, 433.800);												// VCO1 (internal without ext. L) with RFDIV --> VCORA = 0x09
-		spi_ax_setFrequency_MHz(true,  439.025);												// VCO1 (internal without ext. L) with RFDIV --> VCORB = 0x09
+		g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(433.800);							// VCO1 (internal without ext. L) with RFDIV --> VCORA = 0x09
+		g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(439.025);							// VCO1 (internal without ext. L) with RFDIV --> VCORB = 0x09
 
-		//spi_ax_setFrequency_MHz(false, 400.000);												// VCO1 (internal without ext. L) with RFDIV --> VCORA = 0x0e
-		//spi_ax_setFrequency_MHz(true,  525.000);												// VCO1 (internal without ext. L) with RFDIV --> VCORB = 0x02
+		//g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(400.000);						// VCO1 (internal without ext. L) with RFDIV --> VCORA = 0x0e
+		//g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(525.000);						// VCO1 (internal without ext. L) with RFDIV --> VCORB = 0x02
 
-#else
+		#else
 		/* VCO A/B settings */
-		//spi_ax_setFrequency_MHz(false, 144.800);												// VCO2 (internal with    ext. L) with RFDIV --> VCORA = failure
-		//spi_ax_setFrequency_MHz(true,  145.625);												// VCO2 (internal with    ext. L) with RFDIV --> VCORB = failure
+		g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.800);							// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
+		g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(145.625);							// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x04
 
-		spi_ax_setFrequency_MHz(false, 150.000);												// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x??
-		spi_ax_setFrequency_MHz(true,  155.000);												// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x??
-#endif
+		//g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(137.000);						// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x0e
+		//g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(149.000);						// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x01
+		#endif
+
+		spi_ax_setFrequency2Regs(0, false);
+		spi_ax_setFrequency2Regs(1, true);
 	}
 
 	/*
@@ -538,8 +658,8 @@ void spi_start(void) {
 																								// WR address 0x31: PLLCPI -
 
 		//  Set PWRMODE to STANDBY, Enable TCXO if used
-		spi_ax_transport(false, "< 82 65 >");													// WR Address 0x02: PWRMODE - XOEN, REFEN, PWRMODE=Crystal Oscillator enabled
-		//spi_ax_transport(false, "< f0 02 65 >");												// WR Address 0x02: PWRMODE - XOEN, REFEN, PWRMODE=Crystal Oscillator enabled (by long address access)
+		spi_ax_transport(false, "< 82 65 >");													// WR Address 0x02: PWRMODE - XOEN, REFEN, PWRMODE=STANDBY Crystal Oscillator enabled
+		//spi_ax_transport(false, "< f0 02 65 >");												// WR Address 0x02: PWRMODE - XOEN, REFEN, PWRMODE=STANDBY Crystal Oscillator enabled (by long address access)
 
 		//  Wait until crystal oscillator is ready
 		do {
@@ -582,11 +702,10 @@ void spi_start(void) {
 		do {
 			spi_ax_transport(false, "< 33 R1 >");												// RD Address 0x33: PLLRANGINGA
 		} while (g_ax_spi_packet_buffer[0] & _BV(4));											// Bit 4: RNGSTART
+		g_ax_spi_range_chan[0] = g_ax_spi_packet_buffer[0];
 
 		if (g_ax_spi_packet_buffer[0] & _BV(5)) {
 			/* Ranging error - reset to center */
-			barrier();
-			nop();
 			spi_ax_transport(false, "< b3 08 >");
 		}
 
@@ -596,18 +715,163 @@ void spi_start(void) {
 		do {
 			spi_ax_transport(false, "< 3b R1 >");												// RD Address 0x3B: PLLRANGINGB
 		} while (g_ax_spi_packet_buffer[0] & _BV(4));											// Bit 4: RNGSTART
+		g_ax_spi_range_chan[1] = g_ax_spi_packet_buffer[0];
 
 		if (g_ax_spi_packet_buffer[0] & _BV(5)) {
 			/* Ranging error - reset to center */
-			barrier();
-			nop();
 			spi_ax_transport(false, "< bb 08 >");
 		}
-		barrier();
-		nop();
 
-		while (true)
+
+		/* VCOI Manual calibration when GPADC13 is attached to the VCO control voltage, available at FILT in external loop filter mode */
+		#if defined(AX_GPADC13_ENABLED)
+
+		spi_ax_initRegistersTx();
+
+		/* MODULATION */
+		spi_ax_transport(false, "< 90 08 >");													// WR address 0x10: MODULATION - 08: FSK
+
+		/* FSKDEV */
+		spi_ax_transport(false, "< f1 61 00 00 00 >");											// WR address 0x161: FSKDEV - off
+
+		/* FSKDEV */
+		spi_ax_transport(false, "< 30 R1 >");													// RD address 0x38: PLLLOOP - 04: FILTEN
+		g_ax_spi_packet_buffer[1] = 0x04 | g_ax_spi_packet_buffer[0];
+		g_ax_spi_packet_buffer[0] = 0x30 | 0x80;
+		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);									// Write back with modified value
+
+		/* 0xF35 */
+        {
+			spi_ax_transport(false, "< 7f 35 R1 >");											// RD address 0xF35 (RX/TX) - Set to 0x10 for reference frequencies (crystal or TCXO) less than 24.8 MHz (fXTALDIV = 1), or to 0x11 otherwise (fXTALDIV = 2)
+            uint8_t new_0xF35 = 0x80 | g_ax_spi_packet_buffer[0];
+
+            if (0x02 & (uint8_t)~new_0xF35) {
+                ++new_0xF35;
+			}
+
+			g_ax_spi_packet_buffer[0] = 0xFF;
+			g_ax_spi_packet_buffer[1] = 0x35;
+            g_ax_spi_packet_buffer[2] = new_0xF35;
+			spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 3);								// Write back with modified value
+        }
+
+		spi_ax_transport(false, "< 82 6c >");													// WR Address 0x02: PWRMODE - XOEN, REFEN, PWRMODE=SYNTH_TX
+
+		{
+			/* PLLVCOI */
+			spi_ax_transport(false, "< 71 80 R1 >");											// RD address 0x180: PLLVCOI
+			uint8_t vcoi_save = g_ax_spi_packet_buffer[0];
+
+            uint8_t dropFirstCalIdx = 2;
+            for (uint8_t chanIdx = 0; chanIdx < 2; chanIdx++) {
+				g_ax_spi_vcoi_chan[chanIdx] = 0;
+
+                if (g_ax_spi_range_chan[chanIdx] & 0x20) {
+                    continue;
+				}
+
+				g_ax_spi_packet_buffer[0] = 0x33 | 0x80;										// WR Address 0x33: PLLRANGINGA
+				g_ax_spi_packet_buffer[1] = g_ax_spi_range_chan[0] & 0x0f;
+				spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
+
+				spi_ax_setFrequency2Regs(chanIdx, chanIdx == 1 ?  true : false);
+
+                do {
+					g_ax_spi_vcoi_chan[chanIdx] = s_spi_ax_cal_vcoi();
+                } while (--dropFirstCalIdx);
+                dropFirstCalIdx = 1;
+            }
+
+			/* Revert to initial setting */
+			g_ax_spi_packet_buffer[0] = 0x71 | 0x80;											// WR Address 0x180: PLLVCOI
+			g_ax_spi_packet_buffer[1] = 0x80;
+			g_ax_spi_packet_buffer[2] = vcoi_save;
+			spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
+		}
+
+		/* Restore settings and set range vars */
+
+		spi_ax_transport(false, "< 82 00 >");													// WR Address 0x02: PWRMODE - PWRMODE=POWERDOWN
+
+		spi_ax_initRegisters();
+		spi_ax_initRegistersRx();
+
+		spi_ax_setFrequency2Regs(0, false);
+		spi_ax_setFrequency2Regs(1, true);
+
+		uint8_t val = g_ax_spi_range_chan[0];
+		if (val & 0x20) {
+			val = 0x08;
+		}
+		g_ax_spi_packet_buffer[0] = 0x33 | 0x80;												// WR Address 0x33: PLLRANGINGA
+		g_ax_spi_packet_buffer[1] = val & 0x0f;
+		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
+
+		val = g_ax_spi_range_chan[1];
+		if (val & 0x20) {
+			val = 0x08;
+		}
+		g_ax_spi_packet_buffer[0] = 0x3B | 0x80;												// WR Address 0x3B: PLLRANGINGB
+		g_ax_spi_packet_buffer[1] = val & 0x0f;
+		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
+		#endif  // VCOI Calibration
+
+
+		/* PWRMODE=SYNTHRX */
+		spi_ax_transport(false, "< 82 68 >");													// WR address 0x02: PWRMODE - XOEN, REFEN, PWRMODE=SYNTHRX
+		delay_us(40);
+
+		/* PWRMODE=FULLRX */
+		spi_ax_transport(false, "< 82 69 >");													// WR address 0x02: PWRMODE - XOEN, REFEN, PWRMODE=FULLRX
+
+		/* Set VCO-PLL to FREQA */
+		/* PLLLOOP */
+		spi_ax_transport(false, "< 30 R1 >");													// WR address 0x30: PLLLOOP - not FREQB
+		g_ax_spi_packet_buffer[1] = g_ax_spi_packet_buffer[0] & 0x7f;
+		g_ax_spi_packet_buffer[0] = 0xB0;
+
+		/* BGNDRSSI */
+		spi_ax_transport(false, "< C1 0C >");													// WR Address 0x41: BGNDRSSI
+
+		/* RSSIABSTHR */
+		spi_ax_transport(false, "< F2 2D A0 >");												// WR Address 0x22D: RSSIABSTHR
+
+		volatile uint8_t curRssi = 0;
+		volatile uint8_t curBgndRssi = 0;
+		volatile uint8_t curAgcCounter = 0;
+		volatile uint16_t curTrkAmpl = 0;
+		volatile uint32_t curTrkRfFreq = 0;
+		volatile uint16_t curTrkFreq = 0;
+		while (true) {
+			/* RSSI, BGNDRSSI */
+			spi_ax_transport(false, "< 40 R2 >");												// RD Address 0x40: RSSI, BGNDRSSI
+			curRssi			= g_ax_spi_packet_buffer[0];
+			curBgndRssi		= g_ax_spi_packet_buffer[1];
+
+			/* AGCCOUNTER */
+			spi_ax_transport(false, "< 43 R1 >");												// RD Address 0x43: AGCCOUNTER
+			curAgcCounter	= g_ax_spi_packet_buffer[0];
+
+			/* TRKAMPL */
+			spi_ax_transport(false, "< 48 R2 >");												// RD Address 0x48: TRKAMPL
+			curTrkAmpl		= ((uint16_t)g_ax_spi_packet_buffer[0] << 8) | g_ax_spi_packet_buffer[1];
+
+			/* TRKRFFREQ */
+			spi_ax_transport(false, "< 4D R3 >");												// RD Address 0x4D: TRKRFFREQ
+			curTrkRfFreq	= (((uint32_t)g_ax_spi_packet_buffer[0] & 0x0f) << 24) | ((uint32_t)g_ax_spi_packet_buffer[1] << 8) | g_ax_spi_packet_buffer[2];
+
+			/* TRKFREQ */
+			spi_ax_transport(false, "< 50 R2 >");												// RD Address 0x50: TRKFREQ
+			curTrkFreq		= ((uint16_t)g_ax_spi_packet_buffer[0] << 8) | g_ax_spi_packet_buffer[1];
+
 			nop();
+			(void)  curRssi;
+			(void)  curBgndRssi;
+			(void)  curAgcCounter;
+			(void)  curTrkAmpl;
+			(void)  curTrkRfFreq;
+			(void)  curTrkFreq;
+		}
 	}
 
 
