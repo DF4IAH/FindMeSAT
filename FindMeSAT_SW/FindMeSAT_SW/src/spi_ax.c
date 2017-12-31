@@ -232,7 +232,7 @@ void spi_ax_setFrequency2Regs(uint8_t chan, bool isFreqB)
 	f_reg = g_ax_spi_freq_chan[chan];
 
 	/* Prepare packet */
-	l_packet[0] = isFreqB ?  0xBC : 0xB4;														// WR Address 0x34 or 0x3C
+	l_packet[0] = (isFreqB ?  0x3C : 0x34) | 0x80;												// WR Address 0x34 or 0x3C
 	l_packet[1] = (uint8_t) (f_reg >> 24) & 0xff;
 	l_packet[2] = (uint8_t) (f_reg >> 16) & 0xff;
 	l_packet[3] = (uint8_t) (f_reg >>  8) & 0xff;
@@ -241,6 +241,29 @@ void spi_ax_setFrequency2Regs(uint8_t chan, bool isFreqB)
 	/* Send packet */
 	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 	spi_write_packet(&SPI_AX, l_packet, sizeof(l_packet));
+	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+}
+
+void spi_ax_selectVcoFreq(bool isFreqB)
+{
+	/* PLLLOOP */
+	spi_ax_transport(false, "< 30 R1 >");													// RD address 0x30: PLLLOOP - FREQB
+	g_ax_spi_packet_buffer[1] = (isFreqB ?  (g_ax_spi_packet_buffer[0] | 0x80)				// Set   FREQB
+										 :  (g_ax_spi_packet_buffer[0] & 0x7f));			// Clear FREQB
+	g_ax_spi_packet_buffer[0] = 0x30 | 0x80;												// WR address 0x30: PLLLOOP - FREQB
+
+	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
+	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
+	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+
+	/* PLLLOOPBOOST */
+	spi_ax_transport(false, "< 38 R1 >");													// RD address 0x30: PLLLOOP - FREQB
+	g_ax_spi_packet_buffer[1] = (isFreqB ?  (g_ax_spi_packet_buffer[0] | 0x80)				// Set   FREQB
+										 :  (g_ax_spi_packet_buffer[0] & 0x7f));			// Clear FREQB
+	g_ax_spi_packet_buffer[0] = 0x38 | 0x80;												// WR address 0x38: PLLLOOP - FREQB
+
+	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
+	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
 	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
 }
 
@@ -676,52 +699,46 @@ void spi_ax_initRegisters_PR1200_Rx_cont_SingleParamSet(void)
 	spi_ax_transport(false, "< f1 50 e8 >");													// WR address 0x150: AGCGAIN3
 }
 
-void spi_ax_initRegisters_AnlogFM(bool isFull)
+void spi_ax_initRegisters_AnlogFM(void)
 {
 	/* MODULATION */
-	spi_ax_transport(false, "< 90 08 >");														// WR address 0x10: MODULATION - 08: FSK
+	spi_ax_transport(false, "< 90 0b >");														// WR address 0x10: MODULATION - 0B: Analog FM
 
 	/* PINFUNCTCXO_EN */
 	spi_ax_transport(false, "< a6 05 >");														// WR address 0x26: PINFUNCTCXO_EN - Use TCXO_EN pin as DAC output
 
 	/* IFFREQ */
-	spi_ax_transport(false, "< f1 00 00 cd >");													// WR address 0x100: IFFREQ
+	spi_ax_transport(false, "< f1 00 06 66 >");													// WR address 0x100: IFFREQ - 25 kHz (f_xtal = 16 MHz)
 
 	/* MAXDROFFSET */
 	spi_ax_transport(false, "< f1 06 00 00 00 >");												// WR address 0x106: MAXDROFFSET - off
 
 	/* MAXRFOFFSET */
-	spi_ax_transport(false, "< f1 09 80 07 5f >");												// WR address 0x109: MAXRFOFFSET - track at LO1, max 50 kHz @ f_xtal = 16 MHz
+	spi_ax_transport(false, "< f1 09 80 cc cc >");												// WR address 0x109: MAXRFOFFSET - track at LO1, max 50 kHz @ f_xtal = 16 MHz
 
 	/* FREQUENCYLEAK */
 	spi_ax_transport(false, "< f1 16 04 >");													// WR address 0x116: FREQUENCYLEAK - FREQUENCYGAINB0 + 2, prevents the demodulator AFC loop from tracking static frequency offsets
 
 	/* RXPARAMSETS */
-	spi_ax_transport(false, "< f1 17 00 >");													// WR address 0x117: RXPARAMSETS
+	spi_ax_transport(false, "< f1 17 00 >");													// WR address 0x117: RXPARAMSETS - only use receiver parameter set 0
 
 	/* TIMEGAIN0 */
-	spi_ax_transport(false, "< f1 24 ba >");													// WR address 0x124: TIMEGAIN0
+	spi_ax_transport(false, "< f1 24 00 >");													// WR address 0x124: TIMEGAIN0 - disable bit timing recovery, which would only add jitter
 
 	/* DRGAIN0 */
-	spi_ax_transport(false, "< f1 25 b4 >");													// WR address 0x125: DRGAIN0
+	spi_ax_transport(false, "< f1 25 00 >");													// WR address 0x125: DRGAIN0 - off
 
 	/* FREQGAINA0 */
-	spi_ax_transport(false, "< f1 27 0f >");													// WR address 0x127: FREQGAINA0
+	spi_ax_transport(false, "< f1 27 a0 >");													// WR address 0x127: FREQGAINA0 - off
 
 	/* FREQGAINB0 */
-	spi_ax_transport(false, "< f1 28 02 >");													// WR address 0x128: FREQGAINB0 - bandwidth of “inner” AFC loop
+	spi_ax_transport(false, "< f1 28 02 >");													// WR address 0x128: FREQGAINB0 - bandwidth of “inner” AFC loop used for FM demodulation. f_3dB = 0.115*BR.	This is the fastest setting available
 
 	/* FREQGAINC0 */
-	spi_ax_transport(false, "< f1 29 1f >");													// WR address 0x129: FREQGAINC0
+	spi_ax_transport(false, "< f1 29 1f >");													// WR address 0x129: FREQGAINC0 - off
 
 	/* FREQGAIND0 */
-	spi_ax_transport(false, "< f1 2a 08 >");													// WR address 0x12A: FREQGAIND0 - bandwidth of “outer” AFC loop (tracking frequency mismatch)
-
-	/* TIMEGAIN1 */
-	spi_ax_transport(false, "< f1 34 b8 >");													// WR address 0x134: TIMEGAIN1
-
-	/* DRGAIN1 */
-	spi_ax_transport(false, "< f1 35 b3 >");													// WR address 0x135: DRGAIN1
+	spi_ax_transport(false, "< f1 2a 08 >");													// WR address 0x12A: FREQGAIND0 - bandwidth of “outer” AFC loop (tracking frequency mismatch), 78 Hz @ BR = 100 kbps, f_xtal = 16 MHz
 
 	/* DACCONFIG */
 	spi_ax_transport(false, "< f3 32 03 >");													// WR address 0x332: DACCONFIG - output TRKFREQUENCY (= demodulated signal) on DAC
@@ -731,12 +748,6 @@ void spi_ax_initRegisters_AnlogFM(bool isFull)
 
 	/* 0xF18 */
 	spi_ax_transport(false, "< ff 18 06 >");													// WR address 0xF18 (RX/TX) - ? (is set to 0x06, explicit named for using Analog FM)
-
-
-	if (isFull) {
-		/* PWRMODE */
-		spi_ax_transport(false, "< 82 09 >");													// WR address 0x02: PWRMODE - FULL RX
-	}
 }
 
 #if defined(AX_GPADC13_ENABLED)
@@ -745,7 +756,10 @@ static void spi_ax_adcCtrlSet(uint8_t val)
 	g_ax_spi_packet_buffer[0] = 0xF3;															// WR Address 0x300: GPADCCTRL
 	g_ax_spi_packet_buffer[1] = 0x30;
 	g_ax_spi_packet_buffer[2] = val;
+
+	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 3);
+	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
 }
 
 static uint8_t spi_ax_adcCtrlGet(void)
@@ -808,7 +822,10 @@ static uint8_t s_spi_ax_cal_vcoi(void)
 		g_ax_spi_packet_buffer[0] = 0xf1;														// WR address 0x180: PLLVCOI
 		g_ax_spi_packet_buffer[1] = 0x80;
 		g_ax_spi_packet_buffer[2] = vcoiNew;
+
+		spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 3);									// Write back with modified value
+		spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
 
         /* Clear STICKY LOCK */
 		spi_ax_transport(false, "< 33 R1 >");													// RD Address 0x33: PLLRANGINGA
@@ -1009,7 +1026,7 @@ void spi_start(void) {
 		/* VCOI Manual calibration when GPADC13 is attached to the VCO control voltage, available at FILT in external loop filter mode */
 		#if defined(AX_GPADC13_ENABLED)
 
-		spi_ax_initRegistersTx();
+		spi_ax_initRegisters_PR1200_Tx();
 
 		/* MODULATION */
 		spi_ax_transport(false, "< 90 08 >");													// WR address 0x10: MODULATION - 08: FSK
@@ -1021,7 +1038,10 @@ void spi_start(void) {
 		spi_ax_transport(false, "< 30 R1 >");													// RD address 0x38: PLLLOOP - 04: FILTEN
 		g_ax_spi_packet_buffer[1] = 0x04 | g_ax_spi_packet_buffer[0];
 		g_ax_spi_packet_buffer[0] = 0x30 | 0x80;
+
+		spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);									// Write back with modified value
+		spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
 
 		/* 0xF35 */
         {
@@ -1035,7 +1055,10 @@ void spi_start(void) {
 			g_ax_spi_packet_buffer[0] = 0xFF;
 			g_ax_spi_packet_buffer[1] = 0x35;
             g_ax_spi_packet_buffer[2] = new_0xF35;
+
+			spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 			spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 3);								// Write back with modified value
+			spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
         }
 
 		spi_ax_transport(false, "< 82 6c >");													// WR Address 0x02: PWRMODE - XOEN, REFEN, PWRMODE=SYNTH_TX
@@ -1055,7 +1078,10 @@ void spi_start(void) {
 
 				g_ax_spi_packet_buffer[0] = 0x33 | 0x80;										// WR Address 0x33: PLLRANGINGA
 				g_ax_spi_packet_buffer[1] = g_ax_spi_range_chan[0] & 0x0f;
+
+				spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 				spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
+				spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
 
 				spi_ax_setFrequency2Regs(chanIdx, chanIdx == 1 ?  true : false);
 
@@ -1069,15 +1095,19 @@ void spi_start(void) {
 			g_ax_spi_packet_buffer[0] = 0x71 | 0x80;											// WR Address 0x180: PLLVCOI
 			g_ax_spi_packet_buffer[1] = 0x80;
 			g_ax_spi_packet_buffer[2] = vcoi_save;
-			spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
-		}
 
-		/* Restore settings and set range vars */
+			spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
+			spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
+			spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+		}
+		#endif  // VCOI Calibration
+
 
 		spi_ax_transport(false, "< 82 00 >");													// WR Address 0x02: PWRMODE - PWRMODE=POWERDOWN
 
-		spi_ax_initRegisters();
-		spi_ax_initRegistersRx();
+		/* Pre setting with default modulation */
+		spi_ax_initRegisters_PR1200();
+		spi_ax_initRegisters_PR1200_Rx();
 
 		spi_ax_setFrequency2Regs(0, false);
 		spi_ax_setFrequency2Regs(1, true);
@@ -1088,7 +1118,10 @@ void spi_start(void) {
 		}
 		g_ax_spi_packet_buffer[0] = 0x33 | 0x80;												// WR Address 0x33: PLLRANGINGA
 		g_ax_spi_packet_buffer[1] = val & 0x0f;
+
+		spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
+		spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
 
 		val = g_ax_spi_range_chan[1];
 		if (val & 0x20) {
@@ -1096,8 +1129,22 @@ void spi_start(void) {
 		}
 		g_ax_spi_packet_buffer[0] = 0x3B | 0x80;												// WR Address 0x3B: PLLRANGINGB
 		g_ax_spi_packet_buffer[1] = val & 0x0f;
+
+		spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
-		#endif  // VCOI Calibration
+		spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+
+
+#define AX_TEST_ANALOG_FM  true
+		#if defined(AX_TEST_ANALOG_FM)
+
+		/* Overwrite Analog-FM specific settings */
+		spi_ax_initRegisters_AnlogFM();
+
+		/* Set VCO-PLL to FREQB */
+		//spi_ax_selectVcoFreq(true);
+
+		#endif  // AX_TEST_ANALOG_FM
 
 
 		/* PWRMODE=SYNTHRX */
@@ -1107,20 +1154,14 @@ void spi_start(void) {
 		/* PWRMODE=FULLRX */
 		spi_ax_transport(false, "< 82 69 >");													// WR address 0x02: PWRMODE - XOEN, REFEN, PWRMODE=FULLRX
 
-		/* Set VCO-PLL to FREQA */
-		/* PLLLOOP */
-		spi_ax_transport(false, "< 30 R1 >");													// WR address 0x30: PLLLOOP - not FREQB
-		g_ax_spi_packet_buffer[1] = g_ax_spi_packet_buffer[0] & 0x7f;
-		g_ax_spi_packet_buffer[0] = 0xB0;
-
 		/* BGNDRSSI */
-		spi_ax_transport(false, "< C1 0C >");													// WR Address 0x41: BGNDRSSI
+		//spi_ax_transport(false, "< C1 0C >");													// WR Address 0x41: BGNDRSSI
 
 		/* RSSIABSTHR */
-		spi_ax_transport(false, "< F2 2D A0 >");												// WR Address 0x22D: RSSIABSTHR
+		//spi_ax_transport(false, "< F2 2D A0 >");												// WR Address 0x22D: RSSIABSTHR
+
 
 		volatile uint8_t curRssi = 0;
-		volatile int16_t curRssiCalc = 0;
 		volatile uint8_t curBgndRssi = 0;
 		volatile uint8_t curAgcCounter = 0;
 		volatile uint16_t curTrkAmpl = 0;
@@ -1130,7 +1171,6 @@ void spi_start(void) {
 			/* RSSI, BGNDRSSI */
 			spi_ax_transport(false, "< 40 R2 >");												// RD Address 0x40: RSSI, BGNDRSSI
 			curRssi			= g_ax_spi_packet_buffer[0];
-			curRssiCalc		= (int16_t)(int8_t)curRssi - 64;
 			curBgndRssi		= g_ax_spi_packet_buffer[1];
 
 			/* AGCCOUNTER */
@@ -1151,74 +1191,11 @@ void spi_start(void) {
 
 			nop();
 			(void)  curRssi;
-			(void)  curRssiCalc;
 			(void)  curBgndRssi;
 			(void)  curAgcCounter;
 			(void)  curTrkAmpl;
 			(void)  curTrkRfFreq;
 			(void)  curTrkFreq;
 		}
-	}
-
-
-	/* TEST CODES */
-
-#if defined(AX_FM_WIDE_RX)
-	/* Settings for analog FM mode */
-	spi_ax_setModulationFM(false);
-	barrier();
-
-#elif defined(AX_TEST01)
-	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
-	g_ax_spi_packet_buffer[0]	= 0x00;
-	g_ax_spi_packet_buffer[1]	= 0x00;
-	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 1);										// Address 0x00: silicon revision
-	spi_read_packet(&SPI_AX, g_ax_spi_packet_buffer, 1);
-	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-
-	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
-	g_ax_spi_packet_buffer[0]	= 0x80 | 0x01;
-	g_ax_spi_packet_buffer[1]	= 0x55;
-	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);										// Address 0x01: scratch register R/W - set
-	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-
-	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
-	g_ax_spi_packet_buffer[0]	= 0x01;
-	g_ax_spi_packet_buffer[1]	= 0x00;
-	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 1);										// Address 0x01: scratch register R/W - check
-	spi_read_packet(&SPI_AX, g_ax_spi_packet_buffer, 1);
-	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-	nop();
-#endif
-
-
-
-
-	while (true) {
-		/* Read AGCCOUNTER */
-		spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
-		g_ax_spi_packet_buffer[0]	= 0x43;
-		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 1);
-		memset(g_ax_spi_packet_buffer, 0, sizeof(g_ax_spi_packet_buffer));
-		spi_read_packet(&SPI_AX, g_ax_spi_packet_buffer, 1);
-		spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-
-		/* Read RSSI */
-		spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
-		g_ax_spi_packet_buffer[0]	= 0x40;
-		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 1);
-		memset(g_ax_spi_packet_buffer, 0, sizeof(g_ax_spi_packet_buffer));
-		spi_read_packet(&SPI_AX, g_ax_spi_packet_buffer, 1);
-		spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-
-		/* Read TRK_AMPLITUDE */
-		spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
-		g_ax_spi_packet_buffer[0]	= 0x48;
-		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 1);
-		memset(g_ax_spi_packet_buffer, 0, sizeof(g_ax_spi_packet_buffer));
-		spi_read_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
-		spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-
-		nop();
 	}
 }

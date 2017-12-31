@@ -42,13 +42,14 @@ typedef enum SPI_AX_TRPT_STATE_ENUM {
 bool spi_ax_transport(bool isProgMem, const char* packet);
 uint32_t spi_ax_calcFrequency_Mhz2Regs(float f_mhz);
 void spi_ax_setFrequency2Regs(uint8_t chan, bool isFreqB);
+void spi_ax_selectVcoFreq(bool isFreqB);
 void spi_ax_initRegisters_PR1200(void);
 void spi_ax_initRegisters_PR1200_Tx(void);
 void spi_ax_initRegisters_PR1200_Rx(void);
 void spi_ax_initRegisters_PR1200_Rx_WoR(void);
 void spi_ax_initRegisters_PR1200_Rx_cont(void);
 void spi_ax_initRegisters_PR1200_Rx_cont_SingleParamSet(void);
-void spi_ax_initRegisters_AnlogFM(bool isFull);
+void spi_ax_initRegisters_AnlogFM(void);
 
 void spi_init(void);
 void spi_start(void);
