@@ -279,7 +279,11 @@ void spi_ax_initRegisters_PR1200(void)
 	spi_ax_transport(false, "< 91 26 >");														// WR address 0x12: FRAMING
 
 	/* PINFUNCTCXO_EN */
+	#if 0
 	spi_ax_transport(false, "< a6 05 >");														// WR address 0x26: PINFUNCTCXO_EN - Use TCXO_EN pin as DAC output
+	#else
+	spi_ax_transport(false, "< a6 00 >");														// WR address 0x26: PINFUNCTCXO_EN - Set to output '0'
+	#endif
 
 	/* WAKEUPXOEARLY */
 	spi_ax_transport(false, "< ee 01 >");														// WR address 0x6E: WAKEUPXOEARLY
@@ -535,11 +539,13 @@ void spi_ax_initRegisters_PR1200(void)
 	/* PKTACCEPTFLAGS */
 	spi_ax_transport(false, "< f2 33 20 >");													// WR address 0x233: PKTACCEPTFLAGS
 
+	#if 0
 	/* DACVALUE */
-	spi_ax_transport(false, "< f3 30 00 0c >");													// WR address 0x330: DACVALUE
+	spi_ax_transport(false, "< f3 30 00 0c >");													// WR address 0x330: DACVALUE - DACSHIFT = 12 bit
 
 	/* DACCONFIG */
-	spi_ax_transport(false, "< f3 32 02 >");													// WR address 0x332: DACCONFIG
+	spi_ax_transport(false, "< f3 32 83 >");													// WR address 0x332: DACCONFIG - DACPWM, DACINPUT=TRKFREQUENCY
+	#endif
 
 	/* 0xF10 - XTALOSC*/
 	spi_ax_transport(false, "< ff 10 03 >");													// WR address 0xF10: XTALOSC
@@ -740,11 +746,11 @@ void spi_ax_initRegisters_AnlogFM(void)
 	/* FREQGAIND0 */
 	spi_ax_transport(false, "< f1 2a 08 >");													// WR address 0x12A: FREQGAIND0 - bandwidth of “outer” AFC loop (tracking frequency mismatch), 78 Hz @ BR = 100 kbps, f_xtal = 16 MHz
 
-	/* DACCONFIG */
-	spi_ax_transport(false, "< f3 32 03 >");													// WR address 0x332: DACCONFIG - output TRKFREQUENCY (= demodulated signal) on DAC
-
 	/* DACVALUE */
 	spi_ax_transport(false, "< f3 30 00 0c >");													// WR address 0x330: DACVALUE - DACSHIFT = 12 bit. This gives maximum volume, downshifting further gives smaller volume
+
+	/* DACCONFIG */
+	spi_ax_transport(false, "< f3 32 83 >");													// WR address 0x332: DACCONFIG - DACPWM, output TRKFREQ (= demodulated signal) on DAC
 
 	/* 0xF18 */
 	spi_ax_transport(false, "< ff 18 06 >");													// WR address 0xF18 (RX/TX) - ? (is set to 0x06, explicit named for using Analog FM)
