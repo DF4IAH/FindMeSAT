@@ -216,31 +216,19 @@ bool spi_ax_transport(bool isProgMem, const char* packet)
 
 void spi_ax_sync2Powerdown(void)
 {
-	/*
-	The following list explains the typical programming flow.
-	Preparation:
+	/* SEL line and MISO check */
+	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+	delay_us(1);
+	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 
-	1. Reset the Chip. Set SEL to high for at least 1?s,
-	then low. Wait until MISO goes high. Set, and then
-	clear, the RST bit of register PWRMODE.
+	while (!ioport_get_pin_level(AX_MISO_PIN))
+		;
 
-	2. Set the PWRMODE register to POWERDOWN.
-	*/
-	{
-		/* SEL line and MISO check */
-		spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-		delay_us(1);
-		spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
+	/* Set RESET */
+	spi_ax_transport(false, "< 82 80 >");													// WR address 0x02: PWRMODE - RESET, PWRMODE=Powerdown
 
-		while (!ioport_get_pin_level(AX_MISO_PIN))
-			;
-
-		/* Set RESET */
-		spi_ax_transport(false, "< 82 80 >");													// WR address 0x02: PWRMODE - RESET, PWRMODE=Powerdown
-
-		/* Clear RESET and Powerdown */
-		spi_ax_transport(false, "< 82 00 >");													// WR address 0x02: PWRMODE - RESET, PWRMODE=Powerdown
-	}
+	/* Clear RESET and Powerdown */
+	spi_ax_transport(false, "< 82 00 >");													// WR address 0x02: PWRMODE - RESET, PWRMODE=Powerdown
 }
 
 static void s_spi_ax_xtal_waitReady(void)
@@ -940,8 +928,21 @@ void spi_ax_initRegisters_Default(void)
 	/* TXRATE  0x00 0x04 0xEA */
 	spi_ax_transport(false, "< f1 65 00 04 ea >");												// WR address 0x165: FSKDEV
 
+	/* TXPWRCOEFFA */
+	spi_ax_transport(false, "< f1 68 00 00 >");													// WR address 0x168: TXPWRCOEFFA
+
 	/* TXPWRCOEFFB */
-	spi_ax_transport(false, "< f1 6a 00 aa >");													// WR address 0x16A: TXPWRCOEFFB
+	//spi_ax_transport(false, "< f1 6a 00 aa >");												// WR address 0x16A: TXPWRCOEFFB
+	spi_ax_transport(false, "< f1 6a 00 0a >");													// WR address 0x16A: TXPWRCOEFFB
+
+	/* TXPWRCOEFFC */
+	spi_ax_transport(false, "< f1 6c 00 00 >");													// WR address 0x16C: TXPWRCOEFFC
+
+	/* TXPWRCOEFFD */
+	spi_ax_transport(false, "< f1 6e 00 00 >");													// WR address 0x16E: TXPWRCOEFFD
+
+	/* TXPWRCOEFFE */
+	spi_ax_transport(false, "< f1 70 00 00 >");													// WR address 0x170: TXPWRCOEFFE
 
 	/* PLLVCOI */
 	spi_ax_transport(false, "< f1 80 99 >");													// WR address 0x180: PLLVCOI
@@ -1501,11 +1502,11 @@ void spi_start(void) {
 
 	do {
 		spi_ax_setPwrMode(AX_SET_REGISTERS_POWERMODE_FULLTX);
-		delay_ms(100);
+		delay_ms(250);
 
 		spi_ax_setPwrMode(AX_SET_REGISTERS_POWERMODE_SYNTHTX);
 		nop();
-		delay_ms(100);
+		delay_ms(500);
 	} while (true);
 #endif
 }
