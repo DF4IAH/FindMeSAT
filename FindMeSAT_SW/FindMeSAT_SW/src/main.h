@@ -13,8 +13,8 @@
 
 
 /* VERSION: YYM, MDD */
-#define VERSION_HIGH												171
-#define VERSION_LOW													231
+#define VERSION_HIGH												180
+#define VERSION_LOW													101
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"

@@ -659,8 +659,8 @@ static void init_globals(void)
 	{
 		g_ax_spi_freq_chan[0]	= 0;
 		g_ax_spi_freq_chan[1]	= 0;
-		g_ax_spi_range_chan[0]	= 0x08;
-		g_ax_spi_range_chan[1]	= 0x08;
+		g_ax_spi_range_chan[0]	= 0x10;
+		g_ax_spi_range_chan[1]	= 0x10;
 		g_ax_spi_vcoi_chan[0]	= 0;
 		g_ax_spi_vcoi_chan[1]	= 0;
 	}
