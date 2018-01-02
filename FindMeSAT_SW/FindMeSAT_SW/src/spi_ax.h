@@ -95,7 +95,12 @@ void spi_ax_initRegisters_AnlogFM_Rx(void);
 void spi_init(void);
 void spi_start(void);
 
+/* Debugging */
+void spi_ax_test_Analog_FM_TX(void);
+void spi_ax_test_Analog_FM_RX(void);
 void spi_ax_monitor_levels(void);
+
+void spi_ax_test_PR1200_TX(void);
 
 
 #endif /* SPI_H_ */
