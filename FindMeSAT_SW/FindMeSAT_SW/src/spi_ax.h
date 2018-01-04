@@ -67,6 +67,62 @@ typedef enum AX_SET_REGISTERS_POWERMODE {
 } AX_SET_REGISTERS_POWERMODE_t;
 
 
+typedef enum AX_FIFO_CMD {
+	AX_FIFO_CMD_NOP													= 0x00,
+	AX_FIFO_CMD_ASK_COHERENT										= 0x01,
+	AX_FIFO_CMD_CLEAR_FIFO_ERROR									= 0x02,
+	AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS							= 0x03,
+	AX_FIFO_CMD_COMMIT												= 0x04,
+	AX_FIFO_CMD_ROLLBACK											= 0x05
+} AX_FIFO_CMD_t;
+
+typedef enum AX_FIFO_DATA_CMD {
+	AX_FIFO_DATA_CMD_NOP_TX											= 0x00,
+	AX_FIFO_DATA_CMD_RSSI_RX										= 0x31,
+	AX_FIFO_DATA_CMD_TXCTRL_TX										= 0x3C,
+	AX_FIFO_DATA_CMD_FREQOFFS_RX									= 0x52,
+	AX_FIFO_DATA_CMD_ANTRSSI2_RX									= 0x55,
+	AX_FIFO_DATA_CMD_REPEATDATA_TX									= 0x62,
+	AX_FIFO_DATA_CMD_TIMER_RX										= 0x70,
+	AX_FIFO_DATA_CMD_RFFREQOFFS_RX									= 0x73,
+	AX_FIFO_DATA_CMD_DATARATE_RX									= 0x74,
+	AX_FIFO_DATA_CMD_ANTRSSI3_RX									= 0x75,
+	AX_FIFO_DATA_CMD_DATA_TX_RX										= 0xE1,
+	AX_FIFO_DATA_CMD_TXPWR_TX										= 0xFD,
+} AX_FIFO_DATA_CMD_t;
+
+typedef enum AX_FIFO_DATA_FLAGS_TX_BF {
+	AX_FIFO_DATA_FLAGS_TX_PKTSTART									= 0x01,
+	AX_FIFO_DATA_FLAGS_TX_PKTEND									= 0x02,
+	AX_FIFO_DATA_FLAGS_TX_RESIDUE									= 0x04,
+	AX_FIFO_DATA_FLAGS_TX_NOCRC										= 0x08,
+	AX_FIFO_DATA_FLAGS_TX_RAW										= 0x10,
+	AX_FIFO_DATA_FLAGS_TX_UNENC										= 0x20
+} AX_FIFO_CMD_DATA_FLAGS_TX_BF_t;
+
+typedef enum AX_FIFO_DATA_FLAGS_RX_BF {
+	AX_FIFO_DATA_FLAGS_RX_PKTSTART									= 0x01,
+	AX_FIFO_DATA_FLAGS_RX_PKTEND									= 0x02,
+	AX_FIFO_DATA_FLAGS_RX_RESIDUE									= 0x04,
+	AX_FIFO_DATA_FLAGS_RX_CRCFAIL									= 0x08,
+	AX_FIFO_DATA_FLAGS_RX_ADDRFAIL									= 0x10,
+	AX_FIFO_DATA_FLAGS_RX_SIZEFAIL									= 0x20,
+	AX_FIFO_DATA_FLAGS_RX_ABORT										= 0x40
+} AX_FIFO_CMD_DATA_FLAGS_RX_BF_t;
+
+
+static inline void spi_ax_select_device(void)
+{
+	/* clear PORT C4 */
+	PORTC_OUTCLR = 0x10;
+}
+
+static inline void spi_ax_deselect_device(void)
+{
+	/* set   PORT C4 */
+	PORTC_OUTSET = 0x10;
+}
+
 
 bool spi_ax_transport(bool isProgMem, const char* packet);
 

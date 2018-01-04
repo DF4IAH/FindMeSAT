@@ -11,8 +11,8 @@
 __reentrantb void ax5043_set_registers(void) __reentrant
 {
 	AX5043_MODULATION              = 0x08;
-	AX5043_ENCODING                = 0x00;
-	AX5043_FRAMING                 = 0x26;
+	AX5043_ENCODING                = 0x03;
+	AX5043_FRAMING                 = 0x14;
 	AX5043_PINFUNCSYSCLK           = 0x82;
 	AX5043_PINFUNCDCLK             = 0x82;
 	AX5043_PINFUNCDATA             = 0x82;
@@ -98,14 +98,12 @@ __reentrantb void ax5043_set_registers(void) __reentrant
 	AX5043_BBOFFSCAP               = 0x77;
 	AX5043_PKTADDRCFG              = 0x00;
 	AX5043_PKTLENCFG               = 0x00;
-	AX5043_PKTLENOFFSET            = 0x15;
+	AX5043_PKTLENOFFSET            = 0x17;
 	AX5043_PKTMAXLEN               = 0xF0;
-	AX5043_MATCH0PAT3              = 0x7E;
-	AX5043_MATCH0PAT2              = 0x00;
-	AX5043_MATCH0PAT1              = 0x00;
-	AX5043_MATCH0PAT0              = 0x00;
-	AX5043_MATCH0LEN               = 0x87;
-	AX5043_MATCH0MAX               = 0x07;
+	AX5043_MATCH0PAT3              = 0xAA;
+	AX5043_MATCH0PAT2              = 0xCC;
+	AX5043_MATCH0PAT1              = 0xAA;
+	AX5043_MATCH0PAT0              = 0xCC;
 	AX5043_MATCH1PAT1              = 0x7E;
 	AX5043_MATCH1PAT0              = 0x7E;
 	AX5043_MATCH1LEN               = 0x8A;
@@ -117,7 +115,7 @@ __reentrantb void ax5043_set_registers(void) __reentrant
 	AX5043_TMGRXOFFSACQ            = 0x00;
 	AX5043_TMGRXCOARSEAGC          = 0x73;
 	AX5043_TMGRXRSSI               = 0x03;
-	AX5043_TMGRXPREAMBLE2          = 0x12;
+	AX5043_TMGRXPREAMBLE2          = 0x17;
 	AX5043_RSSIABSTHR              = 0xDD;
 	AX5043_BGNDRSSITHR             = 0x00;
 	AX5043_PKTCHUNKSIZE            = 0x0D;
@@ -668,7 +666,7 @@ __reentrantb void axradio_byteconv_buffer(uint8_t __xdata *buf, uint16_t buflen)
 
 __reentrantb uint16_t axradio_framing_check_crc(uint8_t __xdata *pkt, uint16_t cnt) __reentrant
 {
-	if (crc_crc16(pkt, cnt, 0xFFFF) != 0xB001)
+	if (crc_ccitt(pkt, cnt, 0xFFFF) != 0xF0B8)
 		return 0;
 	return cnt;
 }
@@ -676,7 +674,7 @@ __reentrantb uint16_t axradio_framing_check_crc(uint8_t __xdata *pkt, uint16_t c
 __reentrantb uint16_t axradio_framing_append_crc(uint8_t __xdata *pkt, uint16_t cnt) __reentrant
 {
 	uint16_t s = 0xFFFF;
-	s = crc_crc16(pkt, cnt, s);
+	s = crc_ccitt(pkt, cnt, s);
 	pkt += cnt;
 	*pkt++ = ~(uint8_t)(s);
 	*pkt++ = ~(uint8_t)(s >> 8);
@@ -710,27 +708,27 @@ const uint16_t __code axradio_phy_preamble_wor_longlen = 1; // wor_longlen + wor
 const uint16_t __code axradio_phy_preamble_wor_len = 72;
 const uint16_t __code axradio_phy_preamble_longlen = 0;
 const uint16_t __code axradio_phy_preamble_len = 40;
-const uint8_t __code axradio_phy_preamble_byte = 0x7e;
+const uint8_t __code axradio_phy_preamble_byte = 0x81;
 const uint8_t __code axradio_phy_preamble_flags = 0x38;
 const uint8_t __code axradio_phy_preamble_appendbits = 0;
 const uint8_t __code axradio_phy_preamble_appendpattern = 0x00;
 
 //framing
-const uint8_t __code axradio_framing_maclen = 13;
-const uint8_t __code axradio_framing_addrlen = 2;
+const uint8_t __code axradio_framing_maclen = 15;
+const uint8_t __code axradio_framing_addrlen = 0;
 const uint8_t __code axradio_framing_destaddrpos = 0;
 const uint8_t __code axradio_framing_sourceaddrpos = 0xff;
 const uint8_t __code axradio_framing_lenpos = 0;
-const uint8_t __code axradio_framing_lenoffs = 21;
+const uint8_t __code axradio_framing_lenoffs = 23;
 const uint8_t __code axradio_framing_lenmask = 0x00;
 const uint8_t __code axradio_framing_swcrclen = 0;
 
-const uint8_t __code axradio_framing_synclen = 8;
-const uint8_t __code axradio_framing_syncword[] = { 0x7e, 0xaa, 0xcc, 0xaa};
+const uint8_t __code axradio_framing_synclen = 32;
+const uint8_t __code axradio_framing_syncword[] = { 0x33, 0x55, 0x33, 0x55};
 const uint8_t __code axradio_framing_syncflags = 0x38;
 const uint8_t __code axradio_framing_enable_sfdcallback = 0;
 
-const uint32_t __code axradio_framing_ack_timeout = 124; // 191.7ms in wtimer0 units (640Hz)
+const uint32_t __code axradio_framing_ack_timeout = 148; // 228.3ms in wtimer0 units (640Hz)
 const uint32_t __code axradio_framing_ack_delay = 313; // 1.0ms in wtimer1 units (20MHz/64)
 const uint8_t __code axradio_framing_ack_retransmissions = 0;
 const uint8_t __code axradio_framing_ack_seqnrpos = 0xff;
@@ -753,4 +751,4 @@ const uint8_t __code axradio_sync_slave_resyncloss = 11;  // resyncloss is one m
 const uint8_t __code axradio_sync_slave_nrrx = 3;
 const uint32_t __code axradio_sync_slave_rxadvance[] = { 2014, 1976, 2246 };// 61.442ms, 60.283ms, 68.524ms
 const uint32_t __code axradio_sync_slave_rxwindow[] = { 2093, 2017, 2557 }; // 63.853ms, 61.535ms, 78.017ms
-const uint32_t __code axradio_sync_slave_rxtimeout = 6390; // 195.0ms, maximum duration of a packet
+const uint32_t __code axradio_sync_slave_rxtimeout = 7483; // 228.3ms, maximum duration of a packet
