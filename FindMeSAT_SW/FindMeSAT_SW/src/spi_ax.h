@@ -23,7 +23,7 @@
 #endif
 
 
-#define C_SPI_AX_BUFFER_LENGTH										256
+#define C_SPI_AX_BUFFER_LENGTH										512
 
 
 typedef enum SPI_AX_TRPT_STATE {
