@@ -64,8 +64,8 @@
 //#define CONFIG_PLL0_MUL             (24000000UL / BOARD_XOSC_HZ)
 
 /* PLL_SRC_XOSC = 20 MHz --> CONFIG_PLL0_MUL = 3 gives 60 MHz */
-#define CONFIG_PLL0_MUL             3
-#define CONFIG_PLL0_DIV             1
+#define CONFIG_PLL0_MUL  3
+#define CONFIG_PLL0_DIV  1
 
 /* External oscillator frequency range */
 /** 0.4 to 2 MHz frequency range */
@@ -78,8 +78,7 @@
 //#define CONFIG_XOSC_RANGE XOSC_RANGE_12TO16
 
 /* DFLL autocalibration */
-//#define CONFIG_OSC_AUTOCAL_RC2MHZ_REF_OSC  OSC_ID_RC32KHZ
-//#define CONFIG_OSC_AUTOCAL_RC2MHZ_REF_OSC  OSC_ID_RC32KHZ
+#define CONFIG_OSC_AUTOCAL_RC2MHZ_REF_OSC  OSC_ID_RC32KHZ
 //#define CONFIG_OSC_AUTOCAL_RC32MHZ_REF_OSC OSC_ID_XOSC
 
 /* The following example clock configuration definitions can be used in XMEGA

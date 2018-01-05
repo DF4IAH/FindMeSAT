@@ -3480,6 +3480,31 @@ int main(void)
 
 	sysclk_init();		// Clock configuration set-up
 
+	/* TEST VERIFICATION of 30 MHz at CLKOUT - START */
+	/* --> Result: during debugging the clock is fixed at 8 MHz */
+	/*
+
+	// Set Port C7 to output
+	PORTC_OUT	= 0b00110000;
+	PORTC_DIR	= 0b10110100;
+
+	// Prepare measurements
+	nop();
+
+	// Port alternate functions - CLKOUT: CLK_PER on PC7
+	PORTCFG_CLKEVOUT = 0b00000001;
+
+	// Make measurements here
+	nop();
+
+	// Port alternate functions - remove CLKOUT on PORT_C7
+	PORTCFG_CLKEVOUT = 0x00;
+	while (true) {
+		nop();
+	}
+	*/
+	/* TEST VERIFICATION of 30 MHz at CLKOUT - END */
+
 	sleepmgr_init();	// Unlocks all sleep mode levels
 
 	rtc_init();

@@ -40,13 +40,15 @@ typedef enum SPI_AX_TRPT_STATE {
 
 typedef enum AX_SET_REGISTERS_MODULATION {
 	AX_SET_REGISTERS_MODULATION_NONE								= 0x00,
-	AX_SET_REGISTERS_MODULATION_DEFAULT								= 0x11,
+	AX_SET_REGISTERS_MODULATION_NO_CHANGE							= 0x01,
+	AX_SET_REGISTERS_MODULATION_FSK									= 0x11,
 	AX_SET_REGISTERS_MODULATION_PR1200								= 0x21,
 	AX_SET_REGISTERS_MODULATION_ANALOG_FM							= 0x81,
 } AX_SET_REGISTERS_MODULATION_t;
 
 typedef enum AX_SET_REGISTERS_VARIANT {
 	AX_SET_REGISTERS_VARIANT_NONE									= 0x00,
+	AX_SET_REGISTERS_VARIANT_NO_CHANGE								= 0x01,
 	AX_SET_REGISTERS_VARIANT_TX										= 0x11,
 	AX_SET_REGISTERS_VARIANT_RX										= 0x21,
 	AX_SET_REGISTERS_VARIANT_RX_WOR,
@@ -135,7 +137,9 @@ void spi_ax_setFrequency2Regs(uint8_t chan, bool isFreqB);
 void spi_ax_doRanging(void);
 void spi_ax_selectVcoFreq(bool isFreqB);
 
-void spi_ax_initRegisters_Default(void);
+void spi_ax_initRegisters_FSK(void);
+void spi_ax_initRegisters_FSK_Tx(void);
+void spi_ax_initRegisters_FSK_Rx(void);
 
 void spi_ax_initRegisters_PR1200(void);
 void spi_ax_initRegisters_PR1200_Tx(void);
