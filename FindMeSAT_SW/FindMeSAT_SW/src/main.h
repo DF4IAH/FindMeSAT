@@ -285,13 +285,21 @@ typedef enum APRS_ALERT_REASON_ENUM {		// Shorthand in APRS message
 #define APRS_ALERT_REASON_SHORTHAND			"?TPGAMR"
 
 
+typedef enum CALC_CRC16_CCITT_ENUM {
+	CALC_CRC16_CCITT_RESET					= 0,
+	CALC_CRC16_CCITT_ADD,
+	CALC_CRC16_CCITT_RETURN_LSB,
+	CALC_CRC16_CCITT_RETURN_MSB
+} CALC_CRC16_CCITT_ENUM_t;
+
+
 void save_globals(EEPROM_SAVE_BF_ENUM_t bf);
 char* cueBehind(char* ptr, char delim);
 int myStringToFloat(const char* ptr, float* out);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
 char* ipProto_2_ca(uint8_t aprs_ip_proto);
 char* copyStr(char* target, uint8_t targetSize, const char* source);
-uint8_t calc_CRC16_CCITT(uint8_t streamByte_lsbFirst, bool doInit, uint16_t* outCrc);
+uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_first);
 //uint16_t crc16(char *data_p, uint16_t length);
 void adc_app_enable(bool enable);
 void aprs_num_update(uint8_t mode);
