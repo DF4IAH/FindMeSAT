@@ -1180,9 +1180,13 @@ void spi_ax_initRegisters_PR1200(void)
 	spi_ax_transport(false, "< 91 03 >");														// WR address 0x11: ENCODING -  NRZI = ENC DIFF 0x02  &  ENC INV 0x01
 
 	/* FRAMING */
-	spi_ax_transport(false, "< 92 04 >");														// WR address 0x12: FRAMING - CRCMODE: none 0x00, FRMMODE: HDLC [1] 0x04
-	//spi_ax_transport(false, "< 92 14 >");														// WR address 0x12: FRAMING - CRCMODE: CCITT (16 bit) 0x10, FRMMODE: HDLC [1] 0x04
-	//spi_ax_transport(false, "< 92 26 >");														// WR address 0x12: FRAMING - CRCMODE: CRC-16 0x20, FRMMODE:  Raw, Pattern Match 0x06
+	/* When FRMMODE: "Raw, Soft Bits (0b001 << 1)" is selected, do address 0xF72 also */
+	spi_ax_transport(false, "< 92 14 >");														// WR address 0x12: FRAMING - CRCMODE: CCITT (16 bit) 0x10 (right for AX.25), FRMMODE: HDLC [1] 0x04			--> with automatic ending CRC, Flag and 16x '1's, 2xSPACE, off
+	//spi_ax_transport(false, "< 92 10 >");														// WR address 0x12: FRAMING - CRCMODE: CCITT (16 bit) 0x10 (right for AX.25), FRMMODE: Raw 0x00					--> no automatic ending Flag, 2xSPACE, off
+	//spi_ax_transport(false, "< 92 12 >");														// WR address 0x12: FRAMING - CRCMODE: CCITT (16 bit) 0x10 (right for AX.25), FRMMODE: Raw, Soft Bits 0x02		--> no automatic ending Flag, 2xSPACE, off
+	//spi_ax_transport(false, "< 92 16 >");														// WR address 0x12: FRAMING - CRCMODE: CCITT (16 bit) 0x10 (right for AX.25), FRMMODE: Raw, Pattern Match 0x06	--> no automatic ending Flag, 2xSPACE, off
+	//spi_ax_transport(false, "< 92 04 >");														// WR address 0x12: FRAMING - CRCMODE: none 0x00, FRMMODE: HDLC [1] 0x04
+	//spi_ax_transport(false, "< 92 24 >");														// WR address 0x12: FRAMING - CRCMODE: CRC-16 0x20 (wrong for AX.25), FRMMODE: HDLC [1] 0x04
 
 	/* CRCINIT */
 	spi_ax_transport(false, "< 94 ff ff ff ff >");												// WR address 0x14: CRCINIT
@@ -1544,8 +1548,8 @@ void spi_ax_initRegisters_PR1200_Tx(void)
 	spi_ax_transport(false, "< f1 64 05 >");													// WR address 0x164: MODCFGA - AMPLSHAPE, TXDIFF
 
 	/* TXRATE */
-	spi_ax_transport(false, "< f1 65 00 04 ea >");												// WR address 0x165: TXRATE - TXRATE: 1,200 bit/s
-	//spi_ax_transport(false, "< f1 65 00 00 4f >");  // Check with slow motion
+	//spi_ax_transport(false, "< f1 65 00 04 ea >");												// WR address 0x165: TXRATE - TXRATE: 1,200 bit/s
+	spi_ax_transport(false, "< f1 65 00 00 4f >");  // Check with slow motion
 
 
 	/* XTALCAP */
@@ -1655,6 +1659,7 @@ void spi_ax_initRegisters_PR1200_Rx(void)
 
 	/* 0xF72 */
 	spi_ax_transport(false, "< ff 72 00 >");													// WR address 0xF72 (RX) - Set to 0x06 if the framing mode is set to “Raw, Soft Bits” (register FRAMING), or to 0x00 otherwise
+	//spi_ax_transport(false, "< ff 72 06 >");													// WR address 0xF72 (RX) - Set to 0x06 if the framing mode is set to “Raw, Soft Bits” (register FRAMING), or to 0x00 otherwise
 }
 
 void spi_ax_initRegisters_PR1200_Rx_WoR(void)
@@ -2221,8 +2226,8 @@ void spi_ax_test_PR1200_Tx(void)
 		spi_ax_test_PR1200_Tx_FIFO_APRS();
 		#endif
 
-		delay_ms(250);
-		//delay_ms(750);
+		//delay_ms(250);  // Normal data rate with 1,200 bps
+		delay_ms(750);  // Slow motion with 75 bps
 	}
 	#endif
 
@@ -2264,6 +2269,7 @@ void spi_ax_test_PR1200_Tx_FIFO_Flags(uint8_t count)
 	spi_ax_transport(false, "< a8 04 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
 }
 
+#define FCS_AUTO true
 void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal_AddressField(void)
 {
 	uint16_t idx = 0;
@@ -2273,10 +2279,13 @@ void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal_AddressField(void)
 	g_ax_spi_packet_buffer[idx++] = 0xA9;																					// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
 	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_CMD_DATA_TX_RX;
 	g_ax_spi_packet_buffer[idx++] = 0;																						// Dummy entry for now
+#if defined(FCS_AUTO)
+	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART | AX_FIFO_DATA_FLAGS_TX_PKTEND;
+#else
 	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_NOCRC | AX_FIFO_DATA_FLAGS_TX_PKTSTART | AX_FIFO_DATA_FLAGS_TX_PKTEND;
-
+#endif
 	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('T' << 1));										// Address: dest.       [A 1]
-#if 1
+#if 0
 	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('E' << 1));										// Address: dest.       [A 2]
 	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('S' << 1));										// Address: dest.       [A 3]
 	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('T' << 1));										// Address: dest.       [A 4]
@@ -2296,9 +2305,12 @@ void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal_AddressField(void)
 	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD,  0xF0);											// PID
 #endif
 
+#if defined(FCS_AUTO)
+#else
 	/* Completing with the FCS */
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_MSB, 0);										// MSB of CRC-CCITT, MSB is sent first for AX.25
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_LSB, 0);										// LSB
+	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_LSB, 0);										// LSB of CRC-CCITT
+	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_MSB, 0);										// MSB
+#endif
 
 	/* Set length for FIFO DATA command */
 	g_ax_spi_packet_buffer[    2] = idx - 3;																				// Length
@@ -2314,7 +2326,8 @@ void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal()
 	/* Enter an APRS UI frame */
 
 	/* 1 - Flags */
-	spi_ax_test_PR1200_Tx_FIFO_Flags(35);													// Minimal
+	//spi_ax_test_PR1200_Tx_FIFO_Flags(35);													// Minimal
+	spi_ax_test_PR1200_Tx_FIFO_Flags(3);													// Slow motion variant
 
 	/* 2 - Address field, Control and PID */
 	spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal_AddressField();
