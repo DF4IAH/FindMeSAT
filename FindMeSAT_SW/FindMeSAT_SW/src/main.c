@@ -1057,6 +1057,78 @@ char* copyStr(char* target, uint8_t targetSize, const char* source)
 	return target;
 }
 
+uint8_t calc_CRC16_CCITT(uint8_t byte_LSB_first, bool doInit, uint16_t* outCrc)
+{
+	static uint16_t s_crc16 = 0xffff;
+
+	if (doInit) {
+		s_crc16 = 0xffff;
+
+	} else {
+		uint8_t sB = byte_LSB_first;
+
+		for (uint8_t idx = 0; idx < 8; idx++) {
+			if ((s_crc16 & 0x0001) ^ (sB & 0x0001)) {
+				s_crc16 = (s_crc16 >> 1) ^ 0x8408;
+
+			} else {
+				s_crc16 >>= 1;
+			}
+
+			sB >>= 1;
+		}
+	}
+
+	if (outCrc) {
+		uint16_t crc = s_crc16 ^ 0xffff;
+
+		#if 0
+		/* MSB and LSB bytes swapped */
+		*outCrc = (crc >> 8) | (crc & 0xff) << 8;
+
+		#else
+		/* CRC bit reversed */
+		uint16_t result = 0;
+		for (uint8_t rotCnt = 16; rotCnt; rotCnt--) {
+			result <<= 1;
+			result  |= crc & 0x0001;
+			crc >>= 1;
+		}
+		*outCrc = result;
+		#endif
+	}
+
+	return byte_LSB_first;
+}
+
+#if 0
+// @see http://www8.cs.umu.se/~isak/snippets/crc-16.c
+uint16_t crc16(char *data_p, uint16_t length)
+{
+	const uint16_t Poly = 0x8408;
+	unsigned char i;
+	unsigned int data;
+	unsigned int crc = 0xffff;
+
+	if (length == 0)
+		return (~crc);
+
+	do
+	{
+		for (i=0, data=(unsigned int)0xff & *data_p++; i < 8; i++, data >>= 1) {
+			if ((crc & 0x0001) ^ (data & 0x0001))
+				crc = (crc >> 1) ^ Poly;
+			else  crc >>= 1;
+		}
+	} while (--length);
+
+	crc = ~crc;
+	data = crc;
+	crc = (crc << 8) | (data >> 8 & 0xff);
+
+	return (crc);
+}
+#endif
 
 void adc_app_enable(bool enable)
 {

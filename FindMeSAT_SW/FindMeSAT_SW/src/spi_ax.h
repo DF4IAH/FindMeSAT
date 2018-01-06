@@ -156,11 +156,17 @@ void spi_init(void);
 void spi_start(void);
 
 /* Debugging */
-void spi_ax_test_Analog_FM_TX(void);
-void spi_ax_test_Analog_FM_RX(void);
+void spi_ax_test_Analog_FM_Tx(void);
+void spi_ax_test_Analog_FM_Rx(void);
 void spi_ax_monitor_levels(void);
 
-void spi_ax_test_PR1200_TX(void);
+void spi_ax_test_PR1200_Tx(void);
+void spi_ax_test_PR1200_Tx_FIFO_Flags(uint8_t count);
+void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal_AddressField(void);
+void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal(void);
+void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void);
+void spi_ax_test_PR1200_Tx_FIFO_APRS_InformationField(void);
+void spi_ax_test_PR1200_Tx_FIFO_APRS(void);
 
 
 #endif /* SPI_H_ */
