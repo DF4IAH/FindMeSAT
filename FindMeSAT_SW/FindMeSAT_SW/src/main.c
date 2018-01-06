@@ -1059,6 +1059,7 @@ char* copyStr(char* target, uint8_t targetSize, const char* source)
 
 /* For the CRC-CCITT 16 implementation: @see <LINUX_SOURCE>/lib/crc-ccitt.c  and  include/linux/crc-ccitt.h  and  drivers/net/hamradio/hdlcdrv.c
  * as well as  @see http://practicingelectronics.com/articles/article-100003/article.php
+ * This function is verified against the "123456789" sequence which has the result of 0x906E
  */
 uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_first)
 {
@@ -1102,34 +1103,6 @@ uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_fir
 	return byte_LSB_first;
 }
 
-#if 1
-// @see http://www8.cs.umu.se/~isak/snippets/crc-16.c
-uint16_t crc16(char *data_p, uint16_t length)
-{
-	const uint16_t Poly = 0x8408;
-	unsigned char i;
-	unsigned int data;
-	unsigned int crc = 0xffff;
-
-	if (length == 0)
-		return (~crc);
-
-	do
-	{
-		for (i=0, data=(unsigned int)0xff & *data_p++; i < 8; i++, data >>= 1) {
-			if ((crc & 0x0001) ^ (data & 0x0001))
-				crc = (crc >> 1) ^ Poly;
-			else  crc >>= 1;
-		}
-	} while (--length);
-
-	crc = ~crc;
-	data = crc;
-	crc = (crc << 8) | (data >> 8 & 0xff);
-
-	return (crc);
-}
-#endif
 
 void adc_app_enable(bool enable)
 {
@@ -3552,67 +3525,6 @@ int main(void)
 	pmic_set_scheduling(PMIC_SCH_FIXED_PRIORITY);
 
 	sysclk_init();		// Clock configuration set-up
-
-	/* TEST VERIFICATION of 30 MHz at CLKOUT - START */
-	/* --> Result: during debugging the clock is fixed at 8 MHz */
-	/*
-
-	// Set Port C7 to output
-	PORTC_OUT	= 0b00110000;
-	PORTC_DIR	= 0b10110100;
-
-	// Prepare measurements
-	nop();
-
-	// Port alternate functions - CLKOUT: CLK_PER on PC7
-	PORTCFG_CLKEVOUT = 0b00000001;
-
-	// Make measurements here
-	nop();
-
-	// Port alternate functions - remove CLKOUT on PORT_C7
-	PORTCFG_CLKEVOUT = 0x00;
-	while (true) {
-		nop();
-	}
-	*/
-	/* TEST VERIFICATION of 30 MHz at CLKOUT - END */
-
-	/* TEST CRC-CCIT 16 */
-	{
-		calc_CRC16_CCITT(CALC_CRC16_CCITT_RESET, 0);
-
-#if 1
-		#if 1
-		calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, 0x01);
-		//calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, 'B');
-		//calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, 'C');
-
-		#else
-		const char checkStreamBuf[] = "123456789";
-		const uint8_t checkStreamLen = strlen(checkStreamBuf);
-
-		for (uint8_t idx = 0; idx < checkStreamLen; idx++) {
-			calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, checkStreamBuf[idx]);
-		}
-		#endif
-
-		volatile uint8_t crc_lsb = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_LSB, 0);
-		volatile uint8_t crc_msb = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_MSB, 0);
-		(void) crc_lsb;
-		(void) crc_msb;
-
-#else
-		char buf[1] = { 0x01 };
-		volatile uint16_t crc_LSB_MSB = crc16(buf, 1);
-		(void) crc_LSB_MSB;
-#endif
-
-		do {
-			nop();
-		} while (true);
-	}
-
 
 	sleepmgr_init();	// Unlocks all sleep mode levels
 

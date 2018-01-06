@@ -300,7 +300,6 @@ int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int o
 char* ipProto_2_ca(uint8_t aprs_ip_proto);
 char* copyStr(char* target, uint8_t targetSize, const char* source);
 uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_first);
-uint16_t crc16(char *data_p, uint16_t length);
 void adc_app_enable(bool enable);
 void aprs_num_update(uint8_t mode);
 void aprs_link_service_update(const char service[]);
