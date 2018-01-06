@@ -1057,8 +1057,9 @@ char* copyStr(char* target, uint8_t targetSize, const char* source)
 	return target;
 }
 
-/* For the CRC-CCITT 16 implementation: @see http://practicingelectronics.com/articles/article-100003/article.php */
-//uint8_t calc_CRC16_CCITT(uint8_t byte_LSB_first, bool doInit, uint16_t* outCrc)
+/* For the CRC-CCITT 16 implementation: @see <LINUX_SOURCE>/lib/crc-ccitt.c  and  include/linux/crc-ccitt.h  and  drivers/net/hamradio/hdlcdrv.c
+ * as well as  @see http://practicingelectronics.com/articles/article-100003/article.php
+ */
 uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_first)
 {
 	static uint16_t s_crc16 = 0xffff;
@@ -1073,15 +1074,13 @@ uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_fir
 
 		case CALC_CRC16_CCITT_ADD:
 		{
-			uint8_t sB = byte_LSB_first;
-			for (uint8_t idx = 0; idx < 8; idx++) {
-				uint8_t fb = (uint8_t) ((uint16_t)sB & 0x0001) ^ (s_crc16 >> 15);	// Step 1: Feedback = Input.bit[0] XOR CRC.bit[15]
+			for (uint8_t idx = 0, inp = byte_LSB_first; idx < 8; idx++) {
+				uint16_t fb	= (inp & 0x0001) ^ (s_crc16 & 0x0001);						// Step 1: Feedback = Input.bit[0] XOR CRC.bit[15]
 
-				sB >>= 1;															// Step 2: CRC <<= 1;  Input >>= 1;
-				s_crc16 <<= 1;
+				s_crc16 >>= 1;															// Step 2: CRC >>= 1;  Input >>= 1;
+				inp		>>= 1;
 
-				s_crc16 ^= (uint16_t)fb * 0x1021U;									// Step 3: (Feedback * 0x1021)  XOR  CRC
-				nop();
+				s_crc16	 ^= fb * 0x8408U;												// Step 3: CRC ^= (Feedback * POLY)
 			}
 		}
 		break;
@@ -1103,7 +1102,7 @@ uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_fir
 	return byte_LSB_first;
 }
 
-#if 0
+#if 1
 // @see http://www8.cs.umu.se/~isak/snippets/crc-16.c
 uint16_t crc16(char *data_p, uint16_t length)
 {
@@ -3580,17 +3579,16 @@ int main(void)
 	/* TEST VERIFICATION of 30 MHz at CLKOUT - END */
 
 	/* TEST CRC-CCIT 16 */
-	/* It should be: 0x906E */
-	/*
 	{
 		calc_CRC16_CCITT(CALC_CRC16_CCITT_RESET, 0);
 
+#if 1
 		#if 1
 		calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, 0x01);
 		//calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, 'B');
 		//calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, 'C');
 
-		#elif 1
+		#else
 		const char checkStreamBuf[] = "123456789";
 		const uint8_t checkStreamLen = strlen(checkStreamBuf);
 
@@ -3599,16 +3597,21 @@ int main(void)
 		}
 		#endif
 
-		volatile uint8_t crc_msb = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_MSB, 0);
 		volatile uint8_t crc_lsb = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_LSB, 0);
-		(void) crc_msb;
+		volatile uint8_t crc_msb = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_MSB, 0);
 		(void) crc_lsb;
+		(void) crc_msb;
+
+#else
+		char buf[1] = { 0x01 };
+		volatile uint16_t crc_LSB_MSB = crc16(buf, 1);
+		(void) crc_LSB_MSB;
+#endif
 
 		do {
 			nop();
 		} while (true);
 	}
-	*/
 
 
 	sleepmgr_init();	// Unlocks all sleep mode levels

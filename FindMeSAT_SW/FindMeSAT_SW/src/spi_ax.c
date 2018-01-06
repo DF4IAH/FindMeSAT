@@ -2297,7 +2297,7 @@ void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal_AddressField(void)
 #endif
 
 	/* Completing with the FCS */
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_MSB, 0);										// MSB of CRC-CCITT, MSB is sent first
+	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_MSB, 0);										// MSB of CRC-CCITT, MSB is sent first for AX.25
 	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_LSB, 0);										// LSB
 
 	/* Set length for FIFO DATA command */
