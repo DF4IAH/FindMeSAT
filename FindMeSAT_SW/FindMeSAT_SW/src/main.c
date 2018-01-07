@@ -3529,68 +3529,6 @@ int main(void)
 
 	sysclk_init();		// Clock configuration set-up
 
-
-	/* BEGIN Test starts here */
-	/*
-	{
-		uint16_t len = 0;
-		uint16_t ofs = 0;
-		uint8_t packet[512] = { 0 };
-		volatile char checkBuf[1024] = "";
-
-		calc_CRC16_CCITT(CALC_CRC16_CCITT_RESET, 0);
-
-		packet[len++] = ('C' << 1) | 0;
-		packet[len++] = ('Q' << 1) | 0;
-		packet[len++] = (' ' << 1) | 0;
-		packet[len++] = (' ' << 1) | 0;
-		packet[len++] = (' ' << 1) | 0;
-		packet[len++] = (' ' << 1) | 0;
-		packet[len++] = ((0b0 << 7) | (0b11 << 5) | (0x0 << 1)	| 0);
-
-		packet[len++] = ('K' << 1) | 0;
-		packet[len++] = ('B' << 1) | 0;
-		packet[len++] = ('2' << 1) | 0;
-		packet[len++] = ('B' << 1) | 0;
-		packet[len++] = ('R' << 1) | 0;
-		packet[len++] = ('D' << 1) | 0;
-		packet[len++] = ((0b1 << 7) | (0b11 << 5) | (0x2 << 1)	| 1);
-
-		packet[len++] = ((0b0 << 4) |  0b11);
-		packet[len++] = 0xf0;
-
-		packet[len++] = 'A';
-		packet[len++] = '\r';
-
-		for (uint16_t idx = 0; idx < len; idx++) {
-			calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, packet[idx]);
-
-			uint8_t c = packet[idx];
-			ofs += sprintf(checkBuf + ofs, "Byte 0x%02x: %d %d %d %d %d %d %d %d\r\n", idx,
-				(c & (1 << 0)) != 0,
-				(c & (1 << 1)) != 0,
-				(c & (1 << 2)) != 0,
-				(c & (1 << 3)) != 0,
-				(c & (1 << 4)) != 0,
-				(c & (1 << 5)) != 0,
-				(c & (1 << 6)) != 0,
-				(c & (1 << 7)) != 0);
-		}
-
-		volatile uint8_t crc_lsb = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_LSB, 0);
-		volatile uint8_t crc_msb = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_MSB, 0);
-		(void) crc_lsb;
-		(void) crc_msb;
-		(void) checkBuf;
-
-		while (true) {
-			nop();
-		}
-	}
-	*/
-	/* END */
-
-
 	sleepmgr_init();	// Unlocks all sleep mode levels
 
 	rtc_init();

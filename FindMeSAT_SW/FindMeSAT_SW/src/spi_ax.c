@@ -859,20 +859,10 @@ void spi_ax_doRanging(void)
 void spi_ax_selectVcoFreq(bool isFreqB)
 {
 	/* PLLLOOP */
-	spi_ax_transport(false, "< 30 R1 >");														// RD address 0x30: PLLLOOP - FREQB
+	spi_ax_transport(false, "< 30 R1 >");														// RD address 0x30: PLLLOOP
 	g_ax_spi_packet_buffer[1] = (isFreqB ?  (g_ax_spi_packet_buffer[0] | 0x80)					// Set   FREQB
 										 :  (g_ax_spi_packet_buffer[0] & 0x7f));				// Clear FREQB
-	g_ax_spi_packet_buffer[0] = 0x30 | 0x80;													// WR address 0x30: PLLLOOP - FREQB
-
-	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
-	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
-	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-
-	/* PLLLOOPBOOST */
-	spi_ax_transport(false, "< 38 R1 >");														// RD address 0x30: PLLLOOP - FREQB
-	g_ax_spi_packet_buffer[1] = (isFreqB ?  (g_ax_spi_packet_buffer[0] | 0x80)					// Set   FREQB
-										 :  (g_ax_spi_packet_buffer[0] & 0x7f));				// Clear FREQB
-	g_ax_spi_packet_buffer[0] = 0x38 | 0x80;													// WR address 0x38: PLLLOOP - FREQB
+	g_ax_spi_packet_buffer[0] = 0x30 | 0x80;													// WR address 0x30: PLLLOOP
 
 	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
@@ -1105,25 +1095,25 @@ void spi_ax_initRegisters_FSK(void)
 
 
 	/* TMGTXBOOST */
-	spi_ax_transport(false, "< f2 20 32 >");													// WR address 0x220: TMGTXBOOST
+	spi_ax_transport(false, "< f2 20 32 >");													// WR address 0x220: TMGTXBOOST - TMGTXBOOSTE = 1, TMGTXBOOSTM = 18 --> 36 탎
 
 	/* TMGTXSETTLE */
-	spi_ax_transport(false, "< f2 21 14 >");													// WR address 0x221: TMGTXSETTLE
+	spi_ax_transport(false, "< f2 21 14 >");													// WR address 0x221: TMGTXSETTLE - TMGTXSETTLEE = 0, TMGTXSETTLEM = 20 --> 20 탎
 
 	/* TMGRXBOOST */
-	spi_ax_transport(false, "< f2 23 32 >");													// WR address 0x223: TMGRXBOOST
+	spi_ax_transport(false, "< f2 23 32 >");													// WR address 0x223: TMGRXBOOST - TMGRXBOOSTE = 1, TMGRXBOOSTM = 18 --> 36 탎
 
 	/* TMGRXSETTLE */
-	spi_ax_transport(false, "< f2 24 14 >");													// WR address 0x224: TMGRXSETTLE
+	spi_ax_transport(false, "< f2 24 14 >");													// WR address 0x224: TMGRXSETTLE - TMGRXSETTLEE = 0, TMGRXSETTLEM = 20 --> 20 탎
 
 	/* TMGRXOFFSACQ */
-	spi_ax_transport(false, "< f2 25 00 >");													// WR address 0x225: TMGRXOFFSACQ
+	spi_ax_transport(false, "< f2 25 00 >");													// WR address 0x225: TMGRXOFFSACQ - TMGRXOFFSACQE = 0, TMGRXOFFSACQM = 0 --> 0 탎
 
 	/* TMGRXCOARSEAGC */
-	spi_ax_transport(false, "< f2 26 73 >");													// WR address 0x226: TMGRXCOARSEAGC
+	spi_ax_transport(false, "< f2 26 73 >");													// WR address 0x226: TMGRXCOARSEAGC - TMGRXCOARSEAGCE = 3, TMGRXCOARSEAGCM = 19 --> 152 탎 (Bits)  @see PKTMISCFLAGS.RXAGC
 
 	/* TMGRXRSSI */
-	spi_ax_transport(false, "< f2 28 03 >");													// WR address 0x228: TMGRXRSSI
+	spi_ax_transport(false, "< f2 28 03 >");													// WR address 0x228: TMGRXRSSI - TMGRXAGCE = 0, TMGRXAGCM = 3 --> 3 탎 (Bits)  @see PKTMISCFLAGS.RXRSSI
 
 	/* TMGRXPREAMBLE1 */
 	//spi_ax_transport(false, "< f2 29 00 >");													// WR address 0x229: TMGRXPREAMBLE1 - TMGRXPREAMBLE1 timeout = none
@@ -1144,6 +1134,23 @@ void spi_ax_initRegisters_FSK(void)
 	spi_ax_transport(false, "< f2 2f 00 >");													// WR address 0x22F: BGNDRSSITHR - BGNDRSSITHR: 0 dB / off?
 
 
+	/* PKTMISCFLAGS */
+	spi_ax_transport(false, "< f2 31 00 >");													// WR address 0x231: PKTMISCFLAGS - no BGND RSSI, RXAGC CLK, RXRSSI CLK clock sources: 1 탎
+
+
+	/* LPOSCCONFIG */
+	spi_ax_transport(false, "< f3 10 12 >");													// WR address 0x310: LPOSCCONFIG - LPOSC CALIBF 0x10, LPOSC FAST 0x02, (LPOSC ENA 0x01)
+
+	/* LPOSCKFILT */
+	spi_ax_transport(false, "< f3 12 01 5d >");													// WR address 0x312: LPOSCKFILT - LPOSCKFILT <= 1,398 (lower value gives lower jitter; 1/4 th taken: 349)
+
+	/* LPOSCREF */
+	spi_ax_transport(false, "< f3 14 61 a8 >");													// WR address 0x314: LPOSCREF - LPOSCREF = 25,000
+
+	/* LPOSCFREQ */
+	spi_ax_transport(false, "< f3 16 00 00 >");													// WR address 0x316: LPOSCFREQ - no manual tune, done by automatic
+
+
 	#if 1
 	/* DACVALUE */
 	spi_ax_transport(false, "< f3 30 00 0c >");													// WR address 0x330: DACVALUE - DACSHIFT = 12 bit
@@ -1162,12 +1169,20 @@ void spi_ax_initRegisters_FSK(void)
 
 void spi_ax_initRegisters_FSK_Tx(void)
 {
-	// not in use, yet
+	/* PLLLOOP */
+	spi_ax_transport(false, "< b0 0a >");														// WR address 0x30: PLLLOOP - DIRECT 0x08, no FILTEN, FLT 02: Internal Loop Filter x2 (BW = 200 kHz for ICP = 272 mA)
+
+	/* PLLLOOPBOOST */
+	spi_ax_transport(false, "< b8 0b >");														// WR address 0x38: PLLLOOPBOOST - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5 (BW = 500 kHz for ICP = 1.7 mA)
 }
 
 void spi_ax_initRegisters_FSK_Rx(void)
 {
-	// not in use, yet
+	/* PLLLOOP */
+	spi_ax_transport(false, "< b0 0a >");														// WR address 0x30: PLLLOOP - DIRECT 0x08, no FILTEN, FLT 02: Internal Loop Filter x2 (BW = 200 kHz for ICP = 272 mA)
+
+	/* PLLLOOPBOOST */
+	spi_ax_transport(false, "< b8 0b >");														// WR address 0x38: PLLLOOPBOOST - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5 (BW = 500 kHz for ICP = 1.7 mA)
 }
 
 
@@ -1447,25 +1462,25 @@ void spi_ax_initRegisters_PR1200(void)
 
 
 	/* TMGTXBOOST */
-	spi_ax_transport(false, "< f2 20 32 >");													// WR address 0x220: TMGTXBOOST
+	spi_ax_transport(false, "< f2 20 32 >");													// WR address 0x220: TMGTXBOOST - TMGTXBOOSTE = 1, TMGTXBOOSTM = 18 --> 36 탎
 
 	/* TMGTXSETTLE */
-	spi_ax_transport(false, "< f2 21 14 >");													// WR address 0x221: TMGTXSETTLE
+	spi_ax_transport(false, "< f2 21 14 >");													// WR address 0x221: TMGTXSETTLE - TMGTXSETTLEE = 0, TMGTXSETTLEM = 20 --> 20 탎
 
 	/* TMGRXBOOST */
-	spi_ax_transport(false, "< f2 23 32 >");													// WR address 0x223: TMGRXBOOST
+	spi_ax_transport(false, "< f2 23 32 >");													// WR address 0x223: TMGRXBOOST - TMGRXBOOSTE = 1, TMGRXBOOSTM = 18 --> 36 탎
 
 	/* TMGRXSETTLE */
-	spi_ax_transport(false, "< f2 24 14 >");													// WR address 0x224: TMGRXSETTLE
+	spi_ax_transport(false, "< f2 24 14 >");													// WR address 0x224: TMGRXSETTLE - TMGRXSETTLEE = 0, TMGRXSETTLEM = 20 --> 20 탎
 
 	/* TMGRXOFFSACQ */
-	spi_ax_transport(false, "< f2 25 00 >");													// WR address 0x225: TMGRXOFFSACQ
+	spi_ax_transport(false, "< f2 25 00 >");													// WR address 0x225: TMGRXOFFSACQ - TMGRXOFFSACQE = 0, TMGRXOFFSACQM = 0 --> 0 탎
 
 	/* TMGRXCOARSEAGC */
-	spi_ax_transport(false, "< f2 26 73 >");													// WR address 0x226: TMGRXCOARSEAGC
+	spi_ax_transport(false, "< f2 26 73 >");													// WR address 0x226: TMGRXCOARSEAGC - TMGRXCOARSEAGCE = 3, TMGRXCOARSEAGCM = 19 --> 152 탎 (Bits)  @see PKTMISCFLAGS.RXAGC
 
 	/* TMGRXRSSI */
-	spi_ax_transport(false, "< f2 28 03 >");													// WR address 0x228: TMGRXRSSI
+	spi_ax_transport(false, "< f2 28 03 >");													// WR address 0x228: TMGRXRSSI - TMGRXAGCE = 0, TMGRXAGCM = 3 --> 3 탎 (Bits)  @see PKTMISCFLAGS.RXRSSI
 
 	/* TMGRXPREAMBLE1 */
 	//spi_ax_transport(false, "< f2 29 00 >");													// WR address 0x229: TMGRXPREAMBLE1 - TMGRXPREAMBLE1 timeout = none
@@ -1480,10 +1495,30 @@ void spi_ax_initRegisters_PR1200(void)
 	spi_ax_transport(false, "< f2 2c f8 >");													// WR address 0x22C: RSSIREFERENCE - RSSI Offset, this register adds a constant offset to the computed RSSI value. It is used to compensate for board effects.
 
 	/* RSSIABSTHR */
-	spi_ax_transport(false, "< f2 2d dd >");													// WR address 0x22D: RSSIABSTHR - RSSIABSTHR > -35 (-64) = -99 dBm (BUSY)
+	//spi_ax_transport(false, "< f2 2d 98 >");													// WR address 0x22D: RSSIABSTHR - RSSIABSTHR > -104 (-64 offset binary) = -168 dBm (BUSY)
+	spi_ax_transport(false, "< f2 2d 40 >");													// WR address 0x22D: RSSIABSTHR - RSSIABSTHR > -104 (-64 offset binary) = -168 dBm (BUSY)
 
 	/* BGNDRSSITHR */
-	spi_ax_transport(false, "< f2 2f 00 >");													// WR address 0x22F: BGNDRSSITHR - BGNDRSSITHR: 0 dB / off?
+	//spi_ax_transport(false, "< f2 2f 01 >");													// WR address 0x22F: BGNDRSSITHR - BGNDRSSITHR: 1 dB above the BGNDRSSI
+	spi_ax_transport(false, "< f2 2f 00 >");													// WR address 0x22F: BGNDRSSITHR - BGNDRSSITHR: 1 dB above the BGNDRSSI
+
+
+	/* PKTMISCFLAGS */
+	//spi_ax_transport(false, "< f2 31 04 >");													// WR address 0x231: PKTMISCFLAGS - BGND RSSI 0x04, RXAGC CLK, RXRSSI CLK clock sources: 1 탎
+	spi_ax_transport(false, "< f2 31 00 >");													// WR address 0x231: PKTMISCFLAGS - no BGND RSSI !0x04, RXAGC CLK, RXRSSI CLK clock sources: 1 탎
+
+
+	/* LPOSCCONFIG */
+	spi_ax_transport(false, "< f3 10 13 >");													// WR address 0x310: LPOSCCONFIG - LPOSC CALIBF 0x10, LPOSC FAST 0x02, (LPOSC ENA 0x01)
+
+	/* LPOSCKFILT */
+	spi_ax_transport(false, "< f3 12 01 5d >");													// WR address 0x312: LPOSCKFILT - LPOSCKFILT <= 1,398 (lower value gives lower jitter; 1/4 th taken: 349)
+
+	/* LPOSCREF */
+	spi_ax_transport(false, "< f3 14 61 a8 >");													// WR address 0x314: LPOSCREF - LPOSCREF = 25,000
+
+	/* LPOSCFREQ */
+	spi_ax_transport(false, "< f3 16 00 00 >");													// WR address 0x316: LPOSCFREQ - no manual tune, done by automatic
 
 
 	/* PKTCHUNKSIZE */
@@ -1512,7 +1547,7 @@ void spi_ax_initRegisters_PR1200(void)
 void spi_ax_initRegisters_PR1200_Tx(void)
 {
 	/* PLLLOOP */
-	spi_ax_transport(false, "< b0 0a >");														// WR address 0x30: PLLLOOP
+	spi_ax_transport(false, "< b0 0a >");														// WR address 0x30: PLLLOOP - DIRECT 0x08, no FILTEN, FLT 02: Internal Loop Filter x2 (BW = 200 kHz for ICP = 272 mA)
 
 	/* PLLCPI */
 	spi_ax_transport(false, "< b1 10 >");														// WR address 0x31: PLLCPI
@@ -1524,6 +1559,9 @@ void spi_ax_initRegisters_PR1200_Tx(void)
 	/* PLLVCODIV */
 	spi_ax_transport(false, "< b2 34 >");														// WR address 0x32: PLLVCODIV - VCO2INT, VCOSEL, RFDIV
 	#endif
+
+	/* PLLLOOPBOOST */
+	spi_ax_transport(false, "< b8 0b >");														// WR address 0x38: PLLLOOPBOOST - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5 (BW = 500 kHz for ICP = 1.7 mA)
 
 
 	/* AFSKSPACE - TX */
@@ -1590,7 +1628,7 @@ void spi_ax_initRegisters_PR1200_Tx(void)
 void spi_ax_initRegisters_PR1200_Rx(void)
 {
 	/* PLLLOOP */
-	spi_ax_transport(false, "< b0 0a >");														// WR address 0x30: PLLLOOP
+	spi_ax_transport(false, "< b0 0a >");														// WR address 0x30: PLLLOOP - DIRECT 0x08, no FILTEN, FLT 02: Internal Loop Filter x2 (BW = 200 kHz for ICP = 272 mA)
 
 	/* PLLCPI */
 	spi_ax_transport(false, "< b1 10 >");														// WR address 0x31: PLLCPI
@@ -1602,6 +1640,10 @@ void spi_ax_initRegisters_PR1200_Rx(void)
 	/* PLLVCODIV */
 	spi_ax_transport(false, "< b2 34 >");														// WR address 0x32: PLLVCODIV - VCO2INT, VCOSEL, RFDIV
 #endif
+
+	/* PLLLOOPBOOST */
+	spi_ax_transport(false, "< b8 0b >");														// WR address 0x38: PLLLOOPBOOST - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5 (BW = 500 kHz for ICP = 1.7 mA)
+
 
 	/* AFSKSPACE - RX */
 	spi_ax_transport(false, "< f1 10 01 4d >");													// WR address 0x110: AFSKSPACE - AFSKSPACE: 2,200 Hz
@@ -1664,6 +1706,22 @@ void spi_ax_initRegisters_PR1200_Rx(void)
 
 void spi_ax_initRegisters_PR1200_Rx_WoR(void)
 {
+	/*WAKEUPTIMER */
+	spi_ax_transport(false, "< 68 R2 >");														// RD address 0x68: WAKEUPTIMER
+	uint16_t wutNext = ((uint16_t)g_ax_spi_packet_buffer[0] << 8) | g_ax_spi_packet_buffer[1];
+	wutNext += 102;
+
+	g_ax_spi_packet_buffer[0] = 0x6A | 0x80;													// WR address 0x6A: WAKEUP - 10 ms later
+	g_ax_spi_packet_buffer[1] = wutNext >> 8;
+	g_ax_spi_packet_buffer[2] = wutNext & 0xff;
+	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
+	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 3);
+	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+
+	/* WAKEUPFREQ */
+	spi_ax_transport(false, "< ec 00 66 >");													// WR address 0x6C: WAKEUPFREQ - every 10 ms = 102d
+
+
 	/* TMGRXAGC */
 	spi_ax_transport(false, "< f2 27 1c >");													// WR address 0x227: TMGRXAGC
 
@@ -1671,7 +1729,8 @@ void spi_ax_initRegisters_PR1200_Rx_WoR(void)
 	spi_ax_transport(false, "< f2 29 19 >");													// WR address 0x229: TMGRXPREAMBLE1
 
 	/* PKTMISCFLAGS */
-	spi_ax_transport(false, "< f2 31 03 >");													// WR address 0x231: PKTMISCFLAGS - RXAGC CLK, RXRSSI CLK clock sources: Bit clock
+	//spi_ax_transport(false, "< f2 31 07 >");													// WR address 0x231: PKTMISCFLAGS - BGND RSSI 0x04, RXAGC CLK, RXRSSI CLK clock sources: Bit clock
+	spi_ax_transport(false, "< f2 31 03 >");													// WR address 0x231: PKTMISCFLAGS - no BGND RSSI !0x04, RXAGC CLK, RXRSSI CLK clock sources: Bit clock
 }
 
 void spi_ax_initRegisters_PR1200_Rx_cont(void)
@@ -1683,7 +1742,8 @@ void spi_ax_initRegisters_PR1200_Rx_cont(void)
 	spi_ax_transport(false, "< f2 29 00 >");													// WR address 0x229: TMGRXPREAMBLE1
 
 	/* PKTMISCFLAGS */
-	spi_ax_transport(false, "< f2 31 00 >");													// WR address 0x231: PKTMISCFLAGS - Clock sources: 1 탎
+	//spi_ax_transport(false, "< f2 31 04 >");													// WR address 0x231: PKTMISCFLAGS - BGND RSSI 0x04, RXAGC CLK, RXRSSI CLK clock sources: 1 탎
+	spi_ax_transport(false, "< f2 31 00 >");													// WR address 0x231: PKTMISCFLAGS - no BGND RSSI !0x04, RXAGC CLK, RXRSSI CLK clock sources: 1 탎
 }
 
 void spi_ax_initRegisters_PR1200_Rx_cont_SingleParamSet(void)
@@ -1917,7 +1977,8 @@ void spi_start(void) {
 //# define	AX_TEST_BANDENDS		true
 //# define	AX_TEST_ANALOG_FM_TX	true
 //# define	AX_TEST_ANALOG_FM_RX	true
-# define	AX_TEST_PR1200_TX		true
+//# define	AX_TEST_PR1200_TX		true
+# define	AX_TEST_PR1200_RX		true
 
 	g_ax_spi_device_conf.id = AX_SEL;
 
@@ -1971,7 +2032,7 @@ void spi_start(void) {
 				g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.8245);				// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
 				g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(144.8255);				// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x05
 
-				#elif defined(AX_TEST_PR1200_TX)
+				#elif defined(AX_TEST_PR1200_TX) | defined(AX_TEST_PR1200_RX)
 				g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.8000);				// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
 					/* APRS  */
 
@@ -2005,6 +2066,12 @@ void spi_start(void) {
 	/* AX_TEST_PR1200_TX */
 	#if defined(AX_TEST_PR1200_TX)
 	spi_ax_test_PR1200_Tx();
+	#endif
+
+
+	/* AX_TEST_PR1200_RX */
+	#if defined(AX_TEST_PR1200_RX)
+	spi_ax_test_PR1200_Rx();
 	#endif
 }
 
@@ -2125,13 +2192,14 @@ void spi_ax_monitor_levels(void)
 }
 
 
+/* PR1200 TX */
 void spi_ax_test_PR1200_Tx(void)
 { /* TEST: transmitting some packet */
 	//uint8_t cmd = 0x59;
 	//volatile uint8_t tmr01[3];
 	//volatile uint8_t tmr02[3];
 
-	/* Syncing and sending reset command, then setting the default values */
+	/* Syncing and sending reset command, then setting the packet radio values for transmission */
 	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_PR1200, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
 	/* Frequency settings */
@@ -2151,18 +2219,12 @@ void spi_ax_test_PR1200_Tx(void)
 		#endif
 	}
 
-	/* Syncing and sending reset command, then setting the default values */
+	/* Enabling the transmitter */
 	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_FULLTX);
 
 
 	/* FIFOCMD / FIFOSTAT */
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
-
-	/* PKTSTOREFLAGS */
-	spi_ax_transport(false, "< f2 32 17 >");													// WR address 0x232: PKTSTOREFLAGS - ST RSSI, ST RFOFFS, ST FOFFS, ST TIMER
-
-	/* PKTACCEPTFLAGS */
-	spi_ax_transport(false, "< f2 33 3f >");													// WR address 0x233: PKTACCEPTFLAGS - ACCPT LRGP, ACCPT SZF, ACCPT ADDRF, ACCPT CRCF, ACCPT ABRT, ACCPT RESIDUE
 
 
 	/* TIMER */
@@ -2480,4 +2542,290 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS(void)
 	/*
 	spi_ax_test_PR1200_Tx_FIFO_Flags(1);													// Final one or as separator
 	*/
+}
+
+
+/* PR1200 RX */
+void spi_ax_test_PR1200_Rx(void)
+{
+	uint8_t				l_curRssi						= 0;
+	uint8_t				l_curBgndRssi					= 0;
+	uint8_t				l_agcCounter					= 0;
+	uint8_t				l_fifo_stat						= 0;
+	uint16_t			l_fifo_count					= 0;
+	AX_FIFO_RX_FSM_t	l_fifo_state					= AX_FIFO_RX_FSM__START;
+	AX_FIFO_DATA_CMD_t	l_fifo_cmd						= AX_FIFO_DATA_CMD_NOP_TX;
+	uint32_t			l_fifo_lastPacket_time			= 0UL;
+	uint8_t				l_fifo_lastPacket_rssi			= 0U;
+	uint8_t				l_fifo_lastPacket_rssi_ant2		= 0U;
+	uint8_t				l_fifo_lastPacket_bgndnoise		= 0U;
+	uint32_t			l_fifo_lastPacket_frfreqoffset	= 0UL;
+	uint16_t			l_fifo_lastPacket_freqoffset	= 0U;
+	uint32_t			l_fifo_lastPacket_datarate		= 0UL;
+	uint8_t				l_fifo_lastPacket_dataLen		= 0U;
+	uint8_t				l_fifo_lastPacket_dataStatus	= 0U;
+	uint8_t				l_fifo_lastPacket_dataMsg[C_SPI_AX_BUFFER_LENGTH];
+
+	/* Syncing and sending reset command, then setting the packet radio values for receiving */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_PR1200, AX_SET_REGISTERS_VARIANT_RX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+
+	/* Frequency settings */
+	{
+		spi_ax_setFrequency2Regs(0, false);
+		spi_ax_setFrequency2Regs(1, true);
+
+		/* Recall ranging values */
+		spi_ax_doRanging();
+
+		#if 1
+		/* Set VCO-PLL to FREQB */
+		spi_ax_selectVcoFreq(true);
+		#else
+		/* Set VCO-PLL to FREQA */
+		spi_ax_selectVcoFreq(false);
+		#endif
+	}
+
+	/* FIFOCMD / FIFOSTAT */
+	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+	/* PKTSTOREFLAGS */
+	spi_ax_transport(false, "< f2 32 17 >");													// WR address 0x232: PKTSTOREFLAGS - ST RSSI, ST RFOFFS, ST FOFFS, ST TIMER
+
+	/* PKTACCEPTFLAGS */
+	spi_ax_transport(false, "< f2 33 2c >");													// WR address 0x233: PKTACCEPTFLAGS - ACCPT LRGP 0x20, !ACCPT SZF 0x10, ACCPT ADDRF 0x08, ACCPT CRCF 0x04, !ACCPT ABRT 0x02, !ACCPT RESIDUE 0x01
+
+
+	#if 1
+	/* Enable the receiver */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_RX_WOR, AX_SET_REGISTERS_POWERMODE_WOR);
+
+	#else
+	/* Enable the receiver */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_RX_CONT, AX_SET_REGISTERS_POWERMODE_FULLRX);
+	#endif
+
+	/* Receive loop */
+	do {
+		/* Wait for a packet */
+		do {
+			/* RSSI, BGNDRSSI */
+			spi_ax_transport(false, "< 40 R4 >");												// RD Address 0x40: RSSI, BGNDRSSI
+			l_curRssi			= g_ax_spi_packet_buffer[0];
+			l_curBgndRssi		= g_ax_spi_packet_buffer[1];
+			l_agcCounter		= g_ax_spi_packet_buffer[3];
+
+			/* FIFOSTAT */
+			spi_ax_transport(false, "< 28 R1 >");												// RD address 0x28: FIFOSTAT
+		} while (g_ax_spi_packet_buffer[0] & 0x01);
+
+		l_fifo_stat = g_ax_spi_packet_buffer[0];
+
+		/* FIFOCOUNT */
+		spi_ax_transport(false, "< 2a R2 >");													// RD address 0x28: FIFOCOUNT
+		l_fifo_count = ((uint16_t)(g_ax_spi_packet_buffer[0]) << 8) | g_ax_spi_packet_buffer[1];
+
+		if (!l_fifo_count) {
+			continue;
+		}
+
+		/* Reset FSM to START state */
+		l_fifo_state = AX_FIFO_RX_FSM__START;
+
+		/* Pull messages from the FIFO */
+		for (uint16_t idx = 0; idx < l_fifo_count; idx++) {
+			/* FIFODATA */
+			spi_ax_transport(false, "< 29 R1 >");												// RD address 0x29: FIFODATA
+
+			switch (l_fifo_state) {
+				case AX_FIFO_RX_FSM__START:
+				{
+					l_fifo_cmd = (AX_FIFO_DATA_CMD_t)g_ax_spi_packet_buffer[0];
+					switch (l_fifo_cmd) {
+						case AX_FIFO_DATA_CMD_TIMER_RX:
+							l_fifo_state = AX_FIFO_RX_FSM_TIMER_1;
+						break;
+
+						case AX_FIFO_DATA_CMD_RSSI_RX:
+							l_fifo_state = AX_FIFO_RX_FSM_RSSI_1;
+						break;
+
+						case AX_FIFO_DATA_CMD_ANTRSSI2_RX:
+							l_fifo_state = AX_FIFO_RX_FSM_ANTRSSI2_1;
+						break;
+
+						case AX_FIFO_DATA_CMD_ANTRSSI3_RX:
+							l_fifo_state = AX_FIFO_RX_FSM_ANTRSSI3_1;
+						break;
+
+						case AX_FIFO_DATA_CMD_RFFREQOFFS_RX:
+							l_fifo_state = AX_FIFO_RX_FSM_RFFREQOFFS_1;
+						break;
+
+						case AX_FIFO_DATA_CMD_FREQOFFS_RX:
+							l_fifo_state = AX_FIFO_RX_FSM_FREQOFFS_1;
+						break;
+
+						case AX_FIFO_DATA_CMD_DATARATE_RX:
+							l_fifo_state = AX_FIFO_RX_FSM_DATARATE_1;
+						break;
+
+						case AX_FIFO_DATA_CMD_DATA_TX_RX:
+							l_fifo_state = AX_FIFO_RX_FSM_DATA_1;
+						break;
+
+						default:
+						{
+							l_fifo_state = AX_FIFO_RX_FSM__FAIL_CMD;
+						}
+					}
+				}
+				break;
+
+
+				case AX_FIFO_RX_FSM_TIMER_1:
+					l_fifo_lastPacket_time  = (uint32_t)g_ax_spi_packet_buffer[0] << 16;
+					l_fifo_state = AX_FIFO_RX_FSM_TIMER_2;
+				break;
+
+				case AX_FIFO_RX_FSM_TIMER_2:
+					l_fifo_lastPacket_time |= (uint32_t)g_ax_spi_packet_buffer[0] <<  8;
+					l_fifo_state = AX_FIFO_RX_FSM_TIMER_3;
+				break;
+
+				case AX_FIFO_RX_FSM_TIMER_3:
+					l_fifo_lastPacket_time |= (uint32_t)g_ax_spi_packet_buffer[0];
+					l_fifo_state = AX_FIFO_RX_FSM__START;
+				break;
+
+
+				case AX_FIFO_RX_FSM_RSSI_1:
+					l_fifo_lastPacket_rssi = g_ax_spi_packet_buffer[0];
+					l_fifo_state = AX_FIFO_RX_FSM__START;
+				break;
+
+
+				case AX_FIFO_RX_FSM_ANTRSSI2_1:
+					l_fifo_lastPacket_rssi = g_ax_spi_packet_buffer[0];
+					l_fifo_state = AX_FIFO_RX_FSM_ANTRSSI2_2;
+				break;
+
+				case AX_FIFO_RX_FSM_ANTRSSI2_2:
+					l_fifo_lastPacket_bgndnoise = g_ax_spi_packet_buffer[0];
+					l_fifo_state = AX_FIFO_RX_FSM__START;
+				break;
+
+
+				case AX_FIFO_RX_FSM_ANTRSSI3_1:
+					l_fifo_lastPacket_rssi = g_ax_spi_packet_buffer[0];
+					l_fifo_state = AX_FIFO_RX_FSM_ANTRSSI3_2;
+				break;
+
+				case AX_FIFO_RX_FSM_ANTRSSI3_2:
+					l_fifo_lastPacket_rssi_ant2 = g_ax_spi_packet_buffer[0];
+					l_fifo_state = AX_FIFO_RX_FSM_ANTRSSI3_3;
+				break;
+
+				case AX_FIFO_RX_FSM_ANTRSSI3_3:
+					l_fifo_lastPacket_bgndnoise = g_ax_spi_packet_buffer[0];
+					l_fifo_state = AX_FIFO_RX_FSM__START;
+				break;
+
+
+				case AX_FIFO_RX_FSM_RFFREQOFFS_1:
+					l_fifo_lastPacket_frfreqoffset  = (uint32_t)g_ax_spi_packet_buffer[0] << 16;
+					l_fifo_state = AX_FIFO_RX_FSM_RFFREQOFFS_2;
+				break;
+
+				case AX_FIFO_RX_FSM_RFFREQOFFS_2:
+					l_fifo_lastPacket_frfreqoffset |= (uint32_t)g_ax_spi_packet_buffer[0] <<  8;
+					l_fifo_state = AX_FIFO_RX_FSM_RFFREQOFFS_3;
+				break;
+
+				case AX_FIFO_RX_FSM_RFFREQOFFS_3:
+					l_fifo_lastPacket_frfreqoffset |= (uint32_t)g_ax_spi_packet_buffer[0];
+					l_fifo_state = AX_FIFO_RX_FSM__START;
+				break;
+
+
+				case AX_FIFO_RX_FSM_FREQOFFS_1:
+					l_fifo_lastPacket_freqoffset  = (uint32_t)g_ax_spi_packet_buffer[0] <<  8;
+					l_fifo_state = AX_FIFO_RX_FSM_FREQOFFS_2;
+				break;
+
+				case AX_FIFO_RX_FSM_FREQOFFS_2:
+					l_fifo_lastPacket_freqoffset |= (uint32_t)g_ax_spi_packet_buffer[0];
+					l_fifo_state = AX_FIFO_RX_FSM__START;
+				break;
+
+
+				case AX_FIFO_RX_FSM_DATARATE_1:
+					l_fifo_lastPacket_datarate  = (uint32_t)g_ax_spi_packet_buffer[0] << 16;
+					l_fifo_state = AX_FIFO_RX_FSM_DATARATE_2;
+				break;
+
+				case AX_FIFO_RX_FSM_DATARATE_2:
+					l_fifo_lastPacket_datarate |= (uint32_t)g_ax_spi_packet_buffer[0] <<  8;
+					l_fifo_state = AX_FIFO_RX_FSM_DATARATE_3;
+				break;
+
+				case AX_FIFO_RX_FSM_DATARATE_3:
+					l_fifo_lastPacket_datarate |= (uint32_t)g_ax_spi_packet_buffer[0];
+					l_fifo_state = AX_FIFO_RX_FSM__START;
+				break;
+
+
+				case AX_FIFO_RX_FSM_DATA_1:
+					l_fifo_lastPacket_dataLen = g_ax_spi_packet_buffer[0];
+					l_fifo_state = AX_FIFO_RX_FSM_DATA_2;
+				break;
+
+				case AX_FIFO_RX_FSM_DATA_2:
+					l_fifo_lastPacket_dataStatus = g_ax_spi_packet_buffer[0];
+					l_fifo_lastPacket_dataLen--;
+					l_fifo_state = AX_FIFO_RX_FSM_DATA_3;
+				break;
+
+				case AX_FIFO_RX_FSM_DATA_3:
+					g_ax_spi_packet_buffer[0] = 0x29;											// RD address 0x29: FIFODATA
+
+					spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
+					spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 1);
+					spi_read_packet(&SPI_AX, g_ax_spi_packet_buffer, l_fifo_lastPacket_dataLen);
+					spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+
+					memcpy(l_fifo_lastPacket_dataMsg, g_ax_spi_packet_buffer, l_fifo_lastPacket_dataLen);
+					memset(l_fifo_lastPacket_dataMsg + l_fifo_lastPacket_dataLen, 0, sizeof(l_fifo_lastPacket_dataMsg) - l_fifo_lastPacket_dataLen);
+
+					idx += l_fifo_lastPacket_dataLen;
+					l_fifo_state = AX_FIFO_RX_FSM__START;
+				break;
+
+				default:
+				{
+					l_fifo_state = AX_FIFO_RX_FSM__FAIL_STATE;
+				}
+			}
+		}
+
+
+		(void) l_fifo_stat;
+
+		(void) l_curRssi;
+		(void) l_curBgndRssi;
+		(void) l_agcCounter;
+
+		(void) l_fifo_lastPacket_time;
+		(void) l_fifo_lastPacket_rssi;
+		(void) l_fifo_lastPacket_rssi_ant2;
+		(void) l_fifo_lastPacket_bgndnoise;
+		(void) l_fifo_lastPacket_frfreqoffset;
+		(void) l_fifo_lastPacket_freqoffset;
+		(void) l_fifo_lastPacket_datarate;
+		(void) l_fifo_lastPacket_dataLen;
+		(void) l_fifo_lastPacket_dataStatus;
+		(void) l_fifo_lastPacket_dataMsg;
+
+		nop();
+	} while (true);
 }

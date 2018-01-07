@@ -100,7 +100,7 @@ typedef enum AX_FIFO_DATA_FLAGS_TX_BF {
 	AX_FIFO_DATA_FLAGS_TX_NOCRC										= 0x08,
 	AX_FIFO_DATA_FLAGS_TX_RAW										= 0x10,
 	AX_FIFO_DATA_FLAGS_TX_UNENC										= 0x20
-} AX_FIFO_CMD_DATA_FLAGS_TX_BF_t;
+} AX_FIFO_DATA_FLAGS_TX_BF_t;
 
 typedef enum AX_FIFO_DATA_FLAGS_RX_BF {
 	AX_FIFO_DATA_FLAGS_RX_PKTSTART									= 0x01,
@@ -110,7 +110,45 @@ typedef enum AX_FIFO_DATA_FLAGS_RX_BF {
 	AX_FIFO_DATA_FLAGS_RX_ADDRFAIL									= 0x10,
 	AX_FIFO_DATA_FLAGS_RX_SIZEFAIL									= 0x20,
 	AX_FIFO_DATA_FLAGS_RX_ABORT										= 0x40
-} AX_FIFO_CMD_DATA_FLAGS_RX_BF_t;
+} AX_FIFO_DATA_FLAGS_RX_BF_t;
+
+
+typedef enum AX_FIFO_RX_FSM {
+	AX_FIFO_RX_FSM__START											= 0x00,
+	AX_FIFO_RX_FSM__STOP											= 0x0f,
+
+	AX_FIFO_RX_FSM_TIMER_1											= 0x11,
+	AX_FIFO_RX_FSM_TIMER_2,
+	AX_FIFO_RX_FSM_TIMER_3,
+
+	AX_FIFO_RX_FSM_RSSI_1											= 0x21,
+
+	AX_FIFO_RX_FSM_ANTRSSI2_1										= 0x31,
+	AX_FIFO_RX_FSM_ANTRSSI2_2,
+
+	AX_FIFO_RX_FSM_ANTRSSI3_1										= 0x41,
+	AX_FIFO_RX_FSM_ANTRSSI3_2,
+	AX_FIFO_RX_FSM_ANTRSSI3_3,
+
+	AX_FIFO_RX_FSM_RFFREQOFFS_1										= 0x51,
+	AX_FIFO_RX_FSM_RFFREQOFFS_2,
+	AX_FIFO_RX_FSM_RFFREQOFFS_3,
+
+	AX_FIFO_RX_FSM_FREQOFFS_1										= 0x61,
+	AX_FIFO_RX_FSM_FREQOFFS_2,
+
+	AX_FIFO_RX_FSM_DATARATE_1										= 0x71,
+	AX_FIFO_RX_FSM_DATARATE_2,
+	AX_FIFO_RX_FSM_DATARATE_3,
+
+	AX_FIFO_RX_FSM_DATA_1											= 0x81,
+	AX_FIFO_RX_FSM_DATA_2,
+	AX_FIFO_RX_FSM_DATA_3,
+
+	AX_FIFO_RX_FSM__FAIL_STATE										= 0xf1,
+	AX_FIFO_RX_FSM__FAIL_CMD										= 0xf2,
+} AX_FIFO_RX_FSM_t;
+
 
 
 static inline void spi_ax_select_device(void)
@@ -167,6 +205,8 @@ void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal(void);
 void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void);
 void spi_ax_test_PR1200_Tx_FIFO_APRS_InformationField(void);
 void spi_ax_test_PR1200_Tx_FIFO_APRS(void);
+
+void spi_ax_test_PR1200_Rx(void);
 
 
 #endif /* SPI_H_ */
