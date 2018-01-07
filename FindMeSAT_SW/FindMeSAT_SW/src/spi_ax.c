@@ -1207,6 +1207,22 @@ void spi_ax_initRegisters_PR1200(void)
 	spi_ax_transport(false, "< 94 ff ff ff ff >");												// WR address 0x14: CRCINIT
 
 
+	/*WAKEUPTIMER */
+	spi_ax_transport(false, "< 68 R2 >");														// RD address 0x68: WAKEUPTIMER
+	uint16_t wutNext = ((uint16_t)g_ax_spi_packet_buffer[0] << 8) | g_ax_spi_packet_buffer[1];
+	wutNext += 1024;
+
+	g_ax_spi_packet_buffer[0] = 0x6A | 0x80;													// WR address 0x6A: WAKEUP - 100 ms later
+	g_ax_spi_packet_buffer[1] = wutNext >> 8;
+	g_ax_spi_packet_buffer[2] = wutNext & 0xff;
+	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
+	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 3);
+	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+
+	/* WAKEUPFREQ */
+	spi_ax_transport(false, "< ec 04 00 >");													// WR address 0x6C: WAKEUPFREQ - every 100 ms = 1024d
+
+
 	/* PINFUNCTCXO_EN */
 	#if 0
 	spi_ax_transport(false, "< a6 05 >");														// WR address 0x26: PINFUNCTCXO_EN - Use TCXO_EN pin as DAC output
@@ -1218,7 +1234,6 @@ void spi_ax_initRegisters_PR1200(void)
 	spi_ax_transport(false, "< ee 01 >");														// WR address 0x6E: WAKEUPXOEARLY - 1 LPOSC cycle wake-up time before receiver is started
 
 
-	#if 0
 	/* IFFREQ */
 	spi_ax_transport(false, "< f1 00 00 cd >");													// WR address 0x100: IFFREQ - IFFREQ: 3,128 Hz (f_xtal = 16 MHz)
 
@@ -1232,14 +1247,13 @@ void spi_ax_initRegisters_PR1200(void)
 	spi_ax_transport(false, "< f1 06 00 00 00 >");												// WR address 0x106: MAXDROFFSET - off
 
 	/* MAXRFOFFSET */
-	spi_ax_transport(false, "< f1 09 80 07 5f >");												// WR address 0x109: MAXRFOFFSET - FREQOFFSCORR: Correct frequency offset at the first LO if this bit is one, MAXRFOFFSET: +/- 1,799.6 Hz
+	spi_ax_transport(false, "< f1 09 80 04 ea >");												// WR address 0x109: MAXRFOFFSET - FREQOFFSCORR: Correct frequency offset at the first LO 0x80, MAXRFOFFSET: +/- 1,200 Hz
 
 	/* FSKDMAX */
 	spi_ax_transport(false, "< f1 0c 03 f3 >");													// WR address 0x10C: FSKDMAX - FSKDMAX: +1,011d (should be +640d?, seems to be moved by abt. 1.5x up)
 
 	/* FSKDMIN */
 	spi_ax_transport(false, "< f1 0e ff 0d >");													// WR address 0x10E: FSKDMIN - FSKDMIN: -243d (should be -640d?, seems to be moved by abt. 1.5x up)
-	#endif
 
 	/* AMPLFILTER */
 	spi_ax_transport(false, "< f1 15 00 >");													// WR address 0x115: AMPLFILTER - AMPLFILTER: filter bypassed.
@@ -1430,7 +1444,7 @@ void spi_ax_initRegisters_PR1200(void)
 	spi_ax_transport(false, "< f2 01 00 >");													// WR address 0x201: PKTLENCFG - none
 
 	/* PKTLENOFFSET */
-	spi_ax_transport(false, "< f2 02 17 >");													// WR address 0x202: PKTLENOFFSET - not used
+	spi_ax_transport(false, "< f2 02 08 >");													// WR address 0x202: PKTLENOFFSET - receiver_length = Length-Field +8 bytes, in case Length-Field is sent. (Remarks by DF4IAH: reason unknown)
 
 	/* PKTMAXLEN */
 	spi_ax_transport(false, "< f2 03 ff >");													// WR address 0x203: PKTMAXLEN - PKTMAXLEN = 255
@@ -1480,7 +1494,8 @@ void spi_ax_initRegisters_PR1200(void)
 	spi_ax_transport(false, "< f2 26 73 >");													// WR address 0x226: TMGRXCOARSEAGC - TMGRXCOARSEAGCE = 3, TMGRXCOARSEAGCM = 19 --> 152 탎 (Bits)  @see PKTMISCFLAGS.RXAGC
 
 	/* TMGRXRSSI */
-	spi_ax_transport(false, "< f2 28 03 >");													// WR address 0x228: TMGRXRSSI - TMGRXAGCE = 0, TMGRXAGCM = 3 --> 3 탎 (Bits)  @see PKTMISCFLAGS.RXRSSI
+	spi_ax_transport(false, "< f2 28 02 >");													// WR address 0x228: TMGRXRSSI - TMGRXRSSIE = 0, TMGRXRSSIM = 2 --> 2 탎 (Bits)  @see PKTMISCFLAGS.RXRSSI (for datarates < 2 kbit possible)
+	//spi_ax_transport(false, "< f2 28 03 >");													// WR address 0x228: TMGRXRSSI - TMGRXRSSIE = 0, TMGRXRSSIM = 3 --> 3 탎 (Bits)  @see PKTMISCFLAGS.RXRSSI (fall-back strategy)
 
 	/* TMGRXPREAMBLE1 */
 	//spi_ax_transport(false, "< f2 29 00 >");													// WR address 0x229: TMGRXPREAMBLE1 - TMGRXPREAMBLE1 timeout = none
@@ -1706,43 +1721,39 @@ void spi_ax_initRegisters_PR1200_Rx(void)
 
 void spi_ax_initRegisters_PR1200_Rx_WoR(void)
 {
-	/*WAKEUPTIMER */
-	spi_ax_transport(false, "< 68 R2 >");														// RD address 0x68: WAKEUPTIMER
-	uint16_t wutNext = ((uint16_t)g_ax_spi_packet_buffer[0] << 8) | g_ax_spi_packet_buffer[1];
-	wutNext += 102;
+	/* AGCGAIN0 */
+	spi_ax_transport(false, "< f1 20 83 >");													// WR address 0x120: AGCGAIN0 - AGCDECAY0 = 8  (f_3db=621 Hz), AGCATTACK0 = 3  (f_3db=18,660 Hz)
 
-	g_ax_spi_packet_buffer[0] = 0x6A | 0x80;													// WR address 0x6A: WAKEUP - 10 ms later
-	g_ax_spi_packet_buffer[1] = wutNext >> 8;
-	g_ax_spi_packet_buffer[2] = wutNext & 0xff;
-	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
-	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 3);
-	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-
-	/* WAKEUPFREQ */
-	spi_ax_transport(false, "< ec 00 66 >");													// WR address 0x6C: WAKEUPFREQ - every 10 ms = 102d
+	/* AGCGAIN1 */
+	spi_ax_transport(false, "< f1 30 83 >");													// WR address 0x130: AGCGAIN1 - AGCDECAY1 = 8  (f_3db=621 Hz), AGCATTACK1 = 3  (f_3db=18,660 Hz)
 
 
 	/* TMGRXAGC */
-	spi_ax_transport(false, "< f2 27 1c >");													// WR address 0x227: TMGRXAGC
+	spi_ax_transport(false, "< f2 27 54 >");													// WR address 0x227: TMGRXAGC - TMGRXAGCE = 5, TMGRXAGCM = 4 --> 128 탎 (Bits)  @see PKTMISCFLAGS.RXRSSI
 
 	/* TMGRXPREAMBLE1 */
-	spi_ax_transport(false, "< f2 29 19 >");													// WR address 0x229: TMGRXPREAMBLE1
+	spi_ax_transport(false, "< f2 29 34 >");													// WR address 0x229: TMGRXPREAMBLE1 - TMGRXPREAMBLEE = 3, TMGRXPREAMBLEM = 4 --> 32 Bits
 
 	/* PKTMISCFLAGS */
-	//spi_ax_transport(false, "< f2 31 07 >");													// WR address 0x231: PKTMISCFLAGS - BGND RSSI 0x04, RXAGC CLK, RXRSSI CLK clock sources: Bit clock
-	spi_ax_transport(false, "< f2 31 03 >");													// WR address 0x231: PKTMISCFLAGS - no BGND RSSI !0x04, RXAGC CLK, RXRSSI CLK clock sources: Bit clock
+	spi_ax_transport(false, "< f2 31 05 >");													// WR address 0x231: PKTMISCFLAGS - BGND RSSI 0x04, !RXAGC CLK, RXRSSI CLK clock sources: Bit clock
 }
 
 void spi_ax_initRegisters_PR1200_Rx_cont(void)
 {
+	/* AGCGAIN0 */
+	spi_ax_transport(false, "< f1 20 e8 >");													// WR address 0x120: AGCGAIN0 - AGCDECAY0 = 14  (f_3db=10 Hz), AGCATTACK0 = 8  (f_3db=621 Hz)
+
+	/* AGCGAIN1 */
+	spi_ax_transport(false, "< f1 30 e8 >");													// WR address 0x130: AGCGAIN1 - AGCDECAY1 = 14  (f_3db=10 Hz), AGCATTACK1 = 8  (f_3db=621 Hz)
+
+
 	/* TMGRXAGC */
-	spi_ax_transport(false, "< f2 27 00 >");													// WR address 0x227: TMGRXAGC
+	spi_ax_transport(false, "< f2 27 00 >");													// WR address 0x227: TMGRXAGC - not used
 
 	/* TMGRXPREAMBLE1 */
-	spi_ax_transport(false, "< f2 29 00 >");													// WR address 0x229: TMGRXPREAMBLE1
+	spi_ax_transport(false, "< f2 29 00 >");													// WR address 0x229: TMGRXPREAMBLE1 - not used
 
 	/* PKTMISCFLAGS */
-	//spi_ax_transport(false, "< f2 31 04 >");													// WR address 0x231: PKTMISCFLAGS - BGND RSSI 0x04, RXAGC CLK, RXRSSI CLK clock sources: 1 탎
 	spi_ax_transport(false, "< f2 31 00 >");													// WR address 0x231: PKTMISCFLAGS - no BGND RSSI !0x04, RXAGC CLK, RXRSSI CLK clock sources: 1 탎
 }
 

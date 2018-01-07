@@ -29,8 +29,8 @@ __reentrantb void ax5043_set_registers(void) __reentrant
 	AX5043_MAXDROFFSET1            = 0x00;
 	AX5043_MAXDROFFSET0            = 0x00;
 	AX5043_MAXRFOFFSET2            = 0x80;
-	AX5043_MAXRFOFFSET1            = 0x07;
-	AX5043_MAXRFOFFSET0            = 0x5F;
+	AX5043_MAXRFOFFSET1            = 0x04;
+	AX5043_MAXRFOFFSET0            = 0xEA;
 	AX5043_FSKDMAX1                = 0x03;
 	AX5043_FSKDMAX0                = 0xF3;
 	AX5043_FSKDMIN1                = 0xFC;
@@ -98,7 +98,7 @@ __reentrantb void ax5043_set_registers(void) __reentrant
 	AX5043_BBOFFSCAP               = 0x77;
 	AX5043_PKTADDRCFG              = 0x00;
 	AX5043_PKTLENCFG               = 0x00;
-	AX5043_PKTLENOFFSET            = 0x17;
+	AX5043_PKTLENOFFSET            = 0x08;
 	AX5043_PKTMAXLEN               = 0xF0;
 	AX5043_MATCH0PAT3              = 0xAA;
 	AX5043_MATCH0PAT2              = 0xCC;
@@ -114,7 +114,7 @@ __reentrantb void ax5043_set_registers(void) __reentrant
 	AX5043_TMGRXSETTLE             = 0x14;
 	AX5043_TMGRXOFFSACQ            = 0x00;
 	AX5043_TMGRXCOARSEAGC          = 0x73;
-	AX5043_TMGRXRSSI               = 0x03;
+	AX5043_TMGRXRSSI               = 0x02;
 	AX5043_TMGRXPREAMBLE2          = 0x17;
 	AX5043_RSSIABSTHR              = 0xDD;
 	AX5043_BGNDRSSITHR             = 0x00;
@@ -161,9 +161,11 @@ __reentrantb void ax5043_set_registers_rx(void) __reentrant
 
 __reentrantb void ax5043_set_registers_rxwor(void) __reentrant
 {
-	AX5043_TMGRXAGC                = 0x1C;
-	AX5043_TMGRXPREAMBLE1          = 0x19;
-	AX5043_PKTMISCFLAGS            = 0x03;
+	AX5043_TMGRXAGC                = 0x54;
+	AX5043_TMGRXPREAMBLE1          = 0x34;
+	AX5043_PKTMISCFLAGS            = 0x05;
+	AX5043_AGCGAIN0                = 0x83;
+	AX5043_AGCGAIN1                = 0x83;
 }
 
 
@@ -172,6 +174,8 @@ __reentrantb void ax5043_set_registers_rxcont(void) __reentrant
 	AX5043_TMGRXAGC                = 0x00;
 	AX5043_TMGRXPREAMBLE1          = 0x00;
 	AX5043_PKTMISCFLAGS            = 0x00;
+	AX5043_AGCGAIN0                = 0xE8;
+	AX5043_AGCGAIN1                = 0xE8;
 }
 
 
@@ -694,7 +698,7 @@ const uint8_t __code axradio_phy_chanvcoiinit[1] = { 0x00 };
 uint8_t __xdata axradio_phy_chanpllrng[1];
 uint8_t __xdata axradio_phy_chanvcoi[1];
 const uint8_t __code axradio_phy_vcocalib = 0;
-const int32_t __code axradio_phy_maxfreqoffset = 5662;
+const int32_t __code axradio_phy_maxfreqoffset = 3775;
 const int8_t __code axradio_phy_rssioffset = 64;
 // axradio_phy_rssioffset is added to AX5043_RSSIREFERENCE and subtracted from chip RSSI value to prevent overflows (8bit RSSI only goes down to -128)
 // axradio_phy_rssioffset is also added to AX5043_RSSIABSTHR
@@ -702,10 +706,10 @@ const int8_t __code axradio_phy_rssireference = 0xFA + 64;
 const int8_t __code axradio_phy_channelbusy = -99 + 64;
 const uint16_t __code axradio_phy_cs_period = 7; // timer0 units, 10ms
 const uint8_t __code axradio_phy_cs_enabled = 0;
-const uint8_t __code axradio_phy_lbt_retries = 0;
+const uint8_t __code axradio_phy_lbt_retries = 3;
 const uint8_t __code axradio_phy_lbt_forcetx = 0;
-const uint16_t __code axradio_phy_preamble_wor_longlen = 1; // wor_longlen + wor_len totals to 240.0ms plus 40bits
-const uint16_t __code axradio_phy_preamble_wor_len = 72;
+const uint16_t __code axradio_phy_preamble_wor_longlen = 0; // wor_longlen + wor_len totals to 100.0ms plus 40bits
+const uint16_t __code axradio_phy_preamble_wor_len = 160;
 const uint16_t __code axradio_phy_preamble_longlen = 0;
 const uint16_t __code axradio_phy_preamble_len = 40;
 const uint8_t __code axradio_phy_preamble_byte = 0x81;
@@ -714,12 +718,12 @@ const uint8_t __code axradio_phy_preamble_appendbits = 0;
 const uint8_t __code axradio_phy_preamble_appendpattern = 0x00;
 
 //framing
-const uint8_t __code axradio_framing_maclen = 15;
+const uint8_t __code axradio_framing_maclen = 0;
 const uint8_t __code axradio_framing_addrlen = 0;
 const uint8_t __code axradio_framing_destaddrpos = 0;
-const uint8_t __code axradio_framing_sourceaddrpos = 0xff;
+const uint8_t __code axradio_framing_sourceaddrpos = 0x08;
 const uint8_t __code axradio_framing_lenpos = 0;
-const uint8_t __code axradio_framing_lenoffs = 23;
+const uint8_t __code axradio_framing_lenoffs = 8;
 const uint8_t __code axradio_framing_lenmask = 0x00;
 const uint8_t __code axradio_framing_swcrclen = 0;
 
@@ -728,27 +732,27 @@ const uint8_t __code axradio_framing_syncword[] = { 0x33, 0x55, 0x33, 0x55};
 const uint8_t __code axradio_framing_syncflags = 0x38;
 const uint8_t __code axradio_framing_enable_sfdcallback = 0;
 
-const uint32_t __code axradio_framing_ack_timeout = 148; // 228.3ms in wtimer0 units (640Hz)
+const uint32_t __code axradio_framing_ack_timeout = 77; // 118.3ms in wtimer0 units (640Hz)
 const uint32_t __code axradio_framing_ack_delay = 313; // 1.0ms in wtimer1 units (20MHz/64)
 const uint8_t __code axradio_framing_ack_retransmissions = 0;
 const uint8_t __code axradio_framing_ack_seqnrpos = 0xff;
 
 const uint8_t __code axradio_framing_minpayloadlen = 0; // must be set to 1 if the payload directly follows the destination address, and a CRC is configured
 //WOR
-const uint16_t __code axradio_wor_period = 128;
+const uint16_t __code axradio_wor_period = 64;
 
 // synchronous mode
-const uint32_t __code axradio_sync_period = 81920; // ACTUALLY FREQ, NOT PERIOD!
+const uint32_t __code axradio_sync_period = 131072; // ACTUALLY FREQ, NOT PERIOD!
 const uint32_t __code axradio_sync_xoscstartup = 49;
-const uint32_t __code axradio_sync_slave_syncwindow = 245760; // 7.500s
+const uint32_t __code axradio_sync_slave_syncwindow = 393216; // 12.000s
 const uint32_t __code axradio_sync_slave_initialsyncwindow = 5898240; //180.000s
 const uint32_t __code axradio_sync_slave_syncpause = 19660800; // 600.000s
-const int16_t __code axradio_sync_slave_maxperiod = 2649; // in (2^SYNC_K1) * wtimer0 units
+const int16_t __code axradio_sync_slave_maxperiod = 3278; // in (2^SYNC_K1) * wtimer0 units
 const uint8_t __code axradio_sync_slave_resyncloss = 11;  // resyncloss is one more than the number of missed packets to cause a resync
 // window 0 is the first window after synchronisation
 // window 1 is the window normally used when there are no lost packets
 // window 2 is used after one packet is lost, etc
 const uint8_t __code axradio_sync_slave_nrrx = 3;
-const uint32_t __code axradio_sync_slave_rxadvance[] = { 2014, 1976, 2246 };// 61.442ms, 60.283ms, 68.524ms
-const uint32_t __code axradio_sync_slave_rxwindow[] = { 2093, 2017, 2557 }; // 63.853ms, 61.535ms, 78.017ms
+const uint32_t __code axradio_sync_slave_rxadvance[] = { 5318, 5256, 5535 };// 162.267ms, 160.375ms, 168.889ms
+const uint32_t __code axradio_sync_slave_rxwindow[] = { 5424, 5300, 5858 }; // 165.502ms, 161.718ms, 178.746ms
 const uint32_t __code axradio_sync_slave_rxtimeout = 7483; // 228.3ms, maximum duration of a packet
