@@ -721,7 +721,7 @@ const uint8_t __code axradio_phy_preamble_appendpattern = 0x00;
 const uint8_t __code axradio_framing_maclen = 0;
 const uint8_t __code axradio_framing_addrlen = 0;
 const uint8_t __code axradio_framing_destaddrpos = 0;
-const uint8_t __code axradio_framing_sourceaddrpos = 0x08;
+const uint8_t __code axradio_framing_sourceaddrpos = 0xff;
 const uint8_t __code axradio_framing_lenpos = 0;
 const uint8_t __code axradio_framing_lenoffs = 8;
 const uint8_t __code axradio_framing_lenmask = 0x00;
@@ -753,6 +753,6 @@ const uint8_t __code axradio_sync_slave_resyncloss = 11;  // resyncloss is one m
 // window 1 is the window normally used when there are no lost packets
 // window 2 is used after one packet is lost, etc
 const uint8_t __code axradio_sync_slave_nrrx = 3;
-const uint32_t __code axradio_sync_slave_rxadvance[] = { 5318, 5256, 5535 };// 162.267ms, 160.375ms, 168.889ms
-const uint32_t __code axradio_sync_slave_rxwindow[] = { 5424, 5300, 5858 }; // 165.502ms, 161.718ms, 178.746ms
+const uint32_t __code axradio_sync_slave_rxadvance[] = { 5318, 5256, 5535 };// 162.266ms, 160.374ms, 168.888ms
+const uint32_t __code axradio_sync_slave_rxwindow[] = { 5424, 5300, 5858 }; // 165.501ms, 161.717ms, 178.745ms
 const uint32_t __code axradio_sync_slave_rxtimeout = 7483; // 228.3ms, maximum duration of a packet
