@@ -1548,8 +1548,8 @@ void spi_ax_initRegisters_PR1200_Tx(void)
 	spi_ax_transport(false, "< f1 64 05 >");													// WR address 0x164: MODCFGA - AMPLSHAPE, TXDIFF
 
 	/* TXRATE */
-	//spi_ax_transport(false, "< f1 65 00 04 ea >");												// WR address 0x165: TXRATE - TXRATE: 1,200 bit/s
-	spi_ax_transport(false, "< f1 65 00 00 4f >");  // Check with slow motion
+	spi_ax_transport(false, "< f1 65 00 04 ea >");												// WR address 0x165: TXRATE - TXRATE: 1,200 bit/s
+	//spi_ax_transport(false, "< f1 65 00 00 4f >");											// Check with slow motion
 
 
 	/* XTALCAP */
@@ -2269,56 +2269,48 @@ void spi_ax_test_PR1200_Tx_FIFO_Flags(uint8_t count)
 	spi_ax_transport(false, "< a8 04 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
 }
 
-#define FCS_AUTO true
 void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal_AddressField(void)
 {
 	uint16_t idx = 0;
 
-	calc_CRC16_CCITT(CALC_CRC16_CCITT_RESET, 0);
-
-	g_ax_spi_packet_buffer[idx++] = 0xA9;																					// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
+	g_ax_spi_packet_buffer[idx++] = 0xA9;													// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
 	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_CMD_DATA_TX_RX;
-	g_ax_spi_packet_buffer[idx++] = 0;																						// Dummy entry for now
-#if defined(FCS_AUTO)
+	g_ax_spi_packet_buffer[idx++] = 0;														// Dummy entry for now
 	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART | AX_FIFO_DATA_FLAGS_TX_PKTEND;
-#else
-	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_NOCRC | AX_FIFO_DATA_FLAGS_TX_PKTSTART | AX_FIFO_DATA_FLAGS_TX_PKTEND;
-#endif
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('T' << 1));										// Address: dest.       [A 1]
-#if 0
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('E' << 1));										// Address: dest.       [A 2]
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('S' << 1));										// Address: dest.       [A 3]
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('T' << 1));										// Address: dest.       [A 4]
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, (' ' << 1));										// Address: dest.       [A 5]
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, (' ' << 1));										// Address: dest.       [A 6]
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ((0b1 << 7) | (0b11 << 5) | (0x0 << 1)	| 0));		// Address: dest.  SSID [A 7]
+	g_ax_spi_packet_buffer[idx++] = ('D' << 1)	| 0;										// Address: dest.       [A 1]
+	g_ax_spi_packet_buffer[idx++] = ('F' << 1)	| 0;										// Address: dest.       [A 2]
+	g_ax_spi_packet_buffer[idx++] = ('4' << 1)	| 0;										// Address: dest.       [A 3]
+	g_ax_spi_packet_buffer[idx++] = ('I' << 1)	| 0;										// Address: dest.       [A 4]
+	g_ax_spi_packet_buffer[idx++] = ('A' << 1)	| 0;										// Address: dest.       [A 5]
+	g_ax_spi_packet_buffer[idx++] = ('H' << 1)	| 0;										// Address: dest.       [A 6]
+	g_ax_spi_packet_buffer[idx++] = ((0b0 << 7) | (0b11 << 5) | (0x2 << 1)	| 0);			// Address: dest.  SSID [A 7]
 
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('D' << 1));										// Address: source      [A 8]
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('F' << 1));										// Address: source      [A 9]
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('4' << 1));										// Address: source      [A10]
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('I' << 1));										// Address: source      [A11]
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('A' << 1));										// Address: source      [A12]
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ('H' << 1));										// Address: source      [A13]
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ((0b0 << 7) | (0b11 << 5) | (0x9 << 1)	| 1));	// Address: source SSID [A14]
+	g_ax_spi_packet_buffer[idx++] = ('D' << 1)	| 0;										// Address: source      [A 8]
+	g_ax_spi_packet_buffer[idx++] = ('F' << 1)	| 0;										// Address: source      [A 9]
+	g_ax_spi_packet_buffer[idx++] = ('4' << 1)	| 0;										// Address: source      [A10]
+	g_ax_spi_packet_buffer[idx++] = ('I' << 1)	| 0;										// Address: source      [A11]
+	g_ax_spi_packet_buffer[idx++] = ('A' << 1)	| 0;										// Address: source      [A12]
+	g_ax_spi_packet_buffer[idx++] = ('H' << 1)	| 0;										// Address: source      [A13]
+	g_ax_spi_packet_buffer[idx++] = ((0b1 << 7) | (0b11 << 5) | (0x1 << 1)	| 1);			// Address: source SSID [A14]
 
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD, ((0b0 << 4) |  0b11));							// Control: UI frame with no Poll bit set
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_ADD,  0xF0);											// PID
-#endif
+	g_ax_spi_packet_buffer[idx++] = ((0b0 << 4) |  0b11);									// Control: UI frame with no Poll bit set
+	g_ax_spi_packet_buffer[idx++] =  0xf0;													// PID: No layer 3 protocol implemented
 
-#if defined(FCS_AUTO)
-#else
-	/* Completing with the FCS */
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_LSB, 0);										// LSB of CRC-CCITT
-	g_ax_spi_packet_buffer[idx++] = calc_CRC16_CCITT(CALC_CRC16_CCITT_RETURN_MSB, 0);										// MSB
-#endif
+	g_ax_spi_packet_buffer[idx++] =  ':';
+	g_ax_spi_packet_buffer[idx++] =  '-';
+	g_ax_spi_packet_buffer[idx++] =  ')';
+	g_ax_spi_packet_buffer[idx++] =  '\r';
 
 	/* Set length for FIFO DATA command */
-	g_ax_spi_packet_buffer[    2] = idx - 3;																				// Length
+	g_ax_spi_packet_buffer[    2] = idx - 3;												// Length
 
 	/* FIFO data enter */
 	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, idx);
 	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+
+	/* FIFO do a COMMIT */
+	spi_ax_transport(false, "< a8 04 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
 }
 
 void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal()
@@ -2326,14 +2318,17 @@ void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal()
 	/* Enter an APRS UI frame */
 
 	/* 1 - Flags */
-	//spi_ax_test_PR1200_Tx_FIFO_Flags(35);													// Minimal
-	spi_ax_test_PR1200_Tx_FIFO_Flags(3);													// Slow motion variant
+	spi_ax_test_PR1200_Tx_FIFO_Flags(35);													// Minimal
+	//spi_ax_test_PR1200_Tx_FIFO_Flags(10);													// Slow motion variant
 
 	/* 2 - Address field, Control and PID */
 	spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal_AddressField();
 
 	/* 9 - Flags */
+	/* Ending Flag is automatically emitted by the HDLC [1] FRAMING mode */
+	/*
 	spi_ax_test_PR1200_Tx_FIFO_Flags(1);													// Final one or as separator
+	*/
 }
 
 void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void)
@@ -2343,7 +2338,7 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void)
 	g_ax_spi_packet_buffer[idx++] = 0xA9;													// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
 	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_CMD_DATA_TX_RX;
 	g_ax_spi_packet_buffer[idx++] = 0;														// Dummy entry for now
-	g_ax_spi_packet_buffer[idx++] = 0;														// FIFO flag byte
+	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART;							// FIFO flag byte
 
 	g_ax_spi_packet_buffer[idx++] = 'A' << 1;												// Address: dest.       [A 1]
 	g_ax_spi_packet_buffer[idx++] = 'P' << 1;												// Address: dest.       [A 2]
@@ -2351,7 +2346,7 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void)
 	g_ax_spi_packet_buffer[idx++] = 'S' << 1;												// Address: dest.       [A 4]
 	g_ax_spi_packet_buffer[idx++] = ' ' << 1;												// Address: dest.       [A 5]
 	g_ax_spi_packet_buffer[idx++] = ' ' << 1;												// Address: dest.       [A 6]
-	g_ax_spi_packet_buffer[idx++] = (0b1 << 7) | (0b11 << 5) | (0x0 << 1)	| 0;			// Address: dest.  SSID [A 7]
+	g_ax_spi_packet_buffer[idx++] = (0b0 << 7) | (0b11 << 5) | (0x0 << 1)	| 0;			// Address: dest.  SSID [A 7]
 
 	g_ax_spi_packet_buffer[idx++] = 'D' << 1;												// Address: source      [A 8]
 	g_ax_spi_packet_buffer[idx++] = 'F' << 1;												// Address: source      [A 9]
@@ -2359,7 +2354,7 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void)
 	g_ax_spi_packet_buffer[idx++] = 'I' << 1;												// Address: source      [A11]
 	g_ax_spi_packet_buffer[idx++] = 'A' << 1;												// Address: source      [A12]
 	g_ax_spi_packet_buffer[idx++] = 'H' << 1;												// Address: source      [A13]
-	g_ax_spi_packet_buffer[idx++] = (0b0 << 7) | (0b11 << 5) | (0x0 << 1)	| 0;			// Address: source SSID [A14]
+	g_ax_spi_packet_buffer[idx++] = (0b1 << 7) | (0b11 << 5) | (0x0 << 1)	| 0;			// Address: source SSID [A14]
 
 	g_ax_spi_packet_buffer[idx++] = 'W' << 1;												// Address: reptr1      [A15]
 	g_ax_spi_packet_buffer[idx++] = 'I' << 1;												// Address: reptr1      [A16]
@@ -2370,7 +2365,7 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void)
 	g_ax_spi_packet_buffer[idx++] = (0b0 << 7) | (0b11 << 5) | (0x2 << 1)	| 1;			// Address: reptr1 SSID [A21]  --> WIDE2-2
 
 	g_ax_spi_packet_buffer[idx++] = (0b0 << 4) |  0b11;										// Control: UI frame with no Poll bit set
-	g_ax_spi_packet_buffer[idx++] = 0xF0;													// PID
+	g_ax_spi_packet_buffer[idx++] = 0xf0;													// PID
 
 	/* Set length for FIFO DATA command */
 	g_ax_spi_packet_buffer[    2] = idx - 3;												// Length
@@ -2453,6 +2448,7 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS_InformationField(void)
 	g_ax_spi_packet_buffer[idx++] = 'h';													// Info: APRS data      [I56]
 	g_ax_spi_packet_buffer[idx++] = 'l';													// Info: APRS data      [I57]
 	g_ax_spi_packet_buffer[idx++] = '.';													// Info: APRS data      [I58]
+	g_ax_spi_packet_buffer[idx++] = '\r';													// Info: APRS data      [I59]
 
 	/* Set length for FIFO DATA command */
 	g_ax_spi_packet_buffer[    2] = idx - 3;												// Length
