@@ -1131,7 +1131,7 @@ void spi_ax_initRegisters_FSK(void)
 	spi_ax_transport(false, "< f2 2d dd >");													// WR address 0x22D: RSSIABSTHR - RSSIABSTHR > -35 (-64) = -99 dBm (BUSY)
 
 	/* BGNDRSSITHR */
-	spi_ax_transport(false, "< f2 2f 00 >");													// WR address 0x22F: BGNDRSSITHR - BGNDRSSITHR: 0 dB / off?
+	spi_ax_transport(false, "< f2 2f 00 >");													// WR address 0x22F: BGNDRSSITHR - BGNDRSSITHR: off
 
 
 	/* PKTMISCFLAGS */
@@ -1494,8 +1494,8 @@ void spi_ax_initRegisters_PR1200(void)
 	spi_ax_transport(false, "< f2 26 73 >");													// WR address 0x226: TMGRXCOARSEAGC - TMGRXCOARSEAGCE = 3, TMGRXCOARSEAGCM = 19 --> 152 µs (Bits)  @see PKTMISCFLAGS.RXAGC
 
 	/* TMGRXRSSI */
-	spi_ax_transport(false, "< f2 28 02 >");													// WR address 0x228: TMGRXRSSI - TMGRXRSSIE = 0, TMGRXRSSIM = 2 --> 2 µs (Bits)  @see PKTMISCFLAGS.RXRSSI (for datarates < 2 kbit possible)
-	//spi_ax_transport(false, "< f2 28 03 >");													// WR address 0x228: TMGRXRSSI - TMGRXRSSIE = 0, TMGRXRSSIM = 3 --> 3 µs (Bits)  @see PKTMISCFLAGS.RXRSSI (fall-back strategy)
+	//spi_ax_transport(false, "< f2 28 02 >");													// WR address 0x228: TMGRXRSSI - TMGRXRSSIE = 0, TMGRXRSSIM = 2 --> 2 µs (Bits)  @see PKTMISCFLAGS.RXRSSI (for datarates < 2 kbit possible)
+	spi_ax_transport(false, "< f2 28 03 >");													// WR address 0x228: TMGRXRSSI - TMGRXRSSIE = 0, TMGRXRSSIM = 3 --> 3 µs (Bits)  @see PKTMISCFLAGS.RXRSSI (fall-back strategy)
 
 	/* TMGRXPREAMBLE1 */
 	//spi_ax_transport(false, "< f2 29 00 >");													// WR address 0x229: TMGRXPREAMBLE1 - TMGRXPREAMBLE1 timeout = none
@@ -1510,18 +1510,19 @@ void spi_ax_initRegisters_PR1200(void)
 	spi_ax_transport(false, "< f2 2c f8 >");													// WR address 0x22C: RSSIREFERENCE - RSSI Offset, this register adds a constant offset to the computed RSSI value. It is used to compensate for board effects.
 
 	/* RSSIABSTHR */
-	//spi_ax_transport(false, "< f2 2d 98 >");													// WR address 0x22D: RSSIABSTHR - RSSIABSTHR > -104 (-64 offset binary) = -168 dBm (BUSY)
-	spi_ax_transport(false, "< f2 2d 40 >");													// WR address 0x22D: RSSIABSTHR - RSSIABSTHR > -104 (-64 offset binary) = -168 dBm (BUSY)
+	spi_ax_transport(false, "< f2 2d dd >");													// WR address 0x22D: RSSIABSTHR - RSSIABSTHR >  -36 (-64 offset binary) = -100 dBm (BUSY)
+	//spi_ax_transport(false, "< f2 2d 85 >");	// testing function of BGNDRSSITHR
 
 	/* BGNDRSSITHR */
+	//spi_ax_transport(false, "< f2 2f 00 >");													// WR address 0x22F: BGNDRSSITHR - off
 	//spi_ax_transport(false, "< f2 2f 01 >");													// WR address 0x22F: BGNDRSSITHR - BGNDRSSITHR: 1 dB above the BGNDRSSI
-	spi_ax_transport(false, "< f2 2f 00 >");													// WR address 0x22F: BGNDRSSITHR - BGNDRSSITHR: 1 dB above the BGNDRSSI
+	spi_ax_transport(false, "< f2 2f 30 >");	// testing
 
 
-	/* PKTMISCFLAGS */
-	//spi_ax_transport(false, "< f2 31 04 >");													// WR address 0x231: PKTMISCFLAGS - BGND RSSI 0x04, RXAGC CLK, RXRSSI CLK clock sources: 1 µs
+	#if 0
+	/* PKTMISCFLAGS - handeld by  PR1200_Rx_WoR() and PR1200_Rx_cont() */
 	spi_ax_transport(false, "< f2 31 00 >");													// WR address 0x231: PKTMISCFLAGS - no BGND RSSI !0x04, RXAGC CLK, RXRSSI CLK clock sources: 1 µs
-
+	#endif
 
 	/* LPOSCCONFIG */
 	spi_ax_transport(false, "< f3 10 13 >");													// WR address 0x310: LPOSCCONFIG - LPOSC CALIBF 0x10, LPOSC FAST 0x02, (LPOSC ENA 0x01)
@@ -1539,8 +1540,12 @@ void spi_ax_initRegisters_PR1200(void)
 	/* PKTCHUNKSIZE */
 	spi_ax_transport(false, "< f2 30 0d >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 240 bytes
 
+	/* PKTSTOREFLAGS */
+	spi_ax_transport(false, "< f2 32 17 >");													// WR address 0x232: PKTSTOREFLAGS - ST RSSI, ST RFOFFS, ST FOFFS, ST TIMER
+
 	/* PKTACCEPTFLAGS */
-	spi_ax_transport(false, "< f2 33 20 >");													// WR address 0x233: PKTACCEPTFLAGS - ACCPT LRGP: Accept Packets that span multiple FIFO chunks
+	spi_ax_transport(false, "< f2 33 28 >");													// WR address 0x233: PKTACCEPTFLAGS - ACCPT LRGP 0x20, not ACCPT SZF !0x10, ACCPT ADDRF 0x08, not ACCPT CRCF !0x04, not ACCPT ABRT !0x02, not ACCPT RESIDUE !0x01
+	//spi_ax_transport(false, "< f2 33 2c >");	// Test
 
 
 	#if 1
@@ -1602,7 +1607,6 @@ void spi_ax_initRegisters_PR1200_Tx(void)
 
 	/* TXRATE */
 	spi_ax_transport(false, "< f1 65 00 04 ea >");												// WR address 0x165: TXRATE - TXRATE: 1,200 bit/s
-	//spi_ax_transport(false, "< f1 65 00 00 4f >");											// Check with slow motion
 
 
 	/* XTALCAP */
@@ -1716,7 +1720,6 @@ void spi_ax_initRegisters_PR1200_Rx(void)
 
 	/* 0xF72 */
 	spi_ax_transport(false, "< ff 72 00 >");													// WR address 0xF72 (RX) - Set to 0x06 if the framing mode is set to “Raw, Soft Bits” (register FRAMING), or to 0x00 otherwise
-	//spi_ax_transport(false, "< ff 72 06 >");													// WR address 0xF72 (RX) - Set to 0x06 if the framing mode is set to “Raw, Soft Bits” (register FRAMING), or to 0x00 otherwise
 }
 
 void spi_ax_initRegisters_PR1200_Rx_WoR(void)
@@ -2147,12 +2150,6 @@ void spi_ax_test_Analog_FM_Rx(void)
 		#endif
 	}
 
-	/* BGNDRSSI */
-	//spi_ax_transport(false, "< C1 0C >");													// WR Address 0x41: BGNDRSSI
-
-	/* RSSIABSTHR */
-	//spi_ax_transport(false, "< F2 2D A0 >");												// WR Address 0x22D: RSSIABSTHR
-
 	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_FULLRX);
 
 	/* Monitor loop inside */
@@ -2326,11 +2323,8 @@ void spi_ax_test_PR1200_Tx_FIFO_Flags(uint8_t count)
 	g_ax_spi_packet_buffer[idx++] = 0xA9;													// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
 	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_CMD_REPEATDATA_TX;
 
-	/* Setting UNENC to one causes the DATA to bypass the framing mode, as well as the encoder, except for inversion. */
+	/* Setting RAW to one causes the DATA to bypass the framing mode, but still pass through the encoder */
 	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_RAW | AX_FIFO_DATA_FLAGS_TX_NOCRC | AX_FIFO_DATA_FLAGS_TX_PKTSTART;
-
-	/* Setting RAW to one causes the DATA to bypass the framing mode, but still pass through the encoder.
-	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_UNENC | AX_FIFO_DATA_FLAGS_TX_PKTSTART; */
 
 	g_ax_spi_packet_buffer[idx++] = count;
 	g_ax_spi_packet_buffer[idx++] = 0b01111110;												// The AX25 'Flag'
@@ -2392,16 +2386,9 @@ void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal()
 
 	/* 1 - Flags */
 	spi_ax_test_PR1200_Tx_FIFO_Flags(35);													// Minimal
-	//spi_ax_test_PR1200_Tx_FIFO_Flags(10);													// Slow motion variant
 
 	/* 2 - Address field, Control and PID */
 	spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal_AddressField();
-
-	/* 9 - Flags */
-	/* Ending Flag is automatically emitted by the HDLC [1] FRAMING mode */
-	/*
-	spi_ax_test_PR1200_Tx_FIFO_Flags(1);													// Final one or as separator
-	*/
 }
 
 void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void)
@@ -2547,12 +2534,6 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS(void)
 
 	/* 3 - Information field - APRS data */
 	spi_ax_test_PR1200_Tx_FIFO_APRS_InformationField();
-
-	/* 9 - Flags */
-	/* Ending Flag is automatically emitted by the HDLC [1] FRAMING mode */
-	/*
-	spi_ax_test_PR1200_Tx_FIFO_Flags(1);													// Final one or as separator
-	*/
 }
 
 
@@ -2588,7 +2569,7 @@ void spi_ax_test_PR1200_Rx(void)
 		/* Recall ranging values */
 		spi_ax_doRanging();
 
-		#if 1
+		#if 0
 		/* Set VCO-PLL to FREQB */
 		spi_ax_selectVcoFreq(true);
 		#else
@@ -2600,14 +2581,7 @@ void spi_ax_test_PR1200_Rx(void)
 	/* FIFOCMD / FIFOSTAT */
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
-	/* PKTSTOREFLAGS */
-	spi_ax_transport(false, "< f2 32 17 >");													// WR address 0x232: PKTSTOREFLAGS - ST RSSI, ST RFOFFS, ST FOFFS, ST TIMER
-
-	/* PKTACCEPTFLAGS */
-	spi_ax_transport(false, "< f2 33 2c >");													// WR address 0x233: PKTACCEPTFLAGS - ACCPT LRGP 0x20, !ACCPT SZF 0x10, ACCPT ADDRF 0x08, ACCPT CRCF 0x04, !ACCPT ABRT 0x02, !ACCPT RESIDUE 0x01
-
-
-	#if 1
+	#if 0
 	/* Enable the receiver */
 	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_RX_WOR, AX_SET_REGISTERS_POWERMODE_WOR);
 
@@ -2626,19 +2600,21 @@ void spi_ax_test_PR1200_Rx(void)
 			l_curBgndRssi		= g_ax_spi_packet_buffer[1];
 			l_agcCounter		= g_ax_spi_packet_buffer[3];
 
-			/* FIFOSTAT */
+			#if 1
+			/* IRQREQUEST0 */
+			spi_ax_transport(false, "< 0d R1 >");												// RD address 0x0d: IRQREQUEST0
+
+			#else
+			/* FIFOSTAT - does not work in WoR mode */
 			spi_ax_transport(false, "< 28 R1 >");												// RD address 0x28: FIFOSTAT
-		} while (g_ax_spi_packet_buffer[0] & 0x01);
+			#endif
+		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
 
 		l_fifo_stat = g_ax_spi_packet_buffer[0];
 
 		/* FIFOCOUNT */
 		spi_ax_transport(false, "< 2a R2 >");													// RD address 0x28: FIFOCOUNT
 		l_fifo_count = ((uint16_t)(g_ax_spi_packet_buffer[0]) << 8) | g_ax_spi_packet_buffer[1];
-
-		if (!l_fifo_count) {
-			continue;
-		}
 
 		/* Reset FSM to START state */
 		l_fifo_state = AX_FIFO_RX_FSM__START;
