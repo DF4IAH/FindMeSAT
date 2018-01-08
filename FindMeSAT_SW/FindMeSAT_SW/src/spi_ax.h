@@ -208,5 +208,7 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS(void);
 
 void spi_ax_test_PR1200_Rx(void);
 
+void spi_ax_test_POCSAG_Rx(void);
+
 
 #endif /* SPI_H_ */

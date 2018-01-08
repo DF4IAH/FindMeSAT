@@ -1068,9 +1068,7 @@ void spi_ax_initRegisters_FSK(void)
 	spi_ax_transport(false, "< f1 68 00 00 >");													// WR address 0x168: TXPWRCOEFFA - off
 
 	/* TXPWRCOEFFB */
-	//spi_ax_transport(false, "< f1 6a 00 aa >");												// WR address 0x16A: TXPWRCOEFFB
-	//spi_ax_transport(false, "< f1 6a 00 0a >");													// WR address 0x16A: TXPWRCOEFFB
-	spi_ax_transport(false, "< f1 6a 0a aa >");													// WR address 0x16A: TXPWRCOEFFB
+	spi_ax_transport(false, "< f1 6a 00 aa >");													// WR address 0x16A: TXPWRCOEFFB
 
 	/* TXPWRCOEFFC */
 	spi_ax_transport(false, "< f1 6c 00 00 >");													// WR address 0x16C: TXPWRCOEFFC - off
@@ -1394,7 +1392,6 @@ void spi_ax_initRegisters_PR1200(void)
 	/* BBOFFSRES3 */
 	spi_ax_transport(false, "< f1 5f 00 >");													// WR address 0x15F: BBOFFSRES3 - not used
 
-	#if 0
 	/* MODCFGF */
 	spi_ax_transport(false, "< f1 60 00 >");													// WR address 0x160: MODCFGF - FREQSHAPE: External Loop Filter (BT = 0.0)
 
@@ -1411,8 +1408,36 @@ void spi_ax_initRegisters_PR1200(void)
 	spi_ax_transport(false, "< f1 68 00 00 >");													// WR address 0x168: TXPWRCOEFFA - off
 
 	/* TXPWRCOEFFB */
-	//spi_ax_transport(false, "< f1 6a 00 aa >");												// WR address 0x16A: TXPWRCOEFFB
-	spi_ax_transport(false, "< f1 6a 00 0a >");													// WR address 0x16A: TXPWRCOEFFB
+	#if 0
+	spi_ax_transport(false, "< f1 6a 0f ff >");													// WR address 0x16A: TXPWRCOEFFB +15 dBm
+	spi_ax_transport(false, "< f1 6a 0f 00 >");													// WR address 0x16A: TXPWRCOEFFB +14 dBm
+	#endif
+	spi_ax_transport(false, "< f1 6a 0c 00 >");													// WR address 0x16A: TXPWRCOEFFB +13 dBm
+	#if 0
+	spi_ax_transport(false, "< f1 6a 09 d4 >");													// WR address 0x16A: TXPWRCOEFFB +12 dBm
+	spi_ax_transport(false, "< f1 6a 08 00 >");													// WR address 0x16A: TXPWRCOEFFB +11 dBm
+	spi_ax_transport(false, "< f1 6a 07 00 >");													// WR address 0x16A: TXPWRCOEFFB +10 dBm
+	spi_ax_transport(false, "< f1 6a 06 00 >");													// WR address 0x16A: TXPWRCOEFFB + 9 dBm
+	spi_ax_transport(false, "< f1 6a 05 7c >");													// WR address 0x16A: TXPWRCOEFFB + 8 dBm
+	spi_ax_transport(false, "< f1 6a 04 a9 >");													// WR address 0x16A: TXPWRCOEFFB + 7 dBm
+	spi_ax_transport(false, "< f1 6a 04 06 >");													// WR address 0x16A: TXPWRCOEFFB + 6 dBm
+	spi_ax_transport(false, "< f1 6a 03 d6 >");													// WR address 0x16A: TXPWRCOEFFB + 5 dBm
+	spi_ax_transport(false, "< f1 6a 03 5e >");													// WR address 0x16A: TXPWRCOEFFB + 4 dBm
+	spi_ax_transport(false, "< f1 6a 02 eb >");													// WR address 0x16A: TXPWRCOEFFB + 3 dBm
+	spi_ax_transport(false, "< f1 6a 02 90 >");													// WR address 0x16A: TXPWRCOEFFB + 2 dBm
+	spi_ax_transport(false, "< f1 6a 02 44 >");													// WR address 0x16A: TXPWRCOEFFB + 1 dBm
+	spi_ax_transport(false, "< f1 6a 02 07 >");													// WR address 0x16A: TXPWRCOEFFB   0 dBm
+	spi_ax_transport(false, "< f1 6a 01 e0 >");													// WR address 0x16A: TXPWRCOEFFB - 1 dBm
+	spi_ax_transport(false, "< f1 6a 01 af >");													// WR address 0x16A: TXPWRCOEFFB - 2 dBm
+	spi_ax_transport(false, "< f1 6a 01 7f >");													// WR address 0x16A: TXPWRCOEFFB - 3 dBm
+	spi_ax_transport(false, "< f1 6a 01 56 >");													// WR address 0x16A: TXPWRCOEFFB - 4 dBm
+	spi_ax_transport(false, "< f1 6a 01 32 >");													// WR address 0x16A: TXPWRCOEFFB - 5 dBm
+	spi_ax_transport(false, "< f1 6a 01 0f >");													// WR address 0x16A: TXPWRCOEFFB - 6 dBm
+	spi_ax_transport(false, "< f1 6a 00 ec >");													// WR address 0x16A: TXPWRCOEFFB - 7 dBm
+	spi_ax_transport(false, "< f1 6a 00 d1 >");													// WR address 0x16A: TXPWRCOEFFB - 8 dBm
+	spi_ax_transport(false, "< f1 6a 00 bf >");													// WR address 0x16A: TXPWRCOEFFB - 9 dBm
+	spi_ax_transport(false, "< f1 6a 00 aa >");													// WR address 0x16A: TXPWRCOEFFB -10 dBm
+	#endif
 
 	/* TXPWRCOEFFC */
 	spi_ax_transport(false, "< f1 6c 00 00 >");													// WR address 0x16C: TXPWRCOEFFC - off
@@ -1422,7 +1447,6 @@ void spi_ax_initRegisters_PR1200(void)
 
 	/* TXPWRCOEFFE */
 	spi_ax_transport(false, "< f1 70 00 00 >");													// WR address 0x170: TXPWRCOEFFE - off
-	#endif
 
 
 	/* PLLVCOI */
@@ -1601,7 +1625,11 @@ void spi_ax_initRegisters_PR1200_Tx(void)
 	spi_ax_transport(false, "< f1 60 00 >");													// WR address 0x160: MODCFGF - FREQSHAPE: External Loop Filter (BT = 0.0)
 
 	/* FSKDEV - AFSK */
+	//spi_ax_transport(false, "< f1 61 00 06 af >");											// WR address 0x161: FSKDEV - FSKDEV: +/-1,900 Hz @ fxtal = 16 MHz = 1,711d
+	//spi_ax_transport(false, "< f1 61 00 06 28 >");											// WR address 0x161: FSKDEV - FSKDEV: +/-1,750 Hz @ fxtal = 16 MHz = 1,576d
 	spi_ax_transport(false, "< f1 61 00 05 47 >");												// WR address 0x161: FSKDEV - FSKDEV: +/-1,500 Hz @ fxtal = 16 MHz = 1,351d
+	//spi_ax_transport(false, "< f1 61 00 04 66 >");											// WR address 0x161: FSKDEV - FSKDEV: +/-1,250 Hz @ fxtal = 16 MHz = 1,126d
+	//spi_ax_transport(false, "< f1 61 00 03 85 >");											// WR address 0x161: FSKDEV - FSKDEV: +/-1,000 Hz @ fxtal = 16 MHz =   901d
 
 	/* MODCFGA */
 	spi_ax_transport(false, "< f1 64 05 >");													// WR address 0x164: MODCFGA - AMPLSHAPE, TXDIFF
@@ -2220,10 +2248,10 @@ void spi_ax_test_PR1200_Tx(void)
 		spi_ax_doRanging();
 
 		#if 1
-		/* Set VCO-PLL to FREQA */
+		/* Set VCO-PLL to FREQA - 144.800 MHz */
 		spi_ax_selectVcoFreq(false);
 		#else
-		/* Set VCO-PLL to FREQB */
+		/* Set VCO-PLL to FREQB - 144.925 MHz */
 		spi_ax_selectVcoFreq(true);
 		#endif
 	}
@@ -2404,10 +2432,10 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void)
 
 	g_ax_spi_packet_buffer[idx++] = ('A' << 1)	| 0;										// Address: dest.       [A 1]
 	g_ax_spi_packet_buffer[idx++] = ('P' << 1)	| 0;										// Address: dest.       [A 2]
-	g_ax_spi_packet_buffer[idx++] = ('R' << 1)	| 0;										// Address: dest.       [A 3]
-	g_ax_spi_packet_buffer[idx++] = ('S' << 1)	| 0;										// Address: dest.       [A 4]
-	g_ax_spi_packet_buffer[idx++] = (' ' << 1)	| 0;										// Address: dest.       [A 5]
-	g_ax_spi_packet_buffer[idx++] = (' ' << 1)	| 0;										// Address: dest.       [A 6]
+	g_ax_spi_packet_buffer[idx++] = ('X' << 1)	| 0;										// Address: dest.       [A 3]
+	g_ax_spi_packet_buffer[idx++] = ('F' << 1)	| 0;										// Address: dest.       [A 4]
+	g_ax_spi_packet_buffer[idx++] = ('M' << 1)	| 0;										// Address: dest.       [A 5]
+	g_ax_spi_packet_buffer[idx++] = ('S' << 1)	| 0;										// Address: dest.       [A 6]
 	g_ax_spi_packet_buffer[idx++] = (0b0 << 7) | (0b11 << 5) | (0x0 << 1)	| 0;			// Address: dest.  SSID [A 7]
 
 	g_ax_spi_packet_buffer[idx++] = ('D' << 1)	| 0;										// Address: source      [A 8]
@@ -2417,6 +2445,14 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void)
 	g_ax_spi_packet_buffer[idx++] = ('A' << 1)	| 0;										// Address: source      [A12]
 	g_ax_spi_packet_buffer[idx++] = ('H' << 1)	| 0;										// Address: source      [A13]
 	g_ax_spi_packet_buffer[idx++] = (0b1 << 7) | (0b11 << 5) | (0x8 << 1)	| 0;			// Address: source SSID [A14]
+
+	g_ax_spi_packet_buffer[idx++] = ('W' << 1)	| 0;										// Address: reptr1      [A15]
+	g_ax_spi_packet_buffer[idx++] = ('I' << 1)	| 0;										// Address: reptr1      [A16]
+	g_ax_spi_packet_buffer[idx++] = ('D' << 1)	| 0;										// Address: reptr1      [A17]
+	g_ax_spi_packet_buffer[idx++] = ('E' << 1)	| 0;										// Address: reptr1      [A18]
+	g_ax_spi_packet_buffer[idx++] = ('1' << 1)	| 0;										// Address: reptr1      [A19]
+	g_ax_spi_packet_buffer[idx++] = (' ' << 1)	| 0;										// Address: reptr1      [A20]
+	g_ax_spi_packet_buffer[idx++] = (0b0 << 7) | (0b11 << 5) | (0x1 << 1)	| 0;			// Address: reptr1 SSID [A21]  --> WIDE1-1
 
 	g_ax_spi_packet_buffer[idx++] = ('W' << 1)	| 0;										// Address: reptr1      [A15]
 	g_ax_spi_packet_buffer[idx++] = ('I' << 1)	| 0;										// Address: reptr1      [A16]
@@ -2524,7 +2560,7 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS(void)
 	/* Enter an APRS UI frame */
 
 	/* 1 - Flags */
-	spi_ax_test_PR1200_Tx_FIFO_Flags(35);													// Abt. 225 ms
+	spi_ax_test_PR1200_Tx_FIFO_Flags(50);													// 333 ms
 
 	/* 2 - Address field, Control and PID */
 	spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField();
