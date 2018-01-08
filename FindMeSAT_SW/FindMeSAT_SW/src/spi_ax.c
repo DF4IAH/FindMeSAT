@@ -1069,7 +1069,8 @@ void spi_ax_initRegisters_FSK(void)
 
 	/* TXPWRCOEFFB */
 	//spi_ax_transport(false, "< f1 6a 00 aa >");												// WR address 0x16A: TXPWRCOEFFB
-	spi_ax_transport(false, "< f1 6a 00 0a >");													// WR address 0x16A: TXPWRCOEFFB
+	//spi_ax_transport(false, "< f1 6a 00 0a >");													// WR address 0x16A: TXPWRCOEFFB
+	spi_ax_transport(false, "< f1 6a 0a aa >");													// WR address 0x16A: TXPWRCOEFFB
 
 	/* TXPWRCOEFFC */
 	spi_ax_transport(false, "< f1 6c 00 00 >");													// WR address 0x16C: TXPWRCOEFFC - off
@@ -1991,8 +1992,8 @@ void spi_start(void) {
 //# define	AX_TEST_BANDENDS		true
 //# define	AX_TEST_ANALOG_FM_TX	true
 //# define	AX_TEST_ANALOG_FM_RX	true
-//# define	AX_TEST_PR1200_TX		true
-# define	AX_TEST_PR1200_RX		true
+# define	AX_TEST_PR1200_TX		true
+//# define	AX_TEST_PR1200_RX		true
 
 	g_ax_spi_device_conf.id = AX_SEL;
 
@@ -2218,12 +2219,12 @@ void spi_ax_test_PR1200_Tx(void)
 		/* Recall ranging values */
 		spi_ax_doRanging();
 
-		#if 0
-		/* Set VCO-PLL to FREQB */
-		spi_ax_selectVcoFreq(true);
-		#else
+		#if 1
 		/* Set VCO-PLL to FREQA */
 		spi_ax_selectVcoFreq(false);
+		#else
+		/* Set VCO-PLL to FREQB */
+		spi_ax_selectVcoFreq(true);
 		#endif
 	}
 
@@ -2295,7 +2296,8 @@ void spi_ax_test_PR1200_Tx(void)
 		#else
 		/* Enter an APRS UI frame */
 		spi_ax_test_PR1200_Tx_FIFO_APRS();
-		delay_ms(1000);
+		//delay_ms(1000);
+		delay_ms(7500);
 		#endif
 
 	}
@@ -2414,7 +2416,7 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void)
 	g_ax_spi_packet_buffer[idx++] = ('I' << 1)	| 0;										// Address: source      [A11]
 	g_ax_spi_packet_buffer[idx++] = ('A' << 1)	| 0;										// Address: source      [A12]
 	g_ax_spi_packet_buffer[idx++] = ('H' << 1)	| 0;										// Address: source      [A13]
-	g_ax_spi_packet_buffer[idx++] = (0b1 << 7) | (0b11 << 5) | (0x0 << 1)	| 0;			// Address: source SSID [A14]
+	g_ax_spi_packet_buffer[idx++] = (0b1 << 7) | (0b11 << 5) | (0x8 << 1)	| 0;			// Address: source SSID [A14]
 
 	g_ax_spi_packet_buffer[idx++] = ('W' << 1)	| 0;										// Address: reptr1      [A15]
 	g_ax_spi_packet_buffer[idx++] = ('I' << 1)	| 0;										// Address: reptr1      [A16]
@@ -2434,11 +2436,6 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void)
 	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, idx);
 	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-
-	#if 0
-	/* FIFO do a COMMIT */
-	spi_ax_transport(false, "< a8 04 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
-	#endif
 }
 
 void spi_ax_test_PR1200_Tx_FIFO_APRS_InformationField(void)
