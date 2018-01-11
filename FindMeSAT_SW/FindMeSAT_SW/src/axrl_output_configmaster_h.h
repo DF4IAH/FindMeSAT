@@ -12,7 +12,7 @@ Manual changes are overwritten! */
 #define WTIMER0_CLKSRC	CLKSRC_LPOSC
 #define WTIMER0_PRESCALER 0x01
 #define TX_ON_DEMAND
-#define RADIO_MODE        AXRADIO_MODE_WOR_TRANSMIT
+#define RADIO_MODE        AXRADIO_MODE_ASYNC_TRANSMIT
 extern const struct axradio_address __code remoteaddr;
 extern const struct axradio_address_mask __code localaddr;
 extern const uint8_t __code demo_packet[8];

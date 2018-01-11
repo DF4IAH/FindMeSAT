@@ -5,42 +5,42 @@
 #include <libmftypes.h>
 #include <libmfcrc.h>
 
-// TX: fcarrier=144.800MHz dev=  0.500kHz br=  1.200kBit/s pwr=-10.0dBm
-// RX: fcarrier=144.800MHz bw=  5.400kHz br=  1.200kBit/s
+// TX: fcarrier=439.987MHz dev=  4.000kHz br=  1.200kBit/s pwr=-10.0dBm
+// RX: fcarrier=439.987MHz bw=  7.500kHz br=  1.200kBit/s
 
 __reentrantb void ax5043_set_registers(void) __reentrant
 {
 	AX5043_MODULATION              = 0x08;
-	AX5043_ENCODING                = 0x03;
-	AX5043_FRAMING                 = 0x14;
+	AX5043_ENCODING                = 0x01;
+	AX5043_FRAMING                 = 0x06;
 	AX5043_PINFUNCSYSCLK           = 0x82;
 	AX5043_PINFUNCDCLK             = 0x82;
 	AX5043_PINFUNCDATA             = 0x82;
 	AX5043_PINFUNCANTSEL           = 0x05;
 	AX5043_PINFUNCPWRAMP           = 0x02;
 	AX5043_WAKEUPXOEARLY           = 0x01;
-	AX5043_IFFREQ1                 = 0x00;
-	AX5043_IFFREQ0                 = 0xCD;
-	AX5043_DECIMATION              = 0x25;
-	AX5043_RXDATARATE2             = 0x00;
-	AX5043_RXDATARATE1             = 0xB4;
-	AX5043_RXDATARATE0             = 0x2E;
+	AX5043_IFFREQ1                 = 0x02;
+	AX5043_IFFREQ0                 = 0x66;
+	AX5043_DECIMATION              = 0x1A;
+	AX5043_RXDATARATE2             = 0x01;
+	AX5043_RXDATARATE1             = 0x00;
+	AX5043_RXDATARATE0             = 0x69;
 	AX5043_MAXDROFFSET2            = 0x00;
 	AX5043_MAXDROFFSET1            = 0x00;
 	AX5043_MAXDROFFSET0            = 0x00;
 	AX5043_MAXRFOFFSET2            = 0x80;
-	AX5043_MAXRFOFFSET1            = 0x04;
-	AX5043_MAXRFOFFSET0            = 0xEA;
-	AX5043_FSKDMAX1                = 0x03;
-	AX5043_FSKDMAX0                = 0xF3;
-	AX5043_FSKDMIN1                = 0xFC;
-	AX5043_FSKDMIN0                = 0x0D;
+	AX5043_MAXRFOFFSET1            = 0x07;
+	AX5043_MAXRFOFFSET0            = 0x94;
+	AX5043_FSKDMAX1                = 0x05;
+	AX5043_FSKDMAX0                = 0xE0;
+	AX5043_FSKDMIN1                = 0xFA;
+	AX5043_FSKDMIN0                = 0x20;
 	AX5043_AMPLFILTER              = 0x00;
 	AX5043_RXPARAMSETS             = 0xF4;
 	AX5043_AGCGAIN0                = 0xE8;
 	AX5043_AGCTARGET0              = 0x84;
-	AX5043_TIMEGAIN0               = 0xBA;
-	AX5043_DRGAIN0                 = 0xB4;
+	AX5043_TIMEGAIN0               = 0x8B;
+	AX5043_DRGAIN0                 = 0x85;
 	AX5043_PHASEGAIN0              = 0xC3;
 	AX5043_FREQUENCYGAINA0         = 0x0F;
 	AX5043_FREQUENCYGAINB0         = 0x1F;
@@ -54,45 +54,45 @@ __reentrantb void ax5043_set_registers(void) __reentrant
 	AX5043_AGCTARGET1              = 0x84;
 	AX5043_AGCAHYST1               = 0x00;
 	AX5043_AGCMINMAX1              = 0x00;
-	AX5043_TIMEGAIN1               = 0xB8;
-	AX5043_DRGAIN1                 = 0xB3;
+	AX5043_TIMEGAIN1               = 0x89;
+	AX5043_DRGAIN1                 = 0x84;
 	AX5043_PHASEGAIN1              = 0xC3;
 	AX5043_FREQUENCYGAINA1         = 0x0F;
 	AX5043_FREQUENCYGAINB1         = 0x1F;
 	AX5043_FREQUENCYGAINC1         = 0x0A;
 	AX5043_FREQUENCYGAIND1         = 0x0A;
 	AX5043_AMPLITUDEGAIN1          = 0x06;
-	AX5043_FREQDEV11               = 0x00;
-	AX5043_FREQDEV01               = 0x4B;
+	AX5043_FREQDEV11               = 0x02;
+	AX5043_FREQDEV01               = 0x55;
 	AX5043_FOURFSK1                = 0x16;
 	AX5043_BBOFFSRES1              = 0x00;
 	AX5043_AGCGAIN3                = 0xFF;
 	AX5043_AGCTARGET3              = 0x84;
 	AX5043_AGCAHYST3               = 0x00;
 	AX5043_AGCMINMAX3              = 0x00;
-	AX5043_TIMEGAIN3               = 0xB7;
-	AX5043_DRGAIN3                 = 0xB2;
+	AX5043_TIMEGAIN3               = 0x88;
+	AX5043_DRGAIN3                 = 0x83;
 	AX5043_PHASEGAIN3              = 0xC3;
 	AX5043_FREQUENCYGAINA3         = 0x0F;
 	AX5043_FREQUENCYGAINB3         = 0x1F;
 	AX5043_FREQUENCYGAINC3         = 0x0D;
 	AX5043_FREQUENCYGAIND3         = 0x0D;
 	AX5043_AMPLITUDEGAIN3          = 0x06;
-	AX5043_FREQDEV13               = 0x00;
-	AX5043_FREQDEV03               = 0x4B;
+	AX5043_FREQDEV13               = 0x02;
+	AX5043_FREQDEV03               = 0x55;
 	AX5043_FOURFSK3                = 0x16;
 	AX5043_BBOFFSRES3              = 0x00;
 	AX5043_MODCFGF                 = 0x00;
 	AX5043_FSKDEV2                 = 0x00;
-	AX5043_FSKDEV1                 = 0x02;
-	AX5043_FSKDEV0                 = 0x0C;
+	AX5043_FSKDEV1                 = 0x10;
+	AX5043_FSKDEV0                 = 0x62;
 	AX5043_MODCFGA                 = 0x05;
 	AX5043_TXRATE2                 = 0x00;
 	AX5043_TXRATE1                 = 0x04;
 	AX5043_TXRATE0                 = 0xEA;
 	AX5043_TXPWRCOEFFB1            = 0x00;
 	AX5043_TXPWRCOEFFB0            = 0xAA;
-	AX5043_PLLVCOI                 = 0x99;
+	AX5043_PLLVCOI                 = 0xAB;
 	AX5043_PLLRNGCLK               = 0x03;
 	AX5043_BBTUNE                  = 0x0F;
 	AX5043_BBOFFSCAP               = 0x77;
@@ -100,12 +100,14 @@ __reentrantb void ax5043_set_registers(void) __reentrant
 	AX5043_PKTLENCFG               = 0x00;
 	AX5043_PKTLENOFFSET            = 0x08;
 	AX5043_PKTMAXLEN               = 0xF0;
-	AX5043_MATCH0PAT3              = 0xAA;
-	AX5043_MATCH0PAT2              = 0xCC;
-	AX5043_MATCH0PAT1              = 0xAA;
-	AX5043_MATCH0PAT0              = 0xCC;
-	AX5043_MATCH1PAT1              = 0x7E;
-	AX5043_MATCH1PAT0              = 0x7E;
+	AX5043_MATCH0PAT3              = 0xD8;
+	AX5043_MATCH0PAT2              = 0x15;
+	AX5043_MATCH0PAT1              = 0xD2;
+	AX5043_MATCH0PAT0              = 0x7C;
+	AX5043_MATCH0LEN               = 0x1F;
+	AX5043_MATCH0MAX               = 0x1F;
+	AX5043_MATCH1PAT1              = 0x55;
+	AX5043_MATCH1PAT0              = 0x55;
 	AX5043_MATCH1LEN               = 0x8A;
 	AX5043_MATCH1MAX               = 0x0A;
 	AX5043_TMGTXBOOST              = 0x32;
@@ -115,7 +117,7 @@ __reentrantb void ax5043_set_registers(void) __reentrant
 	AX5043_TMGRXOFFSACQ            = 0x00;
 	AX5043_TMGRXCOARSEAGC          = 0x73;
 	AX5043_TMGRXRSSI               = 0x02;
-	AX5043_TMGRXPREAMBLE2          = 0x17;
+	AX5043_TMGRXPREAMBLE2          = 0x35;
 	AX5043_RSSIABSTHR              = 0xDD;
 	AX5043_BGNDRSSITHR             = 0x00;
 	AX5043_PKTCHUNKSIZE            = 0x0D;
@@ -131,7 +133,7 @@ __reentrantb void ax5043_set_registers(void) __reentrant
 	AX5043_0xF22                   = 0xFF;
 	AX5043_0xF23                   = 0x84;
 	AX5043_0xF26                   = 0x98;
-	AX5043_0xF34                   = 0x28;
+	AX5043_0xF34                   = 0x08;
 	AX5043_0xF35                   = 0x10;
 	AX5043_0xF44                   = 0x25;
 }
@@ -141,7 +143,7 @@ __reentrantb void ax5043_set_registers_tx(void) __reentrant
 {
 	AX5043_PLLLOOP                 = 0x0A;
 	AX5043_PLLCPI                  = 0x10;
-	AX5043_PLLVCODIV               = 0x34;
+	AX5043_PLLVCODIV               = 0x30;
 	AX5043_XTALCAP                 = 0x0C;
 	AX5043_0xF00                   = 0x0F;
 	AX5043_0xF18                   = 0x06;
@@ -152,7 +154,7 @@ __reentrantb void ax5043_set_registers_rx(void) __reentrant
 {
 	AX5043_PLLLOOP                 = 0x0A;
 	AX5043_PLLCPI                  = 0x10;
-	AX5043_PLLVCODIV               = 0x34;
+	AX5043_PLLVCODIV               = 0x30;
 	AX5043_XTALCAP                 = 0x0C;
 	AX5043_0xF00                   = 0x0F;
 	AX5043_0xF18                   = 0x06;
@@ -162,7 +164,7 @@ __reentrantb void ax5043_set_registers_rx(void) __reentrant
 __reentrantb void ax5043_set_registers_rxwor(void) __reentrant
 {
 	AX5043_TMGRXAGC                = 0x54;
-	AX5043_TMGRXPREAMBLE1          = 0x34;
+	AX5043_TMGRXPREAMBLE1          = 0x17;
 	AX5043_PKTMISCFLAGS            = 0x05;
 	AX5043_AGCGAIN0                = 0x83;
 	AX5043_AGCGAIN1                = 0x83;
@@ -670,19 +672,12 @@ __reentrantb void axradio_byteconv_buffer(uint8_t __xdata *buf, uint16_t buflen)
 
 __reentrantb uint16_t axradio_framing_check_crc(uint8_t __xdata *pkt, uint16_t cnt) __reentrant
 {
-	if (crc_ccitt(pkt, cnt, 0xFFFF) != 0xF0B8)
-		return 0;
 	return cnt;
 }
 
 __reentrantb uint16_t axradio_framing_append_crc(uint8_t __xdata *pkt, uint16_t cnt) __reentrant
 {
-	uint16_t s = 0xFFFF;
-	s = crc_ccitt(pkt, cnt, s);
-	pkt += cnt;
-	*pkt++ = ~(uint8_t)(s);
-	*pkt++ = ~(uint8_t)(s >> 8);
-	return cnt + 2;
+	return cnt;
 }
 
 
@@ -692,13 +687,13 @@ __reentrantb uint16_t axradio_framing_append_crc(uint8_t __xdata *pkt, uint16_t 
 // physical layer
 const uint8_t __code axradio_phy_pn9 = 0;
 const uint8_t __code axradio_phy_nrchannels = 1;
-const uint32_t __code axradio_phy_chanfreq[1] = { 0x090ccccd };
+const uint32_t __code axradio_phy_chanfreq[1] = { 0x1b7fcccd };
 const uint8_t __code axradio_phy_chanpllrnginit[1] = { 0xFF };
 const uint8_t __code axradio_phy_chanvcoiinit[1] = { 0x00 };
 uint8_t __xdata axradio_phy_chanpllrng[1];
 uint8_t __xdata axradio_phy_chanvcoi[1];
 const uint8_t __code axradio_phy_vcocalib = 0;
-const int32_t __code axradio_phy_maxfreqoffset = 3775;
+const int32_t __code axradio_phy_maxfreqoffset = 5820;
 const int8_t __code axradio_phy_rssioffset = 64;
 // axradio_phy_rssioffset is added to AX5043_RSSIREFERENCE and subtracted from chip RSSI value to prevent overflows (8bit RSSI only goes down to -128)
 // axradio_phy_rssioffset is also added to AX5043_RSSIABSTHR
@@ -706,13 +701,13 @@ const int8_t __code axradio_phy_rssireference = 0xFA + 64;
 const int8_t __code axradio_phy_channelbusy = -99 + 64;
 const uint16_t __code axradio_phy_cs_period = 7; // timer0 units, 10ms
 const uint8_t __code axradio_phy_cs_enabled = 0;
-const uint8_t __code axradio_phy_lbt_retries = 3;
+const uint8_t __code axradio_phy_lbt_retries = 0;
 const uint8_t __code axradio_phy_lbt_forcetx = 0;
-const uint16_t __code axradio_phy_preamble_wor_longlen = 0; // wor_longlen + wor_len totals to 100.0ms plus 40bits
-const uint16_t __code axradio_phy_preamble_wor_len = 160;
+const uint16_t __code axradio_phy_preamble_wor_longlen = 0; // wor_longlen + wor_len totals to 100.0ms plus 24bits
+const uint16_t __code axradio_phy_preamble_wor_len = 144;
 const uint16_t __code axradio_phy_preamble_longlen = 0;
-const uint16_t __code axradio_phy_preamble_len = 40;
-const uint8_t __code axradio_phy_preamble_byte = 0x81;
+const uint16_t __code axradio_phy_preamble_len = 24;
+const uint8_t __code axradio_phy_preamble_byte = 0xaa;
 const uint8_t __code axradio_phy_preamble_flags = 0x38;
 const uint8_t __code axradio_phy_preamble_appendbits = 0;
 const uint8_t __code axradio_phy_preamble_appendpattern = 0x00;
@@ -728,11 +723,11 @@ const uint8_t __code axradio_framing_lenmask = 0x00;
 const uint8_t __code axradio_framing_swcrclen = 0;
 
 const uint8_t __code axradio_framing_synclen = 32;
-const uint8_t __code axradio_framing_syncword[] = { 0x33, 0x55, 0x33, 0x55};
-const uint8_t __code axradio_framing_syncflags = 0x38;
+const uint8_t __code axradio_framing_syncword[] = { 0x7c, 0xd2, 0x15, 0xd8};
+const uint8_t __code axradio_framing_syncflags = 0x18;
 const uint8_t __code axradio_framing_enable_sfdcallback = 0;
 
-const uint32_t __code axradio_framing_ack_timeout = 77; // 118.3ms in wtimer0 units (640Hz)
+const uint32_t __code axradio_framing_ack_timeout = 58; // 89.0ms in wtimer0 units (640Hz)
 const uint32_t __code axradio_framing_ack_delay = 313; // 1.0ms in wtimer1 units (20MHz/64)
 const uint8_t __code axradio_framing_ack_retransmissions = 0;
 const uint8_t __code axradio_framing_ack_seqnrpos = 0xff;
@@ -753,6 +748,6 @@ const uint8_t __code axradio_sync_slave_resyncloss = 11;  // resyncloss is one m
 // window 1 is the window normally used when there are no lost packets
 // window 2 is used after one packet is lost, etc
 const uint8_t __code axradio_sync_slave_nrrx = 3;
-const uint32_t __code axradio_sync_slave_rxadvance[] = { 5318, 5256, 5535 };// 162.266ms, 160.374ms, 168.888ms
-const uint32_t __code axradio_sync_slave_rxwindow[] = { 5424, 5300, 5858 }; // 165.501ms, 161.717ms, 178.745ms
-const uint32_t __code axradio_sync_slave_rxtimeout = 7483; // 228.3ms, maximum duration of a packet
+const uint32_t __code axradio_sync_slave_rxadvance[] = { 2259, 2197, 2476 };// 68.933ms, 67.041ms, 75.555ms
+const uint32_t __code axradio_sync_slave_rxwindow[] = { 2365, 2241, 2799 }; // 72.168ms, 68.384ms, 85.412ms
+const uint32_t __code axradio_sync_slave_rxtimeout = 3332; // 101.7ms, maximum duration of a packet
