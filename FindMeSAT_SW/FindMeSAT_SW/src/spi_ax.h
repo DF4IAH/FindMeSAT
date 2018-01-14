@@ -151,6 +151,12 @@ typedef enum AX_FIFO_RX_FSM {
 } AX_FIFO_RX_FSM_t;
 
 
+typedef enum AX_POCSAG_ENUM {
+	AX_POCSAG_PREAMBLE												= 0xaaaaaaaaUL,		// LSB   0 1 0 1  0 1 0 1     0 1 0 1  0 1 0 1     0 1 0 1  0 1 0 1     0 1 0 1  0 1 0 1   MSB
+	AX_POCSAG_SYNCWORD												= 0x1ba84b3eUL,		// LSB   0 1 1 1  1 1 0 0     1 1 0 1  0 0 1 0     0 0 0 1  0 1 0 1     1 1 0 1  1 0 0 0   MSB
+	AX_POCSAG_IDLEWORD												= 0xe983915eUL,		// LSB   0 1 1 1  1 0 1 0     1 0 0 0  1 0 0 1     1 1 0 0  0 0 0 1     1 0 0 1  0 1 1 1   MSB
+} AX_POCSAG_t;
+
 
 static inline void spi_ax_select_device(void)
 {
@@ -162,6 +168,11 @@ static inline void spi_ax_deselect_device(void)
 {
 	/* set   PORT C4 */
 	PORTC_OUTSET = 0x10;
+}
+
+static inline uint8_t sel_u8_from_u32(uint32_t in_u32, uint8_t sel)
+{
+	return 0xff & (in_u32 >> (sel << 8));
 }
 
 
@@ -220,6 +231,7 @@ void spi_ax_test_PR1200_Rx(void);
 
 void spi_ax_test_POCSAG(void);
 void spi_ax_test_POCSAG_Tx(void);
+void spi_ax_test_POCSAG_Tx_FIFO(void);
 void spi_ax_test_POCSAG_Rx(void);
 
 
