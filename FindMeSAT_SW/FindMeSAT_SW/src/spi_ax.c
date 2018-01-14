@@ -726,6 +726,13 @@ uint32_t spi_ax_calcFrequency_Mhz2Regs(float f_mhz)
 	return (uint32_t) (0.5f + f_mhz * reg_per_mhz);
 }
 
+float spi_ax_calcFrequency_Regs2MHz(uint32_t vco_regval)
+{
+	const float xtal_hz = 16E+6f;																// XTAL = 16 MHz
+	const float reg_per_mhz = (1LL << 24) * 1E+6f / xtal_hz;
+	return vco_regval / reg_per_mhz;
+}
+
 void spi_ax_setFrequency2Regs(uint8_t chan, bool isFreqB)
 {
 	uint32_t f_reg;
@@ -791,6 +798,9 @@ void spi_ax_doRanging(void)
 			if ((0x10 <= g_ax_spi_range_chan[idx]) || (s_ax_spi_freq_chan[idx] != g_ax_spi_freq_chan[idx]))
 			{
 				uint8_t regAdr = idx ?  0x3b : 0x33;											// WR Address 0x33: PLLRANGINGA  or  Address 0x3b: PLLRANGINGB
+
+				/* Switch to VCO1 or VCO2 as needed */
+				spi_vco_select(s_ax_spi_freq_chan[idx]);
 
 				/* Command message */
 				g_ax_spi_packet_buffer[0]	= regAdr | 0x80;
@@ -912,8 +922,49 @@ void spi_ax_doRanging(void)
 	}
 }
 
+void spi_vco_select(uint32_t reg_freq)
+{
+	bool curVco2;
+
+	/* Read VCO settings */
+	{
+		/* PLLVCODIV */
+		spi_ax_transport(false, "< b2 R1 >");													// RD address 0x32: PLLVCODIV - VCO2INT, VCOSEL, RFDIV
+		curVco2 = (g_ax_spi_packet_buffer[0] & 0x20) ?  true : false;
+	}
+
+	/* VCO1 ranges abt. 380 MHz ... 540 MHz (RFDIV=1)  and  760 MHz ... 1080 MHz (RFDIV=0) */
+	if (spi_ax_calcFrequency_Regs2MHz(reg_freq) >= 380E+6) {
+		/* Select VCO1 */
+		if (curVco2) {
+			spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+
+			/* PLLVCODIV - mind you: check 0xF34, also */
+			spi_ax_transport(false, "< b2 04 >");												// WR address 0x32: PLLVCODIV - RFDIV
+
+			/* 0xF34 */
+			spi_ax_transport(false, "< ff 34 28 >");											// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
+		}
+
+	} else {
+		/* Select VCO2 */
+		if (!curVco2) {
+			spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+
+			/* PLLVCODIV - mind you: check 0xF34, also */
+			spi_ax_transport(false, "< b2 34 >");												// WR address 0x32: PLLVCODIV - VCO2INT, VCOSEL, RFDIV
+
+			/* 0xF34 */
+			spi_ax_transport(false, "< ff 34 28 >");											// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
+		}
+	}
+}
+
 void spi_ax_selectVcoFreq(bool isFreqB)
 {
+	/* Switch to VCO1 or VCO2 as needed */
+	spi_vco_select(g_ax_spi_freq_chan[isFreqB ?  1 : 0]);
+
 	/* PLLLOOP */
 	spi_ax_transport(false, "< 30 R1 >");														// RD address 0x30: PLLLOOP
 	g_ax_spi_packet_buffer[1] = (isFreqB ?  (g_ax_spi_packet_buffer[0] | 0x80)					// Set   FREQB
@@ -1653,13 +1704,8 @@ void spi_ax_initRegisters_PR1200_Tx(void)
 	/* PLLCPI */
 	spi_ax_transport(false, "< b1 10 >");														// WR address 0x31: PLLCPI
 
-	#if defined(AX_VCO_INTERNAL)
-	/* PLLVCODIV */
-	spi_ax_transport(false, "< b2 04 >");														// WR address 0x32: PLLVCODIV - RFDIV
-	#else
-	/* PLLVCODIV */
+	/* PLLVCODIV - mind you: check 0xF34, also */
 	spi_ax_transport(false, "< b2 34 >");														// WR address 0x32: PLLVCODIV - VCO2INT, VCOSEL, RFDIV
-	#endif
 
 	/* PLLLOOPBOOST */
 	spi_ax_transport(false, "< b8 0b >");														// WR address 0x38: PLLLOOPBOOST - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5 (BW = 500 kHz for ICP = 1.7 mA)
@@ -1720,13 +1766,8 @@ void spi_ax_initRegisters_PR1200_Tx(void)
 	/* 0xF1C */
 	spi_ax_transport(false, "< ff 1c 07 >");													// WR address 0xF1C (RX/TX) - Set to 0x07
 
-	#if defined(AX_VCO_INTERNAL)
 	/* 0xF34 */
 	spi_ax_transport(false, "< ff 34 28 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
-	#else
-	/* 0xF34 */
-	spi_ax_transport(false, "< ff 34 08 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
-	#endif
 
 	/* 0xF35 */
 	spi_ax_transport(false, "< ff 35 10 >");													// WR address 0xF35 (RX/TX) - Set to 0x10 for reference frequencies (crystal or TCXO) less than 24.8 MHz (fXTALDIV = 1), or to 0x11 otherwise (fXTALDIV = 2)
@@ -1743,13 +1784,8 @@ void spi_ax_initRegisters_PR1200_Rx(void)
 	/* PLLCPI */
 	spi_ax_transport(false, "< b1 10 >");														// WR address 0x31: PLLCPI
 
-	#if defined(AX_VCO_INTERNAL)
-	/* PLLVCODIV */
-	spi_ax_transport(false, "< b2 04 >");														// WR address 0x32: PLLVCODIV - RFDIV
-	#else
-	/* PLLVCODIV */
+	/* PLLVCODIV - mind you: check 0xF34, also */
 	spi_ax_transport(false, "< b2 34 >");														// WR address 0x32: PLLVCODIV - VCO2INT, VCOSEL, RFDIV
-	#endif
 
 	/* PLLLOOPBOOST */
 	spi_ax_transport(false, "< b8 0b >");														// WR address 0x38: PLLLOOPBOOST - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5 (BW = 500 kHz for ICP = 1.7 mA)
@@ -1800,13 +1836,8 @@ void spi_ax_initRegisters_PR1200_Rx(void)
 	/* 0xF26 */
 	spi_ax_transport(false, "< ff 26 98 >");													// WR address 0xF26 (RX)
 
-	#if defined(AX_VCO_INTERNAL)
 	/* 0xF34 */
 	spi_ax_transport(false, "< ff 34 28 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
-	#else
-	/* 0xF34 */
-	spi_ax_transport(false, "< ff 34 08 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
-	#endif
 
 	/* 0xF35 */
 	spi_ax_transport(false, "< ff 35 10 >");													// WR address 0xF35 (RX/TX) - Set to 0x10 for reference frequencies (crystal or TCXO) less than 24.8 MHz (fXTALDIV = 1), or to 0x11 otherwise (fXTALDIV = 2)
@@ -2335,13 +2366,8 @@ void spi_ax_initRegisters_POCSAG_Tx(void)
 	/* PLLCPI */
 	spi_ax_transport(false, "< b1 10 >");														// WR address 0x31: PLLCPI
 
-	#if defined(AX_VCO_INTERNAL)
-	/* PLLVCODIV */
+	/* PLLVCODIV - mind you: check 0xF34, also */
 	spi_ax_transport(false, "< b2 04 >");														// WR address 0x32: PLLVCODIV - RFDIV
-	#else
-	/* PLLVCODIV */
-	spi_ax_transport(false, "< b2 34 >");														// WR address 0x32: PLLVCODIV - VCO2INT, VCOSEL, RFDIV
-	#endif
 
 
 	/* XTALCAP */
@@ -2354,13 +2380,8 @@ void spi_ax_initRegisters_POCSAG_Tx(void)
 	/* 0xF18 */
 	spi_ax_transport(false, "< ff 18 06 >");													// WR address 0xF18:
 
-	#if defined(AX_VCO_INTERNAL)
 	/* 0xF34 */
 	spi_ax_transport(false, "< ff 34 28 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
-	#else
-	/* 0xF34 */
-	spi_ax_transport(false, "< ff 34 08 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
-	#endif
 }
 
 void spi_ax_initRegisters_POCSAG_Rx(void)
@@ -2371,13 +2392,8 @@ void spi_ax_initRegisters_POCSAG_Rx(void)
 	/* PLLCPI */
 	spi_ax_transport(false, "< b1 10 >");														// WR address 0x31: PLLCPI
 
-	#if defined(AX_VCO_INTERNAL)
-	/* PLLVCODIV */
+	/* PLLVCODIV - mind you: check 0xF34, also */
 	spi_ax_transport(false, "< b2 04 >");														// WR address 0x32: PLLVCODIV - RFDIV
-	#else
-	/* PLLVCODIV */
-	spi_ax_transport(false, "< b2 34 >");														// WR address 0x32: PLLVCODIV - VCO2INT, VCOSEL, RFDIV
-	#endif
 
 
 	/* XTALCAP */
@@ -2390,13 +2406,8 @@ void spi_ax_initRegisters_POCSAG_Rx(void)
 	/* 0xF18 */
 	spi_ax_transport(false, "< ff 18 06 >");													// WR address 0xF18:
 
-	#if defined(AX_VCO_INTERNAL)
 	/* 0xF34 */
 	spi_ax_transport(false, "< ff 34 28 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
-	#else
-	/* 0xF34 */
-	spi_ax_transport(false, "< ff 34 08 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
-	#endif
 }
 
 void spi_ax_initRegisters_POCSAG_Rx_WoR(void)
@@ -2654,19 +2665,17 @@ void spi_init(void) {
 
 void spi_start(void) {
 
-#if defined(AX_VCO_INTERNAL)
-//# define	AX_TEST_BANDENDS		true
-# define	AX_TEST_POCSAG_RX		true
+//# define	AX_TEST_VCO1_BANDENDS		true
+//# define	AX_TEST_VCO1_FSK_TX			true
+//# define	AX_TEST_VCO1_FSK_RX			true
+# define	AX_TEST_VCO1_POCSAG_TX		true
+//# define	AX_TEST_VCO1_POCSAG_RX		true
 
-#else
-//# define	AX_TEST_BANDENDS		true
-//# define	AX_TEST_ANALOG_FM_TX	true
-//# define	AX_TEST_ANALOG_FM_RX	true
-//# define	AX_TEST_PR1200_TX		true
-//# define	AX_TEST_PR1200_RX		true
-#endif
-
-
+//# define	AX_TEST_VCO2_BANDENDS		true
+//# define	AX_TEST_VCO2_ANALOG_FM_TX	true
+//# define	AX_TEST_VCO2_ANALOG_FM_RX	true
+//# define	AX_TEST_VCO2_PR1200_TX		true
+//# define	AX_TEST_VCO2_PR1200_RX		true
 
 
 	g_ax_spi_device_conf.id = AX_SEL;
@@ -2680,55 +2689,49 @@ void spi_start(void) {
 
 	/* Frequency settings */
 	{
-		#if defined(AX_VCO_INTERNAL)
-			#if defined(AX_TEST_BANDENDS)
-			/* VCO A/B settings */
-			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(400.0000);					// VCO1 (internal without ext. L) with RFDIV --> VCORA = 0x0e
-			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(525.0000);					// VCO1 (internal without ext. L) with RFDIV --> VCORB = 0x02
+		#if defined(AX_TEST_VCO1_BANDENDS)
+		/* VCO A/B settings */
+		g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(400.0000);						// VCO1 (internal without ext. L) with RFDIV --> VCORA = 0x0e
+		g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(525.0000);						// VCO1 (internal without ext. L) with RFDIV --> VCORB = 0x02
 
-			#else
-			/* VCO A/B settings */
+		#elif defined(AX_TEST_VCO1_FSK_TX) | defined(AX_TEST_VCO1_FSK_RX) | defined(AX_TEST_VCO1_POCSAG_TX) | defined(AX_TEST_VCO1_POCSAG_RX)
+			/* FSK */
 			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(433.9250);					// VCO1 (internal without ext. L) with RFDIV --> VCORA = 0x09
-				/*
-				Radiometrix TXL2/RXL2 - 16kbps bi-phase FSK
-				433.925MHz - CHAN0
-				433.285MHz - CHAN1
-				433.605MHz - CHAN2
-				434.245MHz - CHAN3
-				434.565MHz - CHAN4
-				*/
+			/*
+			Radiometrix TXL2/RXL2 - 16kbps bi-phase FSK
+			433.925MHz - CHAN0
+			433.285MHz - CHAN1
+			433.605MHz - CHAN2
+			434.245MHz - CHAN3
+			434.565MHz - CHAN4
+			*/
 
+			/* POCSAG */
 			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(439.9875);					// VCO1 (internal without ext. L) with RFDIV --> VCORB = 0x09
-				/* POCSAG */
-			#endif
 
-		#else
-			#if defined(AX_TEST_BANDENDS)
+		#elif defined(AX_TEST_VCO2_BANDENDS)
 			/* VCO A/B settings */
 			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(137.0000);					// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x0e
 			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(149.0000);					// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x01
 
-			#else
-				#if defined(AX_TEST_ANALOG_FM_RX)
-				/* VCO A/B settings */
-				g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.8000);				// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
-					/* APRS */
+		#elif defined(AX_TEST_VCO2_ANALOG_FM_RX)
+			/* APRS */
+			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.8000);					// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
 
-				g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(145.6250);				// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x04
-					/* DB0ZH */
+			/* DB0ZH */
+			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(145.6250);					// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x04
 
-				#elif defined(AX_TEST_ANALOG_FM_TX)
-				g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.8245);				// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
-				g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(144.8255);				// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x05
+		#elif defined(AX_TEST_VCO2_ANALOG_FM_TX)
+			/* Burst-Aussendungen fuer Steuerungszwecke - lower and upper frequencies */
+			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.9245);					// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
+			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(144.9255);					// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x05
 
-				#elif defined(AX_TEST_PR1200_TX) | defined(AX_TEST_PR1200_RX)
-				g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.8000);				// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
-					/* APRS  */
+		#elif defined(AX_TEST_PR1200_TX) | defined(AX_TEST_PR1200_RX)
+			/* APRS  */
+			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.8000);					// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
 
-				g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(144.9250);				// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x05
-					/* Burst-Aussendungen fuer Steuerungszwecke */
-				#endif
-			#endif
+			/* Burst-Aussendungen fuer Steuerungszwecke */
+			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(144.9250);					// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x05
 		#endif
 
 		/* FREQA <-- chan[0], FREQB <-- chan[1] */
@@ -2740,34 +2743,35 @@ void spi_start(void) {
 	}
 
 
-	/*  AX_TEST_ANALOG_FM_TX */
-	#if defined(AX_TEST_ANALOG_FM_TX)
-	spi_ax_test_Analog_FM_Tx();
-	#endif
+	/* TEST BOX */
+	{
+		/*  AX_TEST_ANALOG_FM_TX */
+		#if defined(AX_TEST_ANALOG_FM_TX)
+		spi_ax_test_Analog_FM_Tx();
+
+		/* AX_TEST_ANALOG_FM_RX */
+		#elif defined(AX_TEST_ANALOG_FM_RX)
+		spi_ax_test_Analog_FM_Rx();
 
 
-	/* AX_TEST_ANALOG_FM_RX */
-	#if defined(AX_TEST_ANALOG_FM_RX)
-	spi_ax_test_Analog_FM_Rx();
-	#endif
+		/* AX_TEST_PR1200_TX */
+		#elif defined(AX_TEST_PR1200_TX)
+		spi_ax_test_PR1200_Tx();
+
+		/* AX_TEST_PR1200_RX */
+		#elif defined(AX_TEST_PR1200_RX)
+		spi_ax_test_PR1200_Rx();
 
 
-	/* AX_TEST_PR1200_TX */
-	#if defined(AX_TEST_PR1200_TX)
-	spi_ax_test_PR1200_Tx();
-	#endif
+		/* AX_TEST_POCSAG_TX */
+		#elif defined(AX_TEST_POCSAG_TX)
+		spi_ax_test_POCSAG_Tx();
 
-
-	/* AX_TEST_PR1200_RX */
-	#if defined(AX_TEST_PR1200_RX)
-	spi_ax_test_PR1200_Rx();
-	#endif
-
-
-	/* AX_TEST_POCSAG_RX */
-	#if defined(AX_TEST_POCSAG_RX)
-	spi_ax_test_POCSAG_Rx();
-	#endif
+		/* AX_TEST_POCSAG_RX */
+		#elif defined(AX_TEST_POCSAG_RX)
+		spi_ax_test_POCSAG_Rx();
+		#endif
+	}
 }
 
 

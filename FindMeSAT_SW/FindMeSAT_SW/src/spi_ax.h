@@ -172,8 +172,10 @@ void spi_ax_setPwrMode(AX_SET_REGISTERS_POWERMODE_t powerState);
 void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation, AX_SET_REGISTERS_VARIANT_t variant, AX_SET_REGISTERS_POWERMODE_t powerState);
 
 uint32_t spi_ax_calcFrequency_Mhz2Regs(float f_mhz);
+float spi_ax_calcFrequency_Regs2MHz(uint32_t vco_regval);
 void spi_ax_setFrequency2Regs(uint8_t chan, bool isFreqB);
 void spi_ax_doRanging(void);
+void spi_vco_select(uint32_t reg_freq);
 void spi_ax_selectVcoFreq(bool isFreqB);
 
 void spi_ax_initRegisters_FSK(void);
@@ -215,6 +217,7 @@ void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void);
 void spi_ax_test_PR1200_Tx_FIFO_APRS_InformationField(void);
 void spi_ax_test_PR1200_Tx_FIFO_APRS(void);
 void spi_ax_test_PR1200_Rx(void);
+
 void spi_ax_test_POCSAG(void);
 void spi_ax_test_POCSAG_Tx(void);
 void spi_ax_test_POCSAG_Rx(void);
