@@ -209,9 +209,9 @@ void spi_ax_initRegisters_PR1200_Rx_WoR(void);
 void spi_ax_initRegisters_PR1200_Rx_cont(void);
 void spi_ax_initRegisters_PR1200_Rx_cont_SingleParamSet(void);
 void spi_ax_init_PR1200_Tx(void);
-void spi_ax_run_PR1200_Tx_FIFO_APRS(const char addrAry[][6], uint8_t* ssidAry, uint8_t addrCnt, const char* aprsMsg, uint8_t aprsMsgLen);
+void spi_ax_run_PR1200_Tx_FIFO_APRS(const char addrAry[][6], const uint8_t* ssidAry, uint8_t addrCnt, const char* aprsMsg, uint8_t aprsMsgLen);
 void spi_ax_util_PR1200_Tx_FIFO_Flags(uint8_t count);
-void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][6], uint8_t* ssidAry, uint8_t addrCnt);
+void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][6], const uint8_t* ssidAry, uint8_t addrCnt);
 void spi_ax_util_PR1200_Tx_FIFO_InformationField(const char* aprsMsg, uint8_t aprsMsgLen);
 void spi_ax_init_PR1200_Rx(void);
 

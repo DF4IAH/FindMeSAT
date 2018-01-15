@@ -182,6 +182,8 @@ extern int16_t						g_twi1_hygro_DP_100;
 extern uint8_t						g_twi2_lcd_version;
 extern bool							g_twi2_lcd_repaint;
 
+extern bool							g_ax_enable;
+extern bool							g_ax_aprs_enable;
 extern struct spi_device			g_ax_spi_device_conf;
 extern uint8_t						g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH];
 extern uint32_t						g_ax_spi_freq_chan[2];

@@ -2037,7 +2037,7 @@ void spi_ax_init_PR1200_Tx(void)
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 }
 
-void spi_ax_run_PR1200_Tx_FIFO_APRS(const char addrAry[][6], uint8_t* ssidAry, uint8_t addrCnt, const char* aprsMsg, uint8_t aprsMsgLen)
+void spi_ax_run_PR1200_Tx_FIFO_APRS(const char addrAry[][6], const uint8_t* ssidAry, uint8_t addrCnt, const char* aprsMsg, uint8_t aprsMsgLen)
 {
 	/* Enter an APRS UI frame */
 
@@ -2071,7 +2071,7 @@ void spi_ax_util_PR1200_Tx_FIFO_Flags(uint8_t count)
 	spi_ax_transport(false, "< a8 04 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
 }
 
-void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][6], uint8_t* ssidAry, uint8_t addrCnt)
+void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][6], const uint8_t* ssidAry, uint8_t addrCnt)
 {
 	uint16_t idx = 0;
 
@@ -2925,7 +2925,7 @@ void spi_start(void) {
 //# define	AX_TEST_VCO2_BANDENDS		true
 //# define	AX_TEST_VCO2_ANALOG_FM_TX	true
 //# define	AX_TEST_VCO2_ANALOG_FM_RX	true
-# define	AX_TEST_VCO2_PR1200_TX		true
+//# define	AX_TEST_VCO2_PR1200_TX		true
 //# define	AX_TEST_VCO2_PR1200_RX		true
 
 

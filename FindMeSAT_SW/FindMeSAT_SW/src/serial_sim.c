@@ -63,6 +63,8 @@ PROGMEM_DECLARE(const char, PM_SET_PIN_1[]);
 const char					PM_SET_CPOWD_X[]										= "AT+CPOWD=%d\r\n";
 PROGMEM_DECLARE(const char, PM_SET_CPOWD_X[]);
 
+const char					PM_TWI1_INIT_ONBOARD_SIM808_CRLF[]						= "\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_CRLF[]);
 const char					PM_TWI1_INIT_ONBOARD_SIM808_IPR_X[]						= "AT+IPR=%ld\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_SIM808_IPR_X[]);
 const char					PM_TWI1_INIT_ONBOARD_SIM808_IFC_XX[]					= "AT+IFC=%d,%d\r\n";
@@ -737,6 +739,8 @@ void serial_start(void)
 
 	/* Activation of all functionalities */
 	serial_gsm_activation(g_gsm_enable);
+
+	//serial_sim808_send(PM_TWI1_INIT_ONBOARD_SIM808_CRLF, strlen(PM_TWI1_INIT_ONBOARD_SIM808_CRLF), true);
 
 	#if 0
 	/* Request the version number of the firmware */

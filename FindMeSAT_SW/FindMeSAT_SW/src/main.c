@@ -217,6 +217,8 @@ volatile int16_t			g_twi1_hygro_DP_100								= 0;
 uint8_t						g_twi2_lcd_version								= 0;
 volatile bool				g_twi2_lcd_repaint								= false;
 
+bool						g_ax_enable										= false;	// EEPROM
+bool						g_ax_aprs_enable								= false;	// EEPROM
 struct spi_device			g_ax_spi_device_conf							= { 0 };
 volatile uint8_t			g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH]	= { 0 };
 volatile uint32_t			g_ax_spi_freq_chan[2]							= { 0 };
@@ -741,6 +743,13 @@ static void init_globals(void)
 
 	/* AX5243 */
 	{
+		uint8_t		val_ui8		= 0U;
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_BF, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
+			g_ax_enable				= val_ui8 & AX__ENABLE;
+			g_ax_aprs_enable		= val_ui8 & AX__APRS_ENABLE;
+		}
+
 		g_ax_spi_freq_chan[0]	= 0;
 		g_ax_spi_freq_chan[1]	= 0;
 		g_ax_spi_range_chan[0]	= 0x10;
@@ -946,6 +955,15 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_X,	(void*)&l_twi1_gyro_2_mag_factx,	sizeof(l_twi1_gyro_2_mag_factx));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Y,	(void*)&l_twi1_gyro_2_mag_facty,	sizeof(l_twi1_gyro_2_mag_facty));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Z,	(void*)&l_twi1_gyro_2_mag_factz,	sizeof(l_twi1_gyro_2_mag_factz));
+	}
+
+	/* AX5243 */
+	if (bf & EEPROM_SAVE_BF__AX) {
+		uint8_t val_ui8 = (g_ax_enable			?  AX__ENABLE		: 0x00)
+						| (g_ax_aprs_enable		?  AX__APRS_ENABLE	: 0x00);
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_BF,				&val_ui8,							sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_PIN,				(void*)&g_gsm_login_pwd,			sizeof(g_gsm_login_pwd));
 	}
 
 	/* GSM */
@@ -1322,6 +1340,22 @@ void aprs_pwd_update(const char pwd[])
 	if (copyStr(g_aprs_login_pwd, sizeof(g_aprs_login_pwd), pwd)) {
 		save_globals(EEPROM_SAVE_BF__APRS);
 	}
+}
+
+void ax_aprs_enable(bool enable)
+{
+	/* atomic */
+	g_ax_aprs_enable = enable;
+
+	save_globals(EEPROM_SAVE_BF__AX);
+}
+
+void ax_enable(bool enable)
+{
+	/* atomic */
+	g_ax_enable = enable;
+
+	save_globals(EEPROM_SAVE_BF__AX);
 }
 
 void backlight_mode_pwm(int16_t mode_pwm)
@@ -3268,7 +3302,10 @@ static void task_main_aprs(void)
 
 
 	/* Once a second to be processed - do not send when APRS is disabled nor GPS ready */
-	if (s_lock || (s_now_sec == l_now_sec) || !g_gsm_enable || !g_gsm_aprs_enable || !g_gns_fix_status) {
+	if ( s_lock ||
+		(s_now_sec == l_now_sec) ||
+		!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && g_ax_aprs_enable)) ||
+		!g_gns_fix_status) {
 		return;
 	}
 
@@ -3415,20 +3452,22 @@ static void task_main_aprs(void)
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
 
 				/* Re-activate GPRS when call came in */
-				if (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST) {
-					static uint8_t s_count = 0;
+				if (g_gsm_enable && g_gsm_aprs_enable) {
+					if (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST) {
+						static uint8_t s_count = 0;
 
-					if (++s_count < g_gsm_ring) {
-						/* Repeat that packet as requested number of times */
-						l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N1;
-						l_aprs_alert_last = l_now_sec + C_APRS_ALERT_MESSAGE_DELAY_SEC;
+						if (++s_count < g_gsm_ring) {
+							/* Repeat that packet as requested number of times */
+							l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N1;
+							l_aprs_alert_last = l_now_sec + C_APRS_ALERT_MESSAGE_DELAY_SEC;
 
-					} else {
-						s_count = 0;
+						} else {
+							s_count = 0;
+						}
+
+						/* Reset the RING info */
+						g_gsm_ring = 0;
 					}
-
-					/* Reset the RING info */
-					g_gsm_ring = 0;
 				}
 			}
 			break;
@@ -3539,10 +3578,18 @@ static void task_main_aprs(void)
 	if (l_msg_buf_len) {
 		l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_MSGEND);
 
-		/* Transport APRS message to network */
-		{
+		/* Push via AX5243 (VHF/UHF) */
+		if (g_ax_enable && g_ax_aprs_enable) {
+			const char addrAry[][6]	= { "APXFMS", "DF4IAH", "WIDE1", "WIDE2" };
+			const uint8_t ssidAry[]	= { 0, 8, 1, 2 };
+
+			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, 4,  l_msg_buf, l_msg_buf_len);
+		}
+
+		/* Push APRS message via the GSM / GPRS network */
+		if (g_gsm_enable && g_gsm_aprs_enable) {
+			/* Init GPRS link opening */
 			if (!g_gsm_aprs_gprs_connected) {
-				/* Init GPRS link opening */
 				serial_gsm_gprs_link_openClose(true);
 			}
 
@@ -3563,9 +3610,12 @@ static void task_main_aprs(void)
 	}
 
 	/* Shutdown GPRS link when state machine is idling */
-	if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
-		serial_gsm_gprs_link_openClose(false);
+	if (g_gsm_enable && g_gsm_aprs_enable) {
+		if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
+			serial_gsm_gprs_link_openClose(false);
+		}
 	}
+
 
 	/* Write back to the global variables */
 	{

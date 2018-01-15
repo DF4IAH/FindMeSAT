@@ -147,6 +147,12 @@ typedef enum APRS_MODE_ENUM {
 	APRS_MODE__ON,
 } APRS_MODE_ENUM_t;
 
+typedef enum AX_BF_ENUM {
+	AX__ENABLE						= 0b00000001,
+	AX__APRS_ENABLE					= 0b00000010,
+} AX_BF_ENUM_t;
+
+
 typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__VERSION			= 0x0000,						// i32
 	//						next:	= 0x0004,
@@ -203,7 +209,9 @@ typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__APRS_PWD			= 0x009A,						// char[6]
 
 	EEPROM_ADDR__GSM_PIN			= 0x00A2,						// char[14]
-	//						next:	= 0x00B0,
+
+	EEPROM_ADDR__AX_BF				= 0x00B0,						// char[1]
+	//						next:	= 0x00B1,
 
 	EEPROM_ADDR__APRS_LINK_SERVICE	= 0x0100,						// char[32]
 	EEPROM_ADDR__APRS_LINK_USER		= 0x0120,						// char[16]
@@ -223,6 +231,7 @@ typedef enum EEPROM_SAVE_BF_ENUM {
 	EEPROM_SAVE_BF__ENV				= 0b0000000001000000,
 	EEPROM_SAVE_BF__GSM				= 0b0000000010000000,
 	EEPROM_SAVE_BF__APRS			= 0b0000000100000000,
+	EEPROM_SAVE_BF__AX				= 0b0000001000000000,
 } EEPROM_SAVE_BF_ENUM_t;
 
 
@@ -312,6 +321,8 @@ void aprs_call_update(const char call[]);
 void aprs_ssid_update(const char ssid[]);
 void aprs_user_update(const char user[]);
 void aprs_pwd_update(const char pwd[]);
+void ax_aprs_enable(bool enable);
+void ax_enable(bool enable);
 void backlight_mode_pwm(int16_t mode_pwm);
 void bias_update(uint8_t bias);
 void calibration_mode(CALIBRATION_MODE_ENUM_t mode);
