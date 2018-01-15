@@ -7,7 +7,7 @@ Manual changes are overwritten! */
 //#define USE_LCD
 //#define USE_DBGLINK
 //#define USE_COM0
-//#define DEBUGMSG
+//#define DEBUGMSG 
 //#define MCU_SLEEP
 #define WTIMER0_CLKSRC    CLKSRC_LPOSC
 #define WTIMER0_PRESCALER 0x01

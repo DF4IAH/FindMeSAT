@@ -15,20 +15,20 @@
 <REGISTER name="AX5043_WAKEUPXOEARLY" addr="0x06E" value="0x01" xpertvalue="0x01" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_IFFREQ1" addr="0x100" value="0x02" xpertvalue="0x02" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_IFFREQ0" addr="0x101" value="0x66" xpertvalue="0x66" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_DECIMATION" addr="0x102" value="0x1A" xpertvalue="0x1A" mask="0x7F" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_DECIMATION" addr="0x102" value="0x19" xpertvalue="0x19" mask="0x7F" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_RXDATARATE2" addr="0x103" value="0x01" xpertvalue="0x01" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_RXDATARATE1" addr="0x104" value="0x00" xpertvalue="0x00" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_RXDATARATE0" addr="0x105" value="0x69" xpertvalue="0x69" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_RXDATARATE1" addr="0x104" value="0x0A" xpertvalue="0x0A" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_RXDATARATE0" addr="0x105" value="0xAA" xpertvalue="0xAA" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_MAXDROFFSET2" addr="0x106" value="0x00" xpertvalue="0x00" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_MAXDROFFSET1" addr="0x107" value="0x00" xpertvalue="0x00" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_MAXDROFFSET0" addr="0x108" value="0x00" xpertvalue="0x00" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_MAXRFOFFSET2" addr="0x109" value="0x80" xpertvalue="0x80" mask="0x8F" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_MAXRFOFFSET1" addr="0x10A" value="0x07" xpertvalue="0x07" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_MAXRFOFFSET0" addr="0x10B" value="0x94" xpertvalue="0x94" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_FSKDMAX1" addr="0x10C" value="0x05" xpertvalue="0x05" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_FSKDMAX0" addr="0x10D" value="0xE0" xpertvalue="0xE0" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_FSKDMIN1" addr="0x10E" value="0xFA" xpertvalue="0xFA" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_FSKDMIN0" addr="0x10F" value="0x20" xpertvalue="0x20" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_MAXRFOFFSET1" addr="0x10A" value="0x08" xpertvalue="0x08" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_MAXRFOFFSET0" addr="0x10B" value="0x31" xpertvalue="0x31" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_FSKDMAX1" addr="0x10C" value="0x06" xpertvalue="0x06" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_FSKDMAX0" addr="0x10D" value="0x55" xpertvalue="0x55" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_FSKDMIN1" addr="0x10E" value="0xF9" xpertvalue="0xF9" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_FSKDMIN0" addr="0x10F" value="0xAB" xpertvalue="0xAB" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_AMPLFILTER" addr="0x115" value="0x00" xpertvalue="0x00" mask="0x0F" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_RXPARAMSETS" addr="0x117" value="0xF4" xpertvalue="0xF4" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_AGCGAIN0" addr="0x120" value="0xE8" xpertvalue="0xE8" mask="0xFF" usexpertvalue="0x00"/>
@@ -86,7 +86,7 @@
 <REGISTER name="AX5043_TXRATE0" addr="0x167" value="0xEA" xpertvalue="0xEA" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_TXPWRCOEFFB1" addr="0x16A" value="0x00" xpertvalue="0x00" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_TXPWRCOEFFB0" addr="0x16B" value="0xAA" xpertvalue="0xAA" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_PLLVCOI" addr="0x180" value="0xAB" xpertvalue="0xAB" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_PLLVCOI" addr="0x180" value="0x99" xpertvalue="0x99" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_PLLRNGCLK" addr="0x183" value="0x03" xpertvalue="0x03" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_BBTUNE" addr="0x188" value="0x0F" xpertvalue="0x0F" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_BBOFFSCAP" addr="0x189" value="0x77" xpertvalue="0x77" mask="0x77" usexpertvalue="0x00"/>
@@ -102,7 +102,7 @@
 <REGISTER name="AX5043_MATCH0MAX" addr="0x216" value="0x1F" xpertvalue="0x1F" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_MATCH1PAT1" addr="0x218" value="0x55" xpertvalue="0x55" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_MATCH1PAT0" addr="0x219" value="0x55" xpertvalue="0x55" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_MATCH1LEN" addr="0x21C" value="0x8A" xpertvalue="0x8A" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_MATCH1LEN" addr="0x21C" value="0x0A" xpertvalue="0x0A" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_MATCH1MAX" addr="0x21E" value="0x0A" xpertvalue="0x0A" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_TMGTXBOOST" addr="0x220" value="0x32" xpertvalue="0x32" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_TMGTXSETTLE" addr="0x221" value="0x14" xpertvalue="0x14" mask="0xFF" usexpertvalue="0x00"/>
@@ -118,7 +118,7 @@
 <REGISTER name="AX5043_PKTACCEPTFLAGS" addr="0x233" value="0x20" xpertvalue="0x20" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_DACVALUE1" addr="0x330" value="0x00" xpertvalue="0x00" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_DACVALUE0" addr="0x331" value="0x0C" xpertvalue="0x0C" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_DACCONFIG" addr="0x332" value="0x02" xpertvalue="0x02" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_DACCONFIG" addr="0x332" value="0x81" xpertvalue="0x81" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_REF" addr="0xF0D" value="0x03" xpertvalue="0x03" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_XTALOSC" addr="0xF10" value="0x03" xpertvalue="0x03" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_XTALAMPL" addr="0xF11" value="0x07" xpertvalue="0x07" mask="0xFF" usexpertvalue="0x00"/>
@@ -127,25 +127,25 @@
 <REGISTER name="AX5043_0xF22" addr="0xF22" value="0xFF" xpertvalue="0xFF" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_0xF23" addr="0xF23" value="0x84" xpertvalue="0x84" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_0xF26" addr="0xF26" value="0x98" xpertvalue="0x98" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_0xF34" addr="0xF34" value="0x08" xpertvalue="0x08" mask="0x0F" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_0xF34" addr="0xF34" value="0x28" xpertvalue="0x28" mask="0x2F" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_0xF35" addr="0xF35" value="0x10" xpertvalue="0x10" mask="0x03" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_0xF44" addr="0xF44" value="0x25" xpertvalue="0x25" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_PLLLOOP" addr="0x1030" value="0x0A" xpertvalue="0x0A" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_PLLLOOP" addr="0x1030" value="0x0B" xpertvalue="0x0B" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_PLLCPI" addr="0x1031" value="0x10" xpertvalue="0x10" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_PLLVCODIV" addr="0x1032" value="0x30" xpertvalue="0x30" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_PLLVCODIV" addr="0x1032" value="0x24" xpertvalue="0x24" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_XTALCAP" addr="0x1184" value="0x0C" xpertvalue="0x0C" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_0xF00" addr="0x1F00" value="0x0F" xpertvalue="0x0F" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_0xF18" addr="0x1F18" value="0x06" xpertvalue="0x06" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_PLLLOOP" addr="0x2030" value="0x0A" xpertvalue="0x0A" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_PLLLOOP" addr="0x2030" value="0x0B" xpertvalue="0x0B" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_PLLCPI" addr="0x2031" value="0x10" xpertvalue="0x10" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_PLLVCODIV" addr="0x2032" value="0x30" xpertvalue="0x30" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_PLLVCODIV" addr="0x2032" value="0x24" xpertvalue="0x24" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_XTALCAP" addr="0x2184" value="0x0C" xpertvalue="0x0C" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_0xF00" addr="0x2F00" value="0x0F" xpertvalue="0x0F" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_0xF18" addr="0x2F18" value="0x06" xpertvalue="0x06" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_0xF18" addr="0x2F18" value="0x02" xpertvalue="0x02" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_TMGRXAGC_(WOR)" addr="0x3000" value="0x54" xpertvalue="0x54" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_TMGRXPREAMBLE1_(WOR)" addr="0x3001" value="0x17" xpertvalue="0x17" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_TMGRXPREAMBLE1_(WOR)" addr="0x3001" value="0x18" xpertvalue="0x18" mask="0xFF" usexpertvalue="0x00"/>
 <REGISTER name="AX5043_PKTMISCFLAGS_(WOR)" addr="0x3002" value="0x05" xpertvalue="0x05" mask="0xFF" usexpertvalue="0x00"/>
-<REGISTER name="AX5043_RSSIREFERENCE*" addr="0x3006" value="0xFA" xpertvalue="0xFA" mask="0xFF" usexpertvalue="0x00"/>
+<REGISTER name="AX5043_RSSIREFERENCE*" addr="0x3006" value="0xF6" xpertvalue="0xF6" mask="0xFF" usexpertvalue="0x00"/>
 </REGISTERS>
 <MODE>
 <txmode>2</txmode>
@@ -173,53 +173,53 @@
 <vcocal>0x00</vcocal>
 <pa>0x01</pa>
 <lf>0x00</lf>
-<vcomode>0x01</vcomode>
+<vcomode>0x00</vcomode>
 <pinfuncantsel>0x05</pinfuncantsel>
 <pinfuncpwramp>0x02</pinfuncpwramp>
 <pinfuncirq>0xC3</pinfuncirq>
 <pinfuncsysclk>0x82</pinfuncsysclk>
 <pinfuncdclk>0x82</pinfuncdclk>
 <pinfuncdata>0x82</pinfuncdata>
-<dacconfig>0x2</dacconfig>
+<dacconfig>0x81</dacconfig>
 <dacvalue>0xC</dacvalue>
 </PINCONFIG>
 <PHY>
 <fcarrier>439987500.000000</fcarrier>
-<rfdiv>0</rfdiv>
+<rfdiv>1</rfdiv>
 <manual_vcoi>0x00</manual_vcoi>
-<vcoi>0x2B</vcoi>
+<vcoi>0x18</vcoi>
 <cpi_tx>0x10</cpi_tx>
 <cpi_rx>0x10</cpi_rx>
-<filt_tx>0x0A</filt_tx>
-<filt_rx>0x0A</filt_rx>
+<filt_tx>0x0B</filt_tx>
+<filt_rx>0x0B</filt_rx>
 <afsk_mark>1200.000000</afsk_mark>
 <afsk_space>2200.000000</afsk_space>
 <fxtal>16000000.000000</fxtal>
-<maxafc_outer>1850.000000</maxafc_outer>
+<maxafc_outer>2000.000000</maxafc_outer>
 <br>1200.000000</br>
 <chbw>12500.000000</chbw>
 <modulation>0x08</modulation>
 <modh>6.666667</modh>
 <halfdev>4000.000000</halfdev>
 <txpwr>-10.000000</txpwr>
-<bw>7500.000000</bw>
+<bw>8000.000000</bw>
 <encoding>0x01</encoding>
 <xtalcap>0x0C</xtalcap>
 <adcclkdiv>0x03</adcclkdiv>
 <nrchannels>1</nrchannels>
 <acq_channelstate>0</acq_channelstate>
-<channelstate_per>10</channelstate_per>
+<channelstate_per>100</channelstate_per>
 <fec>0</fec>
 <chanbusythr>-99</chanbusythr>
-<lbt_retries>0</lbt_retries>
+<lbt_retries>3</lbt_retries>
 <lbt_forcetx>0</lbt_forcetx>
 <manualfif>0</manualfif>
 <fif>9375.000000</fif>
 </PHY>
 <FRAMING>
-<preamble_len>24</preamble_len>
+<preamble_len>576</preamble_len>
 <preamble_char>0xAA</preamble_char>
-<preamble_unenc>1</preamble_unenc>
+<preamble_unenc>0</preamble_unenc>
 <preamble_appendbits>0</preamble_appendbits>
 <preamble_appendpattern>0x00</preamble_appendpattern>
 <wakeup_preamble_len>100</wakeup_preamble_len>

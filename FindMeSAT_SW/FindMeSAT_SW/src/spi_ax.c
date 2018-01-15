@@ -32,6 +32,26 @@
 
 
 inline
+static uint8_t s_sel_u8_from_u32(uint32_t in_u32, uint8_t sel)
+{
+	return 0xff & (in_u32 >> (sel << 3));
+}
+
+inline
+static void s_spi_ax_select_device(void)
+{
+	/* clear PORT C4 */
+	PORTC_OUTCLR = 0x10;
+}
+
+inline
+static void s_spi_ax_deselect_device(void)
+{
+	/* set   PORT C4 */
+	PORTC_OUTSET = 0x10;
+}
+
+inline
 static uint8_t s_strGetHex(const char* str)
 {
 	unsigned int ret = 0;
@@ -44,6 +64,27 @@ inline
 static uint8_t s_strGetDec(const char* str, int* o_val)
 {
 	return (uint8_t) sscanf(str, "%d", o_val);
+}
+
+uint32_t spi_ax_POCASG_get3Nbls(const char* buf, int len, uint16_t nblIdx)
+{
+	uint32_t msgWord = 0UL;
+	uint16_t nblCur  = nblIdx;
+
+	if ((nblIdx >> 1) >= len) {
+		return AX_POCSAG_CODES_IDLEWORD;
+	}
+
+	/* Cut three nibbles out of the message buffer */
+	for (uint8_t nblLoopIdx = 0; nblLoopIdx < 3; nblLoopIdx++, nblCur++) {
+		uint16_t aryIdx = nblCur >> 1;
+
+		msgWord <<= 4;
+		uint8_t u8  = (uint8_t) (aryIdx < len) ?  buf[aryIdx] : 0U;
+		uint8_t nbl = (nblIdx & 1) ?  (u8 >> 4) : (u8 & 0x0f);
+		msgWord |= nbl;
+	}
+	return msgWord;
 }
 
 
@@ -223,8 +264,7 @@ void spi_ax_sync2Powerdown(void)
 	delay_us(1);
 	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 
-	while (!ioport_get_pin_level(AX_MISO_PIN))
-		;
+	while (!ioport_get_pin_level(AX_MISO_PIN)) ;
 
 	/* Set RESET */
 	spi_ax_transport(false, "< 82 80 >");													// WR address 0x02: PWRMODE - RESET, PWRMODE=Powerdown
@@ -239,6 +279,35 @@ static void s_spi_ax_xtal_waitReady(void)
 	do {
 		spi_ax_transport(false, "< 1d R1 >");												// RD Address 0x1D: XTALSTATUS
 	} while (!(g_ax_spi_packet_buffer[0] & 0x01));											// Bit 0: XTALRUN
+}
+
+void spi_ax_setPower_dBm(float dBm)
+{
+	uint16_t pwrReg;
+	uint8_t pwrIdx;
+
+	if (dBm > 15.f) {
+		dBm = 15.f;
+
+	} else if (dBm < -20.f) {
+		dBm = -10.2f;
+
+	} else if (dBm < -10.f) {
+		dBm = -10.1f;
+	}
+
+	pwrIdx = (uint8_t) ((dBm + 10.2f) * 10.f + 0.5f);
+	pwrReg = g_ax_pwr_ary[pwrIdx];
+
+	/* Set power register value */
+	g_ax_spi_packet_buffer[0] = 0xF1;															// WR Address 0x16A: TXPWRCOEFFB
+	g_ax_spi_packet_buffer[1] = 0x6A;
+	g_ax_spi_packet_buffer[2] = (uint8_t) (pwrReg >> 8);
+	g_ax_spi_packet_buffer[3] = (uint8_t) (pwrReg  & 0xff);
+
+	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
+	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 4);
+	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
 }
 
 void spi_ax_setPwrMode(AX_SET_REGISTERS_POWERMODE_t powerState)
@@ -721,6 +790,40 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 }
 
 
+uint32_t spi_ax_create_POCSAG_checksumParity(uint32_t codeword_in)
+{
+	const uint32_t cw_in = 0x001fffffUL & codeword_in;
+	volatile uint32_t cw_calc = cw_in;
+
+	// Calculate the CRC
+	for (uint8_t idx = 0; idx < 22; idx++) {
+		if (cw_calc & (0x00000001UL << idx)) {
+			cw_calc ^= 0x000004b7UL << idx;
+		}
+	}
+
+	/* Data with CRC */
+	cw_calc |= cw_in;
+
+	/* Calculate the parity */
+	uint32_t par = cw_calc;
+	{
+		par ^= par >> 0x01;
+		par ^= par >> 0x02;
+		par ^= par >> 0x04;
+		par ^= par >> 0x08;
+		par ^= par >> 0x10;
+		par &= 1;
+	}
+
+	/* Data with CRC and Parity */
+	if (par) {
+		cw_calc	|= 0x80000000UL;
+	}
+
+	return cw_calc;
+}
+
 uint32_t spi_ax_calcFrequency_Mhz2Regs(float f_mhz)
 {
 	const float xtal_hz = 16E+6f;																// XTAL = 16 MHz
@@ -789,9 +892,11 @@ void spi_ax_doRanging(void)
 		spi_ax_transport(false, "< 90 08 >");													// WR address 0x10: MODULATION - 08: FSK
 
 		/* Default 100kHz loop BW for ranging */
-		/* PLLLOOP, PLLCPI */
-		spi_ax_transport(false, "< b0 09 08 >");												// WR address 0x30: PLLLOOP - DIRECT: Bypass External Filter Pin, FLT: Internal Loop Filter x1 --> BW = 100 kHz for I_CP = 68 µA
-		// WR address 0x31: PLLCPI - PLLCPI: Charge pump current in multiples of 8.5 ?A --> I_CP = 68 µA
+		/* PLLLOOP */
+		spi_ax_transport(false, "< b0 09 >");													// WR address 0x30: PLLLOOP - DIRECT: Bypass External Filter Pin, FLT: Internal Loop Filter x1 --> BW = 100 kHz for I_CP = 68 µA
+
+		/* PLLCPI */
+		spi_ax_transport(false, "< b1 08 >");													// WR address 0x31: PLLCPI - PLLCPI: Charge pump current in multiples of 8.5 µA --> I_CP = 68 µA
 
 		/* FSKDEV */
 		spi_ax_transport(false, "< f1 61 00 00 00 >");											// WR address 0x161: FSKDEV - off
@@ -801,8 +906,8 @@ void spi_ax_doRanging(void)
 			{
 				uint8_t regAdr = idx ?  0x3b : 0x33;											// WR Address 0x33: PLLRANGINGA  or  Address 0x3b: PLLRANGINGB
 
-				/* Switch to VCO1 or VCO2 as needed */
-				spi_vco_select(g_ax_spi_freq_chan[idx]);
+				/* Switch to VCO1 or VCO2 as needed and return to STANDBY powermode */
+				(void) spi_ax_vco_select(g_ax_spi_freq_chan[idx], true);
 
 				/* Command message */
 				g_ax_spi_packet_buffer[0]	= regAdr | 0x80;
@@ -924,9 +1029,11 @@ void spi_ax_doRanging(void)
 	}
 }
 
-void spi_vco_select(uint32_t reg_freq)
+bool spi_ax_vco_select(uint32_t reg_freq, bool force)
 {
+	float f_Mhz = spi_ax_calcFrequency_Regs2MHz(reg_freq);
 	bool curVco2;
+	bool modified = false;
 
 	/* Read VCO settings */
 	{
@@ -936,10 +1043,20 @@ void spi_vco_select(uint32_t reg_freq)
 	}
 
 	/* VCO1 ranges abt. 380 MHz ... 540 MHz (RFDIV=1)  and  760 MHz ... 1080 MHz (RFDIV=0) */
-	if (spi_ax_calcFrequency_Regs2MHz(reg_freq) >= 380E+6) {
+	if (f_Mhz >= 760.f) {
+		modified = true;
+
+		/* PLLVCODIV - mind you: check 0xF34, also */
+		spi_ax_transport(false, "< b2 00 >");												// WR address 0x32: PLLVCODIV - no RFDIV
+
+		/* 0xF34 */
+		spi_ax_transport(false, "< ff 34 08 >");											// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
+	}
+
+	else if (f_Mhz >= 380.f) {
 		/* Select VCO1 */
-		if (curVco2) {
-			spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+		if (curVco2 || force) {
+			modified = true;
 
 			/* PLLVCODIV - mind you: check 0xF34, also */
 			spi_ax_transport(false, "< b2 04 >");												// WR address 0x32: PLLVCODIV - RFDIV
@@ -947,11 +1064,12 @@ void spi_vco_select(uint32_t reg_freq)
 			/* 0xF34 */
 			spi_ax_transport(false, "< ff 34 28 >");											// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
 		}
+	}
 
-	} else {
+	else {
 		/* Select VCO2 */
-		if (!curVco2) {
-			spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+		if (!curVco2 || force) {
+			modified = true;
 
 			/* PLLVCODIV - mind you: check 0xF34, also */
 			spi_ax_transport(false, "< b2 34 >");												// WR address 0x32: PLLVCODIV - VCO2INT, VCOSEL, RFDIV
@@ -960,12 +1078,14 @@ void spi_vco_select(uint32_t reg_freq)
 			spi_ax_transport(false, "< ff 34 28 >");											// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
 		}
 	}
+
+	return modified;
 }
 
-void spi_ax_selectVcoFreq(bool isFreqB)
+bool spi_ax_selectVcoFreq(bool isFreqB)
 {
 	/* Switch to VCO1 or VCO2 as needed */
-	spi_vco_select(g_ax_spi_freq_chan[isFreqB ?  1 : 0]);
+	bool modified = spi_ax_vco_select(g_ax_spi_freq_chan[isFreqB ?  1 : 0], false);
 
 	/* PLLLOOP */
 	spi_ax_transport(false, "< 30 R1 >");														// RD address 0x30: PLLLOOP
@@ -976,6 +1096,8 @@ void spi_ax_selectVcoFreq(bool isFreqB)
 	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, 2);
 	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+
+	return modified;
 }
 
 void spi_ax_initRegisters_FSK(void)
@@ -1167,6 +1289,7 @@ void spi_ax_initRegisters_FSK(void)
 	/* FSKDEV */
 	spi_ax_transport(false, "< f1 61 00 02 0c >");												// WR address 0x161: FSKDEV - FSKDEV: 500 Hz @ fxtal = 16 MHz.
 
+
 	/* MODCFGA */
 	spi_ax_transport(false, "< f1 64 05 >");													// WR address 0x164: MODCFGA - AMPLSHAPE, TXDIFF
 
@@ -1174,19 +1297,19 @@ void spi_ax_initRegisters_FSK(void)
 	spi_ax_transport(false, "< f1 65 00 04 ea >");												// WR address 0x165: TXRATE - TXRATE: 1,200 bit/s
 
 	/* TXPWRCOEFFA */
-	spi_ax_transport(false, "< f1 68 00 00 >");													// WR address 0x168: TXPWRCOEFFA - off
+	spi_ax_transport(false, "< f1 68 00 00 >");													// WR address 0x168: TXPWRCOEFFA - no correction
 
 	/* TXPWRCOEFFB */
-	spi_ax_transport(false, "< f1 6a 00 aa >");													// WR address 0x16A: TXPWRCOEFFB
+	spi_ax_transport(false, "< f1 6a 00 00 >");													// WR address 0x16A: TXPWRCOEFFB - off
 
 	/* TXPWRCOEFFC */
-	spi_ax_transport(false, "< f1 6c 00 00 >");													// WR address 0x16C: TXPWRCOEFFC - off
+	spi_ax_transport(false, "< f1 6c 00 00 >");													// WR address 0x16C: TXPWRCOEFFC - no correction
 
 	/* TXPWRCOEFFD */
-	spi_ax_transport(false, "< f1 6e 00 00 >");													// WR address 0x16E: TXPWRCOEFFD - off
+	spi_ax_transport(false, "< f1 6e 00 00 >");													// WR address 0x16E: TXPWRCOEFFD - no correction
 
 	/* TXPWRCOEFFE */
-	spi_ax_transport(false, "< f1 70 00 00 >");													// WR address 0x170: TXPWRCOEFFE - off
+	spi_ax_transport(false, "< f1 70 00 00 >");													// WR address 0x170: TXPWRCOEFFE - no correction
 
 
 	/* PLLVCOI */
@@ -1507,6 +1630,7 @@ void spi_ax_initRegisters_PR1200(void)
 	/* FSKDEV */
 	spi_ax_transport(false, "< f1 61 00 02 0c >");												// WR address 0x161: FSKDEV - FSKDEV: 500 Hz @ fxtal = 16 MHz.
 
+
 	/* MODCFGA */
 	spi_ax_transport(false, "< f1 64 05 >");													// WR address 0x164: MODCFGA - AMPLSHAPE, TXDIFF
 
@@ -1514,48 +1638,19 @@ void spi_ax_initRegisters_PR1200(void)
 	spi_ax_transport(false, "< f1 65 00 04 ea >");												// WR address 0x165: TXRATE - TXRATE: 1,200 bit/s
 
 	/* TXPWRCOEFFA */
-	spi_ax_transport(false, "< f1 68 00 00 >");													// WR address 0x168: TXPWRCOEFFA - off
+	spi_ax_transport(false, "< f1 68 00 00 >");													// WR address 0x168: TXPWRCOEFFA - no correction
 
 	/* TXPWRCOEFFB */
-	#if 0
-	spi_ax_transport(false, "< f1 6a 0f ff >");													// WR address 0x16A: TXPWRCOEFFB +15 dBm  (4095d)
-	spi_ax_transport(false, "< f1 6a 0f 00 >");													// WR address 0x16A: TXPWRCOEFFB +14 dBm  (3840d)
-	#endif
-	spi_ax_transport(false, "< f1 6a 0c 00 >");													// WR address 0x16A: TXPWRCOEFFB +13 dBm  (3072d)
-	#if 0
-	spi_ax_transport(false, "< f1 6a 09 d4 >");													// WR address 0x16A: TXPWRCOEFFB +12 dBm  (2516d)
-	spi_ax_transport(false, "< f1 6a 08 00 >");													// WR address 0x16A: TXPWRCOEFFB +11 dBm  (2048d)
-	spi_ax_transport(false, "< f1 6a 07 00 >");													// WR address 0x16A: TXPWRCOEFFB +10 dBm  (1792d)
-	spi_ax_transport(false, "< f1 6a 06 00 >");													// WR address 0x16A: TXPWRCOEFFB + 9 dBm  (1536d)
-	spi_ax_transport(false, "< f1 6a 05 7c >");													// WR address 0x16A: TXPWRCOEFFB + 8 dBm  (1404d)
-	spi_ax_transport(false, "< f1 6a 04 a9 >");													// WR address 0x16A: TXPWRCOEFFB + 7 dBm  (1193d)
-	spi_ax_transport(false, "< f1 6a 04 06 >");													// WR address 0x16A: TXPWRCOEFFB + 6 dBm  (1030d)
-	spi_ax_transport(false, "< f1 6a 03 d6 >");													// WR address 0x16A: TXPWRCOEFFB + 5 dBm  ( 982d)
-	spi_ax_transport(false, "< f1 6a 03 5e >");													// WR address 0x16A: TXPWRCOEFFB + 4 dBm  ( 862d)
-	spi_ax_transport(false, "< f1 6a 02 eb >");													// WR address 0x16A: TXPWRCOEFFB + 3 dBm  ( 747d)
-	spi_ax_transport(false, "< f1 6a 02 90 >");													// WR address 0x16A: TXPWRCOEFFB + 2 dBm  ( 656d)
-	spi_ax_transport(false, "< f1 6a 02 44 >");													// WR address 0x16A: TXPWRCOEFFB + 1 dBm  ( 580d)
-	spi_ax_transport(false, "< f1 6a 02 07 >");													// WR address 0x16A: TXPWRCOEFFB   0 dBm  ( 519d)
-	spi_ax_transport(false, "< f1 6a 01 e0 >");													// WR address 0x16A: TXPWRCOEFFB - 1 dBm  ( 480d)
-	spi_ax_transport(false, "< f1 6a 01 af >");													// WR address 0x16A: TXPWRCOEFFB - 2 dBm  ( 431d)
-	spi_ax_transport(false, "< f1 6a 01 7f >");													// WR address 0x16A: TXPWRCOEFFB - 3 dBm  ( 383d)
-	spi_ax_transport(false, "< f1 6a 01 56 >");													// WR address 0x16A: TXPWRCOEFFB - 4 dBm  ( 342d)
-	spi_ax_transport(false, "< f1 6a 01 32 >");													// WR address 0x16A: TXPWRCOEFFB - 5 dBm  ( 306d)
-	spi_ax_transport(false, "< f1 6a 01 0f >");													// WR address 0x16A: TXPWRCOEFFB - 6 dBm  ( 271d)
-	spi_ax_transport(false, "< f1 6a 00 ec >");													// WR address 0x16A: TXPWRCOEFFB - 7 dBm  ( 236d)
-	spi_ax_transport(false, "< f1 6a 00 d1 >");													// WR address 0x16A: TXPWRCOEFFB - 8 dBm  ( 209d)
-	spi_ax_transport(false, "< f1 6a 00 bf >");													// WR address 0x16A: TXPWRCOEFFB - 9 dBm  ( 191d)
-	spi_ax_transport(false, "< f1 6a 00 aa >");													// WR address 0x16A: TXPWRCOEFFB -10 dBm  ( 170d)
-	#endif
+	spi_ax_transport(false, "< f1 6a 00 00 >");													// WR address 0x16A: TXPWRCOEFFB - off
 
 	/* TXPWRCOEFFC */
-	spi_ax_transport(false, "< f1 6c 00 00 >");													// WR address 0x16C: TXPWRCOEFFC - off
+	spi_ax_transport(false, "< f1 6c 00 00 >");													// WR address 0x16C: TXPWRCOEFFC - no correction
 
 	/* TXPWRCOEFFD */
-	spi_ax_transport(false, "< f1 6e 00 00 >");													// WR address 0x16E: TXPWRCOEFFD - off
+	spi_ax_transport(false, "< f1 6e 00 00 >");													// WR address 0x16E: TXPWRCOEFFD - no correction
 
 	/* TXPWRCOEFFE */
-	spi_ax_transport(false, "< f1 70 00 00 >");													// WR address 0x170: TXPWRCOEFFE - off
+	spi_ax_transport(false, "< f1 70 00 00 >");													// WR address 0x170: TXPWRCOEFFE - no correction
 
 
 	/* PLLVCOI */
@@ -1904,56 +1999,6 @@ void spi_ax_initRegisters_PR1200_Rx_cont_SingleParamSet(void)
 
 void spi_ax_initRegisters_POCSAG(void)
 {
-	/*
-	 * Technical details for POCSAG receiption:		@see http://akafunk.faveve.uni-stuttgart.de/pocsag/
-	 * QRG = 439.9875 MHz (12.5 kHz channel spacing
-	 * Modulation = FSK with  +/- 4.0 kHz
-	 * '0' = higher frequency
-	 * '1' = lower  frequency
-	 *
-	 * Message:										@see http://www.qsl.net/db0avh/code.html
-	 *
-	 * Bit Nr.:    Funktion:					Bemerkung:
-	 *
-	 * 1           Codewortbeschreibung			0 = Adresse, 1 = Nachricht
-	 * 2-21        Adresse (2-19)				Modus (20-21) / Nachricht (2-21)
-	 * 22-31       Checksumme
-	 * 32          Parität (even)
-	 *
-	 * Präambel-SW-CWCW-CWCW-CWCW-CWCW-CWCW-CWCW-CWCW-CWCW-SW-CWCW-CWCW-CWCW ...
-	 *
-	 * Präambel >= 288x '01'
-	 *
-	 * Checksum: Jedes Codewort enthält 21 Informationsbits. Diese stellen die Koeffizienten eines Polynoms (x^30-X^10) da. Der Rest der Polynomkoeffizienten ist 0.
-	 *			 Dieses Polynom wird geteilt (modulo 2) durch das Generatorpolynom x^10+x^9+x^8+x^6+x^5+ x^3+x^0.
-	 *			 Die Prüfbits entsprechen den Koeffizienten x^9 bis x^0 des nach der Division verbleibenden Restpolynoms.
-	 *
-	 * Characters & Numbers:
-	 *
-	 *                        Zeichen
-	 *                        Numeric     Alpha
-	 *                        7   0   0   0 0 1 1 1 1
-	 *                        Bit                         6   0   0   1 1 0 0 1 1
-	 *                        4 3 2 1                     5   0   1   0 1 0 1 0 1
-	 *
-	 *                        0 0 0 0              0         NUL DLE ' '0 ß P ' p
-	 *                        0 0 0 1              1         SOH  DC  ! 1 A Q a q
-	 *                        0 0 1 0              2         STX  DC  " 2 B R b r
-	 *                        0 0 1 1              3         ETX  DC  # 3 C S c s
-	 *                        0 1 0 0              4         EOT  DC  $ 4 D T d t
-	 *                        0 1 0 1              5         ENQ NAK  % 5 E U e u
-	 *                        0 1 1 0              6         ACK SYN  & 6 F V f v
-	 *                        0 1 1 1              7         BEL ETB  ` 7 G W g w
-	 *                        1 0 0 0              8         BS  CAN  ( 8 H X h x
-	 *                        1 0 0 1              9         HT  EM   ) 9 I Y i y
-	 *                        1 0 1 0          - SPARE -     LF  SUB  * : J Z j z
-	 *                        1 0 1 1              U         VT  ESC  + ; K Ä k ä
-	 *                        1 1 0 0             ' '        FF  FS   , < L Ö l ö
-	 *                        1 1 0 1              -         CR  GS   - = M Ü m ü
-	 *                        1 1 1 0              ]         SO  RS   . > N ^ n ß
-	 *                        1 1 1 1              [         SI  US   / ? O _ O DEL
-	 */
-
 	/* MODULATION */
 	spi_ax_transport(false, "< 90 08 >");														// WR address 0x10: MODULATION - 08: FSK
 
@@ -2010,22 +2055,22 @@ void spi_ax_initRegisters_POCSAG(void)
 	spi_ax_transport(false, "< f1 00 02 66 >");													// WR address 0x100: IFFREQ - IFFREQ: 9,369 Hz (f_xtal = 16 MHz)
 
 	/* DECIMATION */
-	spi_ax_transport(false, "< f1 02 1a >");													// WR address 0x102: DECIMATION - DECIMATION: 37d, f_BASEBAND = 27,027.03 Hz
+	spi_ax_transport(false, "< f1 02 19 >");													// WR address 0x102: DECIMATION - DECIMATION: 37d, f_BASEBAND = 27,027.03 Hz
 
 	/* RXDATARATE */
-	spi_ax_transport(false, "< f1 03 01 00 69 >");												// WR address 0x103: RXDATARATE - 1,200 bit/s
+	spi_ax_transport(false, "< f1 03 01 0a aa >");												// WR address 0x103: RXDATARATE - 1,200 bit/s
 
 	/* MAXDROFFSET */
 	spi_ax_transport(false, "< f1 06 00 00 00 >");												// WR address 0x106: MAXDROFFSET - off
 
 	/* MAXRFOFFSET */
-	spi_ax_transport(false, "< f1 09 80 07 94 >");												// WR address 0x109: MAXRFOFFSET - FREQOFFSCORR: Correct frequency offset at the first LO 0x80, MAXRFOFFSET: +/- 1,200 Hz
+	spi_ax_transport(false, "< f1 09 80 08 31 >");												// WR address 0x109: MAXRFOFFSET - FREQOFFSCORR: Correct frequency offset at the first LO 0x80, MAXRFOFFSET: +/- 1,200 Hz
 
 	/* FSKDMAX */
-	spi_ax_transport(false, "< f1 0c 05 e0 >");													// WR address 0x10C: FSKDMAX - FSKDMAX: +1,011d (should be +640d?, seems to be moved by abt. 1.5x up)
+	spi_ax_transport(false, "< f1 0c 06 55 >");													// WR address 0x10C: FSKDMAX - FSKDMAX: +1,011d (should be +640d?, seems to be moved by abt. 1.5x up)
 
 	/* FSKDMIN */
-	spi_ax_transport(false, "< f1 0e fa 20 >");													// WR address 0x10E: FSKDMIN - FSKDMIN: -243d (should be -640d?, seems to be moved by abt. 1.5x up)
+	spi_ax_transport(false, "< f1 0e f9 ab >");													// WR address 0x10E: FSKDMIN - FSKDMIN: -243d (should be -640d?, seems to be moved by abt. 1.5x up)
 
 	/* AMPLFILTER */
 	spi_ax_transport(false, "< f1 15 00 >");													// WR address 0x115: AMPLFILTER - AMPLFILTER: filter bypassed.
@@ -2182,7 +2227,7 @@ void spi_ax_initRegisters_POCSAG(void)
 	spi_ax_transport(false, "< f1 68 00 00 >");													// WR address 0x168: TXPWRCOEFFA - no correction
 
 	/* TXPWRCOEFFB */
-	spi_ax_transport(false, "< f1 6a 00 aa >");													// WR address 0x16A: TXPWRCOEFFB - -10 dBm  (170d)
+	spi_ax_transport(false, "< f1 6a 00 00 >");													// WR address 0x16A: TXPWRCOEFFB - off
 
 	/* TXPWRCOEFFC */
 	spi_ax_transport(false, "< f1 6c 00 00 >");													// WR address 0x16C: TXPWRCOEFFC - no correction
@@ -2195,7 +2240,7 @@ void spi_ax_initRegisters_POCSAG(void)
 
 
 	/* PLLVCOI */
-	spi_ax_transport(false, "< f1 80 ab >");													// WR address 0x180: PLLVCOI - 10 µA * 153 = 1,53 mA
+	spi_ax_transport(false, "< f1 80 99 >");													// WR address 0x180: PLLVCOI - 10 µA * 153 = 1,53 mA
 
 	/* PLLRNGCLK */
 	spi_ax_transport(false, "< f1 83 03 >");													// WR address 0x183: PLLRNGCLK - PLLRNGCLK: 7,812 Hz ? (@see Table 148 in AND9347/D)
@@ -2217,8 +2262,7 @@ void spi_ax_initRegisters_POCSAG(void)
 	spi_ax_transport(false, "< f2 02 08 >");													// WR address 0x202: PKTLENOFFSET - receiver_length = Length-Field +8 bytes, in case Length-Field is sent. (Remarks by DF4IAH: reason unknown)
 
 	/* PKTMAXLEN */
-	spi_ax_transport(false, "< f2 03 40 >");													// WR address 0x203: PKTMAXLEN - PKTMAXLEN = 64  Try this
-	//spi_ax_transport(false, "< f2 03 f0 >");													// WR address 0x203: PKTMAXLEN - PKTMAXLEN = 64  ???
+	spi_ax_transport(false, "< f2 03 40 >");													// WR address 0x203: PKTMAXLEN - PKTMAXLEN = 64
 
 
 	/* MATCH0PAT */
@@ -2227,20 +2271,17 @@ void spi_ax_initRegisters_POCSAG(void)
 	/* MATCH0LEN */
 	spi_ax_transport(false, "< f2 14 1f >");													// WR address 0x214: MATCH0LEN
 
-	#if 0
 	/* MATCH0MIN */
 	spi_ax_transport(false, "< f2 15 00 >");													// WR address 0x215: MATCH0MIN - not in use
-	#endif
 
 	/* MATCH0MAX */
 	spi_ax_transport(false, "< f2 16 1f >");													// WR address 0x216: MATCH0MAX
 
 	/* MATCH1PAT */
 	spi_ax_transport(false, "< f2 18 55 55 >");													// WR address 0x218: MATCH1PAT - MATCH1PAT = 0x55 0x55
-	//spi_ax_transport(false, "< f2 18 aa aa >");												// WR address 0x218: MATCH1PAT - MATCH1PAT = 0xAA 0xAA   Try this?
 
 	/* MATCH1LEN */
-	spi_ax_transport(false, "< f2 1c 8a >");													// WR address 0x21C: MATCH1LEN - MATCH1LEN = 11, MATCH1RAW
+	spi_ax_transport(false, "< f2 1c 0a >");													// WR address 0x21C: MATCH1LEN - not MATCH1RAW, MATCH1LEN = 11
 
 	/* MATCH1MAX */
 	spi_ax_transport(false, "< f2 1e 0a >");													// WR address 0x21E: MATCH1MAX - MATCH1MAX = 10
@@ -2267,23 +2308,17 @@ void spi_ax_initRegisters_POCSAG(void)
 	/* TMGRXRSSI */
 	spi_ax_transport(false, "< f2 28 02 >");													// WR address 0x228: TMGRXRSSI - TMGRXRSSIE = 0, TMGRXRSSIM = 3 --> 3 µs (Bits)  @see PKTMISCFLAGS.RXRSSI (fall-back strategy)
 
-	#if 0
 	/* TMGRXPREAMBLE1 */
 	spi_ax_transport(false, "< f2 29 00 >");													// WR address 0x229: TMGRXPREAMBLE1 - TMGRXPREAMBLE1 timeout = none
-	#endif
 
 	/* TMGRXPREAMBLE2 */
 	spi_ax_transport(false, "< f2 2a 35 >");													// WR address 0x22A: TMGRXPREAMBLE2 - TMGRXPREAMBLE2 timeout = 7 * 2^1 = 14 bits
 
-	#if 0
 	/* TMGRXPREAMBLE3 */
 	spi_ax_transport(false, "< f2 2b 00 >");													// WR address 0x22B: TMGRXPREAMBLE3 - TMGRXPREAMBLE3 timeout = none
-	#endif
 
-	#if 0
 	/* RSSIREFERENCE */
-	spi_ax_transport(false, "< f2 2c f8 >");													// WR address 0x22C: RSSIREFERENCE - RSSI Offset, this register adds a constant offset to the computed RSSI value. It is used to compensate for board effects.
-	#endif
+	spi_ax_transport(false, "< f2 2c f6 >");													// WR address 0x22C: RSSIREFERENCE - RSSI Offset, this register adds a constant offset to the computed RSSI value. It is used to compensate for board effects.
 
 	/* RSSIABSTHR */
 	spi_ax_transport(false, "< f2 2d dd >");													// WR address 0x22D: RSSIABSTHR - RSSIABSTHR >  -36 (-64 offset binary) = -100 dBm (BUSY)
@@ -2293,20 +2328,17 @@ void spi_ax_initRegisters_POCSAG(void)
 
 
 	/* PKTCHUNKSIZE */
-	spi_ax_transport(false, "< f2 30 80 >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 13 bytes   Try this
-	//spi_ax_transport(false, "< f2 30 0d >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 13 bytes   ???
+	spi_ax_transport(false, "< f2 30 f0 >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 240 bytes   Try this
+	//spi_ax_transport(false, "< f2 30 0d >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE:  13 bytes   ???
 
-	#if 1
 	/* PKTSTOREFLAGS */
 	spi_ax_transport(false, "< f2 32 17 >");													// WR address 0x232: PKTSTOREFLAGS - ST RSSI, ST RFOFFS, ST FOFFS, ST TIMER
-	#endif
 
 	/* PKTACCEPTFLAGS */
 	spi_ax_transport(false, "< f2 33 20 >");													// WR address 0x233: PKTACCEPTFLAGS - ACCPT LRGP 0x20, not ACCPT SZF !0x10, ACCPT ADDRF 0x08, not ACCPT CRCF !0x04, not ACCPT ABRT !0x02, not ACCPT RESIDUE !0x01
 	//spi_ax_transport(false, "< f2 33 2c >");	// Test
 
 
-	#if 1
 	/* LPOSCCONFIG */
 	spi_ax_transport(false, "< f3 10 13 >");													// WR address 0x310: LPOSCCONFIG - LPOSC CALIBF 0x10, LPOSC FAST 0x02, (LPOSC ENA 0x01)
 
@@ -2318,58 +2350,41 @@ void spi_ax_initRegisters_POCSAG(void)
 
 	/* LPOSCFREQ */
 	spi_ax_transport(false, "< f3 16 00 00 >");													// WR address 0x316: LPOSCFREQ - no manual tune, done by automatic
-	#endif
 
 
 	/* DACVALUE */
 	spi_ax_transport(false, "< f3 30 00 0c >");													// WR address 0x330: DACVALUE - DACSHIFT = 12 bit
 
 	/* DACCONFIG */
-	spi_ax_transport(false, "< f3 32 02 >");													// WR address 0x332: DACCONFIG
-
-
-	/* 0xF0D = REF */
-	spi_ax_transport(false, "< ff 0d 03 >");													// WR address 0xF0D: REF (RX/TX) - Set to 0x03
-
-	/* 0xF10 - XTALOSC*/
-	spi_ax_transport(false, "< ff 10 03 >");													// WR address 0xF10: XTALOSC
-
-	/* 0xF11 - XTALAMPL */
-	spi_ax_transport(false, "< ff 11 07 >");													// WR address 0xF11: XTALAMPL
-
-
-	/* 0xF1C */
-	spi_ax_transport(false, "< ff 1c 07 >");													// WR address 0xF1C:
-
-	/* 0xF21 */
-	spi_ax_transport(false, "< ff 21 68 >");													// WR address 0xF21:
-
-	/* 0xF22 */
-	spi_ax_transport(false, "< ff 22 ff >");													// WR address 0xF22:
-
-	/* 0xF23 */
-	spi_ax_transport(false, "< ff 23 84 >");													// WR address 0xF23:
-
-	/* 0xF26 */
-	spi_ax_transport(false, "< ff 26 98 >");													// WR address 0xF26:
-
-	/* 0xF35 */
-	spi_ax_transport(false, "< ff 35 10 >");													// WR address 0xF35:
-
-	/* 0xF44 */
-	spi_ax_transport(false, "< ff 44 25 >");													// WR address 0xF44:
+	spi_ax_transport(false, "< f3 32 81 >");													// WR address 0x332: DACCONFIG
 }
 
 void spi_ax_initRegisters_POCSAG_Tx(void)
 {
 	/* PLLLOOP */
-	spi_ax_transport(false, "< b0 0a >");														// WR address 0x30: PLLLOOP
+	spi_ax_transport(false, "< b0 0b >");														// WR address 0x30: PLLLOOP
 
 	/* PLLCPI */
 	spi_ax_transport(false, "< b1 10 >");														// WR address 0x31: PLLCPI
 
 	/* PLLVCODIV - mind you: check 0xF34, also */
-	spi_ax_transport(false, "< b2 04 >");														// WR address 0x32: PLLVCODIV - RFDIV
+	spi_ax_transport(false, "< b2 24 >");														// WR address 0x32: PLLVCODIV - VCO2INT, RFDIV
+
+	/* PLLLOOPBOOST */
+	spi_ax_transport(false, "< b8 0b >");														// WR address 0x38: PLLLOOPBOOST - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5 (BW = 500 kHz for ICP = 1.7 mA)
+
+
+	/* MODCFGF */
+	spi_ax_transport(false, "< f1 60 00 >");													// WR address 0x160: MODCFGF - FREQSHAPE: External Loop Filter (BT = 0.0)
+
+	/* FSKDEV */
+	spi_ax_transport(false, "< f1 61 00 10 62 >");												// WR address 0x161: FSKDEV - FSKDEV: +/-4,000 Hz @ fxtal = 16 MHz
+
+	/* MODCFGA */
+	spi_ax_transport(false, "< f1 64 05 >");													// WR address 0x164: MODCFGA - AMPLSHAPE, TXDIFF
+
+	/* TXRATE */
+	spi_ax_transport(false, "< f1 65 00 04 ea >");												// WR address 0x165: TXRATE - TXRATE: 1,200 bit/s
 
 
 	/* XTALCAP */
@@ -2379,23 +2394,47 @@ void spi_ax_initRegisters_POCSAG_Tx(void)
 	/* 0xF00 */
 	spi_ax_transport(false, "< ff 00 0f >");													// WR address 0xF00:
 
+	/* 0xF0C */
+	spi_ax_transport(false, "< ff 0c 00 >");													// WR address 0xF0C (RX/TX) - Keep the default 0x00
+
+	/* 0xF0D = REF */
+	spi_ax_transport(false, "< ff 0d 03 >");													// WR address 0xF0D: REF (RX/TX) - Set to 0x03
+
+	/* 0xF10 - XTALOSC*/
+	spi_ax_transport(false, "< ff 10 03 >");													// WR address 0xF10 (RX/TX) - Set to 0x04 if a TCXO is used. If a crystal is used, set to 0x0D if the reference frequency (crystal or TCXO) is more than 43 MHz, or to 0x03 otherwise
+
+	/* 0xF11 - XTALAMPL */
+	spi_ax_transport(false, "< ff 11 07 >");													// WR address 0xF11 (RX/TX) - Set to 0x07 if a crystal is connected to CLK16P/CLK16N, or 0x00 if a TCXO is used
+
 	/* 0xF18 */
-	spi_ax_transport(false, "< ff 18 06 >");													// WR address 0xF18:
+	spi_ax_transport(false, "< ff 18 06 >");													// WR address 0xF18 (RX/TX)
+
+	/* 0xF1C */
+	spi_ax_transport(false, "< ff 1c 07 >");													// WR address 0xF1C (RX/TX) - Set to 0x07
 
 	/* 0xF34 */
 	spi_ax_transport(false, "< ff 34 28 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
+
+	/* 0xF35 */
+	spi_ax_transport(false, "< ff 35 10 >");													// WR address 0xF35 (RX/TX) - Set to 0x10 for reference frequencies (crystal or TCXO) less than 24.8 MHz (fXTALDIV = 1), or to 0x11 otherwise (fXTALDIV = 2)
+
+	/* 0xF44 */
+	spi_ax_transport(false, "< ff 44 25 >");													// WR address 0xF44 (RX/TX)
 }
 
 void spi_ax_initRegisters_POCSAG_Rx(void)
 {
 	/* PLLLOOP */
-	spi_ax_transport(false, "< b0 0a >");														// WR address 0x30: PLLLOOP
+	spi_ax_transport(false, "< b0 0b >");														// WR address 0x30: PLLLOOP - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5
 
 	/* PLLCPI */
 	spi_ax_transport(false, "< b1 10 >");														// WR address 0x31: PLLCPI
 
 	/* PLLVCODIV - mind you: check 0xF34, also */
-	spi_ax_transport(false, "< b2 04 >");														// WR address 0x32: PLLVCODIV - RFDIV
+	spi_ax_transport(false, "< b2 24 >");														// WR address 0x32: PLLVCODIV - VCO2INT, RFDIV
+
+	/* PLLLOOPBOOST */
+	spi_ax_transport(false, "< b8 0b >");														// WR address 0x38: PLLLOOPBOOST - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5 (BW = 500 kHz for ICP = 1.7 mA)
 
 
 	/* XTALCAP */
@@ -2405,11 +2444,47 @@ void spi_ax_initRegisters_POCSAG_Rx(void)
 	/* 0xF00 */
 	spi_ax_transport(false, "< ff 00 0f >");													// WR address 0xF00:
 
+	/* 0xF0C */
+	spi_ax_transport(false, "< ff 0c 00 >");													// WR address 0xF0C (RX/TX) - Keep the default 0x00
+
+	/* 0xF0D = REF */
+	spi_ax_transport(false, "< ff 0d 03 >");													// WR address 0xF0D: REF (RX/TX) - Set to 0x03
+
+	/* 0xF10 - XTALOSC*/
+	spi_ax_transport(false, "< ff 10 03 >");													// WR address 0xF10 (RX/TX) - Set to 0x04 if a TCXO is used. If a crystal is used, set to 0x0D if the reference frequency (crystal or TCXO) is more than 43 MHz, or to 0x03 otherwise
+
+	/* 0xF11 - XTALAMPL */
+	spi_ax_transport(false, "< ff 11 07 >");													// WR address 0xF11 (RX/TX) - Set to 0x07 if a crystal is connected to CLK16P/CLK16N, or 0x00 if a TCXO is used
+
 	/* 0xF18 */
-	spi_ax_transport(false, "< ff 18 06 >");													// WR address 0xF18:
+	spi_ax_transport(false, "< ff 18 02 >");													// WR address 0xF18 (RX/TX) - Differs between RX and TX
+
+	/* 0xF1C */
+	spi_ax_transport(false, "< ff 1c 07 >");													// WR address 0xF1C (RX/TX) - Set to 0x07
+
+	/* 0xF21 */
+	spi_ax_transport(false, "< ff 21 68 >");													// WR address 0xF21 (RX)
+
+	/* 0xF22 */
+	spi_ax_transport(false, "< ff 22 ff >");													// WR address 0xF22 (RX)
+
+	/* 0xF23 */
+	spi_ax_transport(false, "< ff 23 84 >");													// WR address 0xF23 (RX)
+
+	/* 0xF26 */
+	spi_ax_transport(false, "< ff 26 98 >");													// WR address 0xF26 (RX)
 
 	/* 0xF34 */
 	spi_ax_transport(false, "< ff 34 28 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
+
+	/* 0xF35 */
+	spi_ax_transport(false, "< ff 35 10 >");													// WR address 0xF35 (RX/TX) - Set to 0x10 for reference frequencies (crystal or TCXO) less than 24.8 MHz (fXTALDIV = 1), or to 0x11 otherwise (fXTALDIV = 2)
+
+	/* 0xF44 */
+	spi_ax_transport(false, "< ff 44 25 >");													// WR address 0xF44 (RX/TX)
+
+	/* 0xF72 */
+	spi_ax_transport(false, "< ff 72 00 >");													// WR address 0xF72 (RX) - Set to 0x06 if the framing mode is set to “Raw, Soft Bits” (register FRAMING), or to 0x00 otherwise
 }
 
 void spi_ax_initRegisters_POCSAG_Rx_WoR(void)
@@ -2425,11 +2500,10 @@ void spi_ax_initRegisters_POCSAG_Rx_WoR(void)
 	spi_ax_transport(false, "< f2 27 54 >");													// WR address 0x227: TMGRXAGC
 
 	/* TMGRXPREAMBLE1 */
-	spi_ax_transport(false, "< f2 29 17 >");													// WR address 0x229: TMGRXPREAMBLE1
+	spi_ax_transport(false, "< f2 29 18 >");													// WR address 0x229: TMGRXPREAMBLE1
 
 	/* PKTMISCFLAGS */
 	spi_ax_transport(false, "< f2 31 05 >");													// WR address 0x231: PKTMISCFLAGS
-
 }
 
 void spi_ax_initRegisters_POCSAG_Rx_cont(void)
@@ -2686,17 +2760,21 @@ void spi_start(void) {
 	spi_master_setup_device(&SPI_AX, &g_ax_spi_device_conf, SPI_MODE_0, 10000000, 0);			// max. 10 MHz (100 ns) when AX in POWERDOWN mode
 	spi_enable(&SPI_AX);
 
-	/* Syncing and sending reset command, then setting the default values */
-	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_PR1200, AX_SET_REGISTERS_VARIANT_RX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
-
 	/* Frequency settings */
 	{
 		#if defined(AX_TEST_VCO1_BANDENDS)
+
+		/* Syncing and sending reset command, then setting the default values */
+		spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_FSK, AX_SET_REGISTERS_VARIANT_RX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+
 		/* VCO A/B settings */
 		g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(400.0000);						// VCO1 (internal without ext. L) with RFDIV --> VCORA = 0x0e
 		g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(525.0000);						// VCO1 (internal without ext. L) with RFDIV --> VCORB = 0x02
 
 		#elif defined(AX_TEST_VCO1_FSK_TX) | defined(AX_TEST_VCO1_FSK_RX) | defined(AX_TEST_VCO1_POCSAG_TX) | defined(AX_TEST_VCO1_POCSAG_RX)
+			/* Syncing and sending reset command, then setting the default values */
+			spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_FSK, AX_SET_REGISTERS_VARIANT_RX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+
 			/* FSK */
 			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(433.9250);					// VCO1 (internal without ext. L) with RFDIV --> VCORA = 0x09
 			/*
@@ -2709,15 +2787,21 @@ void spi_start(void) {
 			*/
 
 			/* POCSAG */
-			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(439.9875);					// VCO1 (internal without ext. L) with RFDIV --> VCORB = ?
-			//g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(144.925);					// VCO2 (internal without ext. L) with RFDIV --> VCORB = 0x05
+			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(439.9875);					// VCO1 (internal without ext. L) with RFDIV --> VCORB = 0x09
+
 
 		#elif defined(AX_TEST_VCO2_BANDENDS)
+			/* Syncing and sending reset command, then setting the default values */
+			spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_FSK, AX_SET_REGISTERS_VARIANT_RX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+
 			/* VCO A/B settings */
 			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(137.0000);					// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x0e
-			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(149.0000);					// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x01
+			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(149.0000);					// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x00
 
 		#elif defined(AX_TEST_VCO2_ANALOG_FM_RX)
+			/* Syncing and sending reset command, then setting the default values */
+			spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_ANALOG_FM, AX_SET_REGISTERS_VARIANT_RX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+
 			/* APRS */
 			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.8000);					// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
 
@@ -2725,18 +2809,25 @@ void spi_start(void) {
 			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(145.6250);					// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x04
 
 		#elif defined(AX_TEST_VCO2_ANALOG_FM_TX)
+			/* Syncing and sending reset command, then setting the default values */
+			spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_ANALOG_FM, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+
 			/* Burst-Aussendungen fuer Steuerungszwecke - lower and upper frequencies */
 			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.9245);					// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
 			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(144.9255);					// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x05
 
 		#elif defined(AX_TEST_VCO2_PR1200_TX) | defined(AX_TEST_VCO2_PR1200_RX)
+			/* Syncing and sending reset command, then setting the default values */
+			spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_PR1200, AX_SET_REGISTERS_VARIANT_RX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+
 			/* APRS  */
 			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.8000);					// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
 
 			/* Burst-Aussendungen fuer Steuerungszwecke */
 			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(144.9250);					// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x05
+
 		#else
-			#error "STOP: frequency not set"
+			#error "STOP: frequencies not set"
 		#endif
 
 		/* FREQA <-- chan[0], FREQB <-- chan[1] */
@@ -2745,8 +2836,11 @@ void spi_start(void) {
 
 		/* Auto ranging and storing */
 		spi_ax_doRanging();
-	}
 
+#if 0
+		while (true) { nop(); }
+#endif
+	}
 
 	/* TEST BOX */
 	{
@@ -3090,17 +3184,21 @@ void spi_ax_test_Analog_FM_Tx(void)
 
 		#if 0
 		/* Set VCO-PLL to FREQB */
-		spi_ax_selectVcoFreq(true);
+		(void) spi_ax_selectVcoFreq(true);
 		#else
 		/* Set VCO-PLL to FREQA */
-		spi_ax_selectVcoFreq(false);
+		(void) spi_ax_selectVcoFreq(false);
 		#endif
 	}
 
 	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_FULLTX);
 
+	/* Set power level */
+	spi_ax_setPower_dBm(-20);
+
+
 	for (uint16_t cnt = 0x2000; cnt; cnt--) {
-		spi_ax_selectVcoFreq(toggle);															// Frequency is alternated  802x per second with the Debug code - 2106x per second with the Release code!
+		(void) spi_ax_selectVcoFreq(toggle);													// Frequency is alternated  802x per second with the Debug code - 2106x per second with the Release code!
 		toggle = !toggle;
 	}
 
@@ -3124,10 +3222,10 @@ void spi_ax_test_Analog_FM_Rx(void)
 
 		#if 0
 		/* Set VCO-PLL to FREQB */
-		spi_ax_selectVcoFreq(true);
+		(void) spi_ax_selectVcoFreq(true);
 		#else
 		/* Set VCO-PLL to FREQA */
-		spi_ax_selectVcoFreq(false);
+		(void) spi_ax_selectVcoFreq(false);
 		#endif
 	}
 
@@ -3158,15 +3256,18 @@ void spi_ax_test_PR1200_Tx(void)
 
 		#if 1
 		/* Set VCO-PLL to FREQA - 144.800 MHz */
-		spi_ax_selectVcoFreq(false);
+		(void) spi_ax_selectVcoFreq(false);
 		#else
 		/* Set VCO-PLL to FREQB - 144.925 MHz */
-		spi_ax_selectVcoFreq(true);
+		(void) spi_ax_selectVcoFreq(true);
 		#endif
 	}
 
 	/* Enabling the transmitter */
 	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_FULLTX);
+
+	/* Set power level */
+	spi_ax_setPower_dBm(-20);
 
 
 	/* FIFOCMD / FIFOSTAT */
@@ -3188,10 +3289,10 @@ void spi_ax_test_PR1200_Tx(void)
 
 	#elif 0
 	/* Direct enable line handling */
-	spi_ax_select_device();																		// clear PORT_C4
+	s_spi_ax_select_device();																		// clear PORT_C4
 	spi_write_packet(&SPI_AX, &cmd, 1);															// Read TIMER data
 	spi_read_packet(&SPI_AX, tmr01, 3);
-	spi_ax_deselect_device();																	// set   PORT_C4
+	s_spi_ax_deselect_device();																	// set   PORT_C4
 	#endif
 
 
@@ -3210,10 +3311,10 @@ void spi_ax_test_PR1200_Tx(void)
 
 	#elif 0
 	/* Direct enable line handling */
-	spi_ax_select_device();																		// clear PORT_C4
+	s_spi_ax_select_device();																		// clear PORT_C4
 	spi_write_packet(&SPI_AX, &cmd, 1);															// Read TIMER data
 	spi_read_packet(&SPI_AX, tmr02, 3);
-	spi_ax_deselect_device();																	// set   PORT_C4
+	s_spi_ax_deselect_device();																	// set   PORT_C4
 	// Debug-code: 8 µs
 	#endif
 
@@ -3495,10 +3596,10 @@ void spi_ax_test_PR1200_Rx(void)
 
 		#if 0
 		/* Set VCO-PLL to FREQB */
-		spi_ax_selectVcoFreq(true);
+		(void) spi_ax_selectVcoFreq(true);
 		#else
 		/* Set VCO-PLL to FREQA */
-		spi_ax_selectVcoFreq(false);
+		(void) spi_ax_selectVcoFreq(false);
 		#endif
 	}
 
@@ -3534,30 +3635,36 @@ void spi_ax_test_POCSAG_Tx(void)
 		spi_ax_doRanging();
 
 		/* Switch to VCO-B */
-		spi_ax_selectVcoFreq(true);
+		(void) spi_ax_selectVcoFreq(true);
 	}
 
 	/* Enabling the transmitter */
 	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_FULLTX);
 
+	/* Set power level */
+	spi_ax_setPower_dBm(-20);
+
 
 	/* FIFOCMD / FIFOSTAT */
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
-	#if 1
-	for (uint16_t count = 1000; count; count--) {
+	for (uint16_t count = 3; count; count--) {
 		do {
 			/* FIFOSTAT */
 			spi_ax_transport(false, "< 28 R1 >");
 		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
 
-		/* Enter POCSAG batches */
-		spi_ax_test_POCSAG_Tx_FIFO();
+		/* Enter POCSAG preamble */
+		spi_ax_test_POCSAG_Tx_FIFO_Preamble();
 
-		delay_ms(1000);
+		/* Enter POCSAG batches with message to destination RIC */
+		int32_t targetRIC	= 2030000UL;
+		const char msgBuf[]	= "DF4IAH: This is a demonstration message to my  RIC 2030000  using 80 characters.";
+		spi_ax_test_POCSAG_Tx_FIFO_Batches(targetRIC, msgBuf, strlen(msgBuf));
+
+		delay_ms(2000);
 		//delay_ms(7500);
 	}
-	#endif
 
 	/* FIFOCMD / FIFOSTAT */
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
@@ -3574,7 +3681,7 @@ void spi_ax_test_POCSAG_Tx(void)
 	}
 }
 
-void spi_ax_test_POCSAG_Tx_FIFO(void)
+void spi_ax_test_POCSAG_Tx_FIFO_Preamble(void)
 {
 	uint16_t idx = 0;
 
@@ -3585,37 +3692,10 @@ void spi_ax_test_POCSAG_Tx_FIFO(void)
 
 	/* PREAMBLE - 576 bits */
 	for (uint8_t paIdx = 0; paIdx < 18; paIdx++) {
-		g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_PREAMBLE, 0);
-		g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_PREAMBLE, 1);
-		g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_PREAMBLE, 2);
-		g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_PREAMBLE, 3);
-	}
-
-	/* Batches */
-	uint8_t batchAdr = 0;
-	for (uint8_t batchIdx = 0; batchIdx < 2; batchIdx++) {
-		/* SYNC */
-		g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_SYNCWORD, 0);
-		g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_SYNCWORD, 1);
-		g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_SYNCWORD, 2);
-		g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_SYNCWORD, 3);
-
-		/* Frames */
-		for (uint8_t frIdx = 0; frIdx < 8; frIdx++) {
-			/* WORD */
-			g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_IDLEWORD, 0);
-			g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_IDLEWORD, 1);
-			g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_IDLEWORD, 2);
-			g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_IDLEWORD, 3);
-			batchAdr++;
-
-			/* WORD */
-			g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_IDLEWORD, 0);
-			g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_IDLEWORD, 1);
-			g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_IDLEWORD, 2);
-			g_ax_spi_packet_buffer[idx++] = sel_u8_from_u32(AX_POCSAG_IDLEWORD, 3);
-			batchAdr++;
-		}
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 0);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 1);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 2);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 3);
 	}
 
 	/* Set length for FIFO DATA command */
@@ -3628,6 +3708,94 @@ void spi_ax_test_POCSAG_Tx_FIFO(void)
 
 	/* FIFO do a COMMIT */
 	spi_ax_transport(false, "< a8 04 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
+}
+
+void spi_ax_test_POCSAG_Tx_FIFO_Batches(uint32_t tgtAddr, const char* msgBuf, uint8_t len)
+{
+	const uint32_t tgtAddrHi	= tgtAddr >> 3;
+	const uint8_t  tgtAddrLo	= tgtAddr % 8;
+	uint16_t msgNblIdx		= 0U;
+	uint8_t batchAddr		= 0U;
+	uint8_t batchIdx		= 0U;
+	bool inMsg				= false;
+	bool msgDone			= false;
+
+	/* Sanity checks */
+	if (!tgtAddr || !msgBuf || (len > 80)) {
+		return;
+	}
+
+	/* Process message as much batches it needs */
+	do {
+		uint16_t idx = 0;
+
+		/* Wait until enough space for next batch is available */
+		{
+			const uint16_t spaceNeeded = 4 + 4 + 8 * (4 + 4);
+			uint16_t fifoFree = 0;
+
+			do {
+				/* FIFOFREE */
+				spi_ax_transport(false, "< 2c R2 >");											// RD address 0x2C: FIFOFREE
+				fifoFree = 0x1ff & (((uint16_t)g_ax_spi_packet_buffer[0] << 8) | g_ax_spi_packet_buffer[1]);
+			} while (fifoFree < spaceNeeded);
+		}
+
+		g_ax_spi_packet_buffer[idx++] = 0xA9;													// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
+		g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_CMD_DATA_TX_RX;
+		g_ax_spi_packet_buffer[idx++] = 0;														// Dummy entry for now
+		g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART;							// FIFO flag byte
+
+		/* SYNC */
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 0);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 1);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 2);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 3);
+
+		/* Frames */
+		for (uint8_t frIdx = 0; frIdx < 8; frIdx++) {
+			for (uint8_t cwIdx = 0; cwIdx < 2; cwIdx++) {
+				uint32_t pad;
+
+				/* WORD */
+				if (!inMsg && !msgDone && (tgtAddrLo == batchAddr)) {
+					inMsg = true;
+					pad = spi_ax_create_POCSAG_checksumParity((tgtAddrHi << 1) | AX_POCSAG_CW_IS_ADDR | AX_POCSAG_CW_MODE3_ALPHA);
+
+				} else if (inMsg) {
+					pad = spi_ax_create_POCSAG_checksumParity((spi_ax_POCASG_get3Nbls(msgBuf, len, msgNblIdx) << 1) | AX_POCSAG_CW_IS_MSG);
+					msgNblIdx += 3;
+
+					if (len < (msgNblIdx >> 1)) {
+						inMsg	= false;
+						msgDone = true;
+					}
+
+				} else {
+					pad = AX_POCSAG_CODES_IDLEWORD;
+				}
+
+				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 0);
+				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 1);
+				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 2);
+				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 3);
+				batchAddr++;
+			}
+		}
+
+		/* Set length for FIFO DATA command */
+		g_ax_spi_packet_buffer[    2] = idx - 3;												// Length
+
+		/* FIFO data enter */
+		spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
+		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, idx);
+		spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+
+		/* FIFO do a COMMIT */
+		spi_ax_transport(false, "< a8 04 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
+
+		batchIdx++;
+	} while (!msgDone);
 }
 
 /* POCSAG RX */
@@ -3645,7 +3813,7 @@ void spi_ax_test_POCSAG_Rx(void)
 		spi_ax_doRanging();
 
 		/* Set VCO-PLL to FREQB */
-		spi_ax_selectVcoFreq(true);
+		(void) spi_ax_selectVcoFreq(true);
 	}
 
 	/* FIFOCMD / FIFOSTAT */
