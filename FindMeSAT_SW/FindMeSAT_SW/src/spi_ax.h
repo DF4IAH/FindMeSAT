@@ -199,6 +199,8 @@ bool spi_ax_selectVcoFreq(bool isFreqB);
 void spi_ax_initRegisters_FSK(void);
 void spi_ax_initRegisters_FSK_Tx(void);
 void spi_ax_initRegisters_FSK_Rx(void);
+void spi_ax_init_FSK_Tx(void);
+void spi_ax_init_FSK_Rx(void);
 
 void spi_ax_initRegisters_PR1200(void);
 void spi_ax_initRegisters_PR1200_Tx(void);
@@ -206,16 +208,26 @@ void spi_ax_initRegisters_PR1200_Rx(void);
 void spi_ax_initRegisters_PR1200_Rx_WoR(void);
 void spi_ax_initRegisters_PR1200_Rx_cont(void);
 void spi_ax_initRegisters_PR1200_Rx_cont_SingleParamSet(void);
+void spi_ax_init_PR1200_Tx(void);
+void spi_ax_run_PR1200_Tx_FIFO_APRS(const char addrAry[][6], uint8_t* ssidAry, uint8_t addrCnt, const char* aprsMsg, uint8_t aprsMsgLen);
+void spi_ax_util_PR1200_Tx_FIFO_Flags(uint8_t count);
+void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][6], uint8_t* ssidAry, uint8_t addrCnt);
+void spi_ax_util_PR1200_Tx_FIFO_InformationField(const char* aprsMsg, uint8_t aprsMsgLen);
+void spi_ax_init_PR1200_Rx(void);
 
 void spi_ax_initRegisters_POCSAG(void);
 void spi_ax_initRegisters_POCSAG_Tx(void);
 void spi_ax_initRegisters_POCSAG_Rx(void);
 void spi_ax_initRegisters_POCSAG_Rx_WoR(void);
 void spi_ax_initRegisters_POCSAG_Rx_cont(void);
+void spi_ax_init_POCSAG_Tx(void);
+void spi_ax_init_POCSAG_Rx(void);
 
 void spi_ax_initRegisters_AnlogFM(void);
 void spi_ax_initRegisters_AnlogFM_Tx(void);
 void spi_ax_initRegisters_AnlogFM_Rx(void);
+void spi_ax_init_AnalogFM_Tx(void);
+void spi_ax_init_AnalogFM_Rx(void);
 
 void spi_init(void);
 void spi_start(void);
@@ -228,12 +240,8 @@ void spi_ax_test_Analog_FM_Tx(void);
 void spi_ax_test_Analog_FM_Rx(void);
 
 void spi_ax_test_PR1200_Tx(void);
-void spi_ax_test_PR1200_Tx_FIFO_Flags(uint8_t count);
 void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal_AddressField(void);
 void spi_ax_test_PR1200_Tx_FIFO_Lev2_minimal(void);
-void spi_ax_test_PR1200_Tx_FIFO_APRS_AddressField(void);
-void spi_ax_test_PR1200_Tx_FIFO_APRS_InformationField(void);
-void spi_ax_test_PR1200_Tx_FIFO_APRS(void);
 void spi_ax_test_PR1200_Rx(void);
 
 void spi_ax_test_POCSAG(void);
