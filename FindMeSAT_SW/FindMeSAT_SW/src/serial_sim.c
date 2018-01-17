@@ -753,10 +753,12 @@ void serial_start(void)
 		/* Activation of all functionalities */
 		serial_gsm_activation(g_gsm_enable);
 
+		#if 0
 		/* Turn on echoing */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_ATE_X, 1);
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
 		serial_sim808_send(PM_TWI1_INIT_ONBOARD_SIM808_CRLF, strlen(PM_TWI1_INIT_ONBOARD_SIM808_CRLF), true);
+		#endif
 
 		#if 0
 		/* Request the IMSI number of the GSM device */
