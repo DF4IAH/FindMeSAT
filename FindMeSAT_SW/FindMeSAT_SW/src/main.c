@@ -1346,7 +1346,6 @@ void ax_aprs_enable(bool enable)
 {
 	/* atomic */
 	g_ax_aprs_enable = enable;
-
 	save_globals(EEPROM_SAVE_BF__AX);
 }
 
@@ -1354,8 +1353,14 @@ void ax_enable(bool enable)
 {
 	/* atomic */
 	g_ax_enable = enable;
-
 	save_globals(EEPROM_SAVE_BF__AX);
+
+	if (enable) {
+		spi_ax_init_PR1200_Tx();
+
+	} else {
+		spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+	}
 }
 
 void backlight_mode_pwm(int16_t mode_pwm)
@@ -3583,7 +3588,7 @@ static void task_main_aprs(void)
 			const char addrAry[][6]	= { "APXFMS", "DF4IAH", "WIDE1", "WIDE2" };
 			const uint8_t ssidAry[]	= { 0, 8, 1, 2 };
 
-			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, 4,  l_msg_buf, l_msg_buf_len);
+			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, sizeof(addrAry) / 6,  l_msg_buf, l_msg_buf_len);
 		}
 
 		/* Push APRS message via the GSM / GPRS network */

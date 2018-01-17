@@ -31,6 +31,40 @@
 #include "externals.h"
 
 
+
+/* BLOCK of DEFINITIONS */
+
+#	define  AX_RUN_VCO2_APRS_TX			true
+
+//# define	AX_TEST_VCO1_BANDENDS		true
+//# define	AX_TEST_VCO1_FSK_TX			true
+//# define	AX_TEST_VCO1_FSK_RX			true
+//# define	AX_TEST_VCO1_POCSAG_TX		true
+//# define	AX_TEST_VCO1_POCSAG_RX		true
+
+//# define	AX_TEST_VCO2_BANDENDS		true
+//# define	AX_TEST_VCO2_ANALOG_FM_TX	true
+//# define	AX_TEST_VCO2_ANALOG_FM_RX	true
+//# define	AX_TEST_VCO2_PR1200_TX		true
+//# define	AX_TEST_VCO2_PR1200_RX		true
+
+
+#if defined(AX_TEST_VCO1_BANDENDS) | defined(AX_TEST_VCO1_FSK_TX)		| defined(AX_TEST_VCO1_FSK_RX)			| defined(AX_TEST_VCO1_FSK_RX)		| defined(AX_TEST_VCO1_POCSAG_RX) |	\
+	defined(AX_TEST_VCO2_BANDENDS) | defined(AX_TEST_VCO2_ANALOG_FM_TX)	| defined(AX_TEST_VCO2_ANALOG_FM_RX)	| defined(AX_TEST_VCO2_PR1200_TX)	| defined(AX_TEST_VCO2_PR1200_RX)
+# ifndef AX_TEST
+# define AX_TEST true
+# endif
+#endif
+
+
+
+/* Forward declarations */
+#ifdef AX_TEST
+static void s_spi_start_testBox(void);
+#endif
+
+
+
 inline
 static uint8_t s_sel_u8_from_u32(uint32_t in_u32, uint8_t sel)
 {
@@ -2080,10 +2114,10 @@ void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][6], const uint
 		return;
 	}
 
-	g_ax_spi_packet_buffer[idx++] = 0xA9;													// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
+	g_ax_spi_packet_buffer[idx++] = 0xA9;														// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
 	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_CMD_DATA_TX_RX;
-	g_ax_spi_packet_buffer[idx++] = 0;														// Dummy entry for now
-	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART;							// FIFO flag byte
+	g_ax_spi_packet_buffer[idx++] = 0;															// Dummy entry for now
+	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART;								// FIFO flag byte
 
 	for (uint8_t addrIdx = 0; addrIdx < addrCnt; addrIdx++) {
 		const char* addrStr = &addrAry[addrIdx][0];
@@ -2092,20 +2126,20 @@ void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][6], const uint
 
 		for (uint8_t addrStrIdx = 0; addrStrIdx < 6; addrStrIdx++) {
 			uint8_t c = addrStrIdx < strLen ?  toupper((char)*(addrStr + addrStrIdx)) : ' ';
-			g_ax_spi_packet_buffer[idx++] = (c << 1)	| 0;								// Address: dest. string
+			g_ax_spi_packet_buffer[idx++] = (c << 1)	| 0;									// Address: dest. string
 		}
 
 		uint8_t pf = (addrIdx == 1) ?  1 : 0;
 		uint8_t addrEnd = (addrIdx == addrCnt - 1) ?  1 : 0;
-		uint8_t val = (pf << 7) | (0b11 << 5) | (ssid << 1)	| addrEnd;						// Address: dest. SSID
+		uint8_t val = (pf << 7) | (0b11 << 5) | (ssid << 1)	| addrEnd;							// Address: dest. SSID
 		g_ax_spi_packet_buffer[idx++] = val;
 	}
 
-	g_ax_spi_packet_buffer[idx++] = (0b0 << 4) |  0b11;										// Control: UI frame with no Poll bit set
-	g_ax_spi_packet_buffer[idx++] = 0xf0;													// PID
+	g_ax_spi_packet_buffer[idx++] = (0b0 << 4) |  0b11;											// Control: UI frame with no Poll bit set
+	g_ax_spi_packet_buffer[idx++] = 0xf0;														// PID
 
 	/* Set length for FIFO DATA command */
-	g_ax_spi_packet_buffer[    2] = idx - 3;												// Length
+	g_ax_spi_packet_buffer[    2] = idx - 3;													// Length
 
 	/* FIFO data enter */
 	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
@@ -2915,20 +2949,6 @@ void spi_init(void) {
 }
 
 void spi_start(void) {
-
-//# define	AX_TEST_VCO1_BANDENDS		true
-//# define	AX_TEST_VCO1_FSK_TX			true
-//# define	AX_TEST_VCO1_FSK_RX			true
-//# define	AX_TEST_VCO1_POCSAG_TX		true
-//# define	AX_TEST_VCO1_POCSAG_RX		true
-
-//# define	AX_TEST_VCO2_BANDENDS		true
-//# define	AX_TEST_VCO2_ANALOG_FM_TX	true
-//# define	AX_TEST_VCO2_ANALOG_FM_RX	true
-//# define	AX_TEST_VCO2_PR1200_TX		true
-//# define	AX_TEST_VCO2_PR1200_RX		true
-
-
 	g_ax_spi_device_conf.id = AX_SEL;
 
 	spi_master_init(&SPI_AX);
@@ -2937,14 +2957,25 @@ void spi_start(void) {
 
 	/* Frequency settings */
 	{
-		#if defined(AX_TEST_VCO1_BANDENDS)
+		#if defined(AX_RUN_VCO2_APRS_TX)
+			/* Default setting for the application: APRS */
+			/* Syncing and sending reset command, then setting the default values */
+			spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_PR1200, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
-		/* Syncing and sending reset command, then setting the default values */
-		spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_FSK, AX_SET_REGISTERS_VARIANT_RX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+			/* APRS  */
+			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.8000);					// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
 
-		/* VCO A/B settings */
-		g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(400.0000);						// VCO1 (internal without ext. L) with RFDIV --> VCORA = 0x0e
-		g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(525.0000);						// VCO1 (internal without ext. L) with RFDIV --> VCORB = 0x02
+			/* Burst-Aussendungen fuer Steuerungszwecke */
+			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(144.9250);					// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x05
+
+
+		#elif defined(AX_TEST_VCO1_BANDENDS)
+			/* Syncing and sending reset command, then setting the default values */
+			spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_FSK, AX_SET_REGISTERS_VARIANT_RX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+
+			/* VCO A/B settings */
+			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(400.0000);						// VCO1 (internal without ext. L) with RFDIV --> VCORA = 0x0e
+			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(525.0000);						// VCO1 (internal without ext. L) with RFDIV --> VCORB = 0x02
 
 		#elif defined(AX_TEST_VCO1_FSK_TX) | defined(AX_TEST_VCO1_FSK_RX) | defined(AX_TEST_VCO1_POCSAG_TX) | defined(AX_TEST_VCO1_POCSAG_RX)
 			/* Syncing and sending reset command, then setting the default values */
@@ -2963,7 +2994,6 @@ void spi_start(void) {
 
 			/* POCSAG */
 			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(439.9875);					// VCO1 (internal without ext. L) with RFDIV --> VCORB = 0x09
-
 
 		#elif defined(AX_TEST_VCO2_BANDENDS)
 			/* Syncing and sending reset command, then setting the default values */
@@ -3002,15 +3032,7 @@ void spi_start(void) {
 			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(144.9250);					// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x05
 
 		#else
-			/* Default setting for the application: APRS */
-			/* Syncing and sending reset command, then setting the default values */
-			spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_PR1200, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
-
-			/* APRS  */
-			g_ax_spi_freq_chan[0] = spi_ax_calcFrequency_Mhz2Regs(144.8000);					// VCO2 (internal with    ext. L) with RFDIV --> VCORA = 0x05
-
-			/* Burst-Aussendungen fuer Steuerungszwecke */
-			g_ax_spi_freq_chan[1] = spi_ax_calcFrequency_Mhz2Regs(144.9250);					// VCO2 (internal with    ext. L) with RFDIV --> VCORB = 0x05
+			#error "A FREQA / FREQB pair has to be set."
 		#endif
 
 		/* FREQA <-- chan[0], FREQB <-- chan[1] */
@@ -3020,44 +3042,58 @@ void spi_start(void) {
 		/* Auto ranging and storing */
 		spi_ax_doRanging();
 
-		#if 0
-			while (true) { nop(); }
+		#ifndef AX_RUN_VCO2_APRS_TX
+			#if 0
+				while (true) { nop(); }
+			#endif
 		#endif
 	}
 
-	/* TEST BOX */
-	{
-		/*  AX_TEST_ANALOG_FM_TX */
-		#if defined(AX_TEST_VCO2_ANALOG_FM_TX)
-		spi_ax_test_Analog_FM_Tx();
+	#if defined (AX_RUN_VCO2_APRS_TX)
+		if (g_ax_enable) {
+			spi_ax_init_PR1200_Tx();
+		}
 
-		/* AX_TEST_ANALOG_FM_RX */
-		#elif defined(AX_TEST_VCO2_ANALOG_FM_RX)
-		spi_ax_test_Analog_FM_Rx();
-
-
-		/* AX_TEST_PR1200_TX */
-		#elif defined(AX_TEST_VCO2_PR1200_TX)
-		spi_ax_test_PR1200_Tx();
-
-		/* AX_TEST_PR1200_RX */
-		#elif defined(AX_TEST_VCO2_PR1200_RX)
-		spi_ax_test_PR1200_Rx();
-
-
-		/* AX_TEST_POCSAG_TX */
-		#elif defined(AX_TEST_VCO1_POCSAG_TX)
-		spi_ax_test_POCSAG_Tx();
-
-		/* AX_TEST_POCSAG_RX */
-		#elif defined(AX_TEST_VCO1_POCSAG_RX)
-		spi_ax_test_POCSAG_Rx();
-		#endif
-	}
+	#else
+		/* TEST BOX */
+		s_spi_start_testBox();
+	#endif
 }
 
 
 /* Debugging */
+
+#ifdef AX_TEST
+static void s_spi_start_testBox(void)
+{
+	//  AX_TEST_ANALOG_FM_TX
+	#if defined(AX_TEST_VCO2_ANALOG_FM_TX)
+	spi_ax_test_Analog_FM_Tx();
+
+	// AX_TEST_ANALOG_FM_RX
+	#elif defined(AX_TEST_VCO2_ANALOG_FM_RX)
+	spi_ax_test_Analog_FM_Rx();
+
+
+	// AX_TEST_PR1200_TX
+	#elif defined(AX_TEST_VCO2_PR1200_TX)
+	spi_ax_test_PR1200_Tx();
+
+	// AX_TEST_PR1200_RX
+	#elif defined(AX_TEST_VCO2_PR1200_RX)
+	spi_ax_test_PR1200_Rx();
+
+
+	// AX_TEST_POCSAG_TX
+	#elif defined(AX_TEST_VCO1_POCSAG_TX)
+	spi_ax_test_POCSAG_Tx();
+
+	// AX_TEST_POCSAG_RX
+	#elif defined(AX_TEST_VCO1_POCSAG_RX)
+	spi_ax_test_POCSAG_Rx();
+	#endif
+}
+#endif
 
 void spi_ax_monitor_levels(void)
 {

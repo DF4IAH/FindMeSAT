@@ -725,10 +725,6 @@ void serial_start(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_IFC_XX, 2, 2);
 	serial_sim808_sendAndResponse(g_prepare_buf, len);
 
-	/* Turn off echoing */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_ATE_X, 0);
-	serial_sim808_sendAndResponse(g_prepare_buf, len);
-
 	/* Turn on error descriptions */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_CMEE_X, 2);
 	serial_sim808_sendAndResponse(g_prepare_buf, len);
@@ -737,12 +733,7 @@ void serial_start(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_CREG_X, 2);
 	serial_sim808_sendAndResponse(g_prepare_buf, len);
 
-	/* Activation of all functionalities */
-	serial_gsm_activation(g_gsm_enable);
-
-	//serial_sim808_send(PM_TWI1_INIT_ONBOARD_SIM808_CRLF, strlen(PM_TWI1_INIT_ONBOARD_SIM808_CRLF), true);
-
-	#if 0
+	#if 1
 	/* Request the version number of the firmware */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_01);
 	serial_sim808_sendAndResponse(g_prepare_buf, len);
@@ -754,13 +745,26 @@ void serial_start(void)
 	serial_sim808_sendAndResponse(g_prepare_buf, len);
 	#endif
 
-	#if 0
 	if (g_gsm_enable) {
+		/* Turn off echoing */
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_ATE_X, 0);
+		serial_sim808_sendAndResponse(g_prepare_buf, len);
+
+		/* Activation of all functionalities */
+		//serial_gsm_activation(g_gsm_enable);
+
+		//serial_sim808_send(PM_TWI1_INIT_ONBOARD_SIM808_CRLF, strlen(PM_TWI1_INIT_ONBOARD_SIM808_CRLF), true);
+
+		/* Turn on echoing */
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_ATE_X, 1);
+		serial_sim808_sendAndResponse(g_prepare_buf, len);
+
+		#if 0
 		/* Request the IMSI number of the GSM device */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_03);
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
+		#endif
 	}
-	#endif
 
 	/* Enable GNSS (GPS, Glonass, ...) and send a position fix request */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_01, 1);
