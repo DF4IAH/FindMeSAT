@@ -88,7 +88,7 @@ typedef enum C_SERIAL_SIM808_GSM_SETFUNC_ENUM {
 
 void serial_sim808_send(const char* msg, uint8_t len, bool doWait);
 bool serial_sim808_sendAndResponse(const char* msg, uint8_t len);
-void serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode);
+void serial_sim808_gsm_setFuncMode(C_SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode);
 void serial_sim808_gsm_setPin(const char* pin);
 
 void serial_gsm_activation(bool enable);

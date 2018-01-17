@@ -1830,7 +1830,7 @@ void shutdown(bool doReset)
 	/* Shutdown SIM808 */
 	//if (g_gsm_mode != OFF) {
 	{
-		serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_OFF);
+		serial_sim808_gsm_setFuncMode(C_SERIAL_SIM808_GSM_SETFUNC_OFF);
 		serial_sim808_gsm_shutdown();
 		serial_shutdown();
 	}

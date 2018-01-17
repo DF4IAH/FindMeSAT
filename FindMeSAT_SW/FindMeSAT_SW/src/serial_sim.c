@@ -253,7 +253,7 @@ bool serial_sim808_sendAndResponse(const char* msg, uint8_t len)
 	return false;
 }
 
-void serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode)
+void serial_sim808_gsm_setFuncMode(C_SERIAL_SIM808_GSM_SETFUNC_ENUM_t funcMode)
 {
 	/* Prepare message to the SIM808 */
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SET_FUNC_1, funcMode);
@@ -279,7 +279,7 @@ void serial_gsm_activation(bool enable)
 {
 	if (enable) {
 		if (g_gsm_enable) {
-			serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_ON);
+			serial_sim808_gsm_setFuncMode(C_SERIAL_SIM808_GSM_SETFUNC_ON);
 			serial_sim808_gsm_setPin(g_gsm_login_pwd);
 		}
 
@@ -287,7 +287,7 @@ void serial_gsm_activation(bool enable)
 		if (g_gsm_enable && g_gsm_aprs_enable) {
 			serial_gsm_gprs_link_openClose(false);
 		}
-		serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_OFF);
+		serial_sim808_gsm_setFuncMode(C_SERIAL_SIM808_GSM_SETFUNC_OFF);
 	}
 }
 
@@ -751,13 +751,12 @@ void serial_start(void)
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
 
 		/* Activation of all functionalities */
-		//serial_gsm_activation(g_gsm_enable);
-
-		//serial_sim808_send(PM_TWI1_INIT_ONBOARD_SIM808_CRLF, strlen(PM_TWI1_INIT_ONBOARD_SIM808_CRLF), true);
+		serial_gsm_activation(g_gsm_enable);
 
 		/* Turn on echoing */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_ATE_X, 1);
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
+		serial_sim808_send(PM_TWI1_INIT_ONBOARD_SIM808_CRLF, strlen(PM_TWI1_INIT_ONBOARD_SIM808_CRLF), true);
 
 		#if 0
 		/* Request the IMSI number of the GSM device */
