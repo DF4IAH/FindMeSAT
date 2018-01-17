@@ -2,7 +2,13 @@
 # Automatically-generated file. Do not edit or delete the file
 ################################################################################
 
-src\serial.c
+src\ASF\common\services\spi\xmega_spi\spi_master.c
+
+src\ASF\xmega\drivers\spi\spi.c
+
+src\serial_sim.c
+
+src\spi_ax.c
 
 src\usb.c
 
@@ -22,7 +28,7 @@ src\dds.c
 
 src\interpreter.c
 
-src\twi.c
+src\twi_1_2.c
 
 src\ASF\common\boards\user_board\init.c
 

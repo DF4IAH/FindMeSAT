@@ -22,7 +22,7 @@
 
 #include "main.h"
 #include "usb.h"
-#include "twi.h"
+#include "twi_1_2.h"
 
 #include "interpreter.h"
 
@@ -53,6 +53,8 @@ const char					PM_HELP_APRS_10[]						=	"\t\tip_port=0-65535: APRS IP port.\r\n"
 const char					PM_HELP_APRS_11[]						=	"\t\th_user=<str>: APRS Host user login.\r\n";
 const char					PM_HELP_APRS_12[]						=	"\t\th_pwd=<str>: APRS Host password.\r\n";
 const char					PM_HELP_AT_1[]							= "AT\t\tCMD to send to the SIM808.\r\n";
+const char					PM_HELP_AX_1[]							= "ax=\t\t0: OFF, 1: ON.\r\n";
+const char					PM_HELP_AX_2[]							=	"\t\taprs=0: APRS via AX5243 OFF, 1: ON.\r\n";
 const char					PM_HELP_BIAS_1[]						= "bias=\t\t0-63: bias voltage ";
 const char					PM_HELP_BIAS_2[]						=	"for LCD contrast.\r\n";
 const char					PM_HELP_BL_1[]							= "bl=\t\t0-255: backlight PWM, ";
@@ -108,6 +110,8 @@ PROGMEM_DECLARE(const char, PM_HELP_APRS_10[]);
 PROGMEM_DECLARE(const char, PM_HELP_APRS_11[]);
 PROGMEM_DECLARE(const char, PM_HELP_APRS_12[]);
 PROGMEM_DECLARE(const char, PM_HELP_AT_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_AX_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_AX_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_BIAS_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_BIAS_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_BL_1[]);
@@ -172,6 +176,9 @@ void printHelp(void)
 	udi_write_tx_msg_P(PM_HELP_APRS_12);
 
 	udi_write_tx_msg_P(PM_HELP_AT_1);
+
+	udi_write_tx_msg_P(PM_HELP_AX_1);
+	udi_write_tx_msg_P(PM_HELP_AX_2);
 
 	udi_write_tx_msg_P(PM_HELP_BIAS_1);
 	udi_write_tx_msg_P(PM_HELP_BIAS_2);
@@ -248,6 +255,8 @@ const char					PM_IP_CMD_aprs_ip_port[]				= "aprs=ip_port=";
 const char					PM_IP_CMD_aprs_user[]					= "aprs=user=";
 const char					PM_IP_CMD_aprs_pwd[]					= "aprs=pwd=";
 const char					PM_IP_CMD_AT[]							= "AT";
+const char					PM_IP_CMD_ax_num[]						= "ax=";
+const char					PM_IP_CMD_ax_aprs[]						= "ax=aprs=";
 const char					PM_IP_CMD_A_slash[]						= "A/";
 const char					PM_IP_CMD_bias[]						= "bias=";
 const char					PM_IP_CMD_bl[]							= "bl=";
@@ -287,6 +296,8 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_ip_port[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_user[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_aprs_pwd[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_AT[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_ax_num[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_ax_aprs[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_A_slash[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_bias[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_bl[]);
@@ -374,6 +385,18 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 				   (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_A_slash,	sizeof(PM_IP_CMD_A_slash) - 1)) ||
 				   ((1 <= cmdLine_buf[0]) && (cmdLine_buf[0] <= 26))) {
 				serial_sim808_send(cmdLine_buf, cmdLine_len, false);
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_ax_aprs,		sizeof(PM_IP_CMD_ax_aprs) - 1)) {
+			int val[1] = { 0 };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_ax_aprs) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
+				ax_aprs_enable(val[0] != 0);
+			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_ax_num,			sizeof(PM_IP_CMD_ax_num) - 1)) {
+			int val[1] = { 0 };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_ax_num) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
+				ax_enable(val[0] != 0);
+			}
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_bias,			sizeof(PM_IP_CMD_bias) - 1)) {
 			int val[1] = { 0 };

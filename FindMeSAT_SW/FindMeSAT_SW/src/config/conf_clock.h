@@ -64,8 +64,8 @@
 //#define CONFIG_PLL0_MUL             (24000000UL / BOARD_XOSC_HZ)
 
 /* PLL_SRC_XOSC = 20 MHz --> CONFIG_PLL0_MUL = 3 gives 60 MHz */
-#define CONFIG_PLL0_MUL             3
-#define CONFIG_PLL0_DIV             1
+#define CONFIG_PLL0_MUL  3
+#define CONFIG_PLL0_DIV  1
 
 /* External oscillator frequency range */
 /** 0.4 to 2 MHz frequency range */
@@ -100,6 +100,7 @@
 
 /* Use to enable and select RTC clock source */
 //#define CONFIG_RTC_SOURCE                 SYSCLK_RTCSRC_ULP
-#define CONFIG_RTC_SOURCE                   SYSCLK_RTCSRC_TOSC32
+#define CONFIG_RTC_SOURCE                   SYSCLK_RTCSRC_TOSC
+//#define CONFIG_RTC_SOURCE                 SYSCLK_RTCSRC_TOSC32
 
 #endif /* CONF_CLOCK_H_INCLUDED */

@@ -13,8 +13,8 @@
 
 
 /* VERSION: YYM, MDD */
-#define VERSION_HIGH												171
-#define VERSION_LOW													206
+#define VERSION_HIGH												180
+#define VERSION_LOW													117
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -147,6 +147,12 @@ typedef enum APRS_MODE_ENUM {
 	APRS_MODE__ON,
 } APRS_MODE_ENUM_t;
 
+typedef enum AX_BF_ENUM {
+	AX__ENABLE						= 0b00000001,
+	AX__APRS_ENABLE					= 0b00000010,
+} AX_BF_ENUM_t;
+
+
 typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__VERSION			= 0x0000,						// i32
 	//						next:	= 0x0004,
@@ -203,7 +209,9 @@ typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__APRS_PWD			= 0x009A,						// char[6]
 
 	EEPROM_ADDR__GSM_PIN			= 0x00A2,						// char[14]
-	//						next:	= 0x00B0,
+
+	EEPROM_ADDR__AX_BF				= 0x00B0,						// char[1]
+	//						next:	= 0x00B1,
 
 	EEPROM_ADDR__APRS_LINK_SERVICE	= 0x0100,						// char[32]
 	EEPROM_ADDR__APRS_LINK_USER		= 0x0120,						// char[16]
@@ -223,6 +231,7 @@ typedef enum EEPROM_SAVE_BF_ENUM {
 	EEPROM_SAVE_BF__ENV				= 0b0000000001000000,
 	EEPROM_SAVE_BF__GSM				= 0b0000000010000000,
 	EEPROM_SAVE_BF__APRS			= 0b0000000100000000,
+	EEPROM_SAVE_BF__AX				= 0b0000001000000000,
 } EEPROM_SAVE_BF_ENUM_t;
 
 
@@ -285,12 +294,21 @@ typedef enum APRS_ALERT_REASON_ENUM {		// Shorthand in APRS message
 #define APRS_ALERT_REASON_SHORTHAND			"?TPGAMR"
 
 
+typedef enum CALC_CRC16_CCITT_ENUM {
+	CALC_CRC16_CCITT_RESET					= 0,
+	CALC_CRC16_CCITT_ADD,
+	CALC_CRC16_CCITT_RETURN_LSB,
+	CALC_CRC16_CCITT_RETURN_MSB
+} CALC_CRC16_CCITT_ENUM_t;
+
+
 void save_globals(EEPROM_SAVE_BF_ENUM_t bf);
 char* cueBehind(char* ptr, char delim);
 int myStringToFloat(const char* ptr, float* out);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
 char* ipProto_2_ca(uint8_t aprs_ip_proto);
 char* copyStr(char* target, uint8_t targetSize, const char* source);
+uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_first);
 void adc_app_enable(bool enable);
 void aprs_num_update(uint8_t mode);
 void aprs_link_service_update(const char service[]);
@@ -303,6 +321,8 @@ void aprs_call_update(const char call[]);
 void aprs_ssid_update(const char ssid[]);
 void aprs_user_update(const char user[]);
 void aprs_pwd_update(const char pwd[]);
+void ax_aprs_enable(bool enable);
+void ax_enable(bool enable);
 void backlight_mode_pwm(int16_t mode_pwm);
 void bias_update(uint8_t bias);
 void calibration_mode(CALIBRATION_MODE_ENUM_t mode);

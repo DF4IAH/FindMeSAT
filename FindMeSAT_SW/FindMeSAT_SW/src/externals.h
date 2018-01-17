@@ -10,7 +10,10 @@
 #define EXTERNALS_H_
 
 
-#include "serial.h"
+#include "interpreter.h"
+#include "serial_sim.h"
+#include "twi_1_2.h"
+#include "spi_ax.h"
 
 
 extern bool							g_adc_enabled;
@@ -179,6 +182,14 @@ extern int16_t						g_twi1_hygro_DP_100;
 extern uint8_t						g_twi2_lcd_version;
 extern bool							g_twi2_lcd_repaint;
 
+extern bool							g_ax_enable;
+extern bool							g_ax_aprs_enable;
+extern struct spi_device			g_ax_spi_device_conf;
+extern uint8_t						g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH];
+extern uint32_t						g_ax_spi_freq_chan[2];
+extern uint8_t						g_ax_spi_range_chan[2];
+extern uint8_t						g_ax_spi_vcoi_chan[2];
+
 extern int32_t						g_xo_mode_pwm;
 
 extern struct adc_config			g_adc_a_conf;
@@ -242,6 +253,8 @@ extern sched_entry_t				g_sched_data[C_SCH_SLOT_CNT];
 extern uint8_t						g_sched_sort[C_SCH_SLOT_CNT];
 
 extern char							g_prepare_buf[C_TX_BUF_SIZE];
+
+extern const uint16_t				g_ax_pwr_ary[C_AX_PRW_LENGTH];
 
 
 /* TWI communications  */

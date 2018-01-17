@@ -39,9 +39,10 @@
 
 #include "conf_dac.h"
 #include "dds.h"
-#include "serial.h"
 #include "usb.h"
-#include "twi.h"
+#include "serial_sim.h"
+#include "twi_1_2.h"
+#include "spi_ax.h"
 #include "interpreter.h"
 
 #include "main.h"
@@ -216,6 +217,14 @@ volatile int16_t			g_twi1_hygro_DP_100								= 0;
 uint8_t						g_twi2_lcd_version								= 0;
 volatile bool				g_twi2_lcd_repaint								= false;
 
+bool						g_ax_enable										= false;	// EEPROM
+bool						g_ax_aprs_enable								= false;	// EEPROM
+struct spi_device			g_ax_spi_device_conf							= { 0 };
+volatile uint8_t			g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH]	= { 0 };
+volatile uint32_t			g_ax_spi_freq_chan[2]							= { 0 };
+volatile uint8_t			g_ax_spi_range_chan[2]							= { 0 };
+volatile uint8_t			g_ax_spi_vcoi_chan[2]							= { 0 };
+
 volatile int32_t			g_xo_mode_pwm									= 0L;		// EEPROM
 
 struct adc_config			g_adc_a_conf									= { 0 };
@@ -279,6 +288,90 @@ volatile sched_entry_t		g_sched_data[C_SCH_SLOT_CNT]					= { 0 };
 volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]					= { 0 };
 
 char						g_prepare_buf[C_TX_BUF_SIZE]					= { 0 };
+
+
+const uint16_t				g_ax_pwr_ary[C_AX_PRW_LENGTH]					= {
+	0x0000UL,
+	0x000aUL,
+
+	// -10.0 .. - 9.1
+	  170,	  173,	  175,	  178,	  180,	  182,	  184,	  186,	  188,	  189,
+
+	// - 9.0 .. - 8.1
+	  191,	  193,	  194,	  196,	  198,	  199,	  201,	  203,	  205,    207,
+
+	// - 8.0 .. - 7.1
+	  209,	  211,	  214,	  216,	  219,	  221,	  224,	  227,	  230,	  233,
+
+	// - 7.0 .. - 6.1
+	  236,	  239,	  243,	  246,	  250,	  253,	  257,	  260,	  264,	  267,
+
+	// - 6.0 .. - 5.1
+	  271,	  275,	  278,	  282,	  285,	  289,	  292,	  296,	  299,	  303,
+
+	// - 5.0 .. - 4.1
+	  306,	  309,	  313,	  317,	  320,	  324,	  327,	  331,	  335,	  338,
+
+	// - 4.0 .. - 3.1
+	  342,	  346,	  350,	  354,	  358,	  362,	  366,	  370,	  374,	  379,
+
+	// - 3.0 .. - 2.1
+	  383,	  387,	  392,	  397,	  401,	  406,	  411,	  416,	  421,	  426,
+
+	// - 2.0 .. - 1.1
+	  431,	  436,	  441,	  447,	  452,	  457,	  462,	  467,	  471,	  476,
+
+	// - 1.0 .. - 0.1
+	  480,	  484,	  488,	  492,	  495,	  499,	  502,	  506,	  510,	  514,
+
+	//   0.0 .. + 0.9
+	  519,	  524,	  529,	  535,	  540,	  547,	  553,	  559,	  566,	  573,
+
+	// + 1.0 .. + 1.9
+	  580,	  587,	  594,	  602,	  609,	  616,	  624,	  632,	  640,	  648,
+
+	// + 2.0 .. + 2.1
+	  656,	  664,	  673,	  681,	  690,	  699,	  708,	  718,	  727,	  737,
+
+	// + 3.0 .. + 3.9
+	  747,	  757,	  768,	  778,	  789,	  800,	  812,	  824,	  836,	  849,
+
+	// + 4.0 .. + 4.9
+	  862,	  876,	  889,	  903,	  917,	  930,	  942,	  954,	  965,	  974,
+
+	// + 5.0 .. + 5.9
+	  982,	  988,	  993,	  997,	 1001,	 1004,	 1008,	 1012,	 1016,	 1022,
+
+	// + 6.0 .. + 6.9
+	 1030,	 1039,	 1051,	 1064,	 1078,	 1095,	 1112,	 1131,	 1151,	 1171,
+
+	// + 7.0 .. + 7.9
+	 1193,	 1215,	 1238,	 1261,	 1284,	 1307,	 1329,	 1350,	 1369,	 1388,
+
+	// + 8.0 .. + 8.9
+	 1404,	 1419,	 1431,	 1443,	 1454,	 1466,	 1477,	 1489,	 1503,	 1518,
+
+	// + 9.0 .. + 9.9
+	 1536,	 1556,	 1579,	 1604,	 1630,	 1657,	 1685,	 1712,	 1740,	 1766,
+
+	// +10.0 .. +10.9
+	 1792,	 1816,	 1839,	 1861,	 1884,	 1907,	 1931,	 1956,	 1984,	 2014,
+
+	// +11.0 .. +11.9
+	 2048,	 2085,	 2126,	 2169,	 2215,	 2263,	 2313,	 2363,	 2414,	 2465,
+
+	// +12.0 .. +12.9
+	 2516,	 2566,	 2616,	 2666,	 2717,	 2770,	 2824,	 2881,	 2941,	 3004,
+
+	// +13.0 .. +13.9
+	 3072,	 3144,	 3220,	 3298,	 3378,	 3459,	 3540,	 3619,	 3696,	 3770,
+
+	// +14.0 .. +14.9
+	 3840,	 3905,	 3963,	 4015,	 4058,	 4093,	 4117,	 4131,	 4132,	 4120,
+
+	// +15.0
+	 4095
+};
 
 
 const char					PM_APRS_TX_HTTP_L1[]							= "POST / HTTP/1.1\r\n";
@@ -648,6 +741,23 @@ static void init_globals(void)
 		cpu_irq_restore(flags);
 	}
 
+	/* AX5243 */
+	{
+		uint8_t		val_ui8		= 0U;
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_BF, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
+			g_ax_enable				= val_ui8 & AX__ENABLE;
+			g_ax_aprs_enable		= val_ui8 & AX__APRS_ENABLE;
+		}
+
+		g_ax_spi_freq_chan[0]	= 0;
+		g_ax_spi_freq_chan[1]	= 0;
+		g_ax_spi_range_chan[0]	= 0x10;
+		g_ax_spi_range_chan[1]	= 0x10;
+		g_ax_spi_vcoi_chan[0]	= 0;
+		g_ax_spi_vcoi_chan[1]	= 0;
+	}
+
 	/* GSM */
 	{
 		uint8_t		val_ui8		= 0U;
@@ -847,6 +957,15 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		nvm_write(INT_EEPROM, EEPROM_ADDR__9AXIS_MAG_FACT_Z,	(void*)&l_twi1_gyro_2_mag_factz,	sizeof(l_twi1_gyro_2_mag_factz));
 	}
 
+	/* AX5243 */
+	if (bf & EEPROM_SAVE_BF__AX) {
+		uint8_t val_ui8 = (g_ax_enable			?  AX__ENABLE		: 0x00)
+						| (g_ax_aprs_enable		?  AX__APRS_ENABLE	: 0x00);
+
+		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_BF,				&val_ui8,							sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_PIN,				(void*)&g_gsm_login_pwd,			sizeof(g_gsm_login_pwd));
+	}
+
 	/* GSM */
 	if (bf & EEPROM_SAVE_BF__GSM) {
 		uint8_t val_ui8 = (g_gsm_enable			?  GSM__ENABLE		: 0x00)
@@ -1040,6 +1159,55 @@ char* copyStr(char* target, uint8_t targetSize, const char* source)
 	return target;
 }
 
+/* For the CRC-CCITT 16 implementation: @see <LINUX_SOURCE>/lib/crc-ccitt.c  and  include/linux/crc-ccitt.h  and  drivers/net/hamradio/hdlcdrv.c
+ * as well as  @see http://practicingelectronics.com/articles/article-100003/article.php
+ * This function is verified against the "123456789" sequence which has the result of 0x906E
+ */
+#define NEED_CRC_CCITT true
+#ifdef  NEED_CRC_CCITT
+uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_first)
+{
+	static uint16_t s_crc16 = 0xffff;
+
+	switch (selection) {
+		case CALC_CRC16_CCITT_RESET:
+		{
+			s_crc16 = 0xffff;
+			return 0;
+		}
+		break;
+
+		case CALC_CRC16_CCITT_ADD:
+		{
+			for (uint8_t idx = 0, inp = byte_LSB_first; idx < 8; idx++) {
+				uint16_t fb	= (inp & 0x0001) ^ (s_crc16 & 0x0001);						// Step 1: Feedback = Input.bit[0] XOR CRC.bit[15]
+
+				s_crc16 >>= 1;															// Step 2: CRC >>= 1;  Input >>= 1;
+				inp		>>= 1;
+
+				s_crc16	 ^= fb * 0x8408U;												// Step 3: CRC ^= (Feedback * POLY)
+			}
+		}
+		break;
+
+		case CALC_CRC16_CCITT_RETURN_LSB:
+		{
+			return (uint8_t) (~s_crc16 & 0xff);
+		}
+		break;
+
+		case CALC_CRC16_CCITT_RETURN_MSB:
+		{
+			return (uint8_t) ((~s_crc16 >> 8) & 0xff);
+		}
+		break;
+
+		default: { }
+	}
+	return byte_LSB_first;
+}
+#endif
+
 
 void adc_app_enable(bool enable)
 {
@@ -1171,6 +1339,27 @@ void aprs_pwd_update(const char pwd[])
 {
 	if (copyStr(g_aprs_login_pwd, sizeof(g_aprs_login_pwd), pwd)) {
 		save_globals(EEPROM_SAVE_BF__APRS);
+	}
+}
+
+void ax_aprs_enable(bool enable)
+{
+	/* atomic */
+	g_ax_aprs_enable = enable;
+	save_globals(EEPROM_SAVE_BF__AX);
+}
+
+void ax_enable(bool enable)
+{
+	/* atomic */
+	g_ax_enable = enable;
+	save_globals(EEPROM_SAVE_BF__AX);
+
+	if (enable) {
+		spi_ax_init_PR1200_Tx();
+
+	} else {
+		spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 	}
 }
 
@@ -1641,7 +1830,7 @@ void shutdown(bool doReset)
 	/* Shutdown SIM808 */
 	//if (g_gsm_mode != OFF) {
 	{
-		serial_sim808_gsm_setFunc(C_SERIAL_SIM808_GSM_SETFUNC_OFF);
+		serial_sim808_gsm_setFuncMode(C_SERIAL_SIM808_GSM_SETFUNC_OFF);
 		serial_sim808_gsm_shutdown();
 		serial_shutdown();
 	}
@@ -3118,7 +3307,10 @@ static void task_main_aprs(void)
 
 
 	/* Once a second to be processed - do not send when APRS is disabled nor GPS ready */
-	if (s_lock || (s_now_sec == l_now_sec) || !g_gsm_enable || !g_gsm_aprs_enable || !g_gns_fix_status) {
+	if ( s_lock ||
+		(s_now_sec == l_now_sec) ||
+		!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && g_ax_aprs_enable)) ||
+		!g_gns_fix_status) {
 		return;
 	}
 
@@ -3265,20 +3457,22 @@ static void task_main_aprs(void)
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
 
 				/* Re-activate GPRS when call came in */
-				if (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST) {
-					static uint8_t s_count = 0;
+				if (g_gsm_enable && g_gsm_aprs_enable) {
+					if (l_aprs_alert_reason == APRS_ALERT_REASON__REQUEST) {
+						static uint8_t s_count = 0;
 
-					if (++s_count < g_gsm_ring) {
-						/* Repeat that packet as requested number of times */
-						l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N1;
-						l_aprs_alert_last = l_now_sec + C_APRS_ALERT_MESSAGE_DELAY_SEC;
+						if (++s_count < g_gsm_ring) {
+							/* Repeat that packet as requested number of times */
+							l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N1;
+							l_aprs_alert_last = l_now_sec + C_APRS_ALERT_MESSAGE_DELAY_SEC;
 
-					} else {
-						s_count = 0;
+						} else {
+							s_count = 0;
+						}
+
+						/* Reset the RING info */
+						g_gsm_ring = 0;
 					}
-
-					/* Reset the RING info */
-					g_gsm_ring = 0;
 				}
 			}
 			break;
@@ -3389,10 +3583,18 @@ static void task_main_aprs(void)
 	if (l_msg_buf_len) {
 		l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_MSGEND);
 
-		/* Transport APRS message to network */
-		{
+		/* Push via AX5243 (VHF/UHF) */
+		if (g_ax_enable && g_ax_aprs_enable) {
+			const char addrAry[][6]	= { "APXFMS", "DF4IAH", "WIDE1", "WIDE2" };
+			const uint8_t ssidAry[]	= { 0, 8, 1, 2 };
+
+			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, sizeof(addrAry) / 6,  l_msg_buf, l_msg_buf_len);
+		}
+
+		/* Push APRS message via the GSM / GPRS network */
+		if (g_gsm_enable && g_gsm_aprs_enable) {
+			/* Init GPRS link opening */
 			if (!g_gsm_aprs_gprs_connected) {
-				/* Init GPRS link opening */
 				serial_gsm_gprs_link_openClose(true);
 			}
 
@@ -3413,9 +3615,12 @@ static void task_main_aprs(void)
 	}
 
 	/* Shutdown GPRS link when state machine is idling */
-	if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
-		serial_gsm_gprs_link_openClose(false);
+	if (g_gsm_enable && g_gsm_aprs_enable) {
+		if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__NOOP) {
+			serial_gsm_gprs_link_openClose(false);
+		}
 	}
+
 
 	/* Write back to the global variables */
 	{
@@ -3480,7 +3685,8 @@ int main(void)
 	if (g_dac_enabled) {
 		dac_init();		// DAC
 	}
-	twi_init();			// I2C / TWI
+	twi_init();			// I2C / TWI to 1:Baro,Hygro,9axis 2:LCD
+	spi_init();			// SPI to AX5243
 
 	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
 
@@ -3497,6 +3703,7 @@ int main(void)
 	if (g_adc_enabled) {
 		adc_start();	// Start AD convertions
 	}
+	spi_start();		// Start SPI communication with the AX5243
 
 	/* Init of USB system */
 	usb_init();			// USB device stack start function to enable stack and start USB
