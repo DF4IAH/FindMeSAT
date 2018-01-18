@@ -49,6 +49,7 @@ extern uint8_t						g_gns_fix_status;
 extern float						g_gns_lat;
 extern float						g_gns_lon;
 extern float						g_gns_msl_alt_m;
+extern float						g_gns_speed_kn;
 extern float						g_gns_speed_kmPh;
 extern float						g_gns_course_deg;
 extern uint8_t						g_gns_fix_mode;
@@ -184,6 +185,7 @@ extern bool							g_twi2_lcd_repaint;
 
 extern bool							g_ax_enable;
 extern bool							g_ax_aprs_enable;
+extern bool							g_ax_pocsag_enable;
 extern struct spi_device			g_ax_spi_device_conf;
 extern uint8_t						g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH];
 extern uint32_t						g_ax_spi_freq_chan[2];

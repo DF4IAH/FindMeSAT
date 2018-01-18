@@ -2057,7 +2057,7 @@ void spi_ax_init_PR1200_Tx(void)
 		(void) spi_ax_selectVcoFreq(false);
 
 		/* Set VCO-PLL to FREQB - 144.925 MHz */
-		//(void) spi_ax_selectVcoFreq(true);
+		(void) spi_ax_selectVcoFreq(true);
 	}
 
 	/* Enabling the transmitter */
@@ -2071,7 +2071,7 @@ void spi_ax_init_PR1200_Tx(void)
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 }
 
-void spi_ax_run_PR1200_Tx_FIFO_APRS(const char addrAry[][6], const uint8_t* ssidAry, uint8_t addrCnt, const char* aprsMsg, uint8_t aprsMsgLen)
+void spi_ax_run_PR1200_Tx_FIFO_APRS(const char addrAry[][C_PR1200_CALL_LENGTH], const uint8_t* ssidAry, uint8_t addrCnt, const char* aprsMsg, uint8_t aprsMsgLen)
 {
 	/* Enter an APRS UI frame */
 
@@ -2105,7 +2105,7 @@ void spi_ax_util_PR1200_Tx_FIFO_Flags(uint8_t count)
 	spi_ax_transport(false, "< a8 04 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
 }
 
-void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][6], const uint8_t* ssidAry, uint8_t addrCnt)
+void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][C_PR1200_CALL_LENGTH], const uint8_t* ssidAry, uint8_t addrCnt)
 {
 	uint16_t idx = 0;
 
@@ -2122,9 +2122,9 @@ void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][6], const uint
 	for (uint8_t addrIdx = 0; addrIdx < addrCnt; addrIdx++) {
 		const char* addrStr = &addrAry[addrIdx][0];
 		uint8_t ssid = 0x0f & ssidAry[addrIdx];
-		uint8_t strLen = strnlen(addrStr, 6);
+		uint8_t strLen = strnlen(addrStr, C_PR1200_CALL_LENGTH);
 
-		for (uint8_t addrStrIdx = 0; addrStrIdx < 6; addrStrIdx++) {
+		for (uint8_t addrStrIdx = 0; addrStrIdx < C_PR1200_CALL_LENGTH; addrStrIdx++) {
 			uint8_t c = addrStrIdx < strLen ?  toupper((char)*(addrStr + addrStrIdx)) : ' ';
 			g_ax_spi_packet_buffer[idx++] = (c << 1)	| 0;									// Address: dest. string
 		}
@@ -2182,7 +2182,7 @@ void spi_ax_util_PR1200_Tx_FIFO_InformationField(const char* aprsMsg, uint8_t ap
 
 void spi_ax_init_PR1200_Rx(void)
 {
-
+	// TODO: implementation
 }
 
 
@@ -2716,12 +2716,166 @@ void spi_ax_initRegisters_POCSAG_Rx_cont(void)
 
 void spi_ax_init_POCSAG_Tx(void)
 {
+	/* Syncing and sending reset command, then setting the POCSAG values for transmission */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_POCSAG, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
+	/* Frequency settings */
+	{
+		spi_ax_setFrequency2Regs(0, false);
+		spi_ax_setFrequency2Regs(1, true);
+
+		/* Recall ranging values */
+		spi_ax_doRanging();
+
+		/* Set VCO-PLL to FREQA - 439.9875 MHz */
+		(void) spi_ax_selectVcoFreq(false);
+
+		/* Set VCO-PLL to FREQB - 439.9875 MHz */
+		(void) spi_ax_selectVcoFreq(true);
+	}
+
+	/* Enabling the transmitter */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_FULLTX);
+
+	/* Set power level */
+	spi_ax_setPower_dBm(-20);
+
+
+	/* FIFOCMD / FIFOSTAT */
+	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+}
+
+void spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTargetRIC, const char* pocsagMsg, uint8_t pocsagMsgLen)
+{
+	/* Enter a POCSAG message */
+
+	/* 1 - Flags */
+	spi_ax_util_POCSAG_Tx_FIFO_Preamble();														// 576 bits of 0/1 patterns
+
+	/* 2 - Target RIC, message to be sent */
+	spi_ax_util_POCSAG_Tx_FIFO_Batches(pocsagTargetRIC, pocsagMsg, pocsagMsgLen);
 }
 
 void spi_ax_init_POCSAG_Rx(void)
 {
+	// TODO: implementation
+}
 
+void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void)
+{
+	uint16_t idx = 0;
+
+	g_ax_spi_packet_buffer[idx++] = 0xA9;														// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
+	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_CMD_DATA_TX_RX;
+	g_ax_spi_packet_buffer[idx++] = 0;															// Dummy entry for now
+	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART;								// FIFO flag byte
+
+	/* PREAMBLE - 576 bits = 18 words*/
+	for (uint8_t paIdx = 0; paIdx < 18; paIdx++) {
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 0);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 1);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 2);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 3);
+	}
+
+	/* Set length for FIFO DATA command */
+	g_ax_spi_packet_buffer[    2] = idx - 3;													// Length
+
+	/* FIFO data enter */
+	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
+	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, idx);
+	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+
+	/* FIFO do a COMMIT */
+	spi_ax_transport(false, "< a8 04 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
+}
+
+void spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, const char* pocsagMsg, uint8_t pocsagMsgLen)
+{
+	const uint32_t tgtAddrHi	= pocsagTargetRIC >> 3;
+	const uint8_t  tgtAddrLo	= pocsagTargetRIC % 8;
+	uint16_t msgNblIdx			= 0U;
+	uint8_t batchAddr			= 0U;
+	uint8_t batchIdx			= 0U;
+	bool inMsg					= false;
+	bool msgDone				= false;
+
+	/* Sanity checks */
+	if (!pocsagTargetRIC || !pocsagMsg || (pocsagMsgLen > 80)) {
+		return;
+	}
+
+	/* Process message as much batches it needs */
+	do {
+		uint16_t idx = 0;
+
+		/* Wait until enough space for next batch is available */
+		{
+			const uint16_t spaceNeeded = 4 + 4 + 8 * (4 + 4);
+			uint16_t fifoFree = 0;
+
+			do {
+				/* FIFOFREE */
+				spi_ax_transport(false, "< 2c R2 >");											// RD address 0x2C: FIFOFREE
+				fifoFree = 0x1ff & (((uint16_t)g_ax_spi_packet_buffer[0] << 8) | g_ax_spi_packet_buffer[1]);
+			} while (fifoFree < spaceNeeded);
+		}
+
+		g_ax_spi_packet_buffer[idx++] = 0xA9;													// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
+		g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_CMD_DATA_TX_RX;
+		g_ax_spi_packet_buffer[idx++] = 0;														// Dummy entry for now
+		g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART;							// FIFO flag byte
+
+		/* SYNC */
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 0);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 1);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 2);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 3);
+
+		/* Frames */
+		for (uint8_t frIdx = 0; frIdx < 8; frIdx++) {
+			for (uint8_t cwIdx = 0; cwIdx < 2; cwIdx++) {
+				uint32_t pad;
+
+				/* WORD */
+				if (!inMsg && !msgDone && (tgtAddrLo == batchAddr)) {
+					inMsg = true;
+					pad = spi_ax_create_POCSAG_checksumParity((tgtAddrHi << 1) | AX_POCSAG_CW_IS_ADDR | AX_POCSAG_CW_MODE3_ALPHA);
+
+					} else if (inMsg) {
+					pad = spi_ax_create_POCSAG_checksumParity((spi_ax_POCASG_get3Nbls(pocsagMsg, pocsagMsgLen, msgNblIdx) << 1) | AX_POCSAG_CW_IS_MSG);
+					msgNblIdx += 3;
+
+					if (pocsagMsgLen < (msgNblIdx >> 1)) {
+						inMsg	= false;
+						msgDone = true;
+					}
+
+					} else {
+					pad = AX_POCSAG_CODES_IDLEWORD;
+				}
+
+				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 0);
+				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 1);
+				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 2);
+				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 3);
+				batchAddr++;
+			}
+		}
+
+		/* Set length for FIFO DATA command */
+		g_ax_spi_packet_buffer[    2] = idx - 3;												// Length
+
+		/* FIFO data enter */
+		spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
+		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, idx);
+		spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+
+		/* FIFO do a COMMIT */
+		spi_ax_transport(false, "< a8 04 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
+
+		batchIdx++;
+	} while (!msgDone);
 }
 
 
@@ -3673,12 +3827,12 @@ void spi_ax_test_POCSAG_Tx(void)
 		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
 
 		/* Enter POCSAG preamble */
-		spi_ax_test_POCSAG_Tx_FIFO_Preamble();
+		spi_ax_util_POCSAG_Tx_FIFO_Preamble();
 
 		/* Enter POCSAG batches with message to destination RIC */
 		int32_t targetRIC	= 2030000UL;
 		const char msgBuf[]	= "DF4IAH: This is a demonstration message to my  RIC 2030000  using 80 characters.";
-		spi_ax_test_POCSAG_Tx_FIFO_Batches(targetRIC, msgBuf, strlen(msgBuf));
+		spi_ax_util_POCSAG_Tx_FIFO_Batches(targetRIC, msgBuf, strlen(msgBuf));
 
 		delay_ms(2000);
 		//delay_ms(7500);
@@ -3697,123 +3851,6 @@ void spi_ax_test_POCSAG_Tx(void)
 	while (true) {
 		nop();
 	}
-}
-
-void spi_ax_test_POCSAG_Tx_FIFO_Preamble(void)
-{
-	uint16_t idx = 0;
-
-	g_ax_spi_packet_buffer[idx++] = 0xA9;														// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
-	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_CMD_DATA_TX_RX;
-	g_ax_spi_packet_buffer[idx++] = 0;															// Dummy entry for now
-	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART;								// FIFO flag byte
-
-	/* PREAMBLE - 576 bits */
-	for (uint8_t paIdx = 0; paIdx < 18; paIdx++) {
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 0);
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 1);
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 2);
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 3);
-	}
-
-	/* Set length for FIFO DATA command */
-	g_ax_spi_packet_buffer[    2] = idx - 3;													// Length
-
-	/* FIFO data enter */
-	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
-	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, idx);
-	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-
-	/* FIFO do a COMMIT */
-	spi_ax_transport(false, "< a8 04 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
-}
-
-void spi_ax_test_POCSAG_Tx_FIFO_Batches(uint32_t tgtAddr, const char* msgBuf, uint8_t len)
-{
-	const uint32_t tgtAddrHi	= tgtAddr >> 3;
-	const uint8_t  tgtAddrLo	= tgtAddr % 8;
-	uint16_t msgNblIdx		= 0U;
-	uint8_t batchAddr		= 0U;
-	uint8_t batchIdx		= 0U;
-	bool inMsg				= false;
-	bool msgDone			= false;
-
-	/* Sanity checks */
-	if (!tgtAddr || !msgBuf || (len > 80)) {
-		return;
-	}
-
-	/* Process message as much batches it needs */
-	do {
-		uint16_t idx = 0;
-
-		/* Wait until enough space for next batch is available */
-		{
-			const uint16_t spaceNeeded = 4 + 4 + 8 * (4 + 4);
-			uint16_t fifoFree = 0;
-
-			do {
-				/* FIFOFREE */
-				spi_ax_transport(false, "< 2c R2 >");											// RD address 0x2C: FIFOFREE
-				fifoFree = 0x1ff & (((uint16_t)g_ax_spi_packet_buffer[0] << 8) | g_ax_spi_packet_buffer[1]);
-			} while (fifoFree < spaceNeeded);
-		}
-
-		g_ax_spi_packet_buffer[idx++] = 0xA9;													// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
-		g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_CMD_DATA_TX_RX;
-		g_ax_spi_packet_buffer[idx++] = 0;														// Dummy entry for now
-		g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART;							// FIFO flag byte
-
-		/* SYNC */
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 0);
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 1);
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 2);
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 3);
-
-		/* Frames */
-		for (uint8_t frIdx = 0; frIdx < 8; frIdx++) {
-			for (uint8_t cwIdx = 0; cwIdx < 2; cwIdx++) {
-				uint32_t pad;
-
-				/* WORD */
-				if (!inMsg && !msgDone && (tgtAddrLo == batchAddr)) {
-					inMsg = true;
-					pad = spi_ax_create_POCSAG_checksumParity((tgtAddrHi << 1) | AX_POCSAG_CW_IS_ADDR | AX_POCSAG_CW_MODE3_ALPHA);
-
-				} else if (inMsg) {
-					pad = spi_ax_create_POCSAG_checksumParity((spi_ax_POCASG_get3Nbls(msgBuf, len, msgNblIdx) << 1) | AX_POCSAG_CW_IS_MSG);
-					msgNblIdx += 3;
-
-					if (len < (msgNblIdx >> 1)) {
-						inMsg	= false;
-						msgDone = true;
-					}
-
-				} else {
-					pad = AX_POCSAG_CODES_IDLEWORD;
-				}
-
-				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 0);
-				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 1);
-				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 2);
-				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 3);
-				batchAddr++;
-			}
-		}
-
-		/* Set length for FIFO DATA command */
-		g_ax_spi_packet_buffer[    2] = idx - 3;												// Length
-
-		/* FIFO data enter */
-		spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
-		spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, idx);
-		spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-
-		/* FIFO do a COMMIT */
-		spi_ax_transport(false, "< a8 04 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
-
-		batchIdx++;
-	} while (!msgDone);
 }
 
 /* POCSAG RX */

@@ -76,7 +76,7 @@ const char					PM_TWI1_INIT_HYGRO_04[]				= "TWI-onboard:  INIT success.\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_04[]);
 const char					PM_TWI1_INIT_HYGRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_05[]);
-const char					PM_TWI1_INIT_ONBOARD_HYGRO_OK[]		= "Init: Hygro success";
+const char					PM_TWI1_INIT_ONBOARD_HYGRO_OK[]		= "Init: Hygro        success.";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_HYGRO_OK[]);
 
 const char					PM_TWI1_INIT_GYRO_01[]				= "\r\nTWI-onboard: Gyro MPU-9250 -   I2C address: 0x%02X, 0x%02X\r\n";
@@ -89,7 +89,7 @@ const char					PM_TWI1_INIT_GYRO_04[]				= "TWI-onboard:  INIT success.\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_04[]);
 const char					PM_TWI1_INIT_GYRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_05[]);
-const char					PM_TWI1_INIT_ONBOARD_GYRO_OK[]		= "Init: Gyro  success";
+const char					PM_TWI1_INIT_ONBOARD_GYRO_OK[]		= "Init: Gyro         success.";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_GYRO_OK[]);
 
 const char					PM_TWI1_INIT_BARO_01[]				= "\r\nTWI-onboard: Baro MS560702BA03-50 -  I2C address: 0x%02X\r\n";
@@ -104,7 +104,7 @@ const char					PM_TWI1_INIT_BARO_05[]				= "TWI-onboard:  INIT success.\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_05[]);
 const char					PM_TWI1_INIT_BARO_06[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_06[]);
-const char					PM_TWI1_INIT_ONBOARD_BARO_OK[]		= "Init: Baro  success";
+const char					PM_TWI1_INIT_ONBOARD_BARO_OK[]		= "Init: Baro         success.";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_BARO_OK[]);
 
 const char					PM_TWI1_INIT_ONBOARD_01[]			= "-----------\r\n\r\n";
@@ -412,7 +412,7 @@ static void init_twi1_hygro(void)
 		g_twi1_hygro_valid = true;
 
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_HYGRO_OK);
-		task_twi2_lcd_str(8, 3 * 10, g_prepare_buf);
+		task_twi2_lcd_str(8,  3 * 10, g_prepare_buf);
 
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_HYGRO_04);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -695,7 +695,7 @@ void init_twi1_gyro(void)
 		g_twi1_gyro_valid = true;
 
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_GYRO_OK);
-		task_twi2_lcd_str(8, 4 * 10, g_prepare_buf);
+		task_twi2_lcd_str(8,  4 * 10, g_prepare_buf);
 
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_GYRO_04);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -758,7 +758,7 @@ static void init_twi1_baro(void)
 		g_twi1_baro_valid = true;
 
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_BARO_OK);
-		task_twi2_lcd_str(8, 5 * 10, g_prepare_buf);
+		task_twi2_lcd_str(8,  5 * 10, g_prepare_buf);
 
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_BARO_05);
 		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);

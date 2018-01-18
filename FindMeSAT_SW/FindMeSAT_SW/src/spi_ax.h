@@ -26,6 +26,8 @@
 #define C_AX_PRW_LENGTH												253
 #define C_SPI_AX_BUFFER_LENGTH										512
 
+#define C_PR1200_CALL_LENGTH										6
+
 
 typedef enum SPI_AX_TRPT_STATE {
 	SPI_AX_TRPT_STATE_DISABLED										= 0x00,
@@ -209,9 +211,9 @@ void spi_ax_initRegisters_PR1200_Rx_WoR(void);
 void spi_ax_initRegisters_PR1200_Rx_cont(void);
 void spi_ax_initRegisters_PR1200_Rx_cont_SingleParamSet(void);
 void spi_ax_init_PR1200_Tx(void);
-void spi_ax_run_PR1200_Tx_FIFO_APRS(const char addrAry[][6], const uint8_t* ssidAry, uint8_t addrCnt, const char* aprsMsg, uint8_t aprsMsgLen);
+void spi_ax_run_PR1200_Tx_FIFO_APRS(const char addrAry[][C_PR1200_CALL_LENGTH], const uint8_t* ssidAry, uint8_t addrCnt, const char* aprsMsg, uint8_t aprsMsgLen);
 void spi_ax_util_PR1200_Tx_FIFO_Flags(uint8_t count);
-void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][6], const uint8_t* ssidAry, uint8_t addrCnt);
+void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][C_PR1200_CALL_LENGTH], const uint8_t* ssidAry, uint8_t addrCnt);
 void spi_ax_util_PR1200_Tx_FIFO_InformationField(const char* aprsMsg, uint8_t aprsMsgLen);
 void spi_ax_init_PR1200_Rx(void);
 
@@ -221,7 +223,10 @@ void spi_ax_initRegisters_POCSAG_Rx(void);
 void spi_ax_initRegisters_POCSAG_Rx_WoR(void);
 void spi_ax_initRegisters_POCSAG_Rx_cont(void);
 void spi_ax_init_POCSAG_Tx(void);
+void spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTargetRIC, const char* pocsagMsg, uint8_t pocsagMsgLen);
 void spi_ax_init_POCSAG_Rx(void);
+void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void);
+void spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, const char* pocsagMsg, uint8_t pocsagMsgLen);
 
 void spi_ax_initRegisters_AnlogFM(void);
 void spi_ax_initRegisters_AnlogFM_Tx(void);
@@ -246,8 +251,6 @@ void spi_ax_test_PR1200_Rx(void);
 
 void spi_ax_test_POCSAG(void);
 void spi_ax_test_POCSAG_Tx(void);
-void spi_ax_test_POCSAG_Tx_FIFO_Preamble(void);
-void spi_ax_test_POCSAG_Tx_FIFO_Batches(uint32_t tgtAddr, const char* msgBuf, uint8_t len);
 void spi_ax_test_POCSAG_Rx(void);
 
 

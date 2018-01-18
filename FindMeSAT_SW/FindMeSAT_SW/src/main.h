@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												180
-#define VERSION_LOW													117
+#define VERSION_LOW													118
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -150,6 +150,7 @@ typedef enum APRS_MODE_ENUM {
 typedef enum AX_BF_ENUM {
 	AX__ENABLE						= 0b00000001,
 	AX__APRS_ENABLE					= 0b00000010,
+	AX__POCSAG_ENABLE				= 0b00000100,
 } AX_BF_ENUM_t;
 
 
@@ -322,6 +323,7 @@ void aprs_ssid_update(const char ssid[]);
 void aprs_user_update(const char user[]);
 void aprs_pwd_update(const char pwd[]);
 void ax_aprs_enable(bool enable);
+void ax_pocsag_enable(bool enable);
 void ax_enable(bool enable);
 void backlight_mode_pwm(int16_t mode_pwm);
 void bias_update(uint8_t bias);
