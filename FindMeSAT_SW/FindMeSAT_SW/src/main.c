@@ -761,8 +761,8 @@ static void init_globals(void)
 
 		g_ax_spi_freq_chan[0]	= 0;
 		g_ax_spi_freq_chan[1]	= 0;
-		g_ax_spi_range_chan[0]	= 0x10;
-		g_ax_spi_range_chan[1]	= 0x10;
+		g_ax_spi_range_chan[0]	= C_SPI_AX_RANGE_NOT_SET;
+		g_ax_spi_range_chan[1]	= C_SPI_AX_RANGE_NOT_SET;
 		g_ax_spi_vcoi_chan[0]	= 0;
 		g_ax_spi_vcoi_chan[1]	= 0;
 	}
@@ -3638,6 +3638,7 @@ static void task_main_aprs(void)
 
 			/* Switch from APRS mode to POCSAG */
 			spi_ax_init_POCSAG_Tx();
+			spi_ax_selectVcoFreq(false);
 
 			/* Transmit POCSAG message */
 			spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, l_pocsag_msg_buf, strlen(l_pocsag_msg_buf));
@@ -3781,6 +3782,76 @@ int main(void)
 
 	/* Start TWI channels */
 	twi_start();		// Start TWI
+
+	/* TEST */
+#if 1
+	{
+		const uint32_t tgtRic = 12 + 1000UL;
+		const char tstBuf[] = "DF4IAH: Test message.";
+
+		for (int count = 100; count; count--) {
+			/* FIFOCMD / FIFOSTAT */
+			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+			/* Switch from APRS mode to POCSAG */
+			spi_ax_init_POCSAG_Tx();
+
+			/* Transmit POCSAG message */
+			spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, tstBuf, strlen(tstBuf));
+
+			delay_ms(250);
+			//delay_ms(7500);
+		}
+
+		/* FIFOCMD / FIFOSTAT */
+		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+		do {
+			/* FIFOSTAT */
+			spi_ax_transport(false, "< 28 R1 >");
+		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+
+		do {
+			/* RADIOSTATE */
+			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
+		} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+	}
+#else
+	{
+		char addrAry[][6]	= { "APXFMS", "DF4IAH", "WIDE1", "WIDE2" };
+		uint8_t ssidAry[]	= { 0, 8, 1, 2 };
+		char aprsMsg[]		= "!4928.39N/00836.88Ej OP: Uli, QTH: Ladenburg, LOC: JN49hl.";
+
+		for (int count = 100; count; count--) {
+			/* FIFOCMD / FIFOSTAT */
+			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+			/* Switch from APRS mode to POCSAG */
+			spi_ax_init_PR1200_Tx();
+			spi_ax_selectVcoFreq(false);
+
+			/* Enter an APRS UI frame */
+			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, 4, aprsMsg, strlen(aprsMsg));
+
+			delay_ms(250);
+			//delay_ms(7500);
+		}
+
+		do {
+			/* FIFOSTAT */
+			spi_ax_transport(false, "< 28 R1 >");
+		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+
+		do {
+			/* RADIOSTATE */
+			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
+		} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+	}
+#endif
+	while (true) {
+		nop();
+	}
+
 
 	/* Start serial */
 	serial_start();		// Start communication with the SIM808 */

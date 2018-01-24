@@ -23,10 +23,11 @@
 #endif
 
 
+#define C_PR1200_CALL_LENGTH										6
+
 #define C_AX_PRW_LENGTH												253
 #define C_SPI_AX_BUFFER_LENGTH										512
-
-#define C_PR1200_CALL_LENGTH										6
+#define C_SPI_AX_RANGE_NOT_SET										0x10
 
 
 typedef enum SPI_AX_TRPT_STATE {
@@ -48,6 +49,7 @@ typedef enum AX_SET_REGISTERS_MODULATION {
 	AX_SET_REGISTERS_MODULATION_PR1200								= 0x21,
 	AX_SET_REGISTERS_MODULATION_POCSAG								= 0x71,
 	AX_SET_REGISTERS_MODULATION_ANALOG_FM							= 0x81,
+	AX_SET_REGISTERS_MODULATION_INVALIDATE							= 0x100,
 } AX_SET_REGISTERS_MODULATION_t;
 
 typedef enum AX_SET_REGISTERS_VARIANT {
@@ -58,6 +60,7 @@ typedef enum AX_SET_REGISTERS_VARIANT {
 	AX_SET_REGISTERS_VARIANT_RX_WOR,
 	AX_SET_REGISTERS_VARIANT_RX_CONT,
 	AX_SET_REGISTERS_VARIANT_RX_CONT_SINGLEPARAMSET,
+	AX_SET_REGISTERS_VARIANT_INVALIDATE								= 0x100,
 } AX_SET_REGISTERS_VARIANT_t;
 
 typedef enum AX_SET_REGISTERS_POWERMODE {
@@ -70,6 +73,7 @@ typedef enum AX_SET_REGISTERS_POWERMODE {
 	AX_SET_REGISTERS_POWERMODE_WOR									= 0x0B,
 	AX_SET_REGISTERS_POWERMODE_SYNTHTX								= 0x0C,
 	AX_SET_REGISTERS_POWERMODE_FULLTX								= 0x0D,
+	AX_SET_REGISTERS_POWERMODE_NONE									= 0x100,
 } AX_SET_REGISTERS_POWERMODE_t;
 
 
@@ -197,6 +201,7 @@ void spi_ax_setFrequency2Regs(uint8_t chan, bool isFreqB);
 void spi_ax_doRanging(void);
 bool spi_ax_vco_select(uint32_t reg_freq, bool force);
 bool spi_ax_selectVcoFreq(bool isFreqB);
+void spi_ax_util_FIFO_waitFree(uint8_t neededSpace);
 
 void spi_ax_initRegisters_FSK(void);
 void spi_ax_initRegisters_FSK_Tx(void);
