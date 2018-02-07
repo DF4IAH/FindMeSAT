@@ -127,7 +127,7 @@
 
 
 /**
- * \name AX5243 VHF transceiver
+ * \name AX5243 VHF/UHF transceiver
  *
  * SPI bus lines of the AX5243 device.
  */
@@ -146,6 +146,7 @@
 #define AX_MISO                         AX_MISO_PIN
 #define AX_CLK                          AX_CLK_PIN
 
+#if 0
 #define AX_INTC_INIT()                  ioport_configure_pin(AX_IRQ_PIN, IOPORT_DIR_INPUT); \
 										PORTC.PIN3CTRL = PORT_ISC0_bm; \
 										PORTC.INT0MASK = PIN3_bm; \
@@ -171,6 +172,8 @@
  *  This macro restores the transceiver interrupt status
  */
 #define LEAVE_TRX_REGION()   PORTC.INTCTRL = irq_mask; }
+
+#endif
 //@}
 
 

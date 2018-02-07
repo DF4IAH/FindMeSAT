@@ -23,8 +23,11 @@
 #endif
 
 
+#define C_PR1200_CALL_LENGTH										6
+
 #define C_AX_PRW_LENGTH												253
 #define C_SPI_AX_BUFFER_LENGTH										512
+#define C_SPI_AX_RANGE_NOT_SET										0x10
 
 
 typedef enum SPI_AX_TRPT_STATE {
@@ -46,6 +49,7 @@ typedef enum AX_SET_REGISTERS_MODULATION {
 	AX_SET_REGISTERS_MODULATION_PR1200								= 0x21,
 	AX_SET_REGISTERS_MODULATION_POCSAG								= 0x71,
 	AX_SET_REGISTERS_MODULATION_ANALOG_FM							= 0x81,
+	AX_SET_REGISTERS_MODULATION_INVALIDATE							= 0x100,
 } AX_SET_REGISTERS_MODULATION_t;
 
 typedef enum AX_SET_REGISTERS_VARIANT {
@@ -56,6 +60,7 @@ typedef enum AX_SET_REGISTERS_VARIANT {
 	AX_SET_REGISTERS_VARIANT_RX_WOR,
 	AX_SET_REGISTERS_VARIANT_RX_CONT,
 	AX_SET_REGISTERS_VARIANT_RX_CONT_SINGLEPARAMSET,
+	AX_SET_REGISTERS_VARIANT_INVALIDATE								= 0x100,
 } AX_SET_REGISTERS_VARIANT_t;
 
 typedef enum AX_SET_REGISTERS_POWERMODE {
@@ -68,6 +73,7 @@ typedef enum AX_SET_REGISTERS_POWERMODE {
 	AX_SET_REGISTERS_POWERMODE_WOR									= 0x0B,
 	AX_SET_REGISTERS_POWERMODE_SYNTHTX								= 0x0C,
 	AX_SET_REGISTERS_POWERMODE_FULLTX								= 0x0D,
+	AX_SET_REGISTERS_POWERMODE_NONE									= 0x100,
 } AX_SET_REGISTERS_POWERMODE_t;
 
 
@@ -195,6 +201,7 @@ void spi_ax_setFrequency2Regs(uint8_t chan, bool isFreqB);
 void spi_ax_doRanging(void);
 bool spi_ax_vco_select(uint32_t reg_freq, bool force);
 bool spi_ax_selectVcoFreq(bool isFreqB);
+void spi_ax_util_FIFO_waitFree(uint8_t neededSpace);
 
 void spi_ax_initRegisters_FSK(void);
 void spi_ax_initRegisters_FSK_Tx(void);
@@ -209,9 +216,9 @@ void spi_ax_initRegisters_PR1200_Rx_WoR(void);
 void spi_ax_initRegisters_PR1200_Rx_cont(void);
 void spi_ax_initRegisters_PR1200_Rx_cont_SingleParamSet(void);
 void spi_ax_init_PR1200_Tx(void);
-void spi_ax_run_PR1200_Tx_FIFO_APRS(const char addrAry[][6], const uint8_t* ssidAry, uint8_t addrCnt, const char* aprsMsg, uint8_t aprsMsgLen);
+void spi_ax_run_PR1200_Tx_FIFO_APRS(const char addrAry[][C_PR1200_CALL_LENGTH], const uint8_t* ssidAry, uint8_t addrCnt, const char* aprsMsg, uint8_t aprsMsgLen);
 void spi_ax_util_PR1200_Tx_FIFO_Flags(uint8_t count);
-void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][6], const uint8_t* ssidAry, uint8_t addrCnt);
+void spi_ax_util_PR1200_Tx_FIFO_AddressField(const char addrAry[][C_PR1200_CALL_LENGTH], const uint8_t* ssidAry, uint8_t addrCnt);
 void spi_ax_util_PR1200_Tx_FIFO_InformationField(const char* aprsMsg, uint8_t aprsMsgLen);
 void spi_ax_init_PR1200_Rx(void);
 
@@ -221,7 +228,10 @@ void spi_ax_initRegisters_POCSAG_Rx(void);
 void spi_ax_initRegisters_POCSAG_Rx_WoR(void);
 void spi_ax_initRegisters_POCSAG_Rx_cont(void);
 void spi_ax_init_POCSAG_Tx(void);
+void spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTargetRIC, const char* pocsagMsg, uint8_t pocsagMsgLen);
 void spi_ax_init_POCSAG_Rx(void);
+void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void);
+void spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, const char* pocsagMsg, uint8_t pocsagMsgLen);
 
 void spi_ax_initRegisters_AnlogFM(void);
 void spi_ax_initRegisters_AnlogFM_Tx(void);
@@ -246,8 +256,6 @@ void spi_ax_test_PR1200_Rx(void);
 
 void spi_ax_test_POCSAG(void);
 void spi_ax_test_POCSAG_Tx(void);
-void spi_ax_test_POCSAG_Tx_FIFO_Preamble(void);
-void spi_ax_test_POCSAG_Tx_FIFO_Batches(uint32_t tgtAddr, const char* msgBuf, uint8_t len);
 void spi_ax_test_POCSAG_Rx(void);
 
 

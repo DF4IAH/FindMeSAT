@@ -38,13 +38,13 @@
 
 
 /* Global string store in program memory */
-const char					PM_SIM808_INFO_LCD_START[]								= "Init: SIM808 Starting  ...";
+const char					PM_SIM808_INFO_LCD_START[]								= "Init: SIM808       starting  ...";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_START[]);
-const char					PM_SIM808_INFO_LCD_RESTART[]							= "Init: SIM808 Restarting...";
+const char					PM_SIM808_INFO_LCD_RESTART[]							= "Init: SIM808  !!!  restarting ..";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_RESTART[]);
-const char					PM_SIM808_INFO_LCD_INITED[]								= "Init: SIM808 - init'ed ...";
+const char					PM_SIM808_INFO_LCD_INITED[]								= "Init: SIM808       done.        ";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_INITED[]);
-const char					PM_SIM808_INFO_LCD_WAIT[]								= "Init: SIM808 - GPRS up ...";
+const char					PM_SIM808_INFO_LCD_WAIT[]								= "Init: SIM808       GPRS up   ...";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_WAIT[]);
 
 const char					PM_SIM808_INFO_START[]									= "SIM808 ser1:  Starting the device ...\r\n";
@@ -312,7 +312,7 @@ void serial_gsm_gprs_link_openClose(bool isStart) {
 			/* LCD information */
 			if (g_workmode == WORKMODE_INIT) {
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_WAIT);
-				task_twi2_lcd_str(8,  9 * 10, g_prepare_buf);
+				task_twi2_lcd_str(8, 12 * 10, g_prepare_buf);
 			}
 
 			/* USB information */
@@ -645,7 +645,7 @@ void serial_start(void)
 
 	/* Inform about to start the SIM808 - LCD */
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_START);
-	task_twi2_lcd_str(8,  7 * 10, g_prepare_buf);
+	task_twi2_lcd_str(8, 12 * 10, g_prepare_buf);
 
 	/* Inform about to start the SIM808 - USB */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_START);
@@ -696,7 +696,7 @@ void serial_start(void)
 					line = 3;
 				}
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_RESTART);
-				task_twi2_lcd_str(8,  7 * 10, g_prepare_buf);
+				task_twi2_lcd_str(8, 12 * 10, g_prepare_buf);
 
 				/* Inform about restart - USB */
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_RESTART);
@@ -733,17 +733,23 @@ void serial_start(void)
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_CREG_X, 2);
 	serial_sim808_sendAndResponse(g_prepare_buf, len);
 
-	#if 1
 	/* Request the version number of the firmware */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_01);
 	serial_sim808_sendAndResponse(g_prepare_buf, len);
-	#endif
 
 	#if 0
 	/* Request more details about the firmware */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_INFO_02);
 	serial_sim808_sendAndResponse(g_prepare_buf, len);
 	#endif
+
+	/* Enable GNSS (GPS, Glonass, ...) power */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_01, 1);
+	serial_sim808_sendAndResponse(g_prepare_buf, len);
+
+	/* Send a position fix request to kickstart GNSS */
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_02);
+	serial_sim808_sendAndResponse(g_prepare_buf, len);
 
 	if (g_gsm_enable) {
 		/* Turn off echoing */
@@ -757,7 +763,6 @@ void serial_start(void)
 		/* Turn on echoing */
 		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_ATE_X, 1);
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
-		serial_sim808_send(PM_TWI1_INIT_ONBOARD_SIM808_CRLF, strlen(PM_TWI1_INIT_ONBOARD_SIM808_CRLF), true);
 		#endif
 
 		#if 0
@@ -766,12 +771,6 @@ void serial_start(void)
 		serial_sim808_sendAndResponse(g_prepare_buf, len);
 		#endif
 	}
-
-	/* Enable GNSS (GPS, Glonass, ...) and send a position fix request */
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_01, 1);
-	serial_sim808_sendAndResponse(g_prepare_buf, len);
-	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_ONBOARD_SIM808_GPS_02);
-	serial_sim808_sendAndResponse(g_prepare_buf, len);
 
 	#if 0
 	if (g_gsm_enable) {
@@ -792,7 +791,7 @@ void serial_start(void)
 
 	/* Inform about baud rate match - LCD */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_INITED);
-	task_twi2_lcd_str(8,  8 * 10, g_prepare_buf);
+	task_twi2_lcd_str(8, 12 * 10, g_prepare_buf);
 
 	/* Inform about baud rate match - USB */
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_SYNCED);
@@ -1014,7 +1013,8 @@ void serial_send_gns_urc(uint8_t val)
 						}
 
 					} else if (idx ==  6) {
-						g_gns_speed_kmPh = fVal;
+						g_gns_speed_kn		= fVal;
+						g_gns_speed_kmPh	= fVal * 1.852f;  // Nautical mile = 1/60deg latitude
 
 					} else if (idx ==  7) {
 						g_gns_course_deg = fVal;
@@ -1043,7 +1043,8 @@ void serial_send_gns_urc(uint8_t val)
 
 void task_serial(void /*uint32_t now*/)
 {
-	uint16_t len_out = 0;
+	char		l_sim808_rx_process_buf[C_USART1_RX_BUF_LEN]	= { 0 };
+	uint16_t	len_out											= 0;
 
 	/* Handshaking SIM808 --> MPU, START data - IRQ disabled  */
 	{
@@ -1067,76 +1068,80 @@ void task_serial(void /*uint32_t now*/)
 	}
 
 	while (g_usart1_rx_ready) {
-		/* Find delimiter as line end indicator - IRQ allowed */
+		/* Find delimiter as line end indicator - no IRQ blocking allowed */
 		{
 			const char* p = strchr(g_usart1_rx_buf, '\n');	// g_usart1_rx_buf has to be 0 terminated
 			if (p) {
+				/* Make a copy for the line interpreter */
 				len_out = 1 + (p - g_usart1_rx_buf);
+				memcpy(l_sim808_rx_process_buf, g_usart1_rx_buf, len_out);
+				l_sim808_rx_process_buf[len_out] = 0;
+
+				/* Move serial buffer by one line and adjust index - IRQ disabled */
+				{
+					irqflags_t flags = cpu_irq_save();
+
+					/* Move operation */
+					if (len_out < C_USART1_RX_BUF_LEN) {
+						char* l_usart1_rx_buf_ptr		= g_usart1_rx_buf;
+						char* l_usart1_rx_buf_mov_ptr	= g_usart1_rx_buf + len_out;
+						for (int16_t movItCnt = g_usart1_rx_idx; movItCnt; movItCnt--) {
+							*(l_usart1_rx_buf_ptr++)	= *(l_usart1_rx_buf_mov_ptr++);
+						}
+					}
+
+					/* Adjust index or reset buffer when stuck */
+					if (g_usart1_rx_idx <= len_out) {
+						g_usart1_rx_idx		= 0;
+						g_usart1_rx_ready	= false;
+
+					} else {
+						g_usart1_rx_idx	   -= len_out;
+					}
+
+					/* Clean operation (for debugging) */
+					char* l_usart1_rx_buf_ptr = g_usart1_rx_buf + g_usart1_rx_idx;
+					for (int16_t movItCnt = (C_USART1_RX_BUF_LEN - g_usart1_rx_idx); movItCnt; movItCnt--) {
+						*(l_usart1_rx_buf_ptr++) = 0;
+					}
+
+					cpu_irq_restore(flags);
+				}
+
+				/* Handshaking, START data - IRQ disabled */
+				{
+					irqflags_t flags = cpu_irq_save();
+					uint16_t l_usart1_rx_idx = g_usart1_rx_idx;
+					cpu_irq_restore(flags);
+
+					if (l_usart1_rx_idx < (C_USART1_RX_BUF_LEN - C_USART1_RX_BUF_DIFF_ON)) {
+						ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_LOW);
+					}
+				}
 
 			} else if (g_usart1_rx_idx >= (C_USART1_RX_BUF_LEN - C_USART1_RX_BUF_DIFF_ON)) {
 				len_out = C_USART1_RX_BUF_LEN;	// indicates to flush the read buffer
+				l_sim808_rx_process_buf[0] = 0;
 
 			} else {
 				return;	// not complete yet
 			}
 		}
 
-		/* Process the line - IRQ allowed */
+		/* Process the line */
 		if (len_out < C_USART1_RX_BUF_LEN) {
 			static bool s_doNotPrint = false;
 
 			/* Process line and get data */
-			bool l_doNotPrint = serial_filter_inStream(g_usart1_rx_buf, len_out);
+			bool l_doNotPrint = serial_filter_inStream(l_sim808_rx_process_buf, len_out);
 
 			/* Copy chunk of data to USB_CDC */
 			if (!l_doNotPrint && (!s_doNotPrint || (len_out > 3)) && g_usb_cdc_printStatusLines_sim808) {
-				udi_write_serial_line(g_usart1_rx_buf, len_out);
+				udi_write_serial_line(l_sim808_rx_process_buf, len_out);
 			}
 
 			/* Store last line state */
 			s_doNotPrint = l_doNotPrint;
-		}
-
-		/* Move serial buffer by one line and adjust index - IRQ disabled */
-		{
-			irqflags_t flags = cpu_irq_save();
-
-			/* Move operation */
-			if (len_out < C_USART1_RX_BUF_LEN) {
-				char* l_usart1_rx_buf_ptr		= g_usart1_rx_buf;
-				char* l_usart1_rx_buf_mov_ptr	= g_usart1_rx_buf + len_out;
-				for (int16_t movItCnt = g_usart1_rx_idx; movItCnt; movItCnt--) {
-					*(l_usart1_rx_buf_ptr++)	= *(l_usart1_rx_buf_mov_ptr++);
-				}
-			}
-
-			/* Adjust index or reset buffer when stuck */
-			if (g_usart1_rx_idx <= len_out) {
-				g_usart1_rx_idx		= 0;
-				g_usart1_rx_ready	= false;
-
-			} else {
-				g_usart1_rx_idx	   -= len_out;
-			}
-
-			/* Clean operation (for debugging) */
-			char* l_usart1_rx_buf_ptr = g_usart1_rx_buf + g_usart1_rx_idx;
-			for (int16_t movItCnt = (C_USART1_RX_BUF_LEN - g_usart1_rx_idx); movItCnt; movItCnt--) {
-				*(l_usart1_rx_buf_ptr++) = 0;
-			}
-
-			cpu_irq_restore(flags);
-		}
-
-		/* Handshaking, START data - IRQ disabled */
-		{
-			irqflags_t flags = cpu_irq_save();
-			uint16_t l_usart1_rx_idx = g_usart1_rx_idx;
-			cpu_irq_restore(flags);
-
-			if (l_usart1_rx_idx < (C_USART1_RX_BUF_LEN - C_USART1_RX_BUF_DIFF_ON)) {
-				ioport_set_pin_level(GSM_RTS1_DRV_GPIO, IOPORT_PIN_LEVEL_LOW);
-			}
 		}
 	}
 }

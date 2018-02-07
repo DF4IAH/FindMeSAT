@@ -83,6 +83,7 @@ uint8_t						g_gns_fix_status								= 0;
 float						g_gns_lat										= 0.;
 float						g_gns_lon										= 0.;
 float						g_gns_msl_alt_m									= 0.;
+float						g_gns_speed_kn									= 0.;
 float						g_gns_speed_kmPh								= 0.;
 float						g_gns_course_deg								= 0.;
 uint8_t						g_gns_fix_mode									= 0;
@@ -218,6 +219,7 @@ uint8_t						g_twi2_lcd_version								= 0;
 volatile bool				g_twi2_lcd_repaint								= false;
 
 bool						g_ax_enable										= false;	// EEPROM
+bool						g_ax_pocsag_enable								= false;	// EEPROM
 bool						g_ax_aprs_enable								= false;	// EEPROM
 struct spi_device			g_ax_spi_device_conf							= { 0 };
 volatile uint8_t			g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH]	= { 0 };
@@ -374,6 +376,11 @@ const uint16_t				g_ax_pwr_ary[C_AX_PRW_LENGTH]					= {
 };
 
 
+const char					PM_POCSAG_TX_MSG_SRCCALL[]						= "%s: ";
+PROGMEM_DECLARE(const char, PM_POCSAG_TX_MSG_SRCCALL[]);
+const char					PM_POCSAG_TX_POS_SPD_HDG[]						= "%c%08.5f° %c%09.5f° spd=%03dkm/h hdg=%03d%c";
+PROGMEM_DECLARE(const char, PM_POCSAG_TX_POS_SPD_HDG[]);
+
 const char					PM_APRS_TX_HTTP_L1[]							= "POST / HTTP/1.1\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L1[]);
 const char					PM_APRS_TX_HTTP_L2[]							= "Content-Length: %d\r\n";
@@ -388,8 +395,8 @@ const char					PM_APRS_TX_FORWARD[]							= "%s%s>APRS,TCPIP*:";							// USER, 
 PROGMEM_DECLARE(const char, PM_APRS_TX_FORWARD[]);
 const char					PM_APRS_TX_SYMBOL_TABLE_ID						= '/';
 const char					PM_APRS_TX_SYMBOL_CODE							= 'j';	// /j: Jeep, /R: RV, \k: SUV, /W: WX
-const char					PM_APRS_TX_POS[]								= "!%02d%5.2f%c%c%03d%5.2f%c%c%03d/%03d";
-PROGMEM_DECLARE(const char, PM_APRS_TX_POS[]);
+const char					PM_APRS_TX_POS_SPD_HDG[]						= "!%02d%5.2f%c%c%03d%5.2f%c%c%03d/%03d";
+PROGMEM_DECLARE(const char, PM_APRS_TX_POS_SPD_HDG[]);
 const char					PM_APRS_TX_N1[]									= "%cGx=%+06.1fd Gy=%+06.1fd Gz=%+06.1fd";
 PROGMEM_DECLARE(const char, PM_APRS_TX_N1[]);
 const char					PM_APRS_TX_N2[]									= "%cAx=%+6.3fg Ay=%+6.3fg Az=%+6.3fg";
@@ -406,7 +413,7 @@ PROGMEM_DECLARE(const char, PM_GSM_IP_PROTO_TCP_STR[]);
 const char					PM_GSM_IP_PROTO_UDP_STR[]						= "UDP";
 PROGMEM_DECLARE(const char, PM_GSM_IP_PROTO_UDP_STR[]);
 
-const char					PM_SIM808_INFO_LCD_READY[]						= "Init: SIM808 - READY.";
+const char					PM_SIM808_INFO_LCD_READY[]						= "Init: SIM808      done.       ";
 PROGMEM_DECLARE(const char, PM_SIM808_INFO_LCD_READY[]);
 
 const char					PM_SIM808_INFO_READY[]							= "SIM808 ser1:  --> READY.\r\n\r\n";
@@ -415,21 +422,21 @@ PROGMEM_DECLARE(const char, PM_SIM808_INFO_READY[]);
 const char					PM_TWI1_SHUT_01[]								= "Shutting down ...";
 PROGMEM_DECLARE(const char, PM_TWI1_SHUT_01[]);
 
-const char					PM_CALIBRATION_GYRO_START[]						= "GYRO calibration starts ...\r\n";
+const char					PM_CALIBRATION_GYRO_START[]						= "GYRO   calibration running   ...\r\n";
 PROGMEM_DECLARE(const char, PM_CALIBRATION_GYRO_START[]);
-const char					PM_CALIBRATION_GYRO_END[]						= "GYRO calibration has ended.\r\n\r\n";
+const char					PM_CALIBRATION_GYRO_END[]						= "GYRO   calibration done.\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_CALIBRATION_GYRO_END[]);
-const char					PM_CALIBRATION_ACCELX_START[]					= "ACCELX calibration starts ...\r\n";
+const char					PM_CALIBRATION_ACCELX_START[]					= "ACCELX calibration running   ...\r\n";
 PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELX_START[]);
-const char					PM_CALIBRATION_ACCELX_END[]						= "ACCELX calibration has ended.\r\n\r\n";
+const char					PM_CALIBRATION_ACCELX_END[]						= "ACCELX calibration done.\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELX_END[]);
-const char					PM_CALIBRATION_ACCELY_START[]					= "ACCELY calibration starts ...\r\n";
+const char					PM_CALIBRATION_ACCELY_START[]					= "ACCELY calibration running   ...\r\n";
 PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELY_START[]);
-const char					PM_CALIBRATION_ACCELY_END[]						= "ACCELY calibration has ended.\r\n\r\n";
+const char					PM_CALIBRATION_ACCELY_END[]						= "ACCELY calibration done.\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELY_END[]);
-const char					PM_CALIBRATION_ACCELZ_START[]					= "ACCELZ calibration starts ...\r\n";
+const char					PM_CALIBRATION_ACCELZ_START[]					= "ACCELZ calibration running   ...\r\n";
 PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELZ_START[]);
-const char					PM_CALIBRATION_ACCELZ_END[]						= "ACCELZ calibration has ended.\r\n\r\n";
+const char					PM_CALIBRATION_ACCELZ_END[]						= "ACCELZ calibration done.\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_CALIBRATION_ACCELZ_END[]);
 
 
@@ -564,6 +571,7 @@ static void init_globals(void)
 		g_gns_lat							= 0.;
 		g_gns_lon							= 0.;
 		g_gns_msl_alt_m						= 0.;
+		g_gns_speed_kn						= 0.;
 		g_gns_speed_kmPh					= 0.;
 		g_gns_course_deg					= 0.;
 		g_gns_fix_mode						= 0;
@@ -748,12 +756,13 @@ static void init_globals(void)
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_BF, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
 			g_ax_enable				= val_ui8 & AX__ENABLE;
 			g_ax_aprs_enable		= val_ui8 & AX__APRS_ENABLE;
+			g_ax_pocsag_enable		= val_ui8 & AX__POCSAG_ENABLE;
 		}
 
 		g_ax_spi_freq_chan[0]	= 0;
 		g_ax_spi_freq_chan[1]	= 0;
-		g_ax_spi_range_chan[0]	= 0x10;
-		g_ax_spi_range_chan[1]	= 0x10;
+		g_ax_spi_range_chan[0]	= C_SPI_AX_RANGE_NOT_SET;
+		g_ax_spi_range_chan[1]	= C_SPI_AX_RANGE_NOT_SET;
 		g_ax_spi_vcoi_chan[0]	= 0;
 		g_ax_spi_vcoi_chan[1]	= 0;
 	}
@@ -959,8 +968,9 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 
 	/* AX5243 */
 	if (bf & EEPROM_SAVE_BF__AX) {
-		uint8_t val_ui8 = (g_ax_enable			?  AX__ENABLE		: 0x00)
-						| (g_ax_aprs_enable		?  AX__APRS_ENABLE	: 0x00);
+		uint8_t val_ui8 = (g_ax_enable			?  AX__ENABLE			: 0x00)
+						| (g_ax_aprs_enable		?  AX__APRS_ENABLE		: 0x00)
+						| (g_ax_pocsag_enable	?  AX__POCSAG_ENABLE	: 0x00);
 
 		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_BF,				&val_ui8,							sizeof(val_ui8));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_PIN,				(void*)&g_gsm_login_pwd,			sizeof(g_gsm_login_pwd));
@@ -1349,6 +1359,13 @@ void ax_aprs_enable(bool enable)
 	save_globals(EEPROM_SAVE_BF__AX);
 }
 
+void ax_pocsag_enable(bool enable)
+{
+	/* atomic */
+	g_ax_pocsag_enable = enable;
+	save_globals(EEPROM_SAVE_BF__AX);
+}
+
 void ax_enable(bool enable)
 {
 	/* atomic */
@@ -1435,8 +1452,10 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 				int32_t			l_twi1_gyro_1_gyro_mean_x = 0L, l_twi1_gyro_1_gyro_mean_y = 0L, l_twi1_gyro_1_gyro_mean_z = 0L;
 				int				len;
 
+				/* Inform via USB and LCD */
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_GYRO_START);
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				task_twi2_lcd_str(8,  7 * 10, g_prepare_buf);
 
 				twi1_gyro_get_mean_values(iterations, true, &l_twi1_gyro_1_gyro_mean_x, &l_twi1_gyro_1_gyro_mean_y, &l_twi1_gyro_1_gyro_mean_z);
 
@@ -1468,8 +1487,10 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 					sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
 				}
 
+				/* Inform via USB and LCD */
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_GYRO_END);
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				task_twi2_lcd_str(8,  8 * 10, g_prepare_buf);
 			}
 		break;
 
@@ -1479,8 +1500,10 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 				int32_t			l_twi1_gyro_1_accel_mean_x = 0L, l_twi1_gyro_1_accel_mean_y = 0L, l_twi1_gyro_1_accel_mean_z = 0L;
 				int				len;
 
+				/* Inform via USB and LCD */
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELX_START);
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				task_twi2_lcd_str(8,  9 * 10, g_prepare_buf);
 
 				twi1_gyro_get_mean_values(iterations, false, &l_twi1_gyro_1_accel_mean_x, &l_twi1_gyro_1_accel_mean_y, &l_twi1_gyro_1_accel_mean_z);
 
@@ -1519,8 +1542,10 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 					sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
 				}
 
+				/* Inform via USB and LCD */
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELX_END);
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				task_twi2_lcd_str(8, 10 * 10, g_prepare_buf);
 			}
 		break;
 
@@ -1530,8 +1555,10 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 				int32_t			l_twi1_gyro_1_accel_mean_x = 0L, l_twi1_gyro_1_accel_mean_y = 0L, l_twi1_gyro_1_accel_mean_z = 0L;
 				int				len;
 
+				/* Inform via USB and LCD */
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELY_START);
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				task_twi2_lcd_str(8,  9 * 10, g_prepare_buf);
 
 				twi1_gyro_get_mean_values(iterations, false, &l_twi1_gyro_1_accel_mean_x, &l_twi1_gyro_1_accel_mean_y, &l_twi1_gyro_1_accel_mean_z);
 
@@ -1570,8 +1597,10 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 					sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
 				}
 
+				/* Inform via USB and LCD */
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELY_END);
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				task_twi2_lcd_str(8, 10 * 10, g_prepare_buf);
 			}
 		break;
 
@@ -1581,8 +1610,10 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 				int32_t			l_twi1_gyro_1_accel_mean_x = 0L, l_twi1_gyro_1_accel_mean_y = 0L, l_twi1_gyro_1_accel_mean_z = 0L;
 				int				len;
 
+				/* Inform via USB and LCD */
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELZ_START);
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				task_twi2_lcd_str(8,  9 * 10, g_prepare_buf);
 
 				twi1_gyro_get_mean_values(iterations, false, &l_twi1_gyro_1_accel_mean_x, &l_twi1_gyro_1_accel_mean_y, &l_twi1_gyro_1_accel_mean_z);
 
@@ -1621,8 +1652,10 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 					sched_push(task_twi1_gyro, SCHED_ENTRY_CB_TYPE__LISTTIME, 0, true, false, false);
 				}
 
+				/* Inform via USB and LCD */
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_CALIBRATION_ACCELZ_END);
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				task_twi2_lcd_str(8, 10 * 10, g_prepare_buf);
 			}
 		break;
 	}
@@ -1763,7 +1796,7 @@ void gsm_enable(bool enable)
 			/* LCD information */
 			if (g_workmode != WORKMODE_RUN) {
 				len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SIM808_INFO_LCD_READY);
-				task_twi2_lcd_str(8, 10 * 10, g_prepare_buf);
+				task_twi2_lcd_str(8, 12 * 10, g_prepare_buf);
 			}
 
 			/* USB information */
@@ -3285,23 +3318,26 @@ static void task_main_aprs(void)
 	static bool					s_lock						= false;
 	uint32_t					l_now_sec					= tcc1_get_time() >> 10;
 	uint32_t					l_boot_time_ts;
-	float						l_gns_lat;
-	uint8_t						l_lat_deg;
-	float						l_lat_minutes;
+	float						l_gns_lat_f;
+	uint8_t						l_lat_deg_d;
+	float						l_lat_minutes_f;
 	char						l_lat_hemisphere;
-	float						l_gns_lon;
-	uint8_t						l_lon_deg;
-	float						l_lon_minutes;
+	float						l_gns_lon_f;
+	uint8_t						l_lon_deg_d;
+	float						l_lon_minutes_f;
 	char						l_lon_hemisphere;
 	float						l_gns_course_deg;
 	uint16_t					l_course_deg;
+	float						l_gns_speed_kn;
 	float						l_gns_speed_kmPh;
 	uint16_t					l_speed_kn;
 	uint64_t					l_aprs_alert_last;
 	APRS_ALERT_FSM_STATE_ENUM_t	l_aprs_alert_fsm_state;
 	APRS_ALERT_REASON_ENUM_t	l_aprs_alert_reason;
 	irqflags_t					flags;
+	char						l_pocsag_msg_buf[C_TX_BUF_SIZE];
 	char						l_msg_buf[C_TX_BUF_SIZE];
+	int							l_pocsag_msg_buf_len		= 0;
 	int							l_msg_buf_len				= 0;
 	char						l_mark						= ' ';
 
@@ -3309,7 +3345,7 @@ static void task_main_aprs(void)
 	/* Once a second to be processed - do not send when APRS is disabled nor GPS ready */
 	if ( s_lock ||
 		(s_now_sec == l_now_sec) ||
-		!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && g_ax_aprs_enable)) ||
+		!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && (g_ax_aprs_enable || g_ax_pocsag_enable))) ||
 		!g_gns_fix_status) {
 		return;
 	}
@@ -3399,21 +3435,22 @@ static void task_main_aprs(void)
 			/* Get copy from global variables */
 			{
 				flags = cpu_irq_save();
-				l_gns_lat			= g_gns_lat;
-				l_gns_lon			= g_gns_lon;
+				l_gns_lat_f			= g_gns_lat;
+				l_gns_lon_f			= g_gns_lon;
 				l_gns_course_deg	= g_gns_course_deg;
+				l_gns_speed_kn		= g_gns_speed_kn;
 				l_gns_speed_kmPh	= g_gns_speed_kmPh;
 				cpu_irq_restore(flags);
 			}
 
 			/* Calculations */
 			{
-				l_lat_deg			= (uint8_t) (l_gns_lat >= 0.f ?  l_gns_lat : -l_gns_lat);
-				l_lat_minutes		= ((l_gns_lat >= 0.f ?  l_gns_lat : -l_gns_lat) - l_lat_deg) * 60.f + 0.005f;
-				l_lat_hemisphere	= l_gns_lat >= 0.f ?  'N' : 'S';
-				l_lon_deg			= (uint8_t) (l_gns_lon >= 0.f ?  l_gns_lon : -l_gns_lon);
-				l_lon_minutes		= ((l_gns_lon >= 0.f ?  l_gns_lon : -l_gns_lon) - l_lon_deg) * 60.f + 0.005f;
-				l_lon_hemisphere	= l_gns_lon >= 0.f ?  'E' : 'W';
+				l_lat_deg_d			= (uint8_t) (l_gns_lat_f >= 0.f ?  l_gns_lat_f : -l_gns_lat_f);
+				l_lat_minutes_f		= ((l_gns_lat_f >= 0.f ?  l_gns_lat_f : -l_gns_lat_f) - l_lat_deg_d) * 60.f + 0.005f;
+				l_lat_hemisphere	= l_gns_lat_f >= 0.f ?  'N' : 'S';
+				l_lon_deg_d			= (uint8_t) (l_gns_lon_f >= 0.f ?  l_gns_lon_f : -l_gns_lon_f);
+				l_lon_minutes_f		= ((l_gns_lon_f >= 0.f ?  l_gns_lon_f : -l_gns_lon_f) - l_lon_deg_d) * 60.f + 0.005f;
+				l_lon_hemisphere	= l_gns_lon_f >= 0.f ?  'E' : 'W';
 
 				l_course_deg		= (uint16_t) (0.5f + l_gns_course_deg);
 				l_course_deg		%= 360;
@@ -3421,7 +3458,7 @@ static void task_main_aprs(void)
 					l_course_deg = 360;
 				}
 
-				l_speed_kn			= (uint16_t) (0.5f + l_gns_speed_kmPh / 1.852f);
+				l_speed_kn			= (uint16_t) (0.5f + l_gns_speed_kn);
 			}
 		}
 
@@ -3449,9 +3486,13 @@ static void task_main_aprs(void)
 				udi_write_tx_buf(g_prepare_buf, len, false);
 				#endif
 
-				/* Message content */
+				/* Message content POCSAG */
+				l_pocsag_msg_buf_len  = snprintf_P(l_pocsag_msg_buf, sizeof(l_pocsag_msg_buf), PM_POCSAG_TX_MSG_SRCCALL, g_aprs_source_callsign);
+				l_pocsag_msg_buf_len += snprintf_P(&(l_pocsag_msg_buf[0]) + l_msg_buf_len, sizeof(l_pocsag_msg_buf), PM_POCSAG_TX_POS_SPD_HDG, l_lat_hemisphere, l_gns_lat_f, l_lon_hemisphere, l_gns_lon_f, l_gns_course_deg, l_gns_speed_kmPh);
+
+				/* Message content APRS */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS_SPD_HDG, l_lat_deg_d, l_lat_minutes_f, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg_d, l_lon_minutes_f, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_N1, l_mark, l_aprs_alert_1_gyro_x_mdps / 1000.f, l_aprs_alert_1_gyro_y_mdps / 1000.f, l_aprs_alert_1_gyro_z_mdps / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
@@ -3499,9 +3540,12 @@ static void task_main_aprs(void)
 				udi_write_tx_buf(g_prepare_buf, len, false);
 				#endif
 
+				/* Message content POCSAG */
+				l_pocsag_msg_buf_len = 0;
+
 				/* Message content */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS_SPD_HDG, l_lat_deg_d, l_lat_minutes_f, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg_d, l_lon_minutes_f, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_N2, l_mark, l_aprs_alert_1_accel_x_mg / 1000.f, l_aprs_alert_1_accel_y_mg / 1000.f, l_aprs_alert_1_accel_z_mg / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N3;
@@ -3530,9 +3574,12 @@ static void task_main_aprs(void)
 				udi_write_tx_buf(g_prepare_buf, len, false);
 				#endif
 
+				/* Message content POCSAG */
+				l_pocsag_msg_buf_len = 0;
+
 				/* Message content */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS_SPD_HDG, l_lat_deg_d, l_lat_minutes_f, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg_d, l_lon_minutes_f, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_N3, l_mark, l_aprs_alert_2_mag_x_nT / 1000.f, l_aprs_alert_2_mag_y_nT / 1000.f, l_aprs_alert_2_mag_z_nT / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
@@ -3563,9 +3610,12 @@ static void task_main_aprs(void)
 				udi_write_tx_buf(g_prepare_buf, len, false);
 				#endif
 
+				/* Message content POCSAG */
+				l_pocsag_msg_buf_len = 0;
+
 				/* Message content */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS, l_lat_deg, l_lat_minutes, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg, l_lon_minutes, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_POS_SPD_HDG, l_lat_deg_d, l_lat_minutes_f, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg_d, l_lon_minutes_f, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
 				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_N4, l_mark, (long)l_gns_msl_alt_ft, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);
 
 				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__NOOP;
@@ -3579,16 +3629,38 @@ static void task_main_aprs(void)
 		}
 	} while (false);
 
-	/* Message content ready */
+
+	/* POCSAG message content ready */
+	if (l_pocsag_msg_buf_len) {
+		/* Push POCSAG via AX5243 (VHF/UHF) */
+		if (g_ax_enable && g_ax_pocsag_enable) {
+			const uint32_t tgtRic = 12 + 1000UL;  // dl-bw  @see http://www.hampager.de/#/rubrics
+
+			/* Switch from APRS mode to POCSAG */
+			spi_ax_init_POCSAG_Tx();
+			spi_ax_selectVcoFreq(false);
+
+			/* Transmit POCSAG message */
+			spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, l_pocsag_msg_buf, strlen(l_pocsag_msg_buf));
+		}
+	}
+
+	/* APRS message content ready */
 	if (l_msg_buf_len) {
 		l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf), PM_APRS_TX_MSGEND);
 
-		/* Push via AX5243 (VHF/UHF) */
+		/* Push APRS via AX5243 (VHF/UHF) */
 		if (g_ax_enable && g_ax_aprs_enable) {
-			const char addrAry[][6]	= { "APXFMS", "DF4IAH", "WIDE1", "WIDE2" };
+			const char addrAry[][C_PR1200_CALL_LENGTH]	= { "APXFMS", "DF4IAH", "WIDE1", "WIDE2" };
 			const uint8_t ssidAry[]	= { 0, 8, 1, 2 };
 
-			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, sizeof(addrAry) / 6,  l_msg_buf, l_msg_buf_len);
+			/* Switch from POCSAG mode to APRS (by PR1200) */
+			if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__DO_N2) {
+				spi_ax_init_PR1200_Tx();
+			}
+
+			/* Transmit APRS message */
+			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, sizeof(addrAry) / C_PR1200_CALL_LENGTH,  l_msg_buf, l_msg_buf_len);
 		}
 
 		/* Push APRS message via the GSM / GPRS network */
@@ -3710,6 +3782,76 @@ int main(void)
 
 	/* Start TWI channels */
 	twi_start();		// Start TWI
+
+	/* TEST */
+#if 1
+	{
+		const uint32_t tgtRic = 12 + 1000UL;
+		const char tstBuf[] = "DF4IAH: Test message.";
+
+		for (int count = 100; count; count--) {
+			/* FIFOCMD / FIFOSTAT */
+			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+			/* Switch from APRS mode to POCSAG */
+			spi_ax_init_POCSAG_Tx();
+
+			/* Transmit POCSAG message */
+			spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, tstBuf, strlen(tstBuf));
+
+			delay_ms(250);
+			//delay_ms(7500);
+		}
+
+		/* FIFOCMD / FIFOSTAT */
+		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+		do {
+			/* FIFOSTAT */
+			spi_ax_transport(false, "< 28 R1 >");
+		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+
+		do {
+			/* RADIOSTATE */
+			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
+		} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+	}
+#else
+	{
+		char addrAry[][6]	= { "APXFMS", "DF4IAH", "WIDE1", "WIDE2" };
+		uint8_t ssidAry[]	= { 0, 8, 1, 2 };
+		char aprsMsg[]		= "!4928.39N/00836.88Ej OP: Uli, QTH: Ladenburg, LOC: JN49hl.";
+
+		for (int count = 100; count; count--) {
+			/* FIFOCMD / FIFOSTAT */
+			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+			/* Switch from APRS mode to POCSAG */
+			spi_ax_init_PR1200_Tx();
+			spi_ax_selectVcoFreq(false);
+
+			/* Enter an APRS UI frame */
+			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, 4, aprsMsg, strlen(aprsMsg));
+
+			delay_ms(250);
+			//delay_ms(7500);
+		}
+
+		do {
+			/* FIFOSTAT */
+			spi_ax_transport(false, "< 28 R1 >");
+		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+
+		do {
+			/* RADIOSTATE */
+			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
+		} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+	}
+#endif
+	while (true) {
+		nop();
+	}
+
 
 	/* Start serial */
 	serial_start();		// Start communication with the SIM808 */
