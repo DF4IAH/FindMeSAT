@@ -21,11 +21,11 @@ int main(int argc, char* argv[])
 	struct timeval tv;
 
 	printf("%c\r\n\r\n\r\n", 0x0c);
-        printf("====================================\r\n");
-        printf("* POCSAG TimeSlot Berechnung (ca.) *\r\n");
-	printf("*                                  *\r\n");
-	printf("* Zum Abbrechen STRG-C drücken.    *\r\n");
-        printf("====================================\r\n\r\n");
+        printf("===========================================\r\n");
+        printf("* POCSAG TimeSlot Berechnung    by DF4IAH *\r\n");
+	printf("*                                         *\r\n");
+	printf("* Zum Abbrechen STRG-C drücken.  20180207 *\r\n");
+	printf("===========================================\r\n\r\n");
  	printf("POCSAG Unix-Zeit = ");
 
 	while (1) {
