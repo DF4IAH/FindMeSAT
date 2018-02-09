@@ -1,0 +1,266 @@
+mainmenu_name "Funkruf-Master Konfiguration"
+mainmenu_option next_comment
+comment ''
+comment ''
+comment ''
+comment ''
+comment 'Willkommen bei der Configuration des FunkrufMaster'
+comment '============================================================'
+comment 'Bitte lesen Sie die nachfolgenden Fragen GENAU und antworten'
+comment 'entsprechend. Eine genaue Beantwortung erspart viel Aerger.'
+comment 'Ein "Enter" uebernimmt die Werte der eckigen Klammer.'
+comment ''
+comment ''
+comment ''
+comment 'Fuer welche Prozessorfamilie soll der FunkrufMaster uebersetzt'
+comment 'werden? Derzeit sind die Bibliotheken fuer Linux auf PowerPC-'
+comment 'Rechnern und auf x86-compatiblen Rechnern verfuegbar. Optimierung'
+comment 'Auf spezielle Prozessortypen innerhalb dieser Familien ist noch'
+comment 'nicht moeglich.'
+choice 'Prozessor Familie' \
+        "PowerPC                                CONFIG_PPC \
+         386                                    CONFIG_M386"
+   
+if [ "$CONFIG_M386" = "JA" ]; then
+comment 'Abhaengig von der Compilerversion muessen ggf. verschiedene '
+comment 'Bibliotheken gelinkt werden. Zur Zeit gibt es Bibliotheken fuer'
+comment 'drei verschiedene Compilerversionen:'
+choice  'Compiler Version' \
+         "EGCS_2.91            			CONFIG_EGCS_291 \
+           GCC_2.95            			CONFIG_GCC_295  \
+           GCC_3             			CONFIG_GCC_3"
+fi
+#
+#
+# Define implied options from the CPU selection here
+#
+#if [ -f /usr/include/linux/ax25.h ]; then
+#define CONFIG_SUSE_8_0
+#else
+#undefine CONFIG_SUSE_8_0
+#fi
+#
+comment 'Sind neue AX25-Libs installiert? Z.B. bei Distributionen der'
+comment	'Version >= 8.0. Eine falsche Eingabe bringt beim Compilieren'
+comment 'einige Fehlermeldung im AX25-Teil.'
+comment ''
+bool 'Neue AX25-Libs installiert?' CONFIG_SUSE_8_0
+
+ 
+endmenu
+
+mainmenu_option next_comment
+comment ''
+comment ''
+comment ''
+comment 'Einzubindende Module'
+comment '===================='
+comment ''
+comment 'Die Software befindet sich noch in der Entwicklung. An vielen Stellen'
+comment 'im Programm befinden sich sogenannte "DEBUG-Ausgaben".'
+comment 'Wenn Sie diese mit ausgeben moechten um evtl. Fehler zu finden, dann'
+comment 'sollten Sie mit "JA" antworten. Ansonsten mit "NEIN".'
+comment ''
+bool 'Uebersetzen im Debugging-Modus' COMPILE_DEBUG
+
+comment ''
+comment ''
+comment ''
+comment 'Es besteht die Moeglichkeit, den FunkrufMaster ueber PacketRadio'
+comment 'zu connecten. Hierzu muss im Linux-Kernel die AX25-Untstuetzung'
+comment 'eingebunden sein und funktionieren.'
+comment 'Bitte mit "JA" oder "NEIN" antworten.'
+comment ''
+bool 'Einbinden der AX25 Unterstuetzung' COMPILE_AX25
+
+comment ''
+comment ''
+comment ''
+comment 'Es besteht ausserdem die Moeglichkeit, den FunkrufMaster per'
+comment 'Telnet, HTTP oder SMTP zu connecten.'
+comment 'Bitte mit "JA" oder "NEIN" antworten.'
+comment ''
+bool 'Einbinden der TCP Unterstuetzung' COMPILE_TCP
+
+if [ "$COMPILE_AX25" = "JA" ]; then
+comment ''
+comment ''
+comment ''
+comment 'Soll ein DX-Cluster connected werden um die eingehenden DX-Meldungen'
+comment 'in Funkrufe umzuwandeln und dann auszusenden?'
+comment 'Bitte mit "JA" oder "NEIN" antworten.'
+comment ''
+bool 'Einbinden des DX-Cluster Spions' COMPILE_CLUSTER
+  
+comment ''
+comment ''
+comment ''
+comment 'Es koennen Wetterstationen connected werden, dessen Daten dann in'
+comment 'die Rubrik Wetter uebernommen werden. Hierzu ist eine weitere'
+comment 'Configuration notwendig.'
+comment 'Bitte mit "JA" oder "NEIN" antworten.'
+comment ''
+bool 'Einbinden der Wetterstations-Abfrage' COMPILE_WX
+
+comment ''
+comment ''
+comment ''
+comment 'Digi- und Linkstatus'
+comment 'Es koennen ein oder mehrere Digis ueberwacht und die aktuellen'
+comment 'Digi- und Link-Daten ausgegeben werden.'
+comment 'Bitte mit "JA" oder "NEIN" antworten.'
+comment ''
+bool 'Einbinden von Digi- und Linkstatus' COMPILE_DIGISTATUS
+fi
+
+comment ''
+comment ''
+comment ''
+comment 'Die Ueberfluege von Amateurfunksatelliten kann ausgehend von einem'
+comment 'Kepler-File berechnet werden. Der Sysop hat darauf zu achten, dass'
+comment 'immer ein aktuelles Kepler-File eingespielt ist.'
+comment 'Bitte mit "JA" oder "NEIN" antworten.'
+comment ''
+bool 'Einbinden der Satellitenberechnung' COMPILE_SAT
+
+comment ''
+comment ''
+comment ''
+comment 'Der FunkrufMaster kann Sonnenaufgaenge und Untergaenge sowie die'
+comment 'Mondphasen berechnen und ausgeben.'
+comment 'Bitte mit "JA" oder "NEIN" antworten.'
+comment ''
+bool 'Einbindung der Astrodatenberechnung' COMPILE_ASTRO
+
+comment ''
+comment ''
+comment ''
+comment 'Die Berechnung der Gezeiten ist nur fuer Kuestennaehe FunkrufMaster'
+comment 'sinvoll.'
+comment 'Bitte mit "JA" oder "NEIN" antworten.'
+comment ''
+bool 'Einbindung der Gezeitenberechnung' COMPILE_TIDE
+
+comment ''
+comment ''
+comment ''
+comment 'Sollen RPC-Karten, also die Funkruf-Sender vom FunkrufMaster versorgt'
+comment 'werden? In der Regel ist die der Fall.'
+comment 'Bitte mit "JA" oder "NEIN" antworten.'
+comment ''
+bool 'Einbindung der Slaveverwaltung' COMPILE_SLAVES
+
+if [ "$COMPILE_TCP" = "JA" ]; then
+comment ''
+comment ''
+comment ''
+comment 'Soll der FunkrufMaster ein WEB-Interface (HTTP_Server) erhalten?'
+comment 'Damit ist es moeglich, alle Benutzerbefehle bequem per Mausklick'
+comment 'auf einem Web-Browser auszufuehren.'
+comment 'Bitte mit "JA" oder "NEIN" antworten.'
+comment ''
+bool 'Einbinden des HTTP-Servers' COMPILE_HTTP
+fi
+
+if [ "$COMPILE_AX25" = "JA" ]; then
+comment ''
+comment ''
+comment ''
+comment 'Soll der FunkrufMaster ein AX25-Web-Interface (AXHTP-Server)'
+comment 'erhalten? Damit ist es moeglich, auch ohne Konfiguration eines'
+comment 'IP-Sockels HTML-Seiten ueber das Packet Radio-Netz zu uebertragen.'
+comment 'Bitte mit "JA" oder "NEIN" antworten.'
+comment ''
+bool 'Einbinden des AXHTP-Servers' COMPILE_AXHTP
+
+if [ "$COMPILE_AXHTP" = "JA" ]; then
+comment ''
+comment ''
+comment ''
+comment 'Geben Sie hier jetzt das Rufzeichen ein, unter dem der AXHTP-Server'
+comment 'erreichbar sein soll.'
+string 'AXHTP-Rufzeichen' AXHTPCALL
+fi
+
+fi
+ 
+comment 'Die Einbindung der HTML-Code-Erzeugung wird automatisch'
+comment 'ermittelt.'
+
+if [ "$COMPILE_HTTP" = "JA" ] || [ "$COMPILE_AXHTP" = "JA" ]; then
+comment 'Es ist der HTTP- oder der AXHTP-Server eingebunden worden.'
+comment 'Es wird somit auch die HTML-Codeerzeugung eingebunden.'
+define COMPILE_HTML
+else
+comment 'Keine HTML-Codeerzeugung notwendig.'
+undefine COMPILE_HTML
+fi
+
+comment ''
+comment ''
+comment ''
+comment 'Soll der FunkrufMaster einen SMTP-Server erhalten?'
+comment 'Damit ist es moeglich ueber das Internet-Mail-Protokoll SMTP'
+comment 'Funkrufe zu erzeugen. Dies kann z.B. auch als Importfunktion'
+comment 'benutzt werden.'
+comment 'Bitte mit "JA" oder "NEIN" antworten.'
+comment ''
+bool 'Einbinden des SMTP-Servers' COMPILE_SMTP
+
+
+endmenu
+
+
+mainmenu_option next_comment
+comment ''
+comment ''
+comment ''
+comment 'In welches Verzeichnis soll der FunkrufMaster installiert werden?'
+comment 'Bitte das abschliessenden "/" im Pfad nicht vergessen.'
+comment ''
+string 'Basisverzeichnis der Installation' BASE_DIR
+endmenu
+
+mainmenu_option next_comment
+comment ''
+comment ''
+comment ''
+comment 'Master Grundkonfiguration'
+comment 'Bitte geben Sie alle Rufzeichen in Grossbuchstaben ein!'
+comment ''
+comment ''
+comment ''
+comment 'Rufzeichen des FunkrufMaster incl. SSID.'
+comment ''
+string 'Rufzeichen' MYCALL
+
+comment ''
+comment ''
+comment ''
+comment 'Locator in dem sich der FunkrufMaster befindet.'
+comment ''
+string 'Locator-Feld' MYLOC
+
+comment ''
+comment ''
+comment ''
+comment 'Wer ist Sysop des FunkrufMaster? Diese erhalten einen Funkruf bei'
+comment 'bestimmten Ereignissen.'
+comment 'Mehrere Sysops durch "," (Komma) trennen ohne Leerzeichen.'
+comment ''
+string2 'Sysops des Masters' CONFIG_SYSOPS
+
+if [ "$COMPILE_AX25" = "JA" ]; then
+comment ''
+comment ''
+comment ''
+comment 'Auf welchen AX25-Port soll der FunkrufMaster hoeren? Dieser Port muss'
+comment 'in /etc/ax25/axports configuriert sein.'
+comment ''
+  string 'AX25 Port aus /etc/ax25/axports' MYPORT
+fi
+
+comment ''
+comment ''
+endmenu
+

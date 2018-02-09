@@ -1,0 +1,228 @@
+ToDo-Liste fuer Pager
+=====================
+Abstufung nach Wichtigkeiten:
+  1	Absolute Wichtig / Kritischer Fehler
+  2	Sehr wichtig
+  3	Bei naechster Gelegenheit
+  4	Wenn mal wieder etwas Zeit ist
+  5	Kosmetische Sachen
+  6	Kein Problem :=)
+
+
+Noch zu erledigen
+=================
+1  SegFault beim runterfahren beseitigen
+1  Nicht mit "\n" abgeschlossene Strings werden ignoriert (SMTP)
+1  Ist die Platte voll werden 0Byte-Files erzeugt. Das ist problematisch
+   bei Funkruf-Gruppen, Board-Liste, Datenbank etc. Bei den Spool-Msg ist das
+   nicht sooo schlimm.
+   Bei fehlendem Plattenplatz sollen keine Konfigurationsdateien mehr "zer-
+   schrieben" werden.
+
+2  Aktivierungssequenzen werden nicht geforwardet!
+2  Blockierende TCP-Ports verhindern, oder Schleifen drehen, bis der Port
+   wieder frei ist (waere nur ein schlechter workaround).
+2  PID auf max 9999 begrenzen, dann wieder bei 0 beginnen.
+   Achtung: Keine doppelten PID erzeugen.
+2  Die Config fuer WX-Station wird erst beim erneuten
+   Verbindungsaufbau gepeichert. Dann aber (scheinbar) staendig.
+2  Enable und Disable einzelner WX-Stationen aehnlich Digi-Statistik   
+
+Speziell zum Fwd von Nachrichten:
+Was soll wann wie geforwarded werden?
+Vorschlag:
+P DH6BB Test     => Nur lokal auf dem Master mit allen seinen Slaves
+P DH6BB @DL Test => Klar, in ganz DL
+P DH6BB @I.DL.EU => An alle im Distrikt I
+P DH6BB @I       => Automatisch Erweitern um .DL.EU
+P DH6BB @DB0WHV  => Nur an SLAVE DB0WHV (automatisch erweitern mit ...)
+
+3  Bei "DELSLAVE" wird die dazugehoerige Bake nicht geloescht
+3  Lifetime sowie Slot einer Rubrik per SMTP mit angeben koennen
+3  Mehrere Empfaenger bei SMTP angeben koennen
+3  AX25-Login User-Passwort fertigstellen
+3  Log-Eintraege bei HTTP zusammenfassen
+3  FWD: Zeit und Initialisierungsnachrichten nicht speichern.
+   Wenn gespeichert wird, dann aber mit gleichem Filenamen (ueberschreiben). 
+   (Anm. DH4DAI: Das ist leider nicht so trivial moeglich)
+3  Timeout der connection setzen koennen
+3  Zusammenfuehren von Datenbankeintraegen. Also einen vorhandenen Namen oder
+   Locator nicht mit "leer" ueberschreiben.
+   Entsprechend muss dann auch wieder eine fwd-Nachricht an ALLE (auch vom RX
+   Partner!) erzeugt werden.
+   Anmerkung DH4DAI: Das muss man nochmal genau ueberdenken, wenn man hier 
+   nicht aufpasst, kann es sein, dass man damit schnell einen Ping-Pong-Effekt
+   von fwd-Nachrichten erzeugt.
+3  Mehr als einen hoerenden AX25-Socket einrichten, damit der FunkrufMaster auf
+   mehr als einem AX25-Port connected werden kann.
+
+4  Crontab als Sysop-Befehl anzeigen koennen
+4  Neben SMTP-Server auch POP3-Client einrichten, um alternativen Zugriff auf
+   E-Mail zu erhalten.
+4  Bei den Zielgebieten kann eine automatische Erweiterung mit einem Standard-
+   Zielgebiet oder Teilen des Default-Zielgebietes erfolgen, um abkuerzende
+   Schreibweisen, wie @O oder @DL zu ermoeglichen.
+4  User sollte seine Heimat-Destination(s) selber setzen koennen. Ist keine
+   eigene Destination gesetzt, wird die default-Destination angenommen.
+   Befehlsvorschlag: HOME/HEIMAT + @I.DL.EU (Wunsch DL9CU)
+4  WECKER-Funktion, mit der sich ein User selber zu einer bestimmten Zeit
+   eine Erinnerungsmail schreiben kann.   
+4  CRONTAB erweitern, dass auch User/Sysop-Befehle ausgefuehrt werden
+4  Destinations sortieren
+4  Kommando "SETDDIR ADDBORDOP" sollte Verteiler wie "@I.DL.EU" verstehen
+4  SMTP sollte bereits bei "RCPT TO" melden, dass der User keine
+   Berechtigung fuer ein Board hat oder die Gruppe z.B. nicht existiert.
+4  Wird > Timeout getrace, dann wird beim disconnect des ueberwachten Threads
+   auch der eigene Thread wegen Timeout beendet.
+   => Auch eingehende Daten (z.B. Talk-Befehl) sollten das Timeout neu setzen.
+
+5  sortieren der Datenbank-Ausgabe
+5  Werden Default-Eintraege in den Rubriken durch FWD-Meldungen ueberschrieben
+   sollten die "alten" Default-Eintraege nach Ablauf der Lifetime wieder
+   auftauchen
+5  "Blocken" gewisser Slots der Rubriken um diese gegen Ueberschreiben zu
+   schuetzen
+5  Einstellung der Zeitzone (PC laeuft nicht in UTC)
+
+
+In Arbeit
+=========
+- Help-File weiter ausbauen
+- Digi-Statistik der Linkstreckenlaufzeiten
+
+
+Probleme
+========
+- Socket nach Programmabbruch noch einige Minuten belegt
+- Ein haengender RPC-Connect (oder auch andere L2-Connects) werden nicht wieder
+  richtig getrennt bzw. auch nicht wieder richtig neu aufgebaut.
+  (erledigt??)
+
+
+Erledigt
+========
+- TCP und AX25 streams laufen jetzt
+- Sysop-Befehle im Helpfile
+- Befehl "UpTime" > in "Version"
+- bei "+grp <gruppe> <call>" eim Meldung: 
+  "<call> wurde zur <gruppe> hinzugefuegt."
+- Logfile auf Datum "02.03.02"  kuerzen
+- "NewCall" als neuer Sysop-Befehl
+- Nachtraegliches erstellen/aendern der Gruppenbeschreibung
+- Uptime in der "Nachkommastelle" immer zweistellig (2:04)
+- "User"-Befehl umbauen: (teilweise fertig. Das geht schon:)
+  "U" ohne Parameter -> "Statistik"
+  "U *" -> Komplette Liste
+  "U Call" -> Ausgabe von Infos uerber <Call>
+- DX-Cluster-Spy einbauen
+- sortieren der User in der Gruppe neue Darstellungsidee:
+  DH6BB    Jens
+  DK0WO    Clubstation
+- Rufstatistik
+- Speicherbelegungs-Informationen bei "Version"
+- Sat-Daten ausgeben
+- Einlesen des Kepler-Files nur wenn dieses erneuert wurde (sat.cpp)
+- Platzhalter im Bakentext fuer Zeit, Datum,....
+- Einbau eines SMTP-Interfaces
+- "?" gleich "help" als User-Befehl
+- User nur in Gruppe eintragen wenn dieser auch in der Datenbank ist
+- "PAGE DH6BB" erzeugt leeren Funkruf. Ebenso "GPAGE OV-I58"
+- User nicht doppelt in Gruppe eintragen koennen
+- DX-Cluster und WX-Station Connect-Status bei "Version *" 
+   ==> Siehe "CStatus" bzw. "WHO"
+- Ausgabe der Crontab-Meldung beim Start auf andere tty legen (koennen)
+- Default-Texte fuer Skyper-Rubriken aus Datei lesen
+- Befehle zum Hinzufuegen, Loeschen und Konfigurieren von Forward-Partnern
+- Talk-Modus und WALL-Befehl
+- In Helpfile Buchstaben gross schreiben, die zur Eindeutigen Kennzeichnund
+  des Befehls notwendig sind.  
+- SAT-Modul: Beim Eintragen der Satelliten ueberprufen, ob diese auch 
+  im Kepler-File sind
+- Einbau eines HTTP-Interfaces
+- SAT-Modul: Wenn ein Satellit nicht sichtbar wird (z.B. HUBBLE), dann
+  rechnet er so lange, bis er sichtbar wird (irgendwann einmal......).
+   ==> Max. 7 Tage im Voraus wird gerechnet
+- Trace-Modus fuer Verbindungen (Sysop-Commando)
+- Letzter Login und Sprache in Datenbank speichern
+- Datenbank ueberall mit "," trennen (ID und CALL)
+- Nichtblockierender AX25-Connect, um Blockieren bei Verbindungsaufbau
+  ueber L2-Digis zu vermeiden.
+- Fuer das setzen der Benutzerparameter (Name, Sprache, letzter Login)
+  soll immer der Datenbankeintrag SSID 0 verwendet werden. Ist dieser
+  Datenbankeintrag nicht vorhanden, soll er automatisch angelegt werden.
+  Als Pager-ID wird dann 0.0 eingetragen.
+- Datenbankeintraege mit Pager-ID 0.0 sollen nicht als Datenbankaenderung
+  ins Forward gelangen. Ebenfalls sollen sie nicht bei einer Datanbank-
+  anforderung ausgesendet werden.
+- Bei einem IP-Connect zunaechst Abfrage nach Rufzeichen und Passwort 
+  durchfuehren. 
+- Implementierung der Kommunikation zu den RPC-Karten, Umbau der
+  Slave- und spool-Konfiguration
+- Textausgaben aus einer Datei nehmen, um auch Uebersetzungen in
+  andere Sprachen zu ermoeglichen
+- Forward zwischen den Mastern  
+- Forward von Datenbank und Rufe
+- Bei den Benutzerbefehlen "user" soll mit einem Flag angegeben werden
+  koennen, ob Eintraege mit pager-ID 0.0 betrachtet werden sollen oder nicht.
+- User nur eintragen, wenn Pager-ID noch NICHT in der Datenbank ist
+- SAT-Modul: Beim Setzten des Kepler-Files pruefen, ob die 
+  angegebenen SATs auch im angegebenen File vorhanden sind
+- "U DH6BB" sollte DH6BB, DH6BB-1 und DH6BB-X ausgeben.
+- Im HTTP-Interface ein Drop-Down fuer die Destination beim Page hinzufuegen
+- In der Crontab evtl die Moeglichkeit von "0-59/5" einbauen
+- Bei Telnet- und HTTP-Connects von nicht 44.xx.xx.xx Nummern Consolenpasswort
+  benutzen
+- Rubrikensysop mit eigenem Passwort (erstmal ohne PW. Noch Call-Check).
+- "NAME Jens" unabhaengig von der Login-SSID. Alle anderen Datenbank-Befehle
+  ohne Angabe eines Calls beziehen sich auf den Eintrag OHNE SSID.
+- Connect-Pfad beim Forward aendern koennen (SETFWD PFAD <Call> Pfad)
+- Ablegen der Netzmasken fuer den 44.x.x.x-Vergleich zum Erkennen von IP over
+  AX-Verbindungen in ein globdef.h, um einzelnen eine Anpassung an 
+  Masquerading-Router o.ae. zu ermoeglichen.
+- Berechnung der Gezeiten (Das sind Ebbe und Flut ;=))
+- In der Datenbank ein Consolenpasswort aufnehmen.
+- Funkrufe in "spool" auf 80 Zeichen begrenzen. Gleiches gilt fuer FWD.
+- Sysops sollten auch ueber unsichere Funkverbindungen die Moeglichkeit haben,
+  das Konsolenpasswort zu setzen, um das Password-Deadlock mit Passwordflags
+  = 7 zu knacken.
+- Lifetime einer Rubrik beim Eingeben mit angeben koennen.
+- Default-Lifetime "0" fuer Rubriken. Nachrichten werden nicht bei crontab
+  "MESSAGES" wieder ausgesendet (Sinnvoll bei DX, Sat-Ueberfluege,....)
+- Bei einem Neustart des FunkrufMaster wird das FWD-Spoolverzeichnis 
+  (fwd/route/) wieder eingelesen
+- Anpassen an GCC 3.3
+- Beschreibung der Informationen die bei den Befehlen CS, bzw. WHO und LOG
+  angezeigt werden.
+- MAX_AGE fuer Funkrufe, die in den FWD gehen. => Purge
+- Ueberfluessige Leerzeichen am Ende eines Funkrufes entfernen
+- Ueberfluessige Leerzeichen bei "DIR" entfernen
+- Kommando "SLAVE" zeigt Version der RPC-Software mit an
+- Kommando "SLAVE" zeigt letzte Laufzeitabweichung an
+- DBREQUEST funktioniert zwischen der 0.99ni (DB0WHV) und 0.99nw (DH6BB) nicht.
+- Telnet-Login geht nicht (Passwortabfrage). (DH6BB, gcc3.3.1)
+- Web-Interface: Bei Fwd koennen keine Details von Calls mit zweistelligem
+  Suffix per klick angezeigt werden. Fuehrendes Leerzeichen stoert
+- Ueberpruefen, ob ein Funkruf ein "\n" bzw "\r" enthalten kann
+  sonst laeuft er fest beim rpd ;=((
+  *** Funktion eingebaut (sp_chomp()), die dieses entfernt. Pse Test!
+  => Keine Fehlfunktion bekannt.
+- Compilierschalter SUSE8.0 automatisch setzen, abhaengig davon, ob die Datei
+  /usr/include/netax25/axlib.h existiert
+- Exportfunktion, analog zum Import-Filter
+- HTTP, SMTP, Telnet-Port bei "VERSION *" mit anzeigen
+- HTTP, SMTP, Telnet-Port ins Config-File
+- Slaves auch im Web-Interface "klickbar" machen
+- Installiert man ohne AX25-Unterstuetzung hat man als Neu-Sysop ohne
+  Datenbank keine Moeglichkeit sich einzuloggen! => PASSWORDFLAGS=0
+- Bestimme Nachrichten einer Rubrik von Hand vor Ablauf der Lifetime loeschen
+  koennen.  => Setdir del <Rubrik> <Nr>
+- strm.setf(ios::left);  funktioniert nicht mit gcc3.3.1/gcc3.3.3 (DH6BB)
+- Anpassen an GCC 3.3
+- Wird bei Senden eines Funkrufes kein Text angegeben sollte die Anfrage
+  nach dem Text in einer neuen Zeile erfolgen. Erst wenn dieser Text auch
+  leer ist eine Fehlermeldung ausgeben.   
+- Wenn EXPORTDIR nicht gesetzt ist, gibt's Log-Meldungen im Sekundentakt. 
+  Abfangen!
+- Wenn die Systemfunktion accept() -1 zurueck liefert, wird ein undefinierter
+  Pointer an das Pogramm zurueck gegeben. 
+- Doppelten Prompt bei Telnet-Login beseitigen   

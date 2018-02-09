@@ -1,0 +1,97 @@
+#
+#
+#
+#        1
+#2345678901234567890
+#
+BOARD
+Info, 1
+Hier laeuft der 
+FunkrufMaster
+(c) 2004 by
+DH4DAI, DH6BB
+#
+BOARD
+Info, 2
+Rubriken:
+=========
+Astro: 
+Astronomische Daten
+#
+BOARD
+Info, 3
+Bake: Baken der 
+Funkrufsender
+Statusbake: Bake mit
+FunkrufMaster-Status
+#
+#
+BOARD
+Info, 4
+DX-??? : DX-Cluster-
+Meldungen nach 
+Frequenzbereich
+
+#
+#
+BOARD
+Info, 5
+Relais-?? : lokale
+Relaisfrequenzen
+Satelliten: Sat.-
+Überflüge
+#
+#
+BOARD
+Info, 6
+HF-Conds: Daten zur
+Funkwellenausbrtng.
+Statistik: Ausges.
+Funkrufe einer Std.
+#
+#
+BOARD
+Info, 7
+Wetter: Meldungen
+einiger Wetterstat.
+
+
+#
+#
+BOARD
+Wichtig, 1
+In der Rubrik Info
+finden Sie Informat.
+zu eingerichteten 
+Rubriken
+#
+#
+BOARD
+Relais-10m, 1
+Mühlhm.DF0MHR 29.660
+
+
+
+#
+#
+BOARD
+Relais-2m,1
+Hagen, DB0UH 145.600
+Duisbg DB0WW 145.625
+Essen  DB0WE 145.650
+Dortm  DB0ZR 145.737
+#
+BOARD
+Relais-2m, 2
+Nordh. DB0VR 145.675
+Mnster DB0WM 145.700 
+Köln   DB0VK 145.775
+Bonn   DB0SB 145.700
+#
+BOARD
+Relais-2m, 3
+Emer.  DB0EE 145.662
+Aachen DB0WA 145.787
+Siegen DB0YS 145.637
+Berghm DB0XO 145.750
+#

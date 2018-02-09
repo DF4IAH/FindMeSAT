@@ -1,0 +1,84 @@
+#
+# Automatically generated make config: don't edit
+#
+
+#
+# Software Grundkonfigurationen
+#
+# CONFIG_PPC nicht gesetzt
+CONFIG_M386=JA
+# CONFIG_M486 nicht gesetzt
+# CONFIG_M586 nicht gesetzt
+# CONFIG_M586TSC nicht gesetzt
+# CONFIG_M586MMX nicht gesetzt
+# CONFIG_M686 nicht gesetzt
+# CONFIG_MPENTIUMIII nicht gesetzt
+# CONFIG_MPENTIUM4 nicht gesetzt
+# CONFIG_MK6 nicht gesetzt
+# CONFIG_MK7 nicht gesetzt
+# CONFIG_MCRUSOE nicht gesetzt
+# CONFIG_MWINCHIPC6 nicht gesetzt
+# CONFIG_MWINCHIP2 nicht gesetzt
+# CONFIG_MWINCHIP3D nicht gesetzt
+# CONFIG_MCYRIXIII nicht gesetzt
+CONFIG_SUSE_8_0=JA
+
+#
+# Einzubindende Module
+#
+# 
+COMPILE_DEBUG=NEIN
+#
+COMPILE_AX25=JA
+COMPILE_TCP=JA
+COMPILE_CLUSTER=JA
+COMPILE_WX=JA
+COMPILE_SAT=JA
+COMPILE_SAT=JA
+COMPILE_TIDE=NEIN
+COMPILE_SLAVES=JA
+
+INSTALL_WX_FILES=NEIN
+#
+# Installationspfad
+#
+BASE_DIR=/usr/local/funkruf/
+
+#
+# Master Grundkonfiguration
+#
+MYCALL=DB0IUZ-11
+MYLOC=JO31OK
+MYPORT=rmnc
+CONFIG_SYSOP="DH4DAI,DH6BB"
+
+#
+# Konfiguration des ersten Funkruf-Slaves
+#
+CREATE_SLAVE=JA
+SLAVECALL=DB0IUZ
+
+#
+# Bake zum ersten Slave:
+#
+
+#
+#         12345678901234567890123456789012345678901234567890123456789012345678901234567890
+#
+SLAVEBAKE="Funkrufsender DB0IUZSysop: DL5DAA WernerLocator:      JO31OKMaster:       DB0IUZ"
+
+#
+# Konfiguration des ersten Forward-Partners
+#
+CREATE_FWD=JA
+FWDCALL=DB0WHV
+CONFIG_FWD_AX25=JA
+# CONFIG_FWD_TCP nicht gesetzt
+# CONFIG_FWD_UDP nicht gesetzt
+
+
+#
+# DX-Cluster-Spion
+#
+CLUSTER_PFAD=DB0IUZ,DB0MDX
+CLUSTER_CLX=JA

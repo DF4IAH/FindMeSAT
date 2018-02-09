@@ -1,0 +1,1870 @@
+VERSION 0.99p
+=============
+-- V 0.99ow
+
+- Bugfix: Wenn sich Logeintraege mit einer Zeilenlaenge von mehr als 250 
+  Zeichen im Log befanden, stoppte die Ausgabe an dieser Stelle. Die Grenze 
+  wurde auf 999 Zeichen raufgesetzt, zudem wurde verhindert, dass 
+  laengere Zeilen vom Programm ins Log geschrieben werden koennen.
+
+- Bugfix: Unter bestimmten noch nicht ganz geklaehrten Umstaenden konnte es
+  sein, dass bei jedem scheduler-Durchlauf eine 
+  "Error_while_accepting_connection"-Ausnahmebedingung auftrat. Das Programm
+  war damit nicht mehr ansprechbar, das Log wurde vollgeschrieben. Das 
+  Auftreten dieser Ausnahmebedinung fuehrt nun zum sofortigen shutdown.
+
+- Bugfix: Beschrieftungsfehler im WEB-Formular "benutzerprofil" beseitigt
+
+-- V 0.99ov
+
+- Im Web-Formular zur Anzeige und Aenderung von Skyperrubriken kann jetzt
+  auch eine Verweildauer und das Zielgebiet fuer die Aenderungen angegeben
+  werden, wenn der Operator die Rechte fuer Eintraege in diese Skyperrubrik
+  besitzt.
+
+-- V 0.99ou
+
+- Fehler beim Einlesen der Portnummern aus dem Config-File behoben.
+  Siehe V0.99ob.
+
+- Einige verlorengegangene Ausgaben bei der Abfrage von Forwardpartnern und
+  Funkrufsendern ueber's WEB-Interface wieder eingebaut.
+
+-- V 0.99ot
+
+- Namensaenderung der Servicenamen fuer die IP-Services des FunkrufMasters.
+  Bei den Namen wurde rpp durch frm ausgetauscht
+
+- Aenderung der WEB-Ausgabe fuer Skyperrubriken. Beim Anklicken einer Rubrik
+  wird jetzt der Inhalt eines Slots in vier Zeilen a 20 Zeichen formatiert
+  angezeigt, sodass die Formatierung der auf dem Skyper entspricht.
+
+  Sysops und Board-Operateure koennen an dieser Stelle auch gleich formatiert
+  Aenderungen eingeben und diese Aussenden lassen.
+
+-- V 0.99os
+
+- Bugfix: In einigen Interfaces, die eingehende Verbindungen bearbeiteten 
+  wurde das path_finished-Flag nicht initialisiert. Dadurch wurde die
+  erste eingehende Zeile nicht an das Interface, sondern an den AX25-
+  Autorouter weiter geleitet. Betroffen waren : use_interface, fwd_interface
+  und axhtp_interface. gefixt!
+
+  Dieser Fehler fuehrte u.a. dazu, dass bei AX25-Connects gelegentlich der
+  erste Befehl ignoriert wurde.
+  
+- Noch ein Darstellungsfehler im Digi- und Linkstatus beseitigt.
+
+-- V 0.99or
+
+- Programm und Konfigurationsdatei wurde von pager bzw. pager.conf umbenannt in
+  frmaster bzw. frmaster.conf.
+
+-- V 0.99oq
+
+- Textausgaben fuer Digi- und Linkstatistik verbessert.
+- Digi-Statistik heisst jetzt Digi-Status
+- Link-Statistik heisst jetzt Link-Status
+
+-- V 0.99op
+
+- Im Web-Formular "Benutzerprofil" wird jetzt in der Geraeteauswahl der 
+  in der Datenbank bekannte Pagertyp vorselektiert.
+
+- Im Webformular "Letzte Logins" wird jetzt die Datumsanzeige wirklich
+  beachtet. Im Formular wird automatisch das aktuelle Datum vorselektiert.
+
+- Bugfix: Wenn dem SMTP-Interface in einem Datenframe mehr als eine Textzeile
+  uebermittelt wurde, wurde die erste Zeile ausgewertet, alle weiteren Zeilen
+  blieben jedoch im Input-Puffer und wurden nicht bearbeitet. gefixt!
+
+- Bugfix: Wenn das Exportverzeichnis nicht gesetzt ist, gibt es bei jeder 
+  eingehenden Clustermeldung, Nachricht, etc. eine Fehlermeldung im Log. 
+  gefixt!
+  Das Exportverzeichnis wird jetzt nur bei gesetzter Exportmaske abgefragt. 
+  Wenn das Exportverzeichnis nicht konfiguriert wurde, wird nun nur noch eine
+  Fehlermeldung ins Log geschrieben und dann die Exportmaske geloescht.
+  Wenn die Exportmaske nicht definiert ist, wird sie ebenfalls automatisch
+  auf 0 gesetzt und in die Konfiguration eingetragen.
+
+- Bugfix: DL9SAU beschrieb eine seltene Situation, in der accept() -1 zurueck 
+  lieferte. Diese Situation wurde bislang nicht abgefangen. Gefixt!
+
+- Bugfix: Bei einem TCP-Telnet-Login kam der Kommandoprompt nach dem
+  Einloggen doppelt. gefixt.
+
+-- V 0.99oo
+
+- Bugfix: Im DL9SAU-Patch fuer die erleichterte Sysop-Authorisierung wurde ein
+  Flag definiert, das gesetzt wird, wenn ein entsprechender IP-Connect (Siehe
+  Version 0.99om) erkannt wurde. Dieses Flag wurde bei AX25-Verbindungen nicht
+  korrekt initialisiert. gefixt!
+
+-- V 0.99on
+
+- Wird bei den Befehlen "PAGE", "GPAGE" oder "RUBRIK" kein Text eingegeben
+  kommt die Aufforderung zur Eingabe des Textes. So sind auch laengere
+  Texte moeglich, wenn das PR-Terminal Programm nach 80 Zeichen umbricht.
+
+
+-- V 0.99om
+
+- DL9SAU-Patch:
+  erleichterte Sysop-Authorisierung wenn Connect von localhost mit
+  Source-port < 1024. Das ist ein unix-standard, und zwar in der Form, das
+  nur der user root einen port < 1024 als Source-Port nutzen kann.
+  Beispiel: nc -p 99 localhost 4711
+  Wenn user dann "sys" sagt, wird er ohne Abfrage Funkruf-Sysop.
+  
+- DL9SAU-Patch:
+  im status "Callsign : " oder "Password : " bei telnet-Verbindungen nach
+  4711 gibt es keine korrekten Meldungen, wenn user in einen Timeout
+  rennt (d.h. sich z.B. 30min lang nicht anmeldet).
+  Vielmehr wird die Fehlermeldung ausgegeben, dass ein "schwerer Fehler in
+  der Sprachdatei" fuer "Meldung 3" aufgetreten ist.
+  Durch das praeventive Laden per 'mldg.load("dl");' ist die Sprache
+  richtig initialisiert.
+  
+- DL9SAU-PATCH:
+  Logfile loggt source-dresse und source-port einer IP verbindung. doch der
+  source-port war noch in network-order. so stimmte die geloggte zahl nicht
+  mit der realen ueberein. htons(3) behebt diesen Fehler.
+
+
+-- V 0.99ol
+
+- Wenn der AXHTP-Server eingebunden wurde aber nicht gestartet wurde 
+  (AXHTP_SERVER=NEIN), blieb ein Zeiger uninitialisiert, was zu einer 
+  Speicherschutzverletzung fuehrte. gefixt!
+
+- Die Dateinamenerzeugung der Logfiles war fehlerhaft. Dadurch kam es
+  zur Verwendung von Sonderzeichen bei den Logfiles. Dieser Fehler wurde 
+  gefixt. Leider kann das Programm dadurch nicht mehr korrekt auf aeltere
+  Logfiles zugreifen.
+
+- Beim Auftreten eines Fehlers waehrend des Select-Systemaufrufs wird der
+  FunkrufMaster jetzt sofort herunter gefahren.
+
+-- V 0.99ok
+
+- Ausgabe von benutzem und freiem Speicher vertauscht. => fixed.
+- Solange der Gruppenruf kein Zielgebiet kenn wird dieses bim HTTP-Interface
+  ignoriert.
+
+
+-- V 0.99oj
+
+- Ausgabe der Infos von "GRUPPE <gruppe>" korregiert.
+
+
+-- V 0.99oi
+
+- etwas Kosmetik im Quellcode.
+- Slave-Statusaenderung korregiert.
+- Digi-Statistik-Anzeige verschoenert (Komando "DIGI").
+- Ausrichtungsproblem bei "DIR" und "GROUP <Gruppe>" bei aktuellem GCC behoben.
+
+
+-- V 0.99oh
+
+- Optimierung des Forwardings
+
+- Anzeige einiger weiterer Parameter bei der Abfrage der Forwardparameter.
+
+-- V 0.99og
+
+- Anzeige der letzten Zeitkorrektur bei RPC-Karten korregiert.
+- Nicht initialisierte Variable im HTTP-Interface auf 0 gesetzt.
+- Anpassungen an Kernel 2.6:
+  - Speicher wird in /proc/meminfo anders angegeben
+  - Beim Senden von Datenpaketen > MTU-Size wurde der User abgeworfen.
+    => Neues define "MTU_SIZE" in der globdef.h (default 255)
+      => Todo: Auslesen der MTU-Size pro Interface
+
+-- V 0.99of
+
+- Weitere Funktionen im HTTP-Interface implementiert: Benutzer koennen jetzt
+  auch ihr Benutzerprofil mit Namen, Locator, Sprach und Pagertyp ueber ein
+  HTML-Formular setzen. Darueberhinaus koennen Sysops das Profil aller Benutzer
+  ueber dieses Formular setzen.
+
+- Sysops koennen nun ueber ein HTML-Formular Rubrikenoperateure hinzufuegen
+  und loeschen.
+
+- Um HTML-Seiten auch ohne den Overhead, der mit TCP/IP-Verbunden ist, ueber
+  das Packet Radio-Netz uebertragen zu koennen, wurde ein Protokoll definiert,
+  mit dem dies auch direkt ueber eine AX25-Verbindung geschehen kann. Dieses
+  AX25 Hypertext Transfer Protokol, kurz AXHTP, wurde in den FunkrufMaster 
+  implementiert.
+
+- Beim Uebersetzen des Quellcodes kann nun konfiguriert werden, oder der SMTP-,
+  der HTTP- und der AXHTP-Server mit uebersetzt werden sollen. Die Uebersetzung
+  der HTML-Code-Erzeugung wird davon abhaengig gemacht, ob HTTP- oder AXHTP-
+  Server eingebunden wurden.
+
+-- V 0.99oe
+
+- Bei der Abfrage der Slaves sowohl beim AX25-Zugang, als auch beim HTTP-Zugang
+  wird wieder die Firmwareversion der RPC-Karten und die letzte Zeitkorrektur
+  angezeigt.
+
+- Im HTTP-Interface funktioniert jetzt auch wieder die Aenderung des eigenen 
+  Passworts. Der entsprechende Dialog wurde bislang nicht angezeigt.
+
+-- V 0.99od
+
+- Durch eine Panne beim Einchecken des neuen HTTPd - Codes ins CVS sind
+  die Exportfunktion und die Digiueberwachung weitgehend verlorengegangen.
+  Dies sollte wieder hergestellt sein.
+
+-- V 0.99oc
+
+- Weitere Funktionen im HTTP-Interface implementiert: Aktuelles, Info, 
+  Suche in Logdateien, Funkrufsender, Benutzersuche
+
+- Das HTTP-Interface kann jetzt auch Binaerdateien uebertragen. Unterstuetzt
+  werden zur Zeit die folgenden Formate: *.jpg, *.jpeg, *.gif, *.wav, *.txt,
+  *.htm und *.html. Die Dateien muessen sich in einem speziellen HTML-
+  Verzeichnis oder eines seiner Unterverzeichnisse befinden.
+
+- Zur Angabe des HTML-Verzeichnisses gibt es den neuesn Konfigurationsparameter
+  HTMLDIR.
+
+- Der Hintergrund der HTML-Ausgabe ist nun mit dem Parameter HTML_BACKGROUND
+  konfigurierbar. Es kann entweder eine Hintergrundfarbe in Hexadezimaler
+  Form (z.B. Weiss = FFFFFF) oder die URL einer Hintergrundgrafik angegeben 
+  werden.
+
+- Bugfix: Wenn unter AX_25_SMTP_SENDER kein Rufzeichen konfiguriert war, 
+  fuehrte dies bei jedem AX25-Connect von aussen zu einer Fehlermeldung. 
+  Sollte jetzt gefixt sein.
+
+-- V 0.99ob
+
+- Digi-Statistik: Toter Link bei TNN wurde nicht richtig erkannt.
+                  Zusaetzlich ausgabe der Zeit in Digi-Statist.
+- Befehl "DIR <Rubrik>" macht jetzt hinter jeder gefuellten Zeile eine 
+  Leerzeile zur Trennung.
+- TCP-Ports werden bei "VERSION *" mit angezeigt.
+- TCP-Ports werden jetzt in der pager.conf mit gespeichert.
+  Die Eintraege in der /etc/services koennen entfallen. Ebenso die
+  Commandozeilenparameter.
+  Reihenfolge: Default-Port => /etc/services => pager.conf => Cmd-Line  
+
+-- V 0.99oa
+
+- Aenderung in der Implementierung des Forward-Protokolls. Bisher wurden beim
+  Einlesen der Daten aus dem Spoolverzeichnis beim Start einer Forward-
+  verbindung die vorhandenen Zeit und Zielgebietsnachrichten aussortiert
+  und geloescht. Dies wurde nun auf den Destruktor des Interfaces verschoben.
+  Dort werden jetzt auch alle noch vorhandenen Protokolleigenschaftsnachrichten
+  geloescht, was beim Verbindungsstart nicht moeglich war.
+
+  Das Ansammeln "ueberfluessiger" Eigenschafts-, Zeit- und Zielgebiets-
+  nachrichten sollte damit vermieden werden. Es wird nur noch eine einzige
+  Eigenschaftsnachricht ausgetauscht.
+
+-- V 0.99o9
+
+- Erweiterung fuer die Config der Digi- und Linkstatistik:
+  - Hinzufuegen von Digis mit "DIGI ADD <Call>", Loeschen mit "DIGI DEL <Call>"
+  - Enable und Disable der gesamten Abfrage
+  - Enable und Disable einzelner Digis (default ist DISABLE!)
+  - Hinzufuegen und loeschen von Links mit "ADDLINK" und "DELLINK"
+
+-- V 0.99o8
+
+- Einbau einer Exportfunktion
+  Bei bestimmten Ereignissen koennen Informationen an andere Programm 
+  exportiert werden. Dazu werden Dateien in ein Verzeichnis geschrieben, das
+  durch den Parameter EXPORTDIR festgelegt ist. Die Dateien haben den Namen
+  EXPORT.<ereignis-id>.<nummer>
+
+  Die Ereignis-IDs werden im folgenden beschrieben, die Nummer ist eine
+  Zufallszahl zwischen 0 und 32767
+
+  Folgende Ereignisse gibt es:
+
+  Ereignis-ID  Beschreibung
+  D            DX-cluster-Meldungen. Es wird die Meldung geschrieben, so wie
+               sie vom DX-Cluster empfangen wurde
+  C            DX-Ausbreitungsmeldungen. Es werden die Meldungen geschrieben, 
+               so wie sie vom DX-Cluster empfangen wurden.
+  W            Wettermeldungen. Es werden die von einer Wetterstation 
+               ausgelesenen Daten im ASYNOP-Format geschrieben 
+               (Achtung: Noch nicht vollstaendig implementiert)
+  P            Persoenliche Funkrufe. Es werden jeweise in einer Zeile die
+               folgenden Daten in dieser Reihenfolge geschrieben:
+
+               Rufzeichen des Masters (bei dem die Nachricht erzeugt wurde)
+               Zeit der Erzeugung (Format : wtg, dd. Mon YYYY  HH:MM:SS)
+               F|L (Nachricht kommt aus dem Forward / Lokale Nachricht)
+               Absender
+               Zieladresse
+               Zielgebiet
+               Nachrichteninhalt
+               Prioritaet
+
+  B            Skyper-Rubrikennachricht. Es werden jeweise in einer Zeile die
+               folgenden Daten in dieser Reihenfolge geschrieben:
+
+               Rufzeichen des Masters (bei dem die Nachricht erzeugt wurde)
+               Zeit der Erzeugung (Format : wtg, dd. Mon YYYY  HH:MM:SS)
+               F|L (Nachricht kommt aus dem Forward / Lokale Nachricht)
+               Boardnummer
+               Slotnummer
+               Zielgebiet
+               Nachrichteninhalt
+               Prioritaet
+
+- Neuer Befehl EXPORTMASK, mit dem die Exportereignisse bei denen Daten
+  exportiert werden abgefragt oder gesetzt werden koennen.
+
+-- V 0.99o7
+
+- Fehlendes "cr" bei Ausgabe von "CStatus".
+- Optik-Verbesserung in der Hilfe-Ausgabe.
+- Erweiterung fuer die Config der Digi- und Linkstatistik.
+
+-- V 0.99o6
+
+- Umbau des HTTP-Interfaces. HTML-Codeerzeugung und HTTP-Server sind nun
+  sauber voneinander getrennt. Die HTML-Codeerzeugung ist nun auch 
+  "Mehrsprachfaehig".
+
+-- V 0.99o5
+
+- einige Fehler in der WX-Abfrage beseitigt. Sollte jetzt wieder laufen.
+
+
+-- V 0.99o4
+
+- Erweiterungen fuer Digi-Statistik bzw. Link-Statistik
+- Neue Boards 91 und 92 fuer Digi- bzw. Linkstatistik
+  (werden automatisch angelegt)
+- Kleine Aenderung im Makefile
+
+
+-- V 0.99o3
+
+- Bei Schrittweisen FWD-Connect wurde der CText des letzten Digis 
+  faelschlicherweise als Meldung erkannt und der Fehlerzaehler lief hoch.
+
+
+-- V 0.99o2
+
+- Erweiterung Digi-Statistik fuer XNET.
+- Statistik fuer PC-Flexnet lief nicht.
+
+
+-- V 0.99o1
+
+- Zeiten fuer gescheiterte Verbindungsaufbauten werden nicht mehr bei neuem
+  Connectversuch zurueckgesetzt.
+- Kosmetik im RPC-Interface
+
+
+Version 0.99o
+=============
+
+- Nochmal Aenderung im SMTP-Teil wegen GROSS- und Kleinschreibung
+- Nichtinitialisierte Variablen unter anderem bei http initialisiert
+- Erweiterungen fuer die Digi-Statistik
+- Telnet-Login sollte wieder funktionieren (Passwort schlug fehl)
+- Web-Interface: Bei Fwd konnten keine Details von Calls mit zweistelligem
+  Suffix per klick angezeigt werden. Fuehrendes Leerzeichen stoerte
+
+
+-- V 0.99nz
+
+- Erweiterungen fuer die Digi-Statistik
+
+-- V 0.99ny
+
+- Slave-Version wird bei "SLAVE" mit angezeigt. Bsp: (RPC-XOS 2.2.0pre32)
+- Letzter Slave-Zeiversatz wird bei "SLAVE <CALL>" mit angezeigt.
+- Bugfix beim Einlesen der Datenbank!! Alle Pager-Typen waren unbekannt.
+- Datenbank-Updateanforderungen funktionieren wieder.
+- Autorouter: Destination mit zu hoher Laufzeit werden ignoriert (siehe globdef.h)
+- Datenbank-Updates werden jetzt zusammengefuehrt.
+  Ist Name, Locator oder Geraet lokal nicht gesetzt und in einem Update kommen
+  zusatzliche Infos, werden diese Infos eingefuegt.
+
+-- V 0.99nx
+
+- SMTP-Server stuerzte beim Connectversuch unter GCC 3.3 ab. gefixt!
+- SMTP-Server unterschied GROSS- und Kleinschreibung beim Server. gefixt!
+- SMTP: Absender <dh6bb@db0fho.ampr.org> wurde nicht erkannt ("<DH6BB"). gefixt!
+
+-- V 0.99nw
+
+- Wno-deprecated im Makefile fuer gcc3
+- Schreibfehler in der FWD-Anzeige beseitigt
+- Copyright-Ausgabe auf 2004 gesetzt
+- Debug-Meldungen teilweise verschoenert
+- Im Autorouter konsequent "-1." als Initialisierung
+- Ueberfluessige Leerzeichen am Ende eines Funkrufes werden entfernt
+- Ueberfluessige Leerzeichen bei "DIR" am Ende der Zeile entfernt
+- RubrikenOPs werden auch als nicht-Sysop angezeigt
+- Anfaenge fuer Digi- und Linkstatistik
+
+  Anmerkung DH6BB: Compiliert und laeuft auch mit GCC 3.3.1 (SuSE 9.0)
+  
+
+-- V 0.99nv
+
+- Beim Start des mit GCC 3.x uebersetzten Masters kam es zum Programmabbruch
+  beim Einlesen der Datenbank, da Leerstellen in Locator, Name u.ae. zu
+  Problemen fuehrte. Dies ist jetzt behoben. 
+
+  Anm. DH4DAI: Mit dieser Version ist es mir erstmals gelungen, das Programm
+  mit GCC 3.2 zu uebersetzen _und_ zu starten.
+
+  Ausfuehrliche Tests stehen jedoch noch aus.
+
+-- V 0.99nu
+
+- Bugfix: Der Aufruf von String::append(ostringstream& ) fuehrte zu einer
+  Speicherschutzverletzung. gefixt!
+
+- Bei DB0IUZ ist erstmals die "Error_while_select" Exception aufgetreten,
+  die bisher nicht abgefangen wurde und somit zum Programmabbruch fuehrte. Dies
+  wird jetzt abgefangen.
+
+-- V 0.99nt
+
+- Sollte nun auch mit GCC 3.x zu uebersetzen sein.
+
+-- V 0.99ns
+
+- Bugfix: Bei Stringvergleiche wurden zwei unterschiedliche Strings als 
+  identisch erkannt, wenn der eine String Anfang des zweiten war. (z.B.
+  PARA == PARA_2 ) Dies fuehrte an verschiedenen STellen zu Problemen.
+  gefixt!
+
+- Bugfix: Dem Clusterinterface wurde ein falscher Sockettyp (IP statt AX25)
+  uebergeben, sodass ein keine Korrekte Zeilentrennung durchfuehren konnte.
+  gefixt!
+
+- Bugfix: Das Clusterinterface bearbeitete stets nur eine Zeile eines ein-
+  gehenden Datensatzes. gefixt.
+
+- Bugfix: Im Importfilter wurden die Zeilen dem Benutzerinterface ohne 
+  Zeilenabschlusszeichen uebergeben, sodass dieses die Zeilen nicht 
+  aufloesen konnte. gefixt.
+
+- Bugfix: Vom Satellitenmodul wurden die Satellitennamen nicht richtig 
+  angezeigt. gefixt.
+ 
+-- V 0.99nr
+
+- Bugfix: Wenn beim Test, ob ein Teilstring in einem String enthalten ist,
+  der Teilstring genau mit dem Ende des Strings uebereinstimmte wurde dies
+  nicht erkannt. gefixt!
+
+-- V 0.99nq
+
+- Beim Weiter-connecten wird jetzt zwischen Puffereintraegen mit Zeilen-Ende
+  und ohne Zeilenende unterschieden. Das Zeilenendezeichen ist abstrakt und 
+  wird entsprechend der IP- oder AX25-Verbindung ersetzt.
+
+- Bei Forwardverbindungen kann jetzt zu Debuggingzwecken der gesamte Daten-
+  verkehr ins Logfile geschrieben werden.
+
+-- V 0.99np
+
+- Einige Umstellungen an den Stringfunktionen. Jetzt sollten auch '\0'
+  Zeichen in String keine Probleme mehr machen. 
+
+- Bugfix: Im RPC-Interface wurde bei mehreren gleichzeitig ankommenden Zeilen
+  durch die Strukturumstellung nur noch die erste Zeile bearbeitet. gefixt.
+
+- Bugfix: Im Connect-Interface wurden die Daten aus dem Input-Buffer, die an
+  den aufrufenden Thread weitergeleitet wurden, nicht wieder aus dem Input-
+  Buffer geloescht. gefixt!
+
+- Bugfix: Wurde beim Aufbau einer Verbindung einmal das "wait_for_conenct"-
+  Flag des Threads gesetzt, wurde dies nicht wieder geloescht. Dies fuehrte
+  dazu, dass das Programm staendig den Outgoing-Socket dieses Threads
+  angepollt hat, womit auch bei jedem Select-Aufruf sofort ein OK fuer diesen
+  Thread zurueck kam. Das Programm wechselte somit nicht mehr in den Sleep-
+  Modus und kam auch annaehernd 100% CPU-Auslastung. gefixt!
+
+- Bugfix: Falls mit dem Connect-Interface eine Verbindung zwischen einem
+  IP und einem AX25-Thread hergestellt wurde, wurden die Zeilenendezeichen
+  nicht konvertiert. gefixt!
+
+- Bugfix: Im Cluster-Interface wurden ebenfalls bei mehreren gleichzeitig
+  eintreffenden Zeilen immer nur die erste bearbeitet. gefixt!
+
+-- V 0.99no
+
+- Weitere Umstellung des Programmablaufs. Die Aufspaltung der Eingabedaten
+  in Textzeilen wurde jetzt in die Interfaces verlagert. Damit koennen 
+  Interfaces jetzt auch auf nicht Zeilenorientierte Daten reagieren.
+
+
+-- V 0.99nn
+
+- Bugfix: Das RPC-Interface sendete keine Daten nach aussen. Grund waren 
+  einige return-Statements bevor die geschriebenen Daten aus einem String-
+  Stream in den Ausgabestring uebernommen wurden.. gefixt!
+
+-- V 0.99nm
+
+- Bugfix: Beim SMTP-Interface kam es durch die Anwendung des +-Operators
+  auf char* und char zum Verschwinden einiger Zeichen. Die Antworten des
+  Servers waren dadurch zerstoert. gefixt!
+
+- Bugfix: beim HTTP-Interface kam es ebenfalls zu fehlerhaften Server-
+  Antworten. gefixt!
+
+- Bugfix: beim HTTP-Interface wurden Requests nicht richtig erkannt. Sie 
+  fuehrten stets zu einer String Index-Verletzung, die intern abgefangen
+  wurde, aber die weiterverarbeitung verhinderte. gefixt!
+
+-- V 0.99nl
+
+- Bugfix: Wegen einer falschen Zeilenendeerkennung konnten keine Daten von
+  AX25 Sockets gelesen werden. Sollte jetzt funktionieren.
+
+-- V 0.99nk
+
+- Als ersten Schritt, um das Programm auch mit dem GCC V > 3 uebersetzen zu
+  koennen, wurde die Struktur der Socketprogrammierung vollstaendig 
+  ueberarbeitet. Die bisherigen Socketstreams wurde komplett beseitigt.
+
+  Neu ist eine Datei socket.cpp / socket.h, in der die beiden Basisklassen
+  client und server enthalten sind, die abstrakt alle Methoden enthalten,
+  um eine Socketkommunikation durchzufuehren. Diese werden an Tochterklassen
+  ax25_server/client und tcp_server/client vererbt.
+
+  Durch diese Struktur konnten weite Teile des Programm deutlich vereinheit-
+  licht werden.
+
+
+-- V 0.99ni
+
+- Bugfix: Bei einer ungraden Anzahl von eingerichteten Rubriken wurden bei
+  der HTML-Ausgabe des Inhaltsverzeichnisses zweimal die ungraden Rubriken
+  nebeneinander ausgegeben, statt links die ungraden und rechts die
+  graden. Gefixt!
+
+- Die Strktur der Logdateien wurde komplett umgestellt. Fuer jedes Log
+  gibt es im Hauptlogverzeichnis nun ein eigenes Unterverzeichnis. Innerhalb
+  dieses Unterverzeichnisses wird fuer jeden Tag eine eigene Datei geoeffnet.
+  Diese Logdateien haben stets einen Dateinamen nach dem folgenden Muster:
+
+                              log_JMT
+                                  |||
+                                  ||+--- Tag im Monat (1..9, A..V )
+                                  ||
+                                  |+---- Monat (1..9, A..C )
+                                  |
+                                  +----- Jahr (0 = 2000, 1 = 2001 ... )
+
+- Es wurde ein weiteres Logverzeichnis hinzugefuegt, das alle gespoolten
+  Funkrufe loggt. Dabei werden geloggt:
+
+                 - Zeit des Spoolens
+                 - Art des Funkrufs
+                 - Absender
+                 - Absender Master
+                 - Absendezeit
+                 - Zielgebiet
+                 - Prioritaet
+                 - Inhalt
+ 
+- Zum Ansehen des Spoollogs gibt es den neuen Befehl "SPLOG".
+
+- Zum Setzen der Spoollogmaske gibt es den neuen Befehl SPLOGMASK. Als
+  einstellbare Optioneen gibt es:
+
+                  #P  Private Funkrufe werden geloggt.
+                  #B  Skyper-Rubrikenrufe werden geloggt.
+                  #R  Wiederholgungen der Boardinhalte werden geloggt.
+                  #N  Aussendungen der Rubrikennamen werden geloggt.
+
+- Bei allen Logbefehlen kann jetzt der Zeitraum des Logauszugs angegeben 
+  werden. Folgt direkt dem Logbefehl eine Zeitoption, wird diese verwendet.
+  Folgende Zeitoptionen stehen zur Verfuegung:
+
+                  -h        heute (Standard)
+                  -w        letzte Woche
+                  -m        letzter Monat
+                  -q        letztes Quartal (3 Monate)
+                  -y        letztes Jahr
+                  -d<datum> Statt des heutigen Datums wird das angegebene
+                            Datum als Ausgangspunkt verwendet. Das Datum
+                            wird in der Form TT.MM.JJ angegeben.
+
+  Unberuehrt davon bleibt die maximale Anzahl von Eintraegen, die Standard-
+  maessig bei 15 bleibt, bzw. separat angegeben werden kann.
+
+
+-- V 0.99nh
+
+- Intern sind alle Zielgebiete jetzt mit einer Pruefsumme versehen. Wird
+  bei der Verwendung eines Zielgebietes eine Fehlerhafte Pruefsumme gefunden,
+  wird dieses Zielgebiet nicht mehr verwendet und eine Fehlermeldung
+  erzeugt. Tritt der Pruefsummenfehler in der Routingtabelle des Autorouters
+  auf, wird die komplette Routingtabelle neu initialisiert.
+
+-- V 0.99ng
+
+- Bugfix: Wenn eine Skyper-Rubriken-Nachricht fuer eine lokal nicht vorhandene
+  Rubrik zu einem Forwardpartner geschickt wird, mit dem diese Nachrichten als
+  Funkrufnachrichten ausgetauscht werden muessen (Protokolloption B nicht 
+  aktiv), fuehrte dies zum Programmabbruch. gefixt!
+
+ 
+-- V 0.99nf
+
+- Verbesserung des Autorouters. Die Bildung von Schleifen und das Haengen-
+  bleiben von Zielgebietseintraegen, die im Netz nicht mehr zu erreichen sind,
+  sollte besser vermieden werden.
+
+-- V 0.99ne
+
+- Bugfix: Das loeschen von lokal angelegten Rubriken mit dem Delrub-Befehl
+  funktionierte bisher nur, wenn der Boardname ausschliesslich aus Kleinbuch-
+  staben und Ziffern bestand. gefixt!
+
+-- V 0.99nd
+
+- Bugfix. Beim Forward von Skyper-Rubrikennachrichten kam es zu Fehlern, 
+  wenn keine Lifetime eingegeben wurde. Da die Standardlifetime mit -1 
+  codiert wird und an einigen stellen ein "unsigned int" verwendet wurde, kam
+  es hier zu merkwuerdigen Ergebnissen. gefixt!
+
+-- V 0.99nc
+
+- Spezielle HTML Aufgabe fuer die Forwardtabelle und die Zielgebiete
+
+-- V 0.99nb
+
+- Parameter des Autorouters wurden leicht modifiziert. Verschlechterungen der
+  Linksituation werden jetzt schneller weiter gegeben.
+
+- Mit Skyper-Rubrikennachrichten werden jetzt auch die Lifetimes dieser 
+  Nachrichten im Forward weiter geleitet. Notwendigerweise ist dies zu der
+  bisherigen Uebertragungsweise inkompatibel. Daher erhaelt der Austausch von
+  Skyper-Rubrikennachrichten jetzt die Protokolloption B. Die Version 0.99nb
+  ist nicht mehr in der Lage solche Nachrichten im alten Format auszutauschen.
+  Der Austausch von Skyper-Rubrikennachrichten mit aelteren FunkrufMaster-
+  Versionen muss daher ueber normale Funkrufnachrichten erfolgen.
+
+- Wird bei der Eingabe einer Sykper-Rubrikennachricht ein Slot vorgegeben, so
+  wird dieser jetzt auch im Forward weiter geleitet. Dies ist ebenfalls nur
+  im neuen Format entsprechend der Protokolloption B moeglich.
+
+- Wurde dem Autorouter eine erfolgreiche Messung zu einem Nachbarn gemeldet,
+  zu dem zuletzt keine erfolgreiche Verbindung aufgebaut werden konnte, wird 
+  zu diesem Nachbarn eine Initialisierungsnachricht geschickt. Diese
+  Initialisierungsnachricht ist so aufgebaut, dass sie bei aelteren 
+  FunkrufMasterversionen ohne Effekt bleibt.
+
+- Wenn eine Initialisierungsnachricht empfangen wird, werden in allen bekannten
+  Zielgebieten die Delays, die von diesem Nachbarn empfangen und zu diesem
+  Nachbarn gesendet wurden zurueck gesetzt. Anschliessend werden entsprechend
+  neue Zielgebietsnachrichten versendet.
+
+-- V 0.99na
+
+- Aenderungen an der DX-Cluster Konfiguration werden nun sofort gespeichert.
+
+- Bugfix: Wenn nach "setfwd enablear" oder "setfwd disablear" ein Parameter
+  folgte, der kein gueltiges Rufzeichen war, fuehrte dies zum Programmabbruch.
+  gefixt!
+
+- Bugfix: Beim Freigeben oder Sperren des Autoroutings zu einem einzelnen
+  Forwardpartner wurde auch gleich der gesamte Autorouter mit reigegeben, 
+  bzw. gesperrt. gefixt!
+
+- Bugfix: Wenn man ueber das HTTP-Interface als Sysop angemeldet ist und den
+  15 Minuten-Timeout verstreichen laesst, wird ein internes Flag nicht wieder
+  zurueck gesetzt. Folge ist, dass sich niemand mehr bis zum Neustart als 
+  Sysop anmelden kann. gefixt! 
+-- V 0.99n9
+
+- Im HTTP-Interface wird jetzt bei der Abfrage der momentanen Logins eine
+  eche HTML-Ausgabe in einer Tabelle ausgefuehrt.
+
+-- V 0.99n8
+
+- Eine Reihe von nicht mehr benoetigten DEBUG-Ausgaben wurden wieder 
+  beseitigt.
+
+- (langsame) dynamische Anpassung der Betriebsflussparameter beim 
+  Forwarding
+
+-- V 0.99n7
+
+- Bugfix: In ganze seltenen Faellen kann es zum Empfang eines SIGPIPE-
+  Signals kommen. Dazu muessen fuer eine Verbindung zu schreibende Daten
+  anliegen und die Verbindung muss zwischen dem Aufruf der "select"-
+  Funktion und dem Schreibversuch unterbrochen werden. Da diese Zeitspanne
+  recht kurz ist, ist dies unwahrscheinlich. Bei einer hohen Anzahl offener
+  Verbindungen nimmt die Zeitspanne und damit die Wahrscheinlichkeit zu. 
+  Vermehrt kann dieses Problem bei eingeschalteter Laufzeitmessung des
+  Digipeaters auftreten, da hier eine hohe Connect-Frequenz gegeben ist
+  und die Verbindung noch waehrend der Ausgabe des Conenct-Text getrennt
+  wird.
+  Das SIGPIPE-Signal wird jetzt abgefangen und protokolliert. Der 
+  entsprechende Thread wird entfernt, ohne das Programm zu beenden.
+
+-- V 0.99n6
+
+- Bugfix: Beim Netscape-Navigator wurden der Inhalt einer Rubrik nicht 
+  angezeigt, weil im HTML-Code das letzte </table>-Tag fehlte. gefixt!
+
+- Die Erweiterungen des HTTP-Servers wurden jetzt auch fuer die Anzeige der 
+  Benutzergruppen vorgenommen.
+
+- Er werden jetzt auch die Signale SIGKILL und SIFPIPE behandelt.
+
+-- V 0.99n5
+
+- Erweiterung des HTTP-Servers. Das Inhaltsverzeichnis der Skyper-Rubirken
+  wird jetzt uebersichtlich in einer Tablle angezeigt. Die einzelnen Rubriken
+  koennen angeklickt werden. Dabei wird dann der Inhalt dieser Rubrik 
+  angezeigt.
+
+-- V 0.99n3
+
+- Bugfix: Die Aenderung aus Version 0.99n2 fuehrte beim Einlesen der Board-
+  dateien im neuen Datenformat zu einem Pogrammabbruch. Behoben
+
+- Bugfix: Alte Boarddateien wurde zwar intern mit neuen Informationen zum
+  Wiederholungsintervall versehen, aber nicht im neuen Format wieder 
+  abgespeichert. gefixt!
+
+
+-- V 0.99n2
+
+- Verbesserung der Wiederholungsaussendung. Fuer jede Skyperrubrik wird jetzt
+  ein Wiederholungsintervall gesetzt. Beim Crontabprozess wird jetzt 
+  ueberprueft, ob dieses Intervall seit der letzten Aussendung abgelaufen ist.
+  Nur wenn dies der Fall ist, wird der Rubrikeninhalt erneut ausgesendet.
+
+  Der Crontab-Prozess sollte daher jetzt wesentlich haeufiger, z.B. Halbstuend-
+  lich aufgerufen werden.
+
+  Standardmaessig wird jeder Rubrik ein im Quelltext vorgegebenes 
+  Wiederholungsintervall mitgegeben.
+
+- Zum Setzen des Wiederholungsintervalls gibt es den neuen Befehl
+  setdir MSGREPEAT <rubrik> <intervall>, bzw. 
+  setdir WIEDERHOLUNG <rubrik> <intervall>. Das Wiederholungsintervall wird
+  in beiden Faellen in Minuten angegeben.
+
+-- V 0.99n1
+
+- Bugfix: Wenn eine Nachrichtendatei beim Wiedereinlesen eines Forward-Spool-
+  Verzeichnisses nicht mehr lesbar ist, blieb sie bisher im Spoolverzeichnis
+  unveraendert liegen und fuehrte bei jedem Versuch, sie wieder einzulesen,
+  erneut zu einem Fehler. Solche Dateien werden jetzt geloescht.
+
+VERSION 0.99n
+=============
+
+- Der Autorouter laesst sich jetzt generell und fuer jeden einzelnen 
+  Forwardpartner abschalten. Dazu gibt es den neuen Befehl SETFWD ENABLEAR
+  [<rufzeichen>] bzw. SETFWD DISABLEAR [<rufzeichen>]
+
+- Bugfix: Einige Fehlersituationen im Forward, speziell wenn Nachbarn mit
+  Autoroutern beteiligt waren, die zum Programmabbruch fuehrten, werden nun
+  sauber abgefangen. Damit sollte die Soft wieder deutlich stabiler sein.
+  
+- Bugfix: Parameter AUTOROUTER wurde beim Programmstart nicht korrekt aus
+  der Konfigurationsdatei gelesen. Daher war nach einem Neustart der 
+  Autorouter immer ausgeschaltet. Gefixt.
+
+- Beim Einlesen der Forward-Spoolverzeichnisse werden die Forwardnachrichten,
+  die ein vorgegebenes Alter ueberschritten haben, nicht mehr in den internen
+  Strukturen gespeichert, sondern geloescht. Dies betrifft beim Programmstart
+  das Einlesen des Routing-Spoolverzeichnisses fwd/route/, sowie nach der 
+  Etablierung einer Forward-Verbindung das Einlesen des Nachbar-Spoolver-
+  zeichnisses fwd/<call>/.
+
+- Maximales Alten von Funkrufen, die in den FWD gehen (ausgehend vom Speicher-
+  zeitpunkt auf der Platte):
+  Persoenliche Nachricht:  6 Stunden
+  Rubriken Nachricht    : 48 Stunden
+  Sonstiges             : Unbegrenzt
+
+- In den Funkrufen der Rubrik Astro wird jetzt auch der Locator des Ortes
+  angegeben, fuer den die Berechnung durchgefuehrt wurde. 
+
+- Neuer Befehl "Setfwd RESET <rufzeichen>" setzt den Status einer Forward-
+  Verbindung auf getrennt und 0 gescheiterte Versuche zurueck. Damit koennen
+  nach Parameteraenderungen oder z.B. nach der Reparatur eines Links die
+  Langen wartezeiten bis zum naechsten automatischen Versuchs abgekuerzt werden.
+
+- Einbau einer Prioritaetshierachie fuer verschiedene Funkrufe. Funkrufe koennen
+  jetzt Prioritaeten von 0 (maximal) bis 255 (minimal) haben. Die folgenden
+  Prioritaeten wurden festgelegt:
+
+  Systemmeldungen                 20
+  Skyper-Aktivierungsmedlungen    32
+  Persoenliche Funkrufe           64
+  DX-Cluster-Meldungen            96
+  Statusbake                      96
+  Skyper-Rubrikenrufe            128
+  Skyper-Rubrikenwiederholungen  196
+
+
+VERSION 0.99m
+=============
+
+- Es gibt nun den neuen Crontab-Eintrag PURGE, zu dem alle abgelaufenen 
+  Nachrichten aus den Skyperrubriken entfernt werden.
+  
+- PURGE loescht auch veraltete Funkrufe in den Spool-Dirs. Ansonsten wird
+  direkt vor dem Aussenden eines Funkrufs nochmals geprueft!
+
+- Mit WX SHOW <rufzeichen> kann man sich nun den Inhalt einer Wetterstations-
+  Konfiguration im Detail ansehen.
+
+- Im Auslesefilter der Wetterstationen wird jetzt die erste Zahl nach dem
+  gefundenen Tag-String benutzt. Zwischen Tagstring und Zahl koennen 
+  beliebige, auch variable Zeichen stehen. Der Tagstring muss nicht am 
+  Anfang der Zeile stehen.
+  
+- Veraenderungen an der User-Passwortabfrage. Laeuft das nun, wie es soll??
+
+- Neues Makro "%P" entspricht dem alten "%N". Dafuer liefert jetzt "%N" den
+  Namen des Users ausgehend von seinem Call OHNE SSID (%P ist mit SSID).
+  Ein "Hallo %N!" zeigt bei Login von DH6BB-5: "Hallo Jens!", wobei ein
+  "Hallo %P!" bei gleichem Call nur "Hallo   !" ausgibt, da DH6BB-5 nicht
+  in der Datenbank ist.
+  
+- Neues Makro "%C" zeigt das User-Call OHNE SSID an. "%c" wie gehabt MIT SSID.
+
+- Bugfix in der User-Passwortabfrage. Wenn bisher unbekanntes Rufzeichen 
+  connected gibt es keinen Programmabbruch mehr.
+
+- Zur Vorbereitung des Autoroutings wurde eine neue Protokolloption eingebaut,
+  die nun in der Lage ist, zwischen zwei Forward-Partnern Laufzeiten zu messen.
+
+- In der Forwardliste werden jetzt auch die Nachrichten angezeigt, die sich
+  noch im Spoolverzeichnis des Forward-Interfaces befinden. Dazu hat das 
+  Interface seine eigene Zaehler, die regelmaessig dem Router gemeldet werden.
+  Der Router bildet dann eine Summe der eigenen und der Interface-Zaehler.
+  Fuer die Aktivierung des Forwards ist auch diese Summe entscheidend.
+
+- Bugfix: Programm beendete sich, wenn ueber das Forward eine Update oder 
+  Datenbankaenderungsnachricht zu einen Rufzeichen eintraf, das in der lokalen
+  Datenbank mit der ID 0.0 eingetragen war.
+  
+- Auf der Forwardstrecke wird nur noch eine Begrenzte Anzahl von unbestaetigten
+  Nachrichten zugelassen. Diese Maximalzahl ist zunaechst auf 200 festgesetzt.
+  Ausserdem schreibt das Programm weniger Agressiv Daten in den Linux-Socket,
+  was bei den vorherigen Versionen zu Problemen bei grossen Datenmengen 
+  fuehrte, die ausgesendet werden mussten. Das Verhalten im Forward duerfte
+  somit bei wesentlich stabilder gegenueber den Vorgaengerversionen sein.
+
+- Bugfix: Der mit der vorhergehenden Aenderung verbundene zu fruehe Abbruch
+  von HTTP-Verbindungen durch den Server ist behoben.
+
+- Bugfix: Es wurden keine negativen Uhrenoffsets angezeigt. Dies ist jetzt
+  behoben.
+
+- Minimale Shutdown-Prozesszeit auf 20 Sekunden verlaengert. 12 Sekunden vor
+  Shutdown wird begonnen Verbindungen abzubauen.
+
+- Im Benutzerlog werden jetzt auch die Anzahl der Empfangenen und gesendeten
+  Nachrichten (im Forward) und Funkruf angezeigt.
+
+- In der Threadliste wird jetzt auch ser Status der Verbindung angezeit. Dabei
+  heisst:
+
+                     C : Verbindung ist im Aufbau
+                     E : Verbindung ist aufgebaut
+                     D : Verbindung wird abgebaut
+
+  zudem wird die Verbindungsrichtung angezeigt.Dabei heisst '<' eingehende
+  und '>' ausgehende Verbindung
+
+- Bugfix: Es werden jetzt keine Default-Lifetimes <=0 beim Setdir-Befehl
+  mehr akzeptiert.
+
+- Bugfix: Es werden jetzt auch QSOs mit Stationen mit gleichem Rufzeichen ins
+  Benutzerlog geschrieben, wenn es sich nicht um Benutzerlogins handelt. Damit
+  werden auch QSOs eingetragen, z.B. zum lokalen RPC oder DX-Cluster.
+
+- bei einem Neustart werden jetzt alle Forwardnachrichten aus dem Spool-
+  verzeichnis des Routers (fwd/route/) wieder eingelesen. Dazu musste das
+  Dateiformat dieser Dateien leicht modifiziert werden, sodass vor einem
+  Update das Verzeichnis fwd/route/ zu loeschen ist.
+
+- Bugfix: Es war bislang moeglich, den eigenen Thread zu tracen, was ein
+  Aufschaukeln des Datenverkehrs mit sich brachte. Dies ist jetzt unterbunden.
+
+- Wenn ein Verbindungsaufbau zum Forwardpartner scheitert oder eine Verbindung
+  getrennt wird, gleichzeitig aber noch eine zweite Verbindung existiert, die
+  z.B. von der Gegenseite Aufgebaut wurde, bleibt nun der Status Aktiv 
+  erhalten, solange diese zweite Verbindung existiert. Damit kommt es nicht 
+  mehr zu der verwirrenden Situation, dass der Status getrennt oder gescheitert
+  ist, gleichzeitig aber eine Forwardverbindung besteht.
+
+- Bei der Anzeige des Benutzerlogs wird jetzt eine Ueberschrift ausgegeben.
+
+- Bugfix: Wenn ueber die Benutzerschnittstelle ein neuer Cluster eingeben
+  wurde, dessen Typ nicht RAW war, fuehrte anschliessend das Loeschen irgend
+  eines Clusters aus der Konfiguration zum Programmabbruch. gefixt!
+
+- Das Forward-Interface pollt in kurzen Abstaenden beim Router an, ob 
+  Nachrichten zur Uebertragung an diesen Nachbarn vorliegen. Diese Polling-
+  Funktion war sehr ineffizient programmiert. Wenn sich durch einen Link-
+  ausfall viele Nachrichten fuer einen S&F-Partner angesammelt haben, mussten
+  auch beim Pollen der anderen Partner alle diese Nachrichten durchsucht
+  werden. Durch Verwendung der internen Nachrichtenzaehler wurde diese Funktion
+  wesentlich effizienter. Hohe CPU-Lasten treten nicht mehr auf.
+
+- Bugfix: Durch die oben genannte Aenderung antwortete der Master im Forward
+  nicht mehr auf Zeitmessanfragen der Nachbarn. gefixt!
+
+- Bugfix: Beim Neustart wurden unbearbeitete Skyper-Boardnachrichten aus dem
+  Spoolverzeichnis vom Router zwar wieder in die Routing-queue aufgenommen,
+  der entsprechende Nachrichtenzaehler jedoch nicht korrekt gesetzt.
+  gefixt!
+  
+- Bugfix: Im rpc_interface wurde der RPC nicht richtig syncronisiert.
+  gefixt!
+
+- Als Vorbereitung fuer ein echtes Autorouting werden sind die Master jetzt
+  in der Lage, Routinginformationen untereinander auszutauschen. Dazu wird die
+  neue Protokolloption 'D' im Forward benutzt. 
+
+- Im Austausch von Routinginformationen wurden eine Reihe von Verbesserungen
+  durchgefuehrt, die verhindern sollen, dass es zu einer Lawine von 
+  Zielgebietsnachrichten im Forward kommt. 
+
+- Neuer Befehl "DESTINATION" zur Abfrage von bekannten Versorgngsgebiete. Die
+  Befehlssyntax lautet:
+
+  DEST [<zielgebiet>]
+
+  Bei Angabe eines Zielgebietes werden nur solche Versorgungsgebiete angezeigt,
+  die Teil des Zielgebietes sind.
+
+- Fuer die Routing-Tabelle des Autorouters werden jetzt die Mittelwerte der
+  letzten 16 Laufzeitmessungen verwendet und nicht mehr die letzten Messungen.
+
+- Es werden jetzt zwei getrennte MID-Tabellen fuer Zeit- und Autorouting-
+  informationen auf der einen und alle anderen Nachrichten auf der anderen 
+  Seite verwendet. Nur die MID-Tabelle fuer "normale" Nachrichten wird in einer
+  Datei gesichert.
+
+- Die MID-Tabelle wird jetzt regelmaessig nach 250 Neueintraegen, spaetestens 
+  jedoch nach einer Stunde in die entsprechende Datei gesichert.
+  
+- Purgen der Rubrikeninhalte korregiert.
+
+- Tracen nur noch mit Angabe einer ID moeglich.
+
+- Board-Lifetime auf max. 999 Tage begrenzt.
+
+- Board-Lifetime 0 eingefuehrt. Bei LT = 0 werden die Nachrichten beim Crontab
+  "MESSAGES" nicht neu ausgesendet! Sinnvoll bei z.B. bei DX-Meldungen.
+  
+- Eingabe einer Rubrik jetzt mit Lifetime moeglich. Siehe "HELP RUBRIK".
+  ToDo: Lifetime in den FWD geben.
+
+- Neuer Unterbefehl "SETDIR LIFETIME <RUBRIK> <SLOT> <LIFETIME>"
+  Siehe "help setdir".
+  Setzen der Default-Lifetime mit "SETDIR DEFLIFETIME"
+  
+- Astro-Daten jetzt mit Locatorangabe
+
+ 
+VERSION 0.99l
+=============
+
+- Bugfix: Bei >10 Satelliten bzw. Orte in der Gezeitenberechnung die von Hand
+  eingetragen wurden, gab es eine Speicherschutzverletzung.
+
+- Bugfix: Speicherleck in der Gezeitenberechnung gestopft.  
+
+- Das Programm kann jetzt Relaislisten, wie sie vom DARC V/U/SHF-Referat
+  veroeffentlicht werden, einlesen und daraus entnommene Informationen ueber
+  die Relais, die dem Master am naechsten liegen, in die entsprechenden
+  Skyper-Rubriken eintragen.
+
+- Es gibt jetzt eine Einheitliche Syntax fuer Sub-Kommandos:
+
+  <Befehl> <Unterbefehl> <rufzeichen> <parameter>
+
+  Dazu wurde dei Syntax von SETSLAVE und SETDIR geaendert.
+
+- Bugfix: Wenn bei einem Page-Befehl das Zielgebiet ohne Leerzeichen direkt
+  hinter dem Rufzeichen folgte, wurde das Zielgebiet nicht erkannt und statt
+  als Teil des Textes betrachtet. Dies ist jetzt gefixt.
+
+- Bugfix: Wenn in einer IP-Adresse zwischen Hostnamen und Port statt eines 
+  Doppelpunktes ein Leerzeichen stand, fuehrte dies zum Programmabsturz. Gefixt!
+
+- Bugfix: Ein Hostname-Look-up-Fehler beim TCP-Fwd oder einer TCP-
+  Weiterverbindung fuehrte zum Programmabbruch. Gefixt!
+
+- Bugfix: In Nachrichten, die Geforwardet wurden, tauchten am Ende der 
+  Nachricht scheinbar zufaellige Rufzeichen auf, die nicht zum Text gehoerten. 
+  Gefixt
+
+- In der Forward-Logmaske gibt es ein neues Bit mit der Wertigkeit 256, mit dem
+  alle eingehenden Forward-Nachrichten in einer lesbaren Kurzform 
+  protokolliert werden.
+
+- Alle Ereignisse, die mit der RPC-Kommunikation zusammen haengen, werden jetzt
+  ins RPC-Log geschrieben. Zur Auswahl der zu schreibenden Ereignisse gibt
+  es den neuen Parameter RPCLOGMASK, der den Parametern LOGMASK, bzw. 
+  FWDLOGMASK entspricht. In der Maske gibt es die folgenden Ereignisbits:
+
+	RPCLOGMASK_NO           0  // Keine Logeintraege
+	RPCLOGMASK_INIT         1  // Initialisierungen
+	RPCLOGMASK_CONNECTION   2  // Verbindungsauf- und -abbau
+	RPCLOGMASK_ERROR        4  // Fehler
+	LOGMASK_DATEN        	8  // Uebertragene Daten
+
+- Dadurch faellt in der LOGMASK das Ereignisbit mit der Wertigkeit 2048 weg,
+  das bisher RPC-Ereignisse protokollieren lies.
+
+- Zum Aendern von LOGMASK, PAGEMASK, FWDLOGMASK und RPCLOGMASK gibt es jetzt
+  Sysopkommandos die logmaske, rufmaske/pagemask, fwdmaske und rpcmaske.
+
+- Alle Kommandos sind jetzt zweisprachig implementiert.
+
+- Bugfix: Im Cluster-Interface wurde eine Feldgroesse ueberschritten, wenn 
+  eine Clusterzeile aus mehr als 20 Worten bestand. Das Feld wurde durch einen
+  Vector aus der STL ersetzt, Bug sollte damit gefixt sein.
+
+- Bugfix: Laenger Funkrufe (etwa > 60 Zeichen) konnten nicht im http-Interface
+  gesendet werden. Der Button "Sende Funkruf" blieb wirkungslos. Sollte jetzt
+  gefixt sein.
+  
+- Gezeitenberechnung wurde komplett umgestellt. Zur Speicherung der Daten 
+  aus der harmonics-Datei werden jetzt in eigenen Klassen  Container der
+  Standard Template Library benutzt. Damit sollte es jetzt keine Speicher-
+  schutzverletzungen mehr geben. Dieses muss jedoch noch getestet werden.
+  Freigeben und Sperren der Gezeitenberechnung arbeitet jetzt korrekt.
+
+- Shutdown wird jetzt um mindestens 10 Sekunden verzoegert, um eingeloggte
+  Benutzern zu informieren. Zudem ist es moeglich die Verzoegerungszeit
+  in Minuten beim Shutdown-Befehl anzugeben, um noch laengere Verzoegerungs-
+  zeiten zu ermoeglichen.
+
+  Eine Shutdownwarnung erfolgt dann eine Minute und fuenf Sekunden vor dem
+  Shutdown.
+  
+- ADDSLAVE setzt einen default-Connect-pfad. Vorher krachte es, wenn kein
+  connect_pfad gesetzt wurde und die slave-Daten gelesen wurden.  
+  
+- Alle User-Datenbank-Befehle beziehen sich auf den User-Eintrag OHNE SSID.
+
+- Ein PAGE an User mit ID 0.0 bringt die Meldung, dass der User nicht in der
+  Datenbank ist.
+  
+- Bei "VERSION *" wird jetzt auch die Anzahl der User MIT Pager (also ID!=0.0)
+  angezeigt
+  
+- Neuer Parameter bei "SETFWD": "PFAD" zum aendern des Connect-Pfad.
+
+- "*** reconnected" wird auch beim Forward erkannt. Ebenso "Reconnected to"
+  im FWD wie auch im Cluster-Interface. "Reconnected to" bei z.B. TNN.
+  
+- User mit ID 0.0 wird durch Forward-Nachricht mit "richtiger" Pager-ID
+  ueberschrieben, auch wenn der Eintrag mit 0.0 neuer ist.
+
+- Netzmaske und IP-Adresse fuer die IP over AX25-Erkennung liegt jetzt
+  in globdef.h
+
+- Sprache kann nur auf eine vorhandene Sprache umgeschaltet werden. Hierzu
+  wird versucht, die messages.<sprache> zu oeffnen.
+  
+- Sicherheits-Patch der die gesamte Datenbank durcheinander bringen koennte,
+  wenn man verspielte User oder Sysops hat ;=)
+
+- Wetterkonfiguration erfolgt jetzt ebenfalls komplett ueber den Sysop-Befehl
+  WX. Die Befehlssysntax kann der Online-Hilfe entnommen werden
+
+- Alle Logmasken koennen nun mit Sysop-Befehlen gesetzt werden
+
+- Timeouts eingebaut. Der connect zu einer Wetterstation wird jetzt 
+  unterbrochen, wenn mehr als vier Minuten keine Daten mehr von dieser 
+  Wetterstation kamen. Ausserdem wird die Verbindung getrennt, wenn der 
+  eingestellte Prompt nach der Eingabe des Befehls erneut empfangen wurde, da 
+  dann nicht mehr mit dem Empfang weiterer Daten zu rechnen ist.
+
+- Beim Aufbau einer Clusterverbindung wurde jetzt auch ein Timeout von vier
+  Minuten eingebaut. Nachdem die ersten Daten vom Cluster empfangen wurden, 
+  verlaengert sich die Timeout-Zeit auf eine Stunde, um auch laengere 
+  Ruhezeiten ueber Nacht ohne Disconnect zu ueberstehen.
+
+
+
+VERSION 0.99k
+=============
+
+- Format der Astrodaten-Funkrufe veraendert. Sonnen- und Monddaten haben jetzt 
+  gleiches Format. Statt der Mondphase wird bei den Sonnendaten die Tageslaenge
+  ausgesendet.
+
+- Mit dem Befehl ZEIT kann jederzeit die aktuelle Systemzeit angezeigt 
+  werden.
+
+- Fuer Telnet und HTTP-Logins die nicht ueber eine Funkverbindung laufen
+  (wird erkannt anhand der 44/8-IP-Nummer) wurde ein Konsolenpasswort 
+  eingefuehrt. Dieses Passwort wird verschluesselt in der benutzerdatenbank
+  gespeichert. Die Datenbank wird automatisch auf das damit verbundene neue
+  Format konvertiert.
+
+  Fuer das Konsolenpasswort gibt es einen Steuerparameter PASSWORTFLAGS. In 
+  diesem Parameter ist Bitweise kodiert, ob das Konsolenpasswort fuer einen
+  Login erforderlich ist, ob der eingestellte Name als Passwort benutzt werden
+  kann, solange kein Passwort eingestellt wurde und ob Benutzer ihr Passwort
+  selbst veraendern duerfen. Die einzelnen Bits haben die folgende Bedeutung:
+
+     1 : Konsolenpasswort wird benutzt
+     2 : Name als Initialpasswort
+     4 : benutzer kann Passwort aendern.
+
+  Zum Aendern des Passwortes gibt es einen neuen Befehl, PASSWD. Sysops 
+  koennen zu diesem Befehl ein Rufzeichen eingeben, um das Passwort eines
+  Benutzers zu setzen. Benutzer koennen nur ihr eigenes Passwort aendern 
+  und muessen dazu ihr altes Passwort angeben. Dies geht nur, wenn Bit 2 in
+  PASSWORTFLAGS gesetzt ist.
+
+  Bei der Eingabe des Passwortes via Telnet wird dieses leider auf dem
+  Bildschirm dargestellt.
+
+- Die Konfigurierbarkeit des Quelltextes, d.h. die Moeglichkeit nicht 
+  benoetigte Teile des Codes abzuschalten wurde deutlich verbessert.
+
+- Bugfix: Beim Abspeichern der slave.conf wurde versehentlich ein Formtierungs-
+  Flag gesetzt, das bei Calls mit zweistelligem Suffix ein Leerzeichen 
+  einfuegte. Dadurch konnte die Datei nicht wieder eingelesen werden. Fehler
+  behoben.
+  
+- Im Web-Interface gibt es jetzt ein Formular, in dem Benutzer ihr Konsolen-
+  Passwort aendern koennen.
+
+- Mit dem Web-Interface kann man sich nun in einem dafuer geschaffenem 
+  Formular als Sysop authentifizieren und dann maximal 15 Minuten Sysop-
+  Befehle durchfuehren. Der Sysopstatus wird im Programm selber gespeichert
+  und nicht etwa im Cookie kodiert. Es kann immer nur ein Benutzer ueber das
+  Web-Interface Sysop sein. Waehrend der gesamten Sitzung muss er mit dem 
+  gleichen Rufzeichen und der gleichen IP-Nummer auf den Master zugreifen.
+
+- Sysops koennen ueber das Web-Interface auch die Konsolenpasswoerter anderer
+  benutzer setzen.
+
+- Das SMTP-Interface kann nun auch ueber einfache AX25-Verbindungen angesprochen
+  werden. Damit steht eine relativ einfache Moeglichkeit eines Funkrufimports
+  von anderen Rechnern zur Verfuegung. Damit dies Funktioniert, muss das
+  Rufzeichen des AX25-SMTP-Senders im Konfigurationsparameter AX_25_SMTP_SENDER
+  eingetragen sein. Es koennen beliebig viel Rufzeichen, mit Kommata getrennt
+  eingetragen werden. Rufzeichen in AX_25_SMTP_SENDER und Absenderrufzeichen
+  muessen genau uebereinstimmen, d.h. auch die SSIDs muessen gleich sein.
+
+- Bugfix: Die Datenbankversion wurde beim Einlesen nicht korrekt erkannt. Daher
+  gingen beim Neustart die Datenbankelemente der neueren Versionen (Passwoerter,
+  Sprache und letzter Login) verloren. gefixt!
+
+- Mit dem Befehl DBTRANS kann ein Sysop jetzt auch alle Datenbankeintraege, die
+  zuletzt in seinem Master geaendert wurden, neu in den Forward schicken. Dabei
+  kann er auch einen zeitbereich angeben, wie alt die Eintraege mindestens oder
+  hoechstens sein duerfen.
+  
+- Gezeitenberechnung. Hierzu den neuen Befehl "Gezeiten" eingefuegt. Bitte
+  im Help-File nachlesen. Parameter "GEZEITEN" und "HARMONICS" neu in der
+  pager.conf.
+  Gestartet wird die Berechnung ueber die Crontab mit "GEZEITEN".
+  
+  Berechnungsdaten stehen fuer die folgenden Orte zur Verfuegung:
+
+  Borkum, Bremen, Bremerhaven, Brunsbuettel, Buesum, Cuxhaven, Emden, Hamburg,
+  Helgoland, Husum, Norderney, Wilhelmshaven
+
+- Neue Skyper-Rubrik "Gezeiten".
+
+- Umbau der Ausgabe von "User" (siehe Help-File). Der User kann waehlen, ob
+  Eintraege ohne Pager-ID mit angezeit werden sollen.
+  
+- Befehl NEWCALL funktioniert wieder, wenn User mit ID 0.0 schon in der
+  Datenbank ist.
+  
+- Befehl "RUBRIK" ohne weitere Parameter bringt jetzt eine Fehlermeldung.
+
+- Bei "DIR" wird jetzt zusaetzlich die Zeit angezeigt, die seit dem lezten
+  Eintrag einer Nachricht vergangen ist.
+  
+- User koennen nur noch eingetragen werden, wenn die Pager-ID noch nicht in 
+  der Datenbank ist.
+  
+- Bei "USER <Call>" werden jetzt zusaetzlich weitere Pager des Users angezeigt
+
+- Bugfix: Der Forwardrouter hat bisher jede Funkruf und Rubrikennachricht an
+  jeden Nachbarn weiter geleitet. Sollte jetzt korrekt funktionieren.
+  
+- Bugfix: Nach entfernen eines Ortes aus dem Gezeitenstring, war die Anzeige
+  der Liste danach leer.
+  
+- Im HTTP-Interface gibt es nun auch eine Destination-Auswahl.
+
+- LOG-Suche etwa 3 Prozent beschleunigt ;=)
+  Wer es um den Faktor 50 schneller haben will, sollte ohne "_DEBUG_STRING_"
+  compilieren!
+  
+- SHOWSPOOL zeigt jetzt zusaetzlich die Anzahl der Funkrufe im Verzeichnis
+  an.  
+
+- Crontab: Eintraege der Form "0-59/5" anstatt "0,5,10,15,..." moeglich.
+  Hinweis: Statt "2,7,12,17,22,..." geht "2-59/5".
+  
+- SLOG ohne Parameter zeigt jetzt wirklich die letzten 15 Eintraege. Dachte
+  schon, ich koenne nicht mehr zaehlen, hi (letzter Eintrag war immer leer).
+  
+- Log-Suche ist nicht mehr Case-Sensitiv.
+  
+- Neue DX-Cluster-Steuerung implementiert. Es ist jetzt moeglich, mehrere
+  DX-Cluster anzugeben, die alternativ bei Ausfall eines Clusters angesprochen
+  werden. Wenn keiner der angegebenen Cluster ansprechbar ist, wird nach 
+  mehreren gescheiterten Versuchen die Wartezeit sucsessive verlaengert.
+  Zur Konfiguration der DX-Cluster-Steuerung wurde der DXCLUSTER-Befehl
+  entsprechend angepasst.
+
+ 
+
+VERSION 0.99j
+=============
+
+- Exception-Handling beim Einlesen der Sende-Queue nach dem Aufbau einer
+  Forwardverbindung verbessert, um haengen bleiben eines geoffneten 
+  Verzeichnisses zu verhindern.
+
+- Beim Befehl FDESCRIPTOR werden die Dateinamen angezeigt, auf die die
+  geoeffneten Datei-Descriptoren zeigen.
+
+
+VERSION 0.99i
+=============
+
+- Bugfix: Beim Aufbau von abgehenden TCP-Verbindungen (Forward und Weiter-
+  connect wurde bislang nicht der angegebene Host, sondern stets localhost 
+  connected. Dieser Fehler ist beseitigt. Stehen fuer einen Hostnamen zudem
+  mehrere IP-Adressen zur Verfuegung werden alle durchprobiert, bis es bei
+  einer zu einem Erfolg kommt.
+
+- Die Mondphasenberechnung arbeitet jetzt korrekt. Es wird abnehmender und
+  zunehmender Mond angezeigt. Zudem werden jetzt auch Auf- und Untergangszeiten
+  von Sonne und Mond der beiden Folgetage angezeigt.
+
+
+VERSION 0.99h
+=============
+
+- Es gibt jetzt einen Timeout von 4 Minuten fuer den Aufbau einer Forward-
+  Verbindung
+
+- Ein gescheiterter Forward-Aufbau wird jetzt besser erkannt.
+
+- Nach gescheitertem Forward-Verbindungsaufbau wird die Wartezeit gestaffelt
+  verlaengert.
+
+- Die gestaffelte Wartezeit nach einem gescheiterten Connectaufbau ist auch
+  fuer Slave-Connects realisiert.
+
+- Bugfix: Wenn Rubrikennachrichten deutlich laenger als 80 Zeilen waren, 
+  fuehrte dies zum Absturz beim wieder Einlesen der Boarddatei. Jetzt werden
+  ueberlange Textzeilen beim Abspeichern der Boarddatei auf 80 Zeichen 
+  gekuerzt. Zudem wurde das Einlesen resistent gegen ueberlange Zeilen
+  gemacht.
+
+- Beim Version-Befehl wird jetzt auch angezeigt, wie viele Dateidescriptoren
+  geoeffnet sind. Mit dem neuen Befehl FDESCRIPTOR koennen sich Sysops zudem
+  alle geoffneten Dateidescriptoren anzeigen lassen.
+
+- Weiterverbindungen konnten bereits, nachdem die Verbindung aufgebaut war mit
+  '~.' beendet werden. Nun ist dies auch waerend des Connect-Aufbaus moeglich.
+
+
+VERSION 0.99g
+=============
+
+- Bugfix: Wenn bisher statt eines connect-Pfade nur ein einzelnes Rufzeichen
+  angegeben wurde, fuehrte dies zu einem Absturz. Dies ist jetzt behoben.
+
+- Bugfix: Wenn von einem Digi beim Verbindungsaufbau die Meldung "Reconnected"
+  kam, wurde bisher darin zunaechst das Stueck "connected" erkannt und falsch
+  reagiert. Nun wird zuerst auf "reconnected" ueberprueft.
+ 
+- Beim Forward von Datenbankaenderungen oder bei Datenbankanforderungen 
+  wird jetzt der Zeitstempel aus dem Forward in die eigene Datenbank 
+  uebernommen.
+
+- Es werden keine negativen Datenmengen mehr ins Logfile eingetragen.
+
+- Bugfix: Wenn direkt beim binden oder connecten einer ausgehenden Verbindung
+  ein Fehler auftrat, wurde der Socket nicht wieder geschlossen. Dies wird 
+  jetzt getan.
+
+- Bugfix: Beim Umbau der Passwort-Abfrage entstand ein Fehler, der dazu 
+  fuehrte, dass das programm in eine Endlosschleife geriet, wenn der Zufalls-
+  generator zwei gleiche Zahlen lieferte. behoben.
+
+
+VERSION 0.99f
+=============
+
+- bei der Passwort-abfrage werden jetzt keine Stellen im Passwort mehr
+  doppelt abgefragt. Das Passwort muss jetzt mindestens 10 Zeichen haben.
+
+- Im Forward werden jetzt auch Austragungen von Rufzeichen und Aenderungen
+  des Rufzeichens uebertragen.
+
+VERSION 0.99e
+=============
+
+- Neue Zugriffkontrolle fuer Rubrikeninhalte. Auf eine Rubrik kann jetzt nur
+  noch schreibend zugreifen, wer als Rubriken-Operateur fuer diese Rubrik
+  eingetragen ist. Zum Eintragen oder Loeschen von Rubriken-Operateuren
+  gibt es die Befehle SETDIR ADDBOARDOP und SETDIR DELBOARDOP. Statt 
+  eines einzelnen Operateurs kann die Rubrik auch fuer alle Benutzer 
+  freigegeben werden. Zudem kann unterschieden werden, ob die Rubrik lokal
+  oder uebers forward freigegeben wird.
+
+- Jeder Nachricht wird fuer die interne Speicherung eine Lifetime mitgegeben,
+  nach deren Ablauf die Nachricht automatisch aus dem internen Speicher 
+  entfernt wird und somit auch nicht mehr ausgesendet wird. Jeder Rubrik
+  kann eine Standard-Lifetime eingetragen werden. Dazu gibt es den Befehl
+  SETDIR LIFETIME
+
+- Die Zugriffskontrolle fuer Rubrikeninhalte arbeitet jetzt auch beim SMTP-
+  und beim HTTP-Zugriff.
+
+- Sysops koennen jetzt auch eine Verbindung nach aussen aufbauen. Dazu 
+  dient der CONNECT-Befehl. Nach dem Befehl ist der Verbindungstyp (
+  'A' fuer AX25-Verbindung und 'T' fuer TCP-Verbindung) und die Adresse
+  anzugeben.
+
+ 
+VERSION 0.99d
+=============
+
+- Bugfix: Aktuell, Info und Helptext haben jetzt auch bei AX25-Verbindungen 
+  wieder richtige Zeilenumbrueche
+
+- Formatierung der Speichergroessen mit Vorsilben sollte jetzt in allen 
+  Faellen richtig sein.
+
+- beim Login wird grundsaetzlich auf die Daten in der Benutzerdatenbank 
+  zugegriffen, die unter der SSID 0 abgespeichert sind.
+
+- Beim ersten Login einer bisher unbekannten Station wird automatisch ein 
+  neuer Datensatz in der SSID 0 in der Benutzerdatenbank angelegt. Als 
+  Pageradresse wird 0.0 gesetzt.
+
+- Wenn der Sysop einen Benutzer hinzufuegen will, fuer den bereits ein
+  Datensatz existiert, jedoch mit Pageradresse 0.0, wird in der Benutzer-
+  datenbank lediglich Pageradresse und Geraetetyp ersetzt.
+
+- Datensaetze, die keine gueltige Pageradresse enthalten, werden nicht ins
+  Forward aufgenommen. Auch bei einem Updaterequest werden diese Datensaetze
+  nicht ausgesendet.
+
+- Mond und Sonne haben jetzt bei den astronomischen Daten zwei eigene 
+  slots in der Rubrik Astro. Mondphase sollte jetzt richtig angezeigt werden.
+
+- Bugfix: Es wurden keine Nachrichten vom Router an das Forward-Interface 
+  uebermittelt, wenn der Linkaufbau via AX25 von der Gegenstation erfolgte
+  und beim Ausgangsrufzeichen eine andere SSID als die eingetragene benutzt
+  wurde. Erschien dann so, also findet keine Richtungsumkehr im Forward
+  statt. 
+
+
+VERSION 0.99c
+=============
+
+- Der Verbindungsaufbau geschieht jetzt nicht blockierend. Damit koennen auch
+  laengere AX25-Routen ueber L2-Digipeater genutzt werden, ohne dass das 
+  Programm laengere Zeit im Connect-Befehl blockiert.
+
+- Bugfix: Wenn der Aufbau einer AX25-Verbindung bereits auf dem weg zum ersten
+  Digipeater scheiterte (trat vornehmlich bei der Verwendung von L2-Digipeatern
+  auf) blieb der Zustand in der Slave-Verwaltung und im Forward-Router auf
+  "im Aufbau" haengen. Dieser Fehler sollte jetzt beseitigt sein.
+
+
+VERSION 0.99b
+=============
+
+- Auch bei eingehenden Forward-Verbindungen und bei TCP-Forward-Verbindungen
+  wird jetzt in der Thread-Liste die korrekte Gegenstation angezeigt.
+
+- Format der Satellitenmeldungen veraendert: Den Zeitangaben UTC hinzugefuegt
+  und "missgluecktes" Gradzeichen durch Stern '*' ersetzt.
+
+- Bei Fehlern in pager.conf bzw. slave.conf werden die fehlerhaften Zeilen
+  Jetzt in die Standard-Fehlerausgabe geschrieben. Bei Fehlern in fwd.conf
+  wird das Rufzeichen des Nachbars, in dessen Konfiguration der Fehler
+  auftritt ins Logfile geschrieben.
+
+- Benutzer koennen jetzt auch eine andere Sprache setzen als Deutsch. Die
+  Funktion konnte mangels vorhandener Uebersetzungen der Textdateien noch
+  nicht getestet werden.
+
+  Fuer diese Funktion muss das Konfigurationsfile geaendert werden. In den
+  Parametern AKTUELL, CTEXT, INFO und HELP muss der Dateisuffix entfernt
+  werden. Dieser wird jetzt abhaengig von der eingestellten Sprache vom 
+  Programm selbst erzeugt.
+
+- Mit den Befehlen LANGUAGE und SPRACHE kann jeder Benutzer jetzt selbst
+  seine Sprache setzen.
+
+- Ueber's Forward empfangene Datensaetze fuer die Benutzerdatenbank haben
+  jetzt dl als Sprache und noch nicht eingeloggt als Loginzeit eingetragen
+
+- Das Format der Benutzerdatenbank hat sich geaendert. Der FunkrufMaster ist
+  in der Lage, sowohl das alte, als auch das neue Format zu lesen. 
+  Abgespeichert wird immer im neuen Format. Die Konvertierung erfolgt somit
+  automatisch.
+
+VERSION 0.99a
+=============
+
+- Fuer das Forwarding wurde ein eigenstaendiges Logfile angelegt. Dieses
+  File kann mit dem Befehl "fwdlog" eingesehen werden. Um festzulegen, welche
+  Ereignisse in das Forwardlog geschrieben werden, gibt es den Konfigurations-
+  parameter FWDLOGMASK. Der Aufbau dieser Maske ist aehnlich wie beim
+  Systemlogfile. Folgende Ereignisse gibt es:
+
+            * Initialisierungsmeldungen     1  #I
+            * Verbindungsauf- und -abbau    2  #C
+            * Interface-Debugmeldungen      4  #F
+            * Interface-IO                  8  #V
+            * Forward-Fehler               16  #E
+            * Routing-Aktionen             32  #R
+            * Router-Nachbarerkennung      64  #N
+            * Meldungen der Descriptoren  128  #D
+
+  Jede Meldung wird mit dem entsprechenden Kennbuschstaben gekennzeichnet.
+  FWDLOGMASK=0 schaltet das Forward-Logfile ab.
+
+- Ebenso gibt es jetzt fuer RPC-Verbindungen ein Logfile. Dieses kann mit
+  dem Befehle "rpclog" eingesehen werden.
+
+
+VERSION 0.99
+============
+
+- Bug beseitigt: Wenn bei Gruppenbefehlen kein Gruppenname angegeben wird,
+  wird jetzt die Ausnahmebedingung abgefangen und fuehrt nicht mehr zum 
+  Absturz.
+
+- Bug Im Forwarding beseitigt: Funkrufe wurden dann, wenn sie in ein lokales
+  Spollverzeichnis geschrieben wurden, nicht mehr in die Routing-queue 
+  uebernommen.
+
+VERSION 0.98j
+=============
+
+- Mit FWD <rufzeichen> werden detailierter Informationen zu einem Forward-
+  Partner angezeigt.
+
+- Bei nie sichtbaren oder immer sichtbaren Satelliten jetzt eine Berechnungs-
+  grenze von 1 Woche eingebaut. Wenn in dieser Zeit der Satellit nicht sichtbar
+  wird oder wieder hinter dem Horizont verschwindet wird die Berechnung
+  abgebrochen. Beispiel fuer nie sichtbar ist (derzeit) "HUBBLE".
+  
+- RPC-Interface: Ueberfluessige Bake entfernt.
+  Routine zum entfernen von Steuerzeichen aus den Rufen eingebaut.
+  Funkruf-Laengenbegrenzung auf 80 Zeichen gesetzt.
+  Zusaetzliche Ausgaben im Log, wenn eine Datei nicht geloescht werden kann.
+  Wenn wir 10 Rufe zur Karte geschickt haben, aber (durch langsame Links) nur
+  erst 4 bestaetigt wurden, dann lief nichts mehr weiter, obwohl die
+  Bestaetigung der restlichen Pakete noch ankam. (tnx. DL9CU fuer Tests!)
+  
+- In der String.cpp einige Strings richtig mit \0 abgeschlossen und den Fehler
+  bei slen() besetigt wenn der String mit str1+str2 zusammengesetzt wurde.
+
+- Mit "kill <thread-id>" koennen jetzt auch vom Sysop Threads gezielt 
+  beendet werden.
+
+- Bei Rubriken-Nachrichten kann jetzt auch ein Slot mit angegeben werden,
+  um Nachrichten gezielt in bestimmt Slots zu schreiben. Dies kann z.B. fuer
+  externe Programme sehr sinnvoll sein.
+
+- Trace-Modus eingebaut. Der Trace-Modus wird mit "trace <thread-id>" 
+  gestartet. Mit "/q" kann er wieder beendet werden. Es kann immer nur 
+  ein einziger Thread im gesamten FunkrufMaster getracet werden. Der Befehl
+  "monitor <thread-id>" hat die gleiche Wirkung.
+
+VERSION 0.98i
+=============
+
+- Im Sat-Modul den Fehler gefunden, der einen Absturz beim Compilieren
+  ohne Debug-Option verursachte. (Feld war zu klein, Fehler trat durch
+  oder Optimierungs-Flag des Compilers auf).
+  
+- Sat-Modul: Neuer Configurationsparameter "STATUS". Moegliche Werte:
+  LOCK, ROTATE, DISABLE
+  Gespeichert wird diese Info im Parameter "SAT" der pager.conf an erster
+  Stelle.
+  
+- DX-Modul aus dem User-interface configurierbar. Befehl: "DXCLUSTER" mit
+  Parameter "PFAD <connectpfad>" und "TYP <CLX/NORMAL/DISABLE>".
+  Ein geandeter Connect-Pfad wird erst nach einem disconnect der Verbindung
+  geaendert. Soll dies sofort geschehen, muss der DX-Cluster mit DISABLE 
+  abgeschalteter und dann mit "CLX" oder "NORMAL" wieder eingeschaltet werden.
+
+- Fehler im HTTP-Interface gefunden. Nach den Headern kommt jetzt eine
+  Leerzeile, Ausgabe der frameset jetzt korrekt im HTML-Header
+
+- Skyper-Rubriken > 95 verarbeitet die RPC-Firmware nicht korrekt. Daher sind
+  jetzt auch lokale Rubriken im Bereich 65 bis 90 erlaubt.
+
+VERSION 0.98h
+=============
+
+- Fehler in der Bakengenerierung zur RPC-Karte beseitigt.
+
+- Beim anlegen eines Forwardpartners wird jetzt bei Bedarf auch das
+  Entsprechende Forward-Spoolverzeichnis mit angelegt.
+
+
+
+VERSION 0.98g
+=============
+
+- Implementierung eines HTTP-Servers. Damit ist es moeglich in einem WEB-
+  Formular Funkrufe einzugeben oder alle Benutzerbefehle des FunkrufMasters
+  auszufuehren. Der Server wird gestartet, wenn der Konfigurationsparameter
+  HTTP_SERVER auf JA gesetzt ist.
+
+  Der Login ist Passwort-geschuetzt. Wie bei der BayCom-Mailbox wird als
+  Login das Rufzeichen und als Passwort der Name des Benutzers benutzt.
+
+- Fuer alle Logfiles gibt es jetzt nur noch einen Konfigurationsparameter
+  LOGDIR, der die bisherigen Parameter LOGFILE, USERLOGFILE und IPLOGFILE
+  ersetzt. LOGDIR gibt das Verzeichnis an, in das alle Logfiles des 
+  FunkrufMasters geschrieben werden. Die Logfiles haben jetzt feste 
+  Dateinamen:
+                 System-Log  pager_sys.log
+                 User-Log    pager_user.log
+                 IP-Log      pager_ip.log
+
+- Zusaetzliches Logfile fuer HTTP-Zugriffe. Der Dateiname ist pager_http.log
+  Dieses Logfile kann mit dem Sysop-Befehl "httplog" betrachtet werden.
+  
+- Fehler in der Connect-String-Auswertung bei L2-Digis beseitigt.
+
+
+
+VERSION 0.98f
+=============
+
+- addbake liefert Fehlermeldung, wenn dieser Slot auf diesem Slave 
+  bereits belegt ist.
+
+- Befehl DELBAKE eingefuehrt, um POCSAG-Baken zu loeschen
+
+- Fuer astronomische Daten gibt es jetzt eine eigene Rubrik "Astro"
+
+- Beim Import ohne Export werden die Daten nicht zunaechst in eine Datei
+  geschrieben, die dan geloescht wird, sondern gleich nach /dev/null 
+  geschrieben.
+
+- Ist in der Forward-Datei eine SSID angegeben, wird diese bei eingehenden
+  AX25-Verbindungen ueberprueft. Bei SSID=0 findet keine Ueberpruefung statt.
+
+- Konfigurationsparameter DEFAULTS legt Datei fest, die beim Start geladen
+  wird und Default-Eintraege fuer Skyper-Rubriken enthaelt.
+  Dateiformat:
+  Alle Zeilen, die mit '#' beginnen sind Kommentarzeilen. Jeder Eintrag
+  hat folgendes Format:
+  1.      Zeile : 'BOARD'
+  2.      Zeile : <boardname>, <slot>
+  3. - 6. Zeile : je bis zu 20 Zeichen Text
+
+- Befehl SEND DEFAULTS sendet default-Eintraege auch nach dem Programmstart
+  erneut aus.
+
+- Inkonsitstenz bei der Slot-Nummierierung beseitigt. Slots werden jetzt
+  durchgaengig von 1 bis 10 gezaehlt!
+
+- Bug im SMTP-Interface beseitigt, durch den bei einem Leerzeichen hinter
+  'mail from:' und 'rcpt to:' die Adresse nicht ausgewertet werden konnte.
+
+- Mit ADDFWD und DELFWD koennen jetzt Forward-Eintraege hinzugefuegt und
+  geloescht werden.
+
+- Mit SETFWD ADDDESTIN und SETFWD DELDESTIN koennen zu bestimmten Forward-
+  Eintraegen Zielgebiete hinzugefuegt und geloescht werden.
+
+- Mit SAVEFWD kann die Forwardkonfiguration jederzeit gespeichert werden. 
+  Zudem wird die Konfiguration auch gespeichert, wenn das Forwarding 
+  deaktiviert oder ein Shutdown durchgefuehrt wird. Die alte Forward-Datei
+  wird nur ueberschrieben, wenn auch wirklich eine Veraenderung statt gefunden
+  hat.
+
+- Ein Talkmodus wurde implementiert, mit dem Kurznachrichten zwischen 
+  eingeloggten Benutzern ausgetauscht werden koennen. Dazu stehen die
+  Befehle WALL und TALK zur verfuegung.
+
+- Scheduler und Thread-Klasse wurden so modifiziert, dass auch Nicht-
+  Blockierender Connect moeglich wird. 
+
+- Astrodaten werden jetzt richtigerweise in den Slot 1 und nicht mehr
+  in den nicht vorhandenen Slot 0 der Rubrik Astro geleitet.
+  
+- Neue Satelliten koennen mit "SAT ADD <Sat>" nur noch hinzugefuegt
+  werden, wenn diese auch im Kepler-File sind.
+
+
+
+VERSION 0.98e
+=============
+
+- setslave ohne Steuerkommando gibt jetzt eine Fehlermeldung
+
+- dbrequest <rufzeichen> <tage> zum anfordern der Datenbank von einem
+  Forward-Partner eingefuegt
+
+- Textmedlungen stehen nun in der Datei messages.dl. Damit sind spaetere
+  Uebersetzungen in andere Sprachen und eine Mehrspreachigkeit des
+  Programms moeglich
+
+- Neuer Konfigurationsparameter : MESSAGES gibt die Position der message-
+  Datei an. Dem angegebenen Dateinamen wird vom Programm noch eine
+  sprachspezifische Erweiterung angehaengt. (Derzeit nur .dl)
+  
+- Satelliten-Configuration jetzt ueber das Benutzerinterface incl.
+  Ausgabe der derzeitigen Parameter
+
+- Mit dem Crontab-prozess ASTRO werden Auf- und Untergangszeiten von 
+  Sonne und Mond berechnet und in Slot 0 der Rubrik Wetter geschrieben
+  Um diese Funktion zu aktivieren, muss der Parameter ASTRODATEN auf JA
+  gesetzt sein.
+
+
+VERSION 0.98d
+=============
+
+- Slave.conf wird nicht mehr geloescht, wenn sich beim Programmstart
+  fehlerhafte Eintraege darin befinden.
+
+- Zwei grosse Bugs beseitigt:
+
+  - Beim Import wurde das Import-Verzeichnis mit opendir geoeffnet, aber nicht
+    wieder geschlossen. Nach laengerer Zeit waren dadurch keine Dateihandle
+    mehr frei und somit kein Zugriff auf Dateien mehr moeglich.
+
+  - ostrstream::str() alloziert Speicher fuer die Zeichenkette, der 
+    anschliessend vom Programm mit delete [] wieder freigegeben werden 
+    muss. Dies wurde an zahlreichen Stellen unterlassen. Das dadurch 
+    entstandene Speicherleck ist nun beseitigt.  
+
+- Ausgaben vom rpc_interface nun im Logfile
+
+- Fehler bei der Connect-Status-Uebergabe vom rpc_interface behoben
+
+- Es werden keine leeren Funkrufe bei "Page DH6BB" bzw "GPAGE TestGruppe" 
+  erzeugt.
+
+- Groesse der Uebertragenen Datenmenge wird nun bei who / cstatus und im
+  Benutzerlog auch mit Vorsilben ausgegeben.
+  
+- User koennen nur noch 1x pro Funkruf-Gruppe eingetragen werden
+  (natuerlich noch weiterhin mit unterschiedlichen SSID!)  
+  
+- Programmabsturz bei Angabe eines fehlerhaften AX25-Ports im Connect-Pfad
+  wird jetzt auch abgefangen und im Syslog protokolliert.
+
+
+VERSION 0.98c
+=============
+
+- Speichergroessen werden jetzt kompakt mit Vorsilbe ausgegeben (z.B. 5.34 M,
+  oder 400 K etc.)
+
+
+Version 0.98b
+=============
+
+- Ausgabeformat des Spoolstatistik-Funkrufes veraendert, jetzt mit Datum
+  und Uhrzeit,
+
+- Fehler in der Formatierung des Benutzerlogfiles (bei Rufzeichen mit SSIDs) 
+  behoben.
+
+- Spoolverzeichnis wird ausgetragen, wenn der Versuch fehlschlug, darin eine
+  Datei zu oeffnen, d.h. das Verzeichnis vermutlich voll ist.
+
+- Beim Anlegen eines Slaves wird die Default-Destination @DL.EU eingetragen. 
+  Dies verhindert, dass das Programm beim Neustart abstuerzt, wenn nach dem
+  Hinzufuegen des Slaves noch keine Destinations eingetragen wurden.
+
+- Syntax-Fehler bei den Destinations in der slave.conf werden jetzt abgefangen
+
+- Eingabe wird nun zunaechst auf moegliche Benutzerbefehle und dann erst auf
+  Sysop-Befehle ueberprueft. Damit reichen bei Benutzerbefehlen im Zweifel 
+  die kuerzeren Eingaben.
+
+- Neuer Sysop-Befehl SAVESLAVE um Slave-Konfiguration zu speichern
+
+- Forwarding wird nur initialisiert, wenn Parameter FORWARDING auf JA gesetzt 
+  ist.
+
+- user_interface.cpp zur besseren Uebersicht in mehrere kleinere Dateien
+  aufgesplittet
+
+
+Version 0.98a
+=============
+
+- IP Logfile eingefuehrt
+
+- Fehler, der bei Spoolstatistik der letzten Stunde zwischen 0 Uhr und 
+  1 Uhr zum Absturz fuehrte, beseitigt.
+
+
+Version 0.98
+=============
+
+- Sysops koennen nur noch loake Rubriken mit IDs >= 100 erzeugen und
+  loeschen. Alle anderen Rubriken werden im Quelltext festgelegt und
+  beim Programmstart erzeugt, falls sie nicht vorhanden sind. 
+  make_boards entfaellt damit.
+
+- State-Machine im User_interface sorgt jetzt dafuer, dass auch interaktive
+  Eingaben moeglich sind.
+
+- Neue Slave-Verwaltung, basierend auf Konfiguratinsdatei slave.conf
+  implementiert. Dazu wurden neue Befehle implementiert:
+
+  Fuer Benutzer:
+  * slaves : Zeigt eine Liste aller eingetragenen Slaves und deren
+             Status an.
+
+  Fuer Sysops:
+  * setslave <call> enable        : Gibt den Slave frei
+  * setslave <call> disable       : Sperrt den Slave
+  * setslave <call> spool         : Gibt den Slave nur fuer's Spooling frei
+  * setslave <call> aktiv         : Schaltet den Slave in den Aktiv Modus
+  * setslave <call> passiv        : Schaltet den Slave in den Passiv Modus
+  * setslave <call> bake <bake>   : Setzt die Bake des Funkrufsenders
+  * setslave <call> slots <slots> : Setzt die Zeitslots des Funkrufsenders
+  * setslave <call> pfad <c_pfad> : Setzt den Connect-Pfad des Funkrufsenders
+  * setslave <call> destinations <dests>
+                                  : Setzt die vom Funkrufsender bedienten
+                                    Destinations
+  * setslave <call> passwort <pw> : Setzt das Baycom-Passwort des Slaves, um
+                                    zugang zu diesem zu erhalten.
+  * addslave <call>               : Erzeugt einen neuen Slave und ggf. das
+                                    dazugehoerige Spoolverzeichnis
+  * delslave <call>               : Loescht einen Slave. Dies geht nur, wenn der
+                                    Slave vorher deaktiviert wurde.
+  * addbake <call> <slot>         : Erzeugt eine Bake. Der Bakentext wird
+                                    nach der Befehlseingabe interaktiv ab-
+                                    gefragt.
+
+- Spoolverzeichnisse koennen mit SHOWSPOOL angezeigt werden.
+
+- Eingerichtete Baken koennen mit SHOWBAKE angezeigt werden.
+
+- Effizienterer Sortieralgorithmus fuer Skyper-Rubriken, dadurch schnellere 
+  Anzeige des Directories.
+
+- Neue Typ-ID fuer's Benutzerlog:
+
+                    R : Verbindung zum RPC-Slave
+
+- Kommunikation mit den RPC-Karten wird von der Master-Software selbst 
+  uebernommen.
+
+- IP Ports, auf denen die Master-Software ansprechbar ist, koennen jetzt
+  auch als Kommandozeilen-Parameter uebergeben werden. Die in der Kommandozeile
+  festgelegten Ports werden dann statt den in /etc/services festgelegten
+  benutzt. Dies ist z.B. dann sinnvoll, wenn zwei installationen des Masters 
+  auf einem Rechner laufen sollen, die miteiannder kommunizieren muessen. 
+  Ebenfalls ist dies sinnvoll, wenn bei der Sortwareinstallation kein Zugriff 
+  auf /etc/services besteht.
+
+  Folgende Parameter sind moeglich:
+
+  -t=<port_nr>  TCP-Login
+  -f=<port_nr>  TCP-Forward
+  -h=<port_nr>  HTTP-Zugang
+  -s=<port_nr>  SMTP-Zugang
+
+  Der Parameter -h ist vorsorglich eingebaut, wird jedoch
+  noch nicht benutzt 
+
+- Ein SMTP-Server ist implementiert worden. Dieser Server ermoeglicht es 
+  eingehende E-Mail als Funkruf auszusenden. Dabei werden maximal die ersten
+  80 Zeichen der Mail ausgesendet.
+
+  Um den Funkruf auszusenden, muss die Absenderadresse ein gueltiges Rufzeichen
+  enthalten und von einer ampr.org-Adresse abgesand worden sein! Andernfalls
+  wird die E-Mail nicht akzeptiert.
+
+
+Version 0.97o
+=============
+
+- Befehle rtext und wtext eingefuegt zum lesen und schreiben
+  beliebiger Textdateien. 
+  VORSICHT: Wenn das Programm vom Benutzer root gestartet wurde,
+  erfolgt der Dateizugriff ebenfalls als root! Zugriff auf 
+  Systemdateien /etc/passwd oder /etc/shadow gegeben.
+- Anzeige aller Verbindungen im Benutzerlog mit Verbindungs-
+  und Typ-ID.
+  Verbindungs-ID:   T : TCP
+                    A : AX25
+                    I : Import-Datei
+  Typ-ID            U : Benutzer
+                    S : Sysop
+                    D : Dx-Cluster
+                    W : Wetterstation
+   (vorgesehen)     F : Forward
+                    H : HTTP-Zugriff
+                    M : SMTP Zugriff
+- Sicherheitsproblem beim Dateizugriff beseitigt. Zugriffe koennen
+  in der Dateihierachie erst ab dem Basisverzeichnis erfolgen. Umgehung
+  mit ../../../etc/ o.ae. wird abgefangen.
+- Parameter SYSOPS und SYSOP_INFO_MASK in Konfigurationsdatei eingefuegt. Damit
+  kann festgelegt werden, dass bei bestimmten Ereignissen (festgelegt durch
+  SYSOP_INFO_MASK) nicht nur ein Eintrag ins Logfile erfolgt, sondern auch
+  die Sysops einen Funkruf erhalten.
+- SAT-Modul jetzt funktionsfaehig
+- Mit dem Crontab-Prozess "STATISTIK" kann die Anzahl der Funkrufe in der
+  letzten Stunde in die Skyper-Rubrik Statistik ausgesendet werde.
+- Existiert eine Funkruf-Gruppe "AURORA", dann wird an diese Gruppe eine 
+  Warnmeldung ausgegeben, wenn dk0wcy Aurora meldet
+
+
+Version 0.97n
+=============
+
+- Beim Connect-Aufbau wird BUSY-FROM abgefangen
+- Spool-Statistik repariert, sollte jetzt richtig 
+  funktionieren.
+- Eine Import-Schnittstelle fuer externe Programme, 
+  die Aktionen des Funkruf-Masters ausloesen wollen
+  ist eingebaut worden.
+- Falsche untere Bandgrenze beim 2-m-Satellitenband 
+  korregiert.
+- Verwendung von L2-Digipeater im Connect-Pfad moeglich.
+- Version-Befehl zeigt auch Speicherbelegung des 
+  Funkruf-Master-Prozesses
+- Neue Makros:
+  %D : Anzeige des "Modification-Date" einer Datei
+  %M : Arbeitsspeichergroesse des Funkruf-Master-Prozesses
+- Neue Konfigurationsmoeglichkeiten im Makefile:
+  Einzelne Programmteile koennen jetzt von der Uebersetzung
+  ausgenommen werden. Z.B. wenn auf einer Maschine keine
+  AX25-Moeglichkeiten zur Verfuegung stehen.
+- Makefile-Konfiguration in getrennten Konfigurationsfile
+  Erstellung dieses Files mit make config
+- Anzeige des Datentransfers in CStatus und Userlog
