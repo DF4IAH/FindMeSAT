@@ -1,0 +1,292 @@
+Version 0.99or - 0.99os => 0.99ot
+=================================
+
+- In der Datei /etc/services muessen die ggf. eingetragenen Service-Namen
+  geaendert werden:
+
+		rpp    		=>	frm
+ 		rpp_smtp 	=>	frm_smtp
+		rpp_fwd		=>	frm_fwd
+		rpp_http	=>	frm_http
+
+	
+Version 0.99oq => 0.99or
+========================
+
+- Wegen der Umbenennung des Programms in frmaster muessen einige Dateien 
+  umbenannt werden. Dazu einmal "make rename" ausfuehren.
+
+  Achtung: Bei make rename wird auch ein neues Startskript start_frmaster
+  installiert. Dieses muss ggf. individuell angepasst werden.
+
+
+Version 0.99nw - 0.99op => 0.99oq
+=================================
+
+- Digi- und Linkstatistik heisst jetzt Digi- und Linkstatus. Bitte
+  "make config" ausfuehren und an entsprechender Stelle mit "JA" oder "NEIN"
+  antworten.
+  Nach dem Start des FRMaster als Sysop "DIGI ENABLE" eingeben.
+  Die Dateien "digi-statist" und "link-statist" sollten aus dem Rubriken-
+  verzeichnis geloescht werden.
+
+
+Version 0.99of - 0.99ok => 0.99ol
+=================================
+
+- Korrektur bei der Benennung der Logfiles. Durch einen Fehler in der
+  Dateinamenerzeugung wurden bisher falsche Dateinamen erzeugt, die
+  ggf. Sonderzeichen enthielten. Wenn weiter auf die alten Logfiles zugegriffen
+  werden soll, muessen diese umbenannt werden. Es gilt jetzt folgendes
+  Benennungsschema:
+
+                              log_JMT
+                                  |||
+                                  ||+--- Tag im Monat (1..9, A..V )
+                                  ||
+                                  |+---- Monat (1..9, A..C )
+                                  |
+                                  +----- Jahr (0 = 2000, 1 = 2001 ... )
+
+
+Version 0.99oc - 0.99oe => 0.99of
+=================================
+
+- Neue Parameter fuer AXHTP-Interface
+
+  AXHTP_SERVER muss auf JA gesetzt werden, wenn der AXHTP-Server gestartet 
+  werden soll.
+
+  AXHTP_PORT ist der AX25-Port auf dem der AXHTP-Server Verbindungen erwarten
+  soll. Es muss sich um einen Port handeln, der in /etc/ax25/axports 
+  definiert wurde.
+
+  AXHTP_CALL ist das Rufzeichen unter dem der AXHTP-Server ansprechbar sein 
+  soll. Typischerweise ist dies das Rufzeichen des FunkrufMasters mit der 
+  SSID 13.
+
+
+Version 0.99o8 - 0.99ob => 0.99oc
+=================================
+
+- Neue Parameter fuer HTTP-Interface
+
+  HTMLDIR gibt das Verzeichnis an, in dem Binaerdateien liegen muessen, die
+          ueber das HTTP-Interface erreichbar sein sollen.
+
+  HTML_BACKGROUND gibt den Hintergrund an, der fuer HTML-Ausgaben verwendet
+                  wird. Fuer die Konfiguration gibt es zwei Moeglichkeiten
+
+  1. Hintergrundfarbe: 
+  Die Hintergrundfarbe ist als Hexadezimalzahl anzugeben. Fuer einen weissen
+  Hintergrund z.B.
+
+  HTML_BACKGROUND=FFFFFF
+
+  2. Hintergrundbild
+  Die URL des Hintergrundbildes ist als Parameter anzugeben. Wenn die
+  Grafikdatei vom HTTP-Server des FunkrufMaster bereit gestellt werden soll, 
+  muss sie sich in dem durch HTMLDIR bezeichneten Verzeichnis befinden. Der 
+  Pfad ist absolut zu $HTMLDIR anzugeben. 
+
+  Beispiel:
+
+  HTMLDIR=/usr/local/funkruf/lib/html/
+
+  Die Grafikdatei fuer das Hintergrundbild befindet sich unter 
+  /usr/local/funkruf/lib/html/hinter.gif, dann muss folgendes konfiguriert
+  werden:
+
+  HTML_BACKGROUND=/hinter.gif
+
+                  ^Der Schraegstrich ist hier unbedingt mit anzugeben
+
+
+Version 0.99o6 - 0.99o7 => 0.99o8
+=================================
+
+- Neue Parameter fuer Exportfunktion
+
+  EXPORTDIR gibt das Verzeichnis an, in das Exportdaten geschrieben werden
+            sollen. Dieser Parameter ist erforderlich!
+
+  EXPORTMASK gibt an, bei welchen Ereignissen Daten exportiert werden sollen.
+             
+  sofern die Exportfunktion nicht verwendet wird, sollte EXPORTMASK=0 gesetzt
+  sein. 
+
+Version 0.99nw - 0.99o5 => 0.99o6
+=================================
+
+- Neue Parameter fuer HTTP-Interface :
+  
+  AKTUELL_HTML  zeigt auf AKTUELL-Datei im HTML-Format
+  CTEXT_HTML    zeigt auf Connect-Text im HTML-Format
+  INFO_HTML     zeigt auf Info-Text im HTML-Format
+
+  Die Angegebenen Dateinamen werden automatisch um den suffix 
+  .<language> erweitert. Damit ist jetzt auch moeglich verschiedene
+  Texte, abhaengig von der gesetzten Sprache auszugeben.
+
+  (Achtung, dies war bislang falsch beschrieben. Es wird nicht, wie bisher
+  faelschlicherweise hier beschrieben, der Suffix ".html.<language>" erweitert,
+  sondern nur ".language". Ein moegliches ".html" muss in den Parameter mit
+  aufgenommen werden.)
+
+  Die Texte aus diesen Dateien werden vom FunkrufMaster in html- und Body-
+  Tags eingebettet, Diese Tags sollten also nicht in der Datei enthalten sein.
+
+
+  <html>
+  <head> .. </head>
+  <body>
+
+    "Text aus Datei"
+
+  </body>
+  </html>
+
+  In diesen HTML-Dateien koennen die ueblichen Textmakros des FunkrufMasters
+  enthalten sein.
+ 
+- Mit "make html" wird ein spezielles Unterverzeichnis fuer HTML-Texte und 
+  darin Templates fuer Aktuell-, Info- und Connecttext in deutscher 
+  Sprach angelegt.
+
+Version 0.99nu => 0.99nw
+========================
+- 2 neuer Compiler-Schalter fuer Compiler sowie Digi- und Linkstatistik.
+  Bitte "make config" ausfuehren
+
+Version 0.99n2 - 0.99nh => 0.99ni
+=================================
+
+- Es muessen weitere Unterverzeichnisse fuer die Logdateien angelegt werden.
+  Diese befinden sich im "Hauptlogverzeichnis". Das Anlegen der Verzeichnisse
+  kann mit "make log" geschehen.
+
+- Es muss der neue Konfigurationsparameter SPOOLLOGMASK hinzugefuegt werden. 
+  Wenn als Startwert 0 verwendet wird, werden keine Funkrufe geloggt.
+
+Version 0.99m - 0.99n1 ==> 0.99n2
+=================================
+
+- Der Crontab-Prozess "messages" sollte deutlich haeufiger, am besten Halb-
+  stuendlich ausgefuehrt werden.
+
+
+Version 0.99l ==> 0.99m
+=======================
+
+- Das Forward-Router Spoolverzeichnis ist vor dem Start der neuen Version
+  zu loeschen!
+
+
+Version 0.99k ==> 0.99l
+=======================
+
+- Neuen Konfigurationsparameter RPCLOGMASK hinzufuegen
+
+- In der LOGMASK faellt das Bit mit der Wertigkeit 2048 (LOGMASK_RPCERR) weg.
+  LOGMASK entsprechend anpassen
+
+- Alle Wetterkonfigurationsdateien sollten geloescht werden oder es _muessen_
+  fuer alle Wetterstationen beim ersten Programmstart die Locator 
+  gesetzt werden! 
+
+- In der LOGMASK wird die Bedeutung des Bits mit der Wertigkeit 8 geaendert. 
+  Forwardfehler werden jetzt ausschliesslich im Forwardlog Protokolliert.
+  Das Bit mit der Wertigkeit 8 steht jetzt fuer Verbindungsfehler-Ereignisse 
+ 
+- Das Forward-Router Spoolverzeichnis ist vor dem Start der neuen Version
+  zu loeschen!
+
+Version 0.99e - 0.99j ==> 0.99k
+===============================
+
+- Neuen Konfigurationsparameter PASSWORTFLAGS hinzufuegen.
+
+- Bei Gezeitenberechnung das File "harmonics" aus "texte/" des src-dir nach
+  "lib/" des FunkrufMaster kopieren (make base_install macht das automatisch)
+
+- Konfigurationsparameter DX_CLUSTER_PFAD und DX_CLUSTER_TYP entfernen und
+  DX-Clusterkonfiguration mit DX-Befehl (siehe Help-Funktion) neu vornehmen.
+
+
+Version 0.99b - 0.99d ==> 0.99e
+===============================
+
+- Dateiformat der Rubrikendateien hat sich geaendert. Alle Dateien in 
+  lib/rubriken loeschen.
+
+Version 0.99a ==> 0.99b
+=======================
+
+- In den Konfigurationsparametern AKTUELL, CTEXT, INFO und HELP muss der Datei-
+  suffix .dl entfernt werden. Der Dateiname wird jetzt automatisch um diesen 
+  erweitert.
+
+Version 0.98i - 0.99 ==> 0.99a
+==============================
+
+- Neuen Konfigurationsparameter FWDLOGMASK hinufuegen
+
+Version 0.98g - 0.98h ==> 0.98i
+===============================
+
+- Im Konfigurationsparameter SAT wird an erster Stelle vor den Satelliten
+  namen der Status "LOCK", "ROTATE" oder "DISABLE" angegeben.
+
+- Konfigurationsparameter DX_CLUSTER_PFAD muss, wenn er noch nicht vorhanden
+  ist, eingefuegt werden. 
+
+- lokale Skyper-Rubriken mit IDs > 100 loeschen und mit IDs zwischen
+  65 und 90 neu anlegen.
+ 
+Version 0.98f ==> 0.98g
+=======================
+
+- Konfigurationsparameter HTTP_SERVER hinzufuegen.
+
+- Konfigurationsparameter LOGDIR hinzufuegen. Dafuer konnen die Parameter
+  LOGFILE, USERLOGFILE und IPLOGFILE entfallen.
+
+Version 0.98e ==> 0.98f
+=======================
+
+- Konfigurationsparameter DEFAULTS hinzufuegen. Beispieldatei fuer eine
+  Default-Datei liegt in src/texte/defaults.
+
+Version 0.98b - 0.98d ==> 0.98e
+===============================
+
+- Konfigurationsparameter MESSAGES hinzufuegen. Deutsche Nachrichtendatei
+  messages.dl wird bei "make install" automatisch nach lib/ kopiert.
+
+- Konfigurationsparameter ASTRODATEN hinzufuegen.
+
+Version 0.98a ==> 0.98b
+=======================
+
+- Konfigurationsparameter FORWARDING hinzufuegen und auf Wert NEIN
+  setzen
+
+Version 0.98 ==> 0.98a
+======================
+
+- Konfigurationsparameter IPLOGFILE hinzufuegen
+
+Version 0.97o ==> 0.98
+======================
+
+- Rubrikendateien loeschen und lokale Rubriken mit IDs neu anlegen
+
+- Konfigurationsparameter SMTP_SERVER und SMTP_SERVER_ADRESSE in
+  Konfigurationsdatei hinzufuegen.
+
+
+Version 0.97n ==> 0.97o
+=======================
+
+- Konfigurationsparameter SYSOPS und SYSOP_INFO_MASK hinzufuegen.
+

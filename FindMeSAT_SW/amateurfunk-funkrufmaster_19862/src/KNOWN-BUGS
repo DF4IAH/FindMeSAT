@@ -1,0 +1,131 @@
+Bekannte Bugs
+=============
+
+! Nicht mit "\n" abgeschlossene Strings werden ignoriert (SMTP)
+
+- Bake (Rubrik 95) wird nicht in der Board-Datei gespeichert
+
+- Trace-Modus: Bug oder Feature?: Man kann nicht vorhandene Threads tracen
+
+- Im Forward zwischen DB0WHV (0.99kl) und DB0AGM (0.99k) wurde ein Datenbank-
+  Eintrag mit Pager-ID 0.0 geforwardet, der offensichtlich urspruenglich von
+  DB0TTM stammt. Es handelte sich um eine Anfrage von DB0AGM mit "dbreq db0whv
+  2000"
+  
+- Bei DB0WHV (0.99o3) von DB0IUZ empfangen:
+  C:405179ea1DB0CEL-13:R:DK2QL:0.0:NO DEFINED:::1079081450:DB0CEL-13  
+
+- Meldung von DB0LJ:
+  beim Reload des ax25d (Signal -SIGHUP) kommt man anschliessend
+  nicht mehr per ax25 in die Software und muss scheinbar neu starten.
+  Oder gibt es dazu einen Trick ?
+  Anmerkung DH6BB: habe dieses Problem nicht.
+
+
+
+Auffaelligkeiten
+================
+
+- rpc_interface
+  Kommt als Antwort von der RPC-Karte z.B. ein "#F9 %" reagieren wir nicht
+  darauf und es kommt zu einem Timeout von der Karte.
+  
+- Eine ueber Forward empfangene Nachricht wird an alle FWD-Partner weiter-
+  geleitet. Soweit, sogut. Die Nachricht wird aber auch an den FWD-Partner
+  geleitet, von dem sie kam. Dies erzeugt unnoetigen Traffic!
+  Anmerk. DH4DAI: kann eigentlich nicht sein. Wo und unter welchen Umstaenden
+  wurde dies beobachtet.
+  
+- Programmabruch mit Exception Error_callsign_does_not_exist nach Benutzer-
+  connect. Benutzer hatte SSID 1 und war bisher nicht in Datenbank vorhanden.
+
+  
+  
+Fixed-Bugs
+==========   
+- Mit Addslave kann ein Rufzeichen mehrfach eingetragen werden
+  *** gefixt ***
+
+- Crontab save-prozess: Bei einem Eintrag in die Crontab-Datei von 0,30 * * * *
+  wurde der Prozess um 0,15,30 und 45 und um 0 und 30 doppelt ausgefuehrt.
+  *** gefixt ***
+
+- Connect-Problem
+  Steht im CLUSTER_PFAD eine Angabe wie "ax0:dh6bb-12>db0fho-4(db0whv)"
+  und im WX-CONNECT_PFAD soetwas "ax0:dh6bb-13>db0whv,db0tnc,db0tnc-8"
+  wird beim WX-Connect ein "db0whv via db0whv" versucht.
+  *** sollte gefixt sein ***   *** bei dh6bb ja ***
+
+- SAT-Modul stuerzt ab, wenn nicht mit DEBUG compiliert wurde
+  *** fixed ***
+
+- steht im connectpfad zum slave ein ungueltiger ax-port, dann schmiert er ab
+  *** sollte gefixt sein *** 
+
+- Statistik Rubrikenmeldungen werden nicht in Boarddatei eingetragen.
+  *** sollte gefixt sein ***
+
+- Makefile: Wird DX-Cluster-Typ "CLX" eingegeben, wird dies nicht mit in die
+            Config uebernommen.
+  *** sollte gefixt sein ***
+
+- Astro-Daten: Mond ist immer zunehmend.....
+  *** sollte gefixt sein ***
+
+- Befehl NEWCALL laeuft nur, wenn der neue User noch nicht mit ID 0.0 in der
+  Datenbank ist. Das sollte nicht so sein.
+  *** sollte gefixt sein ***
+
+- "Rubrik" ohne Parameter bringt keine Fehlermeldung
+  *** sollte gefixt sein ***
+
+- "Rubrik" geht auch als nicht-Sysop. => Rubrikensysop einfuehren
+  *** sollte gefixt sein ***
+  
+- Bei Funkrufnachrichten, die duch's Forward gingen, wurde hinten am Text ein
+  willkuerliches Rufzeihen angehaengt.
+  *** sollte gefixt sein ***
+
+- Bei setslave ist es nicht moeglich einen slave zu disablen, wenn der Status
+  "gescheitert" ist.
+  *** sollte gefixt sein ***
+
+- Ein Reconnected waehrend einer Forwardverbindung wurde nicht erkannt.
+  *** sollte gefixt sein ***
+
+- Bei PASSWORTFLAGS=7 kommt KEINER per telnet rein. Somit kann auch kein
+  Passwort geaendert werden, da dies per ax25 oder PASSWORTFLAGS<7
+  nicht moeglich ist. ==> AX25-Login als Sysop und dann PW aendern.
+
+- Ein Verbindungs-Aufbau-Versuch zum DX-Cluster dauert ueber 10 Minuten, wenn
+  der Cluster nicht erreichbar ist. Sollte max. 4 Minuten sein laut 
+  Deklaration (240 Sekunden).
+  *** gefixt ***
+
+- Das purging abgelaufener Skyper-Rubrikennachrichten funktioniert nicht
+  *** gefixt ***
+
+- Bei einer kompletten Neuinstallation, wo der Sysop noch nicht in der Daten-
+  bank steht, hat dieser keine Chance sich per telnet einzuloggen.
+  => PASSWORTFLAGS nicht setzen.
+  *** Bei einer Neuinstallation wird Passwortflags jetzt auf 0 gesetzt. ***
+  *** Damit ist ein Login jetzt moeglich. Nachdem sich der Sysop ein-   ***
+  *** geloggt hat, kann er die Passwortflags hochsetzen und sich dann   ***
+  *** ein Passwort setzen.                                              ***
+
+- Bei fehlerhafter slave.conf wird nicht die Zeile ausgegeben, in der der 
+  Fehler steckt. Trifft das auch bei fwd.conf, pager.conf,... auf?
+  *** gefixt ***
+
+- Trace-Modus: Lustig wirds, wenn man sich selber traced ;=))
+  *** gefixt ***
+
+- DBREQUEST funktioniert zwischen der 0.99ni (DB0WHV) und 0.99nw (DH6BB) nicht.  
+  *** gefixt (fehler in der 0.99nw bzw. nach der 0.99ni)***
+  
+- Web-Interface: Bei Fwd koennen keine Details von Calls mit zweistelligem
+  Suffix per klick angezeigt werden. Fuehrendes Leerzeichen stoert
+
+- strm.setf(ios::left);  funktioniert nicht mit gcc3.3.1/gcc3.3.3 (DH6BB)
+
+- Kurze erste Befehle nach dem connect werden (manchmal) ignoriert

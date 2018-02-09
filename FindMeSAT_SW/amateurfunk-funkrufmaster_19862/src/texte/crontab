@@ -1,0 +1,14 @@
+#
+# Crontab fuer den Funkruf-Server
+#
+0,10,20,30,40,50 * * * *  bake
+5 * * * *                 boards
+1,31 * * * *              messages
+0,30 * * * *              save
+0,15,30,45 * * * *        wx
+10,25,40,55 * * * *       sat
+7 * * * *                 statistik
+8 * * * *                 astro
+9 * * * *                 purge
+#2 0,3,6,9,12,15,18,21 * * *   gezeiten
+#0,10,20,30,40,50 * * * *  digi

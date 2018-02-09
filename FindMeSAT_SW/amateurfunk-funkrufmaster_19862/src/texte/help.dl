@@ -1,0 +1,879 @@
+# Hilfefile zu Pager
+# Stand 30.07.2004
+# :1: = Sysop-Befehle
+#******************************************************************************
+:Aktuell
+Zeigt den Aktuelltext an, sofern einer vorhanden ist.
+#******************************************************************************
+:Aktivierung 
+Skyper-Aktivierung zur Freischaltung der Rubriken.
+SysOps koennen an dieser Stelle beliebige Rufzeichen angeben.
+Syntax: 
+AKTIvierung <Rufzeichen>
+#******************************************************************************
+:1:ADDFwd
+Fuegt einen Eintrag in die Forward-Tabelle hinzu.
+Syntax:
+ADDFwd <Rufzeichen> <Vebindungstyp> <Adresse>
+#******************************************************************************
+:1:ADdgrp
+Erzeugt eine neue Funkruf-Benutzergruppe.
+Syntax:
+ADDGrp <Gruppenname> <Beschreibung>
+#******************************************************************************
+:1:Addslave
+Erzeugt einen Slave mit dem entsprechenden Spoolverzeichnis.
+Syntax:
+ADDSlave <Rufzeichen>
+#******************************************************************************
+:1:Addbake
+Erzeugt eine neue Bake.
+Im ersten Schritt muessen Sie das Rufzeichen des Slaves, auf dem
+die Bake abgestrahlt werden soll, und den Slot, in dem die Bake 
+gesendet werden soll angeben. Nach dem Bakentext werden Sie dann
+interaktiv gefragt.
+
+Syntax:
+ADDBake <Rufzeichen> <Slot>
+#******************************************************************************
+:1:Connect
+Baut eine Verbindung nach aussen auf.
+Syntax:
+COnnect <Verbindungstyp> <Adresse>
+
+Verbindungstyp kann 'A' fuer AX25-Verbindungen und 'T' fuer 
+TCP-Verbindungen sein.
+Bei AX25-Verbindungen ist die Adresse ein vollstaendiger Connect-
+Pfad, bei TCP-Verbindungen der Hostname und der IP-Port, getrennt
+durch einen Doppelpunkt (<Hostname>:<IPport>)
+#******************************************************************************
+:CStatus
+Zeigt den Connect-Status an.
+#******************************************************************************
+:1:DBSave
+Speichern der Datenbank.
+#******************************************************************************
+:1:DBRequest
+Anfordern der Datenbank.
+Damit kann die gesamte Datenbank oder alle Eintraege, die in den
+letzten <Tage> Tagen veraendert wurden, von einem Forwardnachbarn 
+angefordert werden.
+Syntax:
+DBRequest <Rufzeichen> <Tage>
+#******************************************************************************
+:1:DBTRANS
+Aussenden der Datenbank.
+Damit koennen alle Eintraege, der Datenbank, die in diesem Master
+eingegeben oder zuletzt geaendert wurde ins Forwardnetz geleitet
+werden. Mit <von> und <bis> kann das Alter in Tagen angegeben 
+werden die die letzte Aenderung der Datensaetze haben darf, damit
+sie noch ins Forward geleitet werden.
+Syntax:
+DBTrans [[<von>] <bis>]
+#******************************************************************************
+:1:Delbake
+Loescht eine POCSAG-Bake.
+Syntax:
+Delbake <Slave-Rufzeichen> <Slot>
+#******************************************************************************
+:1:DELFwd
+Loescht einen Eintrag aus der Forward-Tabelle.
+Syntax:
+DELFwd <Rufzeichen>
+#******************************************************************************
+:1:Delgrp
+Loescht eine Funkruf-Benutzergruppe.
+Es koennen nur leere Gruppen geloescht werden.
+Syntax:
+DELGrp <Gruppenname>
+#******************************************************************************
+:1:DELRub
+Loescht eine lokal angelegte Rubrik
+Syntax:
+DELRub <Rubrik>
+#******************************************************************************
+:1:Delslave
+Loescht einen Slave.
+Der Slave muss dafuer vorher deaktiviert worden sein.
+Syntax:
+DELSalve <Rufzeichen>
+#******************************************************************************
+:DIGipeater
+DIGipater Zeigt die Konfiguration von Digi- und Linkstatus
+Syntax:
+DIGipeater [SHOW <Rufzeichen>]
+:1:DIGipeater
+Fuer Sysops zusaetzlich aendern der Configuration von Digi-
+und Linkstatus.
+Syntax:
+DIGipeater [<Unterkommando> [<Rufzeichen> [<Parameter>]]]
+
+Moegliche Unterkommandos:
+ENABLE        : Freigeben von Digi- und Linkstatus.
+                Bei zusaetzlicher Angabe eines Calls 
+                wird nur dieses freigegeben.
+DISABLE       : Sperren von Digi- und Linkstatus.
+                Bei zusaetzlicher Angabe eines Calls 
+                wird nur dieses gesperrt.
+ADD           : Hinzufuegen eines neuen Digis
+                DIGI ADD <DigiCall>
+DEL           : Loeschen eines Digis
+PFAD          : Setzen des Connect-Pfades
+SLOT          : Setzen des Slots
+                DIGI SLOT <DigiCall> <Slot-Nr>
+TYP           : Setzen des Digi-Typs. Moegliche Typen:
+                FLEX, TNN, XNET
+ADDLINK       : Hinzufuegen eines Links
+                DIGI ADDLINK <DigiCall> <LinkCall>
+DELLINK       : Loeschen eines Links 
+                DIGI DELLINK <DigiCall> <LinkCall>
+SHOW          : Anzeige weiterer Daten zu <Rufzeichen>
+#******************************************************************************
+:Dir
+Anzeige der moeglichen Rubriken.
+Es kann auch der Inhalt der Rubriken angezeigt werden.
+Syntax:
+Dir [<Rubrik>]
+#******************************************************************************
+:DXcluster
+Anzeige der DX-Cluster-Configuration.
+#******************************************************************************
+:1:DXcluster
+Aendern der DX-Cluster-Configuration.
+Syntax:
+DXcluster ENABLE         Aktivieren des DX-Cluster-Spions
+DXcluster DISABLE        Deaktivieren des DX-Cluster-Spions
+DXcluster ADD <Call> [RAW] <Connect-Pfad>
+
+Hinzufuegen eines DX-Clusters. Dabei sind
+          <Call> : Rufzeichen des Clusters
+           [RAW] : Keine Wandlung der empfangenen Zeile
+  <Connect-Pfad> : Connect-Pfad zum Cluster
+
+DXcluster DEL <Call>     Loeschen eines DX-Clusters
+#******************************************************************************
+:1:EXPortmask
+Ansehen und Aendern der Exportmaske
+Syntax:
+EXPortmask                Anzeigen der Maske
+EXPortmask #<ereignisse>  Setzen der Maske
+
+Folgende Ereignisse sind moeglich:
+D        DX-Cluster-Meldungen
+C        DX-Wetter-Meldungen
+W        Wettermeldungen
+P        Private Funkrufe
+B        Skyper Rubrikenrufe
+#******************************************************************************
+:1:FDescriptor
+Zeigt alle geoeffneten Dateidescriptoren an.
+#******************************************************************************
+:Fwd
+Zeigt Informationen ueber den Forward-Status an.
+Wenn das Rufzeichen eines Forward-Partners mit angegeben wird,
+werden zu diesem Partner detailiertere Informationen angezeigt.
+Syntax:
+Fwd [<Rufzeichen>]
+#******************************************************************************
+:1:FWDLog
+Zeigt das Forward-Logbuch an.
+Syntax:
+FWDLog [Optionen] [<Zeilen>] [Suchstring]
+
+Mit den Optionen kann der Zeitrahmen angegeben werden, aus dem
+Logeintraege ausgegeben werden. Ohne eine Angabe werden nur die
+Logeintraege des heutigen Tages ausgegeben. folgende Optionen
+sind moeglich:
+
+-w Vom heutigen Tag aus eine Woche zurueck
+-m Vom heutigen Tag aus einen Monat zurueck
+-q Vom heutigen Tag aus ein Quartal (3 Monate) zurueck
+-j Vom heutigen Tag aus ein Jahr zurueck
+         
+Wenn statt des heutigen Tages ein anderer Tag als Ausgangspunkt
+gewaehlt werden soll, ist dies mit der Option
+
+-d<datum>
+
+moeglich. Das Datum wird in der Form tt.mm.jj, also z.B. 24.12.03
+angegeben.
+
+Im Normalfall werden die letzten 15 Eintraege angezeigt. Wenn mehr
+Eintraege ausgegeben werden sollen, kann man dies durch die Angabe
+der zeilenanzahl hinter den Optionen erreichen. Weiterhin kann in
+den Eintraegen nach einer bestimmten Zeichenkette gesucht werden.
+Es werden dann nur Eintraege ausgegeben, in denen diese Zeichen-
+kette enthalten ist.
+#******************************************************************************
+:1:fwdmaske
+Zeigt die aktuelle Forward-Logmaske an, bzw. setzt sie neu.
+Syntax:
+FWDMask [#<Ereignisse>]
+
+Moegliche Ereignisse sind:
+I   Initialisierung
+C   Verbindungsauf- und Abbau
+F   Interface-Debugging-Meldungen
+V   Interface-IO
+E   Forward-Fehlermeldungen
+R   Router-Meldungen
+N   Nachbarerkennung
+D   Descriptoren
+M   Empfangene Meldungen
+#******************************************************************************
+:GEzeiten
+Zeigt die derzeitige Gezeiten-Configuration.
+:1:Gezeiten
+Aendert die derzeitige Gezeiten-Configuration.
+Mit GEzeiten <Parameter/Wert> kann die Gezeiten-Configuration
+geaendert werden.
+Syntax:
+GEzeiten ADD <Ort>                   Ort hinzufuegen
+GEzeiten DEL <Ort>                   Ort loeschen
+GEzeiten HARMONICS <Pfad+Dateiname>  Harmonics-File setzen
+Gezeiten STATUS <Status>             Status setzen
+  STATUS ENABLE                      Berechnung einschalten.
+  STATUS DISABLE                     Berechnung ausschalten.
+#******************************************************************************
+:Group
+Zeigt alle auf dem Server vorhandenen Funkruf-Benutzergruppen an.
+Durch Angabe eines Gruppennamens werden zu dieser Gruppe weitere
+Informationen angezeigt.
+Syntax:
+Group [<Gruppenname>]
+#******************************************************************************
+:GPage
+Einen Funkruf an alle Mitglieder einer Funkruf-Benutzergruppe.
+Setzt einen Funkruf an alle Mitglieder einer Funkruf-Benutzergruppe
+ab.
+Wird kein Nachrichtentext angegeben erfolgt die Anfrage der
+Nachricht in einer neuen Zeile.
+
+Syntax:
+GPage <Gruppenname> <Nachricht>
+#******************************************************************************
+:1:Grpname
+Aendern der Beschreibung einer bestehenden Funkruf-Benutzergruppe.
+Syntax:
+GRPname <Gruppenname> <Beschreibung>
+#******************************************************************************
+:Help      
+Gibt einen Hilfetext aus.
+Ohne Parameter wird eine Befehlsuebersicht angezeigt. Mit Help 
+<Kommando> gibt es eine weitere Hilfe zu einem Kommando.
+#******************************************************************************
+:1:HTTPLog
+Zeigt das HTTP-Uebertragungs-Logbuch an.
+Syntax:
+HTTPLog [Optionen] [<Zeilen>] [Suchstring]
+
+Mit den Optionen kann der Zeitrahmen angegeben werden, aus dem
+Logeintraege ausgegeben werden. Ohne eine Angabe werden nur die
+Logeintraege des heutigen Tages ausgegeben. folgende Optionen
+sind moeglich:
+
+-w Vom heutigen Tag aus eine Woche zurueck
+-m Vom heutigen Tag aus einen Monat zurueck
+-q Vom heutigen Tag aus ein Quartal (3 Monate) zurueck
+-j Vom heutigen Tag aus ein Jahr zurueck
+         
+Wenn statt des heutigen Tages ein anderer Tag als Ausgangspunkt
+gewaehlt werden soll, ist dies mit der Option
+
+-d<datum>
+
+moeglich. Das Datum wird in der Form tt.mm.jj, also z.B. 24.12.03
+angegeben.
+
+Im Normalfall werden die letzten 15 Eintraege angezeigt. Wenn mehr
+Eintraege ausgegeben werden sollen, kann man dies durch die Angabe
+der zeilenanzahl hinter den Optionen erreichen. Weiterhin kann in
+den Eintraegen nach einer bestimmten Zeichenkette gesucht werden.
+Es werden dann nur Eintraege ausgegeben, in denen diese Zeichen-
+kette enthalten ist.
+#******************************************************************************
+:Info
+Zeigt den Info-Text an, sofern einer vorhanden ist.
+#******************************************************************************
+:1:IPLog
+Zeigt das IP-Zugriffs-Logbuch an.
+Syntax:
+IPLog [Optionen] [<Zeilen>] [Suchstring]
+
+Mit den Optionen kann der Zeitrahmen angegeben werden, aus dem
+Logeintraege ausgegeben werden. Ohne eine Angabe werden nur die
+Logeintraege des heutigen Tages ausgegeben. folgende Optionen
+sind moeglich:
+
+-w Vom heutigen Tag aus eine Woche zurueck
+-m Vom heutigen Tag aus einen Monat zurueck
+-q Vom heutigen Tag aus ein Quartal (3 Monate) zurueck
+-j Vom heutigen Tag aus ein Jahr zurueck
+         
+Wenn statt des heutigen Tages ein anderer Tag als Ausgangspunkt
+gewaehlt werden soll, ist dies mit der Option
+
+-d<Datum>
+
+moeglich. Das Datum wird in der Form tt.mm.jj, also z.B. 24.12.03
+angegeben.
+
+Im Normalfall werden die letzten 15 Eintraege angezeigt. Wenn mehr
+Eintraege ausgegeben werden sollen, kann man dies durch die Angabe
+der zeilenanzahl hinter den Optionen erreichen. Weiterhin kann in
+den Eintraegen nach einer bestimmten Zeichenkette gesucht werden.
+Es werden dann nur Eintraege ausgegeben, in denen diese Zeichen-
+kette enthalten ist.
+#******************************************************************************
+:1:Kill
+Toetet einzelne FunkrufMaster-Threads.
+Syntax:
+Kill <Thread-id>
+#******************************************************************************
+:Language
+Setzt die Sprache des Benutzers.
+Wenn Sie mehrere Eintraege in der Datenbank unter unterschiedlichen
+SSIDs haben, koennen Sie diese durch Angabe eines Rufzeichens mit 
+SSID auswaehlen. 
+SysOps koennen an dieser Stelle beliebige Rufzeichen angeben.
+Syntax:
+Language [<Rufzeichen>] <Sprachkuerzel>
+
+Moegliche Sprachkuerzel sind:  dl - Deutsch
+#******************************************************************************
+:Locator
+Dient der Eingabe Ihres Locators.
+Wenn Sie mehrere Eintraege in der Datenbank unter unterschiedlichen
+SSIDs haben, koennen Sie diese durch Angabe eines Rufzeichens mit
+SSID auswaehlen. 
+SysOps koennen an dieser Stelle beliebige Rufzeichen angeben.
+Syntax:
+LOcator [<Rufzeichen>] <Locator>  
+#******************************************************************************
+:Log
+Zeigt das Verbindungs-Logbuch an.
+Syntax:
+LOG [Optionen] [<Zeilen>] [Suchstring]
+
+Mit den Optionen kann der Zeitrahmen angegeben werden, aus dem
+Logeintraege ausgegeben werden. Ohne eine Angabe werden nur die
+Logeintraege des heutigen Tages ausgegeben. folgende Optionen
+sind moeglich:
+
+-w Vom heutigen Tag aus eine Woche zurueck
+-m Vom heutigen Tag aus einen Monat zurueck
+-q Vom heutigen Tag aus ein Quartal (3 Monate) zurueck
+-j Vom heutigen Tag aus ein Jahr zurueck
+         
+Wenn statt des heutigen Tages ein anderer Tag als Ausgangspunkt
+gewaehlt werden soll, ist dies mit der Option
+
+-d<Datum>
+
+moeglich. Das Datum wird in der Form tt.mm.jj, also z.B. 24.12.03
+angegeben.
+
+Im Normalfall werden die letzten 15 Eintraege angezeigt. Wenn mehr
+Eintraege ausgegeben werden sollen, kann man dies durch die Angabe
+der zeilenanzahl hinter den Optionen erreichen. Weiterhin kann in
+den Eintraegen nach einer bestimmten Zeichenkette gesucht werden.
+Es werden dann nur Eintraege ausgegeben, in denen diese Zeichen-
+kette enthalten ist.
+
+
+#******************************************************************************
+:1:Logmask
+Zeigt die aktuelle System-Logmaske an, bzw. setzt sie neu.
+Syntax:
+LOGMask [#<Ereignisse>]
+
+Moegliche Ereignisse sind:
+S  Empfangene Signale
+B  Programmstart und Stopp
+E  Programm Fehlermeldungen
+V  Verbindungsfehler 
+M  Programmmeldungen
+L  Logins und Logouts
+C  Crontab-Ereignisse
+P  Sysopprivilegienverletzung
+A  Authentifizierungen
+D  Datenbankaenderungen
+U  Benutzereingaben (kann sehr viel werden)
+#******************************************************************************
+:1:Mkrub
+Anlegen einer Skyper-Rubrik.
+Syntax:
+Mkrub <Rubriken-Name> <Rubriken-Nr.>
+#******************************************************************************
+:1:MOnitor
+Monitoren einer FunkrufMaster-Verbindung.
+Syntax:
+MOnitor <Thread-id>
+#******************************************************************************
+:Name
+Dient der Eingabe Ihres Namens.
+Wenn Sie mehrere Eintraege in der Datenbank unter unterschiedlichen
+SSIDs haben, koennen Sie diese durch Angabe eines Rufzeichens mit 
+SSID auswaehlen. SysOps koennen an dieser Stelle beliebige Rufzeichen
+angeben.
+Syntax:
+Name [<Rufzeichen>] <Name>
+#******************************************************************************
+:1:Newcall
+User hat ein neues Rufzeichen.
+Wenn ein User ein neues Rufzeichen hat, aber alle anderen Daten 
+unveraendert bleiben, kann der Sysop mit dem Newcall-Befehl nur das
+Rufzeichen aendern. Alle anderen Daten bleiben erhalten.
+Systax:
+NEwcall <Altes Rufzeichen> <Neues Rufzeichen>
+#******************************************************************************
+:Page
+Sendet einen Funkruf aus.
+Wird kein Nachrichtentext angegeben erfolgt die Anfrage der
+Nachricht in einer neuen Zeile.
+
+Syntax:
+Page <Rufzeichen> [@Zielgebiet] <Nachricht>
+#******************************************************************************
+:PASswd
+Aendert das Konsolenpasswort.
+Benutzer koennen, sofern dies freigegeben ist, ihr eigenes 
+Konsolenpasswort aendern, Sysops koennen auch das Passwort anderer
+Benutzer setzen. Diese Funktion geht nicht ueber AX25-Verbindungen
+Syntax:
+PASswd [<Rufzeichen>]
+#******************************************************************************
+:1:PARameter
+Zeigt die gesetzen Parameter des Config-Files an.
+Wenn ein Parametername und ein Wert angegeben wird, kann zudem ein
+Parameter gesetzt werden. Bei einem Shutdown wird eine entsprechend
+geaenderte Konfigurationsdatei gespeichert. Es ist zu beachten, 
+dass einige Aenderungen erst beim naechsten Programmstart wirksam 
+werden.
+Syntax:
+PARameter [<Parametername> <Parameterwert>]
+#******************************************************************************
+:Quit
+Beenden der Verbindung.
+#******************************************************************************
+:1:RElais
+Lesen und Eintragen einer Relais-Datenbank.
+Mit diesem Befehl ist es Moeglich, eine Relaisliste des 
+DARC-V/U/SHF-Refarates einzulesen und daraus Informationen ueber
+die dem Master am naechsten liegenden Relais in verschiedenen 
+Rubriken einzutragen.
+Syntax:
+RElais LOAD <Dateiname>     Laden der Relaisliste
+RElais FM10 [<Startslot> [<Endslot>]] Eintragen der 10-m-FM-Relais
+RElais FM2  [<Startslot> [<Endslot>]] Eintragen der 2-m-FM-Relais
+RElais FM70 [<Startslot> [<Endslot>]] Eintragen der 70-cm-FM-Relais
+RElais FM23 [<Startslot> [<Endslot>]] Eintragen der 23-cm-FM-Relais
+RElais ATV  [<Startslot> [<Endslot>]] Eintragen der ATV-Relais
+RElais DIGI [<Startslot> [<Endslot>]] Eintragen der Digipeater
+RElais BAKE [<Startslot> [<Endslot>]] Eintragen der Baken
+#******************************************************************************
+:1:RPCLog
+Zeigt das RPC-Logbuch an.
+Syntax:
+RPCLog [Optionen] [<Zeilen>] [Suchstring]
+
+Mit den Optionen kann der Zeitrahmen angegeben werden, aus dem
+Logeintraege ausgegeben werden. Ohne eine Angabe werden nur die
+Logeintraege des heutigen Tages ausgegeben. folgende Optionen
+sind moeglich:
+
+-w Vom heutigen Tag aus eine Woche zurueck
+-m Vom heutigen Tag aus einen Monat zurueck
+-q Vom heutigen Tag aus ein Quartal (3 Monate) zurueck
+-j Vom heutigen Tag aus ein Jahr zurueck
+         
+Wenn statt des heutigen Tages ein anderer Tag als Ausgangspunkt
+gewaehlt werden soll, ist dies mit der Option
+
+-d<Datum>
+
+moeglich. Das Datum wird in der Form tt.mm.jj, also z.B. 24.12.03
+angegeben.
+
+Im Normalfall werden die letzten 15 Eintraege angezeigt. Wenn mehr
+Eintraege ausgegeben werden sollen, kann man dies durch die Angabe
+der zeilenanzahl hinter den Optionen erreichen. Weiterhin kann in
+den Eintraegen nach einer bestimmten Zeichenkette gesucht werden.
+Es werden dann nur Eintraege ausgegeben, in denen diese Zeichen-
+kette enthalten ist.
+#******************************************************************************
+:1:rpcmaske
+Zeigt die aktuelle Funkrufsender-Logmaske an, bzw. setzt sie neu.
+Syntax:
+RPCMask [#<Ereignisse>]
+
+Moegliche Ereignisse sind:
+I   Initialisierung
+C   Verbindungsauf- und Abbau
+E   Forward-Fehlermeldungen
+D   Uebertragene Daten (Kann sehr viel werden)
+#******************************************************************************
+:1:RText
+Liest eine beliebige Datei aus.
+Syntax:
+RText <Dateiname>
+#******************************************************************************
+:Rubrik
+Beschreiben einer Skyper-Rubrik.
+Neben dem Rubrikenname kann ein Slot in Form einer Zahl zwischen 1
+und 10 angegeben werden. Wird kein Slot angegeben, vergibt der
+FunkrufMaster selbst einen Slot, so dass die aelteste Nachricht
+geloescht wird.
+Weiterhin kann eine Lifetime in Tagen angegeben werden. Die Lifetime
+beginnt mit # direkt gefolgt von der Zahl. Die max. Lifetime ist die
+Default-Lifetime.
+Wird kein Nachrichtentext angegeben erfolgt die Anfrage der
+Nachricht in einer neuen Zeile.
+
+Syntax:
+Rubrik <Rubriken-Name> [@<Zielgb.>] [<Slot>] [#Lifetime] <Nachricht>
+#******************************************************************************
+:1:Rufmaske
+Sysop erhaelt einen Funkruf bei bestimmten Ereignissen.
+Zeigt die aktuellen Systemlogereignisse an, bzw. setzt sie neu,
+Bei denen automatisch eine Funkrufbenachrichtigung der Sysops
+statt findet.
+Syntax:
+RUFMask [#<Rreignisse>]
+
+Moegliche Ereignisse sind:
+S  Empfangene Signale  (ist keinesfalls empfehlenswert!!!)
+B  Programmstart und Stopp
+E  Programm Fehlermeldungen
+F  Forwardfehler (werden ins Forward-Logfile geschrieben)
+M  Programmmeldungen
+L  Logins und Logouts
+C  Crontab-Ereignisse
+P  Sysopprivilegienverletzung
+A  Authentifizierungen
+D  Datenbankaenderungen
+U  Benutzereingaben (kann sehr viel werden und nicht zu empfehlen!)
+#******************************************************************************
+:Satellit
+Zeigt die derzeitige Satelliten-Configuration.
+:1:Satellit
+SAtellit <Parameter/Wert> aendert als Sysop die Sat-Config.
+Syntax:
+SAtellit ADD <Satellitenname>     Satellit hinzufuegen
+SAtellit DEL <Satellitenname>     Satellit loeschen
+SAtellit KEPLER <Pfad+Dateiname>  Kepler-File setzen
+SAtellit STATUS <Status>Status setzen
+  STATUS LOCK    Feste Slots auf dem Skyper
+  STATUS ROTATE  Naechster freier Slot auf dem Skyper wird genommen
+  STATUS DISABLE Berechnung ausschalten.
+#******************************************************************************
+:1:Saveslaves
+Sichern der Slave-Configuration.
+#******************************************************************************
+:1:Savefwd
+Sichern der Forward-Configuration.
+#******************************************************************************
+:1:Send
+Aussenden der Rubriken-Liste.
+Syntax:
+SEnd BAKEN      sendet alle Baken
+SEnd NAMES      sendet die Rubrikennamen
+SEnd MESSAGES   sendet die Rubrikeninhalte nochmals
+SEnd DEFAULTS   sendet Defaulteintraege in Rubriken
+#******************************************************************************
+:1:Setdir
+Setzt die Eigenschaften einer Skyper-Rubrik.
+Syntax:
+SETDir Addboardop <Rubrik> <Rufzeichen> LOKAL|FORWARD
+   fuegt einen Neuen Rubriken-Operateur hinzu
+
+SETDir Delboardop <Rubrik> <Rufzeichen>
+   loescht einen Rubriken-Operateur
+   Statt eines Rufzeichens kann auch ein Stern ('*') angegeben
+   werden. Dann kann jeder benutzer auf die Rubrik zugreifen.
+
+SETDir Deflifetime <Rubrik> <Lifetime>
+   Setzt die Standard-Lifetime der Rubrik.
+
+SETDir Lifetime <Rubrik> <Slot> <Lifetime>
+   Setzt nachtraeglich die Lifetime einer Nachricht.
+
+SETDir Del <Rubrik> <Slot>
+   Loescht eine Nachricht <Slot> im Board <Rubrik>.
+
+SETDir MSGREPEAT <rubrik> <intervall>
+   Legt fest, in welchen Abstaenden der Inhalt des Boards wieder
+   ausgesendet wird. Das Wiederholungsintervall wird in Minuten 
+   angegeben. Ein Wiederholungsintervall von 0 bedeutet, dass keine
+   Wiederholungsaussendungen stattfinden.
+#******************************************************************************
+:1:Setfwd
+Setzt das Forwarding.
+Syntax:
+SETFwd ENABLE  aktivert das Forwarding
+SETFwd DISABLE deaktiviert das Forwarding
+SETFwd RESET <Rufzeichen>FWD-Partner zuruecksetzen
+SETFwd ADDDESTIN <Rufzeichen> <Destination> 
+ fuegt einem Forwardeintrag ein Zielgebiet hinzu.
+
+SETFwd DELDESTIN <Rufzeichen> <Destination>
+ loescht ein Zielgebiet aus einem Forwardeintrag.
+
+SETFwd PFAD <Rufzeichen> <Vebindungstyp> <Adresse>
+ aendert den Connect-Pfad.
+
+SETFwd ENABLEAR [<rufzeichen>]   aktiviert den Autorouter global
+                                 oder zu einem bestimmten Nachbarn
+SETFwd DISABLEAR [<rufzeichen>]  deaktiviert den Autorouter global
+                                 oder zu einem bestimmten Nachbarn
+#******************************************************************************
+:1:Setslave
+Aendert den Status eines Funkruf Slaves in der Slaveverwaltung.
+Der Slave kann gesperrt, freigegeben oder nur fuer das Spooling von
+Nachrichten freigegeben werden.
+
+Syntax:
+SETSlave ENABLE  <Rufzeichen>Slave freigeben
+SETSlave DISABLE <Rufzeichen>Slave sperren
+SETSlave RESET   <Rufzeichen>Slave zuruecksetzen
+SETSlave SPOOL   <Rufzeichen>Slave fuer das Spooling 
+         freigeben
+SETSlave AKTIV   <Rufzeichen>Slave in den Modus AKTIV
+SETSlave PASSIV  <Rufzeichen>Slave in den Modus PASSIV
+SETSlave BAKE    <Rufzeichen> <Bake>   Bake des Slaves setzen
+SETSlave SLOTS   <Rufzeichen> <Slots>  Zeitslots des Slaves setzen
+SETSlave PFAD    <Rufzeichen> <c_pfad> Con-Pfad des Slaves setzen
+
+SETSlave DESTINATIONS <Rufzeichen> <eigene Destinations>
+      Setzt die vom Sender bedienten
+      Destinations
+
+SETSlave PASSWORT <Rufzeichen> <Passwort>
+      Setzt das Passwort des Slaves
+      Dies sollten Sie nur ueber einen
+      sicheren Zugang, z.B. am
+      Digistandort selbst durchfuehren
+#******************************************************************************
+:Showspool
+Zeigt alle Spoolverzeichnisse an.
+#******************************************************************************
+:Showbake
+Zeigt alle eingerichteten Baken an.
+#******************************************************************************
+:1:Shutdown 
+Beendet das Benutzerinterface.
+Syntax:
+SHUtdown [<Verzoegerung>]
+
+Die Verzoegerungszeit wird in Minuten angegeben
+#******************************************************************************
+:Slaves
+Zeigt alle eingerichteten Funkruf-Slaves und deren Status an.
+#******************************************************************************
+:SLog
+Zeigt das System-Logbuch an.
+Syntax:
+SLog [Optionen] [<Zeilen>] [Suchstring]
+
+Mit den Optionen kann der Zeitrahmen angegeben werden, aus dem
+Logeintraege ausgegeben werden. Ohne eine Angabe werden nur die
+Logeintraege des heutigen Tages ausgegeben. folgende Optionen
+sind moeglich:
+
+-w Vom heutigen Tag aus eine Woche zurueck
+-m Vom heutigen Tag aus einen Monat zurueck
+-q Vom heutigen Tag aus ein Quartal (3 Monate) zurueck
+-j Vom heutigen Tag aus ein Jahr zurueck
+         
+Wenn statt des heutigen Tages ein anderer Tag als Ausgangspunkt
+gewaehlt werden soll, ist dies mit der Option
+
+-d<Datum>
+
+moeglich. Das Datum wird in der Form tt.mm.jj, also z.B. 24.12.03
+angegeben.
+
+Im Normalfall werden die letzten 15 Eintraege angezeigt. Wenn mehr
+Eintraege ausgegeben werden sollen, kann man dies durch die Angabe
+der zeilenanzahl hinter den Optionen erreichen. Weiterhin kann in
+den Eintraegen nach einer bestimmten Zeichenkette gesucht werden.
+Es werden dann nur Eintraege ausgegeben, in denen diese Zeichen-
+kette enthalten ist.
+#******************************************************************************
+:1:SPLog
+Zeigt das Spool-Logbuch an.
+Syntax:
+SPLog [Optionen] [<Zeilen>] [Suchstring]
+
+Mit den Optionen kann der Zeitrahmen angegeben werden, aus dem
+Logeintraege ausgegeben werden. Ohne eine Angabe werden nur die
+Logeintraege des heutigen Tages ausgegeben. folgende Optionen
+sind moeglich:
+
+-w Vom heutigen Tag aus eine Woche zurueck
+-m Vom heutigen Tag aus einen Monat zurueck
+-q Vom heutigen Tag aus ein Quartal (3 Monate) zurueck
+-j Vom heutigen Tag aus ein Jahr zurueck
+         
+Wenn statt des heutigen Tages ein anderer Tag als Ausgangspunkt
+gewaehlt werden soll, ist dies mit der Option
+
+-d<Datum>
+
+moeglich. Das Datum wird in der Form tt.mm.jj, also z.B. 24.12.03
+angegeben.
+
+Im Normalfall werden die letzten 15 Eintraege angezeigt. Wenn mehr
+Eintraege ausgegeben werden sollen, kann man dies durch die Angabe
+der zeilenanzahl hinter den Optionen erreichen. Weiterhin kann in
+den Eintraegen nach einer bestimmten Zeichenkette gesucht werden.
+Es werden dann nur Eintraege ausgegeben, in denen diese Zeichen-
+kette enthalten ist.
+#******************************************************************************
+:sprache
+Setzt die Sprache des Benutzers.
+Wenn Sie mehrere Eintraege in der Datenbank unter unterschiedlichen 
+SSIDs haben, koennen Sie diese durch Angabe eines Rufzeichens mit 
+SSID auswaehlen. 
+SysOps koennen an dieser Stelle beliebige Rufzeichen angeben.
+Syntax:
+SPrache [<Rufzeichen>] <Sprachkuerzel>
+
+Moegliche Sprachkuerzel sind:  dl - Deutsch
+#******************************************************************************
+:Statistik
+Zeigt eine Statistik der bereits gesendeten Funkrufe.
+#******************************************************************************
+:Sysop
+Fragt das Passwort ab, um in den Sysop-Status zu kommen.
+Abfrage nach dem BayCom-Verfahren
+#******************************************************************************
+:Talk
+Sendet eine Kurznachricht an einen anderen eingeloggten Benutzer.
+Syntax:
+Talk <Rufzeichen> [<Kurznachricht>]
+
+Wird keine Kurznachricht mit angegeben, wird in den Talk-Modus
+gewechselt. Alle weiteren Eingaben werden an den angegebenen
+Benutzer weiter geleitet. Der Talk-Modus kann wieder mit '/q'
+verlassen werden.
+#******************************************************************************
+:1:Trace
+Monitoren einer FunkrufMaster-Verbindung.
+Syntax:
+TRace <Thread-id>
+#******************************************************************************
+:Typ
+Dient der Eingabe Ihres Geraetetyps.
+Wenn Sie mehrere Eintraege in der Datenbank unter unterschiedlichen
+SSIDs haben, koennen Sie diese durch Angabe eines Rufzeichens mit 
+SSID auswaehlen.
+SysOps koennen an dieser Stelle beliebige Rufzeichen angeben.
+Syntax: 
+Typ [<Rufzeichen>] <Geraetetyp>
+Moegliche Typen sind: Skyper, Quix, Scall, Telmi, Cityruf, Telmi,
+                      Primo.
+#******************************************************************************
+:User
+Zeigt alle in der Benutzerdatenbank eingetragenen Rufzeichen an.
+Durch Angabe eines Rufzeichens koennen sie zu diesem Rufzeichen
+genauere Informationen erhalten.
+Syntax:
+User      Zeigt eine kurze Datenbankzusammenfassung
+User <Rufzeichen>   Zeigt genaue Informationen zu <Rufzeichen>
+User <Zeichenfolge> Zeigt alle Calls in denen <Zeichenflg> vorkommt
+User *    Zeigt die gesamte Datenbank an. Achtung: Lang!!
+User +    Zeigt zusaetzlich Rufzeichen ohne Pager-ID
+          sonst wie "User *". Achtung: Noch laenger!!
+User <Zeichenfolge> +  Zeigt zusaetzlich Rufzeichen ohne Pager-ID
+          sonst wie "User <Zeichenfolge>"
+#******************************************************************************
+:Version
+Zeigt die Software-Version und deren Laufzeit.
+Syntax:
+Version      Kurze Zusammenfassung
+Version *    Einige zusaetzliche Informationen auch zum System
+#******************************************************************************
+:WAll
+Sendet eine Kurznachricht an alle eingeloggten Benutzer.
+Syntax:
+Wall <Kurznachricht>
+#******************************************************************************
+:Who
+Zeigt alle verbundenen Stationen.
+#******************************************************************************
+:1:WText
+Schreiben einer beliebigen Datei.
+Mit diesem Befehl kann eine beliebige Textdatei
+auf die Festplatte des Funkruf-Masters uebertragen werden.
+Nach Eingabe des Befehls folgt die Textdatei, die mit
+***END, NNNN oder //EX in einer eigenen Zeile abgeschlossen wird.
+Syntax:
+WText <Dateiname>
+#******************************************************************************
+:WX
+Zeigt die Konfiguration der Wetterstationen an
+Bedeutung der Abkuerzungen in der Rubrik:
+ D = Windrichtung
+ S = Windgeschwindigkeit
+ G = Wind-Boen
+ P = Luftdruck
+ T = Temperatur
+ H = Luftfeuchte
+ 1 = Niederschlag der letzen 24 Stunden
+ 4 = Niederschlag der letzen 4 Stunden
+ M = Niederschlag seit Mitternacht
+
+:1:WX
+Fuer Sysops zusaetzlich aendern der Konfiguration von Wetterstationen
+Syntax:
+WX [<Unterkommando> [<Rufzeichen> [<Parameter>]]]
+
+Moegliche Unterkommandos:
+Enable        : Freigeben der Wetterstationsabfrage
+Disable       : Sperren der Wetterstationsabfrag
+Add           : Hinzufuegen einer neuen Wetterstation
+Del           : Loeschen einer Wetterstation
+Pfad          : Setzen des Connect-Pfades
+Slot          : Setzen des Slots
+Locator       : Setzen des Locators
+Prompt        : Setzen des Filterstrings fuer den Prompt
+Kommando      : Setzen des Filterstrings fuer das Kommando
+Temperatur    : Setzen des Filterstrings fuer die Temperatur
+Luftdruck     : Setzen des Filterstrings fuer den Luftdruck
+Luftfeuchte   : Setzen des Filterstrings fuer die Luftfeuchte
+Windrichtung  : Setzen des Filterstrings fuer die Windrichtung
+Windgeshw     : Setzen des Filterstrings fuer die 
+                Windggeschwindigkeit
+Boen          : Setzen des Filterstrings fuer Boen
+Niederschlag1 : Setzen des Filterstrings fuer den Niederschlag der
+                letzten 24 Stunden
+Niederschlag4 : Setzen des Filterstrings fuer den Niederschlag der
+                letzten 4 Stunden
+NiederschlagM : Setzen des Filterstrings fuer den Niederschlag seit
+                0 Uhr
+#******************************************************************************
+:Zeit
+Zeigt die aktuelle Systemzeit in UTC an.
+#******************************************************************************
+:1:+
+Einfuegen eines neuen Rufzeichens in die Datenbank.
+Moegliche Geraetetypen siehe HELP TYP.
+Syntax:
++ <Rufzeichen> <Adresse> [<Geraetetyp>]
+#******************************************************************************
+:1:-
+Traegt ein Rufzeichen aus der Datenbank aus.
+Syntax:
+- <Rufzeichen> <Adresse>
+#******************************************************************************
+:1:+Grp
+Fuegt ein Rufzeichen zu einer Funkrufgruppe hinzu.
+Syntax:
++Grp <Gruppenname> <Rufzeichen>
+#******************************************************************************
+:1:-Grp 
+Loescht ein Rufzeichen aus einer Funkrufgruppe.
+Syntax:
+-Grp <Gruppenname> <Rufzeichen>
+#******************************************************************************
