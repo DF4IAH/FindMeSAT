@@ -1218,6 +1218,19 @@ uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_fir
 }
 #endif
 
+uint32_t calc_BitReverse(uint8_t bitWidth, uint32_t in)
+{
+	uint32_t out = 0UL;
+
+	for (uint8_t idx = 0; idx < bitWidth; idx++) {
+		if (in & (1UL << idx)) {
+			out |= (1UL << (bitWidth - idx - 1));
+		}
+	}
+
+	return out;
+}
+
 
 void adc_app_enable(bool enable)
 {
@@ -3008,8 +3021,8 @@ static void dac_stop(void)
 
 static void dma_init(void)
 {
-	memset(&dmach_dma0_conf, 0, sizeof(dmach_dma0_conf));	// DACB channel 0 - linked with dma1
-	memset(&dmach_dma1_conf, 0, sizeof(dmach_dma1_conf));	// DACB channel 1 - linked with dma0
+	memset(&dmach_dma0_conf, 0, sizeof(dmach_dma0_conf));										// DACB channel 0 - linked with dma1
+	memset(&dmach_dma1_conf, 0, sizeof(dmach_dma1_conf));										// DACB channel 1 - linked with dma0
 
 	dma_channel_set_burst_length(&dmach_dma0_conf, DMA_CH_BURSTLEN_4BYTE_gc);
 	dma_channel_set_burst_length(&dmach_dma1_conf, DMA_CH_BURSTLEN_4BYTE_gc);
@@ -3022,14 +3035,14 @@ static void dma_init(void)
 	dma_channel_set_source_address(&dmach_dma0_conf, (uint16_t)(uintptr_t) &dac_io_dac0_buf[0][0]);
 	dma_channel_set_dest_reload_mode(&dmach_dma0_conf, DMA_CH_DESTRELOAD_BURST_gc);
 	dma_channel_set_dest_dir_mode(&dmach_dma0_conf, DMA_CH_DESTDIR_INC_gc);
-	dma_channel_set_destination_address(&dmach_dma0_conf, (uint16_t)(uintptr_t) &DACB_CH0DATA);		// Access to CH0 and CH1
+	dma_channel_set_destination_address(&dmach_dma0_conf, (uint16_t)(uintptr_t) &DACB_CH0DATA);	// Access to CH0 and CH1
 
 	dma_channel_set_src_reload_mode(&dmach_dma1_conf, DMA_CH_SRCRELOAD_TRANSACTION_gc);
 	dma_channel_set_src_dir_mode(&dmach_dma1_conf, DMA_CH_SRCDIR_INC_gc);
 	dma_channel_set_source_address(&dmach_dma1_conf, (uint16_t)(uintptr_t) &dac_io_dac0_buf[1][0]);
 	dma_channel_set_dest_reload_mode(&dmach_dma1_conf, DMA_CH_DESTRELOAD_BURST_gc);
 	dma_channel_set_dest_dir_mode(&dmach_dma1_conf, DMA_CH_DESTDIR_INC_gc);
-	dma_channel_set_destination_address(&dmach_dma1_conf, (uint16_t)(uintptr_t) &DACB_CH0DATA);		// Access to CH0 and CH1
+	dma_channel_set_destination_address(&dmach_dma1_conf, (uint16_t)(uintptr_t) &DACB_CH0DATA);	// Access to CH0 and CH1
 
 	dma_channel_set_trigger_source(&dmach_dma0_conf, DMA_CH_TRIGSRC_DACB_CH0_gc);
 	dma_channel_set_single_shot(&dmach_dma0_conf);
@@ -3037,7 +3050,7 @@ static void dma_init(void)
 	dma_channel_set_trigger_source(&dmach_dma1_conf, DMA_CH_TRIGSRC_DACB_CH0_gc);
 	dma_channel_set_single_shot(&dmach_dma1_conf);
 
-	task_dac(tcc1_get_time());																		// Calculate DDS increments
+	task_dac(tcc1_get_time());																	// Calculate DDS increments
 }
 
 static void dma_start(void)
@@ -3286,7 +3299,7 @@ static void task_env_calc(void)
 				calc_a = 7.5f;
 				calc_b = 237.3f;
 
-			} else if (temp_env >= -5.f) {  // this temperature is a value given by the programmers will, only ...
+			} else if (temp_env >= -5.f) {														// this temperature is a value given by the programmers will, only ...
 				/* over water */
 				calc_a = 7.6f;
 				calc_b = 240.7f;
@@ -3634,14 +3647,14 @@ static void task_main_aprs(void)
 	if (l_pocsag_msg_buf_len) {
 		/* Push POCSAG via AX5243 (VHF/UHF) */
 		if (g_ax_enable && g_ax_pocsag_enable) {
-			const uint32_t tgtRic = 12 + 1000UL;  // dl-bw  @see http://www.hampager.de/#/rubrics
+			const uint32_t tgtRic = 12 + 1000UL;												// dl-bw  @see http://www.hampager.de/#/rubrics
 
 			/* Switch from APRS mode to POCSAG */
 			spi_ax_init_POCSAG_Tx();
 			spi_ax_selectVcoFreq(false);
 
 			/* Transmit POCSAG message */
-			spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, l_pocsag_msg_buf, strlen(l_pocsag_msg_buf));
+			spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_msg_buf, strlen(l_pocsag_msg_buf));
 		}
 	}
 
@@ -3712,12 +3725,12 @@ void task(void)
 	if (g_workmode == WORKMODE_RUN) {
 		/* TASK when woken up and all ISRs are done */
 		/* note: ADC and DAC are handled by the scheduler */
-		task_serial();										// Handle serial communication with the SIM808
-		task_twi();											// Handle (TWI1 and) TWI2 communications
-		task_usb();											// Handling the USB connection
-		task_main_pll();									// Handling the 1PPS PLL system
-		task_env_calc();									// Environment simulation calculations
-		task_main_aprs();									// Handling the APRS alerts
+		task_serial();																			// Handle serial communication with the SIM808
+		task_twi();																				// Handle (TWI1 and) TWI2 communications
+		task_usb();																				// Handling the USB connection
+		task_main_pll();																		// Handling the 1PPS PLL system
+		task_env_calc();																		// Environment simulation calculations
+		task_main_aprs();																		// Handling the APRS alerts
 	}
 }
 
@@ -3738,29 +3751,32 @@ int main(void)
 	pmic_init();
 	pmic_set_scheduling(PMIC_SCH_FIXED_PRIORITY);
 
-	sysclk_init();		// Clock configuration set-up
+	sysclk_init();																				// Clock configuration set-up
 
-	sleepmgr_init();	// Unlocks all sleep mode levels
+	sleepmgr_init();																			// Unlocks all sleep mode levels
 
 	rtc_init();
 	rtc_start();
 
 	init_globals();
 
-	interrupt_init();	// Port interrupts
-	evsys_init();		// Event system
-	tc_init();			// Timers
-	serial_init();		// Set up serial connection to the SIM808
+	interrupt_init();																			// Port interrupts
+	evsys_init();																				// Event system
+	tc_init();																					// Timers
+
+	/* Insert TEST-CODE here */
+
+	serial_init();																				// Set up serial connection to the SIM808
 	if (g_adc_enabled) {
-		adc_init();		// ADC
+		adc_init();																				// ADC
 	}
 	if (g_dac_enabled) {
-		dac_init();		// DAC
+		dac_init();																				// DAC
 	}
-	twi_init();			// I2C / TWI to 1:Baro,Hygro,9axis 2:LCD
-	spi_init();			// SPI to AX5243
+	twi_init();																					// I2C / TWI to 1:Baro,Hygro,9axis 2:LCD
+	spi_init();																					// SPI to AX5243
 
-	board_init();		// Activates all in/out pins not already handled above - transitions from Z to dedicated states
+	board_init();																				// Activates all in/out pins not already handled above - transitions from Z to dedicated states
 
 	nvm_init(INT_FLASH);
 
@@ -3768,93 +3784,107 @@ int main(void)
 	cpu_irq_enable();
 
 	/* Start of sub-modules */
-	tc_start();			// All clocks and PWM timers start here
+	tc_start();																					// All clocks and PWM timers start here
 	if (g_dac_enabled) {
-		dac_start();	// Start DA convertions
+		dac_start();																			// Start DA convertions
 	}
 	if (g_adc_enabled) {
-		adc_start();	// Start AD convertions
+		adc_start();																			// Start AD convertions
 	}
-	spi_start();		// Start SPI communication with the AX5243
+	spi_start();																				// Start SPI communication with the AX5243
 
 	/* Init of USB system */
-	usb_init();			// USB device stack start function to enable stack and start USB
+	usb_init();																					// USB device stack start function to enable stack and start USB
 
 	/* Start TWI channels */
-	twi_start();		// Start TWI
+	twi_start();																				// Start TWI
 
 	/* TEST */
+	for (int i = 1000; i; i--) {
+
 #if 1
-	{
-		const uint32_t tgtRic = 12 + 1000UL;
-		const char tstBuf[] = "DF4IAH: Test message.";
+		{
+			//const uint32_t tgtRic			= 12 + 1000UL;
+			const uint32_t tgtRic			= 143721UL;											// Skyper of DF4IAH
+			const AX_POCSAG_CW2_t tgtFunc	= AX_POCSAG_CW2_MODE3_ALPHANUM;
+			const char tstBuf[]				= "DF4IAH: Test message.";
 
-		for (int count = 100; count; count--) {
+			for (int count = 1; count; count--) {
+				/* FIFOCMD / FIFOSTAT */
+				spi_ax_transport(false, "< a8 03 >");											// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+				/* Switch from APRS mode to POCSAG */
+				spi_ax_init_POCSAG_Tx();
+
+				#if 1
+				/* Transmit POCSAG message */
+					spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, tgtFunc, tstBuf, strlen(tstBuf));
+
+					delay_ms(500);
+					//delay_ms(7500);
+				#else
+					for (int calCnt = 400; calCnt; calCnt--) {
+						spi_ax_util_POCSAG_Tx_FIFO_Preamble();
+					}
+				#endif
+			}
+
 			/* FIFOCMD / FIFOSTAT */
 			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
-			/* Switch from APRS mode to POCSAG */
-			spi_ax_init_POCSAG_Tx();
+			do {
+				/* FIFOSTAT */
+				spi_ax_transport(false, "< 28 R1 >");
+			} while (!(g_ax_spi_packet_buffer[0] & 0x01));
 
-			/* Transmit POCSAG message */
-			spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, tstBuf, strlen(tstBuf));
-
-			delay_ms(250);
-			//delay_ms(7500);
+			do {
+				/* RADIOSTATE */
+				spi_ax_transport(false, "< 1c R1 >");											// RD Address 0x1C: RADIOSTATE - IDLE
+			} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 		}
-
-		/* FIFOCMD / FIFOSTAT */
-		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
-
-		do {
-			/* FIFOSTAT */
-			spi_ax_transport(false, "< 28 R1 >");
-		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
-
-		do {
-			/* RADIOSTATE */
-			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
-		} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
-	}
-#else
-	{
-		char addrAry[][6]	= { "APXFMS", "DF4IAH", "WIDE1", "WIDE2" };
-		uint8_t ssidAry[]	= { 0, 8, 1, 2 };
-		char aprsMsg[]		= "!4928.39N/00836.88Ej OP: Uli, QTH: Ladenburg, LOC: JN49hl.";
-
-		for (int count = 100; count; count--) {
-			/* FIFOCMD / FIFOSTAT */
-			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
-
-			/* Switch from APRS mode to POCSAG */
-			spi_ax_init_PR1200_Tx();
-			spi_ax_selectVcoFreq(false);
-
-			/* Enter an APRS UI frame */
-			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, 4, aprsMsg, strlen(aprsMsg));
-
-			delay_ms(250);
-			//delay_ms(7500);
-		}
-
-		do {
-			/* FIFOSTAT */
-			spi_ax_transport(false, "< 28 R1 >");
-		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
-
-		do {
-			/* RADIOSTATE */
-			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
-		} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
-	}
 #endif
-	while (true) {
+
+#if 0
+		{
+			char addrAry[][6]	= { "APXFMS", "DF4IAH", "WIDE1", "WIDE2" };
+			uint8_t ssidAry[]	= { 0, 8, 1, 2 };
+			char aprsMsg[]		= "!4928.39N/00836.88Ej OP: Uli, QTH: Ladenburg, LOC: JN49hl.";
+
+			for (int count = 1; count; count--) {
+				/* FIFOCMD / FIFOSTAT */
+				spi_ax_transport(false, "< a8 03 >");											// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+				/* Switch from APRS mode to POCSAG */
+				spi_ax_init_PR1200_Tx();
+
+				/* Enter an APRS UI frame */
+				spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, 4, aprsMsg, strlen(aprsMsg));
+
+				delay_ms(250);
+				//delay_ms(7500);
+			}
+
+			do {
+				/* FIFOSTAT */
+				spi_ax_transport(false, "< 28 R1 >");
+			} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+
+			do {
+				/* RADIOSTATE */
+				spi_ax_transport(false, "< 1c R1 >");											// RD Address 0x1C: RADIOSTATE - IDLE
+			} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+		}
+#endif
+	}
+
+	volatile bool loopWait = true;
+	while (loopWait) {
 		nop();
 	}
 
 
 	/* Start serial */
-	serial_start();		// Start communication with the SIM808 */
+	serial_start();																				// Start communication with the SIM808 */
 
 	/* LED green */
 	twi2_set_leds(0x02);

@@ -101,23 +101,87 @@ static uint8_t s_strGetDec(const char* str, int* o_val)
 }
 
 
-uint32_t spi_ax_POCASG_get3Nbls(const char* buf, int len, uint16_t nblIdx)
+uint8_t spi_ax_POCASG_getBcd(char c)
+{
+	uint8_t u8;
+
+	switch (c) {
+		case 0x30:
+		case 0x31:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
+		case 0x38:
+		case 0x39:
+			u8 = c - 0x30;
+			break;
+
+		case 0x23:																				// #
+		case 0x2a:																				// *
+			u8 = 0xa;
+			break;
+
+		case 0x55:																				// U
+		case 0x75:																				// u
+			u8 = 0xb;
+			break;
+
+		case 0x20:																				// ' '
+			u8 = 0xc;
+			break;
+
+		case 0x2d:																				// -
+			u8 = 0xd;
+			break;
+
+		case 0x5d:																				// ]
+		case 0x29:																				// )
+			u8 = 0xe;
+			break;
+
+		case 0x5b:																				// [
+		case 0x28:																				// (
+			u8 = 0xf;
+			break;
+
+		default:
+			u8 = 0xc;																			// ' '
+	}
+	return u8;
+}
+
+uint32_t spi_ax_POCASG_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx)
 {
 	uint32_t msgWord = 0UL;
-	uint16_t nblCur  = nblIdx;
+	uint16_t msgByteIdx;
+	uint8_t  byteBitPos;
+	uint8_t  byte;
 
-	if ((nblIdx >> 1) >= len) {
-		return AX_POCSAG_CODES_IDLEWORD;
-	}
+	for (uint8_t bitCnt = 20; bitCnt; bitCnt--, msgBitIdx++) {
+		if (tgtFunc == AX_POCSAG_CW2_MODE0_NUMERIC) {
+			/* Calculate source byte and bit position of byte */
+			msgByteIdx	= msgBitIdx >> 2;
+			byteBitPos	= 3 - (msgBitIdx & 0x3);
 
-	/* Cut three nibbles out of the message buffer */
-	for (uint8_t nblLoopIdx = 0; nblLoopIdx < 3; nblLoopIdx++, nblCur++) {
-		uint16_t aryIdx = nblCur >> 1;
+			/* Get the byte as NUMERIC - NUMERIC_SPACE when message exhausted */
+			byte = (msgByteIdx < tgtMsgLen) ?  spi_ax_POCASG_getBcd(*(tgtMsg + msgByteIdx)) : 0xc;
 
-		msgWord <<= 4;
-		uint8_t u8  = (uint8_t) (aryIdx < len) ?  buf[aryIdx] : 0U;
-		uint8_t nbl = (nblIdx & 1) ?  (u8 >> 4) : (u8 & 0x0f);
-		msgWord |= nbl;
+		} else {
+			/* Calculate source byte and bit position of byte */
+			msgByteIdx	= msgBitIdx / 7;
+			byteBitPos	= 7 - (msgBitIdx % 7);
+
+			/* Get the byte as ALPHA - NULL when message exhausted */
+			byte = (msgByteIdx < tgtMsgLen) ?  (uint8_t) *(tgtMsg + msgByteIdx) : 0;
+		}
+
+		msgWord <<= 1;
+		if (byte & (1U << byteBitPos)) {
+			msgWord |= 0b1;
+		}
 	}
 	return msgWord;
 }
@@ -846,20 +910,24 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 
 uint32_t spi_ax_create_POCSAG_checksumParity(uint32_t codeword_in)
 {
-	const uint32_t cw_in = 0x001fffffUL & codeword_in;
-	volatile uint32_t cw_calc = cw_in;
+	const uint32_t inPoly		= 0xfffff800UL & codeword_in;
+	const uint32_t genPoly		= 0x769UL;														// generating polynomial   x10 + x9 + x8 + x6 + x5 + x3 + 1
+	uint32_t cw_calc			= inPoly;
 
-	// Calculate the CRC
-	for (uint8_t idx = 0; idx < 22; idx++) {
-		if (cw_calc & (0x00000001UL << idx)) {
-			cw_calc ^= 0x000004b7UL << idx;
+	// Calculate the BCH check
+	for (uint8_t idx = 31; idx >= 11; idx--) {
+		if (cw_calc  & (1UL <<  idx)) {
+			volatile uint32_t genPolyShifted = genPoly << (idx - 10);
+			cw_calc ^= genPolyShifted;
+			(void)genPolyShifted;
 		}
 	}
+	cw_calc &= 0x000007feUL;
 
-	/* Data with CRC */
-	cw_calc |= cw_in;
+	/* Data with BCH check */
+	cw_calc |= inPoly;
 
-	/* Calculate the parity */
+	/* Calculate for Even Parity */
 	uint32_t par = cw_calc;
 	{
 		par ^= par >> 0x01;
@@ -870,10 +938,8 @@ uint32_t spi_ax_create_POCSAG_checksumParity(uint32_t codeword_in)
 		par &= 1;
 	}
 
-	/* Data with CRC and Parity */
-	if (par) {
-		cw_calc	|= 0x80000000UL;
-	}
+	/* Data with 31:21 BCH and Parity */
+	cw_calc	|= par;
 
 	return cw_calc;
 }
@@ -2604,7 +2670,7 @@ void spi_ax_initRegisters_POCSAG(void)
 
 
 	/* PKTADDRCFG */
-	spi_ax_transport(false, "< f2 00 00 >");													// WR address 0x200: PKTADDRCFG - !MSB_FIRST, !CRC_SKIP_FIRST, FEC SYNC DIS = 0x20, ADDR POS = 0x00
+	spi_ax_transport(false, "< f2 00 80 >");													// WR address 0x200: PKTADDRCFG - MSB_FIRST, !CRC_SKIP_FIRST, FEC SYNC DIS = 0x20, ADDR POS = 0x00
 
 	/* PKTLENCFG */
 	spi_ax_transport(false, "< f2 01 00 >");													// WR address 0x201: PKTLENCFG - none
@@ -2908,7 +2974,7 @@ void spi_ax_init_POCSAG_Tx(void)
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 }
 
-void spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTargetRIC, const char* pocsagMsg, uint8_t pocsagMsgLen)
+void spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc, const char* pocsagTgtMsg, uint8_t pocsagTgtMsgLen)
 {
 	/* Enter a POCSAG message */
 
@@ -2916,7 +2982,7 @@ void spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTargetRIC, const char* pocsagM
 	spi_ax_util_POCSAG_Tx_FIFO_Preamble();														// 576 bits of 0/1 patterns
 
 	/* 2 - Target RIC, message to be sent */
-	spi_ax_util_POCSAG_Tx_FIFO_Batches(pocsagTargetRIC, pocsagMsg, pocsagMsgLen);
+	spi_ax_util_POCSAG_Tx_FIFO_Batches(pocsagTgtRIC, pocsagTgtFunc, pocsagTgtMsg, pocsagTgtMsgLen);
 }
 
 void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void)
@@ -2941,24 +3007,25 @@ void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void)
 	spi_ax_transport(false, "< a8 04 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
 }
 
-void spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, const char* pocsagMsg, uint8_t pocsagMsgLen)
+void spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFunc, const char* tgtMsg, uint8_t tgtMsgLen)
 {
-	const uint32_t tgtAddrHi	= pocsagTargetRIC >> 3;
-	const uint8_t  tgtAddrLo	= pocsagTargetRIC % 8;
-	uint16_t msgNblIdx			= 0U;
-	uint8_t batchAddr			= 0U;
-	uint8_t batchIdx			= 0U;
-	bool inMsg					= false;
-	bool msgDone				= false;
+	//const uint32_t tgtAddrHi	= calc_BitReverse(18, tgtRIC >> 3);
+	uint32_t tgtAddrHi	= tgtRIC >> 3;
+	uint8_t  tgtAddrLo	= tgtRIC & 0x7;
+	uint16_t msgBitIdx	= 0U;
+	uint8_t  batchAddr	= 0U;
+	uint8_t  batchIdx	= 0U;
+	bool     inMsg		= false;
+	bool     msgDone	= false;
 
 	/* Sanity checks */
-	if (!pocsagTargetRIC || !pocsagMsg || (pocsagMsgLen > 80)) {
+	if (!tgtRIC || !tgtMsg || (tgtMsgLen > 80)) {
 		return;
 	}
 
 	/* Process message as much batches it needs */
 	do {
-		uint8_t idx = 0;
+		uint8_t idx		= 0;
 
 		/* Wait until enough space for next batch is available */
 		spi_ax_util_FIFO_waitFree(4 + 4 + 8 * (4 + 4));
@@ -2969,41 +3036,66 @@ void spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, const char* po
 		g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART;							// FIFO flag byte
 
 		/* SYNC */
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 0);
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 1);
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 2);
 		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 3);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 2);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 1);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 0);
 
-		/* Frames */
-		for (uint8_t frIdx = 0; frIdx < 8; frIdx++) {
-			for (uint8_t cwIdx = 0; cwIdx < 2; cwIdx++) {
-				uint32_t pad;
+		/* As long as message has not ended yet - end a message with a SYNCWORD */
+		if (!msgDone) {
+			/* Frames */
+			for (uint8_t frIdx = 0; frIdx < 8; frIdx++) {
+				for (uint8_t cwIdx = 0; cwIdx < 2; cwIdx++) {
+					uint32_t pad;
 
-				/* WORD */
-				if (!inMsg && !msgDone && (tgtAddrLo == batchAddr)) {
-					inMsg = true;
-					pad = spi_ax_create_POCSAG_checksumParity((tgtAddrHi << 1) | AX_POCSAG_CW_IS_ADDR | AX_POCSAG_CW_MODE3_ALPHA);
+					/* WORD */
+					if (!inMsg && !msgDone) {
+						if (batchAddr < tgtAddrLo) {
+							pad = AX_POCSAG_CODES_IDLEWORD;
 
-					} else if (inMsg) {
-					pad = spi_ax_create_POCSAG_checksumParity((spi_ax_POCASG_get3Nbls(pocsagMsg, pocsagMsgLen, msgNblIdx) << 1) | AX_POCSAG_CW_IS_MSG);
-					msgNblIdx += 3;
+						} else {
+							uint32_t addrCW;
 
-					if (pocsagMsgLen < (msgNblIdx >> 1)) {
+							inMsg = true;
+							addrCW  = tgtAddrHi			<< 13;
+							addrCW |= (uint32_t)tgtFunc	<< 11;
+							pad = spi_ax_create_POCSAG_checksumParity(addrCW);
+
+							/* No message content when TONE is sent */
+							if (tgtFunc == AX_POCSAG_CW2_MODE1_TONE) {
+								msgDone = true;
+							}
+						}
+
+					} else if (inMsg && !msgDone) {
+						uint32_t msgCW;
+
+						msgCW  = spi_ax_POCASG_get20Bits(tgtMsg, tgtMsgLen, tgtFunc, msgBitIdx) << 11;
+						msgCW |= 0x80000000UL;
+						msgBitIdx += 20;
+						pad = spi_ax_create_POCSAG_checksumParity(msgCW);
+
+						if (tgtMsgLen < (msgBitIdx >> 3)) {
+							msgDone = true;
+						}
+
+					} else if (msgDone) {
 						inMsg	= false;
-						msgDone = true;
+						pad = AX_POCSAG_CODES_IDLEWORD;
+
+						/* Leave the loops */
+						cwIdx = 2;
+						frIdx = 8;
 					}
 
-					} else {
-					pad = AX_POCSAG_CODES_IDLEWORD;
-				}
-
-				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 0);
-				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 1);
-				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 2);
-				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 3);
-				batchAddr++;
-			}
-		}
+					g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 3);
+					g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 2);
+					g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 1);
+					g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 0);
+					batchAddr++;
+				}  // for (cwIdx)
+			}  // for (frIdx)
+		}  // if (!msgDone)
 
 		/* Set length for FIFO DATA command */
 		g_ax_spi_packet_buffer[    2] = idx - 3;												// Length
@@ -3017,7 +3109,7 @@ void spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, const char* po
 		spi_ax_transport(false, "< a8 04 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
 
 		batchIdx++;
-	} while (!msgDone);
+	} while (!msgDone || inMsg);
 }
 
 void spi_ax_init_POCSAG_Rx(void)
@@ -4057,7 +4149,7 @@ void spi_ax_test_POCSAG_Tx(void)
 		/* Enter POCSAG batches with message to destination RIC */
 		int32_t targetRIC	= 2030000UL;
 		const char msgBuf[]	= "DF4IAH: This is a demonstration message to my  RIC 2030000  using 80 characters.";
-		spi_ax_util_POCSAG_Tx_FIFO_Batches(targetRIC, msgBuf, strlen(msgBuf));
+		spi_ax_util_POCSAG_Tx_FIFO_Batches(targetRIC, AX_POCSAG_CW2_MODE3_ALPHANUM, msgBuf, strlen(msgBuf));
 
 		delay_ms(2000);
 		//delay_ms(7500);
