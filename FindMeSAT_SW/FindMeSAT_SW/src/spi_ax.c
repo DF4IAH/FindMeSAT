@@ -3053,7 +3053,6 @@ int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFu
 	uint32_t tgtAddrHi	= tgtRIC >> 3;
 	uint8_t  tgtAddrLo	= tgtRIC & 0x7;
 	uint16_t msgBitIdx	= 0U;
-	uint8_t  batchAddr	= 0U;
 	uint8_t  batchIdx	= 0U;
 	bool     inMsg		= false;
 	bool     msgDone	= false;
@@ -3119,7 +3118,7 @@ int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFu
 
 				/* WORD */
 				if (!inMsg && !msgDone) {
-					if (batchAddr < tgtAddrLo) {
+					if (frIdx < tgtAddrLo) {
 						pad = AX_POCSAG_CODES_IDLEWORD;
 
 					} else {
@@ -3152,19 +3151,15 @@ int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFu
 					inMsg	= false;
 					pad		= AX_POCSAG_CODES_IDLEWORD;
 
-					/* Break transmission after data + IDLEWORD has been sent */
-					#if 0
-						/* Leave the loops */
-						cwIdx = 2;
-						frIdx = 8;
-					#endif
+					/* Break transmission after data + IDLEWORD has been sent - leave the loops */
+					cwIdx = 2;
+					frIdx = 8;
 				}
 
 				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 3);
 				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 2);
 				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 1);
 				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 0);
-				batchAddr++;
 			}  // for (cwIdx)
 		}  // for (frIdx)
 

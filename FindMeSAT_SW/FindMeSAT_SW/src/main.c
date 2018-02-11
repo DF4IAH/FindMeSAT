@@ -3810,7 +3810,10 @@ int main(void)
 			//const uint32_t tgtRic			= 12 + 1000UL;
 			const uint32_t tgtRic			= 143721UL;											// Skyper of DF4IAH
 			const AX_POCSAG_CW2_t tgtFunc	= AX_POCSAG_CW2_MODE1_TONE;
-			const char tstBuf[]				= "DF4IAH: Test message.";
+			char tstBuf[80];
+
+			memset(tstBuf, 0, sizeof(tstBuf));
+			sprintf(tstBuf, "%02d%02d   %02d%02d%02d", 21,  8,   11,  2, 18);
 
 			for (int count = 1; count; count--) {
 				/* FIFOCMD / FIFOSTAT */
