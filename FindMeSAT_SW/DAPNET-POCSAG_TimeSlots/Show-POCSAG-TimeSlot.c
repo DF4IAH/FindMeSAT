@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
         printf("*==============================================*==========================*\r\n");
         printf("* DAPNET / POCSAG TimeSlot Rechner von DF4IAH  *  Liste ist um            *\r\n");
 	printf("* Voraussetzung:  Systemzeit ist NTP gefuehrt  *  DB0CPU / Mannheim       *\r\n");
-	printf("* zum Abbrechen  STRG-C  druecken.   20180210  *  zentriert               *\r\n");
+	printf("* zum Abbrechen  STRG-C  druecken.   20180211  *  zentriert               *\r\n");
 	printf("*==============================================*==========================*\r\n\r\n");
 
         printf("*==========*===================================*==========================*\r\n");
@@ -42,7 +42,6 @@ int main(int argc, char* argv[])
         printf("*  DB0OFI  *  . . . . . x x . . . . . . x x .  *  Ostfildern              *\r\n");
         printf("*  DB0XHI  *  . . x x . . . . . . x x . . . .  *  Reutlingen-Nord         *\r\n");
         printf("*  DM0AI   *  x x . . . . . . x x . . . . . .  *  Reutlingen              *\r\n");
-        printf("*  unbek.  *  . . . . . . . . x x x x . . . .  *  (unbekannt)             *\r\n");
         printf("*==========*===================================*==========================*\r\n\r\n");
 
 	printf("Unix-Zeit = ");
