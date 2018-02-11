@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												180
-#define VERSION_LOW													124
+#define VERSION_LOW													211
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -310,6 +310,7 @@ int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int o
 char* ipProto_2_ca(uint8_t aprs_ip_proto);
 char* copyStr(char* target, uint8_t targetSize, const char* source);
 uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_first);
+uint32_t calc_BitReverse(uint8_t bitWidth, uint32_t in);
 void adc_app_enable(bool enable);
 void aprs_num_update(uint8_t mode);
 void aprs_link_service_update(const char service[]);

@@ -101,23 +101,87 @@ static uint8_t s_strGetDec(const char* str, int* o_val)
 }
 
 
-uint32_t spi_ax_POCASG_get3Nbls(const char* buf, int len, uint16_t nblIdx)
+uint8_t spi_ax_POCASG_getBcd(char c)
+{
+	uint8_t u8;
+
+	switch (c) {
+		case 0x30:
+		case 0x31:
+		case 0x32:
+		case 0x33:
+		case 0x34:
+		case 0x35:
+		case 0x36:
+		case 0x37:
+		case 0x38:
+		case 0x39:
+			u8 = c - 0x30;
+			break;
+
+		case 0x23:																				// #
+		case 0x2a:																				// *
+			u8 = 0xa;
+			break;
+
+		case 0x55:																				// U
+		case 0x75:																				// u
+			u8 = 0xb;
+			break;
+
+		case 0x20:																				// ' '
+			u8 = 0xc;
+			break;
+
+		case 0x2d:																				// -
+			u8 = 0xd;
+			break;
+
+		case 0x5d:																				// ]
+		case 0x29:																				// )
+			u8 = 0xe;
+			break;
+
+		case 0x5b:																				// [
+		case 0x28:																				// (
+			u8 = 0xf;
+			break;
+
+		default:
+			u8 = 0xc;																			// ' '
+	}
+	return u8;
+}
+
+uint32_t spi_ax_POCASG_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx)
 {
 	uint32_t msgWord = 0UL;
-	uint16_t nblCur  = nblIdx;
+	uint16_t msgByteIdx;
+	uint8_t  byteBitPos;
+	uint8_t  byte;
 
-	if ((nblIdx >> 1) >= len) {
-		return AX_POCSAG_CODES_IDLEWORD;
-	}
+	for (uint8_t bitCnt = 20; bitCnt; bitCnt--, msgBitIdx++) {
+		if (tgtFunc == AX_POCSAG_CW2_MODE0_NUMERIC) {
+			/* Calculate source byte and bit position of byte */
+			msgByteIdx	= msgBitIdx >> 2;
+			byteBitPos	= 3 - (msgBitIdx & 0x3);
 
-	/* Cut three nibbles out of the message buffer */
-	for (uint8_t nblLoopIdx = 0; nblLoopIdx < 3; nblLoopIdx++, nblCur++) {
-		uint16_t aryIdx = nblCur >> 1;
+			/* Get the byte as NUMERIC - NUMERIC_SPACE when message exhausted */
+			byte = (msgByteIdx < tgtMsgLen) ?  spi_ax_POCASG_getBcd(*(tgtMsg + msgByteIdx)) : 0xc;
 
-		msgWord <<= 4;
-		uint8_t u8  = (uint8_t) (aryIdx < len) ?  buf[aryIdx] : 0U;
-		uint8_t nbl = (nblIdx & 1) ?  (u8 >> 4) : (u8 & 0x0f);
-		msgWord |= nbl;
+		} else {
+			/* Calculate source byte and bit position of byte */
+			msgByteIdx	= msgBitIdx / 7;
+			byteBitPos	= 7 - (msgBitIdx % 7);
+
+			/* Get the byte as ALPHA - NULL when message exhausted */
+			byte = (msgByteIdx < tgtMsgLen) ?  (uint8_t) *(tgtMsg + msgByteIdx) : 0;
+		}
+
+		msgWord <<= 1;
+		if (byte & (1U << byteBitPos)) {
+			msgWord |= 0b1;
+		}
 	}
 	return msgWord;
 }
@@ -846,20 +910,24 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 
 uint32_t spi_ax_create_POCSAG_checksumParity(uint32_t codeword_in)
 {
-	const uint32_t cw_in = 0x001fffffUL & codeword_in;
-	volatile uint32_t cw_calc = cw_in;
+	const uint32_t inPoly		= 0xfffff800UL & codeword_in;
+	const uint32_t genPoly		= 0x769UL;														// generating polynomial   x10 + x9 + x8 + x6 + x5 + x3 + 1
+	uint32_t cw_calc			= inPoly;
 
-	// Calculate the CRC
-	for (uint8_t idx = 0; idx < 22; idx++) {
-		if (cw_calc & (0x00000001UL << idx)) {
-			cw_calc ^= 0x000004b7UL << idx;
+	// Calculate the BCH check
+	for (uint8_t idx = 31; idx >= 11; idx--) {
+		if (cw_calc  & (1UL <<  idx)) {
+			volatile uint32_t genPolyShifted = genPoly << (idx - 10);
+			cw_calc ^= genPolyShifted;
+			(void)genPolyShifted;
 		}
 	}
+	cw_calc &= 0x000007feUL;
 
-	/* Data with CRC */
-	cw_calc |= cw_in;
+	/* Data with BCH check */
+	cw_calc |= inPoly;
 
-	/* Calculate the parity */
+	/* Calculate for Even Parity */
 	uint32_t par = cw_calc;
 	{
 		par ^= par >> 0x01;
@@ -870,10 +938,8 @@ uint32_t spi_ax_create_POCSAG_checksumParity(uint32_t codeword_in)
 		par &= 1;
 	}
 
-	/* Data with CRC and Parity */
-	if (par) {
-		cw_calc	|= 0x80000000UL;
-	}
+	/* Data with 31:21 BCH and Parity */
+	cw_calc	|= par;
 
 	return cw_calc;
 }
@@ -2367,16 +2433,22 @@ void spi_ax_initRegisters_POCSAG(void)
 
 
 	/* PINFUNCSYSCLK */
-	spi_ax_transport(false, "< a1 82 >");														// WR address 0x21: PINFUNCSYSCLK
+	spi_ax_transport(false, "< a1 82 >");														// WR address 0x21: PINFUNCSYSCLK - Set to 'Z'
 
 	/* PINFUNCDCLK */
-	spi_ax_transport(false, "< a2 82 >");														// WR address 0x22: PINFUNCDCLK
+	spi_ax_transport(false, "< a2 82 >");														// WR address 0x22: PINFUNCDCLK - Set to 'Z'
 
 	/* PINFUNCDATA */
-	spi_ax_transport(false, "< a3 82 >");														// WR address 0x23: PINFUNCDATA
+	spi_ax_transport(false, "< a3 82 >");														// WR address 0x23: PINFUNCDATA - Set to 'Z'
+
+	/* PINFUNCIRQ */
+	spi_ax_transport(false, "< a4 03 >");														// WR address 0x24: PINFUNCIRQ - Set to Interrupt request
+
+	/* PINFUNCANTSEL */
+	spi_ax_transport(false, "< a5 05 >");														// WR address 0x25: PINFUNCANTSEL - Set to DAC output
 
 	/* PINFUNCPWRAMP / PINFUNCTCXO_EN */
-	spi_ax_transport(false, "< a6 02 >");														// WR address 0x26: PINFUNCTCXO_EN - Set to uutput 'Z'
+	spi_ax_transport(false, "< a6 02 >");														// WR address 0x26: PINFUNCTCXO_EN - Set to 'Z'
 
 
 	// --
@@ -2578,7 +2650,7 @@ void spi_ax_initRegisters_POCSAG(void)
 	spi_ax_transport(false, "< f1 68 00 00 >");													// WR address 0x168: TXPWRCOEFFA - no correction
 
 	/* TXPWRCOEFFB */
-	spi_ax_transport(false, "< f1 6a 00 00 >");													// WR address 0x16A: TXPWRCOEFFB - off
+	spi_ax_transport(false, "< f1 6a 00 aa >");													// WR address 0x16A: TXPWRCOEFFB - -10 dBm
 
 	/* TXPWRCOEFFC */
 	spi_ax_transport(false, "< f1 6c 00 00 >");													// WR address 0x16C: TXPWRCOEFFC - no correction
@@ -2604,7 +2676,7 @@ void spi_ax_initRegisters_POCSAG(void)
 
 
 	/* PKTADDRCFG */
-	spi_ax_transport(false, "< f2 00 00 >");													// WR address 0x200: PKTADDRCFG - !MSB_FIRST, !CRC_SKIP_FIRST, FEC SYNC DIS = 0x20, ADDR POS = 0x00
+	spi_ax_transport(false, "< f2 00 80 >");													// WR address 0x200: PKTADDRCFG - MSB_FIRST, !CRC_SKIP_FIRST, FEC SYNC DIS = 0x20, ADDR POS = 0x00
 
 	/* PKTLENCFG */
 	spi_ax_transport(false, "< f2 01 00 >");													// WR address 0x201: PKTLENCFG - none
@@ -2617,7 +2689,7 @@ void spi_ax_initRegisters_POCSAG(void)
 
 
 	/* MATCH0PAT */
-	spi_ax_transport(false, "< f2 10 d8 15 d2 7c >");											// WR address 0x210: MATCH0PAT - POCSAG SYNC word
+	spi_ax_transport(false, "< f2 10 1b a8 4b 3e >");											// WR address 0x210: MATCH0PAT - POCSAG SYNC word (inverted by AX5243)
 
 	/* MATCH0LEN */
 	spi_ax_transport(false, "< f2 14 1f >");													// WR address 0x214: MATCH0LEN
@@ -2629,7 +2701,7 @@ void spi_ax_initRegisters_POCSAG(void)
 	spi_ax_transport(false, "< f2 16 1f >");													// WR address 0x216: MATCH0MAX
 
 	/* MATCH1PAT */
-	spi_ax_transport(false, "< f2 18 55 55 >");													// WR address 0x218: MATCH1PAT - MATCH1PAT = 0x55 0x55
+	spi_ax_transport(false, "< f2 18 aa aa >");													// WR address 0x218: MATCH1PAT - MATCH1PAT = 0xAA 0xAA
 
 	/* MATCH1LEN */
 	spi_ax_transport(false, "< f2 1c 0a >");													// WR address 0x21C: MATCH1LEN - not MATCH1RAW, MATCH1LEN = 11
@@ -2657,7 +2729,7 @@ void spi_ax_initRegisters_POCSAG(void)
 	spi_ax_transport(false, "< f2 26 73 >");													// WR address 0x226: TMGRXCOARSEAGC - TMGRXCOARSEAGCE = 3, TMGRXCOARSEAGCM = 19 --> 152 µs (Bits)  @see PKTMISCFLAGS.RXAGC
 
 	/* TMGRXRSSI */
-	spi_ax_transport(false, "< f2 28 02 >");													// WR address 0x228: TMGRXRSSI - TMGRXRSSIE = 0, TMGRXRSSIM = 3 --> 3 µs (Bits)  @see PKTMISCFLAGS.RXRSSI (fall-back strategy)
+	spi_ax_transport(false, "< f2 28 03 >");													// WR address 0x228: TMGRXRSSI - TMGRXRSSIE = 0, TMGRXRSSIM = 3 --> 3 µs (Bits)  @see PKTMISCFLAGS.RXRSSI (fall-back strategy)
 
 	/* TMGRXPREAMBLE1 */
 	spi_ax_transport(false, "< f2 29 00 >");													// WR address 0x229: TMGRXPREAMBLE1 - TMGRXPREAMBLE1 timeout = none
@@ -2708,6 +2780,19 @@ void spi_ax_initRegisters_POCSAG(void)
 
 	/* DACCONFIG */
 	spi_ax_transport(false, "< f3 32 81 >");													// WR address 0x332: DACCONFIG
+
+
+	/* 0xF0D = REF */
+	spi_ax_transport(false, "< ff 0d 03 >");													// WR address 0xF0D: REF (RX/TX) - Set to 0x03
+
+	/* 0xF10 - XTALOSC*/
+	spi_ax_transport(false, "< ff 10 03 >");													// WR address 0xF10 (RX/TX) - Set to 0x04 if a TCXO is used. If a crystal is used, set to 0x0D if the reference frequency (crystal or TCXO) is more than 43 MHz, or to 0x03 otherwise
+
+	/* 0xF11 - XTALAMPL */
+	spi_ax_transport(false, "< ff 11 07 >");													// WR address 0xF11 (RX/TX) - Set to 0x07 if a crystal is connected to CLK16P/CLK16N, or 0x00 if a TCXO is used
+
+	/* 0xF1C */
+	spi_ax_transport(false, "< ff 1c 07 >");													// WR address 0xF1C (RX/TX) - Set to 0x07
 }
 
 void spi_ax_initRegisters_POCSAG_Tx(void)
@@ -2722,20 +2807,20 @@ void spi_ax_initRegisters_POCSAG_Tx(void)
 	spi_ax_transport(false, "< b2 24 >");														// WR address 0x32: PLLVCODIV - VCO2INT, RFDIV
 
 	/* PLLLOOPBOOST */
-	spi_ax_transport(false, "< b8 0b >");														// WR address 0x38: PLLLOOPBOOST - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5 (BW = 500 kHz for ICP = 1.7 mA)
+	//spi_ax_transport(false, "< b8 0b >");														// WR address 0x38: PLLLOOPBOOST - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5 (BW = 500 kHz for ICP = 1.7 mA)
 
 
 	/* MODCFGF */
-	spi_ax_transport(false, "< f1 60 00 >");													// WR address 0x160: MODCFGF - FREQSHAPE: External Loop Filter (BT = 0.0)
+	//spi_ax_transport(false, "< f1 60 00 >");													// WR address 0x160: MODCFGF - FREQSHAPE: External Loop Filter (BT = 0.0)
 
 	/* FSKDEV */
-	spi_ax_transport(false, "< f1 61 00 10 62 >");												// WR address 0x161: FSKDEV - FSKDEV: +/-4,000 Hz @ fxtal = 16 MHz
+	//spi_ax_transport(false, "< f1 61 00 10 62 >");												// WR address 0x161: FSKDEV - FSKDEV: +/-4,000 Hz @ fxtal = 16 MHz
 
 	/* MODCFGA */
-	spi_ax_transport(false, "< f1 64 05 >");													// WR address 0x164: MODCFGA - AMPLSHAPE, TXDIFF
+	//spi_ax_transport(false, "< f1 64 05 >");													// WR address 0x164: MODCFGA - AMPLSHAPE, TXDIFF
 
 	/* TXRATE */
-	spi_ax_transport(false, "< f1 65 00 04 ea >");												// WR address 0x165: TXRATE - TXRATE: 1,200 bit/s
+	//spi_ax_transport(false, "< f1 65 00 04 ea >");												// WR address 0x165: TXRATE - TXRATE: 1,200 bit/s
 
 
 	/* XTALCAP */
@@ -2746,31 +2831,52 @@ void spi_ax_initRegisters_POCSAG_Tx(void)
 	spi_ax_transport(false, "< ff 00 0f >");													// WR address 0xF00:
 
 	/* 0xF0C */
-	spi_ax_transport(false, "< ff 0c 00 >");													// WR address 0xF0C (RX/TX) - Keep the default 0x00
+	//spi_ax_transport(false, "< ff 0c 00 >");													// WR address 0xF0C (RX/TX) - Keep the default 0x00
 
 	/* 0xF0D = REF */
-	spi_ax_transport(false, "< ff 0d 03 >");													// WR address 0xF0D: REF (RX/TX) - Set to 0x03
+	//spi_ax_transport(false, "< ff 0d 03 >");													// WR address 0xF0D: REF (RX/TX) - Set to 0x03
 
 	/* 0xF10 - XTALOSC*/
-	spi_ax_transport(false, "< ff 10 03 >");													// WR address 0xF10 (RX/TX) - Set to 0x04 if a TCXO is used. If a crystal is used, set to 0x0D if the reference frequency (crystal or TCXO) is more than 43 MHz, or to 0x03 otherwise
+	//spi_ax_transport(false, "< ff 10 03 >");													// WR address 0xF10 (RX/TX) - Set to 0x04 if a TCXO is used. If a crystal is used, set to 0x0D if the reference frequency (crystal or TCXO) is more than 43 MHz, or to 0x03 otherwise
 
 	/* 0xF11 - XTALAMPL */
-	spi_ax_transport(false, "< ff 11 07 >");													// WR address 0xF11 (RX/TX) - Set to 0x07 if a crystal is connected to CLK16P/CLK16N, or 0x00 if a TCXO is used
+	//spi_ax_transport(false, "< ff 11 07 >");													// WR address 0xF11 (RX/TX) - Set to 0x07 if a crystal is connected to CLK16P/CLK16N, or 0x00 if a TCXO is used
 
 	/* 0xF18 */
 	spi_ax_transport(false, "< ff 18 06 >");													// WR address 0xF18 (RX/TX)
 
 	/* 0xF1C */
-	spi_ax_transport(false, "< ff 1c 07 >");													// WR address 0xF1C (RX/TX) - Set to 0x07
+	//spi_ax_transport(false, "< ff 1c 07 >");													// WR address 0xF1C (RX/TX) - Set to 0x07
 
 	/* 0xF34 */
-	spi_ax_transport(false, "< ff 34 28 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
+	//spi_ax_transport(false, "< ff 34 28 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
 
 	/* 0xF35 */
-	spi_ax_transport(false, "< ff 35 10 >");													// WR address 0xF35 (RX/TX) - Set to 0x10 for reference frequencies (crystal or TCXO) less than 24.8 MHz (fXTALDIV = 1), or to 0x11 otherwise (fXTALDIV = 2)
+	//spi_ax_transport(false, "< ff 35 10 >");													// WR address 0xF35 (RX/TX) - Set to 0x10 for reference frequencies (crystal or TCXO) less than 24.8 MHz (fXTALDIV = 1), or to 0x11 otherwise (fXTALDIV = 2)
 
 	/* 0xF44 */
-	spi_ax_transport(false, "< ff 44 25 >");													// WR address 0xF44 (RX/TX)
+	//spi_ax_transport(false, "< ff 44 25 >");													// WR address 0xF44 (RX/TX)
+
+	/* 0xF21 */
+	//spi_ax_transport(false, "< ff 21 68 >");													// WR address 0xF21 (RX)
+
+	/* 0xF22 */
+	//spi_ax_transport(false, "< ff 22 ff >");													// WR address 0xF22 (RX)
+
+	/* 0xF23 */
+	//spi_ax_transport(false, "< ff 23 84 >");													// WR address 0xF23 (RX)
+
+	/* 0xF26 */
+	//spi_ax_transport(false, "< ff 26 98 >");													// WR address 0xF26 (RX)
+
+	/* 0xF34 */
+	//spi_ax_transport(false, "< ff 34 28 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
+
+	/* 0xF35 */
+	//spi_ax_transport(false, "< ff 35 10 >");													// WR address 0xF35 (RX/TX) - Set to 0x10 for reference frequencies (crystal or TCXO) less than 24.8 MHz (fXTALDIV = 1), or to 0x11 otherwise (fXTALDIV = 2)
+
+	/* 0xF44 */
+	//spi_ax_transport(false, "< ff 44 25 >");													// WR address 0xF44 (RX/TX)
 }
 
 void spi_ax_initRegisters_POCSAG_Rx(void)
@@ -2785,7 +2891,7 @@ void spi_ax_initRegisters_POCSAG_Rx(void)
 	spi_ax_transport(false, "< b2 24 >");														// WR address 0x32: PLLVCODIV - VCO2INT, RFDIV
 
 	/* PLLLOOPBOOST */
-	spi_ax_transport(false, "< b8 0b >");														// WR address 0x38: PLLLOOPBOOST - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5 (BW = 500 kHz for ICP = 1.7 mA)
+	//spi_ax_transport(false, "< b8 0b >");														// WR address 0x38: PLLLOOPBOOST - DIRECT 0x08, no FILTEN, FLT 03: Internal Loop Filter x5 (BW = 500 kHz for ICP = 1.7 mA)
 
 
 	/* XTALCAP */
@@ -2796,46 +2902,46 @@ void spi_ax_initRegisters_POCSAG_Rx(void)
 	spi_ax_transport(false, "< ff 00 0f >");													// WR address 0xF00:
 
 	/* 0xF0C */
-	spi_ax_transport(false, "< ff 0c 00 >");													// WR address 0xF0C (RX/TX) - Keep the default 0x00
+	//spi_ax_transport(false, "< ff 0c 00 >");													// WR address 0xF0C (RX/TX) - Keep the default 0x00
 
 	/* 0xF0D = REF */
-	spi_ax_transport(false, "< ff 0d 03 >");													// WR address 0xF0D: REF (RX/TX) - Set to 0x03
+	//spi_ax_transport(false, "< ff 0d 03 >");													// WR address 0xF0D: REF (RX/TX) - Set to 0x03
 
 	/* 0xF10 - XTALOSC*/
-	spi_ax_transport(false, "< ff 10 03 >");													// WR address 0xF10 (RX/TX) - Set to 0x04 if a TCXO is used. If a crystal is used, set to 0x0D if the reference frequency (crystal or TCXO) is more than 43 MHz, or to 0x03 otherwise
+	//spi_ax_transport(false, "< ff 10 03 >");													// WR address 0xF10 (RX/TX) - Set to 0x04 if a TCXO is used. If a crystal is used, set to 0x0D if the reference frequency (crystal or TCXO) is more than 43 MHz, or to 0x03 otherwise
 
 	/* 0xF11 - XTALAMPL */
-	spi_ax_transport(false, "< ff 11 07 >");													// WR address 0xF11 (RX/TX) - Set to 0x07 if a crystal is connected to CLK16P/CLK16N, or 0x00 if a TCXO is used
+	//spi_ax_transport(false, "< ff 11 07 >");													// WR address 0xF11 (RX/TX) - Set to 0x07 if a crystal is connected to CLK16P/CLK16N, or 0x00 if a TCXO is used
 
 	/* 0xF18 */
 	spi_ax_transport(false, "< ff 18 02 >");													// WR address 0xF18 (RX/TX) - Differs between RX and TX
 
 	/* 0xF1C */
-	spi_ax_transport(false, "< ff 1c 07 >");													// WR address 0xF1C (RX/TX) - Set to 0x07
+	//spi_ax_transport(false, "< ff 1c 07 >");													// WR address 0xF1C (RX/TX) - Set to 0x07
 
 	/* 0xF21 */
-	spi_ax_transport(false, "< ff 21 68 >");													// WR address 0xF21 (RX)
+	//spi_ax_transport(false, "< ff 21 68 >");													// WR address 0xF21 (RX)
 
 	/* 0xF22 */
-	spi_ax_transport(false, "< ff 22 ff >");													// WR address 0xF22 (RX)
+	//spi_ax_transport(false, "< ff 22 ff >");													// WR address 0xF22 (RX)
 
 	/* 0xF23 */
-	spi_ax_transport(false, "< ff 23 84 >");													// WR address 0xF23 (RX)
+	//spi_ax_transport(false, "< ff 23 84 >");													// WR address 0xF23 (RX)
 
 	/* 0xF26 */
-	spi_ax_transport(false, "< ff 26 98 >");													// WR address 0xF26 (RX)
+	//spi_ax_transport(false, "< ff 26 98 >");													// WR address 0xF26 (RX)
 
 	/* 0xF34 */
-	spi_ax_transport(false, "< ff 34 28 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
+	//spi_ax_transport(false, "< ff 34 28 >");													// WR address 0xF34 (RX/TX) - Set to 0x28 if RFDIV in register PLLVCODIV is set, or to 0x08 otherwise
 
 	/* 0xF35 */
-	spi_ax_transport(false, "< ff 35 10 >");													// WR address 0xF35 (RX/TX) - Set to 0x10 for reference frequencies (crystal or TCXO) less than 24.8 MHz (fXTALDIV = 1), or to 0x11 otherwise (fXTALDIV = 2)
+	//spi_ax_transport(false, "< ff 35 10 >");													// WR address 0xF35 (RX/TX) - Set to 0x10 for reference frequencies (crystal or TCXO) less than 24.8 MHz (fXTALDIV = 1), or to 0x11 otherwise (fXTALDIV = 2)
 
 	/* 0xF44 */
-	spi_ax_transport(false, "< ff 44 25 >");													// WR address 0xF44 (RX/TX)
+	//spi_ax_transport(false, "< ff 44 25 >");													// WR address 0xF44 (RX/TX)
 
 	/* 0xF72 */
-	spi_ax_transport(false, "< ff 72 00 >");													// WR address 0xF72 (RX) - Set to 0x06 if the framing mode is set to “Raw, Soft Bits” (register FRAMING), or to 0x00 otherwise
+	//spi_ax_transport(false, "< ff 72 00 >");													// WR address 0xF72 (RX) - Set to 0x06 if the framing mode is set to “Raw, Soft Bits” (register FRAMING), or to 0x00 otherwise
 }
 
 void spi_ax_initRegisters_POCSAG_Rx_WoR(void)
@@ -2908,15 +3014,15 @@ void spi_ax_init_POCSAG_Tx(void)
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 }
 
-void spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTargetRIC, const char* pocsagMsg, uint8_t pocsagMsgLen)
+int8_t spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc, const char* pocsagTgtMsg, uint8_t pocsagTgtMsgLen)
 {
 	/* Enter a POCSAG message */
 
 	/* 1 - Flags */
-	spi_ax_util_POCSAG_Tx_FIFO_Preamble();														// 576 bits of 0/1 patterns
+	spi_ax_util_POCSAG_Tx_FIFO_Preamble();														// 576 bits of 1/0 pattern
 
 	/* 2 - Target RIC, message to be sent */
-	spi_ax_util_POCSAG_Tx_FIFO_Batches(pocsagTargetRIC, pocsagMsg, pocsagMsgLen);
+	return spi_ax_util_POCSAG_Tx_FIFO_Batches(pocsagTgtRIC, pocsagTgtFunc, pocsagTgtMsg, pocsagTgtMsgLen);
 }
 
 void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void)
@@ -2930,7 +3036,7 @@ void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void)
 	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_CMD_REPEATDATA_TX;
 	g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART;								// FIFO flag byte
 	g_ax_spi_packet_buffer[idx++] = 18 * 4;														// PREAMBLE length: 576 bits = 18 words
-	g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 0);
+	g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_PREAMBLE, 0);				// 1/0 pattern
 
 	/* FIFO data enter */
 	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
@@ -2941,38 +3047,70 @@ void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void)
 	spi_ax_transport(false, "< a8 04 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
 }
 
-void spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, const char* pocsagMsg, uint8_t pocsagMsgLen)
+int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFunc, const char* tgtMsg, uint8_t tgtMsgLen)
 {
-	const uint32_t tgtAddrHi	= pocsagTargetRIC >> 3;
-	const uint8_t  tgtAddrLo	= pocsagTargetRIC % 8;
-	uint16_t msgNblIdx			= 0U;
-	uint8_t batchAddr			= 0U;
-	uint8_t batchIdx			= 0U;
-	bool inMsg					= false;
-	bool msgDone				= false;
+	//const uint32_t tgtAddrHi	= calc_BitReverse(18, tgtRIC >> 3);
+	uint32_t tgtAddrHi	= tgtRIC >> 3;
+	uint8_t  tgtAddrLo	= tgtRIC & 0x7;
+	uint16_t msgBitIdx	= 0U;
+	uint8_t  batchAddr	= 0U;
+	uint8_t  batchIdx	= 0U;
+	bool     inMsg		= false;
+	bool     msgDone	= false;
 
 	/* Sanity checks */
-	if (!pocsagTargetRIC || !pocsagMsg || (pocsagMsgLen > 80)) {
-		return;
+	{
+		if (!tgtRIC) {
+			return -1;
+		}
+
+		switch (tgtFunc) {
+			case AX_POCSAG_CW2_MODE0_NUMERIC:
+				if (!tgtMsg || !tgtMsgLen || (tgtMsgLen > 40)) {
+					return -2;
+				}
+			break;
+
+			case AX_POCSAG_CW2_MODE1_TONE:
+				{
+					/* Any data is silently ignored */
+				}
+			break;
+
+			case AX_POCSAG_CW2_MODE2_ACTIVATION:
+				if (!tgtMsg || !tgtMsgLen || (tgtMsgLen > 10)) {								// TODO: fix me - correct maximum size, here.
+					return -2;
+				}
+			break;
+
+			case AX_POCSAG_CW2_MODE3_ALPHANUM:
+				if (!tgtMsg || !tgtMsgLen || (tgtMsgLen > 80)) {
+					return -2;
+				}
+			break;
+
+			default:
+				return -3;
+		}
 	}
 
-	/* Process message as much batches it needs */
+	/* Process message as much batches it needs - each batch is enqueued into the transmitter FIFO */
 	do {
-		uint8_t idx = 0;
+		uint8_t idx	= 0;
 
 		/* Wait until enough space for next batch is available */
-		spi_ax_util_FIFO_waitFree(4 + 4 + 8 * (4 + 4));
+		spi_ax_util_FIFO_waitFree(4 + 4 + 8 * (4 + 4));											// FIFO_cmd + SYNCWORD + 8 batches * (2 words)
 
 		g_ax_spi_packet_buffer[idx++] = 0xA9;													// WR address 0x29: FIFODATA  (SPI AX address keeps constant)
 		g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_CMD_DATA_TX_RX;
 		g_ax_spi_packet_buffer[idx++] = 0;														// Dummy entry for now
-		g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART;							// FIFO flag byte
+		g_ax_spi_packet_buffer[idx++] = AX_FIFO_DATA_FLAGS_TX_PKTSTART | AX_FIFO_DATA_FLAGS_TX_NOCRC;	// FIFO flag byte
 
 		/* SYNC */
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 0);
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 1);
-		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 2);
 		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 3);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 2);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 1);
+		g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(AX_POCSAG_CODES_SYNCWORD, 0);
 
 		/* Frames */
 		for (uint8_t frIdx = 0; frIdx < 8; frIdx++) {
@@ -2980,30 +3118,55 @@ void spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, const char* po
 				uint32_t pad;
 
 				/* WORD */
-				if (!inMsg && !msgDone && (tgtAddrLo == batchAddr)) {
-					inMsg = true;
-					pad = spi_ax_create_POCSAG_checksumParity((tgtAddrHi << 1) | AX_POCSAG_CW_IS_ADDR | AX_POCSAG_CW_MODE3_ALPHA);
+				if (!inMsg && !msgDone) {
+					if (batchAddr < tgtAddrLo) {
+						pad = AX_POCSAG_CODES_IDLEWORD;
 
-					} else if (inMsg) {
-					pad = spi_ax_create_POCSAG_checksumParity((spi_ax_POCASG_get3Nbls(pocsagMsg, pocsagMsgLen, msgNblIdx) << 1) | AX_POCSAG_CW_IS_MSG);
-					msgNblIdx += 3;
+					} else {
+						uint32_t addrCW;
 
-					if (pocsagMsgLen < (msgNblIdx >> 1)) {
-						inMsg	= false;
+						inMsg	= true;
+						addrCW  = tgtAddrHi			<< 13;
+						addrCW |= (uint32_t)tgtFunc	<< 11;
+						pad		= spi_ax_create_POCSAG_checksumParity(addrCW);
+
+						/* No message content when TONE is sent */
+						if (tgtFunc == AX_POCSAG_CW2_MODE1_TONE) {
+							msgDone = true;
+						}
+					}
+
+				} else if (inMsg && !msgDone) {
+					uint32_t msgCW;
+
+					msgCW		= spi_ax_POCASG_get20Bits(tgtMsg, tgtMsgLen, tgtFunc, msgBitIdx) << 11;
+					msgCW	   |= 0x80000000UL;
+					msgBitIdx  += 20;
+					pad			= spi_ax_create_POCSAG_checksumParity(msgCW);
+
+					if (tgtMsgLen < (msgBitIdx >> 3)) {
 						msgDone = true;
 					}
 
-					} else {
-					pad = AX_POCSAG_CODES_IDLEWORD;
+				} else if (msgDone) {
+					inMsg	= false;
+					pad		= AX_POCSAG_CODES_IDLEWORD;
+
+					/* Break transmission after data + IDLEWORD has been sent */
+					#if 0
+						/* Leave the loops */
+						cwIdx = 2;
+						frIdx = 8;
+					#endif
 				}
 
-				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 0);
-				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 1);
-				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 2);
 				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 3);
+				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 2);
+				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 1);
+				g_ax_spi_packet_buffer[idx++] = s_sel_u8_from_u32(pad, 0);
 				batchAddr++;
-			}
-		}
+			}  // for (cwIdx)
+		}  // for (frIdx)
 
 		/* Set length for FIFO DATA command */
 		g_ax_spi_packet_buffer[    2] = idx - 3;												// Length
@@ -3017,7 +3180,9 @@ void spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, const char* po
 		spi_ax_transport(false, "< a8 04 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
 
 		batchIdx++;
-	} while (!msgDone);
+	} while (!msgDone || inMsg);
+
+	return 0;
 }
 
 void spi_ax_init_POCSAG_Rx(void)
@@ -3169,7 +3334,7 @@ void spi_ax_init_AnalogFM_Tx(void)
 	spi_ax_setPower_dBm(-20);
 
 	/* FIFOCMD / FIFOSTAT */
-	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+	spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 }
 
 void spi_ax_init_AnalogFM_Rx(void)
@@ -4057,7 +4222,7 @@ void spi_ax_test_POCSAG_Tx(void)
 		/* Enter POCSAG batches with message to destination RIC */
 		int32_t targetRIC	= 2030000UL;
 		const char msgBuf[]	= "DF4IAH: This is a demonstration message to my  RIC 2030000  using 80 characters.";
-		spi_ax_util_POCSAG_Tx_FIFO_Batches(targetRIC, msgBuf, strlen(msgBuf));
+		(void) spi_ax_util_POCSAG_Tx_FIFO_Batches(targetRIC, AX_POCSAG_CW2_MODE3_ALPHANUM, msgBuf, strlen(msgBuf));
 
 		delay_ms(2000);
 		//delay_ms(7500);

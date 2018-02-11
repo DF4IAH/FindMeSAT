@@ -159,20 +159,22 @@ typedef enum AX_FIFO_RX_FSM {
 
 
 typedef enum AX_POCSAG_CODES_ENUM {
-	AX_POCSAG_CODES_PREAMBLE										= 0xaaaaaaaaUL,		// LSB   0 1 0 1  0 1 0 1     0 1 0 1  0 1 0 1     0 1 0 1  0 1 0 1     0 1 0 1  0 1 0 1   MSB
-	AX_POCSAG_CODES_SYNCWORD										= 0x1ba84b3eUL,		// LSB   0 1 1 1  1 1 0 0     1 1 0 1  0 0 1 0     0 0 0 1  0 1 0 1     1 1 0 1  1 0 0 0   MSB
-	AX_POCSAG_CODES_IDLEWORD										= 0xe983915eUL,		// LSB   0 1 1 1  1 0 1 0     1 0 0 0  1 0 0 1     1 1 0 0  0 0 0 1     1 0 0 1  0 1 1 1   MSB
+	AX_POCSAG_CODES_PREAMBLE										= 0xaaaaaaaaUL,		// MSB   1 0 1 0  1 0 1 0     1 0 1 0  1 0 1 0     1 0 1 0  1 0 1 0     1 0 1 0  1 0 1 0   LSB
+	AX_POCSAG_CODES_SYNCWORD										= 0x7cd215d8UL,		// MSB   0 1 1 1  1 1 0 0     1 1 0 1  0 0 1 0     0 0 0 1  0 1 0 1     1 1 0 1  1 0 0 0   LSB
+	AX_POCSAG_CODES_IDLEWORD										= 0x7a89c197UL,		// MSB   0 1 1 1  1 0 1 0     1 0 0 0  1 0 0 1     1 1 0 0  0 0 0 1     1 0 0 1  0 1 1 1   LSB
 } AX_POCSAG_CODES_t;
 
-typedef enum AX_POCSAG_CW_ENUM {
-	AX_POCSAG_CW_IS_ADDR											= 0x00000000UL,
-	AX_POCSAG_CW_IS_MSG												= 0x00000001UL,
+typedef enum AX_POCSAG_CW1_ENUM {
+	AX_POCSAG_CW1_IS_ADDR											= 0,
+	AX_POCSAG_CW1_IS_MSG											= 1
+} AX_POCSAG_CW1_t;
 
-	AX_POCSAG_CW_MODE0_NUMERIC										= 0x00000000UL,
-	AX_POCSAG_CW_MODE1												= 0x00080000UL,
-	AX_POCSAG_CW_MODE2												= 0x00100000UL,
-	AX_POCSAG_CW_MODE3_ALPHA										= 0x00180000UL,
-} AX_POCSAG_CW_t;
+typedef enum AX_POCSAG_CW2_ENUM {
+	AX_POCSAG_CW2_MODE0_NUMERIC										= 0,
+	AX_POCSAG_CW2_MODE1_TONE										= 1,
+	AX_POCSAG_CW2_MODE2_ACTIVATION									= 2,
+	AX_POCSAG_CW2_MODE3_ALPHANUM									= 3
+} AX_POCSAG_CW2_t;
 
 
 
@@ -184,7 +186,8 @@ inline static uint8_t s_strGetHex(const char* str);
 inline static uint8_t s_strGetDec(const char* str, int* o_val);
 #endif
 
-uint32_t spi_ax_POCASG_get3Nbls(const char* buf, int len, uint16_t nblIdx);
+uint8_t spi_ax_POCASG_getBcd(char c);
+uint32_t spi_ax_POCASG_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx);
 
 
 bool spi_ax_transport(bool isProgMem, const char* packet);
@@ -228,10 +231,10 @@ void spi_ax_initRegisters_POCSAG_Rx(void);
 void spi_ax_initRegisters_POCSAG_Rx_WoR(void);
 void spi_ax_initRegisters_POCSAG_Rx_cont(void);
 void spi_ax_init_POCSAG_Tx(void);
-void spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTargetRIC, const char* pocsagMsg, uint8_t pocsagMsgLen);
+int8_t spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc, const char* pocsagTgtMsg, uint8_t pocsagTgtMsgLen);
 void spi_ax_init_POCSAG_Rx(void);
 void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void);
-void spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, const char* pocsagMsg, uint8_t pocsagMsgLen);
+int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, AX_POCSAG_CW2_t tgtFunc, const char* pocsagMsg, uint8_t pocsagMsgLen);
 
 void spi_ax_initRegisters_AnlogFM(void);
 void spi_ax_initRegisters_AnlogFM_Tx(void);
@@ -260,6 +263,8 @@ void spi_ax_test_POCSAG_Rx(void);
 
 
 /*
+ * ITU Recommendations:							@see https://www.itu.int/dms_pubrec/itu-r/rec/m/R-REC-M.584-2-199711-I!!PDF-E.pdf
+ *
  * Technical details for POCSAG receiption:		@see http://akafunk.faveve.uni-stuttgart.de/pocsag/
  * QRG = 439.9875 MHz (12.5 kHz channel spacing
  * Modulation = FSK with  +/- 4.0 kHz
@@ -277,7 +282,7 @@ void spi_ax_test_POCSAG_Rx(void);
  *
  * Preamble-SW-CWCW-CWCW-CWCW-CWCW-CWCW-CWCW-CWCW-CWCW-SW-CWCW-CWCW-CWCW ...
  *
- * Preamble >= 288 x '01'  equals to 18x 0xAAAAAAAA
+ * Preamble >= 288 x '10'  equals to 18x 0xAAAAAAAA
  *
  * Checksum:  Each codeword contains 21 information bits. They are the coefficients of a polynomial (x^30 .. X^10). The remaining coefficients of the polynomial are being zeroed.
  *			 That polynomial has to be divided (modulo 2) with the generator polynomial (x^10 + x^9 + x^8 + x^6 + x^5 + x^3 + x^0).
@@ -309,5 +314,7 @@ void spi_ax_test_POCSAG_Rx(void);
  *                        1 1 1 0              ]         SO  RS   . > N ^ n ß
  *                        1 1 1 1              [         SI  US   / ? O _ O DEL
  */
+
+ /* See also: https://www.codeproject.com/Articles/13189/POCSAG-Encoder and  http://www.codeproject.com/samples/bch2131.asp */
 
 #endif /* SPI_H_ */
