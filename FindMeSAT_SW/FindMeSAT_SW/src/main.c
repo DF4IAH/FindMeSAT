@@ -3654,7 +3654,10 @@ static void task_main_aprs(void)
 			spi_ax_selectVcoFreq(false);
 
 			/* Transmit POCSAG message */
-			spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_msg_buf, strlen(l_pocsag_msg_buf));
+			if (spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_msg_buf, strlen(l_pocsag_msg_buf))) {
+				/* Some configuration data error has happened */								// TODO: add config error message code here.
+				nop();
+			}
 		}
 	}
 
@@ -3806,7 +3809,7 @@ int main(void)
 		{
 			//const uint32_t tgtRic			= 12 + 1000UL;
 			const uint32_t tgtRic			= 143721UL;											// Skyper of DF4IAH
-			const AX_POCSAG_CW2_t tgtFunc	= AX_POCSAG_CW2_MODE3_ALPHANUM;
+			const AX_POCSAG_CW2_t tgtFunc	= AX_POCSAG_CW2_MODE1_TONE;
 			const char tstBuf[]				= "DF4IAH: Test message.";
 
 			for (int count = 1; count; count--) {
@@ -3817,8 +3820,8 @@ int main(void)
 				spi_ax_init_POCSAG_Tx();
 
 				#if 1
-				/* Transmit POCSAG message */
-					spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, tgtFunc, tstBuf, strlen(tstBuf));
+					/* Transmit POCSAG message */
+					(void) spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, tgtFunc, tstBuf, strlen(tstBuf));
 
 					delay_ms(500);
 					//delay_ms(7500);

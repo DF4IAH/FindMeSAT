@@ -231,10 +231,10 @@ void spi_ax_initRegisters_POCSAG_Rx(void);
 void spi_ax_initRegisters_POCSAG_Rx_WoR(void);
 void spi_ax_initRegisters_POCSAG_Rx_cont(void);
 void spi_ax_init_POCSAG_Tx(void);
-void spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc, const char* pocsagTgtMsg, uint8_t pocsagTgtMsgLen);
+int8_t spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc, const char* pocsagTgtMsg, uint8_t pocsagTgtMsgLen);
 void spi_ax_init_POCSAG_Rx(void);
 void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void);
-void spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, AX_POCSAG_CW2_t tgtFunc, const char* pocsagMsg, uint8_t pocsagMsgLen);
+int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, AX_POCSAG_CW2_t tgtFunc, const char* pocsagMsg, uint8_t pocsagMsgLen);
 
 void spi_ax_initRegisters_AnlogFM(void);
 void spi_ax_initRegisters_AnlogFM_Tx(void);
