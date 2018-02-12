@@ -157,25 +157,32 @@ uint32_t spi_ax_POCASG_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW
 {
 	uint32_t msgWord = 0UL;
 	uint16_t msgByteIdx;
+	uint16_t msgByteIdxLast = 65535;
 	uint8_t  byteBitPos;
-	uint8_t  byte;
+	uint8_t  byte = 0;
 
 	for (uint8_t bitCnt = 20; bitCnt; bitCnt--, msgBitIdx++) {
 		if (tgtFunc == AX_POCSAG_CW2_MODE0_NUMERIC) {
 			/* Calculate source byte and bit position of byte */
 			msgByteIdx	= msgBitIdx >> 2;
-			byteBitPos	= 3 - (msgBitIdx & 0x3);
+			byteBitPos	= msgBitIdx & 0x3;
 
 			/* Get the byte as NUMERIC - NUMERIC_SPACE when message exhausted */
-			byte = (msgByteIdx < tgtMsgLen) ?  spi_ax_POCASG_getBcd(*(tgtMsg + msgByteIdx)) : 0xc;
+			if (msgByteIdxLast != msgByteIdx) {
+				msgByteIdxLast = msgByteIdx;
+				byte = (msgByteIdx < tgtMsgLen) ?  spi_ax_POCASG_getBcd(*(tgtMsg + msgByteIdx)) : 0xc;
+			}
 
 		} else {
 			/* Calculate source byte and bit position of byte */
 			msgByteIdx	= msgBitIdx / 7;
-			byteBitPos	= 7 - (msgBitIdx % 7);
+			byteBitPos	= msgBitIdx % 7;
 
 			/* Get the byte as ALPHA - NULL when message exhausted */
-			byte = (msgByteIdx < tgtMsgLen) ?  (uint8_t) *(tgtMsg + msgByteIdx) : 0;
+			if (msgByteIdxLast != msgByteIdx) {
+				msgByteIdxLast = msgByteIdx;
+				byte = (msgByteIdx < tgtMsgLen) ?  (uint8_t) *(tgtMsg + msgByteIdx) : 0;
+			}
 		}
 
 		msgWord <<= 1;
@@ -3143,8 +3150,27 @@ int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFu
 					msgBitIdx  += 20;
 					pad			= spi_ax_create_POCSAG_checksumParity(msgCW);
 
-					if (tgtMsgLen < (msgBitIdx >> 3)) {
-						msgDone = true;
+					/* Check for message end */
+					switch (tgtFunc) {
+						case AX_POCSAG_CW2_MODE0_NUMERIC:
+							if (tgtMsgLen < (msgBitIdx >> 2)) {
+								msgDone = true;
+							}
+						break;
+
+						#if 0																	// TODO: to be implemented
+						case AX_POCSAG_CW2_MODE2_ACTIVATION:
+						break;
+						#endif
+
+						case AX_POCSAG_CW2_MODE3_ALPHANUM:
+							if (tgtMsgLen < (msgBitIdx / 7)) {
+								msgDone = true;
+							}
+						break;
+
+						default:
+							msgDone = true;
 					}
 
 				} else if (msgDone) {
