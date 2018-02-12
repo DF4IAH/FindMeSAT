@@ -3501,7 +3501,7 @@ static void task_main_aprs(void)
 
 				/* Message content POCSAG */
 				l_pocsag_msg_buf_len  = snprintf_P(l_pocsag_msg_buf, sizeof(l_pocsag_msg_buf), PM_POCSAG_TX_MSG_SRCCALL, g_aprs_source_callsign);
-				l_pocsag_msg_buf_len += snprintf_P(&(l_pocsag_msg_buf[0]) + l_msg_buf_len, sizeof(l_pocsag_msg_buf), PM_POCSAG_TX_POS_SPD_HDG, l_lat_hemisphere, l_gns_lat_f, l_lon_hemisphere, l_gns_lon_f, l_gns_course_deg, l_gns_speed_kmPh);
+				l_pocsag_msg_buf_len += snprintf_P(&(l_pocsag_msg_buf[0]) + l_msg_buf_len, sizeof(l_pocsag_msg_buf), PM_POCSAG_TX_POS_SPD_HDG, l_lat_hemisphere, l_gns_lat_f, l_lon_hemisphere, l_gns_lon_f, (int) (l_gns_speed_kmPh + 0.5f), (int) (l_gns_course_deg + 0.5f));
 
 				/* Message content APRS */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
@@ -3647,17 +3647,30 @@ static void task_main_aprs(void)
 	if (l_pocsag_msg_buf_len) {
 		/* Push POCSAG via AX5243 (VHF/UHF) */
 		if (g_ax_enable && g_ax_pocsag_enable) {
-			const uint32_t tgtRic = 12 + 1000UL;												// dl-bw  @see http://www.hampager.de/#/rubrics
+			//const uint32_t tgtRic = 12 + 1000UL;												// dl-bw  @see http://www.hampager.de/#/rubrics
+			const uint32_t tgtRic = 143721UL;													// Skyper of DF4IAH
+
+			/* FIFOCMD / FIFOSTAT */
+			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 			/* Switch from APRS mode to POCSAG */
 			spi_ax_init_POCSAG_Tx();
-			spi_ax_selectVcoFreq(false);
 
 			/* Transmit POCSAG message */
 			if (spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_msg_buf, strlen(l_pocsag_msg_buf))) {
 				/* Some configuration data error has happened */								// TODO: add config error message code here.
 				nop();
 			}
+
+			do {
+				/* FIFOSTAT */
+				spi_ax_transport(false, "< 28 R1 >");
+			} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+
+			do {
+				/* RADIOSTATE */
+				spi_ax_transport(false, "< 1c R1 >");											// RD Address 0x1C: RADIOSTATE - IDLE
+			} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 		}
 	}
 
@@ -3677,6 +3690,16 @@ static void task_main_aprs(void)
 
 			/* Transmit APRS message */
 			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, sizeof(addrAry) / C_PR1200_CALL_LENGTH,  l_msg_buf, l_msg_buf_len);
+
+			do {
+				/* FIFOSTAT */
+				spi_ax_transport(false, "< 28 R1 >");
+			} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+
+			do {
+				/* RADIOSTATE */
+				spi_ax_transport(false, "< 1c R1 >");											// RD Address 0x1C: RADIOSTATE - IDLE
+			} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 		}
 
 		/* Push APRS message via the GSM / GPRS network */
@@ -3767,7 +3790,9 @@ int main(void)
 	evsys_init();																				// Event system
 	tc_init();																					// Timers
 
-	/* Insert TEST-CODE here */
+
+	/* Insert basic TEST-CODE here */
+
 
 	serial_init();																				// Set up serial connection to the SIM808
 	if (g_adc_enabled) {
@@ -3802,18 +3827,24 @@ int main(void)
 	/* Start TWI channels */
 	twi_start();																				// Start TWI
 
+
+	/* Insert prepared system TEST-CODE here */
+#if 0
 	/* TEST */
 	for (int i = 1000; i; i--) {
 
-#if 1
+		#if 0
 		{
 			//const uint32_t tgtRic			= 12 + 1000UL;
+			//const uint32_t tgtRic			= AX_POCSAG_SKYPER_RICS_CLOCK;
 			const uint32_t tgtRic			= 143721UL;											// Skyper of DF4IAH
-			const AX_POCSAG_CW2_t tgtFunc	= AX_POCSAG_CW2_MODE1_TONE;
+			//const AX_POCSAG_CW2_t tgtFunc	= AX_POCSAG_CW2_MODE0_NUMERIC;
+			const AX_POCSAG_CW2_t tgtFunc	= AX_POCSAG_CW2_MODE3_ALPHANUM;
 			char tstBuf[80];
 
 			memset(tstBuf, 0, sizeof(tstBuf));
-			sprintf(tstBuf, "%02d%02d   %02d%02d%02d", 21,  8,   11,  2, 18);
+			//sprintf(tstBuf, "%02d%02d%d   %02d%02d%02d", 12, 1000 - i, 0,   12,  2, 18);
+			sprintf(tstBuf, "DF4IAH: %02d%02d%02d   %02d%02d%02d", 12, 1000 - i, 0,   12,  2, 18);
 
 			for (int count = 1; count; count--) {
 				/* FIFOCMD / FIFOSTAT */
@@ -3848,9 +3879,9 @@ int main(void)
 				spi_ax_transport(false, "< 1c R1 >");											// RD Address 0x1C: RADIOSTATE - IDLE
 			} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 		}
-#endif
+		#endif
 
-#if 0
+		#if 0
 		{
 			char addrAry[][6]	= { "APXFMS", "DF4IAH", "WIDE1", "WIDE2" };
 			uint8_t ssidAry[]	= { 0, 8, 1, 2 };
@@ -3880,13 +3911,14 @@ int main(void)
 				spi_ax_transport(false, "< 1c R1 >");											// RD Address 0x1C: RADIOSTATE - IDLE
 			} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 		}
-#endif
+		# endif
 	}
 
 	volatile bool loopWait = true;
 	while (loopWait) {
 		nop();
 	}
+#endif
 
 
 	/* Start serial */
