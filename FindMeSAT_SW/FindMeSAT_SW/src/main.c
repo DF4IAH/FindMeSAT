@@ -291,7 +291,6 @@ volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]					= { 0 };
 
 char						g_prepare_buf[C_TX_BUF_SIZE]					= { 0 };
 
-
 const uint16_t				g_ax_pwr_ary[C_AX_PRW_LENGTH]					= {
 	0x0000UL,
 	0x000aUL,
@@ -373,6 +372,19 @@ const uint16_t				g_ax_pwr_ary[C_AX_PRW_LENGTH]					= {
 
 	// +15.0
 	 4095
+};
+
+const uint8_t				g_ax_pocsag_number_of_sync_loops				= 5;
+
+const uint8_t				g_ax_pocsag_activation_code[8][3]				= {
+	{ 0, 7, 50},
+	{ 0, 7, 34},
+	{ 0, 7, 53},
+	{ 0, 7, 51},
+	{ 0, 7, 51},
+	{ 0, 7, 52},
+	{ 0, 7, 52},
+	{ 0, 7, 52}
 };
 
 

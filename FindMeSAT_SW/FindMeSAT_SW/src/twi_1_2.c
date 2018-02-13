@@ -1400,7 +1400,7 @@ static void task_twi1_baro(void)
 
 	/* Calculate and present Baro and Temp values when a different measurement has arrived */
 	if ((l_twi1_baro_d1 != s_twi1_baro_d1) || (l_twi1_baro_d2 != s_twi1_baro_d2)) {
-		int32_t dT = (int32_t)l_twi1_baro_d2 - ((int32_t)g_twi1_baro_c[5] << 8);
+		int32_t dT = (int32_t)l_twi1_baro_d2 - ((int32_t)g_twi1_baro_c[5] << 8)	+ (0);			// Last entry is a local correction
 		int32_t temp_p20 = (int32_t)(((int64_t)dT * g_twi1_baro_c[6]) >> 23);
 		int32_t temp = temp_p20 + 2000L;
 		int64_t off  = ((int64_t)g_twi1_baro_c[2] << 17) + (((int64_t)g_twi1_baro_c[4] * dT) >> 6);
@@ -1423,7 +1423,7 @@ static void task_twi1_baro(void)
 			off  -= off2;
 			sens -= sens2;
 		}
-		int32_t l_p = (int32_t)((((l_twi1_baro_d1 * sens) >> 21) - off) >> 15);
+		int32_t l_p = (int32_t)((((l_twi1_baro_d1 * sens) >> 21) - off) >> 15)	+ (-150);		// Last entry is a local correction;
 
 		/* Store data and calculate QNH within valid data range, only */
 		if ((-3000 < temp) && (temp < 8000) && (30000L < l_p) && (l_p < 120000L)) {

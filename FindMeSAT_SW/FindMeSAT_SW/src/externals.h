@@ -257,6 +257,8 @@ extern uint8_t						g_sched_sort[C_SCH_SLOT_CNT];
 extern char							g_prepare_buf[C_TX_BUF_SIZE];
 
 extern const uint16_t				g_ax_pwr_ary[C_AX_PRW_LENGTH];
+extern const uint8_t				g_ax_pocsag_number_of_sync_loops;
+extern const uint8_t				g_ax_pocsag_activation_code[8][3];
 
 
 /* TWI communications  */
