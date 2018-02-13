@@ -2592,33 +2592,50 @@ void yield_ms_cb(uint32_t listTime)
 
 static void interrupt_init(void)
 {
-	PORTR_DIRCLR	= (1 << 0);													// Pin R0 direction is cleared = INPUT
-	PORTR_PIN0CTRL	= PORT_ISC_RISING_gc;										// GNSS 1PPS has a rising edge signal
+	PORTR_DIRCLR	= (1 << 0);																	// Pin R0 direction is cleared = INPUT
+	PORTR_PIN0CTRL	= PORT_ISC_RISING_gc;														// GNSS 1PPS has a rising edge signal
 
-	PORTR_INT0MASK	= (1 << 0);													// Port R0	--> INT0
-	PORTR_INT1MASK	= 0;														// (none)	--> INT1
+	PORTR_INT0MASK	= (1 << 0);																	// Port R0	--> INT0
+	PORTR_INT1MASK	= 0;																		// (none)	--> INT1
 
-	PORTR_INTCTRL	= PORT_INT1LVL_OFF_gc | PORT_INT0LVL_HI_gc;					// Enable interrupt for port R0 with high level
+	PORTR_INTCTRL	= PORT_INT1LVL_OFF_gc | PORT_INT0LVL_HI_gc;									// Enable interrupt for port R0 with high level
 }
 
 ISR(PORTR_INT0_vect)
 {
 	if (g_1pps_phased_cntr != C_TCC1_CLOCKSETTING_AFTER_SECS) {
-		/* Take the time */
-		g_1pps_last_lo	= tc_read_count(&TCC1);
-		g_1pps_last_hi	= g_milliseconds_cnt64;
+		{
+			irqflags_t flags = cpu_irq_save();
+
+			/* Take the time */
+			g_1pps_last_lo	= tc_read_count(&TCC1);
+			g_1pps_last_hi	= g_milliseconds_cnt64;
+
+			/* Correction for late ISR */
+			if (g_1pps_last_hi % 1000 == 999U) {
+				g_1pps_last_hi++;
+			}
+
+			cpu_irq_restore(flags);
+		}
 		g_1pps_last_new	= true;
 
 	} else {
-		/* Phased-in time correction */
-		tc_write_count(&TCC1, C_TCC1_CLOCKSETTING_OFFSET + C_TCC1_MEAN_OFFSET);	// Time difference between 1PPS interrupt to this position in code
-		tc_update(&TCC1);
-		g_1pps_last_lo = C_TCC1_CLOCKSETTING_OFFSET + C_TCC1_MEAN_OFFSET;
+		{
+			irqflags_t flags = cpu_irq_save();
 
-		/* Rounding up to next full second */
-		g_1pps_last_hi			+= 1000U;
-		g_1pps_last_hi			-= g_1pps_last_hi % 1000U;
-		g_milliseconds_cnt64	 = g_1pps_last_hi;
+			/* Phased-in time correction */
+			g_1pps_last_lo = (uint16_t) (C_TCC1_CLOCKSETTING_OFFSET + C_TCC1_MEAN_OFFSET);		// Time difference between 1PPS interrupt to this position in code
+			tc_write_count(&TCC1, g_1pps_last_lo);
+			tc_update(&TCC1);
+
+			/* Rounding up to next full second */
+			g_1pps_last_hi			+= 1000U;
+			g_1pps_last_hi			-= g_1pps_last_hi % 1000U;
+			g_milliseconds_cnt64	 = g_1pps_last_hi;
+
+			cpu_irq_restore(flags);
+		}
 
 		/* Step ahead avoiding to trap in here, again */
 		++g_1pps_phased_cntr;
@@ -2637,18 +2654,18 @@ static void evsys_init(void)
 	sysclk_enable_module(SYSCLK_PORT_GEN, SYSCLK_EVSYS);
 
 	/* ADC - event channels 0, 1, 2, 3 */
-	EVSYS.CH0MUX  = EVSYS_CHMUX_TCC0_CCC_gc;									// TCC0 CC-C goes to EVSYS CH0
-	EVSYS.CH0CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH0 no digital filtering
-	EVSYS.CH1MUX  = EVSYS_CHMUX_TCC0_CCC_gc;									// TCC0 CC-C goes to EVSYS CH1
-	EVSYS.CH1CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH1 no digital filtering
-	EVSYS.CH2MUX  = EVSYS_CHMUX_TCC0_CCC_gc;									// TCC0 CC-C goes to EVSYS CH2
-	EVSYS.CH2CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH2 no digital filtering
-	EVSYS.CH3MUX  = EVSYS_CHMUX_TCC0_CCC_gc;									// TCC0 CC-C goes to EVSYS CH3
-	EVSYS.CH3CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH3 no digital filtering
+	EVSYS.CH0MUX  = EVSYS_CHMUX_TCC0_CCC_gc;													// TCC0 CC-C goes to EVSYS CH0
+	EVSYS.CH0CTRL = EVSYS_DIGFILT_1SAMPLE_gc;													// EVSYS CH0 no digital filtering
+	EVSYS.CH1MUX  = EVSYS_CHMUX_TCC0_CCC_gc;													// TCC0 CC-C goes to EVSYS CH1
+	EVSYS.CH1CTRL = EVSYS_DIGFILT_1SAMPLE_gc;													// EVSYS CH1 no digital filtering
+	EVSYS.CH2MUX  = EVSYS_CHMUX_TCC0_CCC_gc;													// TCC0 CC-C goes to EVSYS CH2
+	EVSYS.CH2CTRL = EVSYS_DIGFILT_1SAMPLE_gc;													// EVSYS CH2 no digital filtering
+	EVSYS.CH3MUX  = EVSYS_CHMUX_TCC0_CCC_gc;													// TCC0 CC-C goes to EVSYS CH3
+	EVSYS.CH3CTRL = EVSYS_DIGFILT_1SAMPLE_gc;													// EVSYS CH3 no digital filtering
 
 	/* DAC - event 4 */
-	EVSYS.CH4MUX  = EVSYS_CHMUX_TCE1_OVF_gc;									// TCE1 overflow goes to EVSYS CH4
-	EVSYS.CH4CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH4 no digital filtering
+	EVSYS.CH4MUX  = EVSYS_CHMUX_TCE1_OVF_gc;													// TCE1 overflow goes to EVSYS CH4
+	EVSYS.CH4CTRL = EVSYS_DIGFILT_1SAMPLE_gc;													// EVSYS CH4 no digital filtering
 }
 
 
@@ -2663,29 +2680,29 @@ static void tc_init(void)
 	}
 
 	/* TCC0: VCTCXO PWM signal generation and ADCA & ADCB */
-	pwm_init(&g_pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2048);						// Init PWM structure and enable timer - running with 2048 Hz --> 2 Hz averaged data
-	pwm_start(&g_pwm_vctcxo_cfg, 45);											// Start PWM here. Percentage with 1% granularity is to coarse, use driver access instead
+	pwm_init(&g_pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2048);										// Init PWM structure and enable timer - running with 2048 Hz --> 2 Hz averaged data
+	pwm_start(&g_pwm_vctcxo_cfg, 45);															// Start PWM here. Percentage with 1% granularity is to coarse, use driver access instead
 	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) ((l_xo_mode_pwm & C_XO_VAL_INT_MASK) >> C_XO_VAL_INT_SHIFT));	// Setting the PWM value
 
 	/* TCC1: Free running clock for 30 MHz PLL */
 	g_pwm_ctr_pll_cfg.tc = &TCC1;
-	tc_enable(&TCC1);															// Enable TCC1 and power up
-	tc_set_wgm(&TCC1, TC_WG_NORMAL);											// Normal counting up
-	tc_write_clock_source(&TCC1, PWM_CLK_OFF);									// Disable counter until all is ready
-	pwm_set_frequency(&g_pwm_ctr_pll_cfg, 1000);								// Prepare structure for 1 ms overflow frequency
-	tc_write_period(&TCC1, g_pwm_ctr_pll_cfg.period);							// Calculate period count
-	tc_write_period_buffer(&TCC1, C_TCC1_PERIOD - 1);							// Overflows every 1 ms
+	tc_enable(&TCC1);																			// Enable TCC1 and power up
+	tc_set_wgm(&TCC1, TC_WG_NORMAL);															// Normal counting up
+	tc_write_clock_source(&TCC1, PWM_CLK_OFF);													// Disable counter until all is ready
+	pwm_set_frequency(&g_pwm_ctr_pll_cfg, 1000);												// Prepare structure for 1 ms overflow frequency
+	tc_write_period(&TCC1, g_pwm_ctr_pll_cfg.period);											// Calculate period count
+	tc_write_period_buffer(&TCC1, C_TCC1_PERIOD - 1);											// Overflows every 1 ms
 
 	/* TCE1: DAC clock */
 	tc_enable(&TCE1);
-	tc_set_wgm(&TCE1, TC_WG_NORMAL);											// Internal clock for DAC convertion
-	tc_write_period(&TCE1, (sysclk_get_per_hz() / DAC_RATE_OF_CONV) - 1);		// DAC clock of 100 kHz for DDS (Direct Digital Synthesis)
+	tc_set_wgm(&TCE1, TC_WG_NORMAL);															// Internal clock for DAC convertion
+	tc_write_period(&TCE1, (sysclk_get_per_hz() / DAC_RATE_OF_CONV) - 1);						// DAC clock of 100 kHz for DDS (Direct Digital Synthesis)
 }
 
 static void tc_start(void)
 {
 	/* ADC clock */
-	tc_write_clock_source(&TCC0, TC_CLKSEL_DIV1_gc);							// VCTCXO PWM start, output still is Z-state
+	tc_write_clock_source(&TCC0, TC_CLKSEL_DIV1_gc);											// VCTCXO PWM start, output still is Z-state
 	tc_set_overflow_interrupt_callback(&TCC0, isr_tcc0_ovfl);
 	tc_set_overflow_interrupt_level(&TCC0, TC_INT_LVL_LO);
 

@@ -43,7 +43,7 @@
 #define C_TEMPSENSE_MULT											629.65f
 
 #define C_TCC1_PERIOD												30000
-#define C_TCC1_MEAN_OFFSET											1000
+#define C_TCC1_MEAN_OFFSET											0
 #define C_TCC1_BORDER_OFFSET										3000
 #define C_TCC1_CLOCKSETTING_AFTER_SECS								30U
 #define C_TCC1_CLOCKSETTING_OFFSET									11U
