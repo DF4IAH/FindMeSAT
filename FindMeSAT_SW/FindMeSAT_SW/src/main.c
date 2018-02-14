@@ -291,6 +291,9 @@ volatile uint8_t			g_sched_sort[C_SCH_SLOT_CNT]					= { 0 };
 
 char						g_prepare_buf[C_TX_BUF_SIZE]					= { 0 };
 
+bool						g_ax_pocsag_chime_enable						= false;
+uint32_t					g_ax_pocsag_individual_ric						= 0UL;
+
 
 const uint16_t				g_ax_pwr_ary[C_AX_PRW_LENGTH]					= {
 	0x0000UL,
@@ -375,11 +378,25 @@ const uint16_t				g_ax_pwr_ary[C_AX_PRW_LENGTH]					= {
 	 4095
 };
 
+const uint8_t				g_ax_pocsag_number_of_sync_loops				= 5;
+
+uint8_t						g_ax_pocsag_activation_code_len;
+const uint8_t				g_ax_pocsag_activation_code[][3]				= {
+	{ 0, 7, 0x32},
+	{ 0, 7, 0x22},
+	{ 0, 7, 0x35},
+	{ 0, 7, 0x33},
+	{ 0, 7, 0x33},
+	{ 0, 7, 0x34},
+	{ 0, 7, 0x34},
+	{ 0, 7, 0x34}
+};
+
 
 const char					PM_POCSAG_TX_MSG_SRCCALL[]						= "%s: ";
 PROGMEM_DECLARE(const char, PM_POCSAG_TX_MSG_SRCCALL[]);
-const char					PM_POCSAG_TX_POS_SPD_HDG[]						= "%c%08.5f° %c%09.5f° spd=%03dkm/h hdg=%03d%c";
-PROGMEM_DECLARE(const char, PM_POCSAG_TX_POS_SPD_HDG[]);
+const char					PM_POCSAG_TX_SPD_HDG_POS[]						= "spd=%03dkm/h hdg=%03d%c %c %08.5f%c %c%09.5f%c";
+PROGMEM_DECLARE(const char, PM_POCSAG_TX_SPD_HDG_POS[]);
 
 const char					PM_APRS_TX_HTTP_L1[]							= "POST / HTTP/1.1\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L1[]);
@@ -533,6 +550,8 @@ static void task_adc(uint32_t now);
 
 static void init_globals(void)
 {
+	g_ax_pocsag_activation_code_len			= sizeof(g_ax_pocsag_activation_code) / 3;
+
 	/* 1PPS */
 	{
 		g_milliseconds_cnt64				= 0ULL;
@@ -751,12 +770,18 @@ static void init_globals(void)
 
 	/* AX5243 */
 	{
+		uint32_t	val_ui32	= 0UL;
 		uint8_t		val_ui8		= 0U;
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_BF, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
-			g_ax_enable				= val_ui8 & AX__ENABLE;
-			g_ax_aprs_enable		= val_ui8 & AX__APRS_ENABLE;
-			g_ax_pocsag_enable		= val_ui8 & AX__POCSAG_ENABLE;
+			g_ax_enable					= val_ui8 & AX__ENABLE;
+			g_ax_aprs_enable			= val_ui8 & AX__APRS_ENABLE;
+			g_ax_pocsag_enable			= val_ui8 & AX__POCSAG_ENABLE;
+			g_ax_pocsag_chime_enable	= val_ui8 & AX__POCSAG_CHIME_ENABLE;
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_RIC, &val_ui32, sizeof(val_ui32)) == STATUS_OK) {
+			g_ax_pocsag_individual_ric = val_ui32;
 		}
 
 		g_ax_spi_freq_chan[0]	= 0;
@@ -968,12 +993,13 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 
 	/* AX5243 */
 	if (bf & EEPROM_SAVE_BF__AX) {
-		uint8_t val_ui8 = (g_ax_enable			?  AX__ENABLE			: 0x00)
-						| (g_ax_aprs_enable		?  AX__APRS_ENABLE		: 0x00)
-						| (g_ax_pocsag_enable	?  AX__POCSAG_ENABLE	: 0x00);
+		uint8_t val_ui8 = (g_ax_enable				?  AX__ENABLE				: 0x00)
+						| (g_ax_aprs_enable			?  AX__APRS_ENABLE			: 0x00)
+						| (g_ax_pocsag_enable		?  AX__POCSAG_ENABLE		: 0x00)
+						| (g_ax_pocsag_chime_enable	?  AX__POCSAG_CHIME_ENABLE	: 0x00);
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_BF,				&val_ui8,							sizeof(val_ui8));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__GSM_PIN,				(void*)&g_gsm_login_pwd,			sizeof(g_gsm_login_pwd));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_BF,				&val_ui8,							sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_RIC,		&g_ax_pocsag_individual_ric,		sizeof(g_ax_pocsag_individual_ric));
 	}
 
 	/* GSM */
@@ -1835,6 +1861,81 @@ void pitchTone_mode(uint8_t mode)
 	save_globals(EEPROM_SAVE_BF__PITCHTONE);
 }
 
+void pocsag_chime_update(bool enable)
+{
+	/* atomic */
+	g_ax_pocsag_chime_enable = enable;
+
+	save_globals(EEPROM_SAVE_BF__AX);
+}
+
+void pocsag_message_send(const char msg[])
+{
+	if (g_ax_enable && g_ax_pocsag_individual_ric) {
+		char* ptr = strchr(msg, 0x0d);
+		uint8_t msgLen = ptr ?  (ptr - msg) : 0;
+
+		/* FIFOCMD / FIFOSTAT */
+		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+		/* Switch to POCSAG mode */
+		spi_ax_init_POCSAG_Tx();
+
+		/* Transmit POCSAG message */
+		if (spi_ax_run_POCSAG_Tx_FIFO_Msg(g_ax_pocsag_individual_ric, ax_pocsag_analyze_msg_tgtFunc_get(msg, msgLen), msg, msgLen)) {
+			/* Some configuration data error has happened */									// TODO: add config error message code here.
+			nop();
+		}
+
+		do {
+			/* FIFOSTAT */
+			spi_ax_transport(false, "< 28 R1 >");
+		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+
+		do {
+			/* RADIOSTATE */
+			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
+		} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+	}
+}
+
+void pocsag_ric_update(uint32_t ric)
+{
+	irqflags_t flags = cpu_irq_save();
+	g_ax_pocsag_individual_ric = ric;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__AX);
+}
+
+void pocsag_send_skyper_activation(void)
+{
+	/* FIFOCMD / FIFOSTAT */
+	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+	/* Switch to POCSAG mode */
+	spi_ax_init_POCSAG_Tx();
+
+	/* Activate Skyper */
+	{
+		uint8_t actBufLen = g_ax_pocsag_activation_code_len;
+		char actBuf[++actBufLen];
+
+		uint8_t activationLen = spi_ax_pocsag_skyper_RIC2ActivationString(actBuf, actBufLen, g_ax_pocsag_individual_ric);
+		spi_ax_run_POCSAG_Tx_FIFO_Msg(g_ax_pocsag_individual_ric, AX_POCSAG_CW2_MODE2_ACTIVATION, actBuf, activationLen);
+	}
+
+	do {
+		/* FIFOSTAT */
+		spi_ax_transport(false, "< 28 R1 >");
+	} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+
+	do {
+		/* RADIOSTATE */
+		spi_ax_transport(false, "< 1c R1 >");													// RD Address 0x1C: RADIOSTATE - IDLE
+	} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+}
+
 void qnh_setAuto(void)
 {
 	/* atomic */
@@ -2580,33 +2681,50 @@ void yield_ms_cb(uint32_t listTime)
 
 static void interrupt_init(void)
 {
-	PORTR_DIRCLR	= (1 << 0);													// Pin R0 direction is cleared = INPUT
-	PORTR_PIN0CTRL	= PORT_ISC_RISING_gc;										// GNSS 1PPS has a rising edge signal
+	PORTR_DIRCLR	= (1 << 0);																	// Pin R0 direction is cleared = INPUT
+	PORTR_PIN0CTRL	= PORT_ISC_RISING_gc;														// GNSS 1PPS has a rising edge signal
 
-	PORTR_INT0MASK	= (1 << 0);													// Port R0	--> INT0
-	PORTR_INT1MASK	= 0;														// (none)	--> INT1
+	PORTR_INT0MASK	= (1 << 0);																	// Port R0	--> INT0
+	PORTR_INT1MASK	= 0;																		// (none)	--> INT1
 
-	PORTR_INTCTRL	= PORT_INT1LVL_OFF_gc | PORT_INT0LVL_HI_gc;					// Enable interrupt for port R0 with high level
+	PORTR_INTCTRL	= PORT_INT1LVL_OFF_gc | PORT_INT0LVL_HI_gc;									// Enable interrupt for port R0 with high level
 }
 
 ISR(PORTR_INT0_vect)
 {
 	if (g_1pps_phased_cntr != C_TCC1_CLOCKSETTING_AFTER_SECS) {
-		/* Take the time */
-		g_1pps_last_lo	= tc_read_count(&TCC1);
-		g_1pps_last_hi	= g_milliseconds_cnt64;
+		{
+			irqflags_t flags = cpu_irq_save();
+
+			/* Take the time */
+			g_1pps_last_lo	= tc_read_count(&TCC1);
+			g_1pps_last_hi	= g_milliseconds_cnt64;
+
+			/* Correction for late ISR */
+			if (g_1pps_last_hi % 1000 == 999U) {
+				g_1pps_last_hi++;
+			}
+
+			cpu_irq_restore(flags);
+		}
 		g_1pps_last_new	= true;
 
 	} else {
-		/* Phased-in time correction */
-		tc_write_count(&TCC1, C_TCC1_CLOCKSETTING_OFFSET + C_TCC1_MEAN_OFFSET);	// Time difference between 1PPS interrupt to this position in code
-		tc_update(&TCC1);
-		g_1pps_last_lo = C_TCC1_CLOCKSETTING_OFFSET + C_TCC1_MEAN_OFFSET;
+		{
+			irqflags_t flags = cpu_irq_save();
 
-		/* Rounding up to next full second */
-		g_1pps_last_hi			+= 1000U;
-		g_1pps_last_hi			-= g_1pps_last_hi % 1000U;
-		g_milliseconds_cnt64	 = g_1pps_last_hi;
+			/* Phased-in time correction */
+			g_1pps_last_lo = (uint16_t) (C_TCC1_CLOCKSETTING_OFFSET + C_TCC1_MEAN_OFFSET);		// Time difference between 1PPS interrupt to this position in code
+			tc_write_count(&TCC1, g_1pps_last_lo);
+			tc_update(&TCC1);
+
+			/* Rounding up to next full second */
+			g_1pps_last_hi			+= 1000U;
+			g_1pps_last_hi			-= g_1pps_last_hi % 1000U;
+			g_milliseconds_cnt64	 = g_1pps_last_hi;
+
+			cpu_irq_restore(flags);
+		}
 
 		/* Step ahead avoiding to trap in here, again */
 		++g_1pps_phased_cntr;
@@ -2625,18 +2743,18 @@ static void evsys_init(void)
 	sysclk_enable_module(SYSCLK_PORT_GEN, SYSCLK_EVSYS);
 
 	/* ADC - event channels 0, 1, 2, 3 */
-	EVSYS.CH0MUX  = EVSYS_CHMUX_TCC0_CCC_gc;									// TCC0 CC-C goes to EVSYS CH0
-	EVSYS.CH0CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH0 no digital filtering
-	EVSYS.CH1MUX  = EVSYS_CHMUX_TCC0_CCC_gc;									// TCC0 CC-C goes to EVSYS CH1
-	EVSYS.CH1CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH1 no digital filtering
-	EVSYS.CH2MUX  = EVSYS_CHMUX_TCC0_CCC_gc;									// TCC0 CC-C goes to EVSYS CH2
-	EVSYS.CH2CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH2 no digital filtering
-	EVSYS.CH3MUX  = EVSYS_CHMUX_TCC0_CCC_gc;									// TCC0 CC-C goes to EVSYS CH3
-	EVSYS.CH3CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH3 no digital filtering
+	EVSYS.CH0MUX  = EVSYS_CHMUX_TCC0_CCC_gc;													// TCC0 CC-C goes to EVSYS CH0
+	EVSYS.CH0CTRL = EVSYS_DIGFILT_1SAMPLE_gc;													// EVSYS CH0 no digital filtering
+	EVSYS.CH1MUX  = EVSYS_CHMUX_TCC0_CCC_gc;													// TCC0 CC-C goes to EVSYS CH1
+	EVSYS.CH1CTRL = EVSYS_DIGFILT_1SAMPLE_gc;													// EVSYS CH1 no digital filtering
+	EVSYS.CH2MUX  = EVSYS_CHMUX_TCC0_CCC_gc;													// TCC0 CC-C goes to EVSYS CH2
+	EVSYS.CH2CTRL = EVSYS_DIGFILT_1SAMPLE_gc;													// EVSYS CH2 no digital filtering
+	EVSYS.CH3MUX  = EVSYS_CHMUX_TCC0_CCC_gc;													// TCC0 CC-C goes to EVSYS CH3
+	EVSYS.CH3CTRL = EVSYS_DIGFILT_1SAMPLE_gc;													// EVSYS CH3 no digital filtering
 
 	/* DAC - event 4 */
-	EVSYS.CH4MUX  = EVSYS_CHMUX_TCE1_OVF_gc;									// TCE1 overflow goes to EVSYS CH4
-	EVSYS.CH4CTRL = EVSYS_DIGFILT_1SAMPLE_gc;									// EVSYS CH4 no digital filtering
+	EVSYS.CH4MUX  = EVSYS_CHMUX_TCE1_OVF_gc;													// TCE1 overflow goes to EVSYS CH4
+	EVSYS.CH4CTRL = EVSYS_DIGFILT_1SAMPLE_gc;													// EVSYS CH4 no digital filtering
 }
 
 
@@ -2651,29 +2769,29 @@ static void tc_init(void)
 	}
 
 	/* TCC0: VCTCXO PWM signal generation and ADCA & ADCB */
-	pwm_init(&g_pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2048);						// Init PWM structure and enable timer - running with 2048 Hz --> 2 Hz averaged data
-	pwm_start(&g_pwm_vctcxo_cfg, 45);											// Start PWM here. Percentage with 1% granularity is to coarse, use driver access instead
+	pwm_init(&g_pwm_vctcxo_cfg, PWM_TCC0, PWM_CH_C, 2048);										// Init PWM structure and enable timer - running with 2048 Hz --> 2 Hz averaged data
+	pwm_start(&g_pwm_vctcxo_cfg, 45);															// Start PWM here. Percentage with 1% granularity is to coarse, use driver access instead
 	tc_write_cc_buffer(&TCC0, TC_CCC, (uint16_t) ((l_xo_mode_pwm & C_XO_VAL_INT_MASK) >> C_XO_VAL_INT_SHIFT));	// Setting the PWM value
 
 	/* TCC1: Free running clock for 30 MHz PLL */
 	g_pwm_ctr_pll_cfg.tc = &TCC1;
-	tc_enable(&TCC1);															// Enable TCC1 and power up
-	tc_set_wgm(&TCC1, TC_WG_NORMAL);											// Normal counting up
-	tc_write_clock_source(&TCC1, PWM_CLK_OFF);									// Disable counter until all is ready
-	pwm_set_frequency(&g_pwm_ctr_pll_cfg, 1000);								// Prepare structure for 1 ms overflow frequency
-	tc_write_period(&TCC1, g_pwm_ctr_pll_cfg.period);							// Calculate period count
-	tc_write_period_buffer(&TCC1, C_TCC1_PERIOD - 1);							// Overflows every 1 ms
+	tc_enable(&TCC1);																			// Enable TCC1 and power up
+	tc_set_wgm(&TCC1, TC_WG_NORMAL);															// Normal counting up
+	tc_write_clock_source(&TCC1, PWM_CLK_OFF);													// Disable counter until all is ready
+	pwm_set_frequency(&g_pwm_ctr_pll_cfg, 1000);												// Prepare structure for 1 ms overflow frequency
+	tc_write_period(&TCC1, g_pwm_ctr_pll_cfg.period);											// Calculate period count
+	tc_write_period_buffer(&TCC1, C_TCC1_PERIOD - 1);											// Overflows every 1 ms
 
 	/* TCE1: DAC clock */
 	tc_enable(&TCE1);
-	tc_set_wgm(&TCE1, TC_WG_NORMAL);											// Internal clock for DAC convertion
-	tc_write_period(&TCE1, (sysclk_get_per_hz() / DAC_RATE_OF_CONV) - 1);		// DAC clock of 100 kHz for DDS (Direct Digital Synthesis)
+	tc_set_wgm(&TCE1, TC_WG_NORMAL);															// Internal clock for DAC convertion
+	tc_write_period(&TCE1, (sysclk_get_per_hz() / DAC_RATE_OF_CONV) - 1);						// DAC clock of 100 kHz for DDS (Direct Digital Synthesis)
 }
 
 static void tc_start(void)
 {
 	/* ADC clock */
-	tc_write_clock_source(&TCC0, TC_CLKSEL_DIV1_gc);							// VCTCXO PWM start, output still is Z-state
+	tc_write_clock_source(&TCC0, TC_CLKSEL_DIV1_gc);											// VCTCXO PWM start, output still is Z-state
 	tc_set_overflow_interrupt_callback(&TCC0, isr_tcc0_ovfl);
 	tc_set_overflow_interrupt_level(&TCC0, TC_INT_LVL_LO);
 
@@ -3325,12 +3443,13 @@ static void task_env_calc(void)
 	}
 }
 
-static void task_main_aprs(void)
+static void task_main_aprs_pocsag(void)
 {
 	static uint32_t				s_now_sec					= 0UL;
 	static bool					s_lock						= false;
 	uint32_t					l_now_sec					= tcc1_get_time() >> 10;
 	uint32_t					l_boot_time_ts;
+	uint32_t					l_ts;
 	float						l_gns_lat_f;
 	uint8_t						l_lat_deg_d;
 	float						l_lat_minutes_f;
@@ -3353,13 +3472,17 @@ static void task_main_aprs(void)
 	int							l_pocsag_msg_buf_len		= 0;
 	int							l_msg_buf_len				= 0;
 	char						l_mark						= ' ';
+	struct calendar_date		calDat;
 
-
-	/* Once a second to be processed - do not send when APRS is disabled nor GPS ready */
+	/* Once a second to be processed - do not send when GPS not ready */
 	if ( s_lock ||
 		(s_now_sec == l_now_sec) ||
-		!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && (g_ax_aprs_enable || g_ax_pocsag_enable))) ||
 		!g_gns_fix_status) {
+		return;
+	}
+
+	/* do not send when APRS and POCSAG is disabled */
+	if (!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && (g_ax_aprs_enable || g_ax_pocsag_enable)))) {
 		return;
 	}
 
@@ -3373,6 +3496,7 @@ static void task_main_aprs(void)
 	{
 		flags = cpu_irq_save();
 		l_boot_time_ts			= g_boot_time_ts;
+		l_ts					= g_boot_time_ts + (uint32_t)(g_milliseconds_cnt64 / 1000);
 		l_aprs_alert_last		= g_aprs_alert_last;
 		l_aprs_alert_fsm_state	= g_aprs_alert_fsm_state;
 		l_aprs_alert_reason		= g_aprs_alert_reason;
@@ -3384,6 +3508,27 @@ static void task_main_aprs(void)
 		/* Single thread finished */
 		s_lock = false;
 		return;
+	}
+
+	/* Get the date */
+	calendar_timestamp_to_date(l_ts, &calDat);
+
+	/* Prepare POCSAG mode */
+	if (g_ax_enable && g_ax_pocsag_enable && g_ax_pocsag_individual_ric) {
+		/* FIFOCMD / FIFOSTAT */
+		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+		/* Switch to POCSAG mode */
+		spi_ax_init_POCSAG_Tx();
+
+		/* POCSAG Skyper clock for every new minute (chime) */
+		if (!calDat.second && g_ax_pocsag_chime_enable) {
+			l_pocsag_msg_buf_len = spi_ax_pocsag_skyper_TimeString(l_pocsag_msg_buf, (uint8_t) sizeof(l_pocsag_msg_buf), &calDat);
+
+			/* Transmit POCSAG message */
+			spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_CLOCK, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_msg_buf, strlen(l_pocsag_msg_buf));
+			l_pocsag_msg_buf_len = 0;
+		}
 	}
 
 	do {
@@ -3501,7 +3646,7 @@ static void task_main_aprs(void)
 
 				/* Message content POCSAG */
 				l_pocsag_msg_buf_len  = snprintf_P(l_pocsag_msg_buf, sizeof(l_pocsag_msg_buf), PM_POCSAG_TX_MSG_SRCCALL, g_aprs_source_callsign);
-				l_pocsag_msg_buf_len += snprintf_P(&(l_pocsag_msg_buf[0]) + l_msg_buf_len, sizeof(l_pocsag_msg_buf), PM_POCSAG_TX_POS_SPD_HDG, l_lat_hemisphere, l_gns_lat_f, l_lon_hemisphere, l_gns_lon_f, (int) (l_gns_speed_kmPh + 0.5f), (int) (l_gns_course_deg + 0.5f));
+				l_pocsag_msg_buf_len += snprintf_P(&(l_pocsag_msg_buf[0]) + l_msg_buf_len, sizeof(l_pocsag_msg_buf), PM_POCSAG_TX_SPD_HDG_POS, (int) (l_gns_speed_kmPh + 0.5f), (int) (l_gns_course_deg + 0.5f), 0x5e, l_lat_hemisphere, l_gns_lat_f, 0x5e, l_lon_hemisphere, l_gns_lon_f, 0x5e);
 
 				/* Message content APRS */
 				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
@@ -3642,36 +3787,20 @@ static void task_main_aprs(void)
 		}
 	} while (false);
 
-
 	/* POCSAG message content ready */
-	if (l_pocsag_msg_buf_len) {
+	if (g_ax_enable && g_ax_pocsag_enable && g_ax_pocsag_individual_ric && l_pocsag_msg_buf_len) {
 		/* Push POCSAG via AX5243 (VHF/UHF) */
-		if (g_ax_enable && g_ax_pocsag_enable) {
-			//const uint32_t tgtRic = 12 + 1000UL;												// dl-bw  @see http://www.hampager.de/#/rubrics
-			const uint32_t tgtRic = 143721UL;													// Skyper of DF4IAH
+		spi_ax_run_POCSAG_Tx_FIFO_Msg(g_ax_pocsag_individual_ric, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_msg_buf, strlen(l_pocsag_msg_buf));
 
-			/* FIFOCMD / FIFOSTAT */
-			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+		do {
+			/* FIFOSTAT */
+			spi_ax_transport(false, "< 28 R1 >");
+		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
 
-			/* Switch from APRS mode to POCSAG */
-			spi_ax_init_POCSAG_Tx();
-
-			/* Transmit POCSAG message */
-			if (spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_msg_buf, strlen(l_pocsag_msg_buf))) {
-				/* Some configuration data error has happened */								// TODO: add config error message code here.
-				nop();
-			}
-
-			do {
-				/* FIFOSTAT */
-				spi_ax_transport(false, "< 28 R1 >");
-			} while (!(g_ax_spi_packet_buffer[0] & 0x01));
-
-			do {
-				/* RADIOSTATE */
-				spi_ax_transport(false, "< 1c R1 >");											// RD Address 0x1C: RADIOSTATE - IDLE
-			} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
-		}
+		do {
+			/* RADIOSTATE */
+			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
+		} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 	}
 
 	/* APRS message content ready */
@@ -3683,7 +3812,7 @@ static void task_main_aprs(void)
 			const char addrAry[][C_PR1200_CALL_LENGTH]	= { "APXFMS", "DF4IAH", "WIDE1", "WIDE2" };
 			const uint8_t ssidAry[]	= { 0, 8, 1, 2 };
 
-			/* Switch from POCSAG mode to APRS (by PR1200) */
+			/* Switch APRS mode (handled by PR1200) */
 			if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__DO_N2) {
 				spi_ax_init_PR1200_Tx();
 			}
@@ -3695,11 +3824,6 @@ static void task_main_aprs(void)
 				/* FIFOSTAT */
 				spi_ax_transport(false, "< 28 R1 >");
 			} while (!(g_ax_spi_packet_buffer[0] & 0x01));
-
-			do {
-				/* RADIOSTATE */
-				spi_ax_transport(false, "< 1c R1 >");											// RD Address 0x1C: RADIOSTATE - IDLE
-			} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 		}
 
 		/* Push APRS message via the GSM / GPRS network */
@@ -3756,7 +3880,7 @@ void task(void)
 		task_usb();																				// Handling the USB connection
 		task_main_pll();																		// Handling the 1PPS PLL system
 		task_env_calc();																		// Environment simulation calculations
-		task_main_aprs();																		// Handling the APRS alerts
+		task_main_aprs_pocsag();																// Handling the APRS alerts and POCSAG messages
 	}
 }
 
