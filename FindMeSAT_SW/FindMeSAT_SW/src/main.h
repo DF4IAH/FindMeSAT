@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												180
-#define VERSION_LOW													213
+#define VERSION_LOW													214
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -151,6 +151,7 @@ typedef enum AX_BF_ENUM {
 	AX__ENABLE						= 0b00000001,
 	AX__APRS_ENABLE					= 0b00000010,
 	AX__POCSAG_ENABLE				= 0b00000100,
+	AX__POCSAG_CHIME_ENABLE			= 0b00001000,
 } AX_BF_ENUM_t;
 
 
@@ -213,6 +214,8 @@ typedef enum EEPROM_ADDR_ENUM {
 
 	EEPROM_ADDR__AX_BF				= 0x00B0,						// char[1]
 	//						next:	= 0x00B1,
+	EEPROM_ADDR__AX_POCSAG_RIC		= 0x00B4,						// ui32
+	//						next:	= 0x00B8,
 
 	EEPROM_ADDR__APRS_LINK_SERVICE	= 0x0100,						// char[32]
 	EEPROM_ADDR__APRS_LINK_USER		= 0x0120,						// char[16]
@@ -338,6 +341,10 @@ void gsm_pin_update(const char pin[]);
 void gsm_enable(bool enable);
 void keyBeep_enable(bool enable);
 void pitchTone_mode(uint8_t mode);
+void pocsag_chime_update(bool enable);
+void pocsag_message_send(const char msg[]);
+void pocsag_ric_update(uint32_t ric);
+void pocsag_send_skyper_activation(void);
 void qnh_setAuto(void);
 void qnh_setHeightM(int16_t heightM);
 void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf);

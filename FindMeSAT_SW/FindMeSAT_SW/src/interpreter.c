@@ -66,6 +66,7 @@ const char					PM_HELP_CAL_3[]							=	"\t\taccelx: X-axis 1g fact-cal, Y/Z offs
 const char					PM_HELP_CAL_4[]							=	"\t\taccely: Y-axis 1g fact-cal, X/Z offset-cal.\r\n";
 const char					PM_HELP_CAL_5[]							=	"\t\taccelz: Z-axis 1g fact-cal, X/Y offset-cal.\r\n";
 const char					PM_HELP_CAL_6[]							=	"\t\tgyro: reduce GYRO offset errors.\r\n";
+const char					PM_HELP_CHIME_1[]						= "chime=\t\t0: send every minute POCSAG time OFF, 1: ON.\r\n";
 const char					PM_HELP_DAC_1[]							= "dac=\t\t0: turn DACB off, ";
 const char					PM_HELP_DAC_2[]							=	"1: turn DACB on.\r\n";
 const char					PM_HELP_DDS_1[]							= "dds=a,b,c\ta: DDS0 frequency mHz, ";
@@ -83,11 +84,14 @@ const char					PM_HELP_INFO_2[]						=	"\t\t- 0x01: ATxmega.\r\n";
 const char					PM_HELP_INFO_3[]						=	"\t\t- 0x02: SIM808.\r\n";
 const char					PM_HELP_INFO_4[]						=	"\t\t- 0x04: 1PPS/PLL.\r\n";
 const char					PM_HELP_KB_1[]							= "kb=\t\t0: key beep OFF, 1: ON.\r\n";
+const char					PM_HELP_M_1[]							= "m=\t\tPOCSAG messages to send.\r\n";
 const char					PM_HELP_PT_1[]							= "pt=\t\t0: pitch tone OFF, ";
 const char					PM_HELP_PT_2[]							=	"1: turn speed, 2: variometer.\r\n";
 const char					PM_HELP_QNH_AUTO_1[]					= "qnh=\t\tauto: height is taken from GPS.\r\n";
 const char					PM_HELP_QNH_M_1[]						= "qnh_m=\t\theight: fixed value in meters.\r\n";
 const char					PM_HELP_RESET_1[]						= "reset=\t\t1: reboot ALL.\r\n";
+const char					PM_HELP_RIC_1[]							= "ric=\t\tnumber: target RIC to send POCSAG messages to.\r\n";
+const char					PM_HELP_SA_1[]							= "sa\t\tSend Skyper activation to individual RIC.\r\n";
 const char					PM_HELP_SHUT_1[]						= "shut\t\tShutdown this device.\r\n";
 const char					PM_HELP_XO_1[]							= "xo=\t\t0-65535: VCTCXO pull voltage, ";
 const char					PM_HELP_XO_2[]							=	"-1: PLL ON.\r\n";
@@ -124,6 +128,7 @@ PROGMEM_DECLARE(const char, PM_HELP_CAL_3[]);
 PROGMEM_DECLARE(const char, PM_HELP_CAL_4[]);
 PROGMEM_DECLARE(const char, PM_HELP_CAL_5[]);
 PROGMEM_DECLARE(const char, PM_HELP_CAL_6[]);
+PROGMEM_DECLARE(const char, PM_HELP_CHIME_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_DAC_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_DAC_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_DDS_1[]);
@@ -141,11 +146,14 @@ PROGMEM_DECLARE(const char, PM_HELP_INFO_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_INFO_3[]);
 PROGMEM_DECLARE(const char, PM_HELP_INFO_4[]);
 PROGMEM_DECLARE(const char, PM_HELP_KB_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_M_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_PT_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_PT_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_QNH_AUTO_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_QNH_M_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_RESET_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_RIC_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_SA_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_SHUT_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_XO_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_XO_2[]);
@@ -196,6 +204,8 @@ void printHelp(void)
 	udi_write_tx_msg_P(PM_HELP_CAL_5);
 	udi_write_tx_msg_P(PM_HELP_CAL_6);
 
+	udi_write_tx_msg_P(PM_HELP_CHIME_1);
+
 	udi_write_tx_msg_P(PM_HELP_DAC_1);
 	udi_write_tx_msg_P(PM_HELP_DAC_2);
 
@@ -221,6 +231,8 @@ void printHelp(void)
 
 	udi_write_tx_msg_P(PM_HELP_KB_1);
 
+	udi_write_tx_msg_P(PM_HELP_M_1);
+
 	udi_write_tx_msg_P(PM_HELP_PT_1);
 	udi_write_tx_msg_P(PM_HELP_PT_2);
 
@@ -229,6 +241,10 @@ void printHelp(void)
 	udi_write_tx_msg_P(PM_HELP_QNH_M_1);
 
 	udi_write_tx_msg_P(PM_HELP_RESET_1);
+
+	udi_write_tx_msg_P(PM_HELP_RIC_1);
+
+	udi_write_tx_msg_P(PM_HELP_SA_1);
 
 	udi_write_tx_msg_P(PM_HELP_SHUT_1);
 
@@ -269,6 +285,7 @@ const char					PM_IP_CMD_cal_accely[]					= "cal=accely";
 const char					PM_IP_CMD_cal_accelz[]					= "cal=accelz";
 const char					PM_IP_CMD_cal_defaults[]				= "cal=defaults";
 const char					PM_IP_CMD_cal_gyro[]					= "cal=gyro";
+const char					PM_IP_CMD_chime[]						= "chime=";
 const char					PM_IP_CMD_dac[]							= "dac=";
 const char					PM_IP_CMD_dds[]							= "dds=";
 const char					PM_IP_CMD_eb[]							= "eb=";
@@ -279,10 +296,13 @@ const char					PM_IP_CMD_gsm_pin[]						= "gsm=pin=";
 const char					PM_IP_CMD_help[]						= "help";
 const char					PM_IP_CMD_info[]						= "info=";
 const char					PM_IP_CMD_kb[]							= "kb=";
+const char					PM_IP_CMD_m[]							= "m=";
 const char					PM_IP_CMD_pt[]							= "pt=";
 const char					PM_IP_CMD_qnh_auto[]					= "qnh=auto";
 const char					PM_IP_CMD_qnh_m[]						= "qnh_m=";
 const char					PM_IP_CMD_reset[]						= "reset=";
+const char					PM_IP_CMD_ric[]							= "ric=";
+const char					PM_IP_CMD_sa[]							= "sa";
 const char					PM_IP_CMD_shut[]						= "shut";
 const char					PM_IP_CMD_xo[]							= "xo=";
 const char					PM_UNKNOWN_01[]							= "\r\n??? unknown command - for assistance enter  help\r\n";
@@ -311,6 +331,7 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_cal_accely[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_cal_accelz[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_cal_defaults[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_cal_gyro[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_chime[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_dac[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_dds[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_eb[]);
@@ -321,10 +342,13 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_gsm_pin[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_help[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_info[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_kb[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_m[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_pt[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_qnh_auto[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_qnh_m[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_reset[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_ric[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_sa[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_shut[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_xo[]);
 PROGMEM_DECLARE(const char, PM_UNKNOWN_01[]);
@@ -436,6 +460,12 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_cal_gyro,		sizeof(PM_IP_CMD_cal_gyro) - 1)) {
 			calibration_mode(CALIBRATION_MODE_ENUM__GYRO);
 
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_chime,			sizeof(PM_IP_CMD_chime) - 1)) {
+			int val[1] = { 0 };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_chime) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
+				pocsag_chime_update(val[0] != 0);
+			}
+
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_dac,			sizeof(PM_IP_CMD_dac) - 1)) {
 			int val[1] = { 0 };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_dac) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
@@ -490,6 +520,9 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 				keyBeep_enable(val[0] != 0);
 			}
 
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_m,		sizeof(PM_IP_CMD_m) - 1)) {
+			pocsag_message_send(cmdLine_buf + (sizeof(PM_IP_CMD_m) - 1));
+
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_pt,				sizeof(PM_IP_CMD_pt) - 1)) {
 			int val[1] = { 0 };
 			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_pt) - 1), MY_STRING_TO_VAR_INT, NULL, NULL, &(val[0]))) {
@@ -512,6 +545,15 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 					shutdown(true);
 				}
 			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_ric,			sizeof(PM_IP_CMD_ric) - 1)) {
+			long val[1] = { 0 };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_ric) - 1), MY_STRING_TO_VAR_LONG, NULL, &(val[0]), NULL)) {
+				pocsag_ric_update((uint32_t)val[0]);
+			}
+
+		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_sa,			sizeof(PM_IP_CMD_sa) - 1)) {
+			pocsag_send_skyper_activation();
 
 		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_shut,		sizeof(PM_IP_CMD_shut) - 1)) {
 			shutdown(false);

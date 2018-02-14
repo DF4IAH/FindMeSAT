@@ -176,6 +176,12 @@ typedef enum AX_POCSAG_CW2_ENUM {
 	AX_POCSAG_CW2_MODE3_ALPHANUM									= 3
 } AX_POCSAG_CW2_t;
 
+typedef enum AX_POCSAG_SKYPER_ACTIVATION_ARY_ENUM {
+	AX_POCSAG_SKYPER_ACTIVATION_ARY_SHIFT							= 0,
+	AX_POCSAG_SKYPER_ACTIVATION_ARY_MASK,
+	AX_POCSAG_SKYPER_ACTIVATION_ARY_OFFSET
+} AX_POCSAG_SKYPER_ACTIVATION_ARY_t;
+
 typedef enum AX_POCSAG_SKYPER_RIC_ENUM {
 	AX_POCSAG_SKYPER_RIC_CLOCK										= 2504,
 	AX_POCSAG_SKYPER_RIC_RUBRICS									= 4512,
@@ -192,9 +198,12 @@ inline static uint8_t s_strGetHex(const char* str);
 inline static uint8_t s_strGetDec(const char* str, int* o_val);
 #endif
 
-uint8_t spi_ax_POCASG_getBcd(char c);
-uint32_t spi_ax_POCASG_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx);
-
+AX_POCSAG_CW2_t ax_pocsag_analyze_msg_tgtFunc_get(const char* msg, uint8_t msgLen);
+uint32_t spi_ax_pocsag_calc_checksumParity(uint32_t codeword_in);
+uint8_t spi_ax_pocsag_getBcd(char c);
+uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx);
+uint8_t spi_ax_pocsag_skyper_RIC2ActivationString(char* outBuf, uint8_t outBufSize, uint32_t RIC);
+uint8_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint8_t outBufSize, struct calendar_date* calDat);
 
 bool spi_ax_transport(bool isProgMem, const char* packet);
 
@@ -203,7 +212,6 @@ void spi_ax_setPower_dBm(float dBm);
 void spi_ax_setPwrMode(AX_SET_REGISTERS_POWERMODE_t powerState);
 void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation, AX_SET_REGISTERS_VARIANT_t variant, AX_SET_REGISTERS_POWERMODE_t powerState);
 
-uint32_t spi_ax_create_POCSAG_checksumParity(uint32_t codeword_in);
 uint32_t spi_ax_calcFrequency_Mhz2Regs(float f_mhz);
 float spi_ax_calcFrequency_Regs2MHz(uint32_t vco_regval);
 void spi_ax_setFrequency2Regs(uint8_t chan, bool isFreqB);

@@ -101,7 +101,66 @@ static uint8_t s_strGetDec(const char* str, int* o_val)
 }
 
 
-uint8_t spi_ax_POCASG_getBcd(char c)
+AX_POCSAG_CW2_t ax_pocsag_analyze_msg_tgtFunc_get(const char* msg, uint8_t msgLen)
+{
+	if (!msg || !msgLen) {
+		return AX_POCSAG_CW2_MODE1_TONE;
+	}
+
+	for (uint8_t idx = 0; idx < msgLen; idx++) {
+		char c = *(msg + idx);
+
+		if (('0' <= c) && (c <= '9')) {
+			continue;
+		}
+
+		if ((c == ' ') || (c == '-') || (toupper(c) == 'U') || (c == '[') || (c == ']') || (c == '(') || (c == ')')) {
+			continue;
+		}
+
+		return AX_POCSAG_CW2_MODE3_ALPHANUM;
+	}
+
+	return AX_POCSAG_CW2_MODE0_NUMERIC;
+}
+
+uint32_t spi_ax_pocsag_calc_checksumParity(uint32_t codeword_in)
+{
+	const uint32_t inPoly		= 0xfffff800UL & codeword_in;
+	const uint32_t genPoly		= 0x769UL;														// generating polynomial   x10 + x9 + x8 + x6 + x5 + x3 + 1
+	uint32_t cw_calc			= inPoly;
+
+	// Calculate the BCH check
+	for (uint8_t idx = 31; idx >= 11; idx--) {
+		if (cw_calc  & (1UL <<  idx)) {
+			volatile uint32_t genPolyShifted = genPoly << (idx - 10);
+			cw_calc ^= genPolyShifted;
+			(void)genPolyShifted;
+		}
+	}
+	cw_calc &= 0x000007feUL;
+
+	/* Data with BCH check */
+	cw_calc |= inPoly;
+
+	/* Calculate for Even Parity */
+	uint32_t par = cw_calc;
+	{
+		par ^= par >> 0x01;
+		par ^= par >> 0x02;
+		par ^= par >> 0x04;
+		par ^= par >> 0x08;
+		par ^= par >> 0x10;
+		par &= 1;
+	}
+
+	/* Data with 31:21 BCH and Parity */
+	cw_calc	|= par;
+
+	return cw_calc;
+}
+
+uint8_t spi_ax_pocsag_getBcd(char c)
 {
 	uint8_t u8;
 
@@ -153,7 +212,7 @@ uint8_t spi_ax_POCASG_getBcd(char c)
 	return u8;
 }
 
-uint32_t spi_ax_POCASG_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx)
+uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx)
 {
 	uint32_t msgWord = 0UL;
 	uint16_t msgByteIdx;
@@ -170,7 +229,7 @@ uint32_t spi_ax_POCASG_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW
 			/* Get the byte as NUMERIC - NUMERIC_SPACE when message exhausted */
 			if (msgByteIdxLast != msgByteIdx) {
 				msgByteIdxLast = msgByteIdx;
-				byte = (msgByteIdx < tgtMsgLen) ?  spi_ax_POCASG_getBcd(*(tgtMsg + msgByteIdx)) : 0xc;
+				byte = (msgByteIdx < tgtMsgLen) ?  spi_ax_pocsag_getBcd(*(tgtMsg + msgByteIdx)) : 0xc;
 			}
 
 		} else {
@@ -191,6 +250,42 @@ uint32_t spi_ax_POCASG_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW
 		}
 	}
 	return msgWord;
+}
+
+uint8_t spi_ax_pocsag_skyper_RIC2ActivationString(char* outBuf, uint8_t outBufSize, uint32_t RIC)
+{
+	uint8_t outLen = 0;
+
+	/* Sanity checks */
+	if (!outBuf || outBufSize <= g_ax_pocsag_activation_code_len) {
+		return 0;
+	}
+
+	for (uint8_t codeIdx = 0; codeIdx < g_ax_pocsag_activation_code_len; codeIdx++) {
+		outBuf[outLen++] = (((RIC
+							>> g_ax_pocsag_activation_code[codeIdx][AX_POCSAG_SKYPER_ACTIVATION_ARY_SHIFT])
+							&  g_ax_pocsag_activation_code[codeIdx][AX_POCSAG_SKYPER_ACTIVATION_ARY_MASK])
+							+  g_ax_pocsag_activation_code[codeIdx][AX_POCSAG_SKYPER_ACTIVATION_ARY_OFFSET])
+							&  0x7f;															// ASCII-7bit
+	}
+	outBuf[outLen] = 0;
+
+	return outLen;
+}
+
+const char					PM_POCSAG_SKYPER_TIME[]					= "%02d%02d%02d   %02d%02d%02d";
+PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_TIME[]);
+uint8_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint8_t outBufSize, struct calendar_date* calDat)
+{
+	/* Sanity checks */
+	if (!outBuf || outBufSize <= 15) {
+		return 0;
+	}
+
+	/* Put calendar information into Skyper time message form */
+	uint8_t outLen = snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_TIME, calDat->hour, calDat->minute, calDat->second, calDat->date + 1, calDat->month + 1, calDat->year % 100);
+
+	return outLen;
 }
 
 
@@ -914,42 +1009,6 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 	}  // switch (powerState)
 }
 
-
-uint32_t spi_ax_create_POCSAG_checksumParity(uint32_t codeword_in)
-{
-	const uint32_t inPoly		= 0xfffff800UL & codeword_in;
-	const uint32_t genPoly		= 0x769UL;														// generating polynomial   x10 + x9 + x8 + x6 + x5 + x3 + 1
-	uint32_t cw_calc			= inPoly;
-
-	// Calculate the BCH check
-	for (uint8_t idx = 31; idx >= 11; idx--) {
-		if (cw_calc  & (1UL <<  idx)) {
-			volatile uint32_t genPolyShifted = genPoly << (idx - 10);
-			cw_calc ^= genPolyShifted;
-			(void)genPolyShifted;
-		}
-	}
-	cw_calc &= 0x000007feUL;
-
-	/* Data with BCH check */
-	cw_calc |= inPoly;
-
-	/* Calculate for Even Parity */
-	uint32_t par = cw_calc;
-	{
-		par ^= par >> 0x01;
-		par ^= par >> 0x02;
-		par ^= par >> 0x04;
-		par ^= par >> 0x08;
-		par ^= par >> 0x10;
-		par &= 1;
-	}
-
-	/* Data with 31:21 BCH and Parity */
-	cw_calc	|= par;
-
-	return cw_calc;
-}
 
 uint32_t spi_ax_calcFrequency_Mhz2Regs(float f_mhz)
 {
@@ -3134,7 +3193,7 @@ int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFu
 						inMsg	= true;
 						addrCW  = tgtAddrHi			<< 13;
 						addrCW |= (uint32_t)tgtFunc	<< 11;
-						pad		= spi_ax_create_POCSAG_checksumParity(addrCW);
+						pad		= spi_ax_pocsag_calc_checksumParity(addrCW);
 
 						/* No message content when TONE is sent */
 						if (tgtFunc == AX_POCSAG_CW2_MODE1_TONE) {
@@ -3145,10 +3204,10 @@ int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFu
 				} else if (inMsg && !msgDone) {
 					uint32_t msgCW;
 
-					msgCW		= spi_ax_POCASG_get20Bits(tgtMsg, tgtMsgLen, tgtFunc, msgBitIdx) << 11;
+					msgCW		= spi_ax_pocsag_get20Bits(tgtMsg, tgtMsgLen, tgtFunc, msgBitIdx) << 11;
 					msgCW	   |= 0x80000000UL;
 					msgBitIdx  += 20;
-					pad			= spi_ax_create_POCSAG_checksumParity(msgCW);
+					pad			= spi_ax_pocsag_calc_checksumParity(msgCW);
 
 					/* Check for message end */
 					switch (tgtFunc) {
