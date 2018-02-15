@@ -4000,7 +4000,7 @@ int main(void)
 
 
 	/* Insert prepared system TEST-CODE here */
-#if 0
+#if 1
 	/* TEST */
 	for (int i = 1000; i; i--) {
 
@@ -4020,7 +4020,7 @@ int main(void)
 				/* Switch from APRS mode to POCSAG */
 				spi_ax_init_POCSAG_Tx();
 
-				#if 1
+				#if 0
 					/* Transmit POCSAG message */
 					uint8_t tstBufLen = (uint8_t) strlen(tstBuf);
 					(void) spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, ax_pocsag_analyze_msg_tgtFunc_get(tstBuf, tstBufLen), tstBuf, tstBufLen);
