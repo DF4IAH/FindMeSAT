@@ -3813,9 +3813,7 @@ static void task_main_aprs_pocsag(void)
 			const uint8_t ssidAry[]	= { 0, 8, 1, 2 };
 
 			/* Switch APRS mode (handled by PR1200) */
-			if (l_aprs_alert_fsm_state == APRS_ALERT_FSM_STATE__DO_N2) {
-				spi_ax_init_PR1200_Tx();
-			}
+			spi_ax_init_PR1200_Tx();
 
 			/* Transmit APRS message */
 			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, sizeof(addrAry) / C_PR1200_CALL_LENGTH,  l_msg_buf, l_msg_buf_len);
@@ -3959,11 +3957,7 @@ int main(void)
 
 		#if 0
 		{
-			//const uint32_t tgtRic			= 12 + 1000UL;
-			//const uint32_t tgtRic			= AX_POCSAG_SKYPER_RICS_CLOCK;
 			const uint32_t tgtRic			= 143721UL;											// Skyper of DF4IAH
-			//const AX_POCSAG_CW2_t tgtFunc	= AX_POCSAG_CW2_MODE0_NUMERIC;
-			const AX_POCSAG_CW2_t tgtFunc	= AX_POCSAG_CW2_MODE3_ALPHANUM;
 			char tstBuf[80];
 
 			memset(tstBuf, 0, sizeof(tstBuf));
@@ -3979,7 +3973,8 @@ int main(void)
 
 				#if 1
 					/* Transmit POCSAG message */
-					(void) spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, tgtFunc, tstBuf, strlen(tstBuf));
+					uint8_t tstBufLen = (uint8_t) strlen(tstBuf);
+					(void) spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, ax_pocsag_analyze_msg_tgtFunc_get(tstBuf, tstBufLen), tstBuf, tstBufLen);
 
 					delay_ms(500);
 					//delay_ms(7500);
