@@ -1121,7 +1121,13 @@ void task_serial(void /*uint32_t now*/)
 
 			} else if (g_usart1_rx_idx >= (C_USART1_RX_BUF_LEN - C_USART1_RX_BUF_DIFF_ON)) {
 				len_out = C_USART1_RX_BUF_LEN;	// indicates to flush the read buffer
-				l_sim808_rx_process_buf[0] = 0;
+
+				/* IRQ disabled section */
+				{
+					irqflags_t flags = cpu_irq_save();
+					g_usart1_rx_buf[0] = 0;
+					cpu_irq_restore(flags);
+				}
 
 			} else {
 				return;	// not complete yet
