@@ -101,13 +101,13 @@ static uint8_t s_strGetDec(const char* str, int* o_val)
 }
 
 
-AX_POCSAG_CW2_t ax_pocsag_analyze_msg_tgtFunc_get(const char* msg, uint8_t msgLen)
+AX_POCSAG_CW2_t ax_pocsag_analyze_msg_tgtFunc_get(const char* msg, uint16_t msgLen)
 {
 	if (!msg || !msgLen) {
 		return AX_POCSAG_CW2_MODE1_TONE;
 	}
 
-	for (uint8_t idx = 0; idx < msgLen; idx++) {
+	for (uint16_t idx = 0; idx < msgLen; idx++) {
 		char c = *(msg + idx);
 
 		if (('0' <= c) && (c <= '9')) {
@@ -212,7 +212,7 @@ uint8_t spi_ax_pocsag_getBcd(char c)
 	return u8;
 }
 
-uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx)
+uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, uint16_t tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx)
 {
 	uint32_t msgWord = 0UL;
 	uint16_t msgByteIdx;
@@ -220,7 +220,7 @@ uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW
 	uint8_t  byteBitPos;
 	uint8_t  byte = 0;
 
-	for (uint8_t bitCnt = 20; bitCnt; bitCnt--, msgBitIdx++) {
+	for (uint16_t bitCnt = 20; bitCnt; bitCnt--, msgBitIdx++) {
 		if (tgtFunc == AX_POCSAG_CW2_MODE0_NUMERIC) {
 			/* Calculate source byte and bit position of byte */
 			msgByteIdx	= msgBitIdx >> 2;
@@ -252,16 +252,16 @@ uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW
 	return msgWord;
 }
 
-uint8_t spi_ax_pocsag_skyper_RIC2ActivationString(char* outBuf, uint8_t outBufSize, uint32_t RIC)
+uint16_t spi_ax_pocsag_skyper_RIC2ActivationString(char* outBuf, uint16_t outBufSize, uint32_t RIC)
 {
-	uint8_t outLen = 0;
+	uint16_t outLen = 0;
 
 	/* Sanity checks */
 	if (!outBuf || outBufSize <= g_ax_pocsag_activation_code_len) {
 		return 0;
 	}
 
-	for (uint8_t codeIdx = 0; codeIdx < g_ax_pocsag_activation_code_len; codeIdx++) {
+	for (uint16_t codeIdx = 0; codeIdx < g_ax_pocsag_activation_code_len; codeIdx++) {
 		outBuf[outLen++] = (((RIC
 							>> g_ax_pocsag_activation_code[codeIdx][AX_POCSAG_SKYPER_ACTIVATION_ARY_SHIFT])
 							&  g_ax_pocsag_activation_code[codeIdx][AX_POCSAG_SKYPER_ACTIVATION_ARY_MASK])
@@ -275,7 +275,7 @@ uint8_t spi_ax_pocsag_skyper_RIC2ActivationString(char* outBuf, uint8_t outBufSi
 
 const char					PM_POCSAG_SKYPER_TIME[]					= "%02d%02d%02d   %02d%02d%02d";
 PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_TIME[]);
-uint8_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint8_t outBufSize, struct calendar_date* calDat)
+uint16_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint16_t outBufSize, struct calendar_date* calDat)
 {
 	/* Sanity checks */
 	if (!outBuf || outBufSize <= 15) {
@@ -283,7 +283,49 @@ uint8_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint8_t outBufSize, struct
 	}
 
 	/* Put calendar information into Skyper time message form */
-	uint8_t outLen = snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_TIME, calDat->hour, calDat->minute, calDat->second, calDat->date + 1, calDat->month + 1, calDat->year % 100);
+	uint16_t outLen = snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_TIME, calDat->hour, calDat->minute, calDat->second, calDat->date + 1, calDat->month + 1, calDat->year % 100);
+
+	return outLen;
+}
+
+const char					PM_POCSAG_SKYPER_RUBRIC[]				= "1%c%c";
+PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_RUBRIC[]);
+uint16_t spi_ax_pocsag_skyper_RubricString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, const char* rubricLabel, uint16_t rubricLabelLen)
+{
+	/* Sanity checks */
+	if (!outBuf || outBufSize < 8) {
+		return 0;
+	}
+
+	/* Put rubric label into Skyper rubric message form */
+	uint16_t outLen = snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_RUBRIC, ' ' + (rubricNumber - 1), ' ' + 10, rubricLabel);
+
+	char* outBuf_ptr = outBuf + outLen;
+	for (uint16_t idx = 0; idx < rubricLabelLen; idx++, outLen++) {
+		*(outBuf_ptr++) = *(rubricLabel + idx) + 1;
+	}
+	*(outBuf_ptr++) = 0;
+
+	return outLen;
+}
+
+const char					PM_POCSAG_SKYPER_NEWS[]				= "%c%c";
+PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_NEWS[]);
+uint16_t spi_ax_pocsag_skyper_NewsString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, uint8_t newsNumber, const char* newsString, uint16_t newsStringLen)
+{
+	/* Sanity checks */
+	if (!outBuf || outBufSize < 8) {
+		return 0;
+	}
+
+	/* Put news into Skyper news message form */
+	uint16_t outLen = snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_NEWS, ' ' + (rubricNumber - 1), ' ' + newsNumber);
+
+	char* outBuf_ptr = outBuf + outLen;
+	for (uint16_t idx = 0; idx < newsStringLen; idx++, outLen++) {
+		*(outBuf_ptr++) = *(newsString + idx) + 1;
+	}
+	*(outBuf_ptr++) = 0;
 
 	return outLen;
 }
@@ -3109,8 +3151,10 @@ void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void)
 	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, idx);
 	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
 
+	#if 0
 	/* FIFO do a COMMIT */
 	spi_ax_transport(false, "< a8 04 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
+	#endif
 }
 
 int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFunc, const char* tgtMsg, uint8_t tgtMsgLen)
@@ -3149,7 +3193,7 @@ int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFu
 			break;
 
 			case AX_POCSAG_CW2_MODE3_ALPHANUM:
-				if (!tgtMsg || !tgtMsgLen || (tgtMsgLen > 80)) {
+				if (!tgtMsg || !tgtMsgLen || ((tgtMsgLen > 80) && (tgtRIC != AX_POCSAG_SKYPER_RIC_NEWS))) {
 					return -2;
 				}
 			break;

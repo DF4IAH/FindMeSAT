@@ -378,7 +378,7 @@ const uint16_t				g_ax_pwr_ary[C_AX_PRW_LENGTH]					= {
 	 4095
 };
 
-const uint8_t				g_ax_pocsag_number_of_sync_loops				= 5;
+uint8_t						g_ax_pocsag_news_idx							= 0;
 
 uint8_t						g_ax_pocsag_activation_code_len;
 const uint8_t				g_ax_pocsag_activation_code[][3]				= {
@@ -395,8 +395,10 @@ const uint8_t				g_ax_pocsag_activation_code[][3]				= {
 
 const char					PM_POCSAG_TX_MSG_SRCCALL[]						= "%s:  ";
 PROGMEM_DECLARE(const char, PM_POCSAG_TX_MSG_SRCCALL[]);
-const char					PM_POCSAG_TX_SPD_HDG_POS[]						= "alt=%5dm %c %08.5f %c%09.5f spd=%03dkm/h hdg=%03d";
-PROGMEM_DECLARE(const char, PM_POCSAG_TX_SPD_HDG_POS[]);
+const char					PM_POCSAG_TX_SPD_HDG_POS_RIC[]					= "alt=%5dm %c %08.5f %c%09.5f spd=%03dkm/h hdg=%03d";
+PROGMEM_DECLARE(const char, PM_POCSAG_TX_SPD_HDG_POS_RIC[]);
+const char					PM_POCSAG_TX_SPD_HDG_POS_NEWS[]					= "alt=%5dm %c %08.5f          %c%09.5f          spd=%03dkm/h hdg=%03d";
+PROGMEM_DECLARE(const char, PM_POCSAG_TX_SPD_HDG_POS_NEWS[]);
 
 const char					PM_APRS_TX_HTTP_L1[]							= "POST / HTTP/1.1\r\n";
 PROGMEM_DECLARE(const char, PM_APRS_TX_HTTP_L1[]);
@@ -790,6 +792,7 @@ static void init_globals(void)
 		g_ax_spi_range_chan[1]	= C_SPI_AX_RANGE_NOT_SET;
 		g_ax_spi_vcoi_chan[0]	= 0;
 		g_ax_spi_vcoi_chan[1]	= 0;
+		g_ax_pocsag_news_idx	= 0;
 	}
 
 	/* GSM */
@@ -2334,33 +2337,33 @@ uint16_t aprs_mag_delta_nT(void)
 	return (uint16_t) (0.5f + l_mag_delta_total);
 }
 
-void aprs_message_send(const char* msg, uint8_t content_message_len)
+void aprs_message_send(const char* msg, uint16_t content_message_len)
 {
 	/* GSM DPRS transportation */
 	if (g_gsm_enable && g_gsm_aprs_enable) {
 		char l_content_hdr[C_USART1_TX_BUF_LEN];
-		uint8_t content_hdr_len = (uint8_t) snprintf_P(l_content_hdr, sizeof(l_content_hdr), PM_APRS_TX_LOGIN, g_aprs_login_user, g_aprs_login_pwd, APPLICATION_NAME, APPLICATION_VERSION);
-		uint8_t len = content_hdr_len + 2 + content_message_len;
+		uint16_t content_hdr_len = (uint16_t) snprintf_P(l_content_hdr, sizeof(l_content_hdr), PM_APRS_TX_LOGIN, g_aprs_login_user, g_aprs_login_pwd, APPLICATION_NAME, APPLICATION_VERSION);
+		uint16_t len = content_hdr_len + 2 + content_message_len;
 
 		/* Transport message */
 		{
-			char	l_msg_buf[C_USART1_TX_BUF_LEN];
-			uint8_t	l_msg_buf_len;
+			char		l_msg_buf[C_USART1_TX_BUF_LEN];
+			uint16_t	l_msg_buf_len;
 
 			/* Line 1 */
-			l_msg_buf_len = (uint8_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_HTTP_L1);
+			l_msg_buf_len = (uint16_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_HTTP_L1);
 			serial_sim808_send(l_msg_buf, l_msg_buf_len, true);
 
 			/* Line 2 */
-			l_msg_buf_len = (uint8_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_HTTP_L2, len);
+			l_msg_buf_len = (uint16_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_HTTP_L2, len);
 			serial_sim808_send(l_msg_buf, l_msg_buf_len, true);
 
 			/* Line 3 */
-			l_msg_buf_len = (uint8_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_HTTP_L3);
+			l_msg_buf_len = (uint16_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_HTTP_L3);
 			serial_sim808_send(l_msg_buf, l_msg_buf_len, true);
 
 			/* Line 4 */
-			l_msg_buf_len = (uint8_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_HTTP_L4);
+			l_msg_buf_len = (uint16_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_HTTP_L4);
 			serial_sim808_send(l_msg_buf, l_msg_buf_len, true);
 
 			/* Content header - authentication */
@@ -2370,7 +2373,7 @@ void aprs_message_send(const char* msg, uint8_t content_message_len)
 			serial_sim808_send(msg, content_message_len, true);
 
 			/* Ending line */
-			l_msg_buf_len = (uint8_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_MSGEND);
+			l_msg_buf_len = (uint16_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_MSGEND);
 			serial_sim808_send(l_msg_buf, l_msg_buf_len, true);
 		}
 	}
@@ -3467,10 +3470,12 @@ static void task_main_aprs_pocsag(void)
 	APRS_ALERT_FSM_STATE_ENUM_t	l_aprs_alert_fsm_state;
 	APRS_ALERT_REASON_ENUM_t	l_aprs_alert_reason;
 	irqflags_t					flags;
-	char						l_pocsag_msg_buf[C_TX_BUF_SIZE];
+	char						l_pocsag_ric_msg_buf[C_TX_RIC_BUF_SIZE];
+	char						l_pocsag_news_msg_buf[C_TX_NEWS_BUF_SIZE];
 	char						l_msg_buf[C_TX_BUF_SIZE];
-	int							l_pocsag_msg_buf_len		= 0;
-	int							l_msg_buf_len				= 0;
+	uint16_t					l_pocsag_ric_msg_buf_len	= 0U;
+	uint16_t					l_pocsag_news_msg_buf_len	= 0U;
+	uint16_t					l_msg_buf_len				= 0U;
 	char						l_mark						= ' ';
 	struct calendar_date		calDat;
 
@@ -3514,7 +3519,7 @@ static void task_main_aprs_pocsag(void)
 	calendar_timestamp_to_date(l_ts, &calDat);
 
 	/* Prepare POCSAG mode */
-	if (g_ax_enable && g_ax_pocsag_enable && g_ax_pocsag_individual_ric) {
+	if (g_ax_enable && g_ax_pocsag_enable) {
 		/* FIFOCMD / FIFOSTAT */
 		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
@@ -3523,11 +3528,11 @@ static void task_main_aprs_pocsag(void)
 
 		/* POCSAG Skyper clock for every new minute (chime) */
 		if (!calDat.second && g_ax_pocsag_chime_enable) {
-			l_pocsag_msg_buf_len = spi_ax_pocsag_skyper_TimeString(l_pocsag_msg_buf, (uint8_t) sizeof(l_pocsag_msg_buf), &calDat);
+			l_pocsag_ric_msg_buf_len = spi_ax_pocsag_skyper_TimeString(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), &calDat);
 
 			/* Transmit POCSAG message */
-			spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_CLOCK, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_msg_buf, strlen(l_pocsag_msg_buf));
-			l_pocsag_msg_buf_len = 0;
+			spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_CLOCK, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, strlen(l_pocsag_ric_msg_buf));
+			l_pocsag_ric_msg_buf_len = 0;
 		}
 	}
 
@@ -3645,13 +3650,22 @@ static void task_main_aprs_pocsag(void)
 				#endif
 
 				/* Message content POCSAG */
-				l_pocsag_msg_buf_len  = snprintf_P(l_pocsag_msg_buf, sizeof(l_pocsag_msg_buf), PM_POCSAG_TX_MSG_SRCCALL, g_aprs_source_callsign);
-				l_pocsag_msg_buf_len += snprintf_P(&(l_pocsag_msg_buf[0]) + l_pocsag_msg_buf_len, sizeof(l_pocsag_msg_buf) - l_pocsag_msg_buf_len, PM_POCSAG_TX_SPD_HDG_POS, (int) (g_gns_msl_alt_m + 0.5f), l_lat_hemisphere, l_gns_lat_f, l_lon_hemisphere, l_gns_lon_f, (int) (l_gns_speed_kmPh + 0.5f), (int) (l_gns_course_deg + 0.5f));
+				if (g_ax_pocsag_enable) {
+					if (g_ax_pocsag_individual_ric) {
+						l_pocsag_ric_msg_buf_len  = (uint16_t) snprintf_P(l_pocsag_ric_msg_buf, sizeof(l_pocsag_ric_msg_buf), PM_POCSAG_TX_MSG_SRCCALL, g_aprs_source_callsign);
+						l_pocsag_ric_msg_buf_len += (uint16_t) snprintf_P(&(l_pocsag_ric_msg_buf[0]) + l_pocsag_ric_msg_buf_len, sizeof(l_pocsag_ric_msg_buf) - l_pocsag_ric_msg_buf_len, PM_POCSAG_TX_SPD_HDG_POS_RIC, (int) (g_gns_msl_alt_m + 0.5f), l_lat_hemisphere, l_gns_lat_f, l_lon_hemisphere, l_gns_lon_f, (int) (l_gns_speed_kmPh + 0.5f), (int) (l_gns_course_deg + 0.5f));
+					}
+
+					{
+						l_pocsag_news_msg_buf_len  = (uint16_t) snprintf_P(l_pocsag_news_msg_buf, sizeof(l_pocsag_news_msg_buf), PM_POCSAG_TX_MSG_SRCCALL, g_aprs_source_callsign);
+						l_pocsag_news_msg_buf_len += (uint16_t) snprintf_P(&(l_pocsag_news_msg_buf[0]) + l_pocsag_news_msg_buf_len, sizeof(l_pocsag_news_msg_buf) - l_pocsag_news_msg_buf_len, PM_POCSAG_TX_SPD_HDG_POS_NEWS, (int) (g_gns_msl_alt_m + 0.5f), l_lat_hemisphere, l_gns_lat_f, l_lon_hemisphere, l_gns_lon_f, (int) (l_gns_speed_kmPh + 0.5f), (int) (l_gns_course_deg + 0.5f));
+					}
+				}
 
 				/* Message content APRS */
-				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_POS_SPD_HDG, l_lat_deg_d, l_lat_minutes_f, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg_d, l_lon_minutes_f, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_N1, l_mark, l_aprs_alert_1_gyro_x_mdps / 1000.f, l_aprs_alert_1_gyro_y_mdps / 1000.f, l_aprs_alert_1_gyro_z_mdps / 1000.f);
+				l_msg_buf_len  = (uint16_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				l_msg_buf_len += (uint16_t) snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_POS_SPD_HDG, l_lat_deg_d, l_lat_minutes_f, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg_d, l_lon_minutes_f, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += (uint16_t) snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_N1, l_mark, l_aprs_alert_1_gyro_x_mdps / 1000.f, l_aprs_alert_1_gyro_y_mdps / 1000.f, l_aprs_alert_1_gyro_z_mdps / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N2;
 
@@ -3699,12 +3713,13 @@ static void task_main_aprs_pocsag(void)
 				#endif
 
 				/* Message content POCSAG */
-				l_pocsag_msg_buf_len = 0;
+				l_pocsag_ric_msg_buf_len	= 0;
+				l_pocsag_news_msg_buf_len	= 0;
 
 				/* Message content */
-				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_POS_SPD_HDG, l_lat_deg_d, l_lat_minutes_f, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg_d, l_lon_minutes_f, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_N2, l_mark, l_aprs_alert_1_accel_x_mg / 1000.f, l_aprs_alert_1_accel_y_mg / 1000.f, l_aprs_alert_1_accel_z_mg / 1000.f);
+				l_msg_buf_len  = (uint16_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				l_msg_buf_len += (uint16_t) snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_POS_SPD_HDG, l_lat_deg_d, l_lat_minutes_f, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg_d, l_lon_minutes_f, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += (uint16_t) snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_N2, l_mark, l_aprs_alert_1_accel_x_mg / 1000.f, l_aprs_alert_1_accel_y_mg / 1000.f, l_aprs_alert_1_accel_z_mg / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N3;
 			}
@@ -3733,12 +3748,13 @@ static void task_main_aprs_pocsag(void)
 				#endif
 
 				/* Message content POCSAG */
-				l_pocsag_msg_buf_len = 0;
+				l_pocsag_ric_msg_buf_len	= 0;
+				l_pocsag_news_msg_buf_len	= 0;
 
 				/* Message content */
-				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_POS_SPD_HDG, l_lat_deg_d, l_lat_minutes_f, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg_d, l_lon_minutes_f, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_N3, l_mark, l_aprs_alert_2_mag_x_nT / 1000.f, l_aprs_alert_2_mag_y_nT / 1000.f, l_aprs_alert_2_mag_z_nT / 1000.f);
+				l_msg_buf_len  = (uint16_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				l_msg_buf_len += (uint16_t) snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_POS_SPD_HDG, l_lat_deg_d, l_lat_minutes_f, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg_d, l_lon_minutes_f, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += (uint16_t) snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_N3, l_mark, l_aprs_alert_2_mag_x_nT / 1000.f, l_aprs_alert_2_mag_y_nT / 1000.f, l_aprs_alert_2_mag_z_nT / 1000.f);
 
 				l_aprs_alert_fsm_state = APRS_ALERT_FSM_STATE__DO_N4;
 			}
@@ -3769,12 +3785,13 @@ static void task_main_aprs_pocsag(void)
 				#endif
 
 				/* Message content POCSAG */
-				l_pocsag_msg_buf_len = 0;
+				l_pocsag_ric_msg_buf_len	= 0;
+				l_pocsag_news_msg_buf_len	= 0;
 
 				/* Message content */
-				l_msg_buf_len  = snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_POS_SPD_HDG, l_lat_deg_d, l_lat_minutes_f, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg_d, l_lon_minutes_f, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
-				l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_N4, l_mark, (long)l_gns_msl_alt_ft, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);
+				l_msg_buf_len  = (uint16_t) snprintf_P(l_msg_buf, sizeof(l_msg_buf), PM_APRS_TX_FORWARD, g_aprs_source_callsign, g_aprs_source_ssid);
+				l_msg_buf_len += (uint16_t) snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_POS_SPD_HDG, l_lat_deg_d, l_lat_minutes_f, l_lat_hemisphere, PM_APRS_TX_SYMBOL_TABLE_ID, l_lon_deg_d, l_lon_minutes_f, l_lon_hemisphere, PM_APRS_TX_SYMBOL_CODE, l_course_deg, l_speed_kn);
+				l_msg_buf_len += (uint16_t) snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_N4, l_mark, (long)l_gns_msl_alt_ft, l_twi1_hygro_DP_100 / 100.f, l_twi1_baro_p_h_100 / 100.f);
 
 				l_aprs_alert_fsm_state	= APRS_ALERT_FSM_STATE__NOOP;
 				l_aprs_alert_reason		= APRS_ALERT_REASON__NONE;
@@ -3788,24 +3805,56 @@ static void task_main_aprs_pocsag(void)
 	} while (false);
 
 	/* POCSAG message content ready */
-	if (g_ax_enable && g_ax_pocsag_enable && g_ax_pocsag_individual_ric && l_pocsag_msg_buf_len) {
+	if (g_ax_enable && g_ax_pocsag_enable) {
 		/* Push POCSAG via AX5243 (VHF/UHF) */
-		spi_ax_run_POCSAG_Tx_FIFO_Msg(g_ax_pocsag_individual_ric, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_msg_buf, strlen(l_pocsag_msg_buf));
+		{
+			/* Individual message to the RIC */
+			if (g_ax_pocsag_individual_ric && l_pocsag_ric_msg_buf_len) {
+				spi_ax_run_POCSAG_Tx_FIFO_Msg(g_ax_pocsag_individual_ric, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_ric_msg_buf, strlen(l_pocsag_ric_msg_buf));
 
-		do {
-			/* FIFOSTAT */
-			spi_ax_transport(false, "< 28 R1 >");
-		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+				do {
+					/* RADIOSTATE */
+					spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
+				} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+			}
 
-		do {
-			/* RADIOSTATE */
-			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
-		} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+			/* Public news */
+			if (l_pocsag_news_msg_buf_len) {
+				/* Announce public Skyper rubric number 95 with label "Tracking" */
+				{
+					const char rubricLabel[] = "Tracking";
+					char rubricBuf[32];
+
+					uint16_t rubricBufLen = spi_ax_pocsag_skyper_RubricString(rubricBuf, sizeof(rubricBuf), 95, rubricLabel, strlen(rubricLabel));
+					spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_RUBRICS, AX_POCSAG_CW2_MODE3_ALPHANUM, rubricBuf, rubricBufLen);
+
+					do {
+						/* RADIOSTATE */
+						spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
+					} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+				}
+
+				/* Send public Skyper news to rubric "Tracking" */
+				{
+					char newsBuf[C_TX_NEWS_BUF_SIZE];
+
+					uint16_t newsBufLen = spi_ax_pocsag_skyper_NewsString(newsBuf, sizeof(newsBuf), 95, ++g_ax_pocsag_news_idx, l_pocsag_news_msg_buf, l_pocsag_news_msg_buf_len);
+					spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_NEWS, AX_POCSAG_CW2_MODE3_ALPHANUM, newsBuf, newsBufLen);
+
+					g_ax_pocsag_news_idx %= 10;
+
+					do {
+						/* RADIOSTATE */
+						spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
+					} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+				}
+			}
+		}
 	}
 
 	/* APRS message content ready */
 	if (l_msg_buf_len) {
-		l_msg_buf_len += snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_MSGEND);
+		l_msg_buf_len += (uint16_t)  snprintf_P(&(l_msg_buf[0]) + l_msg_buf_len, sizeof(l_msg_buf) - l_msg_buf_len, PM_APRS_TX_MSGEND);
 
 		/* Push APRS via AX5243 (VHF/UHF) */
 		if (g_ax_enable && g_ax_aprs_enable) {

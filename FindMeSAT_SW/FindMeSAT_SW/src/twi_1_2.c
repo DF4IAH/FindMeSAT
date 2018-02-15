@@ -63,7 +63,7 @@ const char					PM_FORMAT_6F1[]						= "%6.1f";
 PROGMEM_DECLARE(const char, PM_FORMAT_6F1[]);
 const char					PM_FORMAT_07F2[]					= "%07.2f";
 PROGMEM_DECLARE(const char, PM_FORMAT_07F2[]);
-const char					PM_FORMAT_KMPH[]					= "kmh";
+const char					PM_FORMAT_KMPH[]					= "km/h";
 PROGMEM_DECLARE(const char, PM_FORMAT_KMPH[]);
 
 const char					PM_TWI1_INIT_HYGRO_01[]				= "\r\nTWI-onboard: Hygro SHT31-DIS - I2C address: 0x%02X\r\n";

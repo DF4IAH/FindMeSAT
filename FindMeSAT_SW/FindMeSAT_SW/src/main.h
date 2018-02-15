@@ -360,7 +360,7 @@ uint16_t aprs_gyro_total_dps_1000(void);
 uint16_t aprs_accel_xy_delta_g_1000(void);
 uint16_t aprs_mag_delta_nT(void);
 
-void aprs_message_send(const char* msg, uint8_t len);
+void aprs_message_send(const char* msg, uint16_t len);
 
 bool sched_getLock(volatile uint8_t* lockVar);
 void sched_freeLock(volatile uint8_t* lockVar);
