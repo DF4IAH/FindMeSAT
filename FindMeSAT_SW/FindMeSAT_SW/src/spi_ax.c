@@ -3150,11 +3150,6 @@ void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void)
 	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 	spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, idx);
 	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
-
-	#if 0
-	/* FIFO do a COMMIT */
-	spi_ax_transport(false, "< a8 04 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
-	#endif
 }
 
 int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFunc, const char* tgtMsg, uint8_t tgtMsgLen)

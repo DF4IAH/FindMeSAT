@@ -397,7 +397,7 @@ const char					PM_POCSAG_TX_MSG_SRCCALL[]						= "%s:  ";
 PROGMEM_DECLARE(const char, PM_POCSAG_TX_MSG_SRCCALL[]);
 const char					PM_POCSAG_TX_SPD_HDG_POS_RIC[]					= "alt=%5dm %c %08.5f %c%09.5f spd=%03dkm/h hdg=%03d";
 PROGMEM_DECLARE(const char, PM_POCSAG_TX_SPD_HDG_POS_RIC[]);
-const char					PM_POCSAG_TX_SPD_HDG_POS_NEWS[]					= "alt=%5dm %c %08.5f          %c%09.5f          spd=%03dkm/h hdg=%03d";
+const char					PM_POCSAG_TX_SPD_HDG_POS_NEWS[]					= "alt=%5dm %c %08.5f %4d%02d%02d %c%09.5f %02d:%02d  %c spd=%03dkm/h hdg=%03d";
 PROGMEM_DECLARE(const char, PM_POCSAG_TX_SPD_HDG_POS_NEWS[]);
 
 const char					PM_APRS_TX_HTTP_L1[]							= "POST / HTTP/1.1\r\n";
@@ -3653,12 +3653,26 @@ static void task_main_aprs_pocsag(void)
 				if (g_ax_pocsag_enable) {
 					if (g_ax_pocsag_individual_ric) {
 						l_pocsag_ric_msg_buf_len  = (uint16_t) snprintf_P(l_pocsag_ric_msg_buf, sizeof(l_pocsag_ric_msg_buf), PM_POCSAG_TX_MSG_SRCCALL, g_aprs_source_callsign);
-						l_pocsag_ric_msg_buf_len += (uint16_t) snprintf_P(&(l_pocsag_ric_msg_buf[0]) + l_pocsag_ric_msg_buf_len, sizeof(l_pocsag_ric_msg_buf) - l_pocsag_ric_msg_buf_len, PM_POCSAG_TX_SPD_HDG_POS_RIC, (int) (g_gns_msl_alt_m + 0.5f), l_lat_hemisphere, l_gns_lat_f, l_lon_hemisphere, l_gns_lon_f, (int) (l_gns_speed_kmPh + 0.5f), (int) (l_gns_course_deg + 0.5f));
+						l_pocsag_ric_msg_buf_len += (uint16_t) snprintf_P(&(l_pocsag_ric_msg_buf[0]) + l_pocsag_ric_msg_buf_len, sizeof(l_pocsag_ric_msg_buf) - l_pocsag_ric_msg_buf_len,
+																PM_POCSAG_TX_SPD_HDG_POS_RIC,
+																(int) (g_gns_msl_alt_m + 0.5f),
+																l_lat_hemisphere, l_gns_lat_f,
+																l_lon_hemisphere, l_gns_lon_f,
+																(int) (l_gns_speed_kmPh + 0.5f), (int) (l_gns_course_deg + 0.5f));
 					}
 
 					{
+						const char reasonAry[] = APRS_ALERT_REASON_SHORTHAND;
 						l_pocsag_news_msg_buf_len  = (uint16_t) snprintf_P(l_pocsag_news_msg_buf, sizeof(l_pocsag_news_msg_buf), PM_POCSAG_TX_MSG_SRCCALL, g_aprs_source_callsign);
-						l_pocsag_news_msg_buf_len += (uint16_t) snprintf_P(&(l_pocsag_news_msg_buf[0]) + l_pocsag_news_msg_buf_len, sizeof(l_pocsag_news_msg_buf) - l_pocsag_news_msg_buf_len, PM_POCSAG_TX_SPD_HDG_POS_NEWS, (int) (g_gns_msl_alt_m + 0.5f), l_lat_hemisphere, l_gns_lat_f, l_lon_hemisphere, l_gns_lon_f, (int) (l_gns_speed_kmPh + 0.5f), (int) (l_gns_course_deg + 0.5f));
+						l_pocsag_news_msg_buf_len += (uint16_t) snprintf_P(&(l_pocsag_news_msg_buf[0]) + l_pocsag_news_msg_buf_len, sizeof(l_pocsag_news_msg_buf) - l_pocsag_news_msg_buf_len,
+																PM_POCSAG_TX_SPD_HDG_POS_NEWS,
+																(int) (g_gns_msl_alt_m + 0.5f),
+																l_lat_hemisphere, l_gns_lat_f,
+																calDat.year, calDat.month + 1, calDat.date + 1,
+																l_lon_hemisphere, l_gns_lon_f,
+																calDat.hour, calDat.minute,
+																reasonAry[l_aprs_alert_reason],
+																(int) (l_gns_speed_kmPh + 0.5f), (int) (l_gns_course_deg + 0.5f));
 					}
 				}
 
@@ -4000,11 +4014,34 @@ int main(void)
 
 
 	/* Insert prepared system TEST-CODE here */
-#if 1
+#if 0
 	/* TEST */
 	for (int i = 1000; i; i--) {
 
-		#if 0
+		#if 1
+		/* Calibration with the preamble '1010..' pattern */
+		{
+			/* FIFOCMD / FIFOSTAT */
+			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+			/* Switch to POCSAG mode */
+			spi_ax_init_POCSAG_Tx();
+
+			for (int calCnt = 400; calCnt; calCnt--) {
+				spi_ax_util_POCSAG_Tx_FIFO_Preamble();
+
+				/* FIFO do a COMMIT */
+				spi_ax_transport(false, "< a8 04 >");											// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
+			}
+
+			do {
+				/* FIFOSTAT */
+				spi_ax_transport(false, "< 28 R1 >");
+			} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+		}
+
+		#else
+		/* Test POCSAG message */
 		{
 			const uint32_t tgtRic			= 143721UL;											// Skyper of DF4IAH
 			char tstBuf[80];
@@ -4020,18 +4057,12 @@ int main(void)
 				/* Switch from APRS mode to POCSAG */
 				spi_ax_init_POCSAG_Tx();
 
-				#if 0
-					/* Transmit POCSAG message */
-					uint8_t tstBufLen = (uint8_t) strlen(tstBuf);
-					(void) spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, ax_pocsag_analyze_msg_tgtFunc_get(tstBuf, tstBufLen), tstBuf, tstBufLen);
+				/* Transmit POCSAG message */
+				uint8_t tstBufLen = (uint8_t) strlen(tstBuf);
+				(void) spi_ax_run_POCSAG_Tx_FIFO_Msg(tgtRic, ax_pocsag_analyze_msg_tgtFunc_get(tstBuf, tstBufLen), tstBuf, tstBufLen);
 
-					delay_ms(500);
-					//delay_ms(7500);
-				#else
-					for (int calCnt = 400; calCnt; calCnt--) {
-						spi_ax_util_POCSAG_Tx_FIFO_Preamble();
-					}
-				#endif
+				delay_ms(500);
+				//delay_ms(7500);
 			}
 
 			/* FIFOCMD / FIFOSTAT */
@@ -4050,6 +4081,7 @@ int main(void)
 		#endif
 
 		#if 0
+		/* Test APRS message */
 		{
 			char addrAry[][6]	= { "APXFMS", "DF4IAH", "WIDE1", "WIDE2" };
 			uint8_t ssidAry[]	= { 0, 8, 1, 2 };
@@ -4059,7 +4091,7 @@ int main(void)
 				/* FIFOCMD / FIFOSTAT */
 				spi_ax_transport(false, "< a8 03 >");											// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
-				/* Switch from APRS mode to POCSAG */
+				/* Switch to APRS (PR1200) mode */
 				spi_ax_init_PR1200_Tx();
 
 				/* Enter an APRS UI frame */
