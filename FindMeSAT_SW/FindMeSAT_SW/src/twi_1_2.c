@@ -187,7 +187,9 @@ static void twi1_slave_process(void) {
 }
 
 ISR(TWIE_TWIS_vect) {
+	irqflags_t flags = cpu_irq_save();
 	TWI_SlaveInterruptHandler(&g_twi1_slave);
+	cpu_irq_restore(flags);
 }
 #endif
 
@@ -201,7 +203,9 @@ static void twi2_slave_process(void) {
 }
 
 ISR(TWIC_TWIS_vect) {
+	irqflags_t flags = cpu_irq_save();
 	TWI_SlaveInterruptHandler(&g_twi2_slave);
+	cpu_irq_restore(flags);
 }
 #endif
 
@@ -1400,38 +1404,38 @@ static void task_twi1_baro(void)
 
 	/* Calculate and present Baro and Temp values when a different measurement has arrived */
 	if ((l_twi1_baro_d1 != s_twi1_baro_d1) || (l_twi1_baro_d2 != s_twi1_baro_d2)) {
-		int32_t dT = (int32_t)l_twi1_baro_d2 - ((int32_t)g_twi1_baro_c[5] << 8)	+ (0);			// Last entry is a local temp correction
-		int32_t temp_p20 = (int32_t)(((int64_t)dT * g_twi1_baro_c[6]) >> 23);
-		int32_t temp = temp_p20 + 2000L;
-		int64_t off  = ((int64_t)g_twi1_baro_c[2] << 17) + (((int64_t)g_twi1_baro_c[4] * dT) >> 6);
-		int64_t sens = ((int64_t)g_twi1_baro_c[1] << 16) + (((int64_t)g_twi1_baro_c[3] * dT) >> 7);
+		int32_t dT			= (int32_t)l_twi1_baro_d2 - ((int32_t)g_twi1_baro_c[5] << 8);
+		int32_t temp_p20	= (int32_t)(((int64_t)dT * g_twi1_baro_c[6]) >> 23);
+		int32_t l_t_100		= temp_p20 + 2000L + (0);											// Last entry is a local temp correction;
+		int64_t off			= ((int64_t)g_twi1_baro_c[2] << 17) + (((int64_t)g_twi1_baro_c[4] * dT) >> 6);
+		int64_t sens		= ((int64_t)g_twi1_baro_c[1] << 16) + (((int64_t)g_twi1_baro_c[3] * dT) >> 7);
 
 		/* Low temp and very low temp corrections */
-		if (temp < 2000L) {
+		if (l_t_100 < 2000L) {
 			int32_t t2 = (int32_t)(((int64_t)dT * (int64_t)dT) >> 31);
 			int32_t temp_p20_2 = temp_p20 * temp_p20;
 			int32_t off2 = (61 * temp_p20_2) >> 4;
 			int32_t sens2 = temp_p20_2 << 1;
 
-			if (temp < -1500L) {
-				int32_t temp_m15 = temp + 1500L;
+			if (l_t_100 < -1500L) {
+				int32_t temp_m15 = l_t_100 + 1500L;
 				int32_t temp_m15_2 = temp_m15 * temp_m15;
 				off2  += 15 * temp_m15_2;
 				sens2 +=  8 * temp_m15_2;
 			}
-			temp -= t2;
-			off  -= off2;
-			sens -= sens2;
+			l_t_100	-= t2;
+			off		-= off2;
+			sens	-= sens2;
 		}
-		int32_t l_p = (int32_t)((((l_twi1_baro_d1 * sens) >> 21) - off) >> 15)	+ (0);			// Last entry is a local baro correction
+		int32_t l_p_100 = (int32_t)((((l_twi1_baro_d1 * sens) >> 21) - off) >> 15)	+ (-45);	// Last entry is a local baro correction
 
 		/* Store data and calculate QNH within valid data range, only */
-		if ((-3000 < temp) && (temp < 8000) && (30000L < l_p) && (l_p < 120000L)) {
+		if ((-3000 < l_t_100) && (l_t_100 < 8000) && (30000L < l_p_100) && (l_p_100 < 120000L)) {
 			/* Setting the global values */
 			{
 				irqflags_t flags = cpu_irq_save();
-				g_twi1_baro_temp_100	= temp;
-				g_twi1_baro_p_100		= l_p;
+				g_twi1_baro_temp_100	= l_t_100;
+				g_twi1_baro_p_100		= l_p_100;
 				cpu_irq_restore(flags);
 			}
 
@@ -1441,11 +1445,11 @@ static void task_twi1_baro(void)
 			cpu_irq_restore(flags);
 
 			/* A valid height value (3D navigation) seems to be access able */
-			if (s_p != l_p) {
+			if (s_p != l_p_100) {
 				float a_m_h		= 0.0065f * l_qnh_height_m;
 				float Th0		= C_0DEGC_K + (l_twi1_baro_temp_100 / 100.f);
 				float term		= 1.f + (a_m_h / Th0);
-				l_p_h			= l_p * pow(term, 5.255f);
+				l_p_h			= l_p_100 * pow(term, 5.255f);
 
 				/* Setting the global values */
 				{
@@ -1454,7 +1458,7 @@ static void task_twi1_baro(void)
 					cpu_irq_restore(flags);
 				}
 
-				s_p = l_p;
+				s_p = l_p_100;
 			}
 		}
 	}

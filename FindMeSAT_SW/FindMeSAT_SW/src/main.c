@@ -50,6 +50,9 @@
 
 /* GLOBAL section */
 
+char						g_dbg_buf[C_DBG_BUF_LEN]						= { 0 };
+uint16_t					g_dbg_buf_len									= 0;
+
 bool						g_adc_enabled									= true;
 bool						g_dac_enabled									= false;
 int16_t						g_backlight_mode_pwm							= 0;		// EEPROM
@@ -3942,6 +3945,12 @@ void task(void)
 		task_main_pll();																		// Handling the 1PPS PLL system
 		task_env_calc();																		// Environment simulation calculations
 		task_main_aprs_pocsag();																// Handling the APRS alerts and POCSAG messages
+
+		/* Send debug message via Skyper */
+		if (g_dbg_buf_len && g_ax_enable && g_ax_pocsag_enable && g_ax_pocsag_individual_ric && (g_milliseconds_cnt64 > 35000ULL)) {
+			spi_ax_send_POCSAG_Msg(g_ax_pocsag_individual_ric, ax_pocsag_analyze_msg_tgtFunc_get(g_dbg_buf, g_dbg_buf_len), g_dbg_buf, g_dbg_buf_len);
+			g_dbg_buf_len = 0;
+		}
 	}
 }
 
@@ -4004,13 +4013,15 @@ int main(void)
 	if (g_adc_enabled) {
 		adc_start();																			// Start AD convertions
 	}
-	spi_start();																				// Start SPI communication with the AX5243
 
 	/* Init of USB system */
 	usb_init();																					// USB device stack start function to enable stack and start USB
 
 	/* Start TWI channels */
 	twi_start();																				// Start TWI
+
+	/* Start the AX5243 */
+	spi_start();																				// Start SPI communication with the AX5243
 
 
 	/* Insert prepared system TEST-CODE here */

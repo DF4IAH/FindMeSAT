@@ -88,65 +88,89 @@ PROGMEM_DECLARE(const char, PM_INFO_PART_PLL1C[]);
 
 static bool udi_write_tx_char(int chr, bool stripControl)
 {
+	/* Leave when not authorized - disconnect USB line when still blocked */
+	if (!g_usb_cdc_transfers_authorized) {
+		return true;
+	}
+	if (g_usb_cdc_access_blocked || !udi_cdc_is_tx_ready()) {
+		g_usb_cdc_transfers_authorized = false;
+		return false;
+	}
+
 	if (stripControl) {
 		/* Drop control character and report putc() success */
 		if ((chr < 0x20) || (chr >= 0x80)) {
 			return true;
 		}
 	}
-
-	if (!g_usb_cdc_access_blocked) {  // atomic operation
-		return udi_cdc_putc(chr);
-	}
-
-	return true;	// write to nowhere
+	return udi_cdc_putc(chr);
 }
 
-uint8_t udi_write_tx_msg_P(const char* msg_P)
+void udi_write_tx_msg_P(const char* msg_P)
 {
 	char l_buf[C_TX_BUF_SIZE];
 
+	/* Leave when not authorized - disconnect USB line when still blocked */
+	if (!g_usb_cdc_transfers_authorized) {
+		return;
+	}
+	if (g_usb_cdc_access_blocked || !udi_cdc_is_tx_ready()) {
+		g_usb_cdc_transfers_authorized = false;
+		return;
+	}
+
 	int len = snprintf_P(l_buf, sizeof(l_buf), msg_P);
-	return udi_write_tx_buf(l_buf, min(len, sizeof(l_buf)), false);
+	udi_write_tx_buf(l_buf, min(len, sizeof(l_buf)), false);
 }
 
-uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl)
+void udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl)
 {
 	uint8_t ret = 0;
 	uint8_t cnt = 0;
 
+	/* Leave when not authorized - disconnect USB line when still blocked */
 	if (!g_usb_cdc_transfers_authorized) {
-		return 0;
+		return;
+	}
+	if (g_usb_cdc_access_blocked || !udi_cdc_is_tx_ready()) {
+		g_usb_cdc_transfers_authorized = false;
+		return;
 	}
 
-	/* Write each character - avoiding to use the block write function */
+	/* Write each character - avoiding to use the block write function which hangs some times */
 	while (ret < len) {
 		if (!udi_cdc_is_tx_ready()) {
 			++cnt;
-			yield_ms(C_USB_LINE_DELAY_MS);
 
-			} else if (!udi_write_tx_char(*(buf + ret), stripControl)) {
+		} else if (!udi_write_tx_char(*(buf + ret), stripControl)) {
 			++cnt;
-			yield_ms(C_USB_LINE_DELAY_MS);
 
-			} else {
+		} else {
 			cnt = 0;
 			++ret;
 		}
 
-		if (cnt > 200) {
-			/* Device blocks, get rid of it */
-			g_usb_cdc_transfers_authorized = false;
-			return ret;
+		if (cnt > 1) {
+			/* Device blocks at the moment */
+			g_usb_cdc_access_blocked = true;
+			return;
 		}
 	}
-	return ret;
 }
 
 void udi_write_serial_line(const char* buf, uint16_t len)
 {
 	char* l_usart1_rx_buf_ptr	= (char*) buf;
 	bool crUntreated			= false;
+
+	/* Leave when not authorized - disconnect USB line when still blocked */
+	if (!g_usb_cdc_transfers_authorized) {
+		return;
+	}
+	if (g_usb_cdc_access_blocked || !udi_cdc_is_tx_ready()) {
+		g_usb_cdc_transfers_authorized = false;
+		return;
+	}
 
 	for (uint16_t cnt = len; cnt; --cnt) {
 		char c = *(l_usart1_rx_buf_ptr++);
@@ -183,19 +207,87 @@ void udi_write_serial_line(const char* buf, uint16_t len)
 			}
 		}
 
-		/* Write out any readable character */
+		/* Write out any printable character */
 		(void) udi_write_tx_char(c, true);
 	}
 	yield_ms(30);
 }
 
+
+void usb_pull_reset(bool reset)
+{
+	if (reset) {
+		/* USB BUS RESET ACTIVE */
+
+		/* Set output levels */
+		ioport_set_pin_level(USB_RESET_DRV_GPIO, HIGH);
+
+		/* Set limited slew rate */
+		ioport_set_pin_mode(USB_RESET_DRV_GPIO, IOPORT_MODE_TOTEM | IOPORT_MODE_SLEW_RATE_LIMIT);
+
+		/* Set direction */
+		ioport_set_pin_dir(USB_RESET_DRV_GPIO, IOPORT_DIR_OUTPUT);
+
+	} else {
+		/* USB BUS RESET INACTIVE */
+
+		/* Set direction */
+		ioport_set_pin_dir(USB_RESET_DRV_GPIO,	IOPORT_DIR_INPUT);
+
+		/* Set mode of operation */
+		ioport_set_pin_mode(USB_RESET_DRV_GPIO,	IOPORT_MODE_BUSKEEPER);
+	}
+}
+
+
 void usb_init(void)
 {
+	/* Make re-entrant sure */
+	if (g_usb_cdc_transfers_authorized) {
+		g_usb_cdc_transfers_authorized = false;
+		stdio_usb_disable();
+	}
+
+	/* Set input pulling resistors */
+	ioport_set_pin_mode(USB_D_P_GPIO,		IOPORT_MODE_PULLUP);
+	ioport_set_pin_mode(USB_D_N_GPIO,		IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_mode(USB_ID_GPIO,		IOPORT_MODE_PULLUP);
+
+	/* Set direction */
+	ioport_set_pin_dir(USB_D_P_GPIO,		IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(USB_D_N_GPIO,		IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(USB_ID_GPIO,			IOPORT_DIR_INPUT);
+
+	usb_pull_reset(false);
+	delay_ms(100);
+
+	/* Check if a host is attached */
+	{
+		bool usb_d_p = ioport_get_value(USB_D_P_GPIO);
+
+		#if 0
+		sprintf(g_prepare_buf, "USB: connected?  %d", !usb_d_p);
+		task_twi2_lcd_str(8, 12 * 10, g_prepare_buf);
+		delay_ms(750);
+		#endif
+
+		/* No valid differential signal J or K present */
+		if (usb_d_p) {
+			return;
+		}
+	}
+
+	/* Set input pulling resistors */
+	ioport_set_pin_mode(USB_D_P_GPIO,		IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_mode(USB_D_N_GPIO,		IOPORT_MODE_PULLDOWN);
+	ioport_set_pin_mode(USB_ID_GPIO,		IOPORT_MODE_PULLDOWN);
+	delay_ms(100);
+
 	stdio_usb_init();	// Init and enable stdio_usb
 	if (g_usb_cdc_stdout_enabled) {
 		stdio_usb_enable();
 	}
-	delay_ms(500);
+	delay_ms(750);
 
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);

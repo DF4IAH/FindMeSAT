@@ -3304,6 +3304,26 @@ int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFu
 	return 0;
 }
 
+void spi_ax_send_POCSAG_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc, const char* pocsagTgtMsg, uint8_t pocsagTgtMsgLen)
+{
+	if (g_ax_enable && g_ax_pocsag_enable) {
+		/* FIFOCMD / FIFOSTAT */
+		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+		/* Switch to POCSAG mode */
+		spi_ax_init_POCSAG_Tx();
+
+		/* Send message */
+		spi_ax_run_POCSAG_Tx_FIFO_Msg(pocsagTgtRIC, pocsagTgtFunc, pocsagTgtMsg, pocsagTgtMsgLen);
+
+		/* Wait until message is sent */
+		do {
+			/* RADIOSTATE */
+			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
+		} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+	}
+}
+
 void spi_ax_init_POCSAG_Rx(void)
 {
 	/* Syncing and sending reset command, then setting the default values */

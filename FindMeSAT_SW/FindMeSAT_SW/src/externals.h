@@ -16,6 +16,9 @@
 #include "spi_ax.h"
 
 
+extern char							g_dbg_buf[C_DBG_BUF_LEN];
+extern uint16_t						g_dbg_buf_len;
+
 extern bool							g_adc_enabled;
 extern bool							g_dac_enabled;
 extern int16_t						g_backlight_mode_pwm;
