@@ -1067,45 +1067,27 @@ int udi_cdc_multi_putc(uint8_t port, int value)
 
 	b_databit_9 = (9 == udi_cdc_line_coding[port].bDataBits);
 
-	// Process once, or twice when 9th data bit is in use
-	while (true) {
-		uint8_t waitIter;
-
-		// Wait for available space
-		for (waitIter = 255U; waitIter; waitIter--) {
-			// Check available space
-			if (!udi_cdc_multi_is_tx_ready(port)) {
-				if (!udi_cdc_data_running) {
-					return false;
-				}
-
-			} else {
-				// Space available
-				break;
-			}
-		}
-		if (!waitIter) {
-			// Timeout waiting for space
+udi_cdc_putc_process_one_byte:
+	// Check available space
+	if (!udi_cdc_multi_is_tx_ready(port)) {
+		if (!udi_cdc_data_running) {
 			return false;
 		}
+		goto udi_cdc_putc_process_one_byte;
+	}
 
-		// Write value
-		flags = cpu_irq_save();
-		buf_sel = udi_cdc_tx_buf_sel[port];
-		udi_cdc_tx_buf[port][buf_sel][udi_cdc_tx_buf_nb[port][buf_sel]++] = value;
-		cpu_irq_restore(flags);
+	// Write value
+	flags = cpu_irq_save();
+	buf_sel = udi_cdc_tx_buf_sel[port];
+	udi_cdc_tx_buf[port][buf_sel][udi_cdc_tx_buf_nb[port][buf_sel]++] = value;
+	cpu_irq_restore(flags);
 
-		if (b_databit_9) {
-			// Send MSB
-			b_databit_9 = false;
-			value >>= 8;
-
-		} else {
-			// Data transmission done
-			break;
-		}
-	}  // while (true)
-
+	if (b_databit_9) {
+		// Send MSB
+		b_databit_9 = false;
+		value = value >> 8;
+		goto udi_cdc_putc_process_one_byte;
+	}
 	return true;
 }
 

@@ -16,6 +16,9 @@
 #include "spi_ax.h"
 
 
+extern char							g_dbg_buf[C_DBG_BUF_LEN];
+extern uint16_t						g_dbg_buf_len;
+
 extern bool							g_adc_enabled;
 extern bool							g_dac_enabled;
 extern int16_t						g_backlight_mode_pwm;
@@ -260,7 +263,7 @@ extern bool							g_ax_pocsag_chime_enable;
 extern uint32_t						g_ax_pocsag_individual_ric;
 
 extern const uint16_t				g_ax_pwr_ary[C_AX_PRW_LENGTH];
-extern const uint8_t				g_ax_pocsag_number_of_sync_loops;
+extern uint8_t						g_ax_pocsag_news_idx;
 extern uint8_t						g_ax_pocsag_activation_code_len;
 extern const uint8_t				g_ax_pocsag_activation_code[][3];
 

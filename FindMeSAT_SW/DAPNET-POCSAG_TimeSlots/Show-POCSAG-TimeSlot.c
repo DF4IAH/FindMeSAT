@@ -20,29 +20,29 @@ int main(int argc, char* argv[])
 	struct timeval	tv;
 
 	printf("%c\r\n\r\n\r\n", 0x0c);
-        printf("*==============================================*==========================*\r\n");
-        printf("* DAPNET / POCSAG TimeSlot Rechner von DF4IAH  *  Liste ist um            *\r\n");
-	printf("* Voraussetzung:  Systemzeit ist NTP gefuehrt  *  DB0CPU / Mannheim       *\r\n");
-	printf("* zum Abbrechen  STRG-C  druecken.   20180211  *  zentriert               *\r\n");
-	printf("*==============================================*==========================*\r\n\r\n");
+        printf("*==============================================*===========================*\r\n");
+        printf("* DAPNET / POCSAG TimeSlot Rechner von DF4IAH  *  Liste ist um             *\r\n");
+	printf("* Voraussetzung:  Systemzeit ist NTP gefuehrt  *  DB0CPU / Mannheim        *\r\n");
+	printf("* zum Abbrechen  STRG-C  druecken.   20180215  *  zentriert                *\r\n");
+	printf("*==============================================*===========================*\r\n\r\n");
 
-        printf("*==========*===================================*==========================*\r\n");
-        printf("*  CALL    *  Slots                            *  QTH                     *\r\n");
-        printf("*          *  0 1 2 3 4 5 6 7 8 9 A B C D E F  *                          *\r\n");
-        printf("*==========*===================================*==========================*\r\n");
-        printf("*  DB0CPU  *  x x x x . . . . x x x x . . . .  *  Mannheim (noch alte SW) *\r\n");
-        printf("*  DB0FTC  *  . . . . x x x . . . . . x . . .  *  Quirnheim               *\r\n");
-        printf("*  DB0IUK  *  . . . . . . . . . . . . . . . .  *  Heppenheim              *\r\n");
-        printf("*  DB0HRF  *  x x x x . . . . . x . . . . . .  *  Feldberg / Ts.          *\r\n");
-        printf("*  DB0ZAV  *  . . . . . . . x . . . . . x x x  *  Karben / Ts.            *\r\n");
-        printf("*  DB0PRT  *  x x . . . . . . x x . . . . . .  *  Muehlacker (PF)         *\r\n");
-        printf("*  DB0LDH  *  . . . . . x x . . . . . x . . .  *  Florstadt               *\r\n");
-        printf("*  DB0LDK  *  x x . . . . . . x x . . . . . .  *  Wetzlar                 *\r\n");
-        printf("*  DB0GH   *  x . . . x . . . . . x . . . . .  *  Weinstadt-Grossheppach  *\r\n");
-        printf("*  DB0OFI  *  . . . . . x x . . . . . . x x .  *  Ostfildern              *\r\n");
-        printf("*  DB0XHI  *  . . x x . . . . . . x x . . . .  *  Reutlingen-Nord         *\r\n");
-        printf("*  DM0AI   *  x x . . . . . . x x . . . . . .  *  Reutlingen              *\r\n");
-        printf("*==========*===================================*==========================*\r\n\r\n");
+        printf("*==========*===================================*===========================*\r\n");
+        printf("*  CALL    *  Slots                            *  QTH                      *\r\n");
+        printf("*          *  0 1 2 3 4 5 6 7 8 9 A B C D E F  *                           *\r\n");
+        printf("*==========*===================================*===========================*\r\n");
+        printf("*  DB0CPU  *  . . . . . . . . x x x x . . . .  *  Mannheim (FunkrufMaster) *\r\n");
+        printf("*  DB0FTC  *  . . . . x x x . . . . . x . . .  *  Quirnheim                *\r\n");
+        printf("*  DB0IUK  *  . . . . . . . . . . . . . . . .  *  Heppenheim               *\r\n");
+        printf("*  DB0HRF  *  x x x x . . . . . x . . . . . .  *  Feldberg / Ts.           *\r\n");
+        printf("*  DB0ZAV  *  . . . . . . . x . . . . . x x x  *  Karben / Ts.             *\r\n");
+        printf("*  DB0PRT  *  x x . . . . . . x x . . . . . .  *  Muehlacker (PF)          *\r\n");
+        printf("*  DB0LDH  *  . . . . . x x . . . . . x . . .  *  Florstadt                *\r\n");
+        printf("*  DB0LDK  *  x x . . . . . . x x . . . . . .  *  Wetzlar                  *\r\n");
+        printf("*  DB0GH   *  x . . . x . . . . . x . . . . .  *  Weinstadt-Grossheppach   *\r\n");
+        printf("*  DB0OFI  *  . . . . . x x . . . . . . x x .  *  Ostfildern               *\r\n");
+        printf("*  DB0XHI  *  . . x x . . . . . . x x . . . .  *  Reutlingen-Nord          *\r\n");
+        printf("*  DM0AI   *  x x . . . . . . x x . . . . . .  *  Reutlingen               *\r\n");
+        printf("*==========*===================================*===========================*\r\n\r\n");
 
 	printf("Unix-Zeit = ");
 

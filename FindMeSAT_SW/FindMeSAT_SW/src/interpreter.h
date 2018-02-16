@@ -12,6 +12,8 @@
 
 #define C_RX_CMDLINE_BUF_SIZE										256
 #define C_TX_BUF_SIZE												128
+#define C_TX_RIC_BUF_SIZE											128
+#define C_TX_NEWS_BUF_SIZE											256
 
 
 void printHelp(void);

@@ -144,6 +144,8 @@ PROGMEM_DECLARE(const char, PM_TWI1_UTIL_ONBOARD_SIM808_RING_R[]);
 /* USART, RX - Complete */
 ISR(USARTF0_RXC_vect, ISR_BLOCK)
 {
+	irqflags_t flags = cpu_irq_save();
+
 	uint8_t ser1_rxd = USARTF0_DATA;
 
 	if (g_usart1_rx_idx < (C_USART1_RX_BUF_LEN - 1)) {
@@ -158,11 +160,15 @@ ISR(USARTF0_RXC_vect, ISR_BLOCK)
 
 	/* Input string ready to read */
 	g_usart1_rx_ready = true;
+
+	cpu_irq_restore(flags);
 }
 
 /* USART, TX - Complete */
 ISR(USARTF0_TXC_vect, ISR_BLOCK)
 {
+	irqflags_t flags = cpu_irq_save();
+
 	if (g_usart1_tx_len > 0) {
 		if (ioport_get_pin_level(GSM_CTS1_GPIO) == IOPORT_PIN_LEVEL_LOW) {
 			/* Send next character */
@@ -177,6 +183,8 @@ ISR(USARTF0_TXC_vect, ISR_BLOCK)
 			g_usart1_tx_buf[--g_usart1_tx_len] = 0;
 		}
 	}
+
+	cpu_irq_restore(flags);
 }
 
 
@@ -1070,7 +1078,16 @@ void task_serial(void /*uint32_t now*/)
 	while (g_usart1_rx_ready) {
 		/* Find delimiter as line end indicator - no IRQ blocking allowed */
 		{
-			const char* p = strchr(g_usart1_rx_buf, '\n');	// g_usart1_rx_buf has to be 0 terminated
+			char* p;
+
+			/* Get the line length - Terminate Buffer for strchr() to work properly */
+			{
+				irqflags_t flags = cpu_irq_save();
+				g_usart1_rx_buf[min(g_usart1_rx_idx, C_USART1_RX_BUF_LEN - 1)] = 0;
+				p = strchr(g_usart1_rx_buf, '\n');
+				cpu_irq_restore(flags);
+			}
+
 			if (p) {
 				/* Make a copy for the line interpreter */
 				len_out = 1 + (p - g_usart1_rx_buf);
@@ -1085,6 +1102,7 @@ void task_serial(void /*uint32_t now*/)
 					if (len_out < C_USART1_RX_BUF_LEN) {
 						char* l_usart1_rx_buf_ptr		= g_usart1_rx_buf;
 						char* l_usart1_rx_buf_mov_ptr	= g_usart1_rx_buf + len_out;
+
 						for (int16_t movItCnt = g_usart1_rx_idx; movItCnt; movItCnt--) {
 							*(l_usart1_rx_buf_ptr++)	= *(l_usart1_rx_buf_mov_ptr++);
 						}
@@ -1121,10 +1139,18 @@ void task_serial(void /*uint32_t now*/)
 
 			} else if (g_usart1_rx_idx >= (C_USART1_RX_BUF_LEN - C_USART1_RX_BUF_DIFF_ON)) {
 				len_out = C_USART1_RX_BUF_LEN;	// indicates to flush the read buffer
-				l_sim808_rx_process_buf[0] = 0;
+
+				/* IRQ disabled section */
+				{
+					irqflags_t flags = cpu_irq_save();
+					g_usart1_rx_idx		= 0;
+					g_usart1_rx_ready	= false;
+					cpu_irq_restore(flags);
+				}
 
 			} else {
-				return;	// not complete yet
+				/* not complete yet */
+				return;
 			}
 		}
 

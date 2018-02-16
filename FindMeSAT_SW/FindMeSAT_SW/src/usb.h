@@ -16,9 +16,11 @@
 #define C_USB_LINE_DELAY_MS											25
 
 
-uint8_t udi_write_tx_msg_P(const char* msg_P);
-uint8_t udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl);
+void udi_write_tx_msg_P(const char* msg_P);
+void udi_write_tx_buf(const char* buf, uint8_t len, bool stripControl);
 void udi_write_serial_line(const char* buf, uint16_t len);
+
+void usb_pull_reset(bool reset);
 
 void usb_init(void);
 

@@ -198,12 +198,14 @@ inline static uint8_t s_strGetHex(const char* str);
 inline static uint8_t s_strGetDec(const char* str, int* o_val);
 #endif
 
-AX_POCSAG_CW2_t ax_pocsag_analyze_msg_tgtFunc_get(const char* msg, uint8_t msgLen);
+AX_POCSAG_CW2_t ax_pocsag_analyze_msg_tgtFunc_get(const char* msg, uint16_t msgLen);
 uint32_t spi_ax_pocsag_calc_checksumParity(uint32_t codeword_in);
 uint8_t spi_ax_pocsag_getBcd(char c);
-uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, int tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx);
-uint8_t spi_ax_pocsag_skyper_RIC2ActivationString(char* outBuf, uint8_t outBufSize, uint32_t RIC);
-uint8_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint8_t outBufSize, struct calendar_date* calDat);
+uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, uint16_t tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx);
+uint16_t spi_ax_pocsag_skyper_RIC2ActivationString(char* outBuf, uint16_t outBufSize, uint32_t RIC);
+uint16_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint16_t outBufSize, struct calendar_date* calDat);
+uint16_t spi_ax_pocsag_skyper_RubricString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, const char* rubricLabel, uint16_t rubricLabelLen);
+uint16_t spi_ax_pocsag_skyper_NewsString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, uint8_t newsNumber, const char* newsString, uint16_t newsStringLen);
 
 bool spi_ax_transport(bool isProgMem, const char* packet);
 
@@ -246,7 +248,9 @@ void spi_ax_initRegisters_POCSAG_Rx_WoR(void);
 void spi_ax_initRegisters_POCSAG_Rx_cont(void);
 void spi_ax_init_POCSAG_Tx(void);
 int8_t spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc, const char* pocsagTgtMsg, uint8_t pocsagTgtMsgLen);
+void spi_ax_send_POCSAG_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc, const char* pocsagTgtMsg, uint8_t pocsagTgtMsgLen);
 void spi_ax_init_POCSAG_Rx(void);
+void spi_ax_run_POCSAG_Tx_single_Msg(const char msgBuf, uint16_t msgBufLen);
 void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void);
 int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t pocsagTargetRIC, AX_POCSAG_CW2_t tgtFunc, const char* pocsagMsg, uint8_t pocsagMsgLen);
 
