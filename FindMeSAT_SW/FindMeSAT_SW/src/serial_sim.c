@@ -1021,8 +1021,8 @@ void serial_send_gns_urc(uint8_t val)
 						}
 
 					} else if (idx ==  6) {
-						g_gns_speed_kn		= fVal;
-						g_gns_speed_kmPh	= fVal * 1.852f;  // Nautical mile = 1/60deg latitude
+						g_gns_speed_kmPh	= fVal;
+						g_gns_speed_kn		= fVal / 1.852f;  // Nautical mile = 1/60 deg latitude = 1,852 m
 
 					} else if (idx ==  7) {
 						g_gns_course_deg = fVal;
