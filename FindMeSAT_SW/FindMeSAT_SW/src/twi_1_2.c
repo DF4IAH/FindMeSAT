@@ -1747,7 +1747,7 @@ static void task_twi2_lcd__pll(void)
 	if (twi2_waitUntilReady(false)) {
 		if (g_1pps_printtwi_avail) {
 			/* Get timer for phase */
-			int16_t l_pll_lo;
+			uint16_t l_pll_lo;
 			{
 				irqflags_t flags = cpu_irq_save();
 				l_pll_lo = g_1pps_last_lo - C_TCC1_MEAN_OFFSET;
@@ -1756,22 +1756,28 @@ static void task_twi2_lcd__pll(void)
 				g_1pps_printtwi_avail = false;
 			}
 
+			/* Negative phase */
+			if ((l_pll_lo > 15000) && (l_pll_lo <= 30000)) {
+				l_pll_lo -= 30000;
+			}
+
 			/* LED green/red */
 			twi2_set_leds(g_1pps_led);
+
+			/* Length of the bar */
+			uint16_t len_y = (l_pll_lo + pos_y_mul * 500) % (pos_y_mul << 1);
 
 			/* Clear old line */
 			task_twi2_lcd_rect(size_x - width, pos_y_top, width, size_y - pos_y_top, true, GFX_PIXEL_CLR);
 
 			/* Draw new line */
-			if (l_pll_lo >= 0) {
+			if (len_y < pos_y_mul) {
 				/* Positive phase */
-				uint8_t len_y = (uint8_t) (((uint32_t) (pos_y_mul + l_pll_lo)) % pos_y_mul);
-				task_twi2_lcd_rect(size_x - width, pos_y_mid - len_y, width, len_y, false, GFX_PIXEL_SET);
+				task_twi2_lcd_rect(size_x - width, pos_y_mid - len_y,	width, len_y,						false, GFX_PIXEL_SET);
 
 			} else {
 				/* Negative phase */
-				uint8_t len_y = (uint8_t) (((uint32_t) (pos_y_mul - l_pll_lo)) % pos_y_mul);
-				task_twi2_lcd_rect(size_x - width, pos_y_mid, width, len_y, false, GFX_PIXEL_SET);
+				task_twi2_lcd_rect(size_x - width, pos_y_mid,			width, (pos_y_mul << 1) - len_y,	false, GFX_PIXEL_SET);
 			}
 		}
 	}
