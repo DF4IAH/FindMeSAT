@@ -1457,6 +1457,11 @@ void bias_update(uint8_t bias)
 
 void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 {
+	/* Clear display */
+	if (g_workmode == WORKMODE_RUN) {
+		task_twi2_lcd_header();
+	}
+
 	switch (mode) {
 		case CALIBRATION_MODE_ENUM__DEFAULTS:
 			{
@@ -1703,6 +1708,12 @@ void calibration_mode(CALIBRATION_MODE_ENUM_t mode)
 				task_twi2_lcd_str(8, 10 * 10, g_prepare_buf);
 			}
 		break;
+	}
+
+	/* Draw template */
+	if (g_workmode == WORKMODE_RUN) {
+		task_twi2_lcd_header();
+		task_twi2_lcd_template();
 	}
 }
 

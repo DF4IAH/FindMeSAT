@@ -172,7 +172,6 @@ PROGMEM_DECLARE(const char, PM_TWIINIT_ACCEL[]);
 static void task_twi1_hygro(void);
 // static void task_twi1_gyro(void);
 static void task_twi1_baro(void);
-static void task_twi2_lcd_template(void);
 
 
 /* Functions */
@@ -1614,7 +1613,7 @@ void task_twi2_lcd_header(void)
 }
 
 
-static void task_twi2_lcd_template(void)
+void task_twi2_lcd_template(void)
 {
 	uint8_t line;
 

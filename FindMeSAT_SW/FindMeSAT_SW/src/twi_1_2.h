@@ -406,6 +406,7 @@ void task_twi2_lcd_line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t 
 void task_twi2_lcd_rect(uint8_t x, uint8_t y, uint8_t width, uint8_t height, bool filled, uint8_t color);
 void task_twi2_lcd_circ(uint8_t x, uint8_t y, uint8_t radius, bool filled, uint8_t color);
 void task_twi2_lcd_header(void);
+void task_twi2_lcd_template(void);
 
 void task_twi2_lcd__cpu1(uint8_t col_left);
 void task_twi2_lcd__cpu2(uint8_t col_left);
