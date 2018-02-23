@@ -2125,6 +2125,7 @@ static void isr_100ms_main_1pps(void)
 	} else {
 		bool doUpdate				= false;
 		bool inSpan					= false;
+		int32_t l_1pps_processed_lo = 0;
 		int16_t l_1pps_last_diff	= 0;
 
 		/* Timer has adjust to 1PPS */
@@ -2138,13 +2139,15 @@ static void isr_100ms_main_1pps(void)
 		} else {
 			/* Normal operation */
 			if (g_1pps_processed_lo || g_1pps_processed_hi) {
-				/* Calculate diff-time */
-				l_1pps_last_diff = (int16_t)g_1pps_last_lo - (int16_t)g_1pps_processed_lo;
+				/* Calculate offs-time */
+				l_1pps_processed_lo = (C_TCC1_PERIOD + (int32_t)g_1pps_last_lo) % C_TCC1_PERIOD;
+				if (l_1pps_processed_lo >= (C_TCC1_PERIOD >> 1)) {
+					l_1pps_processed_lo -= C_TCC1_PERIOD;
+				}
 
-				/* Border values */
-				if (l_1pps_last_diff < (C_TCC1_BORDER_OFFSET - C_TCC1_PERIOD)) {
-					l_1pps_last_diff += C_TCC1_PERIOD;
-				} else if ((C_TCC1_PERIOD - C_TCC1_BORDER_OFFSET) < l_1pps_last_diff) {
+				/* Calculate diff-time */
+				l_1pps_last_diff = (int16_t) ((C_TCC1_PERIOD + (int32_t)g_1pps_last_lo - (int32_t)g_1pps_processed_lo) % C_TCC1_PERIOD);
+				if (l_1pps_last_diff >= (C_TCC1_PERIOD >> 1)) {
 					l_1pps_last_diff -= C_TCC1_PERIOD;
 				}
 
@@ -2154,16 +2157,24 @@ static void isr_100ms_main_1pps(void)
 					doUpdate	= true;
 				}
 
-				/* Move slowly to meridian */
-				if ((0 <= g_1pps_processed_lo) && (g_1pps_processed_lo < C_TCC1_MEAN_OFFSET)) {									// To early
-					l_1pps_last_diff -= (C_TCC1_MEAN_OFFSET - g_1pps_processed_lo) / 40;
+				/* Phase correction */
+				if ((inSpan || !g_1pps_processed_outOfSync) &&
+					((g_1pps_processed_hi % 1000) == 0)) {
+					int32_t r40 = (rand() * 40L) / RAND_MAX;
 
-				} else if ((C_TCC1_MEAN_OFFSET < g_1pps_processed_lo) && (g_1pps_processed_lo <= (C_TCC1_MEAN_OFFSET << 1))) {	// To late
-					l_1pps_last_diff += (g_1pps_processed_lo - C_TCC1_MEAN_OFFSET) / 40;
+					/* Move slowly to meridian */
+					if (l_1pps_processed_lo <= C_TCC1_MEAN_OFFSET) {								// To early
+						l_1pps_last_diff -= (int16_t) (((C_TCC1_MEAN_OFFSET - l_1pps_processed_lo) + r40) / 40);
+
+					} else {																		// To late
+						l_1pps_last_diff += (int16_t) (((l_1pps_processed_lo - C_TCC1_MEAN_OFFSET) + r40) / 40);
+					}
 				}
 
-				if (inSpan) {
+				/* Out of sync counter */
+				if (inSpan && ((g_1pps_processed_hi % 1000) == 0)) {
 					g_1pps_processed_outOfSync = 0;
+
 				} else {
 					/* Re-align meridian */
 					if (g_1pps_processed_outOfSync > 10) {
