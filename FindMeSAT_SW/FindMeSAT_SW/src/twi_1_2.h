@@ -62,7 +62,7 @@
 #define TWI_SMART_LCD_CMD_SHOW_POS_HEIGHT							0x8D
 
 // Delay definitions
-#define TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US					   1
+#define TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US					  25
 #define TWI_SMART_LCD_DEVICE_BUSY_DELAY_MIN_US						 100
 #define TWI_SMART_LCD_DEVICE_TCXOPWM_DELAY_MIN_US					1000
 
@@ -396,7 +396,7 @@ status_code_t twi1_gyro_gyro_offset_set(void);
 status_code_t twi1_gyro_accel_offset_set(void);
 void init_twi1_gyro(void);
 // void task_twi1_onboard(void);
-void start_twi2_lcd(void);
+uint8_t start_twi2_lcd(void);
 
 void task_twi2_lcd_reset(void);
 void task_twi2_lcd_cls(void);
@@ -406,6 +406,7 @@ void task_twi2_lcd_line(uint8_t x1, uint8_t y1, uint8_t x2, uint8_t y2, uint8_t 
 void task_twi2_lcd_rect(uint8_t x, uint8_t y, uint8_t width, uint8_t height, bool filled, uint8_t color);
 void task_twi2_lcd_circ(uint8_t x, uint8_t y, uint8_t radius, bool filled, uint8_t color);
 void task_twi2_lcd_header(void);
+void task_twi2_lcd_template(void);
 
 void task_twi2_lcd__cpu1(uint8_t col_left);
 void task_twi2_lcd__cpu2(uint8_t col_left);

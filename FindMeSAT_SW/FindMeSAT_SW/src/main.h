@@ -14,7 +14,7 @@
 
 /* VERSION: YYM, MDD */
 #define VERSION_HIGH												180
-#define VERSION_LOW													216
+#define VERSION_LOW													223
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -48,7 +48,13 @@
 #define C_TCC1_MEAN_OFFSET											0
 #define C_TCC1_BORDER_OFFSET										3000
 #define C_TCC1_CLOCKSETTING_AFTER_SECS								30U
-#define C_TCC1_CLOCKSETTING_OFFSET									11U
+
+#ifdef DEBUG
+# define C_TCC1_CLOCKSETTING_OFFSET									27U
+#else
+# define C_TCC1_CLOCKSETTING_OFFSET									11U
+#endif
+
 #define C_TCC1_SPAN_HALF											50  // 30 equals to 1 µs
 
 

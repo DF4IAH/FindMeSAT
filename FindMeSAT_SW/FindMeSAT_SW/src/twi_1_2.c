@@ -110,6 +110,10 @@ PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_BARO_OK[]);
 const char					PM_TWI1_INIT_ONBOARD_01[]			= "-----------\r\n\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_01[]);
 
+const char					PM_TWI1_INIT_LCD_01[]				= "\r\nTWI-extern : INIT LCD return code: 0x%02X, display version: 0x%02X\r\n";
+PROGMEM_DECLARE(const char, PM_TWI1_INIT_LCD_01[]);
+
+
 const char					PM_TWIHEADER_FINDMESAT[]			= "FindMeSAT";
 PROGMEM_DECLARE(const char, PM_TWIHEADER_FINDMESAT[]);
 const char					PM_TWIHEADER_BY_DF4IAH[]			= "by DF4IAH";
@@ -172,7 +176,6 @@ PROGMEM_DECLARE(const char, PM_TWIINIT_ACCEL[]);
 static void task_twi1_hygro(void);
 // static void task_twi1_gyro(void);
 static void task_twi1_baro(void);
-static void task_twi2_lcd_template(void);
 
 
 /* Functions */
@@ -813,17 +816,36 @@ static void start_twi1_onboard(void)
 }
 
 /* TWI2 - LCD Port */
-void start_twi2_lcd(void)
+uint8_t start_twi2_lcd(void)
 {
+	uint8_t retryCnt;
+	status_code_t sc;
+	uint8_t ret = 0;
+
 	/* Read the version number */
-	g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_VER;
-	g_twi2_packet.addr_length = 1;
-	g_twi2_packet.length = 1;
-	twi_master_read(&TWI2_MASTER, &g_twi2_packet);
-	g_twi2_lcd_version = g_twi2_m_data[0];
+	for (retryCnt = 50; retryCnt; retryCnt--) {
+		g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_GET_VER;
+		g_twi2_packet.addr_length = 1;
+		g_twi2_packet.length = 1;
+		sc = twi_master_read(&TWI2_MASTER, &g_twi2_packet);
+		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+		g_twi2_lcd_version = g_twi2_m_data[0];
+		if (sc == STATUS_OK) {
+			break;
+		}
+		delay_ms(100);
+	}
+
+	ret++;
+	if (sc != STATUS_OK) {
+		/* No device found */
+		return ret;
+	}
 
 	if (g_twi2_lcd_version >= 0x11) {
-		/* Firstly drop backlight */
+		ret = 0x10;
+
+		/* First switch off backlight */
 		twi2_set_ledbl(0, 0);
 
 		/* Select "Smart-LCD draw box" mode
@@ -831,14 +853,22 @@ void start_twi2_lcd(void)
 		g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_MODE;
 		g_twi2_m_data[0] = 0x10;
 		g_twi2_packet.length = 1;
-		twi_master_write(&TWI2_MASTER, &g_twi2_packet);
+		ret++;
+		sc = twi_master_write(&TWI2_MASTER, &g_twi2_packet);
+		if (sc != STATUS_OK) {
+			return ret;
+		}
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
 
 		/* Reset the LCD to bring it up in case of a bad POR */
 		twi2_waitUntilReady(true);
 		g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_RESET;
 		g_twi2_packet.length = 0;
-		twi_master_write(&TWI2_MASTER, &g_twi2_packet);
+		ret++;
+		sc = twi_master_write(&TWI2_MASTER, &g_twi2_packet);
+		if (sc != STATUS_OK) {
+			return ret;
+		}
 		delay_ms(50);
 
 		/* LED red */
@@ -849,8 +879,12 @@ void start_twi2_lcd(void)
 		g_twi2_packet.addr[0] = TWI_SMART_LCD_CMD_SET_PIXEL_TYPE;
 		g_twi2_m_data[0] = GFX_PIXEL_SET;
 		g_twi2_packet.length = 1;
-		twi_master_write(&TWI2_MASTER, &g_twi2_packet);
+		ret++;
+		sc = twi_master_write(&TWI2_MASTER, &g_twi2_packet);
 		delay_us(TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US);
+		if (sc != STATUS_OK) {
+			return ret;
+		}
 
 		/* Set optimum contrast voltage */
 		twi2_set_bias(g_bias_pm);
@@ -878,7 +912,15 @@ void start_twi2_lcd(void)
 
 		/* Set the backlight level exactly */
 		twi2_set_ledbl(0, l_my_pwm);
+		return 0x10;
+
+	} else {
+		/* Unknown DF4IAH LCD attached */
+		return 0x80;
 	}
+
+	/* No display found */
+	return 0x00;
 }
 
 
@@ -931,8 +973,9 @@ void twi_start(void) {
 	#endif
 	#endif
 
-	delay_ms(1000);											// Give Smart-LCD some time being up and ready
-	start_twi2_lcd();
+	uint8_t code = start_twi2_lcd();
+	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_LCD_01, code, g_twi2_lcd_version);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	/* Start each TWI channel devices */
 	start_twi1_onboard();
@@ -1614,7 +1657,7 @@ void task_twi2_lcd_header(void)
 }
 
 
-static void task_twi2_lcd_template(void)
+void task_twi2_lcd_template(void)
 {
 	uint8_t line;
 
@@ -1747,7 +1790,7 @@ static void task_twi2_lcd__pll(void)
 	if (twi2_waitUntilReady(false)) {
 		if (g_1pps_printtwi_avail) {
 			/* Get timer for phase */
-			int16_t l_pll_lo;
+			uint16_t l_pll_lo;
 			{
 				irqflags_t flags = cpu_irq_save();
 				l_pll_lo = g_1pps_last_lo - C_TCC1_MEAN_OFFSET;
@@ -1756,22 +1799,28 @@ static void task_twi2_lcd__pll(void)
 				g_1pps_printtwi_avail = false;
 			}
 
+			/* Negative phase */
+			if ((l_pll_lo > 15000) && (l_pll_lo <= 30000)) {
+				l_pll_lo -= 30000;
+			}
+
 			/* LED green/red */
 			twi2_set_leds(g_1pps_led);
+
+			/* Length of the bar */
+			uint16_t len_y = (l_pll_lo + pos_y_mul * 500) % (pos_y_mul << 1);
 
 			/* Clear old line */
 			task_twi2_lcd_rect(size_x - width, pos_y_top, width, size_y - pos_y_top, true, GFX_PIXEL_CLR);
 
 			/* Draw new line */
-			if (l_pll_lo >= 0) {
+			if (len_y < pos_y_mul) {
 				/* Positive phase */
-				uint8_t len_y = (uint8_t) (((uint32_t) (pos_y_mul + l_pll_lo)) % pos_y_mul);
-				task_twi2_lcd_rect(size_x - width, pos_y_mid - len_y, width, len_y, false, GFX_PIXEL_SET);
+				task_twi2_lcd_rect(size_x - width, pos_y_mid - len_y,	width, len_y,						false, GFX_PIXEL_SET);
 
 			} else {
 				/* Negative phase */
-				uint8_t len_y = (uint8_t) (((uint32_t) (pos_y_mul - l_pll_lo)) % pos_y_mul);
-				task_twi2_lcd_rect(size_x - width, pos_y_mid, width, len_y, false, GFX_PIXEL_SET);
+				task_twi2_lcd_rect(size_x - width, pos_y_mid,			width, (pos_y_mul << 1) - len_y,	false, GFX_PIXEL_SET);
 			}
 		}
 	}

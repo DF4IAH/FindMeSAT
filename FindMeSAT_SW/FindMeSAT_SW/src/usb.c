@@ -287,7 +287,7 @@ void usb_init(void)
 	if (g_usb_cdc_stdout_enabled) {
 		stdio_usb_enable();
 	}
-	delay_ms(750);
+	delay_s(2);
 
 	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_USBINIT_HEADER_1);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
