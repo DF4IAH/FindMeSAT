@@ -62,7 +62,7 @@
 #define TWI_SMART_LCD_CMD_SHOW_POS_HEIGHT							0x8D
 
 // Delay definitions
-#define TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US					   1
+#define TWI_SMART_LCD_DEVICE_SIMPLE_DELAY_MIN_US					  25
 #define TWI_SMART_LCD_DEVICE_BUSY_DELAY_MIN_US						 100
 #define TWI_SMART_LCD_DEVICE_TCXOPWM_DELAY_MIN_US					1000
 
@@ -396,7 +396,7 @@ status_code_t twi1_gyro_gyro_offset_set(void);
 status_code_t twi1_gyro_accel_offset_set(void);
 void init_twi1_gyro(void);
 // void task_twi1_onboard(void);
-void start_twi2_lcd(void);
+uint8_t start_twi2_lcd(void);
 
 void task_twi2_lcd_reset(void);
 void task_twi2_lcd_cls(void);
