@@ -15,5 +15,5 @@ GPS assisted tracking device with GSM (SMS & GPRS) and Bluetooth connectivity.
 * __VHF/UHF antenna: external passive antenna__ via SMA connector
 * __LiPo: 1-cell 3.7V__ (high power request by the SIM808 device to be satisfied)
 
-###Current PCB overview:
+### Current PCB overview:
 ![current PCB overview](https://raw.githubusercontent.com/DF4IAH/FindMeSAT/master/Docs/64_Redesign_1V3/Placement/2_Eagle-Layout_b.png)
