@@ -222,8 +222,9 @@ uint8_t						g_twi2_lcd_version								= 0;
 volatile bool				g_twi2_lcd_repaint								= false;
 
 bool						g_ax_enable										= false;	// EEPROM
-bool						g_ax_pocsag_enable								= false;	// EEPROM
 bool						g_ax_aprs_enable								= false;	// EEPROM
+bool						g_ax_pocsag_enable								= false;	// EEPROM
+AX_SET_TX_RX_MODE_t			g_ax_set_tx_rx_mode								= AX_SET_TX_RX_MODE_OFF;	// EEPROM
 struct spi_device			g_ax_spi_device_conf							= { 0 };
 volatile uint8_t			g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH]	= { 0 };
 volatile uint32_t			g_ax_spi_freq_chan[2]							= { 0 };
@@ -785,8 +786,12 @@ static void init_globals(void)
 			g_ax_pocsag_chime_enable	= val_ui8 & AX__POCSAG_CHIME_ENABLE;
 		}
 
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_MON_MODE, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
+			g_ax_set_tx_rx_mode			= (AX_SET_TX_RX_MODE_t) val_ui8;
+		}
+
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_RIC, &val_ui32, sizeof(val_ui32)) == STATUS_OK) {
-			g_ax_pocsag_individual_ric = val_ui32;
+			g_ax_pocsag_individual_ric	= val_ui32;
 		}
 
 		g_ax_spi_freq_chan[0]	= 0;
@@ -1005,6 +1010,8 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 						| (g_ax_pocsag_chime_enable	?  AX__POCSAG_CHIME_ENABLE	: 0x00);
 
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_BF,				&val_ui8,							sizeof(val_ui8));
+		val_ui8 = (uint8_t) g_ax_set_tx_rx_mode;
+		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_MON_MODE,			&val_ui8,							sizeof(val_ui8));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_RIC,		&g_ax_pocsag_individual_ric,		sizeof(g_ax_pocsag_individual_ric));
 	}
 
@@ -1868,6 +1875,15 @@ void keyBeep_enable(bool enable)
 	g_keyBeep_enable = enable;
 
 	save_globals(EEPROM_SAVE_BF__BEEP);
+}
+
+void monitor_mode(AX_SET_TX_RX_MODE_t mode)
+{
+	irqflags_t flags = cpu_irq_save();
+	g_ax_set_tx_rx_mode = mode;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__AX);
 }
 
 void pitchTone_mode(uint8_t mode)
@@ -3508,6 +3524,14 @@ static void task_main_aprs_pocsag(void)
 	if ( s_lock ||
 		(s_now_sec == l_now_sec) ||
 		!g_gns_fix_status) {
+		/* Set requested monitor mode */
+		{
+			irqflags_t flags = cpu_irq_save();
+			AX_SET_TX_RX_MODE_t l_ax_set_tx_rx_mode = g_ax_set_tx_rx_mode;
+			cpu_irq_restore(flags);
+
+			spi_ax_setTxRxMode(l_ax_set_tx_rx_mode);
+		}
 		return;
 	}
 
@@ -3954,6 +3978,15 @@ static void task_main_aprs_pocsag(void)
 
 	/* Single thread finished */
 	s_lock = false;
+
+	/* Set requested monitor mode */
+	{
+		irqflags_t flags = cpu_irq_save();
+		AX_SET_TX_RX_MODE_t l_ax_set_tx_rx_mode = g_ax_set_tx_rx_mode;
+		cpu_irq_restore(flags);
+
+		spi_ax_setTxRxMode(l_ax_set_tx_rx_mode);
+	}
 }
 
 void task(void)

@@ -85,6 +85,9 @@ const char					PM_HELP_INFO_3[]						=	"\t\t- 0x02: SIM808.\r\n";
 const char					PM_HELP_INFO_4[]						=	"\t\t- 0x04: 1PPS/PLL.\r\n";
 const char					PM_HELP_KB_1[]							= "kb=\t\t0: key beep OFF, 1: ON.\r\n";
 const char					PM_HELP_M_1[]							= "m=\t\tPOCSAG messages to send.\r\n";
+const char					PM_HELP_MON_1[]							= "mon=\t\to(ff) Turn VHF/UHF monitoring off.\r\n";
+const char					PM_HELP_MON_2[]							= "\t\t\ta(prs) Monitor APRS messages / AX25 UI packets.\r\n";
+const char					PM_HELP_MON_3[]							= "\t\t\tp(ocsag) Monitor POCSAG messages.\r\n";
 const char					PM_HELP_PT_1[]							= "pt=\t\t0: pitch tone OFF, ";
 const char					PM_HELP_PT_2[]							=	"1: turn speed, 2: variometer.\r\n";
 const char					PM_HELP_QNH_AUTO_1[]					= "qnh=\t\tauto: height is taken from GPS.\r\n";
@@ -147,6 +150,9 @@ PROGMEM_DECLARE(const char, PM_HELP_INFO_3[]);
 PROGMEM_DECLARE(const char, PM_HELP_INFO_4[]);
 PROGMEM_DECLARE(const char, PM_HELP_KB_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_M_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_MON_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_MON_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_MON_3[]);
 PROGMEM_DECLARE(const char, PM_HELP_PT_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_PT_2[]);
 PROGMEM_DECLARE(const char, PM_HELP_QNH_AUTO_1[]);
@@ -233,6 +239,10 @@ void printHelp(void)
 
 	udi_write_tx_msg_P(PM_HELP_M_1);
 
+	udi_write_tx_msg_P(PM_HELP_MON_1);
+	udi_write_tx_msg_P(PM_HELP_MON_2);
+	udi_write_tx_msg_P(PM_HELP_MON_3);
+
 	udi_write_tx_msg_P(PM_HELP_PT_1);
 	udi_write_tx_msg_P(PM_HELP_PT_2);
 
@@ -297,6 +307,9 @@ const char					PM_IP_CMD_help[]						= "help";
 const char					PM_IP_CMD_info[]						= "info=";
 const char					PM_IP_CMD_kb[]							= "kb=";
 const char					PM_IP_CMD_m[]							= "m=";
+const char					PM_IP_CMD_mon_off[]						= "mon=off";
+const char					PM_IP_CMD_mon_aprs[]					= "mon=a";
+const char					PM_IP_CMD_mon_pocsag[]					= "mon=p";
 const char					PM_IP_CMD_pt[]							= "pt=";
 const char					PM_IP_CMD_qnh_auto[]					= "qnh=auto";
 const char					PM_IP_CMD_qnh_m[]						= "qnh_m=";
@@ -343,6 +356,9 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_help[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_info[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_kb[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_m[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_mon_off[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_mon_aprs[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_mon_pocsag[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_pt[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_qnh_auto[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_qnh_m[]);
@@ -522,6 +538,15 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_m,		sizeof(PM_IP_CMD_m) - 1)) {
 			pocsag_message_send(cmdLine_buf + (sizeof(PM_IP_CMD_m) - 1));
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_mon_off,		sizeof(PM_IP_CMD_mon_off) - 1)) {
+			monitor_mode(AX_SET_TX_RX_MODE_OFF);
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_mon_aprs,		sizeof(PM_IP_CMD_mon_aprs) - 1)) {
+			monitor_mode(AX_SET_TX_RX_MODE_ARPS_RX_CONT);
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_mon_pocsag,		sizeof(PM_IP_CMD_mon_pocsag) - 1)) {
+			monitor_mode(AX_SET_TX_RX_MODE_POCSAG_RX_CONT);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_pt,				sizeof(PM_IP_CMD_pt) - 1)) {
 			int val[1] = { 0 };

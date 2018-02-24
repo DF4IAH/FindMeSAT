@@ -65,6 +65,111 @@ static void s_spi_start_testBox(void);
 
 
 
+/* ISR routines */
+
+/* PORTC Pin3 - AX5243 IRQ */
+ISR(PORTC_INT0_vect, ISR_BLOCK)
+{
+	static char dbg[16] = { 0 };
+
+	/* IRQREQUEST: check which request is on */
+	spi_ax_transport(false, "< 0c R2 >");														// RD address 0x0C: IRQREQUEST
+	uint16_t ax_spi_irq_request = (uint16_t)g_ax_spi_packet_buffer[0] << 8 | g_ax_spi_packet_buffer[1];
+
+	sprintf(dbg, "r=0x%02X", ax_spi_irq_request);
+	nop();
+
+	/* Reason for interrupt */
+	if (ax_spi_irq_request & _BV(0)) {
+		/* IRQRQFIFONOTEMPTY */
+
+		/* Process FIFO message */
+		isr_spi_ax_fifo_readMessage();
+
+	} else if (ax_spi_irq_request & _BV(4)) {
+		/* IRQRFIFOERROR */
+		nop();
+
+		/* FIFOCMD / FIFOSTAT */
+		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+	} else {
+		/* unknown request */
+		nop();
+	}
+}
+
+void spi_ax_ISR_setFlags(uint8_t flags)
+{
+	if (!flags) {
+		irqflags_t flags = cpu_irq_save();
+
+		/* Disable AX5243 interrupts */
+		{
+			/* FIFOCMD / FIFOSTAT */
+			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+			/* IRQMASK: set to none */
+			spi_ax_transport(false, "< 86 00 00 >");											// WR address 0x06: IRQMASK - clear all flags
+		}
+
+		/* Turn off MCU PORTC interrupts */
+		PORTC_INTCTRL = PORT_INT1LVL_OFF_gc | PORT_INT0LVL_OFF_gc;
+
+		cpu_irq_restore(flags);
+
+	} else {
+		/* PORTC Pin3 --> INT0 */
+		irqflags_t flags = cpu_irq_save();
+
+		/* PORTC Pin3 INPUT */
+		ioport_set_pin_dir(AX_IRQ_PIN, IOPORT_DIR_INPUT);
+
+		/* PORTC Pin3 PULLUP, Falling edge detection */
+		ioport_set_pin_mode(AX_IRQ_PIN, IOPORT_MODE_PULLUP | IOPORT_MODE_FALLING);
+
+		/* Interrupt priority levels for INT1 and INT0 = Low, falling edge */
+		PORTC_INTCTRL = PORT_INT1LVL_OFF_gc | PORT_INT0LVL_LO_gc;
+
+		/* Map PORTC Pin3 --> INT0 */
+		PORTC_INT0MASK = _BV(3);
+		PORTC_INT1MASK = 0;
+
+		/* Enable AX5243 interrupts */
+		{
+			/* FIFOCMD / FIFOSTAT */
+			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+			/* PINFUNCIRQ: set to IRQ source, PULLUP, active LOW */
+			spi_ax_transport(false, "< a4 c3 >");												// WR address 0x24: PINFUNCIRQ - set to IRQ source, PULLUP, active LOW
+
+			/* IRQMASK: set to IRQMFIFONOTEMPTY, IRQMFIFOERROR */
+			spi_ax_transport(false, "< 86 00 11 >");											// WR address 0x06: IRQMASK - set to IRQMFIFONOTEMPTY, IRQMFIFOERROR
+		}
+
+		/* Clear any pending INT1 / INT0 interrupts */
+		PORTC_INTFLAGS = 0b00000011;
+
+		cpu_irq_restore(flags);
+	}
+}
+
+void isr_spi_ax_fifo_readMessage(void)
+{
+	/* Read the length of the message within the FIFO */
+	spi_ax_transport(false, "< 2a R2 >");														// RD address 0x2A: FIFOCOUNT
+	uint16_t msgLen = (uint16_t)g_ax_spi_packet_buffer[0] << 8 | g_ax_spi_packet_buffer[1];
+
+	nop();
+
+	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
+	spi_read_packet(&SPI_AX, g_ax_spi_packet_buffer, msgLen);
+	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
+
+	nop();
+}
+
+
 inline
 static uint8_t s_sel_u8_from_u32(uint32_t in_u32, uint8_t sel)
 {
@@ -677,6 +782,7 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 					spi_ax_initRegisters_PR1200();
 					spi_ax_initRegisters_PR1200_Rx();
 					spi_ax_initRegisters_PR1200_Rx_cont();
+					spi_ax_ISR_setFlags(0xff);
 				}
 
 				/* Overwrite with variant settings */
@@ -687,6 +793,7 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 						case AX_SET_REGISTERS_VARIANT_TX:
 						{
 							spi_ax_initRegisters_PR1200_Tx();
+							spi_ax_ISR_setFlags(0x00);
 						}
 						break;
 
@@ -694,6 +801,7 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 						{
 							spi_ax_initRegisters_PR1200_Rx();
 							spi_ax_initRegisters_PR1200_Rx_WoR();
+							spi_ax_ISR_setFlags(0xff);
 						}
 						break;
 
@@ -702,6 +810,7 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 						{
 							spi_ax_initRegisters_PR1200_Rx();
 							spi_ax_initRegisters_PR1200_Rx_cont();
+							spi_ax_ISR_setFlags(0xff);
 						}
 						break;
 
@@ -709,6 +818,7 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 						{
 							spi_ax_initRegisters_PR1200_Rx();
 							spi_ax_initRegisters_PR1200_Rx_cont_SingleParamSet();
+							spi_ax_ISR_setFlags(0xff);
 						}
 						break;
 
@@ -729,6 +839,7 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 					spi_ax_initRegisters_POCSAG();
 					spi_ax_initRegisters_POCSAG_Rx();
 					spi_ax_initRegisters_POCSAG_Rx_cont();
+					spi_ax_ISR_setFlags(0xff);
 				}
 
 				/* Overwrite with variant settings */
@@ -739,6 +850,7 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 						case AX_SET_REGISTERS_VARIANT_TX:
 						{
 							spi_ax_initRegisters_POCSAG_Tx();
+							spi_ax_ISR_setFlags(0x00);
 						}
 						break;
 
@@ -746,6 +858,7 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 						{
 							spi_ax_initRegisters_POCSAG_Rx();
 							spi_ax_initRegisters_POCSAG_Rx_WoR();
+							spi_ax_ISR_setFlags(0xff);
 						}
 						break;
 
@@ -754,6 +867,7 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 						{
 							spi_ax_initRegisters_POCSAG_Rx();
 							spi_ax_initRegisters_POCSAG_Rx_cont();
+							spi_ax_ISR_setFlags(0xff);
 						}
 						break;
 
@@ -761,7 +875,8 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 						case AX_SET_REGISTERS_VARIANT_RX_CONT_SINGLEPARAMSET:
 						{
 							spi_ax_initRegisters_POCSAG_Rx();
-							spi_ax_initRegisters_POCSAG_Rx_cont_SingleParamSet();
+							spi_ax_initRegisters_POCSAG_Rx_cont();
+							spi_ax_ISR_setFlags(0xff);
 						}
 						break;
 						#endif
@@ -1337,7 +1452,7 @@ void spi_ax_util_FIFO_waitFree(uint8_t neededSpace)
 
 	do {
 		/* FIFOFREE */
-		spi_ax_transport(false, "< 2c R2 >");											// RD address 0x2C: FIFOFREE
+		spi_ax_transport(false, "< 2c R2 >");													// RD address 0x2C: FIFOFREE
 		fifoFree = 0x1ff & (((uint16_t)g_ax_spi_packet_buffer[0] << 8) | g_ax_spi_packet_buffer[1]);
 	} while (fifoFree < neededSpace);
 }
@@ -3616,6 +3731,33 @@ static uint8_t s_spi_ax_cal_vcoi(void)
     return vcoiRet;
 }
 #endif
+
+
+void spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_t mode)
+{
+	static AX_SET_TX_RX_MODE_t lastMode = AX_SET_TX_RX_MODE_OFF;
+
+	if (lastMode != mode) {
+		lastMode = mode;
+
+		switch (mode) {
+			case AX_SET_TX_RX_MODE_ARPS_RX_WOR:
+			case AX_SET_TX_RX_MODE_ARPS_RX_CONT:
+			case AX_SET_TX_RX_MODE_ARPS_RX_CONT_SINGLEPARAMSET:
+				spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_PR1200, AX_SET_REGISTERS_VARIANT_RX_CONT, AX_SET_REGISTERS_POWERMODE_FULLRX);
+			break;
+
+			case AX_SET_TX_RX_MODE_POCSAG_RX_WOR:
+			case AX_SET_TX_RX_MODE_POCSAG_RX_CONT:
+			case AX_SET_TX_RX_MODE_POCSAG_RX_CONT_SINGLEPARAMSET:
+				spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_POCSAG, AX_SET_REGISTERS_VARIANT_RX_CONT, AX_SET_REGISTERS_POWERMODE_FULLRX);
+			break;
+
+			default:
+				spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_INVALIDATE, AX_SET_REGISTERS_VARIANT_INVALIDATE, AX_SET_REGISTERS_POWERMODE_DEEPSLEEP);
+		}
+	}
+}
 
 
 void spi_init(void) {
