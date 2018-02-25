@@ -227,6 +227,9 @@ bool						g_ax_pocsag_enable								= false;	// EEPROM
 AX_SET_TX_RX_MODE_t			g_ax_set_tx_rx_mode								= AX_SET_TX_RX_MODE_OFF;	// EEPROM
 struct spi_device			g_ax_spi_device_conf							= { 0 };
 volatile uint8_t			g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH]	= { 0 };
+volatile uint8_t			g_ax_spi_rx_buffer[C_SPI_AX_BUFFER_LENGTH]		= { 0 };
+volatile uint16_t			g_ax_spi_rx_buffer_idx							= 0;
+volatile bool				g_ax_spi_rx_fifo_doService						= false;
 volatile uint32_t			g_ax_spi_freq_chan[2]							= { 0 };
 volatile uint8_t			g_ax_spi_range_chan[2]							= { 0 };
 volatile uint8_t			g_ax_spi_vcoi_chan[2]							= { 0 };
@@ -1425,10 +1428,17 @@ void ax_enable(bool enable)
 	save_globals(EEPROM_SAVE_BF__AX);
 
 	if (enable) {
-		spi_ax_init_PR1200_Tx();
+		/* Set requested monitor mode */
+		{
+			irqflags_t flags = cpu_irq_save();
+			AX_SET_TX_RX_MODE_t l_ax_set_tx_rx_mode = g_ax_set_tx_rx_mode;
+			cpu_irq_restore(flags);
+
+			spi_ax_setTxRxMode(l_ax_set_tx_rx_mode);
+		}
 
 	} else {
-		spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_OFF);
 	}
 }
 
@@ -1912,7 +1922,7 @@ void pocsag_message_send(const char msg[])
 		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 		/* Switch to POCSAG mode */
-		spi_ax_init_POCSAG_Tx();
+		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
 		/* Transmit POCSAG message */
 		if (spi_ax_run_POCSAG_Tx_FIFO_Msg(g_ax_pocsag_individual_ric, ax_pocsag_analyze_msg_tgtFunc_get(msg, msgLen), msg, msgLen)) {
@@ -1947,7 +1957,7 @@ void pocsag_send_skyper_activation(void)
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 	/* Switch to POCSAG mode */
-	spi_ax_init_POCSAG_Tx();
+	spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
 	/* Activate Skyper */
 	{
@@ -3535,6 +3545,9 @@ static void task_main_aprs_pocsag(void)
 		return;
 	}
 
+	/* Store new second */
+	s_now_sec = l_now_sec;
+
 	/* do not send when APRS and POCSAG is disabled */
 	if (!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && (g_ax_aprs_enable || g_ax_pocsag_enable)))) {
 		return;
@@ -3542,9 +3555,6 @@ static void task_main_aprs_pocsag(void)
 
 	/* Single thread lock */
 	s_lock = true;
-
-	/* Store new second */
-	s_now_sec = l_now_sec;
 
 	/* Get a copy from the global variables */
 	{
@@ -3573,7 +3583,7 @@ static void task_main_aprs_pocsag(void)
 		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 		/* Switch to POCSAG mode */
-		spi_ax_init_POCSAG_Tx();
+		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
 		/* POCSAG Skyper clock for every new minute (chime) */
 		if (!calDat.second && g_ax_pocsag_chime_enable) {
@@ -3925,7 +3935,7 @@ static void task_main_aprs_pocsag(void)
 			const uint8_t ssidAry[]	= { 0, 8, 1, 2 };
 
 			/* Switch APRS mode (handled by PR1200) */
-			spi_ax_init_PR1200_Tx();
+			spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_ARPS_TX);
 
 			/* Transmit APRS message */
 			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, sizeof(addrAry) / C_PR1200_CALL_LENGTH,  l_msg_buf, l_msg_buf_len);
@@ -3979,7 +3989,7 @@ static void task_main_aprs_pocsag(void)
 	/* Single thread finished */
 	s_lock = false;
 
-	/* Set requested monitor mode */
+	/* After transmission set requested monitor mode, again */
 	{
 		irqflags_t flags = cpu_irq_save();
 		AX_SET_TX_RX_MODE_t l_ax_set_tx_rx_mode = g_ax_set_tx_rx_mode;
@@ -3994,11 +4004,12 @@ void task(void)
 	if (g_workmode == WORKMODE_RUN) {
 		/* TASK when woken up and all ISRs are done */
 		/* note: ADC and DAC are handled by the scheduler */
+		task_env_calc();																		// Environment simulation calculations
 		task_serial();																			// Handle serial communication with the SIM808
 		task_twi();																				// Handle (TWI1 and) TWI2 communications
 		task_usb();																				// Handling the USB connection
+		task_spi_ax();																			// Handling the AX5243 data transfer
 		task_main_pll();																		// Handling the 1PPS PLL system
-		task_env_calc();																		// Environment simulation calculations
 		task_main_aprs_pocsag();																// Handling the APRS alerts and POCSAG messages
 
 		/* Send debug message via Skyper */
@@ -4091,7 +4102,7 @@ int main(void)
 			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 			/* Switch to POCSAG mode */
-			spi_ax_init_POCSAG_Tx();
+			spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
 			for (int calCnt = 400; calCnt; calCnt--) {
 				spi_ax_util_POCSAG_Tx_FIFO_Preamble();
@@ -4121,7 +4132,7 @@ int main(void)
 				spi_ax_transport(false, "< a8 03 >");											// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 				/* Switch from APRS mode to POCSAG */
-				spi_ax_init_POCSAG_Tx();
+				spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
 				/* Transmit POCSAG message */
 				uint8_t tstBufLen = (uint8_t) strlen(tstBuf);
@@ -4158,7 +4169,7 @@ int main(void)
 				spi_ax_transport(false, "< a8 03 >");											// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 				/* Switch to APRS (PR1200) mode */
-				spi_ax_init_PR1200_Tx();
+				spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_APRS_TX);
 
 				/* Enter an APRS UI frame */
 				spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, 4, aprsMsg, strlen(aprsMsg));

@@ -192,6 +192,10 @@ extern bool							g_ax_pocsag_enable;
 extern AX_SET_TX_RX_MODE_t			g_ax_set_tx_rx_mode;
 extern struct spi_device			g_ax_spi_device_conf;
 extern uint8_t						g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH];
+extern uint8_t						g_ax_spi_rx_buffer[C_SPI_AX_BUFFER_LENGTH];
+extern uint16_t						g_ax_spi_rx_buffer_idx;
+extern bool							g_ax_spi_rx_fifo_doService;
+
 extern uint32_t						g_ax_spi_freq_chan[2];
 extern uint8_t						g_ax_spi_range_chan[2];
 extern uint8_t						g_ax_spi_vcoi_chan[2];

@@ -291,9 +291,14 @@ void spi_ax_init_AnalogFM_Tx(void);
 void spi_ax_init_AnalogFM_Rx(void);
 
 void spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_t mode);
+uint8_t spi_ax_doProcess_RX_messages(uint16_t msgLen);
+void spi_ax_Rx_FIFO_DataProcessor(AX_SET_TX_RX_MODE_t txRxMode, const uint8_t* dataBuf, uint16_t dataLen);
 
 void spi_init(void);
 void spi_start(void);
+
+void task_spi_ax(void);
+
 
 /* Debugging */
 void spi_ax_monitor_levels(void);
