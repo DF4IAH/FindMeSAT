@@ -891,7 +891,7 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 {
 	/* Version information */
 	{
-		uint32_t version_ui32 = ((uint32_t)(20000 + VERSION_HIGH) * 1000) + (uint32_t)VERSION_LOW;
+		uint32_t version_ui32 = (uint32_t)VERSION;
 		for (uint8_t idx = 0; idx < 8; ++idx) {
 			uint8_t pad = '0' + (version_ui32 % 10);
 			nvm_write(INT_EEPROM, EEPROM_ADDR__VERSION + (7 - idx), (void*)&pad,					sizeof(pad));
@@ -3436,8 +3436,8 @@ static void task_env_calc(void)
 		float temp_twi1_mean;
 		float temp_env;
 		float temp_env_round;
-		int16_t	l_env_temp_deg_100;
-		int16_t	l_env_hygro_RH_100;
+		int16_t	l_env_temp_deg_100 = 0;
+		int16_t	l_env_hygro_RH_100 = 0;
 		int16_t l_twi1_hygro_DP_100;
 		int16_t l_env_temp_delta_100;
 
@@ -3450,14 +3450,31 @@ static void task_env_calc(void)
 		cpu_irq_restore(flags);
 
 		/* Mean temperature of the Barometer and the Hygrometer chip */
-		temp_twi1_mean		= ((float)l_twi1_baro_temp_100 + (float)l_twi1_hygro_T_100) / 200.f;
-		temp_env			= temp_twi1_mean - (l_env_temp_delta_100 / 100.f);
-		temp_env_round		= (temp_env >= 0.f) ?  0.5f : -0.5f;
-		l_env_temp_deg_100	= (int16_t) (temp_env_round + 100.f * temp_env);
+		if (g_twi1_hygro_valid && g_twi1_baro_valid) {
+			/* Both sensors are available - mix data */
+			temp_twi1_mean		= ((float)l_twi1_baro_temp_100 + (float)l_twi1_hygro_T_100) / 200.f;
+			temp_env			= temp_twi1_mean - (l_env_temp_delta_100 / 100.f);
+			temp_env_round		= (temp_env >= 0.f) ?  0.5f : -0.5f;
+			l_env_temp_deg_100	= (int16_t) (temp_env_round + 100.f * temp_env);
+
+		} else if (g_twi1_hygro_valid) {
+			/* Only hygro is available */
+			temp_twi1_mean		= (float)l_twi1_hygro_T_100 / 100.f;
+			temp_env			= temp_twi1_mean - (l_env_temp_delta_100 / 100.f);
+			temp_env_round		= (temp_env >= 0.f) ?  0.5f : -0.5f;
+			l_env_temp_deg_100	= (int16_t) (temp_env_round + 100.f * temp_env);
+
+		} else if (g_twi1_baro_valid) {
+			/* Only baro is available */
+			temp_twi1_mean		= (float)l_twi1_baro_temp_100 / 100.f;
+			temp_env			= temp_twi1_mean - (l_env_temp_delta_100 / 100.f);
+			temp_env_round		= (temp_env >= 0.f) ?  0.5f : -0.5f;
+			l_env_temp_deg_100	= (int16_t) (temp_env_round + 100.f * temp_env);
+		}
 
 		/* Rel. humidity correction for environment temperature */
 		/* @see https://www.wetterochs.de/wetter/feuchte.html */
-		{
+		if (g_twi1_hygro_valid) {
 			// const float K1	= 6.1078f;
 			float td			= l_twi1_hygro_DP_100 / 100.f;
 			float calc_a;
