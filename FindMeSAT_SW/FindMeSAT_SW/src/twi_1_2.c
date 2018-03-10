@@ -375,7 +375,6 @@ static void init_twi1_hygro(void)
 		if (sc != STATUS_OK) {
 			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_TWI1_INIT_HYGRO_02);
 			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-			break;
 		}
 		delay_ms(2);
 
