@@ -10502,7 +10502,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="GND1012" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="C1012" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="+3V3_1011" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R1012" library="rcl" deviceset="R-EU_" device="R0603" value="270kR"/>
+<part name="R1012" library="rcl" deviceset="R-EU_" device="R0603" value="330kR"/>
 <part name="R1011" library="rcl" deviceset="R-EU_" device="R0603" value="100kR"/>
 <part name="GND1011" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="D1122" library="df4iah_diode" deviceset="CRS08" device=""/>
@@ -10542,7 +10542,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="R1112" library="rcl" deviceset="R-EU_" device="R0603" value="6.04kR"/>
 <part name="R1111" library="rcl" deviceset="R-EU_" device="R0603" value="4.02kR"/>
 <part name="GND1112" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="R1141" library="rcl" deviceset="R-EU_" device="R0603" value="4.02kR"/>
+<part name="R1141" library="rcl" deviceset="R-EU_" device="R0603" value="100pF"/>
 <part name="GND1141" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="U1021" library="df4iah_opamp" deviceset="OPA354" device=""/>
 <part name="GND1021" library="df4iah_supply" deviceset="GND" device=""/>
@@ -12169,6 +12169,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <description>Hygro</description>
 <plain>
 <text x="104.14" y="68.58" size="1.778" layer="97">I2C address = 1000100</text>
+<text x="143.764" y="90.424" size="1.778" layer="97">&lt;-- cut nRESET line here!</text>
 </plain>
 <instances>
 <instance part="FRAME5" gate="G$1" x="0" y="0"/>
