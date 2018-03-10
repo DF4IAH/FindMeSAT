@@ -164,9 +164,21 @@ static inline status_code_t twim_release(void)
 	 * other than a transfer in-progress, then test the bus interface
 	 * for an Idle bus state.
 	 */
-	while (OPERATION_IN_PROGRESS == transfer.status);
+	uint16_t toCtr;
 
-	while (! twim_idle(transfer.bus)) { barrier(); }
+	do {
+		toCtr = 0xffffU;
+		while ((OPERATION_IN_PROGRESS == transfer.status) && (--toCtr > 0)) { barrier(); }
+		if (!toCtr) {
+			return ERR_TIMEOUT;
+		}
+
+		toCtr = 0xffffU;
+		while ((! twim_idle(transfer.bus)) && (--toCtr > 0)) { barrier(); }
+		if (!toCtr) {
+			return ERR_TIMEOUT;
+		}
+	} while (false);
 
 	status_code_t const status = transfer.status;
 
