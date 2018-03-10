@@ -10519,7 +10519,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="GND1012" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="C1012" library="rcl" deviceset="C-EU" device="C0603" value="100nF"/>
 <part name="+3V3_1011" library="df4iah_supply" deviceset="+3V3" device=""/>
-<part name="R1012" library="rcl" deviceset="R-EU_" device="R0603" value="270kR"/>
+<part name="R1012" library="rcl" deviceset="R-EU_" device="R0603" value="330kR"/>
 <part name="R1011" library="rcl" deviceset="R-EU_" device="R0603" value="100kR"/>
 <part name="GND1011" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="D1122" library="df4iah_diode" deviceset="CRS08" device=""/>

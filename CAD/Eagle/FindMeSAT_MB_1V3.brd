@@ -48,8 +48,8 @@
 <layer number="48" name="Document" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="49" name="Reference" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="50" name="dxf" color="7" fill="1" visible="no" active="no"/>
-<layer number="51" name="tDocu" color="7" fill="1" visible="no" active="yes"/>
-<layer number="52" name="bDocu" color="7" fill="1" visible="no" active="yes"/>
+<layer number="51" name="tDocu" color="7" fill="1" visible="yes" active="yes"/>
+<layer number="52" name="bDocu" color="7" fill="1" visible="yes" active="yes"/>
 <layer number="53" name="tGND_GNDA" color="7" fill="9" visible="no" active="no"/>
 <layer number="54" name="bGND_GNDA" color="1" fill="9" visible="no" active="no"/>
 <layer number="56" name="wert" color="7" fill="1" visible="no" active="no"/>
@@ -2484,7 +2484,7 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <attribute name="NAME" x="69.596" y="23.368" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="69.469" y="27.432" size="0.6096" layer="28" rot="MR90"/>
 </element>
-<element name="R1012" library="rcl" package="R0603" value="270kR" x="67.691" y="33.02" smashed="yes" rot="MR0">
+<element name="R1012" library="rcl" package="R0603" value="330kR" x="67.691" y="33.02" smashed="yes" rot="MR0">
 <attribute name="NAME" x="68.961" y="33.909" size="0.6096" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="68.453" y="32.766" size="0.6096" layer="28" rot="MR0"/>
 </element>
