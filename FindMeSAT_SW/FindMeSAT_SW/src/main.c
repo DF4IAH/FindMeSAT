@@ -207,14 +207,18 @@ uint16_t					g_twi1_baro_version								= 0;
 volatile uint16_t			g_twi1_baro_c[C_TWI1_BARO_C_CNT]				= { 0 };
 volatile uint32_t			g_twi1_baro_d1									= 0UL;
 volatile uint32_t			g_twi1_baro_d2									= 0UL;
+volatile int16_t			g_twi1_baro_temp_cor_100						= 0L;
 volatile int32_t			g_twi1_baro_temp_100							= 0L;
+volatile int16_t			g_twi1_baro_p_cor_100							= 0L;
 volatile int32_t			g_twi1_baro_p_100								= 0L;
 
 bool						g_twi1_hygro_valid								= false;
 volatile uint16_t			g_twi1_hygro_status								= 0;
 volatile uint16_t			g_twi1_hygro_S_T								= 0;
 volatile uint16_t			g_twi1_hygro_S_RH								= 0;
+volatile int16_t			g_twi1_hygro_T_cor_100							= 0;
 volatile int16_t			g_twi1_hygro_T_100								= 0;
+volatile int16_t			g_twi1_hygro_RH_cor_100							= 0;
 volatile int16_t			g_twi1_hygro_RH_100								= 0;
 volatile int16_t			g_twi1_hygro_DP_100								= 0;
 
@@ -222,10 +226,14 @@ uint8_t						g_twi2_lcd_version								= 0;
 volatile bool				g_twi2_lcd_repaint								= false;
 
 bool						g_ax_enable										= false;	// EEPROM
-bool						g_ax_pocsag_enable								= false;	// EEPROM
 bool						g_ax_aprs_enable								= false;	// EEPROM
+bool						g_ax_pocsag_enable								= false;	// EEPROM
+AX_SET_TX_RX_MODE_t			g_ax_set_tx_rx_mode								= AX_SET_TX_RX_MODE_OFF;	// EEPROM
 struct spi_device			g_ax_spi_device_conf							= { 0 };
 volatile uint8_t			g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH]	= { 0 };
+volatile uint8_t			g_ax_spi_rx_buffer[C_SPI_AX_BUFFER_LENGTH]		= { 0 };
+volatile uint16_t			g_ax_spi_rx_buffer_idx							= 0;
+volatile bool				g_ax_spi_rx_fifo_doService						= false;
 volatile uint32_t			g_ax_spi_freq_chan[2]							= { 0 };
 volatile uint8_t			g_ax_spi_range_chan[2]							= { 0 };
 volatile uint8_t			g_ax_spi_vcoi_chan[2]							= { 0 };
@@ -660,6 +668,54 @@ static void init_globals(void)
 		int16_t val_i16	= 0;
 		uint8_t val_ui8	= 0;
 
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_BARO_TEMP_DELTA, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_twi1_baro_temp_cor_100 = val_i16;
+			cpu_irq_restore(flags);
+
+			/* Validity check */
+			if (g_twi1_baro_temp_cor_100 < -1000 || g_twi1_baro_temp_cor_100 > 10000) {
+				g_twi1_baro_temp_cor_100 = 0;
+				save_globals(EEPROM_SAVE_BF__ENV);
+			}
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_BARO_PRES_DELTA, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_twi1_baro_p_cor_100 = val_i16;
+			cpu_irq_restore(flags);
+
+			/* Validity check */
+			if (g_twi1_baro_p_cor_100 < -1000 || g_twi1_baro_p_cor_100 > 10000) {
+				g_twi1_baro_p_cor_100 = 0;
+				save_globals(EEPROM_SAVE_BF__ENV);
+			}
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_HYGRO_TEMP_DELTA, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_twi1_hygro_T_cor_100 = val_i16;
+			cpu_irq_restore(flags);
+
+			/* Validity check */
+			if (g_twi1_hygro_T_cor_100 < -1000 || g_twi1_hygro_T_cor_100 > 10000) {
+				g_twi1_hygro_T_cor_100 = 0;
+				save_globals(EEPROM_SAVE_BF__ENV);
+			}
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_HYGRO_RH_DELTA, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_twi1_hygro_RH_cor_100 = val_i16;
+			cpu_irq_restore(flags);
+
+			/* Validity check */
+			if (g_twi1_hygro_RH_cor_100 < -1000 || g_twi1_hygro_RH_cor_100 > 10000) {
+				g_twi1_hygro_RH_cor_100 = 0;
+				save_globals(EEPROM_SAVE_BF__ENV);
+			}
+		}
+
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_TEMP_DELTA, &val_i16, sizeof(val_i16)) == STATUS_OK) {
 			irqflags_t flags = cpu_irq_save();
 			g_env_temp_delta_100 = val_i16;
@@ -690,6 +746,7 @@ static void init_globals(void)
 				save_globals(EEPROM_SAVE_BF__ENV);
 			}
 		}
+
 	}
 
 	/* Status lines */
@@ -785,8 +842,12 @@ static void init_globals(void)
 			g_ax_pocsag_chime_enable	= val_ui8 & AX__POCSAG_CHIME_ENABLE;
 		}
 
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_MON_MODE, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
+			g_ax_set_tx_rx_mode			= (AX_SET_TX_RX_MODE_t) val_ui8;
+		}
+
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_RIC, &val_ui32, sizeof(val_ui32)) == STATUS_OK) {
-			g_ax_pocsag_individual_ric = val_ui32;
+			g_ax_pocsag_individual_ric	= val_ui32;
 		}
 
 		g_ax_spi_freq_chan[0]	= 0;
@@ -883,7 +944,7 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 {
 	/* Version information */
 	{
-		uint32_t version_ui32 = ((uint32_t)(20000 + VERSION_HIGH) * 1000) + (uint32_t)VERSION_LOW;
+		uint32_t version_ui32 = (uint32_t)VERSION;
 		for (uint8_t idx = 0; idx < 8; ++idx) {
 			uint8_t pad = '0' + (version_ui32 % 10);
 			nvm_write(INT_EEPROM, EEPROM_ADDR__VERSION + (7 - idx), (void*)&pad,					sizeof(pad));
@@ -930,14 +991,22 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 	/* Environment and QNH settings */
 	if (bf & EEPROM_SAVE_BF__ENV) {
 		irqflags_t flags = cpu_irq_save();
-		int16_t val_i16_1	= g_env_temp_delta_100;
+		int16_t val_i16_1	= g_twi1_baro_temp_cor_100;
+		int16_t val_i16_2	= g_twi1_baro_p_cor_100;
+		int16_t val_i16_3	= g_twi1_hygro_T_cor_100;
+		int16_t val_i16_4	= g_twi1_hygro_RH_cor_100;
+		int16_t val_i16_5	= g_env_temp_delta_100;
 		uint8_t val_ui8		= g_qnh_is_auto;
-		int16_t val_i16_2	= g_qnh_height_m;
+		int16_t val_i16_6	= g_qnh_height_m;
 		cpu_irq_restore(flags);
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_TEMP_DELTA,		(void*)&val_i16_1,					sizeof(val_i16_1));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_AUTO,		(void*)&val_ui8,					sizeof(val_ui8));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS,		(void*)&val_i16_2,					sizeof(val_i16_2));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_BARO_TEMP_DELTA,		(void*)&val_i16_1,					sizeof(val_i16_1));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_BARO_PRES_DELTA,		(void*)&val_i16_2,					sizeof(val_i16_2));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_HYGRO_TEMP_DELTA,	(void*)&val_i16_3,					sizeof(val_i16_3));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_HYGRO_RH_DELTA,		(void*)&val_i16_4,					sizeof(val_i16_4));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_TEMP_DELTA,			(void*)&val_i16_5,					sizeof(val_i16_5));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_AUTO,			(void*)&val_ui8,					sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS,			(void*)&val_i16_6,					sizeof(val_i16_6));
 	}
 
 	/* Status lines */
@@ -1005,6 +1074,8 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 						| (g_ax_pocsag_chime_enable	?  AX__POCSAG_CHIME_ENABLE	: 0x00);
 
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_BF,				&val_ui8,							sizeof(val_ui8));
+		val_ui8 = (uint8_t) g_ax_set_tx_rx_mode;
+		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_MON_MODE,			&val_ui8,							sizeof(val_ui8));
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_RIC,		&g_ax_pocsag_individual_ric,		sizeof(g_ax_pocsag_individual_ric));
 	}
 
@@ -1418,10 +1489,17 @@ void ax_enable(bool enable)
 	save_globals(EEPROM_SAVE_BF__AX);
 
 	if (enable) {
-		spi_ax_init_PR1200_Tx();
+		/* Set requested monitor mode */
+		{
+			irqflags_t flags = cpu_irq_save();
+			AX_SET_TX_RX_MODE_t l_ax_set_tx_rx_mode = g_ax_set_tx_rx_mode;
+			cpu_irq_restore(flags);
+
+			spi_ax_setTxRxMode(l_ax_set_tx_rx_mode);
+		}
 
 	} else {
-		spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_OFF);
 	}
 }
 
@@ -1870,6 +1948,15 @@ void keyBeep_enable(bool enable)
 	save_globals(EEPROM_SAVE_BF__BEEP);
 }
 
+void monitor_mode(AX_SET_TX_RX_MODE_t mode)
+{
+	irqflags_t flags = cpu_irq_save();
+	g_ax_set_tx_rx_mode = mode;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__AX);
+}
+
 void pitchTone_mode(uint8_t mode)
 {
 	/* atomic */
@@ -1896,7 +1983,7 @@ void pocsag_message_send(const char msg[])
 		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 		/* Switch to POCSAG mode */
-		spi_ax_init_POCSAG_Tx();
+		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
 		/* Transmit POCSAG message */
 		if (spi_ax_run_POCSAG_Tx_FIFO_Msg(g_ax_pocsag_individual_ric, ax_pocsag_analyze_msg_tgtFunc_get(msg, msgLen), msg, msgLen)) {
@@ -1931,7 +2018,7 @@ void pocsag_send_skyper_activation(void)
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 	/* Switch to POCSAG mode */
-	spi_ax_init_POCSAG_Tx();
+	spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
 	/* Activate Skyper */
 	{
@@ -1979,6 +2066,74 @@ void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf)
 	g_usb_cdc_printStatusLines_1pps		= bf & PRINT_STATUS_LINES__1PPS		?  true : false;
 
 	save_globals(EEPROM_SAVE_BF__PRINT_STATUS);
+}
+
+void sens_baro_temp(float temp)
+{
+	int16_t l_twi1_baro_temp_cor_100 = 0;
+
+	if (temp > 0.f) {
+		l_twi1_baro_temp_cor_100 = (int16_t) ( 0.5f + 100.f * temp);
+	} else if (temp < 0.f) {
+		l_twi1_baro_temp_cor_100 = (int16_t) (-0.5f + 100.f * temp);
+	}
+
+	irqflags_t flags = cpu_irq_save();
+	g_twi1_baro_temp_cor_100 = l_twi1_baro_temp_cor_100;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__ENV);
+}
+
+void sens_baro_pres(float pres)
+{
+	int16_t l_twi1_baro_p_cor_100 = 0;
+
+	if (pres > 0.f) {
+		l_twi1_baro_p_cor_100 = (int16_t) ( 0.5f + 100.f * pres);
+	} else if (pres < 0.f) {
+		l_twi1_baro_p_cor_100 = (int16_t) (-0.5f + 100.f * pres);
+	}
+
+	irqflags_t flags = cpu_irq_save();
+	g_twi1_baro_p_cor_100 = l_twi1_baro_p_cor_100;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__ENV);
+}
+
+void sens_hygro_temp(float temp)
+{
+	int16_t l_twi1_hygro_T_cor_100 = 0;
+
+	if (temp > 0.f) {
+		l_twi1_hygro_T_cor_100 = (int16_t) ( 0.5f + 100.f * temp);
+	} else if (temp < 0.f) {
+		l_twi1_hygro_T_cor_100 = (int16_t) (-0.5f + 100.f * temp);
+	}
+
+	irqflags_t flags = cpu_irq_save();
+	g_twi1_hygro_T_cor_100 = l_twi1_hygro_T_cor_100;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__ENV);
+}
+
+void sens_hygro_RH(float rh)
+{
+	int16_t l_twi1_hygro_RH_cor_100 = 0;
+
+	if (rh > 0.f) {
+		l_twi1_hygro_RH_cor_100 = (int16_t) ( 0.5f + 100.f * rh);
+	} else if (rh < 0.f) {
+		l_twi1_hygro_RH_cor_100 = (int16_t) (-0.5f + 100.f * rh);
+	}
+
+	irqflags_t flags = cpu_irq_save();
+	g_twi1_hygro_RH_cor_100 = l_twi1_hygro_RH_cor_100;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__ENV);
 }
 
 void shutdown(bool doReset)
@@ -2125,6 +2280,7 @@ static void isr_100ms_main_1pps(void)
 	} else {
 		bool doUpdate				= false;
 		bool inSpan					= false;
+		int32_t l_1pps_processed_lo = 0;
 		int16_t l_1pps_last_diff	= 0;
 
 		/* Timer has adjust to 1PPS */
@@ -2138,13 +2294,15 @@ static void isr_100ms_main_1pps(void)
 		} else {
 			/* Normal operation */
 			if (g_1pps_processed_lo || g_1pps_processed_hi) {
-				/* Calculate diff-time */
-				l_1pps_last_diff = (int16_t)g_1pps_last_lo - (int16_t)g_1pps_processed_lo;
+				/* Calculate offs-time */
+				l_1pps_processed_lo = (C_TCC1_PERIOD + (int32_t)g_1pps_last_lo) % C_TCC1_PERIOD;
+				if (l_1pps_processed_lo >= (C_TCC1_PERIOD >> 1)) {
+					l_1pps_processed_lo -= C_TCC1_PERIOD;
+				}
 
-				/* Border values */
-				if (l_1pps_last_diff < (C_TCC1_BORDER_OFFSET - C_TCC1_PERIOD)) {
-					l_1pps_last_diff += C_TCC1_PERIOD;
-				} else if ((C_TCC1_PERIOD - C_TCC1_BORDER_OFFSET) < l_1pps_last_diff) {
+				/* Calculate diff-time */
+				l_1pps_last_diff = (int16_t) ((C_TCC1_PERIOD + (int32_t)g_1pps_last_lo - (int32_t)g_1pps_processed_lo) % C_TCC1_PERIOD);
+				if (l_1pps_last_diff >= (C_TCC1_PERIOD >> 1)) {
 					l_1pps_last_diff -= C_TCC1_PERIOD;
 				}
 
@@ -2154,16 +2312,24 @@ static void isr_100ms_main_1pps(void)
 					doUpdate	= true;
 				}
 
-				/* Move slowly to meridian */
-				if ((0 <= g_1pps_processed_lo) && (g_1pps_processed_lo < C_TCC1_MEAN_OFFSET)) {									// To early
-					l_1pps_last_diff -= (C_TCC1_MEAN_OFFSET - g_1pps_processed_lo) / 40;
+				/* Phase correction */
+				if ((inSpan || !g_1pps_processed_outOfSync) &&
+					((g_1pps_processed_hi % 1000) == 0)) {
+					int32_t r40 = (rand() * 40L) / RAND_MAX;
 
-				} else if ((C_TCC1_MEAN_OFFSET < g_1pps_processed_lo) && (g_1pps_processed_lo <= (C_TCC1_MEAN_OFFSET << 1))) {	// To late
-					l_1pps_last_diff += (g_1pps_processed_lo - C_TCC1_MEAN_OFFSET) / 40;
+					/* Move slowly to meridian */
+					if (l_1pps_processed_lo <= C_TCC1_MEAN_OFFSET) {								// To early
+						l_1pps_last_diff -= (int16_t) (((C_TCC1_MEAN_OFFSET - l_1pps_processed_lo) + r40) / 40);
+
+					} else {																		// To late
+						l_1pps_last_diff += (int16_t) (((l_1pps_processed_lo - C_TCC1_MEAN_OFFSET) + r40) / 40);
+					}
 				}
 
-				if (inSpan) {
+				/* Out of sync counter */
+				if (inSpan && ((g_1pps_processed_hi % 1000) == 0)) {
 					g_1pps_processed_outOfSync = 0;
+
 				} else {
 					/* Re-align meridian */
 					if (g_1pps_processed_outOfSync > 10) {
@@ -2985,7 +3151,7 @@ static void adc_init(void)
 	adcch_set_input(&g_adcch_temp_conf,				ADCCH_POS_TEMPSENSE,	ADCCH_NEG_NONE, 1);
 
 	/* Convertion and reference */
-	adc_set_conversion_parameters(&g_adc_a_conf,	ADC_SIGN_OFF, ADC_RES_12, ADC_REF_AREFA);	// ADC-A: ADC0 (Pin 62 3V0 as reference pin)
+	adc_set_conversion_parameters(&g_adc_a_conf,	ADC_SIGN_OFF, ADC_RES_12, ADC_REF_AREFA);	// ADC-A: AREFA=ADC0 (Pin 62 = 3V0) - mind you: V1.2 has to be modified for that!
 	adc_set_conversion_parameters(&g_adc_b_conf,	ADC_SIGN_OFF, ADC_RES_12, ADC_REF_BANDGAP);	// ADC-B: bandgap diode (1V0)
 
 	/* PIN scan on ADC-channel 0 */
@@ -3399,8 +3565,8 @@ static void task_env_calc(void)
 		float temp_twi1_mean;
 		float temp_env;
 		float temp_env_round;
-		int16_t	l_env_temp_deg_100;
-		int16_t	l_env_hygro_RH_100;
+		int16_t	l_env_temp_deg_100 = 0;
+		int16_t	l_env_hygro_RH_100 = 0;
 		int16_t l_twi1_hygro_DP_100;
 		int16_t l_env_temp_delta_100;
 
@@ -3413,14 +3579,31 @@ static void task_env_calc(void)
 		cpu_irq_restore(flags);
 
 		/* Mean temperature of the Barometer and the Hygrometer chip */
-		temp_twi1_mean		= ((float)l_twi1_baro_temp_100 + (float)l_twi1_hygro_T_100) / 200.f;
-		temp_env			= temp_twi1_mean - (l_env_temp_delta_100 / 100.f);
-		temp_env_round		= (temp_env >= 0.f) ?  0.5f : -0.5f;
-		l_env_temp_deg_100	= (int16_t) (temp_env_round + 100.f * temp_env);
+		if (g_twi1_hygro_valid && g_twi1_baro_valid) {
+			/* Both sensors are available - mix data */
+			temp_twi1_mean		= ((float)l_twi1_baro_temp_100 + (float)l_twi1_hygro_T_100) / 200.f;
+			temp_env			= temp_twi1_mean - (l_env_temp_delta_100 / 100.f);
+			temp_env_round		= (temp_env >= 0.f) ?  0.5f : -0.5f;
+			l_env_temp_deg_100	= (int16_t) (temp_env_round + 100.f * temp_env);
+
+		} else if (g_twi1_hygro_valid) {
+			/* Only hygro is available */
+			temp_twi1_mean		= (float)l_twi1_hygro_T_100 / 100.f;
+			temp_env			= temp_twi1_mean - (l_env_temp_delta_100 / 100.f);
+			temp_env_round		= (temp_env >= 0.f) ?  0.5f : -0.5f;
+			l_env_temp_deg_100	= (int16_t) (temp_env_round + 100.f * temp_env);
+
+		} else if (g_twi1_baro_valid) {
+			/* Only baro is available */
+			temp_twi1_mean		= (float)l_twi1_baro_temp_100 / 100.f;
+			temp_env			= temp_twi1_mean - (l_env_temp_delta_100 / 100.f);
+			temp_env_round		= (temp_env >= 0.f) ?  0.5f : -0.5f;
+			l_env_temp_deg_100	= (int16_t) (temp_env_round + 100.f * temp_env);
+		}
 
 		/* Rel. humidity correction for environment temperature */
 		/* @see https://www.wetterochs.de/wetter/feuchte.html */
-		{
+		if (g_twi1_hygro_valid) {
 			// const float K1	= 6.1078f;
 			float td			= l_twi1_hygro_DP_100 / 100.f;
 			float calc_a;
@@ -3497,8 +3680,20 @@ static void task_main_aprs_pocsag(void)
 	if ( s_lock ||
 		(s_now_sec == l_now_sec) ||
 		!g_gns_fix_status) {
+		/* Set requested monitor mode */
+		if (g_ax_enable)
+		{
+			irqflags_t flags = cpu_irq_save();
+			AX_SET_TX_RX_MODE_t l_ax_set_tx_rx_mode = g_ax_set_tx_rx_mode;
+			cpu_irq_restore(flags);
+
+			spi_ax_setTxRxMode(l_ax_set_tx_rx_mode);
+		}
 		return;
 	}
+
+	/* Store new second */
+	s_now_sec = l_now_sec;
 
 	/* do not send when APRS and POCSAG is disabled */
 	if (!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && (g_ax_aprs_enable || g_ax_pocsag_enable)))) {
@@ -3507,9 +3702,6 @@ static void task_main_aprs_pocsag(void)
 
 	/* Single thread lock */
 	s_lock = true;
-
-	/* Store new second */
-	s_now_sec = l_now_sec;
 
 	/* Get a copy from the global variables */
 	{
@@ -3538,7 +3730,7 @@ static void task_main_aprs_pocsag(void)
 		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 		/* Switch to POCSAG mode */
-		spi_ax_init_POCSAG_Tx();
+		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
 		/* POCSAG Skyper clock for every new minute (chime) */
 		if (!calDat.second && g_ax_pocsag_chime_enable) {
@@ -3890,7 +4082,7 @@ static void task_main_aprs_pocsag(void)
 			const uint8_t ssidAry[]	= { 0, 8, 1, 2 };
 
 			/* Switch APRS mode (handled by PR1200) */
-			spi_ax_init_PR1200_Tx();
+			spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_ARPS_TX);
 
 			/* Transmit APRS message */
 			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, sizeof(addrAry) / C_PR1200_CALL_LENGTH,  l_msg_buf, l_msg_buf_len);
@@ -3943,6 +4135,15 @@ static void task_main_aprs_pocsag(void)
 
 	/* Single thread finished */
 	s_lock = false;
+
+	/* After transmission set requested monitor mode, again */
+	{
+		irqflags_t flags = cpu_irq_save();
+		AX_SET_TX_RX_MODE_t l_ax_set_tx_rx_mode = g_ax_set_tx_rx_mode;
+		cpu_irq_restore(flags);
+
+		spi_ax_setTxRxMode(l_ax_set_tx_rx_mode);
+	}
 }
 
 void task(void)
@@ -3950,11 +4151,12 @@ void task(void)
 	if (g_workmode == WORKMODE_RUN) {
 		/* TASK when woken up and all ISRs are done */
 		/* note: ADC and DAC are handled by the scheduler */
+		task_env_calc();																		// Environment simulation calculations
 		task_serial();																			// Handle serial communication with the SIM808
 		task_twi();																				// Handle (TWI1 and) TWI2 communications
 		task_usb();																				// Handling the USB connection
+		task_spi_ax();																			// Handling the AX5243 data transfer
 		task_main_pll();																		// Handling the 1PPS PLL system
-		task_env_calc();																		// Environment simulation calculations
 		task_main_aprs_pocsag();																// Handling the APRS alerts and POCSAG messages
 
 		/* Send debug message via Skyper */
@@ -4043,11 +4245,11 @@ int main(void)
 		#if 1
 		/* Calibration with the preamble '1010..' pattern */
 		{
+			/* Switch to POCSAG mode */
+			spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
+
 			/* FIFOCMD / FIFOSTAT */
 			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
-
-			/* Switch to POCSAG mode */
-			spi_ax_init_POCSAG_Tx();
 
 			for (int calCnt = 400; calCnt; calCnt--) {
 				spi_ax_util_POCSAG_Tx_FIFO_Preamble();
@@ -4077,7 +4279,7 @@ int main(void)
 				spi_ax_transport(false, "< a8 03 >");											// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 				/* Switch from APRS mode to POCSAG */
-				spi_ax_init_POCSAG_Tx();
+				spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
 				/* Transmit POCSAG message */
 				uint8_t tstBufLen = (uint8_t) strlen(tstBuf);
@@ -4114,7 +4316,7 @@ int main(void)
 				spi_ax_transport(false, "< a8 03 >");											// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 				/* Switch to APRS (PR1200) mode */
-				spi_ax_init_PR1200_Tx();
+				spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_APRS_TX);
 
 				/* Enter an APRS UI frame */
 				spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, 4, aprsMsg, strlen(aprsMsg));

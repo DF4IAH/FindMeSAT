@@ -172,14 +172,18 @@ extern uint16_t						g_twi1_baro_version;
 extern uint16_t						g_twi1_baro_c[C_TWI1_BARO_C_CNT];
 extern uint32_t						g_twi1_baro_d1;
 extern uint32_t						g_twi1_baro_d2;
+extern int16_t						g_twi1_baro_temp_cor_100;
 extern int32_t						g_twi1_baro_temp_100;
+extern int16_t						g_twi1_baro_p_cor_100;
 extern int32_t						g_twi1_baro_p_100;
 
 extern bool							g_twi1_hygro_valid;
 extern uint16_t						g_twi1_hygro_status;
 extern uint16_t						g_twi1_hygro_S_T;
 extern uint16_t						g_twi1_hygro_S_RH;
+extern int16_t						g_twi1_hygro_T_cor_100;
 extern int16_t						g_twi1_hygro_T_100;
+extern int16_t						g_twi1_hygro_RH_cor_100;
 extern int16_t						g_twi1_hygro_RH_100;
 extern int16_t						g_twi1_hygro_DP_100;
 
@@ -189,8 +193,13 @@ extern bool							g_twi2_lcd_repaint;
 extern bool							g_ax_enable;
 extern bool							g_ax_aprs_enable;
 extern bool							g_ax_pocsag_enable;
+extern AX_SET_TX_RX_MODE_t			g_ax_set_tx_rx_mode;
 extern struct spi_device			g_ax_spi_device_conf;
 extern uint8_t						g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH];
+extern uint8_t						g_ax_spi_rx_buffer[C_SPI_AX_BUFFER_LENGTH];
+extern uint16_t						g_ax_spi_rx_buffer_idx;
+extern bool							g_ax_spi_rx_fifo_doService;
+
 extern uint32_t						g_ax_spi_freq_chan[2];
 extern uint8_t						g_ax_spi_range_chan[2];
 extern uint8_t						g_ax_spi_vcoi_chan[2];

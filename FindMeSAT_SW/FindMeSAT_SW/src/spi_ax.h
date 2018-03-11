@@ -22,6 +22,10 @@
 # define SPI_AX														SPIC
 #endif
 
+#ifndef IOPORT_MODE_FALLING
+# define IOPORT_MODE_FALLING										0x02
+#endif
+
 
 #define C_PR1200_CALL_LENGTH										6
 
@@ -75,6 +79,22 @@ typedef enum AX_SET_REGISTERS_POWERMODE {
 	AX_SET_REGISTERS_POWERMODE_FULLTX								= 0x0D,
 	AX_SET_REGISTERS_POWERMODE_NONE									= 0x100,
 } AX_SET_REGISTERS_POWERMODE_t;
+
+/* find AX_SET_TX_RX_MODE_t in main.h, also */
+#ifndef DEFINED_AX_SET_TX_RX_MODE
+typedef enum AX_SET_TX_RX_MODE {
+	AX_SET_TX_RX_MODE_OFF											= 0x00,
+	AX_SET_TX_RX_MODE_ARPS_TX										= 0x31,
+	AX_SET_TX_RX_MODE_ARPS_RX_WOR,
+	AX_SET_TX_RX_MODE_ARPS_RX_CONT,
+	AX_SET_TX_RX_MODE_ARPS_RX_CONT_SINGLEPARAMSET,
+	AX_SET_TX_RX_MODE_POCSAG_TX										= 0x71,
+	AX_SET_TX_RX_MODE_POCSAG_RX_WOR,
+	AX_SET_TX_RX_MODE_POCSAG_RX_CONT,
+	AX_SET_TX_RX_MODE_POCSAG_RX_CONT_SINGLEPARAMSET,
+} AX_SET_TX_RX_MODE_t;
+#define DEFINED_AX_SET_TX_RX_MODE
+#endif
 
 
 typedef enum AX_FIFO_CMD {
@@ -190,6 +210,16 @@ typedef enum AX_POCSAG_SKYPER_RIC_ENUM {
 
 
 
+/* ISR routines */
+
+/* PORTC Pin3 - AX5243 IRQ */
+ISR(PORTC_INT0_vect, ISR_BLOCK);
+
+void spi_ax_ISR_setFlags(uint8_t flags);
+void isr_spi_ax_fifo_readMessage(void);
+
+
+
 #if 0
 inline static uint8_t s_sel_u8_from_u32(uint32_t in_u32, uint8_t sel);
 inline static void s_spi_ax_select_device(void);
@@ -260,8 +290,15 @@ void spi_ax_initRegisters_AnlogFM_Rx(void);
 void spi_ax_init_AnalogFM_Tx(void);
 void spi_ax_init_AnalogFM_Rx(void);
 
+void spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_t mode);
+uint8_t spi_ax_doProcess_RX_messages(uint16_t msgLen);
+void spi_ax_Rx_FIFO_DataProcessor(AX_SET_TX_RX_MODE_t txRxMode, const uint8_t* dataBuf, uint16_t dataLen);
+
 void spi_init(void);
 void spi_start(void);
+
+void task_spi_ax(void);
+
 
 /* Debugging */
 void spi_ax_monitor_levels(void);
