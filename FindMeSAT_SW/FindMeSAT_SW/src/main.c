@@ -3552,6 +3552,7 @@ static void task_main_aprs_pocsag(void)
 		(s_now_sec == l_now_sec) ||
 		!g_gns_fix_status) {
 		/* Set requested monitor mode */
+		if (g_ax_enable)
 		{
 			irqflags_t flags = cpu_irq_save();
 			AX_SET_TX_RX_MODE_t l_ax_set_tx_rx_mode = g_ax_set_tx_rx_mode;
@@ -4108,18 +4109,18 @@ int main(void)
 
 
 	/* Insert prepared system TEST-CODE here */
-#if 0
+#if 1
 	/* TEST */
 	for (int i = 1000; i; i--) {
 
 		#if 1
 		/* Calibration with the preamble '1010..' pattern */
 		{
-			/* FIFOCMD / FIFOSTAT */
-			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
-
 			/* Switch to POCSAG mode */
 			spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
+
+			/* FIFOCMD / FIFOSTAT */
+			spi_ax_transport(false, "< a8 03 >");												// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 			for (int calCnt = 400; calCnt; calCnt--) {
 				spi_ax_util_POCSAG_Tx_FIFO_Preamble();

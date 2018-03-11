@@ -36,13 +36,13 @@
 
 //#	define  AX_RUN_VCO2_APRS_TX			true
 
-//# define	AX_TEST_VCO1_BANDENDS		true
+# define	AX_TEST_VCO1_BANDENDS		true
 //# define	AX_TEST_VCO1_FSK_TX			true
 //# define	AX_TEST_VCO1_FSK_RX			true
 //# define	AX_TEST_VCO1_POCSAG_TX		true
 //# define	AX_TEST_VCO1_POCSAG_RX		true
 
-//# define	AX_TEST_VCO2_BANDENDS		true
+# define	AX_TEST_VCO2_BANDENDS		true
 //# define	AX_TEST_VCO2_ANALOG_FM_TX	true
 //# define	AX_TEST_VCO2_ANALOG_FM_RX	true
 //# define	AX_TEST_VCO2_PR1200_TX		true
@@ -3762,6 +3762,14 @@ void spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_t mode)
 				spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_POCSAG, AX_SET_REGISTERS_VARIANT_RX_CONT, AX_SET_REGISTERS_POWERMODE_FULLRX);
 			break;
 
+			case AX_SET_TX_RX_MODE_ARPS_TX:
+				spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_PR1200, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_FULLTX);
+			break;
+
+			case AX_SET_TX_RX_MODE_POCSAG_TX:
+				spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_POCSAG, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_FULLTX);
+			break;
+
 			default:
 				spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_INVALIDATE, AX_SET_REGISTERS_VARIANT_INVALIDATE, AX_SET_REGISTERS_POWERMODE_DEEPSLEEP);
 		}
@@ -4056,7 +4064,7 @@ void spi_start(void) {
 
 	/* TEST BOX */
 	s_spi_start_testBox();
-#endif
+	#endif
 }
 
 void task_spi_ax(void)
@@ -4084,7 +4092,7 @@ void task_spi_ax(void)
 	}
 
 	/* Do signal strength monitoring */
-	if (true) {
+	if (false) {
 		int8_t curRssi			= 0;
 		#if 1
 		int8_t curBgndRssi		= 0;
