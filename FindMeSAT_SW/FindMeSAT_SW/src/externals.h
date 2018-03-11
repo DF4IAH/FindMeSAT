@@ -172,14 +172,18 @@ extern uint16_t						g_twi1_baro_version;
 extern uint16_t						g_twi1_baro_c[C_TWI1_BARO_C_CNT];
 extern uint32_t						g_twi1_baro_d1;
 extern uint32_t						g_twi1_baro_d2;
+extern int16_t						g_twi1_baro_temp_cor_100;
 extern int32_t						g_twi1_baro_temp_100;
+extern int16_t						g_twi1_baro_p_cor_100;
 extern int32_t						g_twi1_baro_p_100;
 
 extern bool							g_twi1_hygro_valid;
 extern uint16_t						g_twi1_hygro_status;
 extern uint16_t						g_twi1_hygro_S_T;
 extern uint16_t						g_twi1_hygro_S_RH;
+extern int16_t						g_twi1_hygro_T_cor_100;
 extern int16_t						g_twi1_hygro_T_100;
+extern int16_t						g_twi1_hygro_RH_cor_100;
 extern int16_t						g_twi1_hygro_RH_100;
 extern int16_t						g_twi1_hygro_DP_100;
 

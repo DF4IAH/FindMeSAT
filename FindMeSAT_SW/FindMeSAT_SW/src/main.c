@@ -207,14 +207,18 @@ uint16_t					g_twi1_baro_version								= 0;
 volatile uint16_t			g_twi1_baro_c[C_TWI1_BARO_C_CNT]				= { 0 };
 volatile uint32_t			g_twi1_baro_d1									= 0UL;
 volatile uint32_t			g_twi1_baro_d2									= 0UL;
+volatile int16_t			g_twi1_baro_temp_cor_100						= 0L;
 volatile int32_t			g_twi1_baro_temp_100							= 0L;
+volatile int16_t			g_twi1_baro_p_cor_100							= 0L;
 volatile int32_t			g_twi1_baro_p_100								= 0L;
 
 bool						g_twi1_hygro_valid								= false;
 volatile uint16_t			g_twi1_hygro_status								= 0;
 volatile uint16_t			g_twi1_hygro_S_T								= 0;
 volatile uint16_t			g_twi1_hygro_S_RH								= 0;
+volatile int16_t			g_twi1_hygro_T_cor_100							= 0;
 volatile int16_t			g_twi1_hygro_T_100								= 0;
+volatile int16_t			g_twi1_hygro_RH_cor_100							= 0;
 volatile int16_t			g_twi1_hygro_RH_100								= 0;
 volatile int16_t			g_twi1_hygro_DP_100								= 0;
 
@@ -664,6 +668,54 @@ static void init_globals(void)
 		int16_t val_i16	= 0;
 		uint8_t val_ui8	= 0;
 
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_BARO_TEMP_DELTA, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_twi1_baro_temp_cor_100 = val_i16;
+			cpu_irq_restore(flags);
+
+			/* Validity check */
+			if (g_twi1_baro_temp_cor_100 < -1000 || g_twi1_baro_temp_cor_100 > 10000) {
+				g_twi1_baro_temp_cor_100 = 0;
+				save_globals(EEPROM_SAVE_BF__ENV);
+			}
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_BARO_PRES_DELTA, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_twi1_baro_p_cor_100 = val_i16;
+			cpu_irq_restore(flags);
+
+			/* Validity check */
+			if (g_twi1_baro_p_cor_100 < -1000 || g_twi1_baro_p_cor_100 > 10000) {
+				g_twi1_baro_p_cor_100 = 0;
+				save_globals(EEPROM_SAVE_BF__ENV);
+			}
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_HYGRO_TEMP_DELTA, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_twi1_hygro_T_cor_100 = val_i16;
+			cpu_irq_restore(flags);
+
+			/* Validity check */
+			if (g_twi1_hygro_T_cor_100 < -1000 || g_twi1_hygro_T_cor_100 > 10000) {
+				g_twi1_hygro_T_cor_100 = 0;
+				save_globals(EEPROM_SAVE_BF__ENV);
+			}
+		}
+
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_HYGRO_RH_DELTA, &val_i16, sizeof(val_i16)) == STATUS_OK) {
+			irqflags_t flags = cpu_irq_save();
+			g_twi1_hygro_RH_cor_100 = val_i16;
+			cpu_irq_restore(flags);
+
+			/* Validity check */
+			if (g_twi1_hygro_RH_cor_100 < -1000 || g_twi1_hygro_RH_cor_100 > 10000) {
+				g_twi1_hygro_RH_cor_100 = 0;
+				save_globals(EEPROM_SAVE_BF__ENV);
+			}
+		}
+
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__ENV_TEMP_DELTA, &val_i16, sizeof(val_i16)) == STATUS_OK) {
 			irqflags_t flags = cpu_irq_save();
 			g_env_temp_delta_100 = val_i16;
@@ -694,6 +746,7 @@ static void init_globals(void)
 				save_globals(EEPROM_SAVE_BF__ENV);
 			}
 		}
+
 	}
 
 	/* Status lines */
@@ -938,14 +991,22 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 	/* Environment and QNH settings */
 	if (bf & EEPROM_SAVE_BF__ENV) {
 		irqflags_t flags = cpu_irq_save();
-		int16_t val_i16_1	= g_env_temp_delta_100;
+		int16_t val_i16_1	= g_twi1_baro_temp_cor_100;
+		int16_t val_i16_2	= g_twi1_baro_p_cor_100;
+		int16_t val_i16_3	= g_twi1_hygro_T_cor_100;
+		int16_t val_i16_4	= g_twi1_hygro_RH_cor_100;
+		int16_t val_i16_5	= g_env_temp_delta_100;
 		uint8_t val_ui8		= g_qnh_is_auto;
-		int16_t val_i16_2	= g_qnh_height_m;
+		int16_t val_i16_6	= g_qnh_height_m;
 		cpu_irq_restore(flags);
 
-		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_TEMP_DELTA,		(void*)&val_i16_1,					sizeof(val_i16_1));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_AUTO,		(void*)&val_ui8,					sizeof(val_ui8));
-		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS,		(void*)&val_i16_2,					sizeof(val_i16_2));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_BARO_TEMP_DELTA,		(void*)&val_i16_1,					sizeof(val_i16_1));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_BARO_PRES_DELTA,		(void*)&val_i16_2,					sizeof(val_i16_2));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_HYGRO_TEMP_DELTA,	(void*)&val_i16_3,					sizeof(val_i16_3));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_HYGRO_RH_DELTA,		(void*)&val_i16_4,					sizeof(val_i16_4));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_TEMP_DELTA,			(void*)&val_i16_5,					sizeof(val_i16_5));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_AUTO,			(void*)&val_ui8,					sizeof(val_ui8));
+		nvm_write(INT_EEPROM, EEPROM_ADDR__ENV_QNH_METERS,			(void*)&val_i16_6,					sizeof(val_i16_6));
 	}
 
 	/* Status lines */
@@ -2005,6 +2066,74 @@ void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf)
 	g_usb_cdc_printStatusLines_1pps		= bf & PRINT_STATUS_LINES__1PPS		?  true : false;
 
 	save_globals(EEPROM_SAVE_BF__PRINT_STATUS);
+}
+
+void sens_baro_temp(float temp)
+{
+	int16_t l_twi1_baro_temp_cor_100 = 0;
+
+	if (temp > 0.f) {
+		l_twi1_baro_temp_cor_100 = (int16_t) ( 0.5f + 100.f * temp);
+	} else if (temp < 0.f) {
+		l_twi1_baro_temp_cor_100 = (int16_t) (-0.5f + 100.f * temp);
+	}
+
+	irqflags_t flags = cpu_irq_save();
+	g_twi1_baro_temp_cor_100 = l_twi1_baro_temp_cor_100;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__ENV);
+}
+
+void sens_baro_pres(float pres)
+{
+	int16_t l_twi1_baro_p_cor_100 = 0;
+
+	if (pres > 0.f) {
+		l_twi1_baro_p_cor_100 = (int16_t) ( 0.5f + 100.f * pres);
+	} else if (pres < 0.f) {
+		l_twi1_baro_p_cor_100 = (int16_t) (-0.5f + 100.f * pres);
+	}
+
+	irqflags_t flags = cpu_irq_save();
+	g_twi1_baro_p_cor_100 = l_twi1_baro_p_cor_100;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__ENV);
+}
+
+void sens_hygro_temp(float temp)
+{
+	int16_t l_twi1_hygro_T_cor_100 = 0;
+
+	if (temp > 0.f) {
+		l_twi1_hygro_T_cor_100 = (int16_t) ( 0.5f + 100.f * temp);
+	} else if (temp < 0.f) {
+		l_twi1_hygro_T_cor_100 = (int16_t) (-0.5f + 100.f * temp);
+	}
+
+	irqflags_t flags = cpu_irq_save();
+	g_twi1_hygro_T_cor_100 = l_twi1_hygro_T_cor_100;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__ENV);
+}
+
+void sens_hygro_RH(float rh)
+{
+	int16_t l_twi1_hygro_RH_cor_100 = 0;
+
+	if (rh > 0.f) {
+		l_twi1_hygro_RH_cor_100 = (int16_t) ( 0.5f + 100.f * rh);
+	} else if (rh < 0.f) {
+		l_twi1_hygro_RH_cor_100 = (int16_t) (-0.5f + 100.f * rh);
+	}
+
+	irqflags_t flags = cpu_irq_save();
+	g_twi1_hygro_RH_cor_100 = l_twi1_hygro_RH_cor_100;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__ENV);
 }
 
 void shutdown(bool doReset)
@@ -4109,7 +4238,7 @@ int main(void)
 
 
 	/* Insert prepared system TEST-CODE here */
-#if 1
+#if 0
 	/* TEST */
 	for (int i = 1000; i; i--) {
 

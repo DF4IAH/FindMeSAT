@@ -228,6 +228,12 @@ typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__9AXIS_MAG_FACT_Z									= 0x004C,					// i16
 	//														next:	= 0x004E,
 
+	EEPROM_ADDR__ENV_BARO_TEMP_DELTA								= 0x0050,					// i16
+	EEPROM_ADDR__ENV_BARO_PRES_DELTA								= 0x0052,					// i16
+	EEPROM_ADDR__ENV_HYGRO_TEMP_DELTA								= 0x0054,					// i16
+	EEPROM_ADDR__ENV_HYGRO_RH_DELTA									= 0x0056,					// i16
+	//														next:	= 0x0058,
+
 	EEPROM_ADDR__APRS_CALLSIGN										= 0x0080,					// char[12]
 	EEPROM_ADDR__APRS_SSID											= 0x008C,					// char[4]
 	EEPROM_ADDR__APRS_LOGIN											= 0x0090,					// char[10]
@@ -374,6 +380,10 @@ void pocsag_send_skyper_activation(void);
 void qnh_setAuto(void);
 void qnh_setHeightM(int16_t heightM);
 void printStatusLines_bitfield(PRINT_STATUS_BF_ENUM_t bf);
+void sens_baro_temp(float temp100);
+void sens_baro_pres(float pres100);
+void sens_hygro_temp(float temp100);
+void sens_hygro_RH(float rh100);
 void shutdown(bool doReset);
 void xoPwm_set(int32_t mode_pwm);
 

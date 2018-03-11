@@ -1258,23 +1258,27 @@ static void task_twi1_hygro(void)
 	static uint16_t s_twi1_hygro_S_T	= 0UL;
 	static uint16_t s_twi1_hygro_S_RH	= 0UL;
 	int16_t l_twi1_hygro_T_100, l_twi1_hygro_RH_100;
+	int16_t l_twi1_hygro_T_cor_100, l_twi1_hygro_RH_cor_100;
 	uint16_t l_twi1_hygro_S_T, l_twi1_hygro_S_RH;
 	bool hasChanged = false;
 
 	/* Getting the global values */
 	{
 		irqflags_t flags = cpu_irq_save();
-		l_twi1_hygro_T_100	= g_twi1_hygro_T_100;	// last value
-		l_twi1_hygro_RH_100	= g_twi1_hygro_RH_100;	// last value
-		l_twi1_hygro_S_T	= g_twi1_hygro_S_T;
-		l_twi1_hygro_S_RH	= g_twi1_hygro_S_RH;
+		l_twi1_hygro_T_100		= g_twi1_hygro_T_100;	// last value
+		l_twi1_hygro_RH_100		= g_twi1_hygro_RH_100;	// last value
+		l_twi1_hygro_S_T		= g_twi1_hygro_S_T;
+		l_twi1_hygro_S_RH		= g_twi1_hygro_S_RH;
+		l_twi1_hygro_T_cor_100	= g_twi1_hygro_T_cor_100;
+		l_twi1_hygro_RH_cor_100	= g_twi1_hygro_RH_cor_100;
 		cpu_irq_restore(flags);
 	}
 
 	/* Calculate and present Temp value when a different measurement has arrived */
 	int16_t temp_100 = l_twi1_hygro_T_100;
 	if (s_twi1_hygro_S_T != l_twi1_hygro_S_T) {
-		temp_100 = (int16_t)((((int32_t)l_twi1_hygro_S_T  * 17500) / 0xFFFF) - 4500);
+		temp_100  = (int16_t)((((int32_t)l_twi1_hygro_S_T  * 17500) / 0xFFFF) - 4500);
+		temp_100 += l_twi1_hygro_T_cor_100;
 
 		/* Setting the global value */
 		{
@@ -1290,7 +1294,8 @@ static void task_twi1_hygro(void)
 	/* Calculate and present Hygro value when a different measurement has arrived */
 	int16_t rh_100 = l_twi1_hygro_RH_100;
 	if (s_twi1_hygro_S_RH != l_twi1_hygro_S_RH) {
-		rh_100 = (int16_t)( ((int32_t)l_twi1_hygro_S_RH * 10000) / 0xFFFF);
+		rh_100  = (int16_t)( ((int32_t)l_twi1_hygro_S_RH * 10000) / 0xFFFF);
+		rh_100 += l_twi1_hygro_RH_cor_100;
 
 		/* Setting the global value */
 		{
@@ -1434,13 +1439,16 @@ static void task_twi1_baro(void)
 	static uint32_t s_twi1_baro_d2	= 0UL;
 	static int32_t	s_p				= 0L;
 	uint32_t		l_twi1_baro_d1, l_twi1_baro_d2;
+	int16_t			l_twi1_baro_temp_cor_100, l_twi1_baro_p_cor_100;
 	int32_t			l_p_h;
 
 	/* Getting the global values */
 	{
 		irqflags_t flags = cpu_irq_save();
-		l_twi1_baro_d1								= g_twi1_baro_d1;
-		l_twi1_baro_d2								= g_twi1_baro_d2;
+		l_twi1_baro_d1				= g_twi1_baro_d1;
+		l_twi1_baro_d2				= g_twi1_baro_d2;
+		l_twi1_baro_temp_cor_100	= g_twi1_baro_temp_cor_100;
+		l_twi1_baro_p_cor_100		= g_twi1_baro_p_cor_100;
 		cpu_irq_restore(flags);
 	}
 
@@ -1448,7 +1456,7 @@ static void task_twi1_baro(void)
 	if ((l_twi1_baro_d1 != s_twi1_baro_d1) || (l_twi1_baro_d2 != s_twi1_baro_d2)) {
 		int32_t dT			= (int32_t)l_twi1_baro_d2 - ((int32_t)g_twi1_baro_c[5] << 8);
 		int32_t temp_p20	= (int32_t)(((int64_t)dT * g_twi1_baro_c[6]) >> 23);
-		int32_t l_t_100		= temp_p20 + 2000L + (0);											// Last entry is a local temp correction;
+		int32_t l_t_100		= temp_p20 + 2000L;
 		int64_t off			= ((int64_t)g_twi1_baro_c[2] << 17) + (((int64_t)g_twi1_baro_c[4] * dT) >> 6);
 		int64_t sens		= ((int64_t)g_twi1_baro_c[1] << 16) + (((int64_t)g_twi1_baro_c[3] * dT) >> 7);
 
@@ -1469,7 +1477,14 @@ static void task_twi1_baro(void)
 			off		-= off2;
 			sens	-= sens2;
 		}
-		int32_t l_p_100 = (int32_t)((((l_twi1_baro_d1 * sens) >> 21) - off) >> 15)	+ (-45);	// Last entry is a local baro correction
+
+		/* Temperature correction for this sensor */
+		l_t_100 += l_twi1_baro_temp_cor_100;
+
+		int32_t l_p_100 = (int32_t)((((l_twi1_baro_d1 * sens) >> 21) - off) >> 15);
+
+		/* Pressure correction for this sensor */
+		l_p_100 += l_twi1_baro_p_cor_100;
 
 		/* Store data and calculate QNH within valid data range, only */
 		if ((-3000 < l_t_100) && (l_t_100 < 8000) && (30000L < l_p_100) && (l_p_100 < 120000L)) {

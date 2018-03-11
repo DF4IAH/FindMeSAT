@@ -95,6 +95,10 @@ const char					PM_HELP_QNH_M_1[]						= "qnh_m=\t\theight: fixed value in meters
 const char					PM_HELP_RESET_1[]						= "reset=\t\t1: reboot ALL.\r\n";
 const char					PM_HELP_RIC_1[]							= "ric=\t\tnumber: target RIC to send POCSAG messages to.\r\n";
 const char					PM_HELP_SA_1[]							= "sa\t\tSend Skyper activation to individual RIC.\r\n";
+const char					PM_HELP_SENS_1[]						= "sens=\t\tb=t=+/-(float) baro temp corr. in K.\r\n";
+const char					PM_HELP_SENS_2[]						=	"\t\tb=p=+/-(float) baro pressure corr. in hPa.\r\n";
+const char					PM_HELP_SENS_3[]						=	"\t\th=t=+/-(float) hygro temp corr. in K.\r\n";
+const char					PM_HELP_SENS_4[]						=	"\t\th=h=+/-(float) hygro RH corr. in %%.\r\n";
 const char					PM_HELP_SHUT_1[]						= "shut\t\tShutdown this device.\r\n";
 const char					PM_HELP_XO_1[]							= "xo=\t\t0-65535: VCTCXO pull voltage, ";
 const char					PM_HELP_XO_2[]							=	"-1: PLL ON.\r\n";
@@ -160,6 +164,10 @@ PROGMEM_DECLARE(const char, PM_HELP_QNH_M_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_RESET_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_RIC_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_SA_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_SENS_1[]);
+PROGMEM_DECLARE(const char, PM_HELP_SENS_2[]);
+PROGMEM_DECLARE(const char, PM_HELP_SENS_3[]);
+PROGMEM_DECLARE(const char, PM_HELP_SENS_4[]);
 PROGMEM_DECLARE(const char, PM_HELP_SHUT_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_XO_1[]);
 PROGMEM_DECLARE(const char, PM_HELP_XO_2[]);
@@ -256,6 +264,11 @@ void printHelp(void)
 
 	udi_write_tx_msg_P(PM_HELP_SA_1);
 
+	udi_write_tx_msg_P(PM_HELP_SENS_1);
+	udi_write_tx_msg_P(PM_HELP_SENS_2);
+	udi_write_tx_msg_P(PM_HELP_SENS_3);
+	udi_write_tx_msg_P(PM_HELP_SENS_4);
+
 	udi_write_tx_msg_P(PM_HELP_SHUT_1);
 
 	udi_write_tx_msg_P(PM_HELP_XO_1);
@@ -316,6 +329,10 @@ const char					PM_IP_CMD_qnh_m[]						= "qnh_m=";
 const char					PM_IP_CMD_reset[]						= "reset=";
 const char					PM_IP_CMD_ric[]							= "ric=";
 const char					PM_IP_CMD_sa[]							= "sa";
+const char					PM_IP_CMD_sens_b_t[]					= "sens=b=t=";
+const char					PM_IP_CMD_sens_b_p[]					= "sens=b=p=";
+const char					PM_IP_CMD_sens_h_t[]					= "sens=h=t=";
+const char					PM_IP_CMD_sens_h_h[]					= "sens=h=h=";
 const char					PM_IP_CMD_shut[]						= "shut";
 const char					PM_IP_CMD_xo[]							= "xo=";
 const char					PM_UNKNOWN_01[]							= "\r\n??? unknown command - for assistance enter  help\r\n";
@@ -365,6 +382,10 @@ PROGMEM_DECLARE(const char, PM_IP_CMD_qnh_m[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_reset[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_ric[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_sa[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_sens_b_t[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_sens_b_p[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_sens_h_t[]);
+PROGMEM_DECLARE(const char, PM_IP_CMD_sens_h_h[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_shut[]);
 PROGMEM_DECLARE(const char, PM_IP_CMD_xo[]);
 PROGMEM_DECLARE(const char, PM_UNKNOWN_01[]);
@@ -579,6 +600,30 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 
 		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_sa,			sizeof(PM_IP_CMD_sa) - 1)) {
 			pocsag_send_skyper_activation();
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_sens_b_t,		sizeof(PM_IP_CMD_sens_b_t) - 1)) {
+			float val[3] = { -1.f, -1.f, -1.f };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_sens_b_t) - 1), MY_STRING_TO_VAR_FLOAT, &(val[0]), NULL, NULL)) {
+				sens_baro_temp(val[0]);
+			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_sens_b_p,		sizeof(PM_IP_CMD_sens_b_p) - 1)) {
+			float val[3] = { -1.f, -1.f, -1.f };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_sens_b_p) - 1), MY_STRING_TO_VAR_FLOAT, &(val[0]), NULL, NULL)) {
+				sens_baro_pres(val[0]);
+			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_sens_h_t,		sizeof(PM_IP_CMD_sens_h_t) - 1)) {
+			float val[3] = { -1.f, -1.f, -1.f };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_sens_h_t) - 1), MY_STRING_TO_VAR_FLOAT, &(val[0]), NULL, NULL)) {
+				sens_hygro_temp(val[0]);
+			}
+
+		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_sens_h_h,		sizeof(PM_IP_CMD_sens_h_h) - 1)) {
+			float val[3] = { -1.f, -1.f, -1.f };
+			if (myStringToVar((char*)cmdLine_buf + (sizeof(PM_IP_CMD_sens_h_h) - 1), MY_STRING_TO_VAR_FLOAT, &(val[0]), NULL, NULL)) {
+				sens_hygro_RH(val[0]);
+			}
 
 		} else if (!strncasecmp_P((char*)cmdLine_buf, PM_IP_CMD_shut,		sizeof(PM_IP_CMD_shut) - 1)) {
 			shutdown(false);
