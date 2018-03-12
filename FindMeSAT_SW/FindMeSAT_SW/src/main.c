@@ -4238,7 +4238,7 @@ int main(void)
 
 
 	/* Insert prepared system TEST-CODE here */
-#if 1
+#if 0
 	/* TEST */
 	for (int i = 1000; i; i--) {
 
@@ -4247,15 +4247,6 @@ int main(void)
 		{
 			/* Switch to POCSAG mode */
 			spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
-
-#if 0
-			spi_ax_transport(false, "< 00 R8 >");
-			(void) g_ax_spi_packet_buffer;
-			nop();
-			spi_ax_transport(false, "< 08 R8 >");
-			(void) g_ax_spi_packet_buffer;
-			nop();
-#endif
 
 			for (int calCnt = 400; calCnt; calCnt--) {
 				spi_ax_util_POCSAG_Tx_FIFO_Preamble();

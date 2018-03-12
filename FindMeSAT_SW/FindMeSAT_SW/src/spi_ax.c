@@ -36,13 +36,13 @@
 
 //#	define  AX_RUN_VCO2_APRS_TX			true
 
-# define	AX_TEST_VCO1_BANDENDS		true
+//# define	AX_TEST_VCO1_BANDENDS		true
 //# define	AX_TEST_VCO1_FSK_TX			true
 //# define	AX_TEST_VCO1_FSK_RX			true
 //# define	AX_TEST_VCO1_POCSAG_TX		true
 //# define	AX_TEST_VCO1_POCSAG_RX		true
 
-# define	AX_TEST_VCO2_BANDENDS		true
+//# define	AX_TEST_VCO2_BANDENDS		true
 //# define	AX_TEST_VCO2_ANALOG_FM_TX	true
 //# define	AX_TEST_VCO2_ANALOG_FM_RX	true
 //# define	AX_TEST_VCO2_PR1200_TX		true
@@ -1793,7 +1793,7 @@ void spi_ax_initRegisters_FSK_Rx(void)
 void spi_ax_init_FSK_Tx(void)
 {
 	/* Syncing and sending reset command, then setting the default values */
-	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_INVALIDATE, AX_SET_REGISTERS_VARIANT_INVALIDATE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
 	/* Frequency settings */
 	{
@@ -1815,12 +1815,13 @@ void spi_ax_init_FSK_Tx(void)
 		spi_ax_setFrequency2Regs(0, false);
 		spi_ax_setFrequency2Regs(1, true);
 
+		/* @see AND9347/D, page 12: Preparation 4. */
 		/* Auto ranging and storing */
 		spi_ax_doRanging();
 	}
 
-	/* Enabling the transmitter */
-	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_FSK, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_FULLTX);
+	/* Load the transmitter settings */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_FSK, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
 	#if 1
 		/* Set VCO-PLL to FREQA - 433.9250 MHz */
@@ -1831,16 +1832,19 @@ void spi_ax_init_FSK_Tx(void)
 	#endif
 
 	/* Set power level */
-	spi_ax_setPower_dBm(-20);
+	spi_ax_setPower_dBm(-10.0f);
 
 	/* FIFOCMD / FIFOSTAT */
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+	/* Enabling the transmitter */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_FULLTX);
 }
 
 void spi_ax_init_FSK_Rx(void)
 {
 	/* Syncing and sending reset command, then setting the default values */
-	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_INVALIDATE, AX_SET_REGISTERS_VARIANT_INVALIDATE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
 	/* Frequency settings */
 	{
@@ -1862,12 +1866,13 @@ void spi_ax_init_FSK_Rx(void)
 		spi_ax_setFrequency2Regs(0, false);
 		spi_ax_setFrequency2Regs(1, true);
 
+		/* @see AND9347/D, page 12: Preparation 4. */
 		/* Auto ranging and storing */
 		spi_ax_doRanging();
 	}
 
-	/* Enabling the transmitter */
-	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_FSK, AX_SET_REGISTERS_VARIANT_RX_WOR, AX_SET_REGISTERS_POWERMODE_WOR);
+	/* Load the receiver settings */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_FSK, AX_SET_REGISTERS_VARIANT_RX_WOR, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
 	#if 1
 		/* Set VCO-PLL to FREQA - 433.9250 MHz */
@@ -1879,6 +1884,9 @@ void spi_ax_init_FSK_Rx(void)
 
 	/* FIFOCMD / FIFOSTAT */
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+	/* Enabling the wake-on-radio receiver */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_WOR);
 }
 
 
@@ -2465,7 +2473,7 @@ void spi_ax_initRegisters_PR1200_Rx_cont_SingleParamSet(void)
 void spi_ax_init_PR1200_Tx(void)
 {
 	/* Syncing and sending reset command, then setting the packet radio values for transmission */
-	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_INVALIDATE, AX_SET_REGISTERS_VARIANT_INVALIDATE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
 	/* Frequency settings */
 	{
@@ -2478,12 +2486,13 @@ void spi_ax_init_PR1200_Tx(void)
 		spi_ax_setFrequency2Regs(0, false);
 		spi_ax_setFrequency2Regs(1, true);
 
-		/* Recall ranging values */
+		/* @see AND9347/D, page 12: Preparation 4. */
+		/* Auto ranging and storing */
 		spi_ax_doRanging();
 	}
 
-	/* Enabling the transmitter */
-	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_PR1200, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_FULLTX);
+	/* Load the transmitter settings */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_PR1200, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
 	#if 1
 		/* Set VCO-PLL to FREQA - 144.800 MHz */
@@ -2494,10 +2503,13 @@ void spi_ax_init_PR1200_Tx(void)
 	#endif
 
 	/* Set power level */
-	spi_ax_setPower_dBm(-20);
+	spi_ax_setPower_dBm(-10.0f);
 
 	/* FIFOCMD / FIFOSTAT */
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+	/* Enabling the transmitter */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_FULLTX);
 }
 
 void spi_ax_run_PR1200_Tx_FIFO_APRS(const char addrAry[][C_PR1200_CALL_LENGTH], const uint8_t* ssidAry, uint8_t addrCnt, const char* aprsMsg, uint8_t aprsMsgLen)
@@ -2621,7 +2633,7 @@ void spi_ax_util_PR1200_Tx_FIFO_InformationField(const char* aprsMsg, uint8_t ap
 void spi_ax_init_PR1200_Rx(void)
 {
 	/* Syncing and sending reset command, then setting the packet radio values for transmission */
-	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_INVALIDATE, AX_SET_REGISTERS_VARIANT_INVALIDATE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
 	/* Frequency settings */
 	{
@@ -2634,12 +2646,13 @@ void spi_ax_init_PR1200_Rx(void)
 		spi_ax_setFrequency2Regs(0, false);
 		spi_ax_setFrequency2Regs(1, true);
 
-		/* Recall ranging values */
+		/* @see AND9347/D, page 12: Preparation 4. */
+		/* Auto ranging and storing */
 		spi_ax_doRanging();
 	}
 
-	/* Enabling the transmitter */
-	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_PR1200, AX_SET_REGISTERS_VARIANT_RX_WOR, AX_SET_REGISTERS_POWERMODE_WOR);
+	/* Load the receiver settings */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_PR1200, AX_SET_REGISTERS_VARIANT_RX_WOR, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
 	#if 1
 		/* Set VCO-PLL to FREQA - 144.800 MHz */
@@ -2651,6 +2664,9 @@ void spi_ax_init_PR1200_Rx(void)
 
 	/* FIFOCMD / FIFOSTAT */
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+	/* Enabling the wake-on-radio receiver */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_WOR);
 }
 
 
@@ -3464,7 +3480,7 @@ void spi_ax_send_POCSAG_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc
 void spi_ax_init_POCSAG_Rx(void)
 {
 	/* Syncing and sending reset command, then setting the default values */
-	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
+	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_INVALIDATE, AX_SET_REGISTERS_VARIANT_INVALIDATE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
 	/* Frequency settings */
 	{
@@ -3486,18 +3502,22 @@ void spi_ax_init_POCSAG_Rx(void)
 		spi_ax_setFrequency2Regs(0, false);
 		spi_ax_setFrequency2Regs(1, true);
 
+		/* @see AND9347/D, page 12: Preparation 4. */
 		/* Auto ranging and storing */
 		spi_ax_doRanging();
 	}
 
-	/* Enabling the receiver */
-	//spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_FSK, AX_SET_REGISTERS_VARIANT_RX_WOR, AX_SET_REGISTERS_POWERMODE_WOR);
+	/* Load the receiver settings */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_FSK, AX_SET_REGISTERS_VARIANT_RX_WOR, AX_SET_REGISTERS_POWERMODE_STANDBY);
 
 	/* Switch to VCO-B - set VCO-PLL to FREQB - 439.9875 MHz */
 	(void) spi_ax_selectVcoFreq(true);
 
 	/* FIFOCMD / FIFOSTAT */
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+	/* Enabling the wake-one-radio receiver */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_WOR);
 }
 
 
@@ -3597,20 +3617,24 @@ void spi_ax_init_AnalogFM_Tx(void)
 		spi_ax_setFrequency2Regs(0, false);
 		spi_ax_setFrequency2Regs(1, true);
 
+		/* @see AND9347/D, page 12: Preparation 4. */
 		/* Auto ranging and storing */
 		spi_ax_doRanging();
 	}
 
-	/* Enabling the transmitter */
-	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_ANALOG_FM, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_FULLTX);
+	/* Load the transmitter settings */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_ANALOG_FM, AX_SET_REGISTERS_VARIANT_TX, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
 	(void) spi_ax_selectVcoFreq(false);
 
 	/* Set power level */
-	spi_ax_setPower_dBm(-20);
+	spi_ax_setPower_dBm(-10.0f);
 
 	/* FIFOCMD / FIFOSTAT */
 	spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+	/* Enabling the transmitter */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_FULLTX);
 }
 
 void spi_ax_init_AnalogFM_Rx(void)
@@ -3628,17 +3652,21 @@ void spi_ax_init_AnalogFM_Rx(void)
 		spi_ax_setFrequency2Regs(0, false);
 		spi_ax_setFrequency2Regs(1, true);
 
+		/* @see AND9347/D, page 12: Preparation 4. */
 		/* Auto ranging and storing */
 		spi_ax_doRanging();
 	}
 
-	/* Enabling the transmitter */
-	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_ANALOG_FM, AX_SET_REGISTERS_VARIANT_RX_CONT, AX_SET_REGISTERS_POWERMODE_FULLRX);
+	/* Load the receiver settings */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_ANALOG_FM, AX_SET_REGISTERS_VARIANT_RX_CONT, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
 	(void) spi_ax_selectVcoFreq(false);
 
 	/* FIFOCMD / FIFOSTAT */
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+	/* Enabling the receiver */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_FULLRX);
 }
 
 
