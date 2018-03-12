@@ -3278,12 +3278,24 @@ void spi_ax_init_POCSAG_Tx(void)
 int8_t spi_ax_run_POCSAG_Tx_FIFO_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc, const char* pocsagTgtMsg, uint8_t pocsagTgtMsgLen)
 {
 	/* Enter a POCSAG message */
+	int8_t ret;
+
+	/* FIFOCMD / FIFOSTAT */
+	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 	/* 1 - Flags */
 	spi_ax_util_POCSAG_Tx_FIFO_Preamble();														// 576 bits of 1/0 pattern
 
 	/* 2 - Target RIC, message to be sent */
-	return spi_ax_util_POCSAG_Tx_FIFO_Batches(pocsagTgtRIC, pocsagTgtFunc, pocsagTgtMsg, pocsagTgtMsgLen);
+	ret = spi_ax_util_POCSAG_Tx_FIFO_Batches(pocsagTgtRIC, pocsagTgtFunc, pocsagTgtMsg, pocsagTgtMsgLen);
+
+	/* 3 - Delay until message is sent */
+	do {
+		/* RADIOSTATE */
+		spi_ax_transport(false, "< 1c R1 >");													// RD Address 0x1C: RADIOSTATE - IDLE
+	} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
+
+	return ret;
 }
 
 void spi_ax_util_POCSAG_Tx_FIFO_Preamble(void)
@@ -3460,16 +3472,14 @@ int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFu
 void spi_ax_send_POCSAG_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc, const char* pocsagTgtMsg, uint8_t pocsagTgtMsgLen)
 {
 	if (g_ax_enable && g_ax_pocsag_enable) {
-		/* FIFOCMD / FIFOSTAT */
-		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
-
-		/* Switch to POCSAG mode */
-		spi_ax_init_POCSAG_Tx();
-
 		/* Send message */
 		spi_ax_run_POCSAG_Tx_FIFO_Msg(pocsagTgtRIC, pocsagTgtFunc, pocsagTgtMsg, pocsagTgtMsgLen);
 
-		/* Wait until message is sent */
+		/* Wait until message in FIFO is sent and transmitter switches off */
+		do {
+			/* FIFOSTAT */
+			spi_ax_transport(false, "< 28 R1 >");
+		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
 		do {
 			/* RADIOSTATE */
 			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
@@ -3789,6 +3799,9 @@ void spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_t mode)
 
 	if (lastMode != mode) {
 		lastMode = mode;
+
+		/* FIFOCMD / FIFOSTAT */
+		spi_ax_transport(false, "< a8 03 >");																// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 		switch (mode) {
 			case AX_SET_TX_RX_MODE_ARPS_RX_WOR:
