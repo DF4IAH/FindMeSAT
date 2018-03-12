@@ -17,3 +17,6 @@ GPS assisted tracking device with GSM (SMS & GPRS) and Bluetooth connectivity.
 
 ### Current PCB overview:
 ![current PCB overview](https://raw.githubusercontent.com/DF4IAH/FindMeSAT/master/Docs/64_Redesign_1V3/Placement/2_Eagle-Layout_b.png)
+
+### Working Tracker application with GPRS, APRS and POCSAG transmission:
+![FindMeSAT working together with Smart-LCD](https://raw.githubusercontent.com/DF4IAH/FindMeSAT/master/Pictures/20180312_FindMeSAT-and-SmartLCD__IMG_1592c.jpg)
