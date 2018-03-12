@@ -1979,9 +1979,6 @@ void pocsag_message_send(const char msg[])
 		char* ptr = strchr(msg, 0x0d);
 		uint8_t msgLen = ptr ?  (ptr - msg) : 0;
 
-		/* FIFOCMD / FIFOSTAT */
-		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
-
 		/* Switch to POCSAG mode */
 		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
@@ -1990,16 +1987,6 @@ void pocsag_message_send(const char msg[])
 			/* Some configuration data error has happened */									// TODO: add config error message code here.
 			nop();
 		}
-
-		do {
-			/* FIFOSTAT */
-			spi_ax_transport(false, "< 28 R1 >");
-		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
-
-		do {
-			/* RADIOSTATE */
-			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
-		} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 	}
 }
 
@@ -2014,9 +2001,6 @@ void pocsag_ric_update(uint32_t ric)
 
 void pocsag_send_skyper_activation(void)
 {
-	/* FIFOCMD / FIFOSTAT */
-	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
-
 	/* Switch to POCSAG mode */
 	spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
@@ -2028,16 +2012,6 @@ void pocsag_send_skyper_activation(void)
 		uint8_t activationLen = spi_ax_pocsag_skyper_RIC2ActivationString(actBuf, actBufLen, g_ax_pocsag_individual_ric);
 		spi_ax_run_POCSAG_Tx_FIFO_Msg(g_ax_pocsag_individual_ric, AX_POCSAG_CW2_MODE2_ACTIVATION, actBuf, activationLen);
 	}
-
-	do {
-		/* FIFOSTAT */
-		spi_ax_transport(false, "< 28 R1 >");
-	} while (!(g_ax_spi_packet_buffer[0] & 0x01));
-
-	do {
-		/* RADIOSTATE */
-		spi_ax_transport(false, "< 1c R1 >");													// RD Address 0x1C: RADIOSTATE - IDLE
-	} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 }
 
 void qnh_setAuto(void)
@@ -3726,14 +3700,14 @@ static void task_main_aprs_pocsag(void)
 
 	/* Prepare POCSAG mode */
 	if (g_ax_enable && g_ax_pocsag_enable) {
-		/* FIFOCMD / FIFOSTAT */
-		spi_ax_transport(false, "< a8 03 >");													// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+		static uint8_t s_lastMinute = 255;
 
 		/* Switch to POCSAG mode */
 		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
 		/* POCSAG Skyper clock for every new minute (chime) */
-		if (!calDat.second && g_ax_pocsag_chime_enable) {
+		if ((s_lastMinute != calDat.minute) && g_ax_pocsag_chime_enable) {
+			s_lastMinute   = calDat.minute;
 			l_pocsag_ric_msg_buf_len = spi_ax_pocsag_skyper_TimeString(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), &calDat);
 
 			/* Transmit POCSAG message */
@@ -4028,15 +4002,12 @@ static void task_main_aprs_pocsag(void)
 	if (g_ax_enable && g_ax_pocsag_enable) {
 		/* Push POCSAG via AX5243 (VHF/UHF) */
 		{
+			#if 0
 			/* Individual message to the RIC */
 			if (g_ax_pocsag_individual_ric && l_pocsag_ric_msg_buf_len) {
 				spi_ax_run_POCSAG_Tx_FIFO_Msg(g_ax_pocsag_individual_ric, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_ric_msg_buf, strlen(l_pocsag_ric_msg_buf));
-
-				do {
-					/* RADIOSTATE */
-					spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
-				} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 			}
+			#endif
 
 			/* Public news */
 			if (l_pocsag_news_msg_buf_len) {
@@ -4047,11 +4018,6 @@ static void task_main_aprs_pocsag(void)
 
 					uint16_t rubricBufLen = spi_ax_pocsag_skyper_RubricString(rubricBuf, sizeof(rubricBuf), 95, rubricLabel, strlen(rubricLabel));
 					spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_RUBRICS, AX_POCSAG_CW2_MODE3_ALPHANUM, rubricBuf, rubricBufLen);
-
-					do {
-						/* RADIOSTATE */
-						spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
-					} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 				}
 
 				/* Send public Skyper news to rubric "Tracking" */
@@ -4062,11 +4028,6 @@ static void task_main_aprs_pocsag(void)
 					spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_NEWS, AX_POCSAG_CW2_MODE3_ALPHANUM, newsBuf, newsBufLen);
 
 					g_ax_pocsag_news_idx %= 10;
-
-					do {
-						/* RADIOSTATE */
-						spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
-					} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 				}
 			}
 		}
@@ -4088,9 +4049,9 @@ static void task_main_aprs_pocsag(void)
 			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, sizeof(addrAry) / C_PR1200_CALL_LENGTH,  l_msg_buf, l_msg_buf_len);
 
 			do {
-				/* FIFOSTAT */
-				spi_ax_transport(false, "< 28 R1 >");
-			} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+				/* RADIOSTATE */
+				spi_ax_transport(false, "< 1c R1 >");														// RD Address 0x1C: RADIOSTATE - IDLE
+			} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 		}
 
 		/* Push APRS message via the GSM / GPRS network */
@@ -4272,9 +4233,6 @@ int main(void)
 			sprintf(tstBuf, "DF4IAH: %02d%02d%02d   %02d%02d%02d", 12, 1000 - i, 0,   12,  2, 18);
 
 			for (int count = 1; count; count--) {
-				/* FIFOCMD / FIFOSTAT */
-				spi_ax_transport(false, "< a8 03 >");											// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
-
 				/* Switch from APRS mode to POCSAG */
 				spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
