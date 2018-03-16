@@ -13,7 +13,7 @@
 
 
 /* VERSION: YYM, MDD */
-#define VERSION														20180312
+#define VERSION														20180316
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -243,7 +243,8 @@ typedef enum EEPROM_ADDR_ENUM {
 
 	EEPROM_ADDR__AX_BF												= 0x00B0,					// ui8
 	EEPROM_ADDR__AX_MON_MODE										= 0x00B1,					// ui8
-	//														next:	= 0x00B2,
+	EEPROM_ADDR__AX_POCSAG_BEACON									= 0x00B2,					// ui8
+	//														next:	= 0x00B3,
 
 	EEPROM_ADDR__AX_POCSAG_RIC										= 0x00B4,					// ui32
 	//														next:	= 0x00B8,
@@ -373,6 +374,7 @@ void gsm_enable(bool enable);
 void keyBeep_enable(bool enable);
 void monitor_mode(AX_SET_TX_RX_MODE_t mode);
 void pitchTone_mode(uint8_t mode);
+void pocsagBeacon_time(uint8_t secs);
 void pocsag_chime_update(bool enable);
 void pocsag_message_send(const char msg[]);
 void pocsag_ric_update(uint32_t ric);
