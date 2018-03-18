@@ -228,6 +228,7 @@ volatile bool				g_twi2_lcd_repaint								= false;
 bool						g_ax_enable										= false;	// EEPROM
 bool						g_ax_aprs_enable								= false;	// EEPROM
 bool						g_ax_pocsag_enable								= false;	// EEPROM
+uint8_t						g_ax_pocsag_beacon_secs							= 0;		// EEPROM
 AX_SET_TX_RX_MODE_t			g_ax_set_tx_rx_mode								= AX_SET_TX_RX_MODE_OFF;	// EEPROM
 struct spi_device			g_ax_spi_device_conf							= { 0 };
 volatile uint8_t			g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH]	= { 0 };
@@ -842,6 +843,10 @@ static void init_globals(void)
 			g_ax_pocsag_chime_enable	= val_ui8 & AX__POCSAG_CHIME_ENABLE;
 		}
 
+		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_BEACON, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
+			g_ax_pocsag_beacon_secs		= val_ui8;
+		}
+
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_MON_MODE, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
 			g_ax_set_tx_rx_mode			= (AX_SET_TX_RX_MODE_t) val_ui8;
 		}
@@ -1074,8 +1079,13 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 						| (g_ax_pocsag_chime_enable	?  AX__POCSAG_CHIME_ENABLE	: 0x00);
 
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_BF,				&val_ui8,							sizeof(val_ui8));
+
+		val_ui8 = g_ax_pocsag_beacon_secs;
+		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_BEACON,	&val_ui8,							sizeof(val_ui8));
+
 		val_ui8 = (uint8_t) g_ax_set_tx_rx_mode;
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_MON_MODE,			&val_ui8,							sizeof(val_ui8));
+
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_RIC,		&g_ax_pocsag_individual_ric,		sizeof(g_ax_pocsag_individual_ric));
 	}
 
@@ -1963,6 +1973,15 @@ void pitchTone_mode(uint8_t mode)
 	g_pitch_tone_mode = mode;
 
 	save_globals(EEPROM_SAVE_BF__PITCHTONE);
+}
+
+void pocsagBeacon_time(uint8_t secs)
+{
+	irqflags_t flags = cpu_irq_save();
+	g_ax_pocsag_beacon_secs = secs;
+	cpu_irq_restore(flags);
+
+	save_globals(EEPROM_SAVE_BF__AX);
 }
 
 void pocsag_chime_update(bool enable)
@@ -3624,6 +3643,8 @@ static void task_main_aprs_pocsag(void)
 	uint32_t					l_now_sec					= tcc1_get_time() >> 10;
 	uint32_t					l_boot_time_ts;
 	uint32_t					l_ts;
+	uint8_t						l_ax_pocsag_beacon_secs;
+	static uint32_t				s_pocsag_beacon_last		= 0UL;
 	float						l_gns_lat_f;
 	uint8_t						l_lat_deg_d;
 	float						l_lat_minutes_f;
@@ -3650,10 +3671,41 @@ static void task_main_aprs_pocsag(void)
 	char						l_mark						= ' ';
 	struct calendar_date		calDat;
 
-	/* Once a second to be processed - do not send when GPS not ready */
-	if ( s_lock ||
-		(s_now_sec == l_now_sec) ||
-		!g_gns_fix_status) {
+	/* Once a second to be processed */
+	if (s_now_sec == l_now_sec) {
+		return;
+	}
+
+	/* Store new second */
+	s_now_sec = l_now_sec;
+
+	/* Get a copy from the global variables */
+	{
+		irqflags_t flags = cpu_irq_save();
+		l_boot_time_ts			= g_boot_time_ts;
+		l_ts					= g_boot_time_ts + (uint32_t)(g_milliseconds_cnt64 / 1000);
+		l_ax_pocsag_beacon_secs = g_ax_pocsag_beacon_secs;
+		cpu_irq_restore(flags);
+	}
+
+	/* Get the date */
+	calendar_timestamp_to_date(l_ts, &calDat);
+
+	/* POCSAG beacon mode */
+	if (l_ax_pocsag_beacon_secs && (((s_pocsag_beacon_last + l_ax_pocsag_beacon_secs) <= l_now_sec) || (s_pocsag_beacon_last > l_now_sec))) {
+		/* Update last time */
+		s_pocsag_beacon_last = l_now_sec;
+
+		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
+		l_pocsag_ric_msg_buf_len = snprintf(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), "Test %02d:%02d:%02d", calDat.hour, calDat.minute, calDat.second);
+
+		/* Transmit POCSAG message */
+		spi_ax_run_POCSAG_Tx_FIFO_Msg(123456, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, strlen(l_pocsag_ric_msg_buf));
+		l_pocsag_ric_msg_buf_len = 0;
+	}
+
+	/* Do not send when GPS not ready */
+	if (s_lock || !g_gns_fix_status) {
 		/* Set requested monitor mode */
 		if (g_ax_enable)
 		{
@@ -3666,9 +3718,6 @@ static void task_main_aprs_pocsag(void)
 		return;
 	}
 
-	/* Store new second */
-	s_now_sec = l_now_sec;
-
 	/* do not send when APRS and POCSAG is disabled */
 	if (!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && (g_ax_aprs_enable || g_ax_pocsag_enable)))) {
 		return;
@@ -3680,8 +3729,6 @@ static void task_main_aprs_pocsag(void)
 	/* Get a copy from the global variables */
 	{
 		flags = cpu_irq_save();
-		l_boot_time_ts			= g_boot_time_ts;
-		l_ts					= g_boot_time_ts + (uint32_t)(g_milliseconds_cnt64 / 1000);
 		l_aprs_alert_last		= g_aprs_alert_last;
 		l_aprs_alert_fsm_state	= g_aprs_alert_fsm_state;
 		l_aprs_alert_reason		= g_aprs_alert_reason;
@@ -3694,9 +3741,6 @@ static void task_main_aprs_pocsag(void)
 		s_lock = false;
 		return;
 	}
-
-	/* Get the date */
-	calendar_timestamp_to_date(l_ts, &calDat);
 
 	/* Prepare POCSAG mode */
 	if (g_ax_enable && g_ax_pocsag_enable) {
