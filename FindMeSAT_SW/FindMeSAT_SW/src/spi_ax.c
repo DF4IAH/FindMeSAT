@@ -441,7 +441,7 @@ uint16_t spi_ax_pocsag_skyper_NewsString(char* outBuf, uint16_t outBufSize, uint
 }
 
 
-bool spi_ax_transport(bool isProgMem, const char* packet)
+status_code_t spi_ax_transport(bool isProgMem, const char* packet)
 {
 	uint8_t						l_axIdx								= 0;
 	uint16_t					l_fmtIdx							= 0;
@@ -450,6 +450,7 @@ bool spi_ax_transport(bool isProgMem, const char* packet)
 	const char					*l_fmtPtr							= isProgMem ?  l_msg_buf : packet;
 	bool						l_isRead							= false;
 	uint8_t						l_adr0 = 0, l_adr1 = 0;
+	status_code_t				sc;
 
 	memset(l_msg_buf, 0, sizeof(l_msg_buf));
 	memset(g_ax_spi_packet_buffer, 0, sizeof(g_ax_spi_packet_buffer));
@@ -520,7 +521,11 @@ bool spi_ax_transport(bool isProgMem, const char* packet)
 
 				/* Send read address */
 				if (l_isRead) {
-					spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, l_axIdx);
+					sc = spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, l_axIdx);
+					if (sc != STATUS_OK) {
+						return sc;
+					}
+
 					l_axIdx = 0;
 					l_state = SPI_AX_TRPT_STATE_ENA_DATA_READ;
 
@@ -534,7 +539,11 @@ bool spi_ax_transport(bool isProgMem, const char* packet)
 			{
 				char c = tolower(*(l_fmtPtr + l_fmtIdx));
 				if (c == '>') {
-					spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, l_axIdx);
+					sc = spi_write_packet(&SPI_AX, g_ax_spi_packet_buffer, l_axIdx);
+					if (sc != STATUS_OK) {
+						return sc;
+					}
+
 					l_axIdx = 0;
 					l_state = SPI_AX_TRPT_STATE_COMPLETE;
 					break;
@@ -573,7 +582,10 @@ bool spi_ax_transport(bool isProgMem, const char* packet)
 				len = s_strGetDec(l_fmtPtr + l_fmtIdx, &cnt); l_fmtIdx += ++len;
 
 				/* Execute read */
-				spi_read_packet(&SPI_AX, g_ax_spi_packet_buffer, cnt);
+				sc = spi_read_packet(&SPI_AX, g_ax_spi_packet_buffer, cnt);
+				if (sc != STATUS_OK) {
+					return sc;
+				}
 
 				/* Expect deselect symbol */
 				if (*(l_fmtPtr + l_fmtIdx++) == '>') {
@@ -606,7 +618,7 @@ bool spi_ax_transport(bool isProgMem, const char* packet)
 		}
 	} while (l_state != SPI_AX_TRPT_STATE_END);
 
-	return true;
+	return STATUS_OK;
 }
 
 
@@ -3996,6 +4008,51 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_TX_RX_MODE_t txRxMode, const uint8_t* d
 }
 
 
+const char					PM_SPI_INIT_AX5243_01[]				= "\r\nSPI  AX5243: AX5243 VHF/UHF transceiver\r\n";
+const char					PM_SPI_INIT_AX5243_02[]				= "SPI  AX5243:  Silicon-Rev: 0x%02X\r\n";
+const char					PM_SPI_INIT_AX5243_03[]				= "SPI  AX5243:  --> INIT success.\r\n";
+const char					PM_SPI_INIT_AX5243_04[]				= "SPI  AX5243:  --> device not found on board.\r\n";
+PROGMEM_DECLARE(const char, PM_SPI_INIT_AX5243_01[]);
+PROGMEM_DECLARE(const char, PM_SPI_INIT_AX5243_02[]);
+PROGMEM_DECLARE(const char, PM_SPI_INIT_AX5243_03[]);
+PROGMEM_DECLARE(const char, PM_SPI_INIT_AX5243_04[]);
+static void init_spi_ax5243(void)
+{
+	status_code_t sc;
+
+	int len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SPI_INIT_AX5243_01);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+
+	do {
+		/* AX5243: read Silicon-Rev byte */
+		sc = spi_ax_transport(false, "< 00 R1 >");												// RD Address 0x00: REVISION
+		if (sc != STATUS_OK) {
+			break;
+		}
+		uint8_t rev = g_ax_spi_packet_buffer[0];
+
+		len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SPI_INIT_AX5243_02, rev);
+		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+		delay_ms(2);
+
+		/* Known chip revision */
+		if (rev == 0x51) {
+			len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SPI_INIT_AX5243_03);
+			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+			delay_ms(2);
+			return;
+		}
+	} while(false);
+
+	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SPI_INIT_AX5243_04);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	delay_ms(2);
+
+	/* No chip on board */
+	ax_enable(false);
+}
+
+
 void spi_init(void) {
 	/* Set init level */
 	ioport_set_pin_mode(AX_SEL,	 (uint8_t) (IOPORT_INIT_HIGH | IOPORT_SRL_ENABLED));			// SEL  inactive
@@ -4020,6 +4077,9 @@ void spi_start(void) {
 	spi_master_init(&SPI_AX);
 	spi_master_setup_device(&SPI_AX, &g_ax_spi_device_conf, SPI_MODE_0, 10000000, 0);			// max. 10 MHz (100 ns) when AX in POWERDOWN mode
 	spi_enable(&SPI_AX);
+
+	init_spi_ax5243();
+
 
 	#if 0
 	/* Frequency settings */

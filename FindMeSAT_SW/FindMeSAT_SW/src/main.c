@@ -7,6 +7,10 @@
  * Created: 22.01.2017 13:13:47
  * Author : DF4IAH
  *
+ * FUSE   Byte0, Byte1, Byte2, Byte3, Byte4, Byte5
+ *   App:  0xff,  0x00,  0xff,  ----,  0xfe,  0xf7
+ *  (Dflt: 0xff,  0x00,  0xff,  ----,  0xfe,  0xff)
+ *
  */
 
 /**
@@ -4235,11 +4239,11 @@ int main(void)
 	/* Init of USB system */
 	usb_init();																					// USB device stack start function to enable stack and start USB
 
-	/* Start TWI channels */
-	twi_start();																				// Start TWI
-
 	/* Start the AX5243 */
 	spi_start();																				// Start SPI communication with the AX5243
+
+	/* Start TWI channels */
+	twi_start();																				// Start TWI
 
 
 	/* Insert prepared system TEST-CODE here */

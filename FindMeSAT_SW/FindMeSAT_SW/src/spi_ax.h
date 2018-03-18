@@ -237,7 +237,7 @@ uint16_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint16_t outBufSize, stru
 uint16_t spi_ax_pocsag_skyper_RubricString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, const char* rubricLabel, uint16_t rubricLabelLen);
 uint16_t spi_ax_pocsag_skyper_NewsString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, uint8_t newsNumber, const char* newsString, uint16_t newsStringLen);
 
-bool spi_ax_transport(bool isProgMem, const char* packet);
+status_code_t spi_ax_transport(bool isProgMem, const char* packet);
 
 void spi_ax_sync2Powerdown(void);
 void spi_ax_setPower_dBm(float dBm);
@@ -293,6 +293,8 @@ void spi_ax_init_AnalogFM_Rx(void);
 void spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_t mode);
 uint8_t spi_ax_doProcess_RX_messages(uint16_t msgLen);
 void spi_ax_Rx_FIFO_DataProcessor(AX_SET_TX_RX_MODE_t txRxMode, const uint8_t* dataBuf, uint16_t dataLen);
+
+//void init_spi_ax5243(void);
 
 void spi_init(void);
 void spi_start(void);
