@@ -10561,15 +10561,15 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="R173" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R171" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
 <part name="R222" library="rcl" deviceset="R-EU_" device="R0603" value="68R"/>
-<part name="R271" library="rcl" deviceset="R-EU_" device="R0805"/>
-<part name="R281" library="rcl" deviceset="R-EU_" device="R0805"/>
-<part name="R291" library="rcl" deviceset="R-EU_" device="R0603"/>
-<part name="C291" library="rcl" deviceset="C-EU" device="C0603"/>
-<part name="C292" library="rcl" deviceset="C-EU" device="C0603"/>
-<part name="C271" library="rcl" deviceset="C-EU" device="C0603"/>
-<part name="C281" library="rcl" deviceset="C-EU" device="C0603"/>
-<part name="C272" library="rcl" deviceset="C-EU" device="C0603"/>
-<part name="C282" library="rcl" deviceset="C-EU" device="C0603"/>
+<part name="R271" library="rcl" deviceset="R-EU_" device="R0805" value="0R"/>
+<part name="R281" library="rcl" deviceset="R-EU_" device="R0805" value="0R"/>
+<part name="R291" library="rcl" deviceset="R-EU_" device="R0603" value="0R"/>
+<part name="C291" library="rcl" deviceset="C-EU" device="C0603" value="0pF"/>
+<part name="C292" library="rcl" deviceset="C-EU" device="C0603" value="0pF"/>
+<part name="C271" library="rcl" deviceset="C-EU" device="C0603" value="0pF"/>
+<part name="C281" library="rcl" deviceset="C-EU" device="C0603" value="0pF"/>
+<part name="C272" library="rcl" deviceset="C-EU" device="C0603" value="0pF"/>
+<part name="C282" library="rcl" deviceset="C-EU" device="C0603" value="0pF"/>
 <part name="GND292" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND293" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="GND281" library="df4iah_supply" deviceset="GND" device=""/>
