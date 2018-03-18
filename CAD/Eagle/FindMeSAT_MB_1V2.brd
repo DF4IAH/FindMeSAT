@@ -2688,39 +2688,39 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <attribute name="NAME" x="32.004" y="28.321" size="0.6096" layer="25" rot="R90"/>
 <attribute name="VALUE" x="32.131" y="32.004" size="0.6096" layer="27" rot="R90"/>
 </element>
-<element name="R271" library="rcl" package="R0805" value="" x="12.065" y="28.829" smashed="yes" rot="MR0">
+<element name="R271" library="rcl" package="R0805" value="0R" x="12.065" y="28.829" smashed="yes" rot="MR0">
 <attribute name="NAME" x="12.954" y="31.115" size="0.6096" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="10.795" y="29.591" size="0.6096" layer="28" rot="MR90"/>
 </element>
-<element name="R281" library="rcl" package="R0805" value="" x="12.065" y="15.63958125" smashed="yes" rot="MR0">
+<element name="R281" library="rcl" package="R0805" value="0R" x="12.065" y="15.63958125" smashed="yes" rot="MR0">
 <attribute name="NAME" x="13.081" y="17.67158125" size="0.6096" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="11.176" y="14.11558125" size="0.6096" layer="28" rot="MR0"/>
 </element>
-<element name="R291" library="rcl" package="R0603" value="" x="42.672" y="1.31" smashed="yes" rot="MR0">
+<element name="R291" library="rcl" package="R0603" value="0R" x="42.672" y="1.31" smashed="yes" rot="MR0">
 <attribute name="NAME" x="43.648" y="2.54" size="0.6096" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="41.743" y="0.127" size="0.6096" layer="28" rot="MR0"/>
 </element>
-<element name="C291" library="rcl" package="C0603" value="" x="45.212" y="2.159" smashed="yes" rot="MR90">
+<element name="C291" library="rcl" package="C0603" value="0pF" x="45.212" y="2.159" smashed="yes" rot="MR90">
 <attribute name="NAME" x="45.466" y="3.81" size="0.6096" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="44.069" y="2.54" size="0.6096" layer="28" rot="MR90"/>
 </element>
-<element name="C292" library="rcl" package="C0603" value="" x="40.132" y="2.159" smashed="yes" rot="MR90">
+<element name="C292" library="rcl" package="C0603" value="0pF" x="40.132" y="2.159" smashed="yes" rot="MR90">
 <attribute name="NAME" x="39.878" y="4.191" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="41.402" y="2.921" size="0.6096" layer="28" rot="MR270"/>
 </element>
-<element name="C271" library="rcl" package="C0603" value="" x="14.605" y="29.718" smashed="yes" rot="MR90">
+<element name="C271" library="rcl" package="C0603" value="0pF" x="14.605" y="29.718" smashed="yes" rot="MR90">
 <attribute name="NAME" x="14.351" y="31.496" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="13.335" y="30.099" size="0.6096" layer="28" rot="MR90"/>
 </element>
-<element name="C281" library="rcl" package="C0603" value="" x="14.605" y="14.986" smashed="yes" rot="MR270">
+<element name="C281" library="rcl" package="C0603" value="0pF" x="14.605" y="14.986" smashed="yes" rot="MR270">
 <attribute name="NAME" x="14.351" y="17.907" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="16.129" y="14.605" size="0.6096" layer="28" rot="MR270"/>
 </element>
-<element name="C272" library="rcl" package="C0603" value="" x="9.525" y="29.718" smashed="yes" rot="MR90">
+<element name="C272" library="rcl" package="C0603" value="0pF" x="9.525" y="29.718" smashed="yes" rot="MR90">
 <attribute name="NAME" x="9.271" y="31.496" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="10.922" y="29.337" size="0.6096" layer="28" rot="MR270"/>
 </element>
-<element name="C282" library="rcl" package="C0603" value="" x="9.525" y="14.986" smashed="yes" rot="MR270">
+<element name="C282" library="rcl" package="C0603" value="0pF" x="9.525" y="14.986" smashed="yes" rot="MR270">
 <attribute name="NAME" x="9.144" y="17.907" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="10.922" y="14.605" size="0.6096" layer="28" rot="MR270"/>
 </element>
