@@ -622,17 +622,23 @@ status_code_t spi_ax_transport(bool isProgMem, const char* packet)
 }
 
 
-void spi_ax_sync2Powerdown(void)
+status_code_t spi_ax_sync2Powerdown(void)
 {
 	/* @see AND9347/D, page 12: Preparation 1. and 2. */
+	uint16_t cntr = 0;
 
 	/* SEL line and MISO check */
 	spi_deselect_device(&SPI_AX, &g_ax_spi_device_conf);
 	delay_us(1);
 	spi_select_device(&SPI_AX, &g_ax_spi_device_conf);
 
-	while (!ioport_get_pin_level(AX_MISO_PIN)) {
-		nop();
+	while (--cntr && !ioport_get_pin_level(AX_MISO_PIN)) {
+		barrier();
+	}
+
+	if (!cntr) {
+		/* Timeout */
+		return ERR_TIMEOUT;
 	}
 
 	/* Set RESET with Powerdown mode */
@@ -643,6 +649,7 @@ void spi_ax_sync2Powerdown(void)
 
 	/* Ready to program register file */
 	/* @see AND9347/D, page 12: Preparation 3. */
+	return STATUS_OK;
 }
 
 static void s_spi_ax_xtal_waitReady(void)
@@ -705,6 +712,12 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 	static AX_SET_REGISTERS_MODULATION_t s_modulation	= AX_SET_REGISTERS_MODULATION_NONE;
 	static AX_SET_REGISTERS_VARIANT_t    s_variant		= AX_SET_REGISTERS_VARIANT_NONE;
 	static AX_SET_REGISTERS_POWERMODE_t  s_powerState	= AX_SET_REGISTERS_POWERMODE_NONE;
+	status_code_t sc;
+
+	/* Do not access the registers when not enabled */
+	if (!g_ax_enable) {
+		return;
+	}
 
 	/* Allow to reset to unknown state */
 	if (modulation == AX_SET_REGISTERS_MODULATION_INVALIDATE) {
@@ -732,7 +745,11 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 		s_modulation	= AX_SET_REGISTERS_MODULATION_NONE;
 		s_variant		= AX_SET_REGISTERS_VARIANT_NONE;
 		s_powerState	= AX_SET_REGISTERS_POWERMODE_POWERDOWN;
-		spi_ax_sync2Powerdown();
+
+		sc = spi_ax_sync2Powerdown();
+		if (sc != STATUS_OK) {
+			ax_enable(false);
+		}
 	}
 
 	/* Copy when NO_CHANGE */
@@ -4024,6 +4041,12 @@ static void init_spi_ax5243(void)
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
 
 	do {
+		/* Reset AX5243 and go to Powerdown mode */
+		sc = spi_ax_sync2Powerdown();
+		if (sc != STATUS_OK) {
+			break;
+		}
+
 		/* AX5243: read Silicon-Rev byte */
 		sc = spi_ax_transport(false, "< 00 R1 >");												// RD Address 0x00: REVISION
 		if (sc != STATUS_OK) {
@@ -4042,7 +4065,7 @@ static void init_spi_ax5243(void)
 			delay_ms(2);
 			return;
 		}
-	} while(false);
+	} while (false);
 
 	len = snprintf_P(g_prepare_buf, sizeof(g_prepare_buf), PM_SPI_INIT_AX5243_04);
 	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
@@ -4056,19 +4079,19 @@ static void init_spi_ax5243(void)
 void spi_init(void) {
 	/* Set init level */
 	ioport_set_pin_mode(AX_SEL,	 (uint8_t) (IOPORT_INIT_HIGH | IOPORT_SRL_ENABLED));			// SEL  inactive
-	ioport_set_pin_mode(AX_MOSI, (uint8_t) (IOPORT_INIT_HIGH | IOPORT_SRL_ENABLED));			// MOSI inactive
 	ioport_set_pin_mode(AX_CLK,	 (uint8_t) (IOPORT_INIT_HIGH | IOPORT_SRL_ENABLED));			// CLK  inactive
+	ioport_set_pin_mode(AX_MOSI, (uint8_t) (IOPORT_INIT_HIGH | IOPORT_SRL_ENABLED));			// MOSI inactive
+
+	/* Set port directions */
+	ioport_set_pin_dir(AX_SEL,			IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(AX_CLK,			IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(AX_MOSI,			IOPORT_DIR_OUTPUT);
+	ioport_set_pin_dir(AX_IRQ,			IOPORT_DIR_INPUT);
+	ioport_set_pin_dir(AX_MISO,			IOPORT_DIR_INPUT);
 
 	/* Set input pulling resistors */
 	ioport_set_pin_mode(AX_IRQ,			IOPORT_MODE_PULLUP);
-	ioport_set_pin_mode(AX_MOSI,		IOPORT_MODE_PULLUP);
-
-	/* Set port directions */
-	ioport_set_pin_dir(AX_IRQ,			IOPORT_DIR_INPUT);
-	ioport_set_pin_dir(AX_SEL,			IOPORT_DIR_OUTPUT);
-	ioport_set_pin_dir(AX_MOSI,			IOPORT_DIR_OUTPUT);
-	ioport_set_pin_dir(AX_MISO,			IOPORT_DIR_INPUT);
-	ioport_set_pin_dir(AX_CLK,			IOPORT_DIR_OUTPUT);
+	ioport_set_pin_mode(AX_MISO,		IOPORT_MODE_BUSKEEPER);
 }
 
 void spi_start(void) {

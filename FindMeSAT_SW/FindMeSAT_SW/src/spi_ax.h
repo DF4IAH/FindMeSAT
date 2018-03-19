@@ -239,7 +239,7 @@ uint16_t spi_ax_pocsag_skyper_NewsString(char* outBuf, uint16_t outBufSize, uint
 
 status_code_t spi_ax_transport(bool isProgMem, const char* packet);
 
-void spi_ax_sync2Powerdown(void);
+status_code_t spi_ax_sync2Powerdown(void);
 void spi_ax_setPower_dBm(float dBm);
 void spi_ax_setPwrMode(AX_SET_REGISTERS_POWERMODE_t powerState);
 void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation, AX_SET_REGISTERS_VARIANT_t variant, AX_SET_REGISTERS_POWERMODE_t powerState);
