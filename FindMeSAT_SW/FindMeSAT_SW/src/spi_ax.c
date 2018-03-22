@@ -129,8 +129,8 @@ void spi_ax_ISR_setFlags(uint8_t flags)
 		/* PORTC Pin3 INPUT */
 		ioport_set_pin_dir(AX_IRQ_PIN, IOPORT_DIR_INPUT);
 
-		/* PORTC Pin3 PULLUP, Falling edge detection */
-		ioport_set_pin_mode(AX_IRQ_PIN, IOPORT_MODE_PULLUP | IOPORT_MODE_FALLING);
+		/* PORTC Pin3 PULLDOWN, Rising edge detection = INVERT + Falling */
+		ioport_set_pin_mode(AX_IRQ_PIN, IOPORT_MODE_PULLDOWN | IOPORT_MODE_INVERT_PIN | IOPORT_MODE_FALLING);
 
 		/* Interrupt priority levels for INT1 and INT0 = Low, falling edge */
 		PORTC_INTCTRL = PORT_INT1LVL_OFF_gc | PORT_INT0LVL_LO_gc;
@@ -4317,13 +4317,27 @@ void task_spi_ax(void)
 		(void) spi_ax_doProcess_RX_messages(l_ax_spi_rx_buffer_idx);
 	}
 
+	{
+		/* FIFOSTAT */
+		spi_ax_transport(false, "< 20 R1 >");
+		int8_t pinState = g_ax_spi_packet_buffer[0];
+
+		/* FIFOSTAT */
+		spi_ax_transport(false, "< 28 R1 >");
+		int8_t fifoStat = g_ax_spi_packet_buffer[0];
+
+		int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 Status: PinState=0x%02x, FIFO-Stat=0x%02x\r\n", pinState, fifoStat);
+		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+		delay_ms(25);
+	}
+
 	/* Do signal strength monitoring */
 	{
 		irqflags_t flags = cpu_irq_save();
 		AX_SET_MON_MODE_t l_ax_set_mon_mode = g_ax_set_mon_mode;
 		cpu_irq_restore(flags);
 
-		spi_ax_transport(false, "< 02 R1 >");												// RD Address 0x02:
+		spi_ax_transport(false, "< 02 R1 >");
 		uint8_t powerMode = g_ax_spi_packet_buffer[0];
 
 		if ((powerMode == 0x79) || (powerMode == 0x7b)) {
