@@ -1018,6 +1018,14 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 				}
 				break;
 
+				case AX_SET_REGISTERS_POWERMODE_STANDBY:
+				{
+					s_powerState = AX_SET_REGISTERS_POWERMODE_SYNTHRX;
+					spi_ax_setPwrMode(s_powerState);
+					delay_us(40);  // T_synth
+				}
+				break;
+
 				case AX_SET_REGISTERS_POWERMODE_SYNTHRX:
 				{
 					// unused
@@ -1059,6 +1067,18 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 					spi_ax_setPwrMode(s_powerState);
 					s_spi_ax_xtal_waitReady();  // T_xtal
 
+					s_powerState = AX_SET_REGISTERS_POWERMODE_SYNTHRX;
+					spi_ax_setPwrMode(s_powerState);
+					delay_us(40);  // T_synth
+
+					s_powerState = AX_SET_REGISTERS_POWERMODE_FULLRX;
+					spi_ax_setPwrMode(s_powerState);
+					delay_ms(5);  // T_rx_rssi
+				}
+				break;
+
+				case AX_SET_REGISTERS_POWERMODE_STANDBY:
+				{
 					s_powerState = AX_SET_REGISTERS_POWERMODE_SYNTHRX;
 					spi_ax_setPwrMode(s_powerState);
 					delay_us(40);  // T_synth
@@ -1120,6 +1140,14 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 				}
 				break;
 
+				case AX_SET_REGISTERS_POWERMODE_STANDBY:
+				{
+					s_powerState = AX_SET_REGISTERS_POWERMODE_SYNTHTX;
+					spi_ax_setPwrMode(s_powerState);
+					delay_us(40);  // T_synth
+				}
+				break;
+
 				case AX_SET_REGISTERS_POWERMODE_SYNTHRX:
 				case AX_SET_REGISTERS_POWERMODE_FULLRX:
 				{
@@ -1161,6 +1189,18 @@ void spi_ax_setRegisters(bool doReset, AX_SET_REGISTERS_MODULATION_t modulation,
 					spi_ax_setPwrMode(s_powerState);
 					s_spi_ax_xtal_waitReady();  // T_xtal
 
+					s_powerState = AX_SET_REGISTERS_POWERMODE_SYNTHTX;
+					spi_ax_setPwrMode(s_powerState);
+					delay_us(40);  // T_synth
+
+					s_powerState = AX_SET_REGISTERS_POWERMODE_FULLTX;
+					spi_ax_setPwrMode(s_powerState);
+					delay_ms(1);  // T_tx_on
+				}
+				break;
+
+				case AX_SET_REGISTERS_POWERMODE_STANDBY:
+				{
 					s_powerState = AX_SET_REGISTERS_POWERMODE_SYNTHTX;
 					spi_ax_setPwrMode(s_powerState);
 					delay_us(40);  // T_synth
@@ -1500,6 +1540,36 @@ void spi_ax_util_FIFO_waitFree(uint8_t neededSpace)
 		spi_ax_transport(false, "< 2c R2 >");													// RD address 0x2C: FIFOFREE
 		fifoFree = 0x1ff & (((uint16_t)g_ax_spi_packet_buffer[0] << 8) | g_ax_spi_packet_buffer[1]);
 	} while (fifoFree < neededSpace);
+}
+
+void spi_ax_setRxMode_by_MonMode(void)
+{
+	/* Leave when AX5243 is disabled */
+	if (!g_ax_enable) {
+		return;
+	}
+
+	irqflags_t flags = cpu_irq_save();
+	AX_SET_MON_MODE_t l_ax_set_mon_mode = g_ax_set_mon_mode;
+	cpu_irq_restore(flags);
+
+	switch (l_ax_set_mon_mode) {
+		case AX_SET_MON_MODE_ARPS_RX_WOR:
+		case AX_SET_MON_MODE_ARPS_RX_CONT:
+		case AX_SET_MON_MODE_ARPS_RX_CONT_SINGLEPARAMSET:
+			spi_ax_setTxRxMode((AX_SET_TX_RX_MODE_t)l_ax_set_mon_mode);
+			break;
+
+		case AX_SET_MON_MODE_POCSAG_RX_WOR:
+		case AX_SET_MON_MODE_POCSAG_RX_CONT:
+		case AX_SET_MON_MODE_POCSAG_RX_CONT_SINGLEPARAMSET:
+			spi_ax_setTxRxMode((AX_SET_TX_RX_MODE_t)l_ax_set_mon_mode);
+			break;
+
+		case AX_SET_MON_MODE_OFF:
+		default:
+			spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_OFF);
+	}
 }
 
 
@@ -1903,7 +1973,7 @@ void spi_ax_init_FSK_Rx(void)
 	/* Load the receiver settings */
 	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_FSK, AX_SET_REGISTERS_VARIANT_RX_WOR, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
 
-	#if 1
+	#if 0
 		/* Set VCO-PLL to FREQA - 433.9250 MHz */
 		(void) spi_ax_selectVcoFreq(false);
 	#else
@@ -2659,7 +2729,7 @@ void spi_ax_util_PR1200_Tx_FIFO_InformationField(const char* aprsMsg, uint8_t ap
 	spi_ax_transport(false, "< a8 04 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_COMMIT
 }
 
-void spi_ax_init_PR1200_Rx(void)
+void spi_ax_init_PR1200_Rx(AX_SET_REGISTERS_POWERMODE_t powerMode)
 {
 	/* Syncing and sending reset command, then setting the packet radio values for transmission */
 	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_INVALIDATE, AX_SET_REGISTERS_VARIANT_INVALIDATE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
@@ -2695,7 +2765,7 @@ void spi_ax_init_PR1200_Rx(void)
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
 	/* Enabling the wake-on-radio receiver */
-	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_WOR);
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, powerMode);
 }
 
 
@@ -3516,7 +3586,7 @@ void spi_ax_send_POCSAG_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc
 	}
 }
 
-void spi_ax_init_POCSAG_Rx(void)
+void spi_ax_init_POCSAG_Rx(AX_SET_REGISTERS_POWERMODE_t powerMode)
 {
 	/* Syncing and sending reset command, then setting the default values */
 	spi_ax_setRegisters(true, AX_SET_REGISTERS_MODULATION_INVALIDATE, AX_SET_REGISTERS_VARIANT_INVALIDATE, AX_SET_REGISTERS_POWERMODE_POWERDOWN);
@@ -3555,8 +3625,19 @@ void spi_ax_init_POCSAG_Rx(void)
 	/* FIFOCMD / FIFOSTAT */
 	spi_ax_transport(false, "< a8 03 >");														// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
-	/* Enabling the wake-one-radio receiver */
-	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, AX_SET_REGISTERS_POWERMODE_WOR);
+	/* Change PowerMode */
+	spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_NO_CHANGE, AX_SET_REGISTERS_VARIANT_NO_CHANGE, powerMode);
+
+	#if 0
+	// TEST
+	spi_ax_transport(false, "< 02 R1 >");
+	uint8_t checkPowerMode = g_ax_spi_packet_buffer[0];
+
+	int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 state now: checkPowerMode=0x%02x.\r\n", checkPowerMode);
+	udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+	delay_ms(25);
+	nop();
+	#endif
 }
 
 
@@ -3822,36 +3903,44 @@ static uint8_t s_spi_ax_cal_vcoi(void)
 #endif
 
 
-void spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_t mode)
+void spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_t txRxMode)
 {
-	static AX_SET_TX_RX_MODE_t lastMode = AX_SET_TX_RX_MODE_OFF;
+	static AX_SET_TX_RX_MODE_t lastTxRxMode = AX_SET_TX_RX_MODE_OFF;
 
-	if (lastMode != mode) {
-		lastMode = mode;
+	if (lastTxRxMode != txRxMode) {
+		lastTxRxMode  = txRxMode;
 
 		/* FIFOCMD / FIFOSTAT */
 		spi_ax_transport(false, "< a8 03 >");																// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
 
-		switch (mode) {
+		switch (txRxMode) {
 			case AX_SET_TX_RX_MODE_ARPS_RX_WOR:
-			case AX_SET_TX_RX_MODE_ARPS_RX_CONT:
-			case AX_SET_TX_RX_MODE_ARPS_RX_CONT_SINGLEPARAMSET:
-				spi_ax_init_PR1200_Rx();
+				spi_ax_init_PR1200_Rx(AX_SET_REGISTERS_POWERMODE_WOR);
 			break;
 
-			case AX_SET_TX_RX_MODE_POCSAG_RX_WOR:
-			case AX_SET_TX_RX_MODE_POCSAG_RX_CONT:
-			case AX_SET_TX_RX_MODE_POCSAG_RX_CONT_SINGLEPARAMSET:
-				spi_ax_init_POCSAG_Rx();
+			case AX_SET_TX_RX_MODE_ARPS_RX_CONT:
+			case AX_SET_TX_RX_MODE_ARPS_RX_CONT_SINGLEPARAMSET:
+				spi_ax_init_PR1200_Rx(AX_SET_REGISTERS_POWERMODE_FULLRX);
 			break;
 
 			case AX_SET_TX_RX_MODE_ARPS_TX:
 				spi_ax_init_PR1200_Tx();
 			break;
 
+
+			case AX_SET_TX_RX_MODE_POCSAG_RX_WOR:
+				spi_ax_init_POCSAG_Rx(AX_SET_REGISTERS_POWERMODE_WOR);
+			break;
+
+			case AX_SET_TX_RX_MODE_POCSAG_RX_CONT:
+			case AX_SET_TX_RX_MODE_POCSAG_RX_CONT_SINGLEPARAMSET:
+				spi_ax_init_POCSAG_Rx(AX_SET_REGISTERS_POWERMODE_FULLRX);
+			break;
+
 			case AX_SET_TX_RX_MODE_POCSAG_TX:
 				spi_ax_init_POCSAG_Tx();
 			break;
+
 
 			default:
 				spi_ax_setRegisters(false, AX_SET_REGISTERS_MODULATION_INVALIDATE, AX_SET_REGISTERS_VARIANT_INVALIDATE, AX_SET_REGISTERS_POWERMODE_DEEPSLEEP);
@@ -4229,39 +4318,45 @@ void task_spi_ax(void)
 	}
 
 	/* Do signal strength monitoring */
-	if (false) {
-		int8_t curRssi			= 0;
-		#if 1
-		int8_t curBgndRssi		= 0;
-		#endif
-		int8_t curAgcCounter	= 0;
-		#if 1
-		uint16_t curTrkAmpl		= 0;
-		#endif
+	{
+		irqflags_t flags = cpu_irq_save();
+		AX_SET_MON_MODE_t l_ax_set_mon_mode = g_ax_set_mon_mode;
+		cpu_irq_restore(flags);
 
-		/* RSSI, BGNDRSSI */
-		spi_ax_transport(false, "< 40 R2 >");												// RD Address 0x40: RSSI, BGNDRSSI
-		curRssi			= (int8_t)g_ax_spi_packet_buffer[0];
-		#if 1
-		curBgndRssi		= (int8_t)g_ax_spi_packet_buffer[1];
-		#endif
+		spi_ax_transport(false, "< 02 R1 >");												// RD Address 0x02:
+		uint8_t powerMode = g_ax_spi_packet_buffer[0];
 
-		/* AGCCOUNTER */
-		spi_ax_transport(false, "< 43 R1 >");												// RD Address 0x43: AGCCOUNTER
-		curAgcCounter	= (int8_t)g_ax_spi_packet_buffer[0];
+		if ((powerMode == 0x79) || (powerMode == 0x7b)) {
+			int8_t curRssi			= 0;
+			int8_t curBgndRssi		= 0;
+			int8_t curAgcCounter	= 0;
+			uint16_t curTrkAmpl		= 0;
 
-		/* TRKAMPL */
-		#if 1
-		spi_ax_transport(false, "< 48 R2 >");												// RD Address 0x48: TRKAMPL
-		curTrkAmpl		= ((uint16_t)g_ax_spi_packet_buffer[0] << 8) | g_ax_spi_packet_buffer[1];
-		#endif
+			/* RSSI, BGNDRSSI */
+			spi_ax_transport(false, "< 40 R2 >");												// RD Address 0x40: RSSI, BGNDRSSI
+			curRssi			= (int8_t)g_ax_spi_packet_buffer[0];
+			curBgndRssi		= (int8_t)g_ax_spi_packet_buffer[1];
 
-		#if 1
-		int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 state now: RSSI=%+04ddBm, Bgnd-RSSI=%+04ddBm, AGC-Gain=%+7.2fdB, TrkAmpl=%5d.\r\n", curRssi, curBgndRssi, curAgcCounter * 0.75f, curTrkAmpl);
-		#else
-		int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 state now: RSSI=%+04ddBm, AGC-Gain=%+7.2fdB.\r\n", curRssi, curAgcCounter * 0.75f);
-		#endif
-		udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+			/* AGCCOUNTER */
+			spi_ax_transport(false, "< 43 R1 >");												// RD Address 0x43: AGCCOUNTER
+			curAgcCounter	= (int8_t)g_ax_spi_packet_buffer[0];
+
+			/* TRKAMPL */
+			spi_ax_transport(false, "< 48 R2 >");												// RD Address 0x48: TRKAMPL
+			curTrkAmpl		= ((uint16_t)g_ax_spi_packet_buffer[0] << 8) | g_ax_spi_packet_buffer[1];
+
+			int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 state now: g_ax_set_mon_mode=0x%02x --> PowerMode=0x%02x:\r\n", l_ax_set_mon_mode, powerMode);
+			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+			delay_ms(25);
+			len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), ">\t\t\t\t\t\t\t\tRSSI=%+04ddBm, Bgnd-RSSI=%+04ddBm, AGC-Gain=%+7.2fdB, TrkAmpl=%5d.\r\n\r\n", curRssi, curBgndRssi, curAgcCounter * 0.75f, curTrkAmpl);
+			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+			delay_ms(25);
+
+		} else if ((powerMode != 0x00) && (powerMode != 0x01) && (powerMode != 0x07)) {
+			int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 state now: g_ax_set_mon_mode=0x%02x --> PowerMode=0x%02x.\r\n", l_ax_set_mon_mode, powerMode);
+			udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
+			delay_ms(25);
+		}
 	}
 }
 

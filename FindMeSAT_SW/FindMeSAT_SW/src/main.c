@@ -233,7 +233,8 @@ bool						g_ax_enable										= false;	// EEPROM
 bool						g_ax_aprs_enable								= false;	// EEPROM
 bool						g_ax_pocsag_enable								= false;	// EEPROM
 uint8_t						g_ax_pocsag_beacon_secs							= 0;		// EEPROM
-AX_SET_TX_RX_MODE_t			g_ax_set_tx_rx_mode								= AX_SET_TX_RX_MODE_OFF;	// EEPROM
+AX_SET_TX_RX_MODE_t			g_ax_set_tx_rx_mode								= AX_SET_TX_RX_MODE_OFF;
+AX_SET_MON_MODE_t			g_ax_set_mon_mode								= AX_SET_MON_MODE_OFF;	// EEPROM
 struct spi_device			g_ax_spi_device_conf							= { 0 };
 volatile uint8_t			g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH]	= { 0 };
 volatile uint8_t			g_ax_spi_rx_buffer[C_SPI_AX_BUFFER_LENGTH]		= { 0 };
@@ -852,7 +853,7 @@ static void init_globals(void)
 		}
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_MON_MODE, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
-			g_ax_set_tx_rx_mode			= (AX_SET_TX_RX_MODE_t) val_ui8;
+			g_ax_set_mon_mode			= (AX_SET_MON_MODE_t) val_ui8;
 		}
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_RIC, &val_ui32, sizeof(val_ui32)) == STATUS_OK) {
@@ -1087,7 +1088,7 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		val_ui8 = g_ax_pocsag_beacon_secs;
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_BEACON,	&val_ui8,							sizeof(val_ui8));
 
-		val_ui8 = (uint8_t) g_ax_set_tx_rx_mode;
+		val_ui8 = (uint8_t) g_ax_set_mon_mode;
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_MON_MODE,			&val_ui8,							sizeof(val_ui8));
 
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_RIC,		&g_ax_pocsag_individual_ric,		sizeof(g_ax_pocsag_individual_ric));
@@ -1513,6 +1514,7 @@ void ax_enable(bool enable)
 		}
 
 	} else {
+		monitor_mode(AX_SET_MON_MODE_OFF);
 		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_OFF);
 	}
 }
@@ -1962,10 +1964,10 @@ void keyBeep_enable(bool enable)
 	save_globals(EEPROM_SAVE_BF__BEEP);
 }
 
-void monitor_mode(AX_SET_TX_RX_MODE_t mode)
+void monitor_mode(AX_SET_MON_MODE_t mode)
 {
 	irqflags_t flags = cpu_irq_save();
-	g_ax_set_tx_rx_mode = mode;
+	g_ax_set_mon_mode = mode;
 	cpu_irq_restore(flags);
 
 	save_globals(EEPROM_SAVE_BF__AX);
@@ -3640,6 +3642,7 @@ static void task_env_calc(void)
 	}
 }
 
+
 static void task_main_aprs_pocsag(void)
 {
 	static uint32_t				s_now_sec					= 0UL;
@@ -3708,26 +3711,17 @@ static void task_main_aprs_pocsag(void)
 		l_pocsag_ric_msg_buf_len = 0;
 	}
 
-	/* Do not send when GPS not ready */
-	if (s_lock || !g_gns_fix_status) {
+	/* Not ready for transmission */
+	if (s_lock ||
+		!g_gns_fix_status || !l_boot_time_ts ||																	// Do not send when GPS not ready
+		!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && (g_ax_aprs_enable || g_ax_pocsag_enable)))		// Do not send when APRS and POCSAG is disabled
+		) {
 		/* Set requested monitor mode */
-		if (g_ax_enable)
-		{
-			irqflags_t flags = cpu_irq_save();
-			AX_SET_TX_RX_MODE_t l_ax_set_tx_rx_mode = g_ax_set_tx_rx_mode;
-			cpu_irq_restore(flags);
-
-			spi_ax_setTxRxMode(l_ax_set_tx_rx_mode);
-		}
+		spi_ax_setRxMode_by_MonMode();
 		return;
 	}
 
-	/* do not send when APRS and POCSAG is disabled */
-	if (!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && (g_ax_aprs_enable || g_ax_pocsag_enable)))) {
-		return;
-	}
-
-	/* Single thread lock */
+	/* Single thread lock section BEGINs here */
 	s_lock = true;
 
 	/* Get a copy from the global variables */
@@ -3737,13 +3731,6 @@ static void task_main_aprs_pocsag(void)
 		l_aprs_alert_fsm_state	= g_aprs_alert_fsm_state;
 		l_aprs_alert_reason		= g_aprs_alert_reason;
 		cpu_irq_restore(flags);
-	}
-
-	/* GNSS has to set the clock first */
-	if (!l_boot_time_ts) {
-		/* Single thread finished */
-		s_lock = false;
-		return;
 	}
 
 	/* Prepare POCSAG mode */
@@ -4142,17 +4129,11 @@ static void task_main_aprs_pocsag(void)
 		cpu_irq_restore(flags);
 	}
 
-	/* Single thread finished */
+	/* Single thread lock section ENDs here */
 	s_lock = false;
 
-	/* After transmission set requested monitor mode, again */
-	{
-		irqflags_t flags = cpu_irq_save();
-		AX_SET_TX_RX_MODE_t l_ax_set_tx_rx_mode = g_ax_set_tx_rx_mode;
-		cpu_irq_restore(flags);
-
-		spi_ax_setTxRxMode(l_ax_set_tx_rx_mode);
-	}
+	/* After transmission return to requested monitor mode (half duplex) */
+	spi_ax_setRxMode_by_MonMode();
 }
 
 void task(void)

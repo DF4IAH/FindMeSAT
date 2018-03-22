@@ -13,7 +13,7 @@
 
 
 /* VERSION: YYM, MDD */
-#define VERSION														20180319
+#define VERSION														20180322
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -165,10 +165,12 @@ typedef enum AX_BF_ENUM {
 #ifndef DEFINED_AX_SET_TX_RX_MODE
 typedef enum AX_SET_TX_RX_MODE {
 	AX_SET_TX_RX_MODE_OFF											= 0x00,
+
 	AX_SET_TX_RX_MODE_ARPS_TX										= 0x31,
 	AX_SET_TX_RX_MODE_ARPS_RX_WOR,
 	AX_SET_TX_RX_MODE_ARPS_RX_CONT,
 	AX_SET_TX_RX_MODE_ARPS_RX_CONT_SINGLEPARAMSET,
+
 	AX_SET_TX_RX_MODE_POCSAG_TX										= 0x71,
 	AX_SET_TX_RX_MODE_POCSAG_RX_WOR,
 	AX_SET_TX_RX_MODE_POCSAG_RX_CONT,
@@ -177,6 +179,17 @@ typedef enum AX_SET_TX_RX_MODE {
 #define DEFINED_AX_SET_TX_RX_MODE
 #endif
 
+typedef enum AX_SET_MON_MODE {
+	AX_SET_MON_MODE_OFF												= 0x00,
+
+	AX_SET_MON_MODE_ARPS_RX_WOR										= AX_SET_TX_RX_MODE_ARPS_RX_WOR,
+	AX_SET_MON_MODE_ARPS_RX_CONT									= AX_SET_TX_RX_MODE_ARPS_RX_CONT,
+	AX_SET_MON_MODE_ARPS_RX_CONT_SINGLEPARAMSET						= AX_SET_TX_RX_MODE_ARPS_RX_CONT_SINGLEPARAMSET,
+
+	AX_SET_MON_MODE_POCSAG_RX_WOR									= AX_SET_TX_RX_MODE_POCSAG_RX_WOR,
+	AX_SET_MON_MODE_POCSAG_RX_CONT									= AX_SET_TX_RX_MODE_POCSAG_RX_CONT,
+	AX_SET_MON_MODE_POCSAG_RX_CONT_SINGLEPARAMSET					= AX_SET_TX_RX_MODE_POCSAG_RX_CONT_SINGLEPARAMSET,
+} AX_SET_MON_MODE_t;
 
 typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__VERSION											= 0x0000,					// i32
@@ -372,7 +385,7 @@ void gsm_aprs_enable(bool enable);
 void gsm_pin_update(const char pin[]);
 void gsm_enable(bool enable);
 void keyBeep_enable(bool enable);
-void monitor_mode(AX_SET_TX_RX_MODE_t mode);
+void monitor_mode(AX_SET_MON_MODE_t mode);
 void pitchTone_mode(uint8_t mode);
 void pocsagBeacon_time(uint8_t secs);
 void pocsag_chime_update(bool enable);
