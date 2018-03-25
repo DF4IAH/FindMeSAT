@@ -13,7 +13,7 @@
 
 
 /* VERSION: YYM, MDD */
-#define VERSION														20180322
+#define VERSION														20180325
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -355,6 +355,7 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf);
 char* cueBehind(char* ptr, char delim);
 int myStringToFloat(const char* ptr, float* out);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
+uint8_t doHexdump(char *target, const uint8_t *source, uint8_t inLen);
 char* ipProto_2_ca(uint8_t aprs_ip_proto);
 char* copyStr(char* target, uint8_t targetSize, const char* source);
 uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_first);

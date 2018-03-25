@@ -1251,6 +1251,22 @@ int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int o
 	return ret;
 }
 
+uint8_t doHexdump(char *target, const uint8_t *source, uint8_t inLen)
+{
+	uint8_t outLen = 0;
+
+	for (uint8_t idx = 0; idx < inLen; idx++) {
+		outLen += sprintf(target + outLen, "%02x ", (uint8_t) *(source + idx));
+
+		if ((idx % 0x10) == 0x0f) {
+			outLen += sprintf(target + outLen, "\r\n");
+		}
+	}
+	outLen += sprintf(target + outLen, "\r\n");
+
+	return outLen;
+}
+
 char* ipProto_2_ca(uint8_t aprs_ip_proto)
 {
 	switch (aprs_ip_proto) {
@@ -2078,7 +2094,7 @@ void sens_baro_temp(float temp)
 	}
 
 	irqflags_t flags = cpu_irq_save();
-	g_twi1_baro_temp_cor_100 = l_twi1_baro_temp_cor_100;
+	g_twi1_baro_temp_cor_100 += l_twi1_baro_temp_cor_100;
 	cpu_irq_restore(flags);
 
 	save_globals(EEPROM_SAVE_BF__ENV);
@@ -2095,7 +2111,7 @@ void sens_baro_pres(float pres)
 	}
 
 	irqflags_t flags = cpu_irq_save();
-	g_twi1_baro_p_cor_100 = l_twi1_baro_p_cor_100;
+	g_twi1_baro_p_cor_100 += l_twi1_baro_p_cor_100;
 	cpu_irq_restore(flags);
 
 	save_globals(EEPROM_SAVE_BF__ENV);
@@ -2112,7 +2128,7 @@ void sens_hygro_temp(float temp)
 	}
 
 	irqflags_t flags = cpu_irq_save();
-	g_twi1_hygro_T_cor_100 = l_twi1_hygro_T_cor_100;
+	g_twi1_hygro_T_cor_100 += l_twi1_hygro_T_cor_100;
 	cpu_irq_restore(flags);
 
 	save_globals(EEPROM_SAVE_BF__ENV);
@@ -2129,7 +2145,7 @@ void sens_hygro_RH(float rh)
 	}
 
 	irqflags_t flags = cpu_irq_save();
-	g_twi1_hygro_RH_cor_100 = l_twi1_hygro_RH_cor_100;
+	g_twi1_hygro_RH_cor_100 += l_twi1_hygro_RH_cor_100;
 	cpu_irq_restore(flags);
 
 	save_globals(EEPROM_SAVE_BF__ENV);
