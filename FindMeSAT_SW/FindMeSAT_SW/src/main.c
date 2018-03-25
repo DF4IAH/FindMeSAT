@@ -3715,7 +3715,7 @@ static void task_main_aprs_pocsag(void)
 	calendar_timestamp_to_date(l_ts, &calDat);
 
 	/* POCSAG beacon mode */
-	if (l_ax_pocsag_beacon_secs && (((s_pocsag_beacon_last + l_ax_pocsag_beacon_secs) <= l_now_sec) || (s_pocsag_beacon_last > l_now_sec))) {
+	if (g_ax_enable && g_ax_pocsag_enable && l_ax_pocsag_beacon_secs && (((s_pocsag_beacon_last + l_ax_pocsag_beacon_secs) <= l_now_sec) || (s_pocsag_beacon_last > l_now_sec))) {
 		/* Update last time */
 		s_pocsag_beacon_last = l_now_sec;
 
@@ -3730,7 +3730,7 @@ static void task_main_aprs_pocsag(void)
 	/* Not ready for transmission */
 	if (s_lock ||
 		!g_gns_fix_status || !l_boot_time_ts ||																	// Do not send when GPS not ready
-		!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && (g_ax_aprs_enable || g_ax_pocsag_enable)))		// Do not send when APRS and POCSAG is disabled
+		!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && (g_ax_aprs_enable || g_ax_pocsag_enable)))		// Do not send when APRS and POCSAG is disabled for the AX5243
 		) {
 		/* Set requested monitor mode */
 		spi_ax_setRxMode_by_MonMode();
@@ -3757,7 +3757,7 @@ static void task_main_aprs_pocsag(void)
 		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
 		/* POCSAG Skyper clock for every new minute (chime) */
-		if ((s_lastMinute != calDat.minute) && g_ax_pocsag_chime_enable) {
+		if (g_ax_pocsag_chime_enable && (s_lastMinute != calDat.minute)) {
 			s_lastMinute   = calDat.minute;
 			l_pocsag_ric_msg_buf_len = spi_ax_pocsag_skyper_TimeString(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), &calDat);
 
@@ -3881,7 +3881,7 @@ static void task_main_aprs_pocsag(void)
 				#endif
 
 				/* Message content POCSAG */
-				if (g_ax_pocsag_enable) {
+				if (g_ax_enable && g_ax_pocsag_enable) {
 					if (g_ax_pocsag_individual_ric) {
 						l_pocsag_ric_msg_buf_len  = (uint16_t) snprintf_P(l_pocsag_ric_msg_buf, sizeof(l_pocsag_ric_msg_buf), PM_POCSAG_TX_MSG_SRCCALL, g_aprs_source_callsign);
 						l_pocsag_ric_msg_buf_len += (uint16_t) snprintf_P(&(l_pocsag_ric_msg_buf[0]) + l_pocsag_ric_msg_buf_len, sizeof(l_pocsag_ric_msg_buf) - l_pocsag_ric_msg_buf_len,

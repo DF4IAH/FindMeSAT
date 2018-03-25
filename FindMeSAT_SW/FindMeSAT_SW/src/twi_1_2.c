@@ -2104,7 +2104,7 @@ void task_twi2_lcd__hygro(uint8_t col_left)
 		/* Get up-to-date global data */
 		{
 			irqflags_t flags = cpu_irq_save();
-			l_twi1_hygro_DP_100				= g_twi1_hygro_DP_100;
+			l_twi1_hygro_DP_100	= g_twi1_hygro_DP_100;
 			cpu_irq_restore(flags);
 		}
 

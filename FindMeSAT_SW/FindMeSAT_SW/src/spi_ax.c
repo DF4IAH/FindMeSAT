@@ -156,13 +156,8 @@ void spi_ax_ISR_setFlags(uint8_t flags)
 		/* PORTC Pin3 INPUT */
 		ioport_set_pin_dir(AX_IRQ_PIN, IOPORT_DIR_INPUT);
 
-		#if 0
-		/* PORTC Pin3 PULLHIGH, Falling edge detection = non-INVERT + Falling */
-		ioport_set_pin_mode(AX_IRQ_PIN, IOPORT_MODE_PULLUP | IOPORT_MODE_FALLING);
-		#else
 		/* PORTC Pin3 PULLHIGH, Level: low active */
 		ioport_set_pin_mode(AX_IRQ_PIN, IOPORT_MODE_PULLUP | IOPORT_MODE_INVERT_PIN);
-		#endif
 
 		/* Interrupt priority levels for INT1 and INT0 = Low */
 		PORTC_INTCTRL = PORT_INT1LVL_OFF_gc | PORT_INT0LVL_LO_gc;
@@ -1589,6 +1584,10 @@ void spi_ax_setRxMode_by_MonMode(void)
 {
 	/* Leave when AX5243 is disabled */
 	if (!g_ax_enable) {
+		irqflags_t flags = cpu_irq_save();
+		g_ax_set_mon_mode = AX_SET_MON_MODE_OFF;
+		cpu_irq_restore(flags);
+
 		return;
 	}
 
@@ -3616,20 +3615,18 @@ int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFu
 
 void spi_ax_send_POCSAG_Msg(uint32_t pocsagTgtRIC, AX_POCSAG_CW2_t pocsagTgtFunc, const char* pocsagTgtMsg, uint8_t pocsagTgtMsgLen)
 {
-	if (g_ax_enable && g_ax_pocsag_enable) {
-		/* Send message */
-		spi_ax_run_POCSAG_Tx_FIFO_Msg(pocsagTgtRIC, pocsagTgtFunc, pocsagTgtMsg, pocsagTgtMsgLen);
+	/* Send message */
+	spi_ax_run_POCSAG_Tx_FIFO_Msg(pocsagTgtRIC, pocsagTgtFunc, pocsagTgtMsg, pocsagTgtMsgLen);
 
-		/* Wait until message in FIFO is sent and transmitter switches off */
-		do {
-			/* FIFOSTAT */
-			spi_ax_transport(false, "< 28 R1 >");
-		} while (!(g_ax_spi_packet_buffer[0] & 0x01));
-		do {
-			/* RADIOSTATE */
-			spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
-		} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
-	}
+	/* Wait until message in FIFO is sent and transmitter switches off */
+	do {
+		/* FIFOSTAT */
+		spi_ax_transport(false, "< 28 R1 >");
+	} while (!(g_ax_spi_packet_buffer[0] & 0x01));
+	do {
+		/* RADIOSTATE */
+		spi_ax_transport(false, "< 1c R1 >");												// RD Address 0x1C: RADIOSTATE - IDLE
+	} while ((g_ax_spi_packet_buffer[0] & 0x0f) != 0);
 }
 
 void spi_ax_init_POCSAG_Rx(AX_SET_REGISTERS_POWERMODE_t powerMode)
@@ -4346,7 +4343,6 @@ void task_spi_ax(void)
 		cpu_irq_restore(flags);
 
 		udi_write_tx_buf(g_prepare_buf, len, false);
-		yield_ms(25);
 	}
 
 	#if 0
