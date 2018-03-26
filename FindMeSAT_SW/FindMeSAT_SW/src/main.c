@@ -4094,7 +4094,7 @@ static void task_main_aprs_pocsag(void)
 			const uint8_t ssidAry[]	= { 0, 8, 1, 2 };
 
 			/* Switch APRS mode (handled by PR1200) */
-			spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_ARPS_TX);
+			spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_APRS_TX);
 
 			/* Transmit APRS message */
 			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, sizeof(addrAry) / C_PR1200_CALL_LENGTH,  l_msg_buf, l_msg_buf_len);

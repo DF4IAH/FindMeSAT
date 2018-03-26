@@ -573,7 +573,7 @@ static void executeCmdLine(char* cmdLine_buf, uint8_t cmdLine_len)
 			monitor_mode(AX_SET_TX_RX_MODE_OFF);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_mon_aprs,		sizeof(PM_IP_CMD_mon_aprs) - 1)) {
-			monitor_mode(AX_SET_TX_RX_MODE_ARPS_RX_CONT);
+			monitor_mode(AX_SET_TX_RX_MODE_APRS_RX_CONT);
 
 		} else if (!strncmp_P((char*)cmdLine_buf, PM_IP_CMD_mon_pocsag,		sizeof(PM_IP_CMD_mon_pocsag) - 1)) {
 			monitor_mode(AX_SET_TX_RX_MODE_POCSAG_RX_CONT);

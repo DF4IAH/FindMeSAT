@@ -84,10 +84,10 @@ typedef enum AX_SET_REGISTERS_POWERMODE {
 #ifndef DEFINED_AX_SET_TX_RX_MODE
 typedef enum AX_SET_TX_RX_MODE {
 	AX_SET_TX_RX_MODE_OFF											= 0x00,
-	AX_SET_TX_RX_MODE_ARPS_TX										= 0x31,
-	AX_SET_TX_RX_MODE_ARPS_RX_WOR,
-	AX_SET_TX_RX_MODE_ARPS_RX_CONT,
-	AX_SET_TX_RX_MODE_ARPS_RX_CONT_SINGLEPARAMSET,
+	AX_SET_TX_RX_MODE_APRS_TX										= 0x31,
+	AX_SET_TX_RX_MODE_APRS_RX_WOR,
+	AX_SET_TX_RX_MODE_APRS_RX_CONT,
+	AX_SET_TX_RX_MODE_APRS_RX_CONT_SINGLEPARAMSET,
 	AX_SET_TX_RX_MODE_POCSAG_TX										= 0x71,
 	AX_SET_TX_RX_MODE_POCSAG_RX_WOR,
 	AX_SET_TX_RX_MODE_POCSAG_RX_CONT,
@@ -139,6 +139,14 @@ typedef enum AX_FIFO_DATA_FLAGS_RX_BF {
 	AX_FIFO_DATA_FLAGS_RX_SIZEFAIL									= 0x20,
 	AX_FIFO_DATA_FLAGS_RX_ABORT										= 0x40
 } AX_FIFO_DATA_FLAGS_RX_BF_t;
+
+typedef enum AX_DECODER_POCSAG {
+	AX_DECODER_POCSAG__NONE											= 0x00,
+	AX_DECODER_POCSAG__SYNC,
+	AX_DECODER_POCSAG__IDLE,
+	AX_DECODER_POCSAG__ADDRESS,
+	AX_DECODER_POCSAG__DATA,
+} AX_DECODER_POCSAG_t;
 
 
 typedef enum AX_FIFO_RX_FSM {
@@ -208,6 +216,19 @@ typedef enum AX_POCSAG_SKYPER_RIC_ENUM {
 	AX_POCSAG_SKYPER_RIC_NEWS										= 4520
 } AX_POCSAG_SKYPER_RIC_t;
 
+typedef struct AX_POCSAG_DECODER_DATA {
+	bool		badDecode;																		// No successful decode (0 bit error and 1 bit error)
+
+	bool		badParity;																		// Parity not even (0 bit error)
+	bool		badCheck;																		// Check failed (0 bit error)
+
+	bool		isAddr;																			// Decoded word is an address
+	bool		isData;																			// Decoded word contains data
+	uint32_t	addrData;																		// Shared data or an address
+	uint8_t		functionBits;																	// Two additional bits for sub-address or Skyper signaling
+	uint8_t		invertedBit;																	// One bit error correction: 0-31 inverted bit. 32 means no correction involved
+} AX_POCSAG_DECODER_DATA_t;
+
 
 
 /* ISR routines */
@@ -229,13 +250,17 @@ inline static uint8_t s_strGetDec(const char* str, int* o_val);
 #endif
 
 AX_POCSAG_CW2_t ax_pocsag_analyze_msg_tgtFunc_get(const char* msg, uint16_t msgLen);
-uint32_t spi_ax_pocsag_calc_checksumParity(uint32_t codeword_in);
+uint8_t spi_ax_pocsag_calc_evenParity(uint32_t par);
+uint32_t spi_ax_pocsag_calc_checkAndParity(uint32_t codeword_in);
 uint8_t spi_ax_pocsag_getBcd(char c);
 uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, uint16_t tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx);
 uint16_t spi_ax_pocsag_skyper_RIC2ActivationString(char* outBuf, uint16_t outBufSize, uint32_t RIC);
 uint16_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint16_t outBufSize, struct calendar_date* calDat);
 uint16_t spi_ax_pocsag_skyper_RubricString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, const char* rubricLabel, uint16_t rubricLabelLen);
 uint16_t spi_ax_pocsag_skyper_NewsString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, uint8_t newsNumber, const char* newsString, uint16_t newsStringLen);
+
+void spi_ax_pocsag_wordDecoder(AX_POCSAG_DECODER_DATA_t* l_pocsagData, uint32_t pocsagWord, uint8_t pocsagWordCnt);
+void spi_ax_pocsag_messageDecoder(uint32_t ric, uint8_t functionBits, uint32_t* dataAry, uint8_t dataCnt);
 
 status_code_t spi_ax_transport(bool isProgMem, const char* packet);
 
@@ -292,7 +317,7 @@ void spi_ax_init_AnalogFM_Tx(void);
 void spi_ax_init_AnalogFM_Rx(void);
 
 void spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_t mode);
-uint8_t spi_ax_doProcess_RX_messages(uint16_t msgLen);
+uint8_t spi_ax_doProcess_RX_messages(const uint8_t* buf, uint8_t msgLen);
 void spi_ax_Rx_FIFO_DataProcessor(AX_SET_TX_RX_MODE_t txRxMode, const uint8_t* dataBuf, uint16_t dataLen);
 
 //void init_spi_ax5243(void);
@@ -304,8 +329,8 @@ void task_spi_ax(void);
 
 
 /* Debugging */
-void spi_ax_monitor_levels(void);
-void spi_ax_Rx_FIFO(void);
+void spi_ax_test_monitor_levels(void);
+void spi_ax_test_Rx_FIFO(void);
 
 void spi_ax_test_Analog_FM_Tx(void);
 void spi_ax_test_Analog_FM_Rx(void);
