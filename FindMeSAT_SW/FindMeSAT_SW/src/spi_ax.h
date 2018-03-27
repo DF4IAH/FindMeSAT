@@ -96,6 +96,22 @@ typedef enum AX_SET_TX_RX_MODE {
 #define DEFINED_AX_SET_TX_RX_MODE
 #endif
 
+/* find AX_SET_MON_MODE_t in main.h, also */
+#ifndef DEFINED_AX_SET_MON_MODE
+typedef enum AX_SET_MON_MODE {
+	AX_SET_MON_MODE_OFF												= 0x00,
+
+	AX_SET_MON_MODE_APRS_RX_WOR										= AX_SET_TX_RX_MODE_APRS_RX_WOR,
+	AX_SET_MON_MODE_APRS_RX_CONT									= AX_SET_TX_RX_MODE_APRS_RX_CONT,
+	AX_SET_MON_MODE_APRS_RX_CONT_SINGLEPARAMSET						= AX_SET_TX_RX_MODE_APRS_RX_CONT_SINGLEPARAMSET,
+
+	AX_SET_MON_MODE_POCSAG_RX_WOR									= AX_SET_TX_RX_MODE_POCSAG_RX_WOR,
+	AX_SET_MON_MODE_POCSAG_RX_CONT									= AX_SET_TX_RX_MODE_POCSAG_RX_CONT,
+	AX_SET_MON_MODE_POCSAG_RX_CONT_SINGLEPARAMSET					= AX_SET_TX_RX_MODE_POCSAG_RX_CONT_SINGLEPARAMSET,
+} AX_SET_MON_MODE_t;
+#define DEFINED_AX_SET_MON_MODE
+#endif
+
 
 typedef enum AX_FIFO_CMD {
 	AX_FIFO_CMD_NOP													= 0x00,
@@ -229,6 +245,19 @@ typedef struct AX_POCSAG_DECODER_DATA {
 	uint8_t		invertedBit;																	// One bit error correction: 0-31 inverted bit. 32 means no correction involved
 } AX_POCSAG_DECODER_DATA_t;
 
+typedef struct AX_RX_FIFO_MEAS {
+	uint32_t	timer;
+
+	uint8_t		rssi;
+	int16_t		antRssi2;
+	int32_t		antRssi3;
+
+	int32_t		rfFrqOffs;
+	int16_t		frqOffs;
+
+	uint32_t	dataRate;
+} AX_RX_FIFO_MEAS_t;
+
 
 
 /* ISR routines */
@@ -318,7 +347,7 @@ void spi_ax_init_AnalogFM_Rx(void);
 
 void spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_t mode);
 uint8_t spi_ax_doProcess_RX_messages(const uint8_t* buf, uint8_t msgLen);
-void spi_ax_Rx_FIFO_DataProcessor(AX_SET_TX_RX_MODE_t txRxMode, const uint8_t* dataBuf, uint16_t dataLen);
+void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* dataBuf, uint16_t dataLen);
 
 //void init_spi_ax5243(void);
 

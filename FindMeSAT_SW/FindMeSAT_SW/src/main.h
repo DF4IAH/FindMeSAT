@@ -179,6 +179,8 @@ typedef enum AX_SET_TX_RX_MODE {
 #define DEFINED_AX_SET_TX_RX_MODE
 #endif
 
+/* find AX_SET_MON_MODE_t in spi_ax.h, also */
+#ifndef DEFINED_AX_SET_MON_MODE
 typedef enum AX_SET_MON_MODE {
 	AX_SET_MON_MODE_OFF												= 0x00,
 
@@ -190,6 +192,8 @@ typedef enum AX_SET_MON_MODE {
 	AX_SET_MON_MODE_POCSAG_RX_CONT									= AX_SET_TX_RX_MODE_POCSAG_RX_CONT,
 	AX_SET_MON_MODE_POCSAG_RX_CONT_SINGLEPARAMSET					= AX_SET_TX_RX_MODE_POCSAG_RX_CONT_SINGLEPARAMSET,
 } AX_SET_MON_MODE_t;
+#define DEFINED_AX_SET_MON_MODE
+#endif
 
 typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__VERSION											= 0x0000,					// i32

@@ -243,6 +243,7 @@ volatile bool				g_ax_spi_rx_fifo_doService						= false;
 volatile uint32_t			g_ax_spi_freq_chan[2]							= { 0 };
 volatile uint8_t			g_ax_spi_range_chan[2]							= { 0 };
 volatile uint8_t			g_ax_spi_vcoi_chan[2]							= { 0 };
+volatile AX_RX_FIFO_MEAS_t	g_ax_rx_fifo_meas								= { 0 };
 
 volatile int32_t			g_xo_mode_pwm									= 0L;		// EEPROM
 

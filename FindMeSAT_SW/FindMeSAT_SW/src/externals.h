@@ -206,6 +206,8 @@ extern uint32_t						g_ax_spi_freq_chan[2];
 extern uint8_t						g_ax_spi_range_chan[2];
 extern uint8_t						g_ax_spi_vcoi_chan[2];
 
+extern AX_RX_FIFO_MEAS_t			g_ax_rx_fifo_meas;
+
 extern int32_t						g_xo_mode_pwm;
 
 extern struct adc_config			g_adc_a_conf;
