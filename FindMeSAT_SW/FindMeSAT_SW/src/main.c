@@ -1263,7 +1263,7 @@ uint8_t doHexdump(char *target, const uint8_t *source, uint8_t inLen)
 			outLen += sprintf(target + outLen, "\r\n");
 		}
 	}
-	outLen += sprintf(target + outLen, "\r\n");
+	outLen += sprintf(target + outLen, "\r\n\r\n");
 
 	return outLen;
 }
@@ -4245,6 +4245,33 @@ int main(void)
 
 
 	/* Insert prepared system TEST-CODE here */
+
+#if 1
+	{
+		static uint8_t				s_pocsagWordCtr		= 0;
+		AX_POCSAG_DECODER_DATA_t	l_pocsagData;
+		uint32_t					pocsagWord;
+
+		/* SYNCWORD */
+		pocsagWord = 0x7cd215d8UL;
+		spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
+		nop();
+
+		/* IDLEWORD */
+		pocsagWord = 0x7ac9c197UL;
+		spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
+		nop();
+
+		/* TEST: IDLEWORD with inverted bit 2 */
+		pocsagWord = 0x7ac9c193UL;
+		spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
+		nop();
+
+		while (true)
+			;
+	}
+#endif
+
 #if 0
 	/* TEST */
 	for (int i = 1000; i; i--) {

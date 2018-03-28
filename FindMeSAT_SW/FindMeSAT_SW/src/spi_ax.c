@@ -488,11 +488,12 @@ void spi_ax_pocsag_wordDecoder(AX_POCSAG_DECODER_DATA_t* l_pocsagData, uint32_t 
 		return;
 	}
 
+	l_pocsagData->badDecode		= true;																// No decoding data result
+	l_pocsagData->badParity		= true;																// Parity check on non-modified data failed
+
 	/* Outer loop for one bit error corrections */
 	do {
 		/* Preparations */
-		l_pocsagData->badDecode		= true;															// No decoding data result
-		l_pocsagData->badParity		= true;															// Parity check on non-modified data failed
 		l_pocsagData->badCheck		= true;															// Check on non-modified data failed
 		l_pocsagData->isAddr		= false;
 		l_pocsagData->isData		= false;
@@ -502,17 +503,17 @@ void spi_ax_pocsag_wordDecoder(AX_POCSAG_DECODER_DATA_t* l_pocsagData, uint32_t 
 
 		/* Try this pattern */
 		uint32_t l_pocsagWord = pocsagWord;
-		if ((0 <= tryBits) && (tryBits < 32)) {
+		if ((0x00 <= tryBits) && (tryBits < 0x20)) {
 			l_pocsagWord ^= (1UL << tryBits);
 		}
 
 		/* Inner loop for CODEWORD under test */
 		do {
 			/* Parity check */
-			bool	parCalc		= !spi_ax_pocsag_calc_evenParity(l_pocsagWord);
+			bool	parCalc		= spi_ax_pocsag_calc_evenParity(l_pocsagWord);
 			bool	parData		= (l_pocsagWord & 0x01) != 0;
 			bool	l_badParity	= (parCalc != parData);
-			if (tryBits == 32) {
+			if (tryBits == 0x20) {
 				l_pocsagData->badParity = l_badParity;
 			}
 			if (l_badParity) {
@@ -522,7 +523,7 @@ void spi_ax_pocsag_wordDecoder(AX_POCSAG_DECODER_DATA_t* l_pocsagData, uint32_t 
 			/* Check calculation */
 			uint32_t	chkCalc		= spi_ax_pocsag_calc_checkAndParity(l_pocsagWord);
 			bool		l_badCheck	= (chkCalc != l_pocsagWord);
-			if (tryBits == 32) {
+			if (tryBits == 0x20) {
 				l_pocsagData->badCheck = l_badCheck;
 
 				if (l_badCheck && !l_badParity) {
@@ -530,16 +531,19 @@ void spi_ax_pocsag_wordDecoder(AX_POCSAG_DECODER_DATA_t* l_pocsagData, uint32_t 
 					return;
 				}
 			}
-
-			/* Function bits */
-			l_pocsagData->functionBits = (uint8_t) ((l_pocsagWord >> 11) & 0x00000003UL);
+			if (l_badCheck) {
+				break;
+			}
 
 			/* Address / Data assignment */
 			l_pocsagData->badDecode = false;
 			if (!(l_pocsagWord & 0x80000000UL)) {
 				/* Address */
 				l_pocsagData->isAddr	= true;
-				l_pocsagData->addrData	= ((l_pocsagWord >> 11) & 0x000ffffcUL) | (pocsagWordCnt >> 1);
+				l_pocsagData->addrData	= ((l_pocsagWord >> 10) & 0x000ffffcUL) | ((pocsagWordCnt >> 1) & 0x03);
+
+				/* Function bits */
+				l_pocsagData->functionBits = (uint8_t) ((l_pocsagWord >> 11) & 0x00000003UL);
 
 			} else {
 				/* Data */
@@ -4251,8 +4255,10 @@ uint8_t spi_ax_doProcess_RX_messages(const uint8_t* buf, uint8_t msgLen)
 				AX_SET_MON_MODE_t l_ax_set_mon_mode = g_ax_set_mon_mode;
 				cpu_irq_restore(flags);
 
-				msgCnt++;
 				spi_ax_Rx_FIFO_DataProcessor(l_ax_set_mon_mode, buf + msgPos, fifoDataLen);
+				msgPos += fifoDataLen;
+
+				msgCnt++;
 			}
 			break;
 
@@ -4262,53 +4268,6 @@ uint8_t spi_ax_doProcess_RX_messages(const uint8_t* buf, uint8_t msgLen)
 				nop();
 			}
 		}  // switch(fifoCmd)
-
-		#if 0
-		/* Info section */
-		{
-			{
-				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 RX FIFO: cmd=0x%02X\r\n", fifoCmd);
-				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-			}
-
-			if (fifoRssi) {
-				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 RX FIFO: RSSI=0x%02X\r\n", fifoRssi);
-				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-			}
-			if (fifoAntRssi2 != 0x8000) {
-				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 RX FIFO: AntRSSI2=0x%04X\r\n", fifoAntRssi2);
-				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-			}
-			if (fifoAntRssi3 != 0x80000000L) {
-				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 RX FIFO: AntRSSI3=0x%06lX\r\n", fifoAntRssi3);
-				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-			}
-
-			if (fifoFrqOffs != 0x8000) {
-				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 RX FIFO: FrqOffs=0x%04X\r\n", fifoFrqOffs);
-				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-			}
-			if (fifoRfFrqOffs != 0x80000000L) {
-				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 RX FIFO: RfFrqOffs=0x%06lX\r\n", fifoRfFrqOffs);
-				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-			}
-
-			if (fifoDataRate != 0xffffffffUL) {
-				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 RX FIFO: DataRate=0x%06lX\r\n", fifoDataRate);
-				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-			}
-
-			if (fifoTimer) {
-				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 RX FIFO: AntRSSI3=0x%06lX\r\n", fifoTimer);
-				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-			}
-
-			if (fifoDataLen) {
-				int len = snprintf(g_prepare_buf, sizeof(g_prepare_buf), "AX5243 RX FIFO: DataLen=0x%02X <Data: ...>\r\n", fifoDataLen);
-				udi_write_tx_buf(g_prepare_buf, min(len, sizeof(g_prepare_buf)), false);
-			}
-		}
-		#endif
 	}  // while (msgPos < msgLen)
 
 	return msgCnt;
@@ -4326,7 +4285,6 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 	static uint8_t	s_pocsagData_FunctionBits				= 0;
 	static uint32_t	s_pocsagData_Data[S_POCSAG_DATA_SIZE]	= { 0UL };
 	static uint8_t	s_pocsagData_DataCnt					= 0;
-	uint16_t		dataPos									= 0;
 
 	/* Sanity check */
 	if (!dataLen) {
@@ -4349,6 +4307,7 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 		case AX_SET_MON_MODE_POCSAG_RX_WOR:
 		{
 			uint8_t						status			= *(dataBuf++);
+			uint16_t					dataPos			= 0U;
 			uint32_t					pocsagWord		= 0UL;
 			uint8_t						pocsagWordPos	= 0;
 			AX_POCSAG_DECODER_DATA_t	l_pocsagData;
@@ -4358,25 +4317,6 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 				s_pocsagFIFOWordLen	= 0;
 				s_pocsagWordCtr		= 0;
 				s_pocsagState		= AX_DECODER_POCSAG__ADDRESS;
-			}
-
-			/* Put sliced data into the FIFO word */
-			if ((dataPos + 4) > dataLen) {
-				uint8_t loopCtr = 0;
-				s_pocsagFIFOWord = 0UL;
-
-				do {
-					/* Push into MSB */
-					s_pocsagFIFOWord >>= 8;
-					s_pocsagFIFOWord  |= ((uint32_t) ((*(dataBuf + dataPos++)) & 0xff)) << 24;
-
-					loopCtr++;
-				} while (dataPos < dataLen);
-
-				s_pocsagFIFOWordLen   = loopCtr;
-				s_pocsagFIFOWord	>>= (8 << (4 - loopCtr));
-				nop();
-				return;
 			}
 
 			/* Pull FIFO data first */
@@ -4390,115 +4330,126 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 				s_pocsagFIFOWord >>= 8;
 			}
 			s_pocsagFIFOWordLen = 0;
-			nop();
 
-			/* Fill the rest from the buffer for a complete WORD */
-			while (pocsagWordPos < 4) {
-				/* Transfer data */
-				pocsagWord <<= 8;
-				pocsagWord  |= *(dataBuf + dataPos++) & 0xff;
+			/* Process the data buffer */
+			while ((dataPos + 4) < dataLen) {
+				/* Fill the rest from the buffer for a complete WORD */
+				while (pocsagWordPos < 4) {
+					/* Transfer data */
+					pocsagWord <<= 8;
+					pocsagWord  |= *(dataBuf + dataPos++) & 0xff;
 
-				/* Adjust */
-				pocsagWordPos++;
-			}
-			nop();
-
-			/* DEBUG WORDs */
-			uint8_t len = (uint8_t) sprintf(g_prepare_buf, "WORD = 0x%08lx\r\n", pocsagWord);
-			udi_write_tx_buf(g_prepare_buf, len, false);
-
-			/* Preset struct */
-			l_pocsagData.badDecode = true;
-
-			/* Known WORDs */
-			switch (pocsagWord) {
-				case AX_POCSAG_CODES_SYNCWORD:
-				{
-					s_pocsagState = AX_DECODER_POCSAG__SYNC;
+					/* Adjust */
+					pocsagWordPos++;
 				}
-				break;
+				pocsagWordPos = 0;
 
-				case AX_POCSAG_CODES_IDLEWORD:
-				{
-					s_pocsagState = AX_DECODER_POCSAG__IDLE;
-				}
-				break;
+				/* DEBUG WORDs */
+				uint8_t len = (uint8_t) sprintf(g_prepare_buf, "status = 0x%02x, WORD = 0x%08lx\r\n", status, pocsagWord);
+				udi_write_tx_buf(g_prepare_buf, len, false);
 
-				default:
-				{
-					/* WORD decoder */
-					spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
+				/* WORD decoder */
+				spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
 
-					if (!l_pocsagData.badDecode) {
-						if (l_pocsagData.isAddr) {
-							s_pocsagState = AX_DECODER_POCSAG__ADDRESS;
-						} else if (l_pocsagData.isData) {
-							s_pocsagState = AX_DECODER_POCSAG__DATA;
+				if (!l_pocsagData.badDecode) {
+					if (l_pocsagData.isAddr) {
+						/* Known addresses of WORDs */
+						switch (l_pocsagData.addrData) {
+							case ((AX_POCSAG_CODES_SYNCWORD >> 13) & 0x0007ffffUL):
+								s_pocsagState = AX_DECODER_POCSAG__SYNC;
+							break;
+
+							case ((AX_POCSAG_CODES_IDLEWORD >> 13) & 0x0007ffffUL):
+								s_pocsagState = AX_DECODER_POCSAG__IDLE;
+							break;
+
+							default:
+								s_pocsagState = AX_DECODER_POCSAG__ADDRESS;
+						}  // switch(pocsagWord)
+
+					} else if (l_pocsagData.isData) {
+						s_pocsagState = AX_DECODER_POCSAG__DATA;
+					}  // else if (l_pocsagData.isData)
+
+				} else {
+					s_pocsagState = AX_DECODER_POCSAG__NONE;
+				}  // if (l_pocsagData.badDecode)
+
+				switch (s_pocsagState) {
+					case AX_DECODER_POCSAG__ADDRESS:
+					{
+						/* Process last data */
+						if (s_pocsagData_DataCnt) {
+							/* Decode the message */
+							//spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
+
+							/* Reset data */
+							s_pocsagData_Addr			= 0UL;
+							s_pocsagData_FunctionBits	= 0;
+							s_pocsagData_DataCnt		= 0;
 						}
 
-					} else {
-						s_pocsagState = AX_DECODER_POCSAG__NONE;
+						/* New address follows */
+						s_pocsagData_Addr			= l_pocsagData.addrData;
+						s_pocsagData_FunctionBits	= l_pocsagData.functionBits;
 					}
-				}
-			}  // switch(pocsagWord)
+					break;
 
-			switch (s_pocsagState) {
-				case AX_DECODER_POCSAG__ADDRESS:
-				{
-					/* Process last data */
-					if (s_pocsagData_DataCnt) {
+					case AX_DECODER_POCSAG__DATA:
+					{
+						/* Store data for processing */
+						if (s_pocsagData_DataCnt < S_POCSAG_DATA_SIZE) {
+							s_pocsagData_Data[s_pocsagData_DataCnt++] = l_pocsagData.addrData;
+						}
+					}
+					break;
+
+					case AX_DECODER_POCSAG__IDLE:
+					{
 						/* Decode the message */
-						spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
+						//spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
 
 						/* Reset data */
 						s_pocsagData_Addr			= 0UL;
 						s_pocsagData_FunctionBits	= 0;
 						s_pocsagData_DataCnt		= 0;
 					}
+					break;
 
-					/* New address follows */
-					s_pocsagData_Addr			= l_pocsagData.addrData;
-					s_pocsagData_FunctionBits	= l_pocsagData.functionBits;
-				}
-				break;
-
-				case AX_DECODER_POCSAG__DATA:
-				{
-					/* Store data for processing */
-					if (s_pocsagData_DataCnt < S_POCSAG_DATA_SIZE) {
-						s_pocsagData_Data[s_pocsagData_DataCnt++] = l_pocsagData.addrData;
+					case AX_DECODER_POCSAG__SYNC:
+					{
+						s_pocsagWordCtr = 0;
 					}
-				}
-				break;
 
-				case AX_DECODER_POCSAG__IDLE:
-				{
-					/* Decode the message */
-					spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
+					case AX_DECODER_POCSAG__NONE:
+					default:
+					{
+						/* Reset data */
+						s_pocsagData_Addr			= 0UL;
+						s_pocsagData_FunctionBits	= 0;
+						s_pocsagData_DataCnt		= 0;
+					}
+				}  // switch (s_pocsagState)
 
-					/* Reset data */
-					s_pocsagData_Addr			= 0UL;
-					s_pocsagData_FunctionBits	= 0;
-					s_pocsagData_DataCnt		= 0;
-				}
-				break;
+				s_pocsagWordCtr++;
+			}  // while (dataPos < dataLen)
 
-				case AX_DECODER_POCSAG__SYNC:
-				{
-					s_pocsagWordCtr = 0;
-				}
+			/* Put sliced data into the FIFO word */
+			if (dataPos < dataLen) {
+				s_pocsagFIFOWord = 0UL;
+				s_pocsagFIFOWordLen = 0;
+				do {
+					/* Push into MSB */
+					s_pocsagFIFOWord >>= 8;
+					s_pocsagFIFOWord  |= ((uint32_t) ((*(dataBuf + dataPos++)) & 0xff)) << 24;
 
-				case AX_DECODER_POCSAG__NONE:
-				default:
-				{
-					/* Reset data */
-					s_pocsagData_Addr			= 0UL;
-					s_pocsagData_FunctionBits	= 0;
-					s_pocsagData_DataCnt		= 0;
-				}
-			}  // switch (s_pocsagState)
+					s_pocsagFIFOWordLen++;
+				} while (dataPos < dataLen);
 
-			s_pocsagWordCtr++;
+				s_pocsagFIFOWord >>= (8 << (4 - s_pocsagFIFOWordLen));
+				nop();
+				return;
+			}
 		}
 		break;
 
@@ -4693,21 +4644,22 @@ void task_spi_ax(void)
 {
 	/* When doService is flagged by the ISR do read the FIFO */
 	if (g_ax_spi_rx_fifo_doService) {
+		uint8_t bufDbg[C_SPI_AX_BUFFER_LENGTH];
 		uint8_t buf[C_SPI_AX_BUFFER_LENGTH];
+		uint8_t lenDbg = 0;
 		uint8_t len = 0;
 
 		/* IRQ disabled section */
 		{
 			irqflags_t flags = cpu_irq_save();
 
-			#if 0
-			len = doHexdump(buf, g_ax_spi_rx_buffer, g_ax_spi_rx_buffer_idx);
+			#if 1
+			lenDbg = doHexdump((char*)bufDbg, g_ax_spi_rx_buffer, g_ax_spi_rx_buffer_idx);
+			#endif
 
-			#else
 			/* Copy chunk to decoder buffer */
 			len = g_ax_spi_rx_buffer_idx;
 			memcpy(buf, g_ax_spi_rx_buffer, len);
-			#endif
 
 			/* Free ISR buffer */
 			g_ax_spi_rx_buffer_idx = 0;
@@ -4719,13 +4671,13 @@ void task_spi_ax(void)
 			cpu_irq_restore(flags);
 		}
 
-		/* Decode the POCSAG data */
-		#if 0
-		udi_write_tx_buf(buf, len, false);
-
-		#else
-		spi_ax_doProcess_RX_messages(buf, len);
+		#if 1
+		udi_write_tx_buf((char*)bufDbg, lenDbg, false);
+		yield_ms(25);
 		#endif
+
+		/* Decode the POCSAG data */
+		spi_ax_doProcess_RX_messages(buf, len);
 	}
 }
 

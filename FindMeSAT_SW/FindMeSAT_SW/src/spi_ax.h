@@ -204,8 +204,8 @@ typedef enum AX_FIFO_RX_FSM {
 
 typedef enum AX_POCSAG_CODES_ENUM {
 	AX_POCSAG_CODES_PREAMBLE										= 0xaaaaaaaaUL,		// MSB   1 0 1 0  1 0 1 0     1 0 1 0  1 0 1 0     1 0 1 0  1 0 1 0     1 0 1 0  1 0 1 0   LSB
-	AX_POCSAG_CODES_SYNCWORD										= 0x7cd215d8UL,		// MSB   0 1 1 1  1 1 0 0     1 1 0 1  0 0 1 0     0 0 0 1  0 1 0 1     1 1 0 1  1 0 0 0   LSB
-	AX_POCSAG_CODES_IDLEWORD										= 0x7ac9c197UL,		// MSB   0 1 1 1  1 0 1 0     1 1 0 0  1 0 0 1     1 1 0 0  0 0 0 1     1 0 0 1  0 1 1 1   LSB
+	AX_POCSAG_CODES_SYNCWORD										= 0x7cd215d8UL,		// MSB   0 1 1 1  1 1 0 0     1 1 0 1  0 0 1 0     0 0 0 1  0 1 0 1     1 1 0 1  1 0 0 0   LSB  == HI-address: 0x1f348  concat  0b000           = 0xf9a40
+	AX_POCSAG_CODES_IDLEWORD										= 0x7ac9c197UL,		// MSB   0 1 1 1  1 0 1 0     1 1 0 0  1 0 0 1     1 1 0 0  0 0 0 1     1 0 0 1  0 1 1 1   LSB  == HI-address: 0x1eb27  concat  0b000 .. 0b111  = 0xf5938 .. 0xf593f
 } AX_POCSAG_CODES_t;
 
 typedef enum AX_POCSAG_CW1_ENUM {
