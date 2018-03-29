@@ -1256,6 +1256,7 @@ uint8_t doHexdump(char *target, const uint8_t *source, uint8_t inLen)
 {
 	uint8_t outLen = 0;
 
+	outLen += sprintf(target + outLen, "\r\n");
 	for (uint8_t idx = 0; idx < inLen; idx++) {
 		outLen += sprintf(target + outLen, "%02x ", (uint8_t) *(source + idx));
 
@@ -1263,7 +1264,7 @@ uint8_t doHexdump(char *target, const uint8_t *source, uint8_t inLen)
 			outLen += sprintf(target + outLen, "\r\n");
 		}
 	}
-	outLen += sprintf(target + outLen, "\r\n\r\n");
+	outLen += sprintf(target + outLen, "\r\n");
 
 	return outLen;
 }

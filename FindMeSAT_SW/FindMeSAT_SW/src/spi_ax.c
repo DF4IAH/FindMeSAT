@@ -360,6 +360,81 @@ uint8_t spi_ax_pocsag_getBcd(char c)
 	return u8;
 }
 
+char spi_ax_pocsag_getReversedNumChar(uint8_t nibble)
+{
+	char c;
+
+	switch (nibble) {
+		case 0b0000:
+			c = 0x30;
+			break;
+
+		case 0b1000:
+			c = 0x31;
+			break;
+
+		case 0b0100:
+			c = 0x32;
+			break;
+
+		case 0b1100:
+			c = 0x33;
+			break;
+
+		case 0b0010:
+			c = 0x34;
+			break;
+
+		case 0b1010:
+			c = 0x35;
+			break;
+
+		case 0b0110:
+			c = 0x36;
+			break;
+
+		case 0b1110:
+			c = 0x37;
+			break;
+
+		case 0b0001:
+			c = 0x38;
+			break;
+
+		case 0b1001:
+			c = 0x39;
+			break;
+
+		case 0b0101:																			// #
+			c = 0x23;
+			break;
+
+		case 0b1101:																			// U
+			c = 0x55;
+			break;
+
+		case 0b0011:																			// ' '
+			c = 0x20;
+			break;
+
+		case 0b1011:																			// -
+			c = 0x2d;
+			break;
+
+		case 0b0111:																			// ]
+			c = 0x5d;
+			break;
+
+		case 0b1111:																			// [
+			c = 0x5b;
+			break;
+
+		default:
+			c = 0x20;																			// ' '
+	}
+	return c;
+}
+
 uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, uint16_t tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx)
 {
 	uint32_t msgWord = 0UL;
@@ -399,6 +474,76 @@ uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, uint16_t tgtMsgLen, AX_POCS
 	}
 	return msgWord;
 }
+
+char spi_ax_pocsag_getNumeric(const uint32_t* rcv20Bits, uint8_t rcv20BitsCnt, uint8_t msgNumIdx)
+{
+	uint8_t rcv20BitsIdx	= msgNumIdx / 5;
+	uint8_t innerPos		= 4 - (msgNumIdx % 5);
+	uint8_t mvCnt			= innerPos << 2;
+	char numChar			= ' ';
+
+	if (rcv20BitsIdx < rcv20BitsCnt) {
+		/* Get nibble slice */
+		uint8_t nibble = (*(rcv20Bits + rcv20BitsIdx) >> mvCnt) & 0x0f;
+		numChar = spi_ax_pocsag_getReversedNumChar(nibble);
+	}
+	return numChar;
+}
+
+
+void spi_ax_pocsag_address_tone(bool is_RIC_individual, uint32_t address, uint8_t fktBits)
+{
+	char isMyChar = is_RIC_individual ?  '*' : ' ';
+	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
+
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n%c RIC=%lu FktBits=0x%02x  (TONE   )%c%c%c\r\n", isMyChar, address, fktBits, isMyBeep, isMyBeep, isMyBeep);
+	udi_write_tx_buf(g_prepare_buf, len, false);
+}
+
+void spi_ax_pocsag_address_numeric(bool is_RIC_individual, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt)
+{
+	char isMyChar = is_RIC_individual ?  '*' : ' ';
+	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
+	uint8_t digitIdx = 0;
+
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n%c RIC=%lu FktBits=0x%02x  (NUMERIC):", isMyChar, address, fktBits);
+	udi_write_tx_buf(g_prepare_buf, len, false);
+
+	for (uint8_t dataCntIdx = 0; dataCntIdx < dataCnt; dataCntIdx++) {
+		for (uint8_t sliceIdx = 0; sliceIdx < 5; sliceIdx++, digitIdx++) {
+			g_prepare_buf[0] = spi_ax_pocsag_getNumeric(dataAry, dataCnt, digitIdx);
+			udi_write_tx_buf(g_prepare_buf, 1, false);
+		}
+	}
+
+	len = (uint8_t) sprintf(g_prepare_buf, "%c\r\n", isMyBeep);
+	udi_write_tx_buf(g_prepare_buf, len, false);
+}
+
+void spi_ax_pocsag_address_alphanum(bool is_RIC_individual, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt)
+{
+	char isMyChar = is_RIC_individual ?  '*' : ' ';
+	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
+
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n%c RIC=%lu FktBits=0x%02x  (ALPHA  ):", isMyChar, address, fktBits);
+	udi_write_tx_buf(g_prepare_buf, len, false);
+
+	len = (uint8_t) sprintf(g_prepare_buf, " TODO! %c\r\n", isMyBeep);
+	udi_write_tx_buf(g_prepare_buf, len, false);
+}
+
+void spi_ax_pocsag_address_skyper_activation(bool is_RIC_individual, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt)
+{
+	char isMyChar = is_RIC_individual ?  '*' : ' ';
+	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
+
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n%c RIC=%lu FktBits=0x%02x  (ACTIVTN):", isMyChar, address, fktBits);
+	udi_write_tx_buf(g_prepare_buf, len, false);
+
+	len = (uint8_t) sprintf(g_prepare_buf, " TODO! %c%c%c\r\n", isMyBeep, isMyBeep, isMyBeep);
+	udi_write_tx_buf(g_prepare_buf, len, false);
+}
+
 
 uint16_t spi_ax_pocsag_skyper_RIC2ActivationString(char* outBuf, uint16_t outBufSize, uint32_t RIC)
 {
@@ -555,7 +700,7 @@ void spi_ax_pocsag_wordDecoder(AX_POCSAG_DECODER_DATA_t* l_pocsagData, uint32_t 
 	} while (tryBits--);
 }
 
-void spi_ax_pocsag_messageDecoder(uint32_t ric, uint8_t functionBits, uint32_t* dataAry, uint8_t dataCnt)
+void spi_ax_pocsag_messageDecoder(uint32_t address, uint8_t functionBits, uint32_t* dataAry, uint8_t dataCnt)
 {
 	bool isSkyper = true;
 
@@ -569,11 +714,12 @@ void spi_ax_pocsag_messageDecoder(uint32_t ric, uint8_t functionBits, uint32_t* 
 			cpu_irq_restore(flags);
 		}
 
-		switch (ric) {
+		switch (address) {
 			case AX_POCSAG_SKYPER_RIC_CLOCK:
 			{
 				if (functionBits == AX_POCSAG_CW2_MODE0_NUMERIC) {
 					/* Time information */
+					spi_ax_pocsag_address_numeric(false, address, functionBits, dataAry, dataCnt);			// TODO: DEBUGGING ONLY
 				}
 			}
 			break;
@@ -582,6 +728,7 @@ void spi_ax_pocsag_messageDecoder(uint32_t ric, uint8_t functionBits, uint32_t* 
 			{
 				if (functionBits == AX_POCSAG_CW2_MODE3_ALPHANUM) {
 					/* Store list of Rubrics */
+					spi_ax_pocsag_address_alphanum(false, address, functionBits, dataAry, dataCnt);			// TODO: DEBUGGING ONLY
 				}
 			}
 			break;
@@ -590,38 +737,45 @@ void spi_ax_pocsag_messageDecoder(uint32_t ric, uint8_t functionBits, uint32_t* 
 			{
 				if (functionBits == AX_POCSAG_CW2_MODE3_ALPHANUM) {
 					/* Store News into rubrics */
+					spi_ax_pocsag_address_alphanum(false, address, functionBits, dataAry, dataCnt);			// TODO: DEBUGGING ONLY
 				}
 			}
 			break;
 
 			default:
 			{
-				if (ric == l_ax_pocsag_individual_ric) {
-					switch (functionBits) {
-						case AX_POCSAG_CW2_MODE2_ACTIVATION:
-						{
-							/* Check activation */
-						}
-						break;
-
-						case AX_POCSAG_CW2_MODE0_NUMERIC:
-						{
-							/* Numeric decoder */
-						}
-
-						case AX_POCSAG_CW2_MODE1_TONE:
-						{
-							/* Beep */
-						}
-
-						case AX_POCSAG_CW2_MODE3_ALPHANUM:
-						{
-							/* Alphanum decoder */
-						}
+				bool is_RIC_individual = address == l_ax_pocsag_individual_ric;
+				switch (functionBits) {
+					case AX_POCSAG_CW2_MODE2_ACTIVATION:
+					{
+						/* Check activation */
+						spi_ax_pocsag_address_skyper_activation(is_RIC_individual, address, functionBits, dataAry, dataCnt);
 					}
-				}
+					break;
+
+					case AX_POCSAG_CW2_MODE0_NUMERIC:
+					{
+						/* Numeric decoder */
+						spi_ax_pocsag_address_numeric(is_RIC_individual, address, functionBits, dataAry, dataCnt);
+					}
+					break;
+
+					case AX_POCSAG_CW2_MODE1_TONE:
+					{
+						/* Beep */
+						spi_ax_pocsag_address_tone(is_RIC_individual, address, functionBits);
+					}
+					break;
+
+					case AX_POCSAG_CW2_MODE3_ALPHANUM:
+					{
+						/* Alphanum decoder */
+						spi_ax_pocsag_address_alphanum(is_RIC_individual, address, functionBits, dataAry, dataCnt);
+					}
+					break;
+				}  // switch (functionBits)
 			}
-		}  // switch (ric)
+		}  // switch (address)
 	}  // if (isSkyper)
 }
 
@@ -4344,12 +4498,12 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 				}
 				pocsagWordBytePos = 0;
 
-				/* DEBUG WORDs */
-				uint8_t len = (uint8_t) sprintf(g_prepare_buf, "status = 0x%02x, WORD = 0x%08lx\r\n", status, pocsagWord);
-				udi_write_tx_buf(g_prepare_buf, len, false);
-
 				/* WORD decoder */
 				spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
+
+				/* DEBUG WORDs */
+				uint8_t len = (uint8_t) sprintf(g_prepare_buf, "status = 0x%02x, WORD = 0x%08lx, %c\r\n", status, pocsagWord, l_pocsagData.badDecode ?  '-' : '+');
+				udi_write_tx_buf(g_prepare_buf, len, false);
 
 				if (!l_pocsagData.badDecode) {
 					if (l_pocsagData.isAddr) {
@@ -4381,7 +4535,7 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 						/* Process last data */
 						if (s_pocsagData_DataCnt) {
 							/* Decode the message */
-							//spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
+							spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
 
 							/* Reset data */
 							s_pocsagData_Addr			= 0UL;
@@ -4407,7 +4561,7 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 					case AX_DECODER_POCSAG__IDLE:
 					{
 						/* Decode the message */
-						//spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
+						spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
 
 						/* Reset data */
 						s_pocsagData_Addr			= 0UL;

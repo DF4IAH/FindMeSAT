@@ -282,14 +282,22 @@ AX_POCSAG_CW2_t ax_pocsag_analyze_msg_tgtFunc_get(const char* msg, uint16_t msgL
 uint8_t spi_ax_pocsag_calc_evenParity(uint32_t par);
 uint32_t spi_ax_pocsag_calc_checkAndParity(uint32_t codeword_in);
 uint8_t spi_ax_pocsag_getBcd(char c);
+char spi_ax_pocsag_getReversedNumChar(uint8_t nibble);
 uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, uint16_t tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx);
+char spi_ax_pocsag_getNumeric(const uint32_t* rcv20Bits, uint8_t rcv20BitsCnt, uint8_t msgNumIdx);
+
+void spi_ax_pocsag_address_tone(bool individual_RIC_address, uint32_t address, uint8_t fktBits);
+void spi_ax_pocsag_address_numeric(bool individual_RIC_address, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt);
+void spi_ax_pocsag_address_alphanum(bool individual_RIC_address, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt);
+void spi_ax_pocsag_address_skyper_activation(bool individual_RIC_address, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt);
+
 uint16_t spi_ax_pocsag_skyper_RIC2ActivationString(char* outBuf, uint16_t outBufSize, uint32_t RIC);
 uint16_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint16_t outBufSize, struct calendar_date* calDat);
 uint16_t spi_ax_pocsag_skyper_RubricString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, const char* rubricLabel, uint16_t rubricLabelLen);
 uint16_t spi_ax_pocsag_skyper_NewsString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, uint8_t newsNumber, const char* newsString, uint16_t newsStringLen);
 
 void spi_ax_pocsag_wordDecoder(AX_POCSAG_DECODER_DATA_t* l_pocsagData, uint32_t pocsagWord, uint8_t pocsagWordCnt);
-void spi_ax_pocsag_messageDecoder(uint32_t ric, uint8_t functionBits, uint32_t* dataAry, uint8_t dataCnt);
+void spi_ax_pocsag_messageDecoder(uint32_t address, uint8_t functionBits, uint32_t* dataAry, uint8_t dataCnt);
 
 status_code_t spi_ax_transport(bool isProgMem, const char* packet);
 
