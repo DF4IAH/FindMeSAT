@@ -3721,7 +3721,7 @@ static void task_main_aprs_pocsag(void)
 		s_pocsag_beacon_last = l_now_sec;
 
 		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
-		l_pocsag_ric_msg_buf_len = snprintf(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), "Test %02d:%02d:%02d", calDat.hour, calDat.minute, calDat.second);
+		l_pocsag_ric_msg_buf_len = snprintf(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), "%02d%02d%02d", calDat.hour, calDat.minute, calDat.second);
 
 		/* Transmit POCSAG message */
 		spi_ax_run_POCSAG_Tx_FIFO_Msg(123456, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, strlen(l_pocsag_ric_msg_buf));
@@ -4246,7 +4246,7 @@ int main(void)
 
 	/* Insert prepared system TEST-CODE here */
 
-#if 1
+#if 0
 	{
 		static uint8_t				s_pocsagWordCtr		= 0;
 		AX_POCSAG_DECODER_DATA_t	l_pocsagData;
@@ -4258,12 +4258,12 @@ int main(void)
 		nop();
 
 		/* IDLEWORD */
-		pocsagWord = 0x7ac9c197UL;
+		pocsagWord = 0x7a89c197UL;
 		spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
 		nop();
 
-		/* TEST: IDLEWORD with inverted bit 2 */
-		pocsagWord = 0x7ac9c193UL;
+		/* TEST: IDLEWORD with inverted bit 22 */
+		pocsagWord = 0x7ac9c197UL;
 		spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
 		nop();
 

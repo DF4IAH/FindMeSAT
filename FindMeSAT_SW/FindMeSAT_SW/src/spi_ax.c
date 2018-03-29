@@ -488,18 +488,18 @@ void spi_ax_pocsag_wordDecoder(AX_POCSAG_DECODER_DATA_t* l_pocsagData, uint32_t 
 		return;
 	}
 
+	/* Preparations */
 	l_pocsagData->badDecode		= true;																// No decoding data result
 	l_pocsagData->badParity		= true;																// Parity check on non-modified data failed
+	l_pocsagData->badCheck		= true;																// Check on non-modified data failed
+	l_pocsagData->isAddr		= false;
+	l_pocsagData->isData		= false;
+	l_pocsagData->addrData		= 0UL;
+	l_pocsagData->functionBits	= 0;
 
 	/* Outer loop for one bit error corrections */
 	do {
-		/* Preparations */
-		l_pocsagData->badCheck		= true;															// Check on non-modified data failed
-		l_pocsagData->isAddr		= false;
-		l_pocsagData->isData		= false;
-		l_pocsagData->addrData		= 0UL;
-		l_pocsagData->functionBits	= 0;
-		l_pocsagData->invertedBit	= tryBits;
+		l_pocsagData->invertedBit = tryBits;
 
 		/* Try this pattern */
 		uint32_t l_pocsagWord = pocsagWord;
@@ -510,8 +510,8 @@ void spi_ax_pocsag_wordDecoder(AX_POCSAG_DECODER_DATA_t* l_pocsagData, uint32_t 
 		/* Inner loop for CODEWORD under test */
 		do {
 			/* Parity check */
-			bool	parCalc		= spi_ax_pocsag_calc_evenParity(l_pocsagWord);
-			bool	parData		= (l_pocsagWord & 0x01) != 0;
+			bool	parCalc		= spi_ax_pocsag_calc_evenParity(l_pocsagWord & 0xfffffffe);
+			bool	parData		= (l_pocsagWord & 0x00000001) != 0;
 			bool	l_badParity	= (parCalc != parData);
 			if (tryBits == 0x20) {
 				l_pocsagData->badParity = l_badParity;
@@ -538,12 +538,12 @@ void spi_ax_pocsag_wordDecoder(AX_POCSAG_DECODER_DATA_t* l_pocsagData, uint32_t 
 			/* Address / Data assignment */
 			l_pocsagData->badDecode = false;
 			if (!(l_pocsagWord & 0x80000000UL)) {
-				/* Address */
+				/* Address - HI-part concatenated by LO-part */
 				l_pocsagData->isAddr	= true;
-				l_pocsagData->addrData	= ((l_pocsagWord >> 10) & 0x000ffffcUL) | ((pocsagWordCnt >> 1) & 0x03);
+				l_pocsagData->addrData	= ((l_pocsagWord >> 10) & 0x001ffff8UL) | ((pocsagWordCnt >> 1) & 0b111);
 
 				/* Function bits */
-				l_pocsagData->functionBits = (uint8_t) ((l_pocsagWord >> 11) & 0x00000003UL);
+				l_pocsagData->functionBits = (uint8_t) ((l_pocsagWord >> 11) & 0b11);
 
 			} else {
 				/* Data */
@@ -3304,7 +3304,7 @@ void spi_ax_initRegisters_POCSAG(void)
 
 
 	/* PKTCHUNKSIZE */
-	spi_ax_transport(false, "< f2 30 06 >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 32 bytes
+	spi_ax_transport(false, "< f2 30 05 >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 16 bytes
 
 	/* PKTSTOREFLAGS */
 	spi_ax_transport(false, "< f2 32 01 >");													// WR address 0x232: PKTSTOREFLAGS - not ST RSSI !0x10, not ST RFOFFS !0x04, not ST FOFFS !0x02, ST TIMER 0x01
@@ -3365,13 +3365,13 @@ void spi_ax_initRegisters_POCSAG_Tx(void)
 	//spi_ax_transport(false, "< f1 60 00 >");													// WR address 0x160: MODCFGF - FREQSHAPE: External Loop Filter (BT = 0.0)
 
 	/* FSKDEV */
-	//spi_ax_transport(false, "< f1 61 00 10 62 >");												// WR address 0x161: FSKDEV - FSKDEV: +/-4,000 Hz @ fxtal = 16 MHz
+	//spi_ax_transport(false, "< f1 61 00 10 62 >");											// WR address 0x161: FSKDEV - FSKDEV: +/-4,000 Hz @ fxtal = 16 MHz
 
 	/* MODCFGA */
 	//spi_ax_transport(false, "< f1 64 05 >");													// WR address 0x164: MODCFGA - AMPLSHAPE, TXDIFF
 
 	/* TXRATE */
-	//spi_ax_transport(false, "< f1 65 00 04 ea >");												// WR address 0x165: TXRATE - TXRATE: 1,200 bit/s
+	//spi_ax_transport(false, "< f1 65 00 04 ea >");											// WR address 0x165: TXRATE - TXRATE: 1,200 bit/s
 
 
 	/* XTALCAP */
@@ -4306,10 +4306,10 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 		case AX_SET_MON_MODE_POCSAG_RX_CONT_SINGLEPARAMSET:
 		case AX_SET_MON_MODE_POCSAG_RX_WOR:
 		{
-			uint8_t						status			= *(dataBuf++);
-			uint16_t					dataPos			= 0U;
-			uint32_t					pocsagWord		= 0UL;
-			uint8_t						pocsagWordPos	= 0;
+			uint8_t						status				= *dataBuf;
+			uint16_t					dataPos				= 1U;
+			uint32_t					pocsagWord			= 0UL;
+			uint8_t						pocsagWordBytePos	= 0;
 			AX_POCSAG_DECODER_DATA_t	l_pocsagData;
 
 			if (status & AX_FIFO_DATA_FLAGS_RX_PKTSTART) {
@@ -4320,13 +4320,13 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 			}
 
 			/* Pull FIFO data first */
-			while (pocsagWordPos < s_pocsagFIFOWordLen) {
+			while (pocsagWordBytePos < s_pocsagFIFOWordLen) {
 				/* Transfer data */
 				pocsagWord <<= 8;
 				pocsagWord  |= s_pocsagFIFOWord & 0xff;
 
 				/* Adjust */
-				pocsagWordPos++;
+				pocsagWordBytePos++;
 				s_pocsagFIFOWord >>= 8;
 			}
 			s_pocsagFIFOWordLen = 0;
@@ -4334,15 +4334,15 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 			/* Process the data buffer */
 			while ((dataPos + 4) < dataLen) {
 				/* Fill the rest from the buffer for a complete WORD */
-				while (pocsagWordPos < 4) {
+				while (pocsagWordBytePos < 4) {
 					/* Transfer data */
 					pocsagWord <<= 8;
 					pocsagWord  |= *(dataBuf + dataPos++) & 0xff;
 
 					/* Adjust */
-					pocsagWordPos++;
+					pocsagWordBytePos++;
 				}
-				pocsagWordPos = 0;
+				pocsagWordBytePos = 0;
 
 				/* DEBUG WORDs */
 				uint8_t len = (uint8_t) sprintf(g_prepare_buf, "status = 0x%02x, WORD = 0x%08lx\r\n", status, pocsagWord);
@@ -4353,8 +4353,8 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 
 				if (!l_pocsagData.badDecode) {
 					if (l_pocsagData.isAddr) {
-						/* Known addresses of WORDs */
-						switch (l_pocsagData.addrData) {
+						/* Known addresses of these WORDs - HI-part */
+						switch (l_pocsagData.addrData >> 3) {
 							case ((AX_POCSAG_CODES_SYNCWORD >> 13) & 0x0007ffffUL):
 								s_pocsagState = AX_DECODER_POCSAG__SYNC;
 							break;
@@ -4432,12 +4432,12 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 				}  // switch (s_pocsagState)
 
 				s_pocsagWordCtr++;
-			}  // while (dataPos < dataLen)
+			}  // while ((dataPos + 4) < dataLen)
 
 			/* Put sliced data into the FIFO word */
 			if (dataPos < dataLen) {
-				s_pocsagFIFOWord = 0UL;
-				s_pocsagFIFOWordLen = 0;
+				s_pocsagFIFOWord	= 0UL;
+				s_pocsagFIFOWordLen	= 0;
 				do {
 					/* Push into MSB */
 					s_pocsagFIFOWord >>= 8;
@@ -4446,8 +4446,7 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 					s_pocsagFIFOWordLen++;
 				} while (dataPos < dataLen);
 
-				s_pocsagFIFOWord >>= (8 << (4 - s_pocsagFIFOWordLen));
-				nop();
+				s_pocsagFIFOWord >>= ((4 - s_pocsagFIFOWordLen) << 3);
 				return;
 			}
 		}
@@ -4673,7 +4672,6 @@ void task_spi_ax(void)
 
 		#if 1
 		udi_write_tx_buf((char*)bufDbg, lenDbg, false);
-		yield_ms(25);
 		#endif
 
 		/* Decode the POCSAG data */
