@@ -248,7 +248,7 @@ typedef struct AX_POCSAG_DECODER_DATA {
 typedef struct AX_RX_FIFO_MEAS {
 	uint32_t	timer;
 
-	uint8_t		rssi;
+	int8_t		rssi;																			// Sign reversal at 0x40 offset
 	int16_t		antRssi2;
 	int32_t		antRssi3;
 

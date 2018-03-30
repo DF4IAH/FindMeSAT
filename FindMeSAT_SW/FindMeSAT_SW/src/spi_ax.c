@@ -49,7 +49,7 @@
 //# define	AX_TEST_VCO2_PR1200_RX		true
 
 
-#if defined(AX_TEST_VCO1_BANDENDS) | defined(AX_TEST_VCO1_FSK_TX)		| defined(AX_TEST_VCO1_FSK_RX)			| defined(AX_TEST_VCO1_FSK_RX)		| defined(AX_TEST_VCO1_POCSAG_RX) |	\
+#if defined(AX_TEST_VCO1_BANDENDS) | defined(AX_TEST_VCO1_FSK_TX)		| defined(AX_TEST_VCO1_FSK_RX)			| defined(AX_TEST_VCO1_FSK_RX)		| defined(AX_TEST_VCO1_POCSAG_RX) | \
 	defined(AX_TEST_VCO2_BANDENDS) | defined(AX_TEST_VCO2_ANALOG_FM_TX)	| defined(AX_TEST_VCO2_ANALOG_FM_RX)	| defined(AX_TEST_VCO2_PR1200_TX)	| defined(AX_TEST_VCO2_PR1200_RX)
 # ifndef AX_TEST
 # define AX_TEST true
@@ -88,8 +88,21 @@ ISR(PORTC_INT0_vect, ISR_BLOCK)
 		spi_ax_transport(false, "< 40 R1 >");													// RD Address 0x40: RSSI
 		fifoRssiCmd[1] = g_ax_spi_packet_buffer[0];
 
-		/* Abort packet when signal strength indicator falls near background noise */
-		if (fifoRssiCmd[1] < 0xb8) {
+		/* Get local adjusted copies */
+		int16_t l_ax_spi_rx_rssi		= (int8_t) (fifoRssiCmd[1]);
+		int16_t l_ax_spi_rx_bgnd_rssi	= g_ax_spi_rx_bgnd_rssi;
+
+		/* 64 dB offset correction */
+		l_ax_spi_rx_rssi		-= 64;
+		l_ax_spi_rx_bgnd_rssi	-= 64;
+
+		/* Decrease background RSSI each time to avoid blocking */
+		if (-120 < l_ax_spi_rx_bgnd_rssi) {
+			--g_ax_spi_rx_bgnd_rssi;
+		}
+
+		/* Abort packet when signal strength indicator falls near background noise and at least some WORDS were detected */
+		if ((g_ax_spi_rx_buffer_idx >= 0x10) && (l_ax_spi_rx_rssi < (l_ax_spi_rx_bgnd_rssi + 12))) {
 			/* FRMMODE abort frame */
 			spi_ax_transport(false, "< 92 07 >");												// WR address 0x12: FRAMING - CRCMODE: none, FRMMODE: Raw, Pattern Match 0x06, FABORT
 		}
@@ -113,8 +126,14 @@ ISR(PORTC_INT0_vect, ISR_BLOCK)
 		processed = true;
 	}
 
+	/* IRQRQPLLUNLOCK */
+	if (ax_spi_irq_request & _BV(5)) {
+		nop();
+		processed = true;
+	}
+
 	/* RADIO EVENT = REVMDONE */
-	if (ax_spi_irq_request & _BV(7)) {
+	if (ax_spi_irq_request & _BV(6)) {
 		const uint8_t fifoDoneCmd = 0x01;
 		memcpy(g_ax_spi_rx_buffer + g_ax_spi_rx_buffer_idx, &fifoDoneCmd, 1);
 		g_ax_spi_rx_buffer_idx++;
@@ -178,7 +197,7 @@ void spi_ax_ISR_setFlags(uint8_t flags)
 			spi_ax_transport(false, "< 88 00 01 >");											// WR address 0x08: RADIOEVENTMASK - set to not REVMRXPARAMSETCHG !0x08, not REVMRADIOSTATECHG !0x04, REVMDONE 0x01
 
 			/* IRQMASK */
-			spi_ax_transport(false, "< 86 00 51 >");											// WR address 0x06: IRQMASK - set to IRQMRADIOCTRL 0x040, IRQMFIFOERROR 0x010, IRQMFIFONOTEMPTY 0x001
+			spi_ax_transport(false, "< 86 00 51 >");											// WR address 0x06: IRQMASK - set to Bit06:IRQMRADIOCTRL 0x040, !Bit05:IRQRQPLLUNLOCK !0x020, Bit04:IRQMFIFOERROR 0x010, Bit0:IRQMFIFONOTEMPTY 0x001
 		}
 
 		/* Clear any pending INT1 / INT0 interrupts */
@@ -551,7 +570,7 @@ void spi_ax_pocsag_address_tone(bool is_RIC_individual, uint32_t address, uint8_
 	char isMyChar = is_RIC_individual ?  '*' : ' ';
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n%c RIC=%lu FktBits=0x%02x  (TONE   )%c%c%c\r\n", isMyChar, address, fktBits, isMyBeep, isMyBeep, isMyBeep);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>%cAddress=%lu FktBits=0x%02x  (TONE   )%c%c%c\r\n", isMyChar, address, fktBits, isMyBeep, isMyBeep, isMyBeep);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 }
 
@@ -561,7 +580,7 @@ void spi_ax_pocsag_address_numeric(bool is_RIC_individual, uint32_t address, uin
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
 	uint8_t digitIdx = 0;
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n%c RIC=%lu FktBits=0x%02x  (NUMERIC):", isMyChar, address, fktBits);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>%cAddress=%lu FktBits=0x%02x  (NUMERIC):", isMyChar, address, fktBits);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 
 	for (uint8_t dataCntIdx = 0; dataCntIdx < dataCnt; dataCntIdx++) {
@@ -580,7 +599,7 @@ void spi_ax_pocsag_address_alphanum(bool is_RIC_individual, uint32_t address, ui
 	char isMyChar = is_RIC_individual ?  '*' : ' ';
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n%c RIC=%lu FktBits=0x%02x  (ALPHA  ):", isMyChar, address, fktBits);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>%cAddress=%lu FktBits=0x%02x  (ALPHA  ):", isMyChar, address, fktBits);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 
 	uint8_t alphaCnt = (dataCnt * 20) / 7;
@@ -589,7 +608,7 @@ void spi_ax_pocsag_address_alphanum(bool is_RIC_individual, uint32_t address, ui
 		udi_write_tx_buf(g_prepare_buf, 1, false);
 	}
 
-	len = (uint8_t) sprintf(g_prepare_buf, " TODO! %c\r\n", isMyBeep);
+	len = (uint8_t) sprintf(g_prepare_buf, "%c\r\n", isMyBeep);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 }
 
@@ -800,6 +819,12 @@ void spi_ax_pocsag_messageDecoder(uint32_t address, uint8_t functionBits, uint32
 					/* Store News into rubrics */
 					spi_ax_pocsag_address_alphanum(false, address, functionBits, dataAry, dataCnt);			// TODO: DEBUGGING ONLY
 				}
+			}
+			break;
+
+			case 0:
+			{
+				/* Drop non-valid address */
 			}
 			break;
 
@@ -3519,7 +3544,7 @@ void spi_ax_initRegisters_POCSAG(void)
 
 
 	/* PKTCHUNKSIZE */
-	spi_ax_transport(false, "< f2 30 05 >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 16 bytes
+	spi_ax_transport(false, "< f2 30 04 >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 8 bytes
 
 	/* PKTSTOREFLAGS */
 	spi_ax_transport(false, "< f2 32 01 >");													// WR address 0x232: PKTSTOREFLAGS - not ST RSSI !0x10, not ST RFOFFS !0x04, not ST FOFFS !0x02, ST TIMER 0x01
@@ -4559,11 +4584,51 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 				}
 				pocsagWordBytePos = 0;
 
+				/* Restart receiver at once to catch the next SYNCWORD */
+				if ((pocsagWord == 0x55555555UL) || (pocsagWord == 0xaaaaaaaaUL)) {
+					/* Interrupt disabled actions */
+					{
+						irqflags_t flags = cpu_irq_save();
+
+						/* FRMMODE abort frame */
+						spi_ax_transport(false, "< 92 07 >");										// WR address 0x12: FRAMING - CRCMODE: none, FRMMODE: Raw, Pattern Match 0x06, FABORT
+
+						/* FIFOCMD / FIFOSTAT */
+						spi_ax_transport(false, "< a8 03 >");										// WR address 0x28: FIFOCMD - AX_FIFO_CMD_CLEAR_FIFO_DATA_AND_FLAGS
+
+						g_ax_spi_rx_buffer_idx = 0;
+						memset(g_ax_spi_rx_buffer, 0, C_SPI_AX_BUFFER_LENGTH);
+
+						cpu_irq_restore(flags);
+					}
+
+					/* DEBUG WORDs */
+					int16_t l_rssi		= g_ax_rx_fifo_meas.rssi;	l_rssi		-= 64;
+					int16_t l_bgnd_rssi	= g_ax_spi_rx_bgnd_rssi;	l_bgnd_rssi	-= 64;
+					uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\tstatus = 0x%02x, WORD = 0x%08lx, RSSI = %-4ddBm, bgnd_RSSI = %-4ddBm, ***ABORT_FRAME***\r\n",
+													status, pocsagWord,
+													l_rssi, l_bgnd_rssi);
+					udi_write_tx_buf(g_prepare_buf, len, false);
+
+					/* Make current data non-valid */
+					s_pocsagFIFOWord	= 0UL;
+					s_pocsagFIFOWordLen	= 0;
+					s_pocsagWordCtr		= 0;
+					s_pocsagState		= AX_DECODER_POCSAG__NONE;
+
+					return;
+				}
+
 				/* WORD decoder */
 				spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
 
 				/* DEBUG WORDs */
-				uint8_t len = (uint8_t) sprintf(g_prepare_buf, "status = 0x%02x, WORD = 0x%08lx, %c\r\n", status, pocsagWord, l_pocsagData.badDecode ?  '-' : '+');
+				int16_t l_rssi		= g_ax_rx_fifo_meas.rssi;	l_rssi		-= 64;
+				int16_t l_bgnd_rssi	= g_ax_spi_rx_bgnd_rssi;	l_bgnd_rssi	-= 64;
+				uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\tstatus = 0x%02x, WORD = 0x%08lx, RSSI = %-4ddBm, bgnd_RSSI = %-4ddBm, %c\r\n",
+												status, pocsagWord,
+												l_rssi, l_bgnd_rssi,
+												l_pocsagData.badDecode ?  '-' : '+');
 				udi_write_tx_buf(g_prepare_buf, len, false);
 
 				if (!l_pocsagData.badDecode) {
@@ -4588,6 +4653,36 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 
 				} else {
 					s_pocsagState = AX_DECODER_POCSAG__NONE;
+
+					/* Get RSSI and take that as background RSSI */
+					{
+						int16_t		l_cur_bgnd_rssi;
+						int16_t		l_mean_bgnd_rssi;
+						irqflags_t	flags;
+
+						spi_ax_transport(false, "< 40 R1 >");									// RD Address 0x40: RSSI
+						l_cur_bgnd_rssi = (int8_t) (g_ax_spi_packet_buffer[0]);
+
+						flags = cpu_irq_save();
+						l_mean_bgnd_rssi = g_ax_spi_rx_bgnd_rssi;
+						cpu_irq_restore(flags);
+
+						/* 64 dB offset correction */
+						l_cur_bgnd_rssi		-= 64;
+						l_mean_bgnd_rssi	-= 64;
+
+						/* Calculate mean value with weight 7 and 1 */
+						l_mean_bgnd_rssi  *= 7;
+						l_mean_bgnd_rssi  += l_cur_bgnd_rssi;
+						l_mean_bgnd_rssi >>= 3;
+
+						/* 64 dB offset encoding */
+						l_mean_bgnd_rssi += 64;
+
+						flags = cpu_irq_save();
+						g_ax_spi_rx_bgnd_rssi = (int8_t) (l_mean_bgnd_rssi & 0xff);
+						cpu_irq_restore(flags);
+					}
 				}  // if (l_pocsagData.badDecode)
 
 				switch (s_pocsagState) {
@@ -4595,7 +4690,7 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 					{
 						/* Process last data */
 						if (s_pocsagData_DataCnt) {
-							/* Decode the message */
+							/* Decode the previous message */
 							spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
 
 							/* Reset data */
@@ -4621,7 +4716,7 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 
 					case AX_DECODER_POCSAG__IDLE:
 					{
-						/* Decode the message */
+						/* Decode the previous message */
 						spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
 
 						/* Reset data */

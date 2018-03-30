@@ -243,6 +243,7 @@ volatile bool				g_ax_spi_rx_fifo_doService						= false;
 volatile uint32_t			g_ax_spi_freq_chan[2]							= { 0 };
 volatile uint8_t			g_ax_spi_range_chan[2]							= { 0 };
 volatile uint8_t			g_ax_spi_vcoi_chan[2]							= { 0 };
+volatile int8_t				g_ax_spi_rx_bgnd_rssi							= 0xc8;
 volatile AX_RX_FIFO_MEAS_t	g_ax_rx_fifo_meas								= { 0 };
 
 volatile int32_t			g_xo_mode_pwm									= 0L;		// EEPROM
@@ -1256,16 +1257,13 @@ uint8_t doHexdump(char *target, const uint8_t *source, uint8_t inLen)
 {
 	uint8_t outLen = 0;
 
-	outLen += sprintf(target + outLen, "\r\n");
 	for (uint8_t idx = 0; idx < inLen; idx++) {
-		outLen += sprintf(target + outLen, "%02x ", (uint8_t) *(source + idx));
-
-		if ((idx % 0x10) == 0x0f) {
-			outLen += sprintf(target + outLen, "\r\n");
+		if (!(idx % 0x10)) {
+			outLen += sprintf(target + outLen, "\r\n # ");
 		}
+		outLen += sprintf(target + outLen, "%02x ", (uint8_t) *(source + idx));
 	}
 	outLen += sprintf(target + outLen, "\r\n");
-
 	return outLen;
 }
 
@@ -3721,11 +3719,20 @@ static void task_main_aprs_pocsag(void)
 		/* Update last time */
 		s_pocsag_beacon_last = l_now_sec;
 
+		/* Activate POCSAG TX */
 		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
-		l_pocsag_ric_msg_buf_len = snprintf(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), "%02d%02d%02d", calDat.hour, calDat.minute, calDat.second);
 
-		/* Transmit POCSAG message */
-		spi_ax_run_POCSAG_Tx_FIFO_Msg(123456, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, l_pocsag_ric_msg_buf_len);
+		/* Transmit POCSAG message - Tone */
+		spi_ax_run_POCSAG_Tx_FIFO_Msg(123456, AX_POCSAG_CW2_MODE1_TONE, NULL, 0);
+
+		/* Transmit POCSAG message - Numeric */
+		l_pocsag_ric_msg_buf_len = snprintf(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), "%02d %02d %02d", calDat.hour, calDat.minute, calDat.second);
+		spi_ax_run_POCSAG_Tx_FIFO_Msg(123457, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, l_pocsag_ric_msg_buf_len);
+
+		/* Transmit POCSAG message - Alphanum */
+		l_pocsag_ric_msg_buf_len = snprintf(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), "Clock:%02d:%02d:%02d", calDat.hour, calDat.minute, calDat.second);
+		spi_ax_run_POCSAG_Tx_FIFO_Msg(123458, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_ric_msg_buf, l_pocsag_ric_msg_buf_len);
+
 		l_pocsag_ric_msg_buf_len = 0;
 	}
 
