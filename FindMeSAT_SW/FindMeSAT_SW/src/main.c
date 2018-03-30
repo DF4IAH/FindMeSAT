@@ -3725,7 +3725,7 @@ static void task_main_aprs_pocsag(void)
 		l_pocsag_ric_msg_buf_len = snprintf(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), "%02d%02d%02d", calDat.hour, calDat.minute, calDat.second);
 
 		/* Transmit POCSAG message */
-		spi_ax_run_POCSAG_Tx_FIFO_Msg(123456, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, strlen(l_pocsag_ric_msg_buf));
+		spi_ax_run_POCSAG_Tx_FIFO_Msg(123456, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, l_pocsag_ric_msg_buf_len);
 		l_pocsag_ric_msg_buf_len = 0;
 	}
 
@@ -3764,7 +3764,7 @@ static void task_main_aprs_pocsag(void)
 			l_pocsag_ric_msg_buf_len = spi_ax_pocsag_skyper_TimeString(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), &calDat);
 
 			/* Transmit POCSAG message */
-			spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_CLOCK, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, strlen(l_pocsag_ric_msg_buf));
+			spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_CLOCK, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, l_pocsag_ric_msg_buf_len);
 			l_pocsag_ric_msg_buf_len = 0;
 		}
 	}
