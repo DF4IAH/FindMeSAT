@@ -435,6 +435,23 @@ char spi_ax_pocsag_getReversedNumChar(uint8_t nibble)
 	return c;
 }
 
+char spi_ax_pocsag_getReversedAlphaChar(uint8_t reversedIn)
+{
+	char c = 0;
+
+	/* Reverse 7-bit to get ASCII */
+	for (uint8_t idx = 0; idx < 7; idx++) {
+		/* Take LSB */
+		uint8_t bit = reversedIn & 0x01;
+
+		/* Move bit to reversed target */
+		c <<= 1;
+		c  |= bit;
+		reversedIn >>= 1;
+	}
+	return c;
+}
+
 uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, uint16_t tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx)
 {
 	uint32_t msgWord = 0UL;
@@ -490,6 +507,44 @@ char spi_ax_pocsag_getNumeric(const uint32_t* rcv20Bits, uint8_t rcv20BitsCnt, u
 	return numChar;
 }
 
+char spi_ax_pocsag_getAlphanum(const uint32_t* rcv20Bits, uint8_t rcv20BitsCnt, uint8_t msgAlphaIdx)
+{
+	uint8_t		rcv20BitsStartWordPos	= (msgAlphaIdx * 7) / 20;
+	uint8_t		rcv20BitsStartBitPos	= (msgAlphaIdx * 7) - (rcv20BitsStartWordPos * 20);
+
+	/* Check for overflow */
+	if ((rcv20BitsStartBitPos > 13) && ((rcv20BitsStartWordPos + 1) >= rcv20BitsCnt)) {
+		return ' ';
+	}
+
+	/* Preload with MSB 20 bits */
+	uint32_t charHiPad = *(rcv20Bits + rcv20BitsStartWordPos);
+
+	/* Decide whether word concatenation is needed */
+	if (rcv20BitsStartBitPos <= 13) {
+		/* No overlapping */
+		charHiPad >>= (13 - rcv20BitsStartBitPos);
+
+	} else {
+		/* Complete with LSB part when overlapping */
+
+		/* Load LSB part */
+		uint32_t charLoPad = *(rcv20Bits + rcv20BitsStartWordPos + 1);
+
+		/* Move upper part to right position */
+		charHiPad <<= (rcv20BitsStartBitPos - 13);
+
+		/* Move lower part to right position */
+		charLoPad >>= (33 - rcv20BitsStartBitPos);
+
+		/* Combine into MSB pad */
+		charHiPad  |= charLoPad;
+	}
+
+	/* Get character of this 7-bit field */
+	return spi_ax_pocsag_getReversedAlphaChar((uint8_t) (charHiPad & 0x0000007fUL));
+}
+
 
 void spi_ax_pocsag_address_tone(bool is_RIC_individual, uint32_t address, uint8_t fktBits)
 {
@@ -527,6 +582,12 @@ void spi_ax_pocsag_address_alphanum(bool is_RIC_individual, uint32_t address, ui
 
 	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n%c RIC=%lu FktBits=0x%02x  (ALPHA  ):", isMyChar, address, fktBits);
 	udi_write_tx_buf(g_prepare_buf, len, false);
+
+	uint8_t alphaCnt = (dataCnt * 20) / 7;
+	for (uint8_t alphaIdx = 0; alphaIdx < alphaCnt; alphaIdx++) {
+		g_prepare_buf[0] = spi_ax_pocsag_getAlphanum(dataAry, dataCnt, alphaIdx);
+		udi_write_tx_buf(g_prepare_buf, 1, false);
+	}
 
 	len = (uint8_t) sprintf(g_prepare_buf, " TODO! %c\r\n", isMyBeep);
 	udi_write_tx_buf(g_prepare_buf, len, false);
@@ -3865,7 +3926,7 @@ int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFu
 					/* Check for message end */
 					switch (tgtFunc) {
 						case AX_POCSAG_CW2_MODE0_NUMERIC:
-							if (tgtMsgLen < (msgBitIdx >> 2)) {
+							if (tgtMsgLen <= (msgBitIdx >> 2)) {
 								msgDone = true;
 							}
 						break;
@@ -3876,7 +3937,7 @@ int8_t spi_ax_util_POCSAG_Tx_FIFO_Batches(uint32_t tgtRIC, AX_POCSAG_CW2_t tgtFu
 						#endif
 
 						case AX_POCSAG_CW2_MODE3_ALPHANUM:
-							if (tgtMsgLen < (msgBitIdx / 7)) {
+							if (tgtMsgLen <= (msgBitIdx / 7)) {
 								msgDone = true;
 							}
 						break;

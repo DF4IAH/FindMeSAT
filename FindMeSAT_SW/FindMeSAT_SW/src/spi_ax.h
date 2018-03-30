@@ -283,8 +283,10 @@ uint8_t spi_ax_pocsag_calc_evenParity(uint32_t par);
 uint32_t spi_ax_pocsag_calc_checkAndParity(uint32_t codeword_in);
 uint8_t spi_ax_pocsag_getBcd(char c);
 char spi_ax_pocsag_getReversedNumChar(uint8_t nibble);
+char spi_ax_pocsag_getReversedAlphaChar(uint8_t reversedIn);
 uint32_t spi_ax_pocsag_get20Bits(const char* tgtMsg, uint16_t tgtMsgLen, AX_POCSAG_CW2_t tgtFunc, uint16_t msgBitIdx);
 char spi_ax_pocsag_getNumeric(const uint32_t* rcv20Bits, uint8_t rcv20BitsCnt, uint8_t msgNumIdx);
+char spi_ax_pocsag_getAlphanum(const uint32_t* rcv20Bits, uint8_t rcv20BitsCnt, uint8_t msgAlphaIdx);
 
 void spi_ax_pocsag_address_tone(bool individual_RIC_address, uint32_t address, uint8_t fktBits);
 void spi_ax_pocsag_address_numeric(bool individual_RIC_address, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt);

@@ -4246,6 +4246,22 @@ int main(void)
 
 
 	/* Insert prepared system TEST-CODE here */
+#if 0
+	{
+		static char check;
+		static uint32_t rcv20Bits[8] = { 0x000fffffUL, 0x000fffffUL, 0x000fffffUL, 0x000fffffUL, 0x000fffffUL, 0x000fffffUL, 0x000fffffUL, 0x000fffffUL };
+		static uint8_t  rcv20BitsCnt = sizeof(rcv20Bits) / sizeof(uint32_t);
+
+		for (uint8_t msgAlphaIdx = 0; msgAlphaIdx < 20; msgAlphaIdx++) {
+			check = spi_ax_pocsag_getAlphanum(rcv20Bits, rcv20BitsCnt, msgAlphaIdx);
+			(void)check;
+			nop();
+		}
+
+		while (true)
+			;
+	}
+#endif
 
 #if 0
 	{
