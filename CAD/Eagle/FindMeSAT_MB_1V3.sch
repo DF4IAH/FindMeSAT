@@ -10639,13 +10639,13 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="GND612" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="Q651" library="df4iah_crystal" deviceset="ABM03B-16.000MHZ" device="" value="ABM3B-16MHZ-10-R50-1-U"/>
 <part name="L671" library="rcl" deviceset="R-EU_" device="R0603" value="22nH"/>
-<part name="C681" library="rcl" deviceset="C-EU" device="C0603" value="68pF"/>
+<part name="C681" library="rcl" deviceset="C-EU" device="C0603" value="33pF"/>
 <part name="GND683" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="L686" library="rcl" deviceset="R-EU_" device="R0603" value="150nH"/>
-<part name="L682" library="rcl" deviceset="R-EU_" device="R0603" value="68nH"/>
+<part name="L686" library="rcl" deviceset="R-EU_" device="R0603" value="22nH"/>
+<part name="L682" library="rcl" deviceset="R-EU_" device="R0603" value="22nH"/>
 <part name="GND684" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C686" library="rcl" deviceset="C-EU" device="C0603" value="18pF"/>
-<part name="L681" library="rcl" deviceset="R-EU_" device="R0603" value="150nH"/>
+<part name="C686" library="rcl" deviceset="C-EU" device="C0603" value="4.7pF"/>
+<part name="L681" library="rcl" deviceset="R-EU_" device="R0603" value="100nH"/>
 <part name="X685" library="df4iah_connector" deviceset="SMA_SMT_AMPHENOL-901-143" device="" value="SMA_CON"/>
 <part name="GND689" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="X181" library="df4iah_connector" deviceset="HEADER-2X3" device="" value="HEADER-2X3"/>
@@ -10663,6 +10663,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="GND651" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="C1141" library="rcl" deviceset="C-EU" device="C0603" value="100pF"/>
 <part name="C302" library="rcl" deviceset="C-EU" device="C0603" value="10nF"/>
+<part name="C682" library="rcl" deviceset="C-EU" device="C0603" value="4.7pF"/>
 </parts>
 <sheets>
 <sheet>
@@ -12303,7 +12304,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <attribute name="NAME" x="171.831" y="89.916" size="1.778" layer="95" rot="R90"/>
 <attribute name="VALUE" x="174.625" y="90.17" size="1.778" layer="96" rot="R90"/>
 </instance>
-<instance part="GND683" gate="1" x="167.64" y="106.68" rot="R180"/>
+<instance part="GND683" gate="1" x="167.64" y="109.22" rot="R180"/>
 <instance part="L686" gate="G$1" x="167.64" y="76.2" smashed="yes" rot="R90">
 <attribute name="NAME" x="168.656" y="71.3486" size="1.778" layer="95"/>
 <attribute name="VALUE" x="168.656" y="68.326" size="1.778" layer="96"/>
@@ -12327,6 +12328,10 @@ Diameter = 1mm, Clearance = 3R</description>
 </instance>
 <instance part="GND689" gate="1" x="226.06" y="63.5"/>
 <instance part="GND651" gate="1" x="137.16" y="127"/>
+<instance part="C682" gate="G$1" x="175.26" y="101.6" smashed="yes" rot="R90">
+<attribute name="NAME" x="171.831" y="102.616" size="1.778" layer="95" rot="R90"/>
+<attribute name="VALUE" x="174.625" y="102.87" size="1.778" layer="96" rot="R90"/>
+</instance>
 </instances>
 <busses>
 </busses>
@@ -12375,7 +12380,10 @@ Diameter = 1mm, Clearance = 3R</description>
 <segment>
 <pinref part="L681" gate="G$1" pin="2"/>
 <pinref part="GND683" gate="1" pin="GND"/>
-<wire x1="167.64" y1="104.14" x2="167.64" y2="101.6" width="0.1524" layer="91"/>
+<wire x1="167.64" y1="106.68" x2="167.64" y2="101.6" width="0.1524" layer="91"/>
+<pinref part="C682" gate="G$1" pin="1"/>
+<wire x1="167.64" y1="101.6" x2="172.72" y2="101.6" width="0.1524" layer="91"/>
+<junction x="167.64" y="101.6"/>
 </segment>
 <segment>
 <pinref part="L686" gate="G$1" pin="1"/>
@@ -12525,8 +12533,13 @@ Diameter = 1mm, Clearance = 3R</description>
 <segment>
 <pinref part="C681" gate="G$1" pin="2"/>
 <pinref part="L682" gate="G$1" pin="1"/>
-<wire x1="180.34" y1="88.9" x2="185.42" y2="88.9" width="0.1524" layer="91"/>
-<label x="182.88" y="88.9" size="1.778" layer="95" rot="R90" xref="yes"/>
+<wire x1="180.34" y1="88.9" x2="182.88" y2="88.9" width="0.1524" layer="91"/>
+<pinref part="C682" gate="G$1" pin="2"/>
+<wire x1="182.88" y1="88.9" x2="185.42" y2="88.9" width="0.1524" layer="91"/>
+<wire x1="182.88" y1="88.9" x2="182.88" y2="101.6" width="0.1524" layer="91"/>
+<wire x1="182.88" y1="101.6" x2="180.34" y2="101.6" width="0.1524" layer="91"/>
+<junction x="182.88" y="88.9"/>
+<label x="182.88" y="101.6" size="1.778" layer="95" rot="R90" xref="yes"/>
 </segment>
 </net>
 </nets>
