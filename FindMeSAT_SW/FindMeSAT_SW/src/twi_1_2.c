@@ -72,11 +72,11 @@ const char					PM_TWI1_INIT_HYGRO_02[]				= "TWI-onboard: Hygro SHT31-DIS -   ad
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_02[]);
 const char					PM_TWI1_INIT_HYGRO_03[]				= "TWI-onboard: Hygro SHT31-DIS -      status: 0x%04X\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_03[]);
-const char					PM_TWI1_INIT_HYGRO_04[]				= "TWI-onboard:  INIT success.\r\n";
+const char					PM_TWI1_INIT_HYGRO_04[]				= "TWI-onboard: --> INIT success.\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_04[]);
 const char					PM_TWI1_INIT_HYGRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_HYGRO_05[]);
-const char					PM_TWI1_INIT_ONBOARD_HYGRO_OK[]		= "Init: Hygro        success.";
+const char					PM_TWI1_INIT_ONBOARD_HYGRO_OK[]		= "Init: Hygro   ... success.";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_HYGRO_OK[]);
 
 const char					PM_TWI1_INIT_GYRO_01[]				= "\r\nTWI-onboard: Gyro MPU-9250 -   I2C address: 0x%02X, 0x%02X\r\n";
@@ -85,26 +85,26 @@ const char					PM_TWI1_INIT_GYRO_02[]				= "TWI-onboard: Gyro MPU-9250 -       '
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_02[]);
 const char					PM_TWI1_INIT_GYRO_03[]				= "TWI-onboard: Gyro MPU-9250 -       version: 0x%02X, 0x%02X\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_03[]);
-const char					PM_TWI1_INIT_GYRO_04[]				= "TWI-onboard:  INIT success.\r\n";
+const char					PM_TWI1_INIT_GYRO_04[]				= "TWI-onboard: --> INIT success.\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_04[]);
 const char					PM_TWI1_INIT_GYRO_05[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_GYRO_05[]);
-const char					PM_TWI1_INIT_ONBOARD_GYRO_OK[]		= "Init: Gyro         success.";
+const char					PM_TWI1_INIT_ONBOARD_GYRO_OK[]		= "Init: Gyro    ... success.";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_GYRO_OK[]);
 
 const char					PM_TWI1_INIT_BARO_01[]				= "\r\nTWI-onboard: Baro MS560702BA03-50 -  I2C address: 0x%02X\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_01[]);
-const char					PM_TWI1_INIT_BARO_02[]				= "TWI-onboard:  BAD reading serial/CRC word. (sc=%d)\r\n";
+const char					PM_TWI1_INIT_BARO_02[]				= "TWI-onboard: --> BAD reading serial/CRC word. (sc=%d)\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_02[]);
 const char					PM_TWI1_INIT_BARO_03[]				= "TWI-onboard: Baro MS560702BA03-50 -      serial#: %d\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_03[]);
-const char					PM_TWI1_INIT_BARO_04[]				= "TWI-onboard:  BAD reading PROM address %d. (sc=%d)\r\n";
+const char					PM_TWI1_INIT_BARO_04[]				= "TWI-onboard: --> BAD reading PROM address %d. (sc=%d)\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_04[]);
-const char					PM_TWI1_INIT_BARO_05[]				= "TWI-onboard:  INIT success.\r\n";
+const char					PM_TWI1_INIT_BARO_05[]				= "TWI-onboard: --> INIT success.\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_05[]);
 const char					PM_TWI1_INIT_BARO_06[]				= "TWI-onboard:  ... device not on board. (sc=%d)\r\n";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_BARO_06[]);
-const char					PM_TWI1_INIT_ONBOARD_BARO_OK[]		= "Init: Baro         success.";
+const char					PM_TWI1_INIT_ONBOARD_BARO_OK[]		= "Init: Baro    ... success.";
 PROGMEM_DECLARE(const char, PM_TWI1_INIT_ONBOARD_BARO_OK[]);
 
 const char					PM_TWI1_INIT_ONBOARD_01[]			= "-----------\r\n\r\n";
@@ -2104,7 +2104,7 @@ void task_twi2_lcd__hygro(uint8_t col_left)
 		/* Get up-to-date global data */
 		{
 			irqflags_t flags = cpu_irq_save();
-			l_twi1_hygro_DP_100				= g_twi1_hygro_DP_100;
+			l_twi1_hygro_DP_100	= g_twi1_hygro_DP_100;
 			cpu_irq_restore(flags);
 		}
 

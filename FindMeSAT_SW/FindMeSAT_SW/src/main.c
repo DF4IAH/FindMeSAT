@@ -7,6 +7,10 @@
  * Created: 22.01.2017 13:13:47
  * Author : DF4IAH
  *
+ * FUSE   Byte0, Byte1, Byte2, Byte3, Byte4, Byte5
+ *   App:  0xff,  0x00,  0xff,  ----,  0xfe,  0xf7
+ *  (Dflt: 0xff,  0x00,  0xff,  ----,  0xfe,  0xff)
+ *
  */
 
 /**
@@ -229,7 +233,8 @@ bool						g_ax_enable										= false;	// EEPROM
 bool						g_ax_aprs_enable								= false;	// EEPROM
 bool						g_ax_pocsag_enable								= false;	// EEPROM
 uint8_t						g_ax_pocsag_beacon_secs							= 0;		// EEPROM
-AX_SET_TX_RX_MODE_t			g_ax_set_tx_rx_mode								= AX_SET_TX_RX_MODE_OFF;	// EEPROM
+AX_SET_TX_RX_MODE_t			g_ax_set_tx_rx_mode								= AX_SET_TX_RX_MODE_OFF;
+AX_SET_MON_MODE_t			g_ax_set_mon_mode								= AX_SET_MON_MODE_OFF;	// EEPROM
 struct spi_device			g_ax_spi_device_conf							= { 0 };
 volatile uint8_t			g_ax_spi_packet_buffer[C_SPI_AX_BUFFER_LENGTH]	= { 0 };
 volatile uint8_t			g_ax_spi_rx_buffer[C_SPI_AX_BUFFER_LENGTH]		= { 0 };
@@ -238,6 +243,8 @@ volatile bool				g_ax_spi_rx_fifo_doService						= false;
 volatile uint32_t			g_ax_spi_freq_chan[2]							= { 0 };
 volatile uint8_t			g_ax_spi_range_chan[2]							= { 0 };
 volatile uint8_t			g_ax_spi_vcoi_chan[2]							= { 0 };
+volatile int8_t				g_ax_spi_rx_bgnd_rssi							= 0xc8;
+volatile AX_RX_FIFO_MEAS_t	g_ax_rx_fifo_meas								= { 0 };
 
 volatile int32_t			g_xo_mode_pwm									= 0L;		// EEPROM
 
@@ -848,7 +855,7 @@ static void init_globals(void)
 		}
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_MON_MODE, &val_ui8, sizeof(val_ui8)) == STATUS_OK) {
-			g_ax_set_tx_rx_mode			= (AX_SET_TX_RX_MODE_t) val_ui8;
+			g_ax_set_mon_mode			= (AX_SET_MON_MODE_t) val_ui8;
 		}
 
 		if (nvm_read(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_RIC, &val_ui32, sizeof(val_ui32)) == STATUS_OK) {
@@ -1083,7 +1090,7 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 		val_ui8 = g_ax_pocsag_beacon_secs;
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_BEACON,	&val_ui8,							sizeof(val_ui8));
 
-		val_ui8 = (uint8_t) g_ax_set_tx_rx_mode;
+		val_ui8 = (uint8_t) g_ax_set_mon_mode;
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_MON_MODE,			&val_ui8,							sizeof(val_ui8));
 
 		nvm_write(INT_EEPROM, EEPROM_ADDR__AX_POCSAG_RIC,		&g_ax_pocsag_individual_ric,		sizeof(g_ax_pocsag_individual_ric));
@@ -1244,6 +1251,20 @@ int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int o
 	}
 
 	return ret;
+}
+
+uint8_t doHexdump(char *target, const uint8_t *source, uint8_t inLen)
+{
+	uint8_t outLen = 0;
+
+	for (uint8_t idx = 0; idx < inLen; idx++) {
+		if (!(idx % 0x10)) {
+			outLen += sprintf(target + outLen, "\r\n # ");
+		}
+		outLen += sprintf(target + outLen, "%02x ", (uint8_t) *(source + idx));
+	}
+	outLen += sprintf(target + outLen, "\r\n");
+	return outLen;
 }
 
 char* ipProto_2_ca(uint8_t aprs_ip_proto)
@@ -1509,6 +1530,7 @@ void ax_enable(bool enable)
 		}
 
 	} else {
+		monitor_mode(AX_SET_MON_MODE_OFF);
 		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_OFF);
 	}
 }
@@ -1958,10 +1980,10 @@ void keyBeep_enable(bool enable)
 	save_globals(EEPROM_SAVE_BF__BEEP);
 }
 
-void monitor_mode(AX_SET_TX_RX_MODE_t mode)
+void monitor_mode(AX_SET_MON_MODE_t mode)
 {
 	irqflags_t flags = cpu_irq_save();
-	g_ax_set_tx_rx_mode = mode;
+	g_ax_set_mon_mode = mode;
 	cpu_irq_restore(flags);
 
 	save_globals(EEPROM_SAVE_BF__AX);
@@ -2072,7 +2094,7 @@ void sens_baro_temp(float temp)
 	}
 
 	irqflags_t flags = cpu_irq_save();
-	g_twi1_baro_temp_cor_100 = l_twi1_baro_temp_cor_100;
+	g_twi1_baro_temp_cor_100 += l_twi1_baro_temp_cor_100;
 	cpu_irq_restore(flags);
 
 	save_globals(EEPROM_SAVE_BF__ENV);
@@ -2089,7 +2111,7 @@ void sens_baro_pres(float pres)
 	}
 
 	irqflags_t flags = cpu_irq_save();
-	g_twi1_baro_p_cor_100 = l_twi1_baro_p_cor_100;
+	g_twi1_baro_p_cor_100 += l_twi1_baro_p_cor_100;
 	cpu_irq_restore(flags);
 
 	save_globals(EEPROM_SAVE_BF__ENV);
@@ -2106,7 +2128,7 @@ void sens_hygro_temp(float temp)
 	}
 
 	irqflags_t flags = cpu_irq_save();
-	g_twi1_hygro_T_cor_100 = l_twi1_hygro_T_cor_100;
+	g_twi1_hygro_T_cor_100 += l_twi1_hygro_T_cor_100;
 	cpu_irq_restore(flags);
 
 	save_globals(EEPROM_SAVE_BF__ENV);
@@ -2123,7 +2145,7 @@ void sens_hygro_RH(float rh)
 	}
 
 	irqflags_t flags = cpu_irq_save();
-	g_twi1_hygro_RH_cor_100 = l_twi1_hygro_RH_cor_100;
+	g_twi1_hygro_RH_cor_100 += l_twi1_hygro_RH_cor_100;
 	cpu_irq_restore(flags);
 
 	save_globals(EEPROM_SAVE_BF__ENV);
@@ -3636,6 +3658,7 @@ static void task_env_calc(void)
 	}
 }
 
+
 static void task_main_aprs_pocsag(void)
 {
 	static uint32_t				s_now_sec					= 0UL;
@@ -3692,38 +3715,38 @@ static void task_main_aprs_pocsag(void)
 	calendar_timestamp_to_date(l_ts, &calDat);
 
 	/* POCSAG beacon mode */
-	if (l_ax_pocsag_beacon_secs && (((s_pocsag_beacon_last + l_ax_pocsag_beacon_secs) <= l_now_sec) || (s_pocsag_beacon_last > l_now_sec))) {
+	if (g_ax_enable && g_ax_pocsag_enable && l_ax_pocsag_beacon_secs && (((s_pocsag_beacon_last + l_ax_pocsag_beacon_secs) <= l_now_sec) || (s_pocsag_beacon_last > l_now_sec))) {
 		/* Update last time */
 		s_pocsag_beacon_last = l_now_sec;
 
+		/* Activate POCSAG TX */
 		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
-		l_pocsag_ric_msg_buf_len = snprintf(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), "Test %02d:%02d:%02d", calDat.hour, calDat.minute, calDat.second);
 
-		/* Transmit POCSAG message */
-		spi_ax_run_POCSAG_Tx_FIFO_Msg(123456, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, strlen(l_pocsag_ric_msg_buf));
+		/* Transmit POCSAG message - Tone */
+		spi_ax_run_POCSAG_Tx_FIFO_Msg(123456, AX_POCSAG_CW2_MODE1_TONE, NULL, 0);
+
+		/* Transmit POCSAG message - Numeric */
+		l_pocsag_ric_msg_buf_len = snprintf(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), "%02d %02d %02d", calDat.hour, calDat.minute, calDat.second);
+		spi_ax_run_POCSAG_Tx_FIFO_Msg(123457, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, l_pocsag_ric_msg_buf_len);
+
+		/* Transmit POCSAG message - Alphanum */
+		l_pocsag_ric_msg_buf_len = snprintf(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), "Clock:%02d:%02d:%02d", calDat.hour, calDat.minute, calDat.second);
+		spi_ax_run_POCSAG_Tx_FIFO_Msg(123458, AX_POCSAG_CW2_MODE3_ALPHANUM, l_pocsag_ric_msg_buf, l_pocsag_ric_msg_buf_len);
+
 		l_pocsag_ric_msg_buf_len = 0;
 	}
 
-	/* Do not send when GPS not ready */
-	if (s_lock || !g_gns_fix_status) {
+	/* Not ready for transmission */
+	if (s_lock ||
+		!g_gns_fix_status || !l_boot_time_ts ||																	// Do not send when GPS not ready
+		!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && (g_ax_aprs_enable || g_ax_pocsag_enable)))		// Do not send when APRS and POCSAG is disabled for the AX5243
+		) {
 		/* Set requested monitor mode */
-		if (g_ax_enable)
-		{
-			irqflags_t flags = cpu_irq_save();
-			AX_SET_TX_RX_MODE_t l_ax_set_tx_rx_mode = g_ax_set_tx_rx_mode;
-			cpu_irq_restore(flags);
-
-			spi_ax_setTxRxMode(l_ax_set_tx_rx_mode);
-		}
+		spi_ax_setRxMode_by_MonMode();
 		return;
 	}
 
-	/* do not send when APRS and POCSAG is disabled */
-	if (!((g_gsm_enable && g_gsm_aprs_enable) || (g_ax_enable && (g_ax_aprs_enable || g_ax_pocsag_enable)))) {
-		return;
-	}
-
-	/* Single thread lock */
+	/* Single thread lock section BEGINs here */
 	s_lock = true;
 
 	/* Get a copy from the global variables */
@@ -3735,13 +3758,6 @@ static void task_main_aprs_pocsag(void)
 		cpu_irq_restore(flags);
 	}
 
-	/* GNSS has to set the clock first */
-	if (!l_boot_time_ts) {
-		/* Single thread finished */
-		s_lock = false;
-		return;
-	}
-
 	/* Prepare POCSAG mode */
 	if (g_ax_enable && g_ax_pocsag_enable) {
 		static uint8_t s_lastMinute = 255;
@@ -3750,12 +3766,12 @@ static void task_main_aprs_pocsag(void)
 		spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_POCSAG_TX);
 
 		/* POCSAG Skyper clock for every new minute (chime) */
-		if ((s_lastMinute != calDat.minute) && g_ax_pocsag_chime_enable) {
+		if (g_ax_pocsag_chime_enable && (s_lastMinute != calDat.minute)) {
 			s_lastMinute   = calDat.minute;
 			l_pocsag_ric_msg_buf_len = spi_ax_pocsag_skyper_TimeString(l_pocsag_ric_msg_buf, (uint8_t) sizeof(l_pocsag_ric_msg_buf), &calDat);
 
 			/* Transmit POCSAG message */
-			spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_CLOCK, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, strlen(l_pocsag_ric_msg_buf));
+			spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_CLOCK, AX_POCSAG_CW2_MODE0_NUMERIC, l_pocsag_ric_msg_buf, l_pocsag_ric_msg_buf_len);
 			l_pocsag_ric_msg_buf_len = 0;
 		}
 	}
@@ -3874,7 +3890,7 @@ static void task_main_aprs_pocsag(void)
 				#endif
 
 				/* Message content POCSAG */
-				if (g_ax_pocsag_enable) {
+				if (g_ax_enable && g_ax_pocsag_enable) {
 					if (g_ax_pocsag_individual_ric) {
 						l_pocsag_ric_msg_buf_len  = (uint16_t) snprintf_P(l_pocsag_ric_msg_buf, sizeof(l_pocsag_ric_msg_buf), PM_POCSAG_TX_MSG_SRCCALL, g_aprs_source_callsign);
 						l_pocsag_ric_msg_buf_len += (uint16_t) snprintf_P(&(l_pocsag_ric_msg_buf[0]) + l_pocsag_ric_msg_buf_len, sizeof(l_pocsag_ric_msg_buf) - l_pocsag_ric_msg_buf_len,
@@ -4087,7 +4103,7 @@ static void task_main_aprs_pocsag(void)
 			const uint8_t ssidAry[]	= { 0, 8, 1, 2 };
 
 			/* Switch APRS mode (handled by PR1200) */
-			spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_ARPS_TX);
+			spi_ax_setTxRxMode(AX_SET_TX_RX_MODE_APRS_TX);
 
 			/* Transmit APRS message */
 			spi_ax_run_PR1200_Tx_FIFO_APRS(addrAry, ssidAry, sizeof(addrAry) / C_PR1200_CALL_LENGTH,  l_msg_buf, l_msg_buf_len);
@@ -4138,17 +4154,11 @@ static void task_main_aprs_pocsag(void)
 		cpu_irq_restore(flags);
 	}
 
-	/* Single thread finished */
+	/* Single thread lock section ENDs here */
 	s_lock = false;
 
-	/* After transmission set requested monitor mode, again */
-	{
-		irqflags_t flags = cpu_irq_save();
-		AX_SET_TX_RX_MODE_t l_ax_set_tx_rx_mode = g_ax_set_tx_rx_mode;
-		cpu_irq_restore(flags);
-
-		spi_ax_setTxRxMode(l_ax_set_tx_rx_mode);
-	}
+	/* After transmission return to requested monitor mode (half duplex) */
+	spi_ax_setRxMode_by_MonMode();
 }
 
 void task(void)
@@ -4235,14 +4245,57 @@ int main(void)
 	/* Init of USB system */
 	usb_init();																					// USB device stack start function to enable stack and start USB
 
-	/* Start TWI channels */
-	twi_start();																				// Start TWI
-
 	/* Start the AX5243 */
 	spi_start();																				// Start SPI communication with the AX5243
 
+	/* Start TWI channels */
+	twi_start();																				// Start TWI
+
 
 	/* Insert prepared system TEST-CODE here */
+#if 0
+	{
+		static char check;
+		static uint32_t rcv20Bits[8] = { 0x000fffffUL, 0x000fffffUL, 0x000fffffUL, 0x000fffffUL, 0x000fffffUL, 0x000fffffUL, 0x000fffffUL, 0x000fffffUL };
+		static uint8_t  rcv20BitsCnt = sizeof(rcv20Bits) / sizeof(uint32_t);
+
+		for (uint8_t msgAlphaIdx = 0; msgAlphaIdx < 20; msgAlphaIdx++) {
+			check = spi_ax_pocsag_getAlphanum(rcv20Bits, rcv20BitsCnt, msgAlphaIdx);
+			(void)check;
+			nop();
+		}
+
+		while (true)
+			;
+	}
+#endif
+
+#if 0
+	{
+		static uint8_t				s_pocsagWordCtr		= 0;
+		AX_POCSAG_DECODER_DATA_t	l_pocsagData;
+		uint32_t					pocsagWord;
+
+		/* SYNCWORD */
+		pocsagWord = 0x7cd215d8UL;
+		spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
+		nop();
+
+		/* IDLEWORD */
+		pocsagWord = 0x7a89c197UL;
+		spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
+		nop();
+
+		/* TEST: IDLEWORD with inverted bit 22 */
+		pocsagWord = 0x7ac9c197UL;
+		spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
+		nop();
+
+		while (true)
+			;
+	}
+#endif
+
 #if 0
 	/* TEST */
 	for (int i = 1000; i; i--) {

@@ -130,12 +130,18 @@ void spi_master_setup_device(SPI_t *spi, struct spi_device *device,
 status_code_t spi_write_packet(SPI_t *spi, const uint8_t *data, size_t len)
 {
 	while (len--) {
+		uint16_t cntr = 0;
+
 		spi_write_single(spi, *data++);
-		
-		while (!spi_is_rx_full(spi)) {
+
+		while (--cntr && !spi_is_rx_full(spi)) {
+		}
+
+		if (!cntr) {
+			return ERR_TIMEOUT;
 		}
 	}
-	
+
 	return STATUS_OK;
 }
 
@@ -153,15 +159,21 @@ status_code_t spi_write_packet(SPI_t *spi, const uint8_t *data, size_t len)
 status_code_t spi_read_packet(SPI_t *spi, uint8_t *data, size_t len)
 {
 	while (len--) {
+		uint16_t cntr = 0;
+
 		spi_write_single(spi,CONFIG_SPI_MASTER_DUMMY); //Dummy write
 
-		while (!spi_is_rx_full(spi)) {
+		while (--cntr && !spi_is_rx_full(spi)) {
 		}
-		
+
+		if (!cntr) {
+			return ERR_TIMEOUT;
+		}
+
 		spi_read_single(spi, data);
 		data++;
 	}
-	
+
 	return STATUS_OK;
 }
 

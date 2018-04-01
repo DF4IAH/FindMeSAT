@@ -13,7 +13,7 @@
 
 
 /* VERSION: YYM, MDD */
-#define VERSION														20180316
+#define VERSION														20180401
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -165,10 +165,12 @@ typedef enum AX_BF_ENUM {
 #ifndef DEFINED_AX_SET_TX_RX_MODE
 typedef enum AX_SET_TX_RX_MODE {
 	AX_SET_TX_RX_MODE_OFF											= 0x00,
-	AX_SET_TX_RX_MODE_ARPS_TX										= 0x31,
-	AX_SET_TX_RX_MODE_ARPS_RX_WOR,
-	AX_SET_TX_RX_MODE_ARPS_RX_CONT,
-	AX_SET_TX_RX_MODE_ARPS_RX_CONT_SINGLEPARAMSET,
+
+	AX_SET_TX_RX_MODE_APRS_TX										= 0x31,
+	AX_SET_TX_RX_MODE_APRS_RX_WOR,
+	AX_SET_TX_RX_MODE_APRS_RX_CONT,
+	AX_SET_TX_RX_MODE_APRS_RX_CONT_SINGLEPARAMSET,
+
 	AX_SET_TX_RX_MODE_POCSAG_TX										= 0x71,
 	AX_SET_TX_RX_MODE_POCSAG_RX_WOR,
 	AX_SET_TX_RX_MODE_POCSAG_RX_CONT,
@@ -177,6 +179,21 @@ typedef enum AX_SET_TX_RX_MODE {
 #define DEFINED_AX_SET_TX_RX_MODE
 #endif
 
+/* find AX_SET_MON_MODE_t in spi_ax.h, also */
+#ifndef DEFINED_AX_SET_MON_MODE
+typedef enum AX_SET_MON_MODE {
+	AX_SET_MON_MODE_OFF												= 0x00,
+
+	AX_SET_MON_MODE_APRS_RX_WOR										= AX_SET_TX_RX_MODE_APRS_RX_WOR,
+	AX_SET_MON_MODE_APRS_RX_CONT									= AX_SET_TX_RX_MODE_APRS_RX_CONT,
+	AX_SET_MON_MODE_APRS_RX_CONT_SINGLEPARAMSET						= AX_SET_TX_RX_MODE_APRS_RX_CONT_SINGLEPARAMSET,
+
+	AX_SET_MON_MODE_POCSAG_RX_WOR									= AX_SET_TX_RX_MODE_POCSAG_RX_WOR,
+	AX_SET_MON_MODE_POCSAG_RX_CONT									= AX_SET_TX_RX_MODE_POCSAG_RX_CONT,
+	AX_SET_MON_MODE_POCSAG_RX_CONT_SINGLEPARAMSET					= AX_SET_TX_RX_MODE_POCSAG_RX_CONT_SINGLEPARAMSET,
+} AX_SET_MON_MODE_t;
+#define DEFINED_AX_SET_MON_MODE
+#endif
 
 typedef enum EEPROM_ADDR_ENUM {
 	EEPROM_ADDR__VERSION											= 0x0000,					// i32
@@ -342,6 +359,7 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf);
 char* cueBehind(char* ptr, char delim);
 int myStringToFloat(const char* ptr, float* out);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
+uint8_t doHexdump(char *target, const uint8_t *source, uint8_t inLen);
 char* ipProto_2_ca(uint8_t aprs_ip_proto);
 char* copyStr(char* target, uint8_t targetSize, const char* source);
 uint8_t calc_CRC16_CCITT(CALC_CRC16_CCITT_ENUM_t selection, uint8_t byte_LSB_first);
@@ -372,7 +390,7 @@ void gsm_aprs_enable(bool enable);
 void gsm_pin_update(const char pin[]);
 void gsm_enable(bool enable);
 void keyBeep_enable(bool enable);
-void monitor_mode(AX_SET_TX_RX_MODE_t mode);
+void monitor_mode(AX_SET_MON_MODE_t mode);
 void pitchTone_mode(uint8_t mode);
 void pocsagBeacon_time(uint8_t secs);
 void pocsag_chime_update(bool enable);
