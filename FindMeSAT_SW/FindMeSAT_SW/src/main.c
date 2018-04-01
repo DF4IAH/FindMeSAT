@@ -243,7 +243,7 @@ volatile bool				g_ax_spi_rx_fifo_doService						= false;
 volatile uint32_t			g_ax_spi_freq_chan[2]							= { 0 };
 volatile uint8_t			g_ax_spi_range_chan[2]							= { 0 };
 volatile uint8_t			g_ax_spi_vcoi_chan[2]							= { 0 };
-volatile int8_t				g_ax_spi_rx_bgnd_rssi							= 0xc8;
+volatile int8_t				g_ax_spi_rx_bgnd_rssi							= 0x96;  // -170 dBm
 volatile AX_RX_FIFO_MEAS_t	g_ax_rx_fifo_meas								= { 0 };
 
 volatile int32_t			g_xo_mode_pwm									= 0L;		// EEPROM
@@ -1121,6 +1121,23 @@ void save_globals(EEPROM_SAVE_BF_ENUM_t bf)
 	}
 }
 
+
+inline
+uint8_t getCurrent_POCSAG_TimeSlot(void)
+{
+	uint64_t				l_seconds10;
+
+	/* Get up-to-date global data */
+	{
+		irqflags_t flags = cpu_irq_save();
+		l_seconds10	 = g_milliseconds_cnt64 / 100ULL;
+		l_seconds10	+= g_boot_time_ts * 10UL;
+		cpu_irq_restore(flags);
+	}
+
+	/* Each TimeSlot takes 6.4 secs */
+    return (uint8_t) ((l_seconds10 >> 6) & 0x0f);
+}
 
 char* cueBehind(char* ptr, char delim)
 {

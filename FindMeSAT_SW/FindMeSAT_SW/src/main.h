@@ -13,7 +13,7 @@
 
 
 /* VERSION: YYM, MDD */
-#define VERSION														20180401
+#define VERSION														20180402
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
@@ -356,6 +356,8 @@ typedef enum CALC_CRC16_CCITT_ENUM {
 
 
 void save_globals(EEPROM_SAVE_BF_ENUM_t bf);
+
+uint8_t getCurrent_POCSAG_TimeSlot(void);
 char* cueBehind(char* ptr, char delim);
 int myStringToFloat(const char* ptr, float* out);
 int myStringToVar(char *str, uint32_t format, float out_f[], long out_l[], int out_i[]);
