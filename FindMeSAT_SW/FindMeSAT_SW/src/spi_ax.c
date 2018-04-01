@@ -70,13 +70,11 @@ static void s_spi_test_start_testBox(void);
 /* PORTC Pin3 - AX5243 IRQ */
 ISR(PORTC_INT0_vect, ISR_BLOCK)
 {
-	static char dbg[16] = { 0 };
 	bool processed = false;
 
 	/* IRQREQUEST: check which request is on */
 	spi_ax_transport(false, "< 0c R2 >");														// RD address 0x0C: IRQREQUEST
 	uint16_t ax_spi_irq_request = (uint16_t)g_ax_spi_packet_buffer[0] << 8 | g_ax_spi_packet_buffer[1];
-	sprintf(dbg, "r=0x%02X", ax_spi_irq_request);
 
 	/* Reason(s) for interrupt */
 
@@ -97,12 +95,12 @@ ISR(PORTC_INT0_vect, ISR_BLOCK)
 		l_ax_spi_rx_bgnd_rssi	-= 64;
 
 		/* Decrease background RSSI each time to avoid blocking */
-		if (-120 < l_ax_spi_rx_bgnd_rssi) {
+		if (-170 < l_ax_spi_rx_bgnd_rssi) {
 			--g_ax_spi_rx_bgnd_rssi;
 		}
 
 		/* Abort packet when signal strength indicator falls near background noise and at least some WORDS were detected */
-		if ((g_ax_spi_rx_buffer_idx >= 0x10) && (l_ax_spi_rx_rssi < (l_ax_spi_rx_bgnd_rssi + 12))) {
+		if ((g_ax_spi_rx_buffer_idx >= 0x10) && (l_ax_spi_rx_rssi < (l_ax_spi_rx_bgnd_rssi + 6))) {
 			/* FRMMODE abort frame */
 			spi_ax_transport(false, "< 92 07 >");												// WR address 0x12: FRAMING - CRCMODE: none, FRMMODE: Raw, Pattern Match 0x06, FABORT
 		}
@@ -3544,7 +3542,7 @@ void spi_ax_initRegisters_POCSAG(void)
 
 
 	/* PKTCHUNKSIZE */
-	spi_ax_transport(false, "< f2 30 04 >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 8 bytes
+	spi_ax_transport(false, "< f2 30 05 >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 16 bytes
 
 	/* PKTSTOREFLAGS */
 	spi_ax_transport(false, "< f2 32 01 >");													// WR address 0x232: PKTSTOREFLAGS - not ST RSSI !0x10, not ST RFOFFS !0x04, not ST FOFFS !0x02, ST TIMER 0x01
@@ -4652,7 +4650,7 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 					}  // else if (l_pocsagData.isData)
 
 				} else {
-					s_pocsagState = AX_DECODER_POCSAG__NONE;
+					s_pocsagState = AX_DECODER_POCSAG__FLUSH;
 
 					/* Get RSSI and take that as background RSSI */
 					{
@@ -4711,6 +4709,20 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 						if (s_pocsagData_DataCnt < S_POCSAG_DATA_SIZE) {
 							s_pocsagData_Data[s_pocsagData_DataCnt++] = l_pocsagData.addrData;
 						}
+					}
+					break;
+
+					case AX_DECODER_POCSAG__FLUSH:
+					{
+						/* Flush the data as much it is usable */
+						spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
+
+						/* Reset data */
+						s_pocsagData_Addr			= 0UL;
+						s_pocsagData_FunctionBits	= 0;
+						s_pocsagData_DataCnt		= 0;
+
+						s_pocsagState = AX_DECODER_POCSAG__NONE;
 					}
 					break;
 
@@ -4963,7 +4975,8 @@ void task_spi_ax(void)
 			irqflags_t flags = cpu_irq_save();
 
 			#if 1
-			lenDbg = doHexdump((char*)bufDbg, g_ax_spi_rx_buffer, g_ax_spi_rx_buffer_idx);
+			lenDbg  = sprintf((char*)bufDbg, "\r\nTimeSlot=%1X:", getCurrent_POCSAG_TimeSlot());
+			lenDbg += doHexdump((char*)(bufDbg + lenDbg), g_ax_spi_rx_buffer, g_ax_spi_rx_buffer_idx);
 			#endif
 
 			/* Copy chunk to decoder buffer */
