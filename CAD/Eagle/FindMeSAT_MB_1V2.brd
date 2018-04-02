@@ -2844,15 +2844,15 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <attribute name="NAME" x="93.345" y="19.685" size="0.6096" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="92.456" y="18.542" size="0.6096" layer="28" rot="MR0"/>
 </element>
-<element name="L686" library="rcl" package="R0603" value="150nH" x="89.027" y="9.144" smashed="yes" rot="MR90">
+<element name="L686" library="rcl" package="R0603" value="27nH" x="89.027" y="9.144" smashed="yes" rot="MR90">
 <attribute name="NAME" x="88.773" y="5.207" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="88.773" y="8.001" size="0.6096" layer="28" rot="MR90"/>
 </element>
-<element name="L682" library="rcl" package="R0603" value="68nH" x="94.742" y="16.256" smashed="yes" rot="MR270">
+<element name="L682" library="rcl" package="R0603" value="27nH" x="94.742" y="16.256" smashed="yes" rot="MR270">
 <attribute name="NAME" x="94.488" y="18.034" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="94.488" y="15.24" size="0.6096" layer="28" rot="MR90"/>
 </element>
-<element name="C686" library="rcl" package="C0603" value="18pF" x="94.742" y="10.668" smashed="yes" rot="MR90">
+<element name="C686" library="rcl" package="C0603" value="3.3pF" x="94.742" y="10.668" smashed="yes" rot="MR90">
 <attribute name="NAME" x="94.488" y="6.604" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="94.488" y="10.287" size="0.6096" layer="28" rot="MR90"/>
 </element>

@@ -10625,10 +10625,10 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="L671" library="rcl" deviceset="R-EU_" device="R0603" value="22nH"/>
 <part name="C681" library="rcl" deviceset="C-EU" device="C0603" value="68pF"/>
 <part name="GND683" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="L686" library="rcl" deviceset="R-EU_" device="R0603" value="150nH"/>
-<part name="L682" library="rcl" deviceset="R-EU_" device="R0603" value="68nH"/>
+<part name="L686" library="rcl" deviceset="R-EU_" device="R0603" value="27nH"/>
+<part name="L682" library="rcl" deviceset="R-EU_" device="R0603" value="27nH"/>
 <part name="GND684" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C686" library="rcl" deviceset="C-EU" device="C0603" value="18pF"/>
+<part name="C686" library="rcl" deviceset="C-EU" device="C0603" value="3.3pF"/>
 <part name="L681" library="rcl" deviceset="R-EU_" device="R0603" value="150nH"/>
 <part name="X685" library="df4iah_connector" deviceset="SMA_SMT_AMPHENOL-901-143" device="" value="SMA_CON"/>
 <part name="GND689" library="df4iah_supply" deviceset="GND" device=""/>
