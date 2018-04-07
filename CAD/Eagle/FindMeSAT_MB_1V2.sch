@@ -10623,13 +10623,13 @@ Diameter = 1mm, Clearance = 3R</description>
 <part name="GND612" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="Q651" library="df4iah_crystal" deviceset="ABM03B-16.000MHZ" device="" value="ABM3B-16MHZ-10-R50-1-U"/>
 <part name="L671" library="rcl" deviceset="R-EU_" device="R0603" value="22nH"/>
-<part name="C681" library="rcl" deviceset="C-EU" device="C0603" value="68pF"/>
+<part name="C681" library="rcl" deviceset="C-EU" device="C0603" value="82pF"/>
 <part name="GND683" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="L686" library="rcl" deviceset="R-EU_" device="R0603" value="27nH"/>
-<part name="L682" library="rcl" deviceset="R-EU_" device="R0603" value="27nH"/>
+<part name="L686" library="rcl" deviceset="R-EU_" device="R0603" value="33nH"/>
+<part name="L682" library="rcl" deviceset="R-EU_" device="R0603" value="56nH"/>
 <part name="GND684" library="df4iah_supply" deviceset="GND" device=""/>
-<part name="C686" library="rcl" deviceset="C-EU" device="C0603" value="3.3pF"/>
-<part name="L681" library="rcl" deviceset="R-EU_" device="R0603" value="150nH"/>
+<part name="C686" library="rcl" deviceset="C-EU" device="C0603" value="150pF"/>
+<part name="L681" library="rcl" deviceset="R-EU_" device="R0603" value="100nH"/>
 <part name="X685" library="df4iah_connector" deviceset="SMA_SMT_AMPHENOL-901-143" device="" value="SMA_CON"/>
 <part name="GND689" library="df4iah_supply" deviceset="GND" device=""/>
 <part name="X181" library="df4iah_connector" deviceset="HEADER-2X3" device="" value="HEADER-2X3"/>
@@ -12249,6 +12249,7 @@ Diameter = 1mm, Clearance = 3R</description>
 <text x="63.5" y="78.74" size="1.778" layer="97">NC</text>
 <text x="121.92" y="119.38" size="1.778" layer="97">NC</text>
 <text x="121.92" y="109.22" size="1.778" layer="97">NC</text>
+<text x="203.2" y="50.8" size="1.778" layer="97" rot="R90">Add 150nH to GND here</text>
 </plain>
 <instances>
 <instance part="FRAME6" gate="G$1" x="0" y="0"/>
