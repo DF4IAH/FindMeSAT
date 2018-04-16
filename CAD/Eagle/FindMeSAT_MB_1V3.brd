@@ -2804,23 +2804,23 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <attribute name="NAME" x="81.407" y="8.255" size="0.6096" layer="25"/>
 <attribute name="VALUE" x="81.788" y="7.112" size="0.6096" layer="27"/>
 </element>
-<element name="C681" library="rcl" package="C0603" value="82pF" x="92.075" y="18.796" smashed="yes" rot="MR0">
+<element name="C681" library="rcl" package="C0603" value="47pF" x="92.075" y="18.796" smashed="yes" rot="MR0">
 <attribute name="NAME" x="90.17" y="18.415" size="0.6096" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="92.456" y="18.542" size="0.6096" layer="28" rot="MR0"/>
 </element>
-<element name="L686" library="rcl" package="R0603" value="33nH" x="89.027" y="9.144" smashed="yes" rot="MR90">
+<element name="L686" library="rcl" package="R0603" value="18nH" x="89.027" y="9.144" smashed="yes" rot="MR90">
 <attribute name="NAME" x="88.773" y="5.207" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="88.773" y="8.001" size="0.6096" layer="28" rot="MR90"/>
 </element>
-<element name="L682" library="rcl" package="R0603" value="56nH" x="94.742" y="16.256" smashed="yes" rot="MR270">
+<element name="L682" library="rcl" package="R0603" value="47nH" x="94.742" y="16.256" smashed="yes" rot="MR270">
 <attribute name="NAME" x="94.488" y="18.034" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="94.488" y="15.24" size="0.6096" layer="28" rot="MR90"/>
 </element>
-<element name="C686" library="rcl" package="C0603" value="150pF" x="94.742" y="10.668" smashed="yes" rot="MR90">
+<element name="C686" library="rcl" package="C0603" value="3.9pF" x="94.742" y="10.668" smashed="yes" rot="MR90">
 <attribute name="NAME" x="94.488" y="6.604" size="0.6096" layer="26" rot="MR90"/>
 <attribute name="VALUE" x="94.488" y="10.287" size="0.6096" layer="28" rot="MR90"/>
 </element>
-<element name="L681" library="rcl" package="R0603" value="100nH" x="97.282" y="18.415" smashed="yes" rot="MR180">
+<element name="L681" library="rcl" package="R0603" value="150nH" x="97.282" y="18.415" smashed="yes" rot="MR180">
 <attribute name="NAME" x="98.425" y="19.304" size="0.6096" layer="26" rot="MR0"/>
 <attribute name="VALUE" x="98.552" y="18.161" size="0.6096" layer="28" rot="MR0"/>
 </element>
@@ -2881,7 +2881,6 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <attribute name="NAME" x="45.847" y="21.336" size="0.6096" layer="25" rot="R90"/>
 <attribute name="VALUE" x="46.355" y="26.162" size="0.6096" layer="27" rot="R270"/>
 </element>
-<element name="L687" library="rcl" package="R0603" value="150nH" x="91.948" y="13.462" rot="MR180"/>
 </elements>
 <signals>
 <signal name="GND" class="8" airwireshidden="yes">
@@ -3414,25 +3413,27 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <via x="42.037" y="14.097" extent="1-16" drill="0.3048" shape="octagon"/>
 <wire x1="42.037" y1="14.097" x2="42.037" y2="14.732" width="0.1524" layer="16"/>
 <contactref element="C711" pad="2"/>
-<contactref element="L687" pad="1"/>
+<wire x1="91.059" y1="12.954" x2="91.059" y2="12.328025" width="0.2032" layer="16"/>
+<wire x1="91.059" y1="12.328025" x2="91.2449875" y2="11.8790125" width="0.2032" layer="16" curve="45"/>
+<wire x1="91.2449875" y1="11.8790125" x2="92.202" y2="10.922" width="0.2032" layer="16"/>
 <wire x1="93.384" y1="32.258" x2="94.996" y2="38.1" width="0" layer="19" extent="16-16"/>
 <wire x1="92.075" y1="22.313" x2="93.599" y2="29.337" width="0" layer="19" extent="1-1"/>
 <wire x1="97.47" y1="21.463" x2="92.075" y2="22.313" width="0" layer="19" extent="1-1"/>
 <wire x1="98.132" y1="18.415" x2="97.47" y2="19.751" width="0" layer="19" extent="1-16"/>
 <wire x1="92.202" y1="16.002" x2="97.282" y2="16.002" width="0" layer="19" extent="1-1"/>
-<wire x1="97.282" y1="10.922" x2="97.282" y2="16.002" width="0" layer="19" extent="1-1"/>
-<wire x1="97.79" y1="8.636" x2="97.282" y2="10.922" width="0" layer="19" extent="1-1"/>
-<wire x1="92.202" y1="10.922" x2="92.202" y2="16.002" width="0" layer="19" extent="1-1"/>
+<wire x1="91.059" y1="12.954" x2="92.202" y2="16.002" width="0" layer="19" extent="16-16"/>
 <wire x1="91.694" y1="8.001" x2="92.202" y2="10.922" width="0" layer="19" extent="1-1"/>
 <wire x1="89.408" y1="6.604" x2="89.447" y2="8.001" width="0" layer="19" extent="1-16"/>
 <wire x1="89.084" y1="6.064" x2="89.408" y2="6.604" width="0" layer="19" extent="1-1"/>
 <wire x1="86.684" y1="2.064" x2="85.09" y2="2.54" width="0" layer="19" extent="1-1"/>
 <wire x1="86.995" y1="1.524" x2="86.684" y2="2.064" width="0" layer="19" extent="1-1"/>
+<wire x1="86.868" y1="15.113" x2="91.059" y2="12.954" width="0" layer="19" extent="16-16"/>
 <wire x1="92.71" y1="2.54" x2="90.043" y2="6.604" width="0" layer="19" extent="1-1"/>
-<wire x1="97.79" y1="2.54" x2="97.79" y2="7.62" width="0" layer="19" extent="1-1"/>
+<wire x1="97.282" y1="10.922" x2="97.282" y2="16.002" width="0" layer="19" extent="1-1"/>
+<wire x1="97.79" y1="8.636" x2="97.282" y2="10.922" width="0" layer="19" extent="1-1"/>
+<wire x1="97.79" y1="2.54" x2="92.71" y2="2.54" width="0" layer="19" extent="1-1"/>
 <wire x1="74.422" y1="2.54" x2="79.51" y2="2.532" width="0" layer="19" extent="1-1"/>
 <wire x1="78.867" y1="10.033" x2="83.963" y2="9.033" width="0" layer="19" extent="1-1"/>
-<wire x1="86.868" y1="15.113" x2="92.202" y2="16.002" width="0" layer="19" extent="1-1"/>
 <wire x1="70.866" y1="9.271" x2="76.2" y2="10.58" width="0" layer="19" extent="16-16"/>
 <wire x1="65.913" y1="12.407" x2="70.016" y2="10.668" width="0" layer="19" extent="16-16"/>
 <wire x1="65.786" y1="15.748" x2="65.913" y2="12.407" width="0" layer="19" extent="16-16"/>
@@ -3512,10 +3513,6 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <wire x1="11.43" y1="38.1" x2="11.303" y2="38.1" width="0" layer="19" extent="1-1"/>
 <wire x1="11.43" y1="37.973" x2="11.43" y2="38.1" width="0" layer="19" extent="1-1"/>
 <wire x1="15.66" y1="36.068" x2="15.367" y2="36.068" width="0" layer="19" extent="1-1"/>
-<wire x1="91.098" y1="13.462" x2="4.591059375" y2="1.0096875" width="0" layer="19" extent="1-1"/>
-<wire x1="91.059" y1="12.954" x2="91.059" y2="12.328025" width="0.2032" layer="16"/>
-<wire x1="91.059" y1="12.328025" x2="91.2449875" y2="11.8790125" width="0.2032" layer="16" curve="45"/>
-<wire x1="91.2449875" y1="11.8790125" x2="92.202" y2="10.922" width="0.2032" layer="16"/>
 </signal>
 <signal name="EN">
 <contactref element="U1111" pad="4"/>
@@ -5896,8 +5893,6 @@ Setup for &lt;b&gt;4-layer PatternClass6 BaseCopperO18-I35 eCDefault&lt;/b&gt;
 <contactref element="X685" pad="1"/>
 <wire x1="94.742" y1="11.518" x2="94.742" y2="13.462" width="0.2032" layer="16"/>
 <wire x1="94.742" y1="15.406" x2="94.742" y2="13.462" width="0.2032" layer="16"/>
-<contactref element="L687" pad="2"/>
-<wire x1="92.798" y1="13.462" x2="94.742" y2="13.462" width="0.2032" layer="16"/>
 </signal>
 <signal name="AX_ANT_I" class="2">
 <contactref element="L682" pad="1"/>
