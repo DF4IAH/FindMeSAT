@@ -233,6 +233,13 @@ typedef enum AX_POCSAG_SKYPER_RIC_ENUM {
 	AX_POCSAG_SKYPER_RIC_NEWS										= 4520
 } AX_POCSAG_SKYPER_RIC_t;
 
+typedef enum AX_POCSAG_IS_SKYPER_SPECIAL_ENUM {
+	AX_POCSAG_IS_SKYPER_SPECIAL_NO									= 0,
+	AX_POCSAG_IS_SKYPER_SPECIAL_RUBRIC,
+	AX_POCSAG_IS_SKYPER_SPECIAL_NEWS,
+} AX_POCSAG_IS_SKYPER_SPECIAL_t;
+
+
 typedef struct AX_POCSAG_DECODER_DATA {
 	bool		badDecode;																		// No successful decode (0 bit error and 1 bit error)
 
@@ -291,13 +298,15 @@ char spi_ax_pocsag_getAlphanum(const uint32_t* rcv20Bits, uint8_t rcv20BitsCnt, 
 
 void spi_ax_pocsag_address_tone(bool individual_RIC_address, uint32_t address, uint8_t fktBits);
 void spi_ax_pocsag_address_numeric(bool individual_RIC_address, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt);
-void spi_ax_pocsag_address_alphanum(bool individual_RIC_address, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt);
+void spi_ax_pocsag_address_alphanum(bool individual_RIC_address, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt, AX_POCSAG_IS_SKYPER_SPECIAL_t skyperSpecial);
 void spi_ax_pocsag_address_skyper_activation(bool individual_RIC_address, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt);
 
 uint16_t spi_ax_pocsag_skyper_RIC2ActivationString(char* outBuf, uint16_t outBufSize, uint32_t RIC);
 uint16_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint16_t outBufSize, struct calendar_date* calDat);
-uint16_t spi_ax_pocsag_skyper_RubricString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, const char* rubricLabel, uint16_t rubricLabelLen);
-uint16_t spi_ax_pocsag_skyper_NewsString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, uint8_t newsNumber, const char* newsString, uint16_t newsStringLen);
+uint16_t spi_ax_pocsag_skyper_RubricString_Encode(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, const char* rubricLabel, uint16_t rubricLabelLen);
+uint16_t spi_ax_pocsag_skyper_RubricString_Decode(char* outBuf, uint16_t outBufSize, const char* pocsagSkyperRubricMsg, uint16_t pocsagSkyperRubricMsgLen);
+uint16_t spi_ax_pocsag_skyper_NewsString_Encode(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, uint8_t newsNumber, const char* newsString, uint16_t newsStringLen);
+uint16_t spi_ax_pocsag_skyper_NewsString_Decode(char* outBuf, uint16_t outBufSize, const char* pocsagSkyperNewsMsg, uint16_t pocsagSkyperNewsMsgLen);
 
 void spi_ax_pocsag_wordDecoder(AX_POCSAG_DECODER_DATA_t* l_pocsagData, uint32_t pocsagWord, uint8_t pocsagWordCnt);
 void spi_ax_pocsag_messageDecoder(uint32_t address, uint8_t functionBits, uint32_t* dataAry, uint8_t dataCnt);

@@ -568,7 +568,7 @@ void spi_ax_pocsag_address_tone(bool is_RIC_individual, uint32_t address, uint8_
 	char isMyChar = is_RIC_individual ?  '*' : ' ';
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>%cAddress=%lu FktBits=0x%02x  (TONE   )%c%c%c\r\n", isMyChar, address, fktBits, isMyBeep, isMyBeep, isMyBeep);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>>%cAddress=%lu FktBits=0x%02x  (TONE   )%c%c%c\r\n", isMyChar, address, fktBits, isMyBeep, isMyBeep, isMyBeep);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 }
 
@@ -578,7 +578,7 @@ void spi_ax_pocsag_address_numeric(bool is_RIC_individual, uint32_t address, uin
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
 	uint8_t digitIdx = 0;
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>%cAddress=%lu FktBits=0x%02x  (NUMERIC):", isMyChar, address, fktBits);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>>%cAddress=%lu FktBits=0x%02x  (NUMERIC):", isMyChar, address, fktBits);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 
 	for (uint8_t dataCntIdx = 0; dataCntIdx < dataCnt; dataCntIdx++) {
@@ -592,18 +592,56 @@ void spi_ax_pocsag_address_numeric(bool is_RIC_individual, uint32_t address, uin
 	udi_write_tx_buf(g_prepare_buf, len, false);
 }
 
-void spi_ax_pocsag_address_alphanum(bool is_RIC_individual, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt)
+void spi_ax_pocsag_address_alphanum(bool is_RIC_individual, uint32_t address, uint8_t fktBits, uint32_t* dataAry, uint8_t dataCnt, AX_POCSAG_IS_SKYPER_SPECIAL_t skyperSpecial)
 {
+	const char* typeStr = 0;
 	char isMyChar = is_RIC_individual ?  '*' : ' ';
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
+	char l_buf[256];
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>%cAddress=%lu FktBits=0x%02x  (ALPHA  ):", isMyChar, address, fktBits);
+	switch (skyperSpecial) {
+		case 1:
+			typeStr = "RUBRIC ";
+		break;
+
+		case 2:
+			typeStr = "NEWS   ";
+		break;
+
+		default:
+			typeStr = "ALPHA  ";
+	}
+
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>>%cAddress=%lu FktBits=0x%02x  (%s):", isMyChar, address, fktBits, typeStr);
 	udi_write_tx_buf(g_prepare_buf, len, false);
+	len = 0;
 
 	uint8_t alphaCnt = (dataCnt * 20) / 7;
+	if (alphaCnt >= sizeof(g_prepare_buf)) {
+		/* Buffer overflow */
+		return;
+	}
+
+	/* Get text data */
 	for (uint8_t alphaIdx = 0; alphaIdx < alphaCnt; alphaIdx++) {
-		g_prepare_buf[0] = spi_ax_pocsag_getAlphanum(dataAry, dataCnt, alphaIdx);
-		udi_write_tx_buf(g_prepare_buf, 1, false);
+		g_prepare_buf[len++] = spi_ax_pocsag_getAlphanum(dataAry, dataCnt, alphaIdx);
+	}
+
+	switch (skyperSpecial) {
+		case 1:
+			/* Decode Rubric content */
+			len = spi_ax_pocsag_skyper_RubricString_Decode(l_buf, sizeof(l_buf), g_prepare_buf, len);
+			udi_write_tx_buf(l_buf, len, false);
+		break;
+
+		case 2:
+			/* Decode News content */
+			len = spi_ax_pocsag_skyper_NewsString_Decode(l_buf, sizeof(l_buf), g_prepare_buf, len);
+			udi_write_tx_buf(l_buf, len, false);
+		break;
+
+		default:
+			udi_write_tx_buf(g_prepare_buf, len, false);
 	}
 
 	len = (uint8_t) sprintf(g_prepare_buf, "%c\r\n", isMyBeep);
@@ -615,7 +653,7 @@ void spi_ax_pocsag_address_skyper_activation(bool is_RIC_individual, uint32_t ad
 	char isMyChar = is_RIC_individual ?  '*' : ' ';
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n%c RIC=%lu FktBits=0x%02x  (ACTIVTN):", isMyChar, address, fktBits);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>>%c RIC=%lu FktBits=0x%02x  (ACTIVTN):", isMyChar, address, fktBits);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 
 	len = (uint8_t) sprintf(g_prepare_buf, " TODO! %c%c%c\r\n", isMyBeep, isMyBeep, isMyBeep);
@@ -659,9 +697,9 @@ uint16_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint16_t outBufSize, stru
 	return outLen;
 }
 
-const char					PM_POCSAG_SKYPER_RUBRIC[]				= "1%c%c";
-PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_RUBRIC[]);
-uint16_t spi_ax_pocsag_skyper_RubricString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, const char* rubricLabel, uint16_t rubricLabelLen)
+const char					PM_POCSAG_SKYPER_RUBRIC_ENC[]				= "1%c%c";
+PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_RUBRIC_ENC[]);
+uint16_t spi_ax_pocsag_skyper_RubricString_Encode(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, const char* rubricLabel, uint16_t rubricLabelLen)
 {
 	/* Sanity checks */
 	if (!outBuf || outBufSize < 8) {
@@ -669,7 +707,7 @@ uint16_t spi_ax_pocsag_skyper_RubricString(char* outBuf, uint16_t outBufSize, ui
 	}
 
 	/* Put rubric label into Skyper rubric message form */
-	uint16_t outLen = snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_RUBRIC, ' ' + (rubricNumber - 1), ' ' + 10, rubricLabel);
+	uint16_t outLen = snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_RUBRIC_ENC, ' ' + (rubricNumber - 1), ' ' + 10);
 
 	char* outBuf_ptr = outBuf + outLen;
 	for (uint16_t idx = 0; idx < rubricLabelLen; idx++, outLen++) {
@@ -680,9 +718,31 @@ uint16_t spi_ax_pocsag_skyper_RubricString(char* outBuf, uint16_t outBufSize, ui
 	return outLen;
 }
 
-const char					PM_POCSAG_SKYPER_NEWS[]				= "%c%c";
-PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_NEWS[]);
-uint16_t spi_ax_pocsag_skyper_NewsString(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, uint8_t newsNumber, const char* newsString, uint16_t newsStringLen)
+const char					PM_POCSAG_SKYPER_RUBRIC_DEC[]				= "Rubric=%02d, MaxEntries=%02d, Name: ";
+PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_RUBRIC_DEC[]);
+uint16_t spi_ax_pocsag_skyper_RubricString_Decode(char* outBuf, uint16_t outBufSize, const char* pocsagSkyperRubricMsg, uint16_t pocsagSkyperRubricMsgLen)
+{
+	/* Sanity checks */
+	if (!outBuf || outBufSize < 8 || pocsagSkyperRubricMsgLen < 4) {
+		return 0;
+	}
+
+	uint8_t rubricNumber	= (pocsagSkyperRubricMsg[1] - ' ') + 1;
+	uint8_t rubricSize		= pocsagSkyperRubricMsg[2] - ' ';
+	uint16_t outLen			= snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_RUBRIC_DEC, rubricNumber, rubricSize);
+
+	char* outBuf_ptr = outBuf + outLen;
+	for (uint16_t idx = 3; idx < pocsagSkyperRubricMsgLen; idx++, outLen++) {
+		*(outBuf_ptr++) = *(pocsagSkyperRubricMsg + idx) - 1;
+	}
+	*(outBuf_ptr++) = 0;
+
+	return (outBuf_ptr - outBuf);
+}
+
+const char					PM_POCSAG_SKYPER_NEWS_ENC[]				= "%c%c";
+PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_NEWS_ENC[]);
+uint16_t spi_ax_pocsag_skyper_NewsString_Encode(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, uint8_t newsNumber, const char* newsString, uint16_t newsStringLen)
 {
 	/* Sanity checks */
 	if (!outBuf || outBufSize < 8) {
@@ -690,7 +750,7 @@ uint16_t spi_ax_pocsag_skyper_NewsString(char* outBuf, uint16_t outBufSize, uint
 	}
 
 	/* Put news into Skyper news message form */
-	uint16_t outLen = snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_NEWS, ' ' + (rubricNumber - 1), ' ' + newsNumber);
+	uint16_t outLen = snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_NEWS_ENC, ' ' + (rubricNumber - 1), ' ' + newsNumber);
 
 	char* outBuf_ptr = outBuf + outLen;
 	for (uint16_t idx = 0; idx < newsStringLen; idx++, outLen++) {
@@ -699,6 +759,28 @@ uint16_t spi_ax_pocsag_skyper_NewsString(char* outBuf, uint16_t outBufSize, uint
 	*(outBuf_ptr++) = 0;
 
 	return outLen;
+}
+
+const char					PM_POCSAG_SKYPER_NEWS_DEC[]				= "Rubric=%02d, News#=%02d, Text: ";
+PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_NEWS_DEC[]);
+uint16_t spi_ax_pocsag_skyper_NewsString_Decode(char* outBuf, uint16_t outBufSize, const char* pocsagSkyperNewsMsg, uint16_t pocsagSkyperNewsMsgLen)
+{
+	/* Sanity checks */
+	if (!outBuf || outBufSize < 8 || pocsagSkyperNewsMsgLen < 4) {
+		return 0;
+	}
+
+	uint8_t rubricNumber	= (pocsagSkyperNewsMsg[0] - ' ') + 1;
+	uint8_t newsNumber		= pocsagSkyperNewsMsg[1] - ' ';
+	uint16_t outLen			= snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_NEWS_DEC, rubricNumber, newsNumber);
+
+	char* outBuf_ptr = outBuf + outLen;
+	for (uint16_t idx = 3; idx < pocsagSkyperNewsMsgLen; idx++, outLen++) {
+		*(outBuf_ptr++) = *(pocsagSkyperNewsMsg + idx) - 1;
+	}
+	*(outBuf_ptr++) = 0;
+
+	return (outBuf_ptr - outBuf);
 }
 
 
@@ -806,7 +888,7 @@ void spi_ax_pocsag_messageDecoder(uint32_t address, uint8_t functionBits, uint32
 			{
 				if (functionBits == AX_POCSAG_CW2_MODE3_ALPHANUM) {
 					/* Store list of Rubrics */
-					spi_ax_pocsag_address_alphanum(false, address, functionBits, dataAry, dataCnt);			// TODO: DEBUGGING ONLY
+					spi_ax_pocsag_address_alphanum(false, address, functionBits, dataAry, dataCnt, AX_POCSAG_IS_SKYPER_SPECIAL_RUBRIC);		// TODO: DEBUGGING ONLY
 				}
 			}
 			break;
@@ -815,7 +897,7 @@ void spi_ax_pocsag_messageDecoder(uint32_t address, uint8_t functionBits, uint32
 			{
 				if (functionBits == AX_POCSAG_CW2_MODE3_ALPHANUM) {
 					/* Store News into rubrics */
-					spi_ax_pocsag_address_alphanum(false, address, functionBits, dataAry, dataCnt);			// TODO: DEBUGGING ONLY
+					spi_ax_pocsag_address_alphanum(false, address, functionBits, dataAry, dataCnt, AX_POCSAG_IS_SKYPER_SPECIAL_NEWS);		// TODO: DEBUGGING ONLY
 				}
 			}
 			break;
@@ -854,7 +936,7 @@ void spi_ax_pocsag_messageDecoder(uint32_t address, uint8_t functionBits, uint32
 					case AX_POCSAG_CW2_MODE3_ALPHANUM:
 					{
 						/* Alphanum decoder */
-						spi_ax_pocsag_address_alphanum(is_RIC_individual, address, functionBits, dataAry, dataCnt);
+						spi_ax_pocsag_address_alphanum(is_RIC_individual, address, functionBits, dataAry, dataCnt, AX_POCSAG_IS_SKYPER_SPECIAL_NO);
 					}
 					break;
 				}  // switch (functionBits)
@@ -4549,12 +4631,24 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 			uint32_t					pocsagWord			= 0UL;
 			uint8_t						pocsagWordBytePos	= 0;
 			AX_POCSAG_DECODER_DATA_t	l_pocsagData;
+			const char*					l_pocsagStateStr	= 0;
 
 			if (status & AX_FIFO_DATA_FLAGS_RX_PKTSTART) {
+				/* Process last data */
+				if (s_pocsagData_DataCnt) {
+					/* Decode the previous message */
+					spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
+
+					/* Reset data */
+					s_pocsagData_Addr			= 0UL;
+					s_pocsagData_FunctionBits	= 0;
+					s_pocsagData_DataCnt		= 0;
+				}
+
 				s_pocsagFIFOWord	= 0UL;
 				s_pocsagFIFOWordLen	= 0;
 				s_pocsagWordCtr		= 0;
-				s_pocsagState		= AX_DECODER_POCSAG__ADDRESS;
+				s_pocsagState		= AX_DECODER_POCSAG__SYNC;
 			}
 
 			/* Pull FIFO data first */
@@ -4620,13 +4714,45 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 				/* WORD decoder */
 				spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
 
+				/* DEBUG state strings */
+				switch (s_pocsagState) {
+					case AX_DECODER_POCSAG__NONE:
+						l_pocsagStateStr = "NONE ";
+					break;
+
+					case AX_DECODER_POCSAG__SYNC:
+						l_pocsagStateStr = "SYNC ";
+					break;
+
+					case AX_DECODER_POCSAG__IDLE:
+						l_pocsagStateStr = "IDLE ";
+					break;
+
+					case AX_DECODER_POCSAG__ADDRESS:
+						l_pocsagStateStr = "ADDR ";
+					break;
+
+					case AX_DECODER_POCSAG__DATA:
+						l_pocsagStateStr = "DATA ";
+					break;
+
+					case AX_DECODER_POCSAG__FLUSH:
+						l_pocsagStateStr = "FLUSH";
+					break;
+
+					default:
+						l_pocsagStateStr = "";
+				}
+
 				/* DEBUG WORDs */
 				int16_t l_rssi		= g_ax_rx_fifo_meas.rssi;	l_rssi		-= 64;
 				int16_t l_bgnd_rssi	= g_ax_spi_rx_bgnd_rssi;	l_bgnd_rssi	-= 64;
-				uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\tstatus = 0x%02x, WORD = 0x%08lx, RSSI = %-4ddBm, bgnd_RSSI = %-4ddBm, %c\r\n",
+				uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\tDecoder=%s\tstatus = 0x%02x, WORD = 0x%08lx, RSSI = %-4ddBm, bgnd_RSSI = %-4ddBm, %c (EC=%c)\r\n",
+												l_pocsagStateStr,
 												status, pocsagWord,
 												l_rssi, l_bgnd_rssi,
-												l_pocsagData.badDecode ?  '-' : '+');
+												l_pocsagData.badDecode ?  '-' : '+',
+												(!l_pocsagData.badDecode && (l_pocsagData.invertedBit != 32) ?  '1' : (l_pocsagData.badDecode ?  '-' : '0')));
 				udi_write_tx_buf(g_prepare_buf, len, false);
 
 				if (!l_pocsagData.badDecode) {
@@ -4646,7 +4772,15 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 						}  // switch(pocsagWord)
 
 					} else if (l_pocsagData.isData) {
-						s_pocsagState = AX_DECODER_POCSAG__DATA;
+						if (s_pocsagState == AX_DECODER_POCSAG__ADDRESS) {
+							s_pocsagState = AX_DECODER_POCSAG__DATA;
+
+						} else if (s_pocsagState == AX_DECODER_POCSAG__DATA) {
+							// keep state
+
+						} else {
+							s_pocsagState = AX_DECODER_POCSAG__NONE;
+						}
 					}  // else if (l_pocsagData.isData)
 
 				} else {
@@ -4683,6 +4817,7 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 					}
 				}  // if (l_pocsagData.badDecode)
 
+
 				switch (s_pocsagState) {
 					case AX_DECODER_POCSAG__ADDRESS:
 					{
@@ -4708,19 +4843,34 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 						/* Store data for processing */
 						if (s_pocsagData_DataCnt < S_POCSAG_DATA_SIZE) {
 							s_pocsagData_Data[s_pocsagData_DataCnt++] = l_pocsagData.addrData;
+
+						} else {
+							if (s_pocsagData_DataCnt) {
+								/* When message is to long for buffer do break message */
+								spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
+
+								/* Reset data */
+								s_pocsagData_Addr			= 0UL;
+								s_pocsagData_FunctionBits	= 0;
+								s_pocsagData_DataCnt		= 0;
+							}
+
+							s_pocsagState = AX_DECODER_POCSAG__NONE;
 						}
 					}
 					break;
 
 					case AX_DECODER_POCSAG__FLUSH:
 					{
-						/* Flush the data as much it is usable */
-						spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
+						if (s_pocsagData_DataCnt) {
+							/* Flush the data as much it is usable */
+							spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
 
-						/* Reset data */
-						s_pocsagData_Addr			= 0UL;
-						s_pocsagData_FunctionBits	= 0;
-						s_pocsagData_DataCnt		= 0;
+							/* Reset data */
+							s_pocsagData_Addr			= 0UL;
+							s_pocsagData_FunctionBits	= 0;
+							s_pocsagData_DataCnt		= 0;
+						}
 
 						s_pocsagState = AX_DECODER_POCSAG__NONE;
 					}
@@ -4728,18 +4878,31 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 
 					case AX_DECODER_POCSAG__IDLE:
 					{
-						/* Decode the previous message */
-						spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
+						if (s_pocsagData_DataCnt) {
+							/* Decode the previous message */
+							spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
 
-						/* Reset data */
-						s_pocsagData_Addr			= 0UL;
-						s_pocsagData_FunctionBits	= 0;
-						s_pocsagData_DataCnt		= 0;
+							/* Reset data */
+							s_pocsagData_Addr			= 0UL;
+							s_pocsagData_FunctionBits	= 0;
+							s_pocsagData_DataCnt		= 0;
+						}
 					}
 					break;
 
 					case AX_DECODER_POCSAG__SYNC:
 					{
+						/* Process last data */
+						if (s_pocsagData_DataCnt) {
+							/* Decode the previous message */
+							spi_ax_pocsag_messageDecoder(s_pocsagData_Addr, s_pocsagData_FunctionBits, s_pocsagData_Data, s_pocsagData_DataCnt);
+
+							/* Reset data */
+							s_pocsagData_Addr			= 0UL;
+							s_pocsagData_FunctionBits	= 0;
+							s_pocsagData_DataCnt		= 0;
+						}
+
 						s_pocsagWordCtr = 0;
 					}
 

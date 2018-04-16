@@ -13,7 +13,7 @@
 
 
 /* VERSION: YYM, MDD */
-#define VERSION														20180402
+#define VERSION														20180416
 
 #define APPLICATION_NAME											"FindMeSAT"
 #define APPLICATION_VERSION											"1.0"
