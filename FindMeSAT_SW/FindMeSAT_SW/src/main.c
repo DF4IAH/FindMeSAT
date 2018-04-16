@@ -4093,7 +4093,7 @@ static void task_main_aprs_pocsag(void)
 					const char rubricLabel[] = "Tracking";
 					char rubricBuf[32];
 
-					uint16_t rubricBufLen = spi_ax_pocsag_skyper_RubricString(rubricBuf, sizeof(rubricBuf), 95, rubricLabel, strlen(rubricLabel));
+					uint16_t rubricBufLen = spi_ax_pocsag_skyper_RubricString_Encode(rubricBuf, sizeof(rubricBuf), 95, rubricLabel, strlen(rubricLabel));
 					spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_RUBRICS, AX_POCSAG_CW2_MODE3_ALPHANUM, rubricBuf, rubricBufLen);
 				}
 
@@ -4101,7 +4101,7 @@ static void task_main_aprs_pocsag(void)
 				{
 					char newsBuf[C_TX_NEWS_BUF_SIZE];
 
-					uint16_t newsBufLen = spi_ax_pocsag_skyper_NewsString(newsBuf, sizeof(newsBuf), 95, ++g_ax_pocsag_news_idx, l_pocsag_news_msg_buf, l_pocsag_news_msg_buf_len);
+					uint16_t newsBufLen = spi_ax_pocsag_skyper_NewsString_Encode(newsBuf, sizeof(newsBuf), 95, ++g_ax_pocsag_news_idx, l_pocsag_news_msg_buf, l_pocsag_news_msg_buf_len);
 					spi_ax_run_POCSAG_Tx_FIFO_Msg(AX_POCSAG_SKYPER_RIC_NEWS, AX_POCSAG_CW2_MODE3_ALPHANUM, newsBuf, newsBufLen);
 
 					g_ax_pocsag_news_idx %= 10;
