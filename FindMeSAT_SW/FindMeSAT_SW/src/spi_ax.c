@@ -775,7 +775,7 @@ uint16_t spi_ax_pocsag_skyper_NewsString_Decode(char* outBuf, uint16_t outBufSiz
 	uint16_t outLen			= snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_NEWS_DEC, rubricNumber, newsNumber);
 
 	char* outBuf_ptr = outBuf + outLen;
-	for (uint16_t idx = 3; idx < pocsagSkyperNewsMsgLen; idx++, outLen++) {
+	for (uint16_t idx = 2; idx < pocsagSkyperNewsMsgLen; idx++, outLen++) {
 		*(outBuf_ptr++) = *(pocsagSkyperNewsMsg + idx) - 1;
 	}
 	*(outBuf_ptr++) = 0;
