@@ -692,38 +692,41 @@ uint16_t spi_ax_pocsag_skyper_TimeString(char* outBuf, uint16_t outBufSize, stru
 	}
 
 	/* Put calendar information into Skyper time message form */
-	uint16_t outLen = snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_TIME, calDat->hour, calDat->minute, calDat->second, calDat->date + 1, calDat->month + 1, calDat->year % 100);
-
-	return outLen;
+	return (uint16_t) snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_TIME, calDat->hour, calDat->minute, calDat->second, calDat->date + 1, calDat->month + 1, calDat->year % 100);
 }
 
-const char					PM_POCSAG_SKYPER_RUBRIC_ENC[]				= "1%c%c";
+const char					PM_POCSAG_SKYPER_RUBRIC_ENC[]			= "1%c%c";
 PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_RUBRIC_ENC[]);
 uint16_t spi_ax_pocsag_skyper_RubricString_Encode(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, const char* rubricLabel, uint16_t rubricLabelLen)
 {
 	/* Sanity checks */
-	if (!outBuf || outBufSize < 8) {
+	if (!outBuf || outBufSize < 4) {
 		return 0;
 	}
 
 	/* Put rubric label into Skyper rubric message form */
 	uint16_t outLen = snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_RUBRIC_ENC, ' ' + (rubricNumber - 1), ' ' + 10);
 
-	char* outBuf_ptr = outBuf + outLen;
-	for (uint16_t idx = 0; idx < rubricLabelLen; idx++, outLen++) {
-		*(outBuf_ptr++) = *(rubricLabel + idx) + 1;
-	}
-	*(outBuf_ptr++) = 0;
+	char* outBuf_ptr		= outBuf + outLen;
+	const char* read_ptr	= rubricLabel;
+	for (uint16_t idx = 0; idx < rubricLabelLen; idx++) {
+		*(outBuf_ptr++) = *(read_ptr++) + 1;
 
+		/* Target buffer runs out of space */
+		if (++outLen >= (outBufSize - 1)) {
+			break;
+		}
+	}
+	*outBuf_ptr = 0;
 	return outLen;
 }
 
-const char					PM_POCSAG_SKYPER_RUBRIC_DEC[]				= "Rubric=%02d, MaxEntries=%02d, Name: ";
+const char					PM_POCSAG_SKYPER_RUBRIC_DEC[]			= "Rubric=%02d, MaxEntries=%02d, Name: ";
 PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_RUBRIC_DEC[]);
 uint16_t spi_ax_pocsag_skyper_RubricString_Decode(char* outBuf, uint16_t outBufSize, const char* pocsagSkyperRubricMsg, uint16_t pocsagSkyperRubricMsgLen)
 {
 	/* Sanity checks */
-	if (!outBuf || outBufSize < 8 || pocsagSkyperRubricMsgLen < 4) {
+	if (!outBuf || outBufSize < 8 || pocsagSkyperRubricMsgLen < 3) {
 		return 0;
 	}
 
@@ -731,13 +734,18 @@ uint16_t spi_ax_pocsag_skyper_RubricString_Decode(char* outBuf, uint16_t outBufS
 	uint8_t rubricSize		= pocsagSkyperRubricMsg[2] - ' ';
 	uint16_t outLen			= snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_RUBRIC_DEC, rubricNumber, rubricSize);
 
-	char* outBuf_ptr = outBuf + outLen;
-	for (uint16_t idx = 3; idx < pocsagSkyperRubricMsgLen; idx++, outLen++) {
-		*(outBuf_ptr++) = *(pocsagSkyperRubricMsg + idx) - 1;
-	}
-	*(outBuf_ptr++) = 0;
+	char* outBuf_ptr		= outBuf + outLen;
+	const char* read_ptr	= pocsagSkyperRubricMsg + 3;
+	for (uint16_t idx = 3; idx < pocsagSkyperRubricMsgLen; idx++) {
+		*(outBuf_ptr++) = *(read_ptr++) - 1;
 
-	return (outBuf_ptr - outBuf);
+		/* Target buffer runs out of space */
+		if (++outLen >= (outBufSize - 1)) {
+			break;
+		}
+	}
+	*outBuf_ptr = 0;
+	return outLen;
 }
 
 const char					PM_POCSAG_SKYPER_NEWS_ENC[]				= "%c%c";
@@ -745,19 +753,24 @@ PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_NEWS_ENC[]);
 uint16_t spi_ax_pocsag_skyper_NewsString_Encode(char* outBuf, uint16_t outBufSize, uint8_t rubricNumber, uint8_t newsNumber, const char* newsString, uint16_t newsStringLen)
 {
 	/* Sanity checks */
-	if (!outBuf || outBufSize < 8) {
+	if (!outBuf || outBufSize < 2) {
 		return 0;
 	}
 
 	/* Put news into Skyper news message form */
 	uint16_t outLen = snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_NEWS_ENC, ' ' + (rubricNumber - 1), ' ' + newsNumber);
 
-	char* outBuf_ptr = outBuf + outLen;
-	for (uint16_t idx = 0; idx < newsStringLen; idx++, outLen++) {
-		*(outBuf_ptr++) = *(newsString + idx) + 1;
-	}
-	*(outBuf_ptr++) = 0;
+	char* outBuf_ptr		= outBuf + outLen;
+	const char* read_ptr	= newsString;
+	for (uint16_t idx = 0; idx < newsStringLen; idx++) {
+		*(outBuf_ptr++) = *(read_ptr++) + 1;
 
+		/* Target buffer runs out of space */
+		if (++outLen >= (outBufSize - 1)) {
+			break;
+		}
+	}
+	*outBuf_ptr = 0;
 	return outLen;
 }
 
@@ -766,7 +779,7 @@ PROGMEM_DECLARE(const char, PM_POCSAG_SKYPER_NEWS_DEC[]);
 uint16_t spi_ax_pocsag_skyper_NewsString_Decode(char* outBuf, uint16_t outBufSize, const char* pocsagSkyperNewsMsg, uint16_t pocsagSkyperNewsMsgLen)
 {
 	/* Sanity checks */
-	if (!outBuf || outBufSize < 8 || pocsagSkyperNewsMsgLen < 4) {
+	if (!outBuf || outBufSize < 8 || pocsagSkyperNewsMsgLen < 2) {
 		return 0;
 	}
 
@@ -774,13 +787,18 @@ uint16_t spi_ax_pocsag_skyper_NewsString_Decode(char* outBuf, uint16_t outBufSiz
 	uint8_t newsNumber		= pocsagSkyperNewsMsg[1] - ' ';
 	uint16_t outLen			= snprintf_P(outBuf, outBufSize, PM_POCSAG_SKYPER_NEWS_DEC, rubricNumber, newsNumber);
 
-	char* outBuf_ptr = outBuf + outLen;
-	for (uint16_t idx = 2; idx < pocsagSkyperNewsMsgLen; idx++, outLen++) {
-		*(outBuf_ptr++) = *(pocsagSkyperNewsMsg + idx) - 1;
-	}
-	*(outBuf_ptr++) = 0;
+	char* outBuf_ptr		= outBuf + outLen;
+	const char* read_ptr	= pocsagSkyperNewsMsg + 2;
+	for (uint16_t idx = 2; idx < pocsagSkyperNewsMsgLen; idx++) {
+		*(outBuf_ptr++) = *(read_ptr++) - 1;
 
-	return (outBuf_ptr - outBuf);
+		/* Target buffer runs out of space */
+		if (++outLen >= (outBufSize - 1)) {
+			break;
+		}
+	}
+	*outBuf_ptr = 0;
+	return outLen;
 }
 
 
