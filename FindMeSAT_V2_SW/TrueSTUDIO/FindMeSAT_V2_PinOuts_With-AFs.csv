@@ -127,7 +127,7 @@
 "126","PG11","Output","GPIO_Output","SMPS_EN [EN_ST1PS20D1QTR]","","LPTIM1_IN2","","","","","SPI3_MOSI","USART1_CTS","","","","","","SAI2_MCLK_A","TIM15_CH2","EVENTOUT"
 "127","PG12","Input","GPIO_Input","SMPS_PG [PG_ST1PS02D1QTR]","","LPTIM1_ETR","","","","","SPI3_NSS","USART1_DE/USART1_RTS","","","","","FMC_NE4","SAI2_SD_A","","EVENTOUT"
 "128","PG13","Output","GPIO_Output","SMPS_SW [SW_ST1PS02D1QTR]","","","","","I2C1_SDA","","","USART1_CK","","","","","FMC_A24","","","EVENTOUT"
-"129","PG14","I/O","GPIO_Analog","","","","","","I2C1_SCL","","","","","","","","FMC_A25","","","EVENTOUT"
+"129","PG14","I/O","GPIO_Analog","PG14_[NA]","","","","","I2C1_SCL","","","","","","","","FMC_A25","","","EVENTOUT"
 "130","VSS","Power","","","","","","","","","","","","","","","","","",""
 "131","VDDIO2","Power","","","","","","","","","","","","","","","","","",""
 "132","PB3 (JTDO/TRACESWO)","I/O","SYS_JTDO-SWO","SWO","SYS_JTDO-SWO","TIM2_CH2","","","","SPI1_SCK","SPI3_SCK","USART1_DE/USART1_RTS","","","CRS_SYNC","LCD_SEG7","","SAI1_SCK_B","","EVENTOUT"
