@@ -28,7 +28,7 @@ SPI2	Hardware NSS Output Signal	SPI2_NSS	PB12
 SYS	Trace Asynchronous Sw	SYS_JTMS-SWDIO	PA13 (JTMS/SWDIO)
 SYS	Trace Asynchronous Sw	SYS_JTCK-SWCLK	PA14 (JTCK/SWCLK)
 SYS	Trace Asynchronous Sw	SYS_JTDO-SWO	PB3 (JTDO/TRACESWO)
-SYS	SysTick	SYS_VS_Systick	VP_SYS_VS_Systick
+SYS	TIM2	SYS_VS_tim2	VP_SYS_VS_tim2
 TIM5	Internal Clock	TIM5_VS_ClockSourceINT	VP_TIM5_VS_ClockSourceINT
 TIM5	Input Capture direct mode	TIM5_CH2	PF7
 UART5	Asynchronous	UART5_RX	PD2
@@ -84,3 +84,31 @@ Pin Nb	PINs	FUNCTIONs	LABELs
 135	PB6	I2C1_SCL	I2C1_SCL[CN9_15]
 136	PB7	GPIO_Output	LD2 [Blue]
 139	PB9	I2C1_SDA	I2C1_SDA[CN7_4]
+
+
+
+SOFTWARE PROJECT
+
+Project Settings : 
+Project Name : FindMeSAT_V2
+Project Folder : Z:\nfs_ds_nfs\git\FindMeSAT__SW\FindMeSAT_V2_SW\TrueSTUDIO\FindMeSAT_V2
+Toolchain / IDE : TrueSTUDIO
+Firmware Package Name and Version : STM32Cube FW_L4 V1.11.0
+
+
+Code Generation Settings : 
+STM32Cube Firmware Library Package : Copy only the necessary library files
+Generate peripheral initialization as a pair of '.c/.h' files per peripheral : Yes
+Backup previously generated files when re-generating : No
+Delete previously generated files when not re-generated : Yes
+Set all free pins as analog (to optimize the power consumption) : Yes
+
+
+Toolchains Settings : 
+Compiler Optimizations : Balanced Size/Speed
+
+
+
+
+
+
