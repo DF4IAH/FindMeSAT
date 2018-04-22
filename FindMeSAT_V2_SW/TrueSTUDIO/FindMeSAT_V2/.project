@@ -73,28 +73,28 @@
 	<linkedResources>
 		
 	<link>
-			<name>Middlewares/USB_Device_Library</name>
+			
 			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			
 		</link><link>
-			<name>Middlewares</name>
+			
 			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			
 		</link><link>
-			<name>Drivers</name>
+			
 			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			
 		</link><link>
-			<name>Application</name>
+			
 			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			
 		</link><link>
-			<name>Middlewares/FreeRTOS</name>
+			
 			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
+			
 		</link><link>
-			<name>Drivers/CMSIS</name>
+			
 			<type>2</type>
-			<locationURI>virtual:/virtual</locationURI>
-		</link></linkedResources>
+			
+		</link><link><name>Middlewares/USB_Device_Library</name><type>2</type><locationURI>virtual:/virtual</locationURI></link><link><name>Middlewares</name><type>2</type><locationURI>virtual:/virtual</locationURI></link><link><name>Drivers</name><type>2</type><locationURI>virtual:/virtual</locationURI></link><link><name>Application</name><type>2</type><locationURI>virtual:/virtual</locationURI></link><link><name>Middlewares/FreeRTOS</name><type>2</type><locationURI>virtual:/virtual</locationURI></link><link><name>Drivers/CMSIS</name><type>2</type><locationURI>virtual:/virtual</locationURI></link></linkedResources>
 </projectDescription>
