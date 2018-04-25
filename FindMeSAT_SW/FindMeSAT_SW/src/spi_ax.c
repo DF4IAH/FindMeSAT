@@ -100,7 +100,7 @@ ISR(PORTC_INT0_vect, ISR_BLOCK)
 		}
 
 		/* Abort packet when signal strength indicator falls near background noise and at least some WORDS were detected */
-		if ((g_ax_spi_rx_buffer_idx >= 0x10) && (l_ax_spi_rx_rssi < (l_ax_spi_rx_bgnd_rssi + 6))) {
+		if ((g_ax_spi_rx_buffer_idx >= 0x10) && (l_ax_spi_rx_rssi < (l_ax_spi_rx_bgnd_rssi + 12))) {
 			/* FRMMODE abort frame */
 			spi_ax_transport(false, "< 92 07 >");												// WR address 0x12: FRAMING - CRCMODE: none, FRMMODE: Raw, Pattern Match 0x06, FABORT
 		}
@@ -2870,7 +2870,7 @@ void spi_ax_initRegisters_PR1200(void)
 
 
 	/* PKTCHUNKSIZE */
-	spi_ax_transport(false, "< f2 30 0d >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 240 bytes
+	spi_ax_transport(false, "< f2 30 0b >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 192 bytes
 
 	/* PKTSTOREFLAGS */
 	spi_ax_transport(false, "< f2 32 17 >");													// WR address 0x232: PKTSTOREFLAGS - ST RSSI, ST RFOFFS, ST FOFFS, ST TIMER
@@ -3642,7 +3642,7 @@ void spi_ax_initRegisters_POCSAG(void)
 
 
 	/* PKTCHUNKSIZE */
-	spi_ax_transport(false, "< f2 30 05 >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 16 bytes
+	spi_ax_transport(false, "< f2 30 0b >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 192 bytes
 
 	/* PKTSTOREFLAGS */
 	spi_ax_transport(false, "< f2 32 01 >");													// WR address 0x232: PKTSTOREFLAGS - not ST RSSI !0x10, not ST RFOFFS !0x04, not ST FOFFS !0x02, ST TIMER 0x01
@@ -4649,7 +4649,7 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 			uint32_t					pocsagWord			= 0UL;
 			uint8_t						pocsagWordBytePos	= 0;
 			AX_POCSAG_DECODER_DATA_t	l_pocsagData;
-			const char*					l_pocsagStateStr	= 0;
+			//const char*					l_pocsagStateStr	= 0;
 
 			if (status & AX_FIFO_DATA_FLAGS_RX_PKTSTART) {
 				/* Process last data */
@@ -4713,12 +4713,14 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 					}
 
 					/* DEBUG WORDs */
+					#if 0
 					int16_t l_rssi		= g_ax_rx_fifo_meas.rssi;	l_rssi		-= 64;
 					int16_t l_bgnd_rssi	= g_ax_spi_rx_bgnd_rssi;	l_bgnd_rssi	-= 64;
 					uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\tstatus = 0x%02x, WORD = 0x%08lx, RSSI = %-4ddBm, bgnd_RSSI = %-4ddBm, ***ABORT_FRAME***\r\n",
 													status, pocsagWord,
 													l_rssi, l_bgnd_rssi);
 					udi_write_tx_buf(g_prepare_buf, len, false);
+					#endif
 
 					/* Make current data non-valid */
 					s_pocsagFIFOWord	= 0UL;
@@ -4732,6 +4734,7 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 				/* WORD decoder */
 				spi_ax_pocsag_wordDecoder(&l_pocsagData, pocsagWord, s_pocsagWordCtr);
 
+				#if 0
 				/* DEBUG state strings */
 				switch (s_pocsagState) {
 					case AX_DECODER_POCSAG__NONE:
@@ -4772,6 +4775,7 @@ void spi_ax_Rx_FIFO_DataProcessor(AX_SET_MON_MODE_t monMode, const uint8_t* data
 												l_pocsagData.badDecode ?  '-' : '+',
 												(!l_pocsagData.badDecode && (l_pocsagData.invertedBit != 32) ?  '1' : (l_pocsagData.badDecode ?  '-' : '0')));
 				udi_write_tx_buf(g_prepare_buf, len, false);
+				#endif
 
 				if (!l_pocsagData.badDecode) {
 					if (l_pocsagData.isAddr) {
@@ -5156,8 +5160,8 @@ void task_spi_ax(void)
 			irqflags_t flags = cpu_irq_save();
 
 			#if 1
-			lenDbg  = sprintf((char*)bufDbg, "\r\nTimeSlot=%1X:", getCurrent_POCSAG_TimeSlot());
-			lenDbg += doHexdump((char*)(bufDbg + lenDbg), g_ax_spi_rx_buffer, g_ax_spi_rx_buffer_idx);
+			lenDbg  = sprintf((char*)bufDbg, "\r\nTimeSlot=%1X:\r\n", getCurrent_POCSAG_TimeSlot());
+			//lenDbg += doHexdump((char*)(bufDbg + lenDbg), g_ax_spi_rx_buffer, g_ax_spi_rx_buffer_idx);
 			#endif
 
 			/* Copy chunk to decoder buffer */

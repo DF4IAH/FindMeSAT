@@ -52,13 +52,20 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */     
-
+#include "stm32l4xx_nucleo_144.h"
+#include "stm32l4xx_hal.h"
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
 osThreadId defaultTaskHandle;
 
 /* USER CODE BEGIN Variables */
+
+/* Private typedef -----------------------------------------------------------*/
+/* Private define ------------------------------------------------------------*/
+/* Private macro -------------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
+static GPIO_InitTypeDef  GPIO_InitStruct;
 
 /* USER CODE END Variables */
 
@@ -114,10 +121,34 @@ void StartDefaultTask(void const * argument)
   MX_USB_DEVICE_Init();
 
   /* USER CODE BEGIN StartDefaultTask */
+
+  /* -1- Enable GPIO Clock (to be able to program the configuration registers) */
+  LED1_GPIO_CLK_ENABLE();
+  LED2_GPIO_CLK_ENABLE();
+  LED3_GPIO_CLK_ENABLE();
+
+  /* -2- Configure IO in output push-pull mode to drive external LEDs */
+  GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull  = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+
+  GPIO_InitStruct.Pin = LED1_PIN;
+  HAL_GPIO_Init(LED1_GPIO_PORT, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LED2_PIN;
+  HAL_GPIO_Init(LED2_GPIO_PORT, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LED3_PIN;
+  HAL_GPIO_Init(LED3_GPIO_PORT, &GPIO_InitStruct);
+
   /* Infinite loop */
   for(;;)
   {
-    osDelay(1);
+    /* LED toggle */
+    HAL_GPIO_TogglePin(LED1_GPIO_PORT, LED1_PIN);
+    osDelay(100);
+    HAL_GPIO_TogglePin(LED2_GPIO_PORT, LED2_PIN);
+    osDelay(100);
+    HAL_GPIO_TogglePin(LED3_GPIO_PORT, LED3_PIN);
+    osDelay(100);
   }
   /* USER CODE END StartDefaultTask */
 }
