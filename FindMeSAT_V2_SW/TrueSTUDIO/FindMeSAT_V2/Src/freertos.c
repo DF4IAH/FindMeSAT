@@ -169,7 +169,7 @@ void StartDefaultTask(void const * argument)
 #else
 
 		if (!i) {
-			i = 10000000UL;
+			i = 10000000UL;  // 10E+06  - @80MHz=0.76s, @16MHz=3,76s
 			HAL_GPIO_TogglePin(LED1_GPIO_PORT, LED1_PIN);
 		}
 		--i;
