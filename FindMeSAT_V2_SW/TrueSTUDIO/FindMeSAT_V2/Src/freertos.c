@@ -117,7 +117,7 @@ void MX_FREERTOS_Init(void) {
 /* StartDefaultTask function */
 void StartDefaultTask(void const * argument)
 {
-	int i = 0;
+	uint32_t i = 0;
 
 	/* init code for USB_DEVICE */
 	MX_USB_DEVICE_Init();
@@ -146,9 +146,6 @@ void StartDefaultTask(void const * argument)
 
 	/* Infinite loop */
 	for (;;) {
-		if (i++ >= 8) {
-			i = 0;
-		}
 
 #if 0
 		/* LED toggle */
@@ -159,7 +156,7 @@ void StartDefaultTask(void const * argument)
 		HAL_GPIO_TogglePin(LED3_GPIO_PORT, LED3_PIN);
 		osDelay(100);
 
-#else
+#elif 0
 
 		/* LED counter */
 		HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN,
@@ -169,6 +166,14 @@ void StartDefaultTask(void const * argument)
 		HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN,
 				(i & 4) > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET);
 		osDelay(25);
+#else
+
+		if (!i) {
+			i = 10000000UL;
+			HAL_GPIO_TogglePin(LED1_GPIO_PORT, LED1_PIN);
+		}
+		--i;
+
 #endif
 	}
 	/* USER CODE END StartDefaultTask */
