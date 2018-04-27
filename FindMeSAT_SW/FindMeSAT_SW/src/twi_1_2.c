@@ -2471,6 +2471,20 @@ static void task_twi2_lcd(void)
 		/* Show current measurement data on the LCD */
 		const uint8_t col_left = 6 * 10;
 
+		/* Show current POCSAG TimeSlot on the LCD */
+		if (g_ax_enable) {
+			static uint8_t	s_pocsagTimeSlot = 0;
+			uint8_t			l_pocsagTimeSlot = getCurrent_POCSAG_TimeSlot();
+
+			if (s_pocsagTimeSlot != l_pocsagTimeSlot) {
+				char lcdTsBuf[5];
+
+				s_pocsagTimeSlot = l_pocsagTimeSlot;
+				snprintf(lcdTsBuf, sizeof(lcdTsBuf), "TS=%1X", getCurrent_POCSAG_TimeSlot());
+				task_twi2_lcd_str(30*6, 2*10 - 4, lcdTsBuf);
+			}
+		}
+
 		/* Check if new 1PPS has arrived do resync of state */
 		if (g_1pps_twi_new) {
 			g_1pps_twi_new = false;

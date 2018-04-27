@@ -568,7 +568,7 @@ void spi_ax_pocsag_address_tone(bool is_RIC_individual, uint32_t address, uint8_
 	char isMyChar = is_RIC_individual ?  '*' : ' ';
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>>%cAddress=%lu FktBits=0x%02x  (TONE   )%c%c%c\r\n", isMyChar, address, fktBits, isMyBeep, isMyBeep, isMyBeep);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>> TS=%1X %c Address=%7lu FktBits=0x%02x  (TONE   )%c%c%c\r\n", getCurrent_POCSAG_TimeSlot(), isMyChar, address, fktBits, isMyBeep, isMyBeep, isMyBeep);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 }
 
@@ -578,7 +578,7 @@ void spi_ax_pocsag_address_numeric(bool is_RIC_individual, uint32_t address, uin
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
 	uint8_t digitIdx = 0;
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>>%cAddress=%lu FktBits=0x%02x  (NUMERIC):", isMyChar, address, fktBits);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>> TS=%1X %c Address=%7lu FktBits=0x%02x  (NUMERIC):", getCurrent_POCSAG_TimeSlot(), isMyChar, address, fktBits);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 
 	for (uint8_t dataCntIdx = 0; dataCntIdx < dataCnt; dataCntIdx++) {
@@ -612,7 +612,7 @@ void spi_ax_pocsag_address_alphanum(bool is_RIC_individual, uint32_t address, ui
 			typeStr = "ALPHA  ";
 	}
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>>%cAddress=%lu FktBits=0x%02x  (%s):", isMyChar, address, fktBits, typeStr);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>> TS=%1X %c Address=%7lu FktBits=0x%02x  (%s):", getCurrent_POCSAG_TimeSlot(), isMyChar, address, fktBits, typeStr);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 	len = 0;
 
@@ -653,7 +653,7 @@ void spi_ax_pocsag_address_skyper_activation(bool is_RIC_individual, uint32_t ad
 	char isMyChar = is_RIC_individual ?  '*' : ' ';
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>>%c RIC=%lu FktBits=0x%02x  (ACTIVTN):", isMyChar, address, fktBits);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>> TS=%1X %c Address=%7lu FktBits=0x%02x  (ACTIVTN):", getCurrent_POCSAG_TimeSlot(), isMyChar, address, fktBits);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 
 	len = (uint8_t) sprintf(g_prepare_buf, " TODO! %c%c%c\r\n", isMyBeep, isMyBeep, isMyBeep);
@@ -2870,7 +2870,7 @@ void spi_ax_initRegisters_PR1200(void)
 
 
 	/* PKTCHUNKSIZE */
-	spi_ax_transport(false, "< f2 30 0b >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 192 bytes
+	spi_ax_transport(false, "< f2 30 0c >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 224 bytes
 
 	/* PKTSTOREFLAGS */
 	spi_ax_transport(false, "< f2 32 17 >");													// WR address 0x232: PKTSTOREFLAGS - ST RSSI, ST RFOFFS, ST FOFFS, ST TIMER
@@ -3642,7 +3642,7 @@ void spi_ax_initRegisters_POCSAG(void)
 
 
 	/* PKTCHUNKSIZE */
-	spi_ax_transport(false, "< f2 30 0b >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 192 bytes
+	spi_ax_transport(false, "< f2 30 0c >");													// WR address 0x230: PKTCHUNKSIZE - PKTCHUNKSIZE: 224 bytes
 
 	/* PKTSTOREFLAGS */
 	spi_ax_transport(false, "< f2 32 01 >");													// WR address 0x232: PKTSTOREFLAGS - not ST RSSI !0x10, not ST RFOFFS !0x04, not ST FOFFS !0x02, ST TIMER 0x01
@@ -5159,9 +5159,8 @@ void task_spi_ax(void)
 		{
 			irqflags_t flags = cpu_irq_save();
 
-			#if 1
-			lenDbg  = sprintf((char*)bufDbg, "\r\nTimeSlot=%1X:\r\n", getCurrent_POCSAG_TimeSlot());
-			//lenDbg += doHexdump((char*)(bufDbg + lenDbg), g_ax_spi_rx_buffer, g_ax_spi_rx_buffer_idx);
+			#if 0
+			lenDbg += doHexdump((char*)(bufDbg + lenDbg), g_ax_spi_rx_buffer, g_ax_spi_rx_buffer_idx);
 			#endif
 
 			/* Copy chunk to decoder buffer */
