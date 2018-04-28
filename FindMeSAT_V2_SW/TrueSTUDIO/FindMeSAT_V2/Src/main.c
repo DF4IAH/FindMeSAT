@@ -1,3 +1,4 @@
+
 /**
   ******************************************************************************
   * @file           : main.c
@@ -131,11 +132,14 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-	while (1) {
+  while (1)
+  {
+
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-	}
+
+  }
   /* USER CODE END 3 */
 
 }
@@ -153,6 +157,8 @@ void SystemClock_Config(void)
 
     /**Configure LSE Drive Capability 
     */
+  HAL_PWR_EnableBkUpAccess();
+
   __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
 
     /**Initializes the CPU, AHB and APB busses clocks 
@@ -249,9 +255,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 void _Error_Handler(char *file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
-	/* User can add his own implementation to report the HAL error return state */
-	while (1) {
-	}
+  /* User can add his own implementation to report the HAL error return state */
+  while(1)
+  {
+  }
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -266,7 +273,7 @@ void _Error_Handler(char *file, int line)
 void assert_failed(uint8_t* file, uint32_t line)
 { 
   /* USER CODE BEGIN 6 */
-	/* User can add his own implementation to report the file name and line number,
+  /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
   /* USER CODE END 6 */
 }

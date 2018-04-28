@@ -54,13 +54,13 @@
 /* USER CODE BEGIN Includes */     
 #include "stm32l4xx_nucleo_144.h"
 #include "stm32l4xx_hal.h"
+
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
 osThreadId defaultTaskHandle;
 
 /* USER CODE BEGIN Variables */
-
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 /* Private macro -------------------------------------------------------------*/
@@ -143,19 +143,19 @@ __weak void PostSleepProcessing(uint32_t *ulExpectedIdleTime)
 
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-
+       
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
-	/* add mutexes, ... */
+  /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
-	/* add semaphores, ... */
+  /* add semaphores, ... */
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
-	/* start timers, add new ones, ... */
+  /* start timers, add new ones, ... */
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the thread(s) */
@@ -164,11 +164,11 @@ void MX_FREERTOS_Init(void) {
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
-	/* add threads, ... */
+  /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
 
   /* USER CODE BEGIN RTOS_QUEUES */
-	/* add queues, ... */
+  /* add queues, ... */
   /* USER CODE END RTOS_QUEUES */
 }
 
@@ -179,64 +179,60 @@ void StartDefaultTask(void const * argument)
   MX_USB_DEVICE_Init();
 
   /* USER CODE BEGIN StartDefaultTask */
+  uint32_t i = 0;
 
-	/* -1- Enable GPIO Clock (to be able to program the configuration registers) */
-	LED1_GPIO_CLK_ENABLE()
-	;
-	LED2_GPIO_CLK_ENABLE()
-	;
-	LED3_GPIO_CLK_ENABLE()
-	;
+  /* -1- Enable GPIO Clock (to be able to program the configuration registers) */
+  LED1_GPIO_CLK_ENABLE();
+  LED2_GPIO_CLK_ENABLE();
+  LED3_GPIO_CLK_ENABLE();
 
-	/* -2- Configure IO in output push-pull mode to drive external LEDs */
-	GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull = GPIO_PULLUP;
-	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+  /* -2- Configure IO in output push-pull mode to drive external LEDs */
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
 
-	GPIO_InitStruct.Pin = LED1_PIN;
-	HAL_GPIO_Init(LED1_GPIO_PORT, &GPIO_InitStruct);
-	GPIO_InitStruct.Pin = LED2_PIN;
-	HAL_GPIO_Init(LED2_GPIO_PORT, &GPIO_InitStruct);
-	GPIO_InitStruct.Pin = LED3_PIN;
-	HAL_GPIO_Init(LED3_GPIO_PORT, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LED1_PIN;
+  HAL_GPIO_Init(LED1_GPIO_PORT, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LED2_PIN;
+  HAL_GPIO_Init(LED2_GPIO_PORT, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LED3_PIN;
+  HAL_GPIO_Init(LED3_GPIO_PORT, &GPIO_InitStruct);
 
-	/* Infinite loop */
-	for (;;) {
+  /* Infinite loop */
+  for(;;)
+  {
+    //osDelay(1);
 
 #if 0
-		/* LED toggle */
-		HAL_GPIO_TogglePin(LED1_GPIO_PORT, LED1_PIN);
-		osDelay(100);
-		HAL_GPIO_TogglePin(LED2_GPIO_PORT, LED2_PIN);
-		osDelay(100);
-		HAL_GPIO_TogglePin(LED3_GPIO_PORT, LED3_PIN);
-		osDelay(100);
-
+	/* LED toggle */
+	HAL_GPIO_TogglePin(LED1_GPIO_PORT, LED1_PIN);
+	osDelay(100);
+	HAL_GPIO_TogglePin(LED2_GPIO_PORT, LED2_PIN);
+	osDelay(100);
+	HAL_GPIO_TogglePin(LED3_GPIO_PORT, LED3_PIN);
+	osDelay(100);
 #elif 0
-
-		/* LED counter */
-		HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN,
-				(i & 1) > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN,
-				(i & 2) > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET);
-		HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN,
-				(i & 4) > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET);
-		osDelay(25);
+	/* LED counter */
+	HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN,
+				   (i & 1) > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN,
+				   (i & 2) > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET);
+	HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN,
+				   (i & 4) > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET);
+	osDelay(25);
 #else
-
-		if (!i) {
-			i = 10000000UL;  // 10E+06  - @80MHz=0.76s, @16MHz=3,76s
-			HAL_GPIO_TogglePin(LED1_GPIO_PORT, LED1_PIN);
-		}
-		--i;
-
-#endif
+	if (!i) {
+		   i = 10000000UL;  // 10E+06  - @80MHz=0.76s, @16MHz=3,76s
+		   HAL_GPIO_TogglePin(LED1_GPIO_PORT, LED1_PIN);
 	}
+	--i;
+#endif
+  }
   /* USER CODE END StartDefaultTask */
 }
 
 /* USER CODE BEGIN Application */
-
+     
 /* USER CODE END Application */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/
