@@ -1,3 +1,4 @@
 mx.scratch
+**/*.su
 /Release/
 /Debug/
