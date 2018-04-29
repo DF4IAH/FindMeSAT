@@ -52,9 +52,12 @@
 #include "cmsis_os.h"
 
 /* USER CODE BEGIN Includes */     
+#include <stddef.h>
+#include <sys/_stdint.h>
+#include <stdio.h>
+#include <usbd_cdc_if.h>
 #include "stm32l4xx_nucleo_144.h"
 #include "stm32l4xx_hal.h"
-
 /* USER CODE END Includes */
 
 /* Variables -----------------------------------------------------------------*/
@@ -66,6 +69,7 @@ osThreadId defaultTaskHandle;
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static GPIO_InitTypeDef  GPIO_InitStruct;
+volatile uint32_t g_timer_us = 0;
 
 /* USER CODE END Variables */
 
@@ -79,10 +83,6 @@ void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
 
 /* USER CODE END FunctionPrototypes */
 
-/* Pre/Post sleep processing prototypes */
-void PreSleepProcessing(uint32_t *ulExpectedIdleTime);
-void PostSleepProcessing(uint32_t *ulExpectedIdleTime);
-
 /* Hook prototypes */
 void configureTimerForRunTimeStats(void);
 unsigned long getRunTimeCounterValue(void);
@@ -93,12 +93,16 @@ void vApplicationMallocFailedHook(void);
 /* Functions needed when configGENERATE_RUN_TIME_STATS is on */
 __weak void configureTimerForRunTimeStats(void)
 {
-
+	// none needed
 }
 
 __weak unsigned long getRunTimeCounterValue(void)
 {
-return 0;
+	uint64_t timer_us = HAL_GetTick() & 0x003fffffUL;  // avoid overflows
+	timer_us *= 1000UL;
+	timer_us += TIM2->CNT;
+	g_timer_us = timer_us;
+	return timer_us;
 }
 /* USER CODE END 1 */
 
@@ -126,18 +130,6 @@ __weak void vApplicationMallocFailedHook(void)
    provide information on how the remaining heap might be fragmented). */
 }
 /* USER CODE END 5 */
-
-/* USER CODE BEGIN PREPOSTSLEEP */
-__weak void PreSleepProcessing(uint32_t *ulExpectedIdleTime)
-{
-/* place for user code */ 
-}
-
-__weak void PostSleepProcessing(uint32_t *ulExpectedIdleTime)
-{
-/* place for user code */
-}
-/* USER CODE END PREPOSTSLEEP */
 
 /* Init FreeRTOS */
 
@@ -180,11 +172,13 @@ void StartDefaultTask(void const * argument)
 
   /* USER CODE BEGIN StartDefaultTask */
   uint32_t i = 0;
+  unsigned char buf[32] = { 0 };
+  strcpy((char*) buf, "+\r\n");
 
   /* -1- Enable GPIO Clock (to be able to program the configuration registers) */
-  LED1_GPIO_CLK_ENABLE();
-  LED2_GPIO_CLK_ENABLE();
-  LED3_GPIO_CLK_ENABLE();
+  LED1_GPIO_CLK_ENABLE();  // Green
+  LED2_GPIO_CLK_ENABLE();  // Blue
+  LED3_GPIO_CLK_ENABLE();  // Red
 
   /* -2- Configure IO in output push-pull mode to drive external LEDs */
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -201,17 +195,20 @@ void StartDefaultTask(void const * argument)
   /* Infinite loop */
   for(;;)
   {
-    //osDelay(1);
+    HAL_GPIO_TogglePin(LED1_GPIO_PORT, LED1_PIN);
+    //snprintf((char*) (buf + 1), sizeof(buf), " %010ld\r\n", getRunTimeCounterValue());
 
 #if 0
-	/* LED toggle */
+    /* LED toggle */
 	HAL_GPIO_TogglePin(LED1_GPIO_PORT, LED1_PIN);
-	osDelay(100);
+	vTaskDelay(100 / portTICK_PERIOD_MS);
 	HAL_GPIO_TogglePin(LED2_GPIO_PORT, LED2_PIN);
-	osDelay(100);
+	vTaskDelay(100 / portTICK_PERIOD_MS);
 	HAL_GPIO_TogglePin(LED3_GPIO_PORT, LED3_PIN);
-	osDelay(100);
+	vTaskDelay(100 / portTICK_PERIOD_MS);
 #elif 0
+    i++;
+
 	/* LED counter */
 	HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN,
 				   (i & 1) > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET);
@@ -219,13 +216,40 @@ void StartDefaultTask(void const * argument)
 				   (i & 2) > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET);
 	HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN,
 				   (i & 4) > 0 ? GPIO_PIN_SET : GPIO_PIN_RESET);
-	osDelay(25);
-#else
+	vTaskDelay(25 / portTICK_PERIOD_MS);
+#elif 0
 	if (!i) {
 		   i = 10000000UL;  // 10E+06  - @80MHz=0.76s, @16MHz=3,76s
 		   HAL_GPIO_TogglePin(LED1_GPIO_PORT, LED1_PIN);
 	}
 	--i;
+#else
+	uint8_t result;
+	uint8_t ctr;
+	UNUSED(i);
+
+	for (ctr = 50; ctr; ctr--) {
+		result = CDC_Transmit_FS(buf, strlen((char*) buf));
+		if (USBD_BUSY != result) {
+			HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);
+			buf[0] ='+';
+			break;
+
+		} else {
+			HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);
+			buf[0] ='@';
+
+			HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);
+			//taskYIELD();		//osThreadYield();
+			vTaskDelay(1 / portTICK_PERIOD_MS);  // osDelay(1);
+			//vTaskDelay(2 / portTICK_PERIOD_MS);  // osDelay(2);
+			HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);
+		}
+	}
+	if (!ctr) {
+		HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);
+		buf[0] ='?';
+	}
 #endif
   }
   /* USER CODE END StartDefaultTask */

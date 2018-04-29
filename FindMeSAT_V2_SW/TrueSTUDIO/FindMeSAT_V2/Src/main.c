@@ -217,6 +217,10 @@ void SystemClock_Config(void)
     */
   HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
 
+    /**Enable MSI Auto calibration 
+    */
+  HAL_RCCEx_EnableMSIPLLMode();
+
   /* SysTick_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(SysTick_IRQn, 15, 0);
 }

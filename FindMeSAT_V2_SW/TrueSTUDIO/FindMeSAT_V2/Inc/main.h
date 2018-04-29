@@ -61,6 +61,10 @@
 
 #define B1_UserButton_Pin GPIO_PIN_13
 #define B1_UserButton_GPIO_Port GPIOC
+#define OSC32_IN_Pin GPIO_PIN_14
+#define OSC32_IN_GPIO_Port GPIOC
+#define OSC32_OUT_Pin GPIO_PIN_15
+#define OSC32_OUT_GPIO_Port GPIOC
 #define GPS_1PPS_Pin GPIO_PIN_7
 #define GPS_1PPS_GPIO_Port GPIOF
 #define MCO_Pin GPIO_PIN_0
