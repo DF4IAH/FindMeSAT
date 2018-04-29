@@ -1676,10 +1676,15 @@ void task_twi2_lcd_template(void)
 	uint8_t line;
 
 	if (twi2_waitUntilReady(false)) {
+		line = 2;
+		task_twi2_lcd_str(6 *  0, (line) * 10 -4, strcpy_P(g_prepare_buf, PM_TWIINIT_DATE_TIME));
+		if (g_ax_enable) {
+			task_twi2_lcd_str(6 * 30, (line) * 10 -4, "TS=");
+		}
+		line++;
+
 		if (g_adc_enabled) {
 			/* Left measurement names */
-			line = 2;
-			task_twi2_lcd_str(6 *  0, (line++) * 10 -4, strcpy_P(g_prepare_buf, PM_TWIINIT_DATE_TIME));
 			task_twi2_lcd_str(6 *  0, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_TEMP));
 			task_twi2_lcd_str(6 *  3, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_UUSB));
 			task_twi2_lcd_str(6 *  3, (line++) * 10, strcpy_P(g_prepare_buf, PM_TWIINIT_MP_UBAT));
@@ -2477,11 +2482,11 @@ static void task_twi2_lcd(void)
 			uint8_t			l_pocsagTimeSlot = getCurrent_POCSAG_TimeSlot();
 
 			if (s_pocsagTimeSlot != l_pocsagTimeSlot) {
-				char lcdTsBuf[5];
+				char lcdTsBuf[2];
 
 				s_pocsagTimeSlot = l_pocsagTimeSlot;
-				snprintf(lcdTsBuf, sizeof(lcdTsBuf), "TS=%1X", getCurrent_POCSAG_TimeSlot());
-				task_twi2_lcd_str(30*6, 2*10 - 4, lcdTsBuf);
+				snprintf(lcdTsBuf, sizeof(lcdTsBuf), "%1X", getCurrent_POCSAG_TimeSlot());
+				task_twi2_lcd_str(33*6, 2*10 - 4, lcdTsBuf);
 			}
 		}
 

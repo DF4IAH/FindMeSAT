@@ -1,4 +1,4 @@
-.metadata/
-Debug/
-Release/
+mx.scratch
 **/*.su
+/Release/
+/Debug/

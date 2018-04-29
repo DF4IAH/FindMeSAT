@@ -1,2 +1,0 @@
-usb_device.c:96:6:MX_USB_DEVICE_Init	8	static
-usb_device.c:124:6:HAL_PCDEx_BCD_Callback	568	static
