@@ -54,6 +54,8 @@
 /* Includes ------------------------------------------------------------------*/
 
 /* USER CODE BEGIN Includes */
+#include <stddef.h>
+#include <sys/_stdint.h>
 
 /* USER CODE END Includes */
 
@@ -160,6 +162,10 @@ void _Error_Handler(char *, int);
 #ifdef __cplusplus
 }
 #endif
+
+/* USER CODE BEGIN vAssertCalled */
+void vAssertCalled( const char *pcFile, uint32_t ulLine);
+/* USER CODE END vAssertCalled */
 
 #endif /* __MAIN_H__ */
 

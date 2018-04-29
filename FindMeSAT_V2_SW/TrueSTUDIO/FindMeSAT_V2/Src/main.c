@@ -283,6 +283,16 @@ void assert_failed(uint8_t* file, uint32_t line)
 }
 #endif /* USE_FULL_ASSERT */
 
+/* USER CODE BEGIN vAssertCalled */
+void vAssertCalled( const char *pcFile, uint32_t ulLine)
+{
+	taskDISABLE_INTERRUPTS();
+	for (;;) {
+		__asm volatile( "nop" );
+	}
+}
+/* USER CODE END vAssertCalled */
+
 /**
   * @}
   */
