@@ -65,6 +65,7 @@
 /* Variables -----------------------------------------------------------------*/
 osThreadId defaultTaskHandle;
 osThreadId usbToHostTaskHandle;
+osThreadId usbFromHostTaskHandle;
 osMessageQId usbToHostQueueHandle;
 osMessageQId usbFromHostQueueHandle;
 
@@ -74,15 +75,17 @@ osMessageQId usbFromHostQueueHandle;
 /* Private macro -------------------------------------------------------------*/
 /* Private variables ---------------------------------------------------------*/
 static GPIO_InitTypeDef  GPIO_InitStruct;
-volatile uint32_t  g_timer_us = 0;
-extern uint8_t  usbFromHostISRBuf[64];
-extern uint32_t  usbFromHostISRBufLen;
+volatile uint32_t	g_timer_us = 0;
+volatile uint32_t	g_timerStart_us = 0;
+extern uint8_t		usbFromHostISRBuf[64];
+extern uint32_t		usbFromHostISRBufLen;
 
 /* USER CODE END Variables */
 
 /* Function prototypes -------------------------------------------------------*/
 void StartDefaultTask(void const * argument);
 void StartUsbToHostTask(void const * argument);
+void StartUsbFromHostTask(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -101,7 +104,8 @@ void vApplicationMallocFailedHook(void);
 /* Functions needed when configGENERATE_RUN_TIME_STATS is on */
 __weak void configureTimerForRunTimeStats(void)
 {
-	// none needed
+	getRunTimeCounterValue();
+	g_timerStart_us = g_timer_us;
 }
 
 __weak unsigned long getRunTimeCounterValue(void)
@@ -110,7 +114,7 @@ __weak unsigned long getRunTimeCounterValue(void)
 	timer_us *= 1000UL;
 	timer_us += TIM2->CNT;
 	g_timer_us = timer_us;
-	return timer_us;
+	return timer_us - g_timerStart_us;
 }
 /* USER CODE END 1 */
 
@@ -166,6 +170,10 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of usbToHostTask */
   osThreadDef(usbToHostTask, StartUsbToHostTask, osPriorityAboveNormal, 0, 128);
   usbToHostTaskHandle = osThreadCreate(osThread(usbToHostTask), NULL);
+
+  /* definition and creation of usbFromHostTask */
+  osThreadDef(usbFromHostTask, StartUsbFromHostTask, osPriorityAboveNormal, 0, 128);
+  usbFromHostTaskHandle = osThreadCreate(osThread(usbFromHostTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -233,7 +241,6 @@ void StartUsbToHostTask(void const * argument)
 	}
 
 	/* DEBUG */
-	HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);						// Blue off
 	HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);						// Red off
 
 	/* Infinite loop */
@@ -273,9 +280,7 @@ void StartUsbToHostTask(void const * argument)
 						HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);		// Red on
 
 						/* Delay for next USB packet to come and go */
-						HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);		// Blue on
 						osDelay(1);
-						HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);	// Blue off
 					}
 				}
 
@@ -288,6 +293,40 @@ void StartUsbToHostTask(void const * argument)
 		}
 	}
   /* USER CODE END StartUsbToHostTask */
+}
+
+/* StartUsbFromHostTask function */
+void StartUsbFromHostTask(void const * argument)
+{
+	/* USER CODE BEGIN StartUsbFromHostTask */
+	const uint8_t nulBuf[1] = { 0 };
+
+	/* DEBUG */
+	HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);	// Blue off
+
+	/* Infinite loop */
+	for(;;)
+	{
+		if (usbFromHostISRBufLen) {
+			/* USB OUT EP from host put data into the buffer */
+			uint8_t* bufPtr = usbFromHostISRBuf;
+			for (BaseType_t idx = 0; idx < usbFromHostISRBufLen; idx++, bufPtr++) {
+				xQueueSendToBack(usbFromHostQueueHandle, bufPtr, 0);
+			}
+			xQueueSendToBack(usbFromHostQueueHandle, nulBuf, 0);
+
+			memset((char*) usbFromHostISRBufLen, 0, sizeof(usbFromHostISRBufLen));
+			__asm volatile( "" );  // schedule barrier
+			usbFromHostISRBufLen = 0;
+
+		} else {
+			/* Delay for the next attempt */
+			HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);	// Blue off
+			osDelay(25);
+			HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);		// Blue on
+		}
+	}
+	/* USER CODE END StartUsbFromHostTask */
 }
 
 /* USER CODE BEGIN Application */

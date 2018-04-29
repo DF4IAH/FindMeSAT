@@ -226,6 +226,13 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+void vAssertCalled( const char *pcFile, uint32_t ulLine)
+{
+	taskDISABLE_INTERRUPTS();
+	for (;;) {
+		__asm volatile( "nop" );
+	}
+}
 
 /* USER CODE END 4 */
 
@@ -260,9 +267,10 @@ void _Error_Handler(char *file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  while(1)
-  {
-  }
+	taskDISABLE_INTERRUPTS();
+	for (;;) {
+		__asm volatile( "nop" );
+	}
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -279,19 +287,14 @@ void assert_failed(uint8_t* file, uint32_t line)
   /* USER CODE BEGIN 6 */
   /* User can add his own implementation to report the file name and line number,
      tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-  /* USER CODE END 6 */
-}
-#endif /* USE_FULL_ASSERT */
 
-/* USER CODE BEGIN vAssertCalled */
-void vAssertCalled( const char *pcFile, uint32_t ulLine)
-{
 	taskDISABLE_INTERRUPTS();
 	for (;;) {
 		__asm volatile( "nop" );
 	}
+  /* USER CODE END 6 */
 }
-/* USER CODE END vAssertCalled */
+#endif /* USE_FULL_ASSERT */
 
 /**
   * @}

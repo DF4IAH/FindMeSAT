@@ -147,9 +147,10 @@
   * @brief Uncomment the line below to expanse the "assert_param" macro in the 
   *        HAL drivers code
   */
-/* #define USE_FULL_ASSERT    1U */
+#define USE_FULL_ASSERT    1U
 
 /* USER CODE BEGIN Private defines */
+void vAssertCalled( const char *pcFile, uint32_t ulLine);
 
 /* USER CODE END Private defines */
 
@@ -162,10 +163,6 @@ void _Error_Handler(char *, int);
 #ifdef __cplusplus
 }
 #endif
-
-/* USER CODE BEGIN vAssertCalled */
-void vAssertCalled( const char *pcFile, uint32_t ulLine);
-/* USER CODE END vAssertCalled */
 
 #endif /* __MAIN_H__ */
 
