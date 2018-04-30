@@ -66,6 +66,8 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+volatile uint32_t	g_timer_us = 0;
+volatile uint32_t	g_timerStart_us = 0;
 
 /* USER CODE END PV */
 
@@ -226,14 +228,59 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-void vAssertCalled( const char *pcFile, uint32_t ulLine)
+void configureTimerForRunTimeStats(void)
 {
-	taskDISABLE_INTERRUPTS();
-	for (;;) {
-		__asm volatile( "nop" );
-	}
+  getRunTimeCounterValue();
+  g_timerStart_us = g_timer_us;
 }
 
+unsigned long getRunTimeCounterValue(void)
+{
+  uint64_t timer_us = HAL_GetTick() & 0x003fffffUL;  // avoid overflows
+  timer_us *= 1000UL;
+  timer_us += TIM2->CNT;
+  g_timer_us = timer_us;
+  return timer_us - g_timerStart_us;
+}
+
+void vAssertCalled( const char *pcFile, uint32_t ulLine)
+{
+  /* Inside this function, pcFile holds the name of the source file that contains
+  the line that detected the error, and ulLine holds the line number in the source
+  file. The pcFile and ulLine values can be printed out, or otherwise recorded,
+  before the following infinite loop is entered. */
+  //RecordErrorInformationHere( pcFile, ulLine );
+  /* Disable interrupts so the tick interrupt stops executing, then sit in a loop
+  so execution does not move past the line that failed the assertion. */
+  taskDISABLE_INTERRUPTS();
+  for(;;)
+  {
+      __asm volatile( "nop" );
+  }
+}
+
+void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName)
+{
+   /* Run time stack overflow checking is performed if
+   configCHECK_FOR_STACK_OVERFLOW is defined to 1 or 2. This hook function is
+   called if a stack overflow is detected. */
+   vAssertCalled(__FILE__, __LINE__);
+}
+
+void vApplicationMallocFailedHook(void)
+{
+   /* vApplicationMallocFailedHook() will only be called if
+   configUSE_MALLOC_FAILED_HOOK is set to 1 in FreeRTOSConfig.h. It is a hook
+   function that will get called if a call to pvPortMalloc() fails.
+   pvPortMalloc() is called internally by the kernel whenever a task, queue,
+   timer or semaphore is created. It is also called by various parts of the
+   demo application. If heap_1.c or heap_2.c are used, then the size of the
+   heap available to pvPortMalloc() is defined by configTOTAL_HEAP_SIZE in
+   FreeRTOSConfig.h, and the xPortGetFreeHeapSize() API function can be used
+   to query the size of free heap space that remains (although it does not
+   provide information on how the remaining heap might be fragmented). */
+  vAssertCalled(__FILE__, __LINE__);
+}
 /* USER CODE END 4 */
 
 /**
@@ -267,10 +314,7 @@ void _Error_Handler(char *file, int line)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-	taskDISABLE_INTERRUPTS();
-	for (;;) {
-		__asm volatile( "nop" );
-	}
+  vAssertCalled(file, line);
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -285,13 +329,7 @@ void _Error_Handler(char *file, int line)
 void assert_failed(uint8_t* file, uint32_t line)
 { 
   /* USER CODE BEGIN 6 */
-  /* User can add his own implementation to report the file name and line number,
-     tex: printf("Wrong parameters value: file %s on line %d\r\n", file, line) */
-
-	taskDISABLE_INTERRUPTS();
-	for (;;) {
-		__asm volatile( "nop" );
-	}
+  vAssertCalled((char *) file, line);
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */

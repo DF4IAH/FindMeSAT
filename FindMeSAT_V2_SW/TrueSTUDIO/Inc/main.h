@@ -147,10 +147,18 @@
   * @brief Uncomment the line below to expanse the "assert_param" macro in the 
   *        HAL drivers code
   */
-#define USE_FULL_ASSERT    1U
+/* #define USE_FULL_ASSERT    1U */
 
 /* USER CODE BEGIN Private defines */
+#define USE_FULL_ASSERT    1U
+
+typedef void * TaskHandle_t;
+
+void configureTimerForRunTimeStats(void);
+unsigned long getRunTimeCounterValue(void);
 void vAssertCalled( const char *pcFile, uint32_t ulLine);
+void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName);
+void vApplicationMallocFailedHook(void);
 
 /* USER CODE END Private defines */
 
