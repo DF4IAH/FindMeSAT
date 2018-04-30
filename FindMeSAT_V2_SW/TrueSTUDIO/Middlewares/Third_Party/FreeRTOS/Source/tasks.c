@@ -427,7 +427,7 @@ PRIVILEGED_INITIALIZED_DATA static volatile UBaseType_t uxSchedulerSuspended	= (
 
 /* Callback function prototypes. --------------------------*/
 #if(  configCHECK_FOR_STACK_OVERFLOW > 0 )
-	extern void vApplicationStackOverflowHook( TaskHandle_t xTask, char *pcTaskName );
+	extern void vApplicationStackOverflowHook( TaskHandle_t xTask, signed char *pcTaskName );
 #endif
 
 #if( configUSE_TICK_HOOK > 0 )

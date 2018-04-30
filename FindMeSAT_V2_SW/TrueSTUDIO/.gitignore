@@ -1,1 +1,6 @@
-.metadata/
+**/*.su
+/FindMeSAT_V2.elf.launch
+/mx.scratch
+/.settings/
+/.metadata/
+/Debug/

@@ -70,15 +70,9 @@ osMessageQId usbToHostQueueHandle;
 osMessageQId usbFromHostQueueHandle;
 
 /* USER CODE BEGIN Variables */
-/* Private typedef -----------------------------------------------------------*/
-/* Private define ------------------------------------------------------------*/
-/* Private macro -------------------------------------------------------------*/
-/* Private variables ---------------------------------------------------------*/
+extern uint8_t usbFromHostISRBuf[64];
+extern uint32_t usbFromHostISRBufLen;
 static GPIO_InitTypeDef  GPIO_InitStruct;
-volatile uint32_t	g_timer_us = 0;
-volatile uint32_t	g_timerStart_us = 0;
-extern uint8_t		usbFromHostISRBuf[64];
-extern uint32_t		usbFromHostISRBufLen;
 
 /* USER CODE END Variables */
 
@@ -104,17 +98,11 @@ void vApplicationMallocFailedHook(void);
 /* Functions needed when configGENERATE_RUN_TIME_STATS is on */
 __weak void configureTimerForRunTimeStats(void)
 {
-	getRunTimeCounterValue();
-	g_timerStart_us = g_timer_us;
 }
 
 __weak unsigned long getRunTimeCounterValue(void)
 {
-	uint64_t timer_us = HAL_GetTick() & 0x003fffffUL;  // avoid overflows
-	timer_us *= 1000UL;
-	timer_us += TIM2->CNT;
-	g_timer_us = timer_us;
-	return timer_us - g_timerStart_us;
+  return 0;
 }
 /* USER CODE END 1 */
 
@@ -147,7 +135,7 @@ __weak void vApplicationMallocFailedHook(void)
 
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
-       
+
   /* USER CODE END Init */
 
   /* USER CODE BEGIN RTOS_MUTEX */
@@ -164,15 +152,15 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 256);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of usbToHostTask */
-  osThreadDef(usbToHostTask, StartUsbToHostTask, osPriorityAboveNormal, 0, 128);
+  osThreadDef(usbToHostTask, StartUsbToHostTask, osPriorityAboveNormal, 0, 256);
   usbToHostTaskHandle = osThreadCreate(osThread(usbToHostTask), NULL);
 
   /* definition and creation of usbFromHostTask */
-  osThreadDef(usbFromHostTask, StartUsbFromHostTask, osPriorityAboveNormal, 0, 128);
+  osThreadDef(usbFromHostTask, StartUsbFromHostTask, osPriorityAboveNormal, 0, 256);
   usbFromHostTaskHandle = osThreadCreate(osThread(usbFromHostTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
@@ -204,9 +192,12 @@ void StartDefaultTask(void const * argument)
   strcpy((char*) buf, "+\r\n");
 
   /* -1- Enable GPIO Clock (to be able to program the configuration registers) */
-  LED1_GPIO_CLK_ENABLE();  // Green
-  LED2_GPIO_CLK_ENABLE();  // Blue
-  LED3_GPIO_CLK_ENABLE();  // Red
+  LED1_GPIO_CLK_ENABLE()
+  ;  // Green
+  LED2_GPIO_CLK_ENABLE()
+  ;  // Blue
+  LED3_GPIO_CLK_ENABLE()
+  ;  // Red
 
   /* -2- Configure IO in output push-pull mode to drive external LEDs */
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -221,10 +212,10 @@ void StartDefaultTask(void const * argument)
   HAL_GPIO_Init(LED3_GPIO_PORT, &GPIO_InitStruct);
 
   /* Infinite loop */
-  for(;;)
-  {
+  for (;;) {
     snprintf((char*) (buf + 1), sizeof(buf), " %010ld\r\n", getRunTimeCounterValue());
-	usbToHost(buf, strlen((char*) buf));
+    usbToHost(buf, strlen((char*) buf));
+    osDelay(500);
   }
   /* USER CODE END StartDefaultTask */
 }
@@ -233,100 +224,125 @@ void StartDefaultTask(void const * argument)
 void StartUsbToHostTask(void const * argument)
 {
   /* USER CODE BEGIN StartUsbToHostTask */
-	uint8_t buf[32];
-	uint8_t bufCtr = 0;
+  uint8_t clrScrBuf[4]  = { 0x0d, 0x0a, 0x0c, 0 };
+  uint8_t buf[32];
+  uint8_t bufCtr = 0;
+  uint8_t inChr = 0;
 
-	/* Clear queue */
-	while (uxQueueMessagesWaiting(usbToHostQueueHandle) == pdPASS) {
-	}
+  HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);	  			                        // Red on
 
-	/* DEBUG */
-	HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);						// Red off
+  /* Give time for USB CDC to come up */
+  osDelay(2500);
 
-	/* Infinite loop */
-	for(;;)
-	{
-		BaseType_t	xStatus;
-		uint8_t		inChr = 0;
+  /* Clear queue */
+  while (xQueueReceive(usbToHostQueueHandle, &inChr, 0) == pdPASS) {
+  }
 
-	    /* Take next character from the queue*/
-		HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);					// Green off
-		xStatus = xQueueReceive(usbToHostQueueHandle, &inChr, 100 / portTICK_PERIOD_MS);
-		HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);						// Green on
+  HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                                // Red off
+  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);                                  // Blue on
 
-		if (pdPASS == xStatus) {
-			if (inChr && (bufCtr < (sizeof(buf) - 1))) {
-				buf[bufCtr++] = inChr;
+  /* Init connection with dummy data */
+  for (uint32_t cnt = 5; cnt; cnt--) {
+    CDC_Transmit_FS(clrScrBuf, 3);
+    osDelay(25);
+  }
+  osDelay(250);
+  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);                                // Blue off
 
-			} else {
-				uint8_t cnt;
+  /* Infinite loop */
+  for (;;) {
+    BaseType_t xStatus;
 
-				/* Do not send empty buffer */
-				if (!bufCtr) {
-					continue;
-				}
+    /* Take next character from the queue*/
+    xStatus = xQueueReceive(usbToHostQueueHandle, &inChr, 100 / portTICK_PERIOD_MS);
 
-				buf[bufCtr] = 0;
-				for (cnt = 50; cnt; cnt--) {
-					uint8_t ucRetVal = CDC_Transmit_FS(buf, bufCtr);
-					if (USBD_BUSY != ucRetVal) {
-						/* Data accepted for transmission */
-						bufCtr = 0;
-						HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);	// Red off
-						break;
+    if (pdPASS == xStatus) {
+      if (inChr && (bufCtr < (sizeof(buf) - 1))) {
+        buf[bufCtr++] = inChr;
 
-					} else {
-						/* USB EP busy - try again */
-						HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);		// Red on
+      } else {
+        uint32_t cnt;
 
-						/* Delay for next USB packet to come and go */
-						osDelay(1);
-					}
-				}
+        /* Do not send empty buffer */
+        if (!bufCtr) {
+          continue;
+        }
 
-				if (!cnt) {
-					/* USB EP still busy - drop whole buffer content */
-					bufCtr = 0;
-					HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);			// Red on
-				}
-			}
-		}
-	}
+        buf[bufCtr] = 0;
+        for (cnt = 25UL; cnt; cnt--) {
+          uint8_t ucRetVal = CDC_Transmit_FS(buf, bufCtr);
+          if (USBD_BUSY != ucRetVal) {
+            /* Data accepted for transmission */
+            bufCtr = 0;
+            HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);			                // Red off
+            break;
+
+          } else {
+            /* USB EP busy - try again */
+            HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);			                  // Red on
+
+            /* Delay for next USB packet to come and go */
+            osDelay(2);
+          }
+        }
+
+        if (!cnt) {
+          /* USB EP still busy - drop whole buffer content */
+          bufCtr = 0;
+          HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);	                        // Red on
+        }
+      }
+    }
+  }
   /* USER CODE END StartUsbToHostTask */
 }
 
 /* StartUsbFromHostTask function */
 void StartUsbFromHostTask(void const * argument)
 {
-	/* USER CODE BEGIN StartUsbFromHostTask */
-	const uint8_t nulBuf[1] = { 0 };
+  const uint8_t lightOnMax = 2;
+  uint8_t lightOnCtr = 0;
 
-	/* DEBUG */
-	HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);	// Blue off
+  /* USER CODE BEGIN StartUsbFromHostTask */
+  const uint8_t nulBuf[1] = { 0 };
 
-	/* Infinite loop */
-	for(;;)
-	{
-		if (usbFromHostISRBufLen) {
-			/* USB OUT EP from host put data into the buffer */
-			uint8_t* bufPtr = usbFromHostISRBuf;
-			for (BaseType_t idx = 0; idx < usbFromHostISRBufLen; idx++, bufPtr++) {
-				xQueueSendToBack(usbFromHostQueueHandle, bufPtr, 0);
-			}
-			xQueueSendToBack(usbFromHostQueueHandle, nulBuf, 0);
+  HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);                                  // Green on
 
-			memset((char*) usbFromHostISRBufLen, 0, sizeof(usbFromHostISRBufLen));
-			__asm volatile( "" );  // schedule barrier
-			usbFromHostISRBufLen = 0;
+  /* Give time for USB CDC to come up */
+  osDelay(2500);
 
-		} else {
-			/* Delay for the next attempt */
-			HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);	// Blue off
-			osDelay(25);
-			HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);		// Blue on
-		}
-	}
-	/* USER CODE END StartUsbFromHostTask */
+  HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                                // Green off
+
+  /* Infinite loop */
+  for (;;) {
+    if (usbFromHostISRBufLen) {
+      lightOnCtr = lightOnMax;
+      HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);                              // Green on
+
+      /* USB OUT EP from host put data into the buffer */
+      uint8_t* bufPtr = usbFromHostISRBuf;
+      for (BaseType_t idx = 0; idx < usbFromHostISRBufLen; idx++, bufPtr++) {
+        xQueueSendToBack(usbFromHostQueueHandle, bufPtr, 0);
+      }
+      xQueueSendToBack(usbFromHostQueueHandle, nulBuf, 0);
+
+      memset((char*) usbFromHostISRBufLen, 0, sizeof(usbFromHostISRBufLen));
+      __asm volatile( "" );   // schedule barrier
+      usbFromHostISRBufLen = 0;
+
+    } else {
+      /* Delay for the next attempt */
+      osDelay(25);
+    }
+
+    /* Show state */
+    if (lightOnCtr) {
+      if (!--lightOnCtr) {
+        HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                          // Green off
+      }
+    }
+  }
+  /* USER CODE END StartUsbFromHostTask */
 }
 
 /* USER CODE BEGIN Application */
