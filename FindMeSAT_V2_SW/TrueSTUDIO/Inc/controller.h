@@ -9,6 +9,7 @@
 #define CONTROLLER_H_
 
 
-void controllerInit(void);
+void controllerControllerTaskInit(void);
+void controllerControllerTaskLoop(void);
 
 #endif /* CONTROLLER_H_ */

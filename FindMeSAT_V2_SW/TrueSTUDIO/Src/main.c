@@ -59,6 +59,11 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
+#include <stddef.h>
+#include <sys/_stdint.h>
+#include <stdio.h>
+#include "stm32l4xx_nucleo_144.h"
+#include "stm32l4xx_hal.h"
 
 /* USER CODE END Includes */
 
@@ -66,6 +71,7 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+static GPIO_InitTypeDef  GPIO_InitStruct;
 volatile uint32_t	g_timer_us = 0;
 volatile uint32_t	g_timerStart_us = 0;
 
@@ -81,6 +87,42 @@ void MX_FREERTOS_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+
+void mainDefaultTaskInit(void)
+{
+  /* -1- Enable GPIO Clock (to be able to program the configuration registers) */
+  LED1_GPIO_CLK_ENABLE()
+  ;  // Green
+  LED2_GPIO_CLK_ENABLE()
+  ;  // Blue
+  LED3_GPIO_CLK_ENABLE()
+  ;  // Red
+
+  /* -2- Configure IO in output push-pull mode to drive external LEDs */
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+
+  GPIO_InitStruct.Pin = LED1_PIN;
+  HAL_GPIO_Init(LED1_GPIO_PORT, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LED2_PIN;
+  HAL_GPIO_Init(LED2_GPIO_PORT, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LED3_PIN;
+  HAL_GPIO_Init(LED3_GPIO_PORT, &GPIO_InitStruct);
+}
+
+void mainDefaultTaskLoop(void)
+{
+#if 0
+  unsigned char buf[32] = { 0 };
+  strcpy((char*) buf, "+\r\n");
+
+  snprintf((char*) (buf + 1), sizeof(buf), " %010ld\r\n", getRunTimeCounterValue());
+  usbToHost(buf, strlen((char*) buf));
+#endif
+
+  osDelay(1000);
+}
 
 /* USER CODE END 0 */
 
@@ -136,11 +178,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-
   }
   /* USER CODE END 3 */
 

@@ -14,14 +14,16 @@
 #include "usb.h"
 
 
-/* Forward declarations ------------------------------------------------------*/
+/* Private variables ---------------------------------------------------------*/
+
+/* Private function prototypes -----------------------------------------------*/
 static void prvControllerInitBeforeGreet(void);
 static void prvControllerInitAfterGreet(void);
 static void prvControllerUsbGreet(void);
 
 
 /* Global functions ----------------------------------------------------------*/
-void controllerInit(void)
+void controllerControllerTaskInit(void)
 {
   uint32_t prevWakeTime = 0;
 
@@ -35,6 +37,11 @@ void controllerInit(void)
   prvControllerUsbGreet();
 
   prvControllerInitAfterGreet();
+}
+
+void controllerControllerTaskLoop(void)
+{
+  osDelay(100);
 }
 
 
