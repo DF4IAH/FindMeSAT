@@ -35,7 +35,7 @@ void interpreterInterpreterTaskInit(void)
 
 void interpreterInterpreterTaskLoop(void)
 {
-  static uint8_t inBuf[64] = { 0 };
+  static uint8_t inBuf[64] = { 0 };  // [8] works, [16] not !
   static uint32_t inBufPos = 0;
   static uint8_t prevCr = 0;
   uint8_t chr;
@@ -65,7 +65,7 @@ void interpreterInterpreterTaskLoop(void)
 
       /* Interpreter */
       if (inBufPos < (sizeof(inBuf) - 1)) {
-        prvDoInterprete(inBuf, inBufPos);
+        //prvDoInterprete(inBuf, inBufPos);
       }
 
       /* Prepare for next command */

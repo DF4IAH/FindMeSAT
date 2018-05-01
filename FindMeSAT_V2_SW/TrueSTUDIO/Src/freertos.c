@@ -55,6 +55,7 @@
 #include "stm32l4xx_nucleo_144.h"
 #include "stm32l4xx_hal.h"
 #include "controller.h"
+#include "interpreter.h"
 #include "usb.h"
 
 /* USER CODE END Includes */
@@ -64,6 +65,7 @@ osThreadId defaultTaskHandle;
 osThreadId usbToHostTaskHandle;
 osThreadId usbFromHostTaskHandle;
 osThreadId controllerTaskHandle;
+osThreadId interpreterTaskHandle;
 osMessageQId usbToHostQueueHandle;
 osMessageQId usbFromHostQueueHandle;
 
@@ -78,6 +80,7 @@ void StartDefaultTask(void const * argument);
 void StartUsbToHostTask(void const * argument);
 void StartUsbFromHostTask(void const * argument);
 void StartControllerTask(void const * argument);
+void StartInterpreterTask(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -165,6 +168,10 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(controllerTask, StartControllerTask, osPriorityBelowNormal, 0, 128);
   controllerTaskHandle = osThreadCreate(osThread(controllerTask), NULL);
 
+  /* definition and creation of interpreterTask */
+  osThreadDef(interpreterTask, StartInterpreterTask, osPriorityNormal, 0, 128);
+  interpreterTaskHandle = osThreadCreate(osThread(interpreterTask), NULL);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -249,6 +256,23 @@ void StartControllerTask(void const * argument)
     controllerControllerTaskLoop();
   }
   /* USER CODE END StartControllerTask */
+}
+
+/* StartInterpreterTask function */
+void StartInterpreterTask(void const * argument)
+{
+  /* USER CODE BEGIN StartInterpreterTask */
+
+  /* Give DefaultTask time to prepare the device */
+  osDelay(100);
+
+  interpreterInterpreterTaskInit();
+  /* Infinite loop */
+  for(;;)
+  {
+    interpreterInterpreterTaskLoop();
+  }
+  /* USER CODE END StartInterpreterTask */
 }
 
 /* USER CODE BEGIN Application */
