@@ -159,6 +159,7 @@ void mainDefaultTaskLoop(void);
 
 void configureTimerForRunTimeStats(void);
 unsigned long getRunTimeCounterValue(void);
+void doRestart(void);
 void vAssertCalled( const char *pcFile, uint32_t ulLine);
 void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName);
 void vApplicationMallocFailedHook(void);

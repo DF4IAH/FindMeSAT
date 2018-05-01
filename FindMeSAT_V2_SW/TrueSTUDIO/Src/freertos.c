@@ -162,7 +162,7 @@ void MX_FREERTOS_Init(void) {
   usbFromHostTaskHandle = osThreadCreate(osThread(usbFromHostTask), NULL);
 
   /* definition and creation of controllerTask */
-  osThreadDef(controllerTask, StartControllerTask, osPriorityIdle, 0, 128);
+  osThreadDef(controllerTask, StartControllerTask, osPriorityBelowNormal, 0, 128);
   controllerTaskHandle = osThreadCreate(osThread(controllerTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
