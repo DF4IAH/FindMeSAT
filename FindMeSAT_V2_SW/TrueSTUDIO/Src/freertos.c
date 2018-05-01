@@ -203,6 +203,10 @@ void StartDefaultTask(void const * argument)
 void StartUsbToHostTask(void const * argument)
 {
   /* USER CODE BEGIN StartUsbToHostTask */
+
+  /* Give DefaultTask time to prepare the device */
+  osDelay(100);
+
   usbUsbToHostTaskInit();
 
   /* Infinite loop */
@@ -216,6 +220,10 @@ void StartUsbToHostTask(void const * argument)
 void StartUsbFromHostTask(void const * argument)
 {
   /* USER CODE BEGIN StartUsbFromHostTask */
+
+  /* Give DefaultTask time to prepare the device */
+  osDelay(100);
+
   usbUsbFromHostTaskInit();
 
   /* Infinite loop */
@@ -229,6 +237,10 @@ void StartUsbFromHostTask(void const * argument)
 void StartControllerTask(void const * argument)
 {
   /* USER CODE BEGIN StartControllerTask */
+
+  /* Give DefaultTask time to prepare the device */
+  osDelay(100);
+
   controllerControllerTaskInit();
 
   /* Infinite loop */

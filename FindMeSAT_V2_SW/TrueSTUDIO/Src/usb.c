@@ -58,9 +58,9 @@ void usbFromHostFromIRQ(const uint8_t* buf, uint32_t len)
 }
 
 
+const uint8_t clrScrBuf[4] = { 0x0d, 0x0a, 0x0c, 0 };
 void usbUsbToHostTaskInit(void)
 {
-  uint8_t clrScrBuf[4] = { 0x0d, 0x0a, 0x0c, 0 };
   uint8_t inChr = 0;
 
   HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);                                  // Red on
@@ -77,7 +77,7 @@ void usbUsbToHostTaskInit(void)
 
   /* Init connection with dummy data */
   for (uint32_t cnt = 5; cnt; cnt--) {
-    CDC_Transmit_FS(clrScrBuf, 3);
+    CDC_Transmit_FS((uint8_t*) clrScrBuf, 3);
     osDelay(25);
   }
   osDelay(250);
@@ -86,8 +86,8 @@ void usbUsbToHostTaskInit(void)
 
 void usbUsbToHostTaskLoop(void)
 {
-  uint8_t buf[32];
-  uint8_t bufCtr = 0;
+  static uint8_t buf[32] = { 0 };
+  static uint8_t bufCtr = 0;
   uint8_t inChr = 0;
   BaseType_t xStatus;
 
@@ -113,6 +113,7 @@ void usbUsbToHostTaskLoop(void)
       if (USBD_BUSY != ucRetVal) {
         /* Data accepted for transmission */
         bufCtr = 0;
+        buf[0] = 0;
         HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                          // Red off
         break;
 
@@ -148,7 +149,8 @@ void usbUsbFromHostTaskLoop(void)
 {
   const uint8_t nulBuf[1] = { 0 };
   const uint8_t lightOnMax = 2;
-  uint8_t lightOnCtr = 0;
+  const uint8_t maxWaitMs = 25;
+  static uint8_t lightOnCtr = 0;
 
   if (usbFromHostISRBufLen) {
     lightOnCtr = lightOnMax;
@@ -157,9 +159,9 @@ void usbUsbFromHostTaskLoop(void)
     /* USB OUT EP from host put data into the buffer */
     uint8_t* bufPtr = usbFromHostISRBuf;
     for (BaseType_t idx = 0; idx < usbFromHostISRBufLen; ++idx, ++bufPtr) {
-      xQueueSendToBack(usbFromHostQueueHandle, bufPtr, 0);
+      xQueueSendToBack(usbFromHostQueueHandle, bufPtr, maxWaitMs);
     }
-    xQueueSendToBack(usbFromHostQueueHandle, nulBuf, 0);
+    xQueueSendToBack(usbFromHostQueueHandle, nulBuf, maxWaitMs);
 
     memset((char*) usbFromHostISRBufLen, 0, sizeof(usbFromHostISRBufLen));
     __asm volatile( "" );
@@ -172,9 +174,16 @@ void usbUsbFromHostTaskLoop(void)
   }
 
   /* Show state */
-  if (lightOnCtr) {
-    if (!--lightOnCtr) {
-      HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                            // Green off
-    }
+  switch (lightOnCtr) {
+  case 0:
+    break;
+
+  case 1:
+    --lightOnCtr;
+    HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                            // Green off
+    break;
+
+  default:
+    --lightOnCtr;
   }
 }
