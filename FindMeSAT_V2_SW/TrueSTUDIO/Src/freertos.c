@@ -171,11 +171,11 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* definition and creation of usbToHostQueue */
-  osMessageQDef(usbToHostQueue, 64, uint8_t);
+  osMessageQDef(usbToHostQueue, 128, uint8_t);
   usbToHostQueueHandle = osMessageCreate(osMessageQ(usbToHostQueue), NULL);
 
   /* definition and creation of usbFromHostQueue */
-  osMessageQDef(usbFromHostQueue, 64, uint8_t);
+  osMessageQDef(usbFromHostQueue, 32, uint8_t);
   usbFromHostQueueHandle = osMessageCreate(osMessageQ(usbFromHostQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
