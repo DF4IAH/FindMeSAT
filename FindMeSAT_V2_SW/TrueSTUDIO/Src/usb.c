@@ -24,13 +24,13 @@ uint32_t 			usbFromHostISRBufLen	= 0;
 
 void usbToHost(const uint8_t* buf, uint32_t len)
 {
-	const uint8_t nulBuf = 0;
+	const uint8_t maxWaitMs = 25;
 
 	if (buf && len) {
 		while (len--) {
-			xQueueSendToBack(usbToHostQueueHandle, buf++, 0);
+			osMessagePut(usbToHostQueueHandle, *(buf++), maxWaitMs);
 		}
-		xQueueSendToBack(usbToHostQueueHandle, &nulBuf, 0);
+		osMessagePut(usbToHostQueueHandle, 0, maxWaitMs);
 	}
 }
 
