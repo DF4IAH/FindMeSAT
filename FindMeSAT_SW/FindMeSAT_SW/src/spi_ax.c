@@ -568,7 +568,7 @@ void spi_ax_pocsag_address_tone(bool is_RIC_individual, uint32_t address, uint8_
 	char isMyChar = is_RIC_individual ?  '*' : ' ';
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>> TS=%1X %c Address=%7lu FktBits=0x%02x  (TONE   )%c%c%c\r\n", getCurrent_POCSAG_TimeSlot(), isMyChar, address, fktBits, isMyBeep, isMyBeep, isMyBeep);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>> TS=%1X %c Address=%8lu FktBits=0x%02x  (TONE   )%c%c%c\r\n", getCurrent_POCSAG_TimeSlot(), isMyChar, address, fktBits, isMyBeep, isMyBeep, isMyBeep);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 }
 
@@ -578,7 +578,7 @@ void spi_ax_pocsag_address_numeric(bool is_RIC_individual, uint32_t address, uin
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
 	uint8_t digitIdx = 0;
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>> TS=%1X %c Address=%7lu FktBits=0x%02x  (NUMERIC):", getCurrent_POCSAG_TimeSlot(), isMyChar, address, fktBits);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>> TS=%1X %c Address=%8lu FktBits=0x%02x  (NUMERIC):", getCurrent_POCSAG_TimeSlot(), isMyChar, address, fktBits);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 
 	for (uint8_t dataCntIdx = 0; dataCntIdx < dataCnt; dataCntIdx++) {
@@ -612,7 +612,7 @@ void spi_ax_pocsag_address_alphanum(bool is_RIC_individual, uint32_t address, ui
 			typeStr = "ALPHA  ";
 	}
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>> TS=%1X %c Address=%7lu FktBits=0x%02x  (%s):", getCurrent_POCSAG_TimeSlot(), isMyChar, address, fktBits, typeStr);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>> TS=%1X %c Address=%8lu FktBits=0x%02x  (%s):", getCurrent_POCSAG_TimeSlot(), isMyChar, address, fktBits, typeStr);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 	len = 0;
 
@@ -653,7 +653,7 @@ void spi_ax_pocsag_address_skyper_activation(bool is_RIC_individual, uint32_t ad
 	char isMyChar = is_RIC_individual ?  '*' : ' ';
 	char isMyBeep = is_RIC_individual ?  0x07 : ' ';
 
-	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>> TS=%1X %c Address=%7lu FktBits=0x%02x  (ACTIVTN):", getCurrent_POCSAG_TimeSlot(), isMyChar, address, fktBits);
+	uint8_t len = (uint8_t) sprintf(g_prepare_buf, "\r\n>>> TS=%1X %c Address=%8lu FktBits=0x%02x  (ACTIVTN):", getCurrent_POCSAG_TimeSlot(), isMyChar, address, fktBits);
 	udi_write_tx_buf(g_prepare_buf, len, false);
 
 	len = (uint8_t) sprintf(g_prepare_buf, " TODO! %c%c%c\r\n", isMyBeep, isMyBeep, isMyBeep);
