@@ -197,7 +197,8 @@ standard names. */
 #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS configureTimerForRunTimeStats
 #define portGET_RUN_TIME_COUNTER_VALUE getRunTimeCounterValue
 
-#define USB_TO_HOST_EG__BUF_EMPTY 0x000001
+#define USB_TO_HOST_EG__BUF_EMPTY     0x000001
+#define USB_TO_HOST_EG__ECHO_ON       0x000002
 /* USER CODE END 2 */
 
 /* USER CODE BEGIN Defines */   	      

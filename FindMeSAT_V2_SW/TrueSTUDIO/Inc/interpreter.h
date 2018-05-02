@@ -12,6 +12,7 @@
 void interpreterInterpreterTaskInit(void);
 void interpreterInterpreterTaskLoop(void);
 
-void printHelp(void);
+void interpreterPrintHelp(void);
+void interpreterShowCursor(void);
 
 #endif /* INTERPRETER_H_ */

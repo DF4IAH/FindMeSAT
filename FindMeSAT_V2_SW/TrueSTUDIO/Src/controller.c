@@ -82,12 +82,13 @@ void prvControllerUsbGreet(void)
 
   osSemaphoreRelease(usbToHostBinarySemHandle);
 
-  printHelp();
+  interpreterPrintHelp();
 }
 
 void prvControllerInitBeforeGreet(void)
 {
-
+  /* USB typing echo */
+  xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON);   // TODO: should be from Config-FLASH page
 }
 
 void prvControllerInitAfterGreet(void)

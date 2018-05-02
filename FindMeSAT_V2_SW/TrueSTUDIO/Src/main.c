@@ -289,11 +289,6 @@ unsigned long getRunTimeCounterValue(void)
   return timer_us - g_timerStart_us;
 }
 
-void doRestart(void)
-{
-  __asm volatile( "nop" );
-}
-
 void vAssertCalled( const char *pcFile, uint32_t ulLine)
 {
   /* Inside this function, pcFile holds the name of the source file that contains

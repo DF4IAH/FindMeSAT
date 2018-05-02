@@ -68,7 +68,7 @@ void usbFromHostFromIRQ(const uint8_t* buf, uint32_t len)
 }
 
 
-const uint8_t clrScrBuf[4] = { 0x0d, 0x0a, 0x0c, 0 };
+const uint8_t usbClrScrBuf[4] = { 0x0d, 0x0a, 0x0c, 0 };
 void usbUsbToHostTaskInit(void)
 {
   uint8_t inChr = 0;
@@ -81,17 +81,17 @@ void usbUsbToHostTaskInit(void)
   /* Clear queue */
   while (xQueueReceive(usbToHostQueueHandle, &inChr, 0) == pdPASS) {
   }
+  xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
 
   HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                                // Red off
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);                                  // Blue on
 
   /* Init connection with dummy data */
   for (uint32_t cnt = 5; cnt; cnt--) {
-    CDC_Transmit_FS((uint8_t*) clrScrBuf, 3);
+    CDC_Transmit_FS((uint8_t*) usbClrScrBuf, 3);
     osDelay(25);
   }
   osDelay(250);
-  xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);                                // Blue off
 }
 

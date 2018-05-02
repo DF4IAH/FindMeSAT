@@ -24,7 +24,9 @@ extern EventGroupHandle_t usbToHostEventGroupHandle;
 /* Private variables ---------------------------------------------------------*/
 
 /* Private function prototypes -----------------------------------------------*/
+void Reset_Handler(void);
 static void prvDoInterprete(const uint8_t *buf, uint32_t len);
+static void prvUnknownCommand(void);
 
 /* Global functions ----------------------------------------------------------*/
 void interpreterInterpreterTaskInit(void)
@@ -38,7 +40,7 @@ void interpreterInterpreterTaskInit(void)
 
 void interpreterInterpreterTaskLoop(void)
 {
-  static uint8_t inBuf[64] = { 0 };  // [8] works, [16] not !
+  static uint8_t inBuf[64] = { 0 };
   static uint32_t inBufPos = 0;
   static uint8_t prevCr = 0;
   uint8_t chr;
@@ -56,30 +58,40 @@ void interpreterInterpreterTaskLoop(void)
         chr = 0x0d;
       }
       prevCr = 0;
+
     } else {
       prevCr = 0;
     }
 
-    /* Echoing back to USB CDC IN */
-    if (1) {
-      usbToHost(&chr, 1);
-      if (chr == 0x0d) {
-        /* Add a LF for the terminal */
-        usbToHost((uint8_t*) "\n", 1);
+    /* Process valid data */
+    if (chr) {
+      /* Echoing back to USB CDC IN when enabled */
+      EventBits_t eb = xEventGroupWaitBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON, 0, 0, 1);
+      if (eb & USB_TO_HOST_EG__BUF_EMPTY) {
+        usbToHost(&chr, 1);
+        if (chr == 0x0d) {
+          /* Add a LF for the terminal */
+          osSemaphoreWait(usbToHostBinarySemHandle, 0);
+          usbToHostWait((uint8_t*) "\n", 1);
+          osSemaphoreRelease(usbToHostBinarySemHandle);
+        }
+      }
+
+      /* Concatenate for the interpreter buffer */
+      if ((chr != 0x0a) && (chr != 0x0d)) {
+        inBuf[inBufPos++] = chr;
       }
     }
 
-    /* Concatenate for the interpreter buffer */
-    inBuf[inBufPos++] = chr;
-
     /* Process line */
-    if (chr == 0x0d || (inBufPos >= (sizeof(inBuf) - 1))) {
+    if ((chr == 0x0d) || (inBufPos >= (sizeof(inBuf) - 1))) {
       inBuf[inBufPos] = 0;
 
       /* Interpreter */
-      if (inBufPos < (sizeof(inBuf) - 1)) {
+      if (inBufPos && (inBufPos < (sizeof(inBuf) - 1))) {
         prvDoInterprete(inBuf, inBufPos);
       }
+      interpreterShowCursor();
 
       /* Prepare for next command */
       memset(inBuf, 0, sizeof(inBuf));
@@ -89,55 +101,64 @@ void interpreterInterpreterTaskLoop(void)
 }
 
 
-const uint8_t helpMsg01[] =
+const uint8_t interpreterHelpMsg01[] =
     "\r\n";
-const uint8_t helpMsg02[] =
+const uint8_t interpreterHelpMsg02[] =
     "\t====================================\r\n";
-const uint8_t helpMsg03[] =
+const uint8_t interpreterHelpMsg03[] =
     "\t*  HELP:  Listing of the commands  *\r\n";
-const uint8_t helpMsg11[] =
+const uint8_t interpreterHelpMsg11[] =
     "\tCommand       +\tRemarks\r\n";
-const uint8_t helpMsg12[] =
+const uint8_t interpreterHelpMsg12[] =
     "\t--------------+\t---------------------------------------------\r\n";
-const uint8_t helpMsg21[] =
+const uint8_t interpreterHelpMsg21[] =
     "\thelp\t\tPrint this list of commands.\r\n";
-const uint8_t helpMsg22[] =
+const uint8_t interpreterHelpMsg22[] =
     "\trestart\t\tRestart this device.\r\n";
-void printHelp(void)
+void interpreterPrintHelp(void)
 {
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
 
-  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
-  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
+  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
-  usbToHostWait(helpMsg02, strlen((char*) helpMsg02));
+  usbToHostWait(interpreterHelpMsg02, strlen((char*) interpreterHelpMsg02));
 
-  usbToHostWait(helpMsg03, strlen((char*) helpMsg03));
+  usbToHostWait(interpreterHelpMsg03, strlen((char*) interpreterHelpMsg03));
 
-  usbToHostWait(helpMsg02, strlen((char*) helpMsg02));
+  usbToHostWait(interpreterHelpMsg02, strlen((char*) interpreterHelpMsg02));
 
-  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
-  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
+  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
-  usbToHostWait(helpMsg11, strlen((char*) helpMsg11));
+  usbToHostWait(interpreterHelpMsg11, strlen((char*) interpreterHelpMsg11));
 
-  usbToHostWait(helpMsg12, strlen((char*) helpMsg12));
+  usbToHostWait(interpreterHelpMsg12, strlen((char*) interpreterHelpMsg12));
 
-  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
-  usbToHostWait(helpMsg21, strlen((char*) helpMsg21));
+  usbToHostWait(interpreterHelpMsg21, strlen((char*) interpreterHelpMsg21));
 
-  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
-  usbToHostWait(helpMsg22, strlen((char*) helpMsg22));
+  usbToHostWait(interpreterHelpMsg22, strlen((char*) interpreterHelpMsg22));
 
-  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
-  usbToHostWait(helpMsg12, strlen((char*) helpMsg12));
+  usbToHostWait(interpreterHelpMsg12, strlen((char*) interpreterHelpMsg12));
 
-  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
-  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
+  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
+  osSemaphoreRelease(usbToHostBinarySemHandle);
+}
+
+const uint8_t interpreterShowCursor01[] =
+    "> ";
+void interpreterShowCursor(void)
+{
+  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  usbToHostWait(interpreterShowCursor01, strlen((char*) interpreterShowCursor01));
   osSemaphoreRelease(usbToHostBinarySemHandle);
 }
 
@@ -148,9 +169,22 @@ void prvDoInterprete(const uint8_t *buf, uint32_t len)
   const char *cb = (const char*) buf;
 
   if (!strncmp("help", cb, len)) {
-    printHelp();
+    interpreterPrintHelp();
 
   } else if(!strncmp("restart", cb, len)) {
-    doRestart();
+    Reset_Handler();
+
+  } else {
+    prvUnknownCommand();
   }
+}
+
+
+const uint8_t interpreterUnknownCommand01[] =
+    "\r\n?? unknown command - please try 'help' ??\r\n\r\n";
+void prvUnknownCommand(void)
+{
+  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  usbToHostWait(interpreterUnknownCommand01, strlen((char*) interpreterUnknownCommand01));
+  osSemaphoreRelease(usbToHostBinarySemHandle);
 }

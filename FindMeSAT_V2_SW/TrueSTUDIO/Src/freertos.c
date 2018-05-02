@@ -195,6 +195,11 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
+  vQueueAddToRegistry(usbToHostQueueHandle,     "USBtoHostQ");
+  vQueueAddToRegistry(usbToHostBinarySemHandle, "USBtoHostEG");
+  vQueueAddToRegistry(usbToHostBinarySemHandle, "USBtoHost");
+  vQueueAddToRegistry(usbFromHostQueueHandle,   "USBfromHostQ");
+  vQueueAddToRegistry(usbToHostBinarySemHandle, "USBfromHostBSem");
   /* USER CODE END RTOS_QUEUES */
 }
 
