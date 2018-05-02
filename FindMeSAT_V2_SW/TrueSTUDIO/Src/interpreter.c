@@ -168,10 +168,10 @@ void prvDoInterprete(const uint8_t *buf, uint32_t len)
 {
   const char *cb = (const char*) buf;
 
-  if (!strncmp("help", cb, len)) {
+  if (!strncmp("help", cb, 4)) {
     interpreterPrintHelp();
 
-  } else if(!strncmp("restart", cb, len)) {
+  } else if(!strncmp("restart", cb, 7)) {
     Reset_Handler();
 
   } else {
