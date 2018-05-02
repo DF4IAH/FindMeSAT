@@ -68,10 +68,12 @@ osThreadId controllerTaskHandle;
 osThreadId interpreterTaskHandle;
 osMessageQId usbToHostQueueHandle;
 osMessageQId usbFromHostQueueHandle;
+osSemaphoreId usbToHostBinarySemHandle;
 
 /* USER CODE BEGIN Variables */
 extern uint8_t usbFromHostISRBuf[64];
 extern uint32_t usbFromHostISRBufLen;
+EventGroupHandle_t usbToHostEventGroupHandle;
 
 /* USER CODE END Variables */
 
@@ -143,8 +145,14 @@ void MX_FREERTOS_Init(void) {
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
 
+  /* Create the semaphores(s) */
+  /* definition and creation of usbToHostBinarySem */
+  osSemaphoreDef(usbToHostBinarySem);
+  usbToHostBinarySemHandle = osSemaphoreCreate(osSemaphore(usbToHostBinarySem), 1);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
+  usbToHostEventGroupHandle = xEventGroupCreate();
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -178,7 +186,7 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* definition and creation of usbToHostQueue */
-  osMessageQDef(usbToHostQueue, 128, uint8_t);
+  osMessageQDef(usbToHostQueue, 512, uint8_t);
   usbToHostQueueHandle = osMessageCreate(osMessageQ(usbToHostQueue), NULL);
 
   /* definition and creation of usbFromHostQueue */

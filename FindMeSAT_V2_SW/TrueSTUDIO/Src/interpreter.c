@@ -7,6 +7,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <string.h>
+#include "FreeRTOS.h"
 #include <sys/_stdint.h>
 #include <cmsis_os.h>
 #include "main.h"
@@ -16,7 +17,9 @@
 
 
 /* Variables -----------------------------------------------------------------*/
-extern osMessageQId usbFromHostQueueHandle;
+extern osMessageQId       usbFromHostQueueHandle;
+extern osSemaphoreId      usbToHostBinarySemHandle;
+extern EventGroupHandle_t usbToHostEventGroupHandle;
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -57,6 +60,16 @@ void interpreterInterpreterTaskLoop(void)
       prevCr = 0;
     }
 
+    /* Echoing back to USB CDC IN */
+    if (1) {
+      usbToHost(&chr, 1);
+      if (chr == 0x0d) {
+        /* Add a LF for the terminal */
+        usbToHost((uint8_t*) "\n", 1);
+      }
+    }
+
+    /* Concatenate for the interpreter buffer */
     inBuf[inBufPos++] = chr;
 
     /* Process line */
@@ -65,7 +78,7 @@ void interpreterInterpreterTaskLoop(void)
 
       /* Interpreter */
       if (inBufPos < (sizeof(inBuf) - 1)) {
-        //prvDoInterprete(inBuf, inBufPos);
+        prvDoInterprete(inBuf, inBufPos);
       }
 
       /* Prepare for next command */
@@ -76,18 +89,56 @@ void interpreterInterpreterTaskLoop(void)
 }
 
 
-const uint8_t helpMsg[] =
-    "\r\n"
-    "\r\n"
-    "List of commands\r\n"
-    "----------------\r\n"
-    "\r\n"
-    "help\t\tPrint this list of commands.\r\n"
-    "restart\t\tRestart this device.\r\n"
+const uint8_t helpMsg01[] =
     "\r\n";
+const uint8_t helpMsg02[] =
+    "\t====================================\r\n";
+const uint8_t helpMsg03[] =
+    "\t*  HELP:  Listing of the commands  *\r\n";
+const uint8_t helpMsg11[] =
+    "\tCommand       +\tRemarks\r\n";
+const uint8_t helpMsg12[] =
+    "\t--------------+\t---------------------------------------------\r\n";
+const uint8_t helpMsg21[] =
+    "\thelp\t\tPrint this list of commands.\r\n";
+const uint8_t helpMsg22[] =
+    "\trestart\t\tRestart this device.\r\n";
 void printHelp(void)
 {
-  usbToHost(helpMsg, strlen((char*) helpMsg));
+  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+
+  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+
+  usbToHostWait(helpMsg02, strlen((char*) helpMsg02));
+
+  usbToHostWait(helpMsg03, strlen((char*) helpMsg03));
+
+  usbToHostWait(helpMsg02, strlen((char*) helpMsg02));
+
+  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+
+  usbToHostWait(helpMsg11, strlen((char*) helpMsg11));
+
+  usbToHostWait(helpMsg12, strlen((char*) helpMsg12));
+
+  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+
+  usbToHostWait(helpMsg21, strlen((char*) helpMsg21));
+
+  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+
+  usbToHostWait(helpMsg22, strlen((char*) helpMsg22));
+
+  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+
+  usbToHostWait(helpMsg12, strlen((char*) helpMsg12));
+
+  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+  usbToHostWait(helpMsg01, strlen((char*) helpMsg01));
+
+  osSemaphoreRelease(usbToHostBinarySemHandle);
 }
 
 

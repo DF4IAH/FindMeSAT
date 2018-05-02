@@ -6,8 +6,6 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-#include "usb.h"
-
 #include <string.h>
 #include "FreeRTOS.h"
 #include "task.h"
@@ -21,12 +19,15 @@
 #include "stm32l4xx_nucleo_144.h"
 #include "stm32l4xx_hal.h"
 
+#include "usb.h"
+
 
 /* Variables -----------------------------------------------------------------*/
-extern osMessageQId	usbToHostQueueHandle;
-extern osMessageQId	usbFromHostQueueHandle;
-uint8_t				usbFromHostISRBuf[64]	= { 0 };
-uint32_t 			usbFromHostISRBufLen	= 0;
+extern osMessageQId       usbToHostQueueHandle;
+extern osMessageQId       usbFromHostQueueHandle;
+extern EventGroupHandle_t usbToHostEventGroupHandle;
+uint8_t                   usbFromHostISRBuf[64]	= { 0 };
+uint32_t                  usbFromHostISRBufLen	= 0;
 
 
 void usbToHost(const uint8_t* buf, uint32_t len)
@@ -40,6 +41,15 @@ void usbToHost(const uint8_t* buf, uint32_t len)
 		osMessagePut(usbToHostQueueHandle, 0, maxWaitMs);
 	}
 }
+
+void usbToHostWait(const uint8_t* buf, uint32_t len)
+{
+  EventBits_t eb = xEventGroupWaitBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY, 0, 0, portMAX_DELAY);
+  if (eb & USB_TO_HOST_EG__BUF_EMPTY) {
+    usbToHost(buf, len);
+  }
+}
+
 
 void usbFromHostFromIRQ(const uint8_t* buf, uint32_t len)
 {
@@ -81,6 +91,7 @@ void usbUsbToHostTaskInit(void)
     osDelay(25);
   }
   osDelay(250);
+  xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);                                // Blue off
 }
 
@@ -94,6 +105,9 @@ void usbUsbToHostTaskLoop(void)
   /* Take next character from the queue*/
   xStatus = xQueueReceive(usbToHostQueueHandle, &inChr, 100 / portTICK_PERIOD_MS);
   if ((pdPASS == xStatus) && inChr) {
+    /* Group-Bit set */
+    xEventGroupClearBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
+
     buf[bufCtr++] = inChr;
   }
 
@@ -114,6 +128,9 @@ void usbUsbToHostTaskLoop(void)
         /* Data accepted for transmission */
         bufCtr = 0;
         buf[0] = 0;
+        /* Group-Bit release */
+        xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
+
         HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                          // Red off
         break;
 

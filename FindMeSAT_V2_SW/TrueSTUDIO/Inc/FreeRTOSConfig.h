@@ -195,7 +195,9 @@ standard names. */
 /* USER CODE BEGIN 2 */    
 /* Definitions needed when configGENERATE_RUN_TIME_STATS is on */
 #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS configureTimerForRunTimeStats
-#define portGET_RUN_TIME_COUNTER_VALUE getRunTimeCounterValue    
+#define portGET_RUN_TIME_COUNTER_VALUE getRunTimeCounterValue
+
+#define USB_TO_HOST_EG__BUF_EMPTY 0x000001
 /* USER CODE END 2 */
 
 /* USER CODE BEGIN Defines */   	      
