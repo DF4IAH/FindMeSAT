@@ -154,6 +154,9 @@
 
 typedef void * TaskHandle_t;
 
+void mainDefaultTaskInit(void);
+void mainDefaultTaskLoop(void);
+
 void configureTimerForRunTimeStats(void);
 unsigned long getRunTimeCounterValue(void);
 void vAssertCalled( const char *pcFile, uint32_t ulLine);

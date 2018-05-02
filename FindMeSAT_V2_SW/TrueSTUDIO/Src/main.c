@@ -59,6 +59,11 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN Includes */
+#include <stddef.h>
+#include <sys/_stdint.h>
+#include <stdio.h>
+#include "stm32l4xx_nucleo_144.h"
+#include "stm32l4xx_hal.h"
 
 /* USER CODE END Includes */
 
@@ -66,6 +71,7 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+static GPIO_InitTypeDef  GPIO_InitStruct;
 volatile uint32_t	g_timer_us = 0;
 volatile uint32_t	g_timerStart_us = 0;
 
@@ -81,6 +87,42 @@ void MX_FREERTOS_Init(void);
 /* USER CODE END PFP */
 
 /* USER CODE BEGIN 0 */
+
+void mainDefaultTaskInit(void)
+{
+  /* -1- Enable GPIO Clock (to be able to program the configuration registers) */
+  LED1_GPIO_CLK_ENABLE()
+  ;  // Green
+  LED2_GPIO_CLK_ENABLE()
+  ;  // Blue
+  LED3_GPIO_CLK_ENABLE()
+  ;  // Red
+
+  /* -2- Configure IO in output push-pull mode to drive external LEDs */
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_VERY_HIGH;
+
+  GPIO_InitStruct.Pin = LED1_PIN;
+  HAL_GPIO_Init(LED1_GPIO_PORT, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LED2_PIN;
+  HAL_GPIO_Init(LED2_GPIO_PORT, &GPIO_InitStruct);
+  GPIO_InitStruct.Pin = LED3_PIN;
+  HAL_GPIO_Init(LED3_GPIO_PORT, &GPIO_InitStruct);
+}
+
+void mainDefaultTaskLoop(void)
+{
+#if 0
+  unsigned char buf[32] = { 0 };
+  strcpy((char*) buf, "+\r\n");
+
+  snprintf((char*) (buf + 1), sizeof(buf), " %010ld\r\n", getRunTimeCounterValue());
+  usbToHost(buf, strlen((char*) buf));
+#endif
+
+  osDelay(1000);
+}
 
 /* USER CODE END 0 */
 
@@ -136,11 +178,9 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-
   /* USER CODE END WHILE */
 
   /* USER CODE BEGIN 3 */
-
   }
   /* USER CODE END 3 */
 
@@ -171,7 +211,13 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.HSICalibrationValue = 64;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = 2;
+  RCC_OscInitStruct.PLL.PLLN = 20;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
+  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV8;
+  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -181,12 +227,12 @@ void SystemClock_Config(void)
     */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -196,7 +242,7 @@ void SystemClock_Config(void)
                               |RCC_PERIPHCLK_USB;
   PeriphClkInit.Uart5ClockSelection = RCC_UART5CLKSOURCE_HSI;
   PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_HSI;
-  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_PCLK1;
+  PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
   PeriphClkInit.RTCClockSelection = RCC_RTCCLKSOURCE_LSE;
   PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)

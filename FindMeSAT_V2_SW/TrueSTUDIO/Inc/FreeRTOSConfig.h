@@ -106,7 +106,7 @@
 #define configTICK_RATE_HZ                       ((TickType_t)1000)
 #define configMAX_PRIORITIES                     ( 7 )
 #define configMINIMAL_STACK_SIZE                 ((uint16_t)128)
-#define configTOTAL_HEAP_SIZE                    ((size_t)6000)
+#define configTOTAL_HEAP_SIZE                    ((size_t)8192)
 #define configMAX_TASK_NAME_LEN                  ( 16 )
 #define configGENERATE_RUN_TIME_STATS            1
 #define configUSE_TRACE_FACILITY                 1
@@ -143,6 +143,8 @@ to exclude the API function. */
 #define INCLUDE_xTaskGetSchedulerState      1
 #define INCLUDE_xEventGroupSetBitFromISR    1
 #define INCLUDE_xTimerPendFunctionCall      1
+#define INCLUDE_xQueueGetMutexHolder        1
+#define INCLUDE_xSemaphoreGetMutexHolder    1
 #define INCLUDE_pcTaskGetTaskName           1
 #define INCLUDE_uxTaskGetStackHighWaterMark 1
 #define INCLUDE_xTaskGetCurrentTaskHandle   1
@@ -193,7 +195,10 @@ standard names. */
 /* USER CODE BEGIN 2 */    
 /* Definitions needed when configGENERATE_RUN_TIME_STATS is on */
 #define portCONFIGURE_TIMER_FOR_RUN_TIME_STATS configureTimerForRunTimeStats
-#define portGET_RUN_TIME_COUNTER_VALUE getRunTimeCounterValue    
+#define portGET_RUN_TIME_COUNTER_VALUE getRunTimeCounterValue
+
+#define USB_TO_HOST_EG__BUF_EMPTY     0x000001
+#define USB_TO_HOST_EG__ECHO_ON       0x000002
 /* USER CODE END 2 */
 
 /* USER CODE BEGIN Defines */   	      

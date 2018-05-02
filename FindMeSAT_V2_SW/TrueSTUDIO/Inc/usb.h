@@ -14,8 +14,15 @@
 
 /* Called from the application */
 void usbToHost(const uint8_t* buf, uint32_t len);
+void usbToHostWait(const uint8_t* buf, uint32_t len);
 
 /* Called from the USB CDC backend */
 void usbFromHostFromIRQ(const uint8_t* buf, uint32_t len);
+
+void usbUsbToHostTaskInit(void);
+void usbUsbToHostTaskLoop(void);
+
+void usbUsbFromHostTaskInit(void);
+void usbUsbFromHostTaskLoop(void);
 
 #endif /* USB_H_ */
