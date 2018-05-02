@@ -20,6 +20,7 @@
 extern osMessageQId       usbFromHostQueueHandle;
 extern osSemaphoreId      usbToHostBinarySemHandle;
 extern EventGroupHandle_t usbToHostEventGroupHandle;
+extern uint8_t usbClrScrBuf[4];
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -112,8 +113,10 @@ const uint8_t interpreterHelpMsg11[] =
 const uint8_t interpreterHelpMsg12[] =
     "\t--------------+\t---------------------------------------------\r\n";
 const uint8_t interpreterHelpMsg21[] =
-    "\thelp\t\tPrint this list of commands.\r\n";
+    "\tc\t\tClear screen.\r\n";
 const uint8_t interpreterHelpMsg22[] =
+    "\thelp\t\tPrint this list of commands.\r\n";
+const uint8_t interpreterHelpMsg23[] =
     "\trestart\t\tRestart this device.\r\n";
 void interpreterPrintHelp(void)
 {
@@ -138,11 +141,12 @@ void interpreterPrintHelp(void)
   usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
   usbToHostWait(interpreterHelpMsg21, strlen((char*) interpreterHelpMsg21));
-
   usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
   usbToHostWait(interpreterHelpMsg22, strlen((char*) interpreterHelpMsg22));
+  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
+  usbToHostWait(interpreterHelpMsg23, strlen((char*) interpreterHelpMsg23));
   usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
   usbToHostWait(interpreterHelpMsg12, strlen((char*) interpreterHelpMsg12));
@@ -162,16 +166,26 @@ void interpreterShowCursor(void)
   osSemaphoreRelease(usbToHostBinarySemHandle);
 }
 
+void interpreterClearScreen(void)
+{
+  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  usbToHostWait(usbClrScrBuf, strlen((char*) usbClrScrBuf));
+  osSemaphoreRelease(usbToHostBinarySemHandle);
+}
+
 
 /* Private functions ---------------------------------------------------------*/
 void prvDoInterprete(const uint8_t *buf, uint32_t len)
 {
   const char *cb = (const char*) buf;
 
-  if (!strncmp("help", cb, 4)) {
+  if (!strncmp("c", cb, 1) && (1 == len)) {
+    interpreterClearScreen();
+
+  } else if (!strncmp("help", cb, 4) && (4 == len)) {
     interpreterPrintHelp();
 
-  } else if(!strncmp("restart", cb, 7)) {
+  } else if(!strncmp("restart", cb, 7) && (7 == len)) {
     Reset_Handler();
 
   } else {
