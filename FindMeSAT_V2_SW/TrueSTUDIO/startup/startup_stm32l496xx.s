@@ -251,6 +251,20 @@ g_pfnVectors:
 	.word	CAN2_RX1_IRQHandler
 	.word	CAN2_SCE_IRQHandler
 	.word	DMA2D_IRQHandler  
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word 0
+	.word  BootRAM       /* @0x1E0. This is for boot in RAM mode for
+                         STM32F10x High Density devices. */
 
 
 /*******************************************************************************
