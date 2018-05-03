@@ -161,23 +161,23 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the thread(s) */
   /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityNormal, 0, 128);
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityBelowNormal, 0, 128);
   defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
 
   /* definition and creation of usbToHostTask */
-  osThreadDef(usbToHostTask, StartUsbToHostTask, osPriorityAboveNormal, 0, 128);
+  osThreadDef(usbToHostTask, StartUsbToHostTask, osPriorityHigh, 0, 128);
   usbToHostTaskHandle = osThreadCreate(osThread(usbToHostTask), NULL);
 
   /* definition and creation of usbFromHostTask */
-  osThreadDef(usbFromHostTask, StartUsbFromHostTask, osPriorityAboveNormal, 0, 128);
+  osThreadDef(usbFromHostTask, StartUsbFromHostTask, osPriorityHigh, 0, 128);
   usbFromHostTaskHandle = osThreadCreate(osThread(usbFromHostTask), NULL);
 
   /* definition and creation of controllerTask */
-  osThreadDef(controllerTask, StartControllerTask, osPriorityBelowNormal, 0, 128);
+  osThreadDef(controllerTask, StartControllerTask, osPriorityNormal, 0, 128);
   controllerTaskHandle = osThreadCreate(osThread(controllerTask), NULL);
 
   /* definition and creation of interpreterTask */
-  osThreadDef(interpreterTask, StartInterpreterTask, osPriorityNormal, 0, 128);
+  osThreadDef(interpreterTask, StartInterpreterTask, osPriorityAboveNormal, 0, 128);
   interpreterTaskHandle = osThreadCreate(osThread(interpreterTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
