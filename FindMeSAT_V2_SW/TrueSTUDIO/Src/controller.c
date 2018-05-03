@@ -11,11 +11,14 @@
 #include <string.h>
 #include <stdio.h>
 #include "FreeRTOS.h"
+#include "stm32l496xx.h"
 #include "cmsis_os.h"
 #include "usb.h"
 #include "interpreter.h"
 
 #include "controller.h"
+
+//#pragma GCC diagnostic ignored "-Wformat"
 
 
 /* Private variables ---------------------------------------------------------*/
@@ -26,6 +29,7 @@ extern EventGroupHandle_t usbToHostEventGroupHandle;
 static void prvControllerInitBeforeGreet(void);
 static void prvControllerInitAfterGreet(void);
 static void prvControllerUsbGreet(void);
+static void prvControllerPrintUID(void);
 
 
 /* Global functions ----------------------------------------------------------*/
@@ -52,53 +56,76 @@ void controllerControllerTaskLoop(void)
 
 
 /* Private functions ---------------------------------------------------------*/
-const uint8_t controllerGreetMsg01[] = "\r\n";
-const uint8_t controllerGreetMsg02[] = "+=======================================================+\r\n";
-const uint8_t controllerGreetMsg03[] = "*                                                       *\r\n";
-const uint8_t controllerGreetMsg04[] = "*  FindMeSAT V2 - by DF4IAH - ARM powered by STM32L496  *\r\n";
-const uint8_t controllerGreetMsg11[] = "\tFindMeSAT_V2 version: %08ld\r\n";
+const char controllerGreetMsg01[] = "\r\n";
+const char controllerGreetMsg02[] = "+=======================================================+\r\n";
+const char controllerGreetMsg03[] = "*                                                       *\r\n";
+const char controllerGreetMsg04[] = "*  FindMeSAT V2 - by DF4IAH - ARM powered by STM32L496  *\r\n";
+const char controllerGreetMsg11[] = "\tFindMeSAT_V2 version: %08u\r\n";
 void prvControllerUsbGreet(void)
 {
   uint8_t clrScrBuf[2] = { 0x0c, 0 };
-  uint8_t verBuf[48];
+  char verBuf[48];
 
-  sprintf((char*) verBuf, (char*) controllerGreetMsg11, FINDMESAT_VERSION);
+  sprintf(verBuf, controllerGreetMsg11, FINDMESAT_VERSION);
 
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
 
   usbToHostWait(clrScrBuf, 1);
-  usbToHostWait(controllerGreetMsg01, strlen((char*) controllerGreetMsg01));
+  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
 
-  usbToHostWait(controllerGreetMsg02, strlen((char*) controllerGreetMsg02));
+  usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
 
-  usbToHostWait(controllerGreetMsg03, strlen((char*) controllerGreetMsg03));
+  usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
 
-  usbToHostWait(controllerGreetMsg04, strlen((char*) controllerGreetMsg04));
+  usbToHostWait((uint8_t*) controllerGreetMsg04, strlen(controllerGreetMsg04));
 
-  usbToHostWait(controllerGreetMsg03, strlen((char*) controllerGreetMsg03));
+  usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
 
-  usbToHostWait(controllerGreetMsg02, strlen((char*) controllerGreetMsg02));
+  usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
 
-  usbToHostWait(controllerGreetMsg01, strlen((char*) controllerGreetMsg01));
+  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
 
-  usbToHostWait(verBuf, strlen((char*) verBuf));
+  usbToHostWait((uint8_t*) verBuf, strlen(verBuf));
 
-  usbToHostWait(controllerGreetMsg01, strlen((char*) controllerGreetMsg01));
-  usbToHostWait(controllerGreetMsg01, strlen((char*) controllerGreetMsg01));
+  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
+  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
 
   osSemaphoreRelease(usbToHostBinarySemHandle);
 
   interpreterPrintHelp();
-  interpreterShowCursor();
 }
 
 void prvControllerInitBeforeGreet(void)
 {
   /* USB typing echo */
   xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON);   // TODO: should be from Config-FLASH page
+
 }
 
 void prvControllerInitAfterGreet(void)
 {
+  /* Print UID of the ARM-4M */
+  prvControllerPrintUID();
 
+  /* At the last position show the cursor */
+  interpreterShowCursor();
+}
+
+void prvControllerPrintUID(void)
+{
+  char lotBuf[8];
+  char buf[80] = { 0 };
+
+  uint32_t uidPosX    = (*((uint32_t*)  UID_BASE     )      ) & 0X0000ffffUL;
+  uint32_t uidPosY    = (*((uint32_t*)  UID_BASE     ) >> 16) & 0X0000ffffUL;
+  uint32_t uidWaf     = (*((uint32_t*) (UID_BASE + 4))      ) & 0X000000ffUL;
+  char* uidLot        = ((char*)       (UID_BASE + 5));
+  memcpy(lotBuf, uidLot, 7);
+  lotBuf[7] = 0;
+
+  sprintf(buf, "\tLot-Id:\t\t%s\r\n\tWafer:\t\t%lu\r\n\tPos. X/Y:\t%2lu/%2lu\r\n\r\n", lotBuf, uidWaf, uidPosX, uidPosY);
+
+  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  usbToHostWait((uint8_t*) buf, strlen(buf));
+  osSemaphoreRelease(usbToHostBinarySemHandle);
 }
