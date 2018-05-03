@@ -146,6 +146,12 @@ void mainDefaultTaskLoop(void)
 int main(void)
 {
   /* USER CODE BEGIN 1 */
+  /* Check if ARM core is already in reset state */
+  if (!(RCC->CSR & 0xff000000UL)) {
+    /* ARM software reset to be done */
+    SystemResetbyARMcore();
+  }
+  __HAL_RCC_CLEAR_RESET_FLAGS();
 
   /* USER CODE END 1 */
 

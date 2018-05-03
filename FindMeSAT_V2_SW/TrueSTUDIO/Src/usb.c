@@ -30,23 +30,27 @@ uint8_t                   usbFromHostISRBuf[64]	= { 0 };
 uint32_t                  usbFromHostISRBufLen	= 0;
 
 
+const uint8_t usbToHost_MaxWaitQueueMs = 25;
 void usbToHost(const uint8_t* buf, uint32_t len)
 {
-	const uint8_t maxWaitMs = 25;
 
 	if (buf && len) {
 		while (len--) {
-			osMessagePut(usbToHostQueueHandle, *(buf++), maxWaitMs);
+			osMessagePut(usbToHostQueueHandle, *(buf++), usbToHost_MaxWaitQueueMs);
 		}
-		osMessagePut(usbToHostQueueHandle, 0, maxWaitMs);
+		osMessagePut(usbToHostQueueHandle, 0, usbToHost_MaxWaitQueueMs);
 	}
 }
 
+const uint16_t usbToHostWait_MaxWaitSemMs = 250;
 void usbToHostWait(const uint8_t* buf, uint32_t len)
 {
-  EventBits_t eb = xEventGroupWaitBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY, 0, 0, portMAX_DELAY);
+  EventBits_t eb = xEventGroupWaitBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY, 0, 0, usbToHostWait_MaxWaitSemMs);
   if (eb & USB_TO_HOST_EG__BUF_EMPTY) {
     usbToHost(buf, len);
+
+//  } else {
+//    __asm volatile( "nop" );
   }
 }
 
@@ -99,16 +103,23 @@ void usbUsbToHostTaskLoop(void)
 {
   static uint8_t buf[32] = { 0 };
   static uint8_t bufCtr = 0;
-  uint8_t inChr = 0;
+  uint8_t inChr;
   BaseType_t xStatus;
 
-  /* Take next character from the queue*/
+  /* Take next character from the queue - at least update each 100ms */
+  inChr = 0;
   xStatus = xQueueReceive(usbToHostQueueHandle, &inChr, 100 / portTICK_PERIOD_MS);
   if ((pdPASS == xStatus) && inChr) {
-    /* Group-Bit set */
+    /* Group-Bit for empty queue cleared */
     xEventGroupClearBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
 
     buf[bufCtr++] = inChr;
+
+  } else {
+    if (pdPASS != xStatus) {
+      /* Group-Bit for empty queue set */
+      xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
+    }
   }
 
   /* Flush when 0 or when buffer is full */
@@ -128,7 +139,8 @@ void usbUsbToHostTaskLoop(void)
         /* Data accepted for transmission */
         bufCtr = 0;
         buf[0] = 0;
-        /* Group-Bit release */
+
+        /* Group-Bit for empty queue set */
         xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
 
         HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                          // Red off
