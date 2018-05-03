@@ -186,7 +186,7 @@ void prvDoInterprete(const uint8_t *buf, uint32_t len)
     interpreterPrintHelp();
 
   } else if(!strncmp("restart", cb, 7) && (7 == len)) {
-    Reset_Handler();
+    SystemResetbyARMcore();
 
   } else {
     prvUnknownCommand();
