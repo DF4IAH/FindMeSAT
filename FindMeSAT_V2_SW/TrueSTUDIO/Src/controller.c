@@ -83,6 +83,7 @@ void prvControllerUsbGreet(void)
   osSemaphoreRelease(usbToHostBinarySemHandle);
 
   interpreterPrintHelp();
+  interpreterShowCursor();
 }
 
 void prvControllerInitBeforeGreet(void)

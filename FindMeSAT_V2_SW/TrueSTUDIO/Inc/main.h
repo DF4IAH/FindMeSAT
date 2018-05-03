@@ -150,7 +150,9 @@
 /* #define USE_FULL_ASSERT    1U */
 
 /* USER CODE BEGIN Private defines */
-#define USE_FULL_ASSERT    1U
+#define USE_FULL_ASSERT     1U
+
+#define FINDMESAT_VERSION   20180503U
 
 typedef void * TaskHandle_t;
 
@@ -159,6 +161,7 @@ void mainDefaultTaskLoop(void);
 
 void configureTimerForRunTimeStats(void);
 unsigned long getRunTimeCounterValue(void);
+void SystemResetbyARMcore(void);
 void vAssertCalled( const char *pcFile, uint32_t ulLine);
 void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName);
 void vApplicationMallocFailedHook(void);
