@@ -105,49 +105,49 @@ void interpreterInterpreterTaskLoop(void)
 const uint8_t interpreterHelpMsg01[] =
     "\r\n";
 const uint8_t interpreterHelpMsg02[] =
-    "\t====================================\r\n";
+    "\t==============================\r\n";
 const uint8_t interpreterHelpMsg03[] =
-    "\t*  HELP:  Listing of the commands  *\r\n";
+    "\tHELP:  Listing of the commands\r\n";
 const uint8_t interpreterHelpMsg11[] =
-    "\tCommand       +\tRemarks\r\n";
+    "\t\tCommand       +\tRemarks\r\n";
 const uint8_t interpreterHelpMsg12[] =
-    "\t--------------+\t---------------------------------------------\r\n";
+    "\t\t--------------+\t---------------------------------------------\r\n";
 const uint8_t interpreterHelpMsg21[] =
-    "\tc\t\tClear screen.\r\n";
+    "\t\tc\t\tClear screen.\r\n";
 const uint8_t interpreterHelpMsg22[] =
-    "\thelp\t\tPrint this list of commands.\r\n";
+    "\t\thelp\t\tPrint this list of commands.\r\n";
 const uint8_t interpreterHelpMsg23[] =
-    "\trestart\t\tRestart this device.\r\n";
+    "\t\trestart\t\tRestart this device.\r\n";
 void interpreterPrintHelp(void)
 {
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
 
-  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
+  //usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
   usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
-  usbToHostWait(interpreterHelpMsg02, strlen((char*) interpreterHelpMsg02));
+  //usbToHostWait(interpreterHelpMsg02, strlen((char*) interpreterHelpMsg02));
 
   usbToHostWait(interpreterHelpMsg03, strlen((char*) interpreterHelpMsg03));
 
   usbToHostWait(interpreterHelpMsg02, strlen((char*) interpreterHelpMsg02));
 
-  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
+  //usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
   usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
   usbToHostWait(interpreterHelpMsg11, strlen((char*) interpreterHelpMsg11));
 
   usbToHostWait(interpreterHelpMsg12, strlen((char*) interpreterHelpMsg12));
 
-  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
+  //usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
   usbToHostWait(interpreterHelpMsg21, strlen((char*) interpreterHelpMsg21));
-  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
+  //usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
   usbToHostWait(interpreterHelpMsg22, strlen((char*) interpreterHelpMsg22));
-  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
+  //usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
   usbToHostWait(interpreterHelpMsg23, strlen((char*) interpreterHelpMsg23));
-  usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
+  //usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
   usbToHostWait(interpreterHelpMsg12, strlen((char*) interpreterHelpMsg12));
 

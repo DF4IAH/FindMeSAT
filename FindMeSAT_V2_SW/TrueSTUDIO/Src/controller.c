@@ -121,7 +121,7 @@ const char controllerPackages0xXX[] = "(reserved)";
 void prvControllerPrintUID(void)
 {
   char lotBuf[8];
-  char buf[80] = { 0 };
+  char buf[140] = { 0 };
   const char *packagePtr = NULL;
 
   uint32_t uidPosX    = (*((uint32_t*)  UID_BASE     )      ) & 0X0000ffffUL;
@@ -161,7 +161,16 @@ void prvControllerPrintUID(void)
     packagePtr = controllerPackages0xXX;
   }
 
-  sprintf(buf, "\tLot-Id:\t\t%s\r\n\tWafer:\t\t%lu\r\n\tPos. X/Y:\t%2lu/%2lu\r\n\tPackage(s):\t%s\r\n\r\n", lotBuf, uidWaf, uidPosX, uidPosY, packagePtr);
+  sprintf(buf,
+      "\r\n"
+      "\tMCU Info\r\n"
+      "\t========\r\n"
+      "\r\n"
+      "\t\tLot-ID:\t\t%s\r\n"
+      "\t\tWafer:\t\t%lu\r\n"
+      "\t\tPos. X/Y:\t%2lu/%2lu\r\n"
+      "\t\tPackage(s):\t%s\r\n\r\n\r\n",
+      lotBuf, uidWaf, uidPosX, uidPosY, packagePtr);
 
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) buf, strlen(buf));
