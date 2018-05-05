@@ -161,16 +161,19 @@ void prvControllerPrintUID(void)
     packagePtr = controllerPackages0xXX;
   }
 
+  uint16_t flashSize = (uint16_t) ((*((uint32_t*) FLASHSIZE_BASE)) & 0x0000ffffUL);
+
   sprintf(buf,
       "\r\n"
-      "\tMCU Info\r\n"
-      "\t========\r\n"
+      "\tMCU Info:\r\n"
+      "\t=========\r\n"
       "\r\n"
       "\t\tLot-ID:\t\t%s\r\n"
       "\t\tWafer:\t\t%lu\r\n"
       "\t\tPos. X/Y:\t%2lu/%2lu\r\n"
-      "\t\tPackage(s):\t%s\r\n\r\n\r\n",
-      lotBuf, uidWaf, uidPosX, uidPosY, packagePtr);
+      "\t\tPackage(s):\t%s\r\n"
+      "\t\tFlash size:\t%4u kB\r\n\r\n\r\n",
+      lotBuf, uidWaf, uidPosX, uidPosY, packagePtr, flashSize);
 
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) buf, strlen(buf));
