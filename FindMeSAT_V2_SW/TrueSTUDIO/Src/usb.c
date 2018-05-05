@@ -30,10 +30,9 @@ uint8_t                   usbFromHostISRBuf[64]	= { 0 };
 uint32_t                  usbFromHostISRBufLen	= 0;
 
 
-const uint8_t usbToHost_MaxWaitQueueMs = 25;
+const uint8_t usbToHost_MaxWaitQueueMs = 100;
 void usbToHost(const uint8_t* buf, uint32_t len)
 {
-
 	if (buf && len) {
 		while (len--) {
 			osMessagePut(usbToHostQueueHandle, *(buf++), usbToHost_MaxWaitQueueMs);
@@ -42,15 +41,12 @@ void usbToHost(const uint8_t* buf, uint32_t len)
 	}
 }
 
-const uint16_t usbToHostWait_MaxWaitSemMs = 250;
+const uint16_t usbToHostWait_MaxWaitSemMs = 500;
 void usbToHostWait(const uint8_t* buf, uint32_t len)
 {
   EventBits_t eb = xEventGroupWaitBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY, 0, 0, usbToHostWait_MaxWaitSemMs);
   if (eb & USB_TO_HOST_EG__BUF_EMPTY) {
     usbToHost(buf, len);
-
-//  } else {
-//    __asm volatile( "nop" );
   }
 }
 
