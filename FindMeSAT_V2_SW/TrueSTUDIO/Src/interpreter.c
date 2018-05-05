@@ -107,7 +107,7 @@ const uint8_t interpreterHelpMsg01[] =
 const uint8_t interpreterHelpMsg02[] =
     "\t==============================\r\n";
 const uint8_t interpreterHelpMsg03[] =
-    "\tHELP:  Listing of the commands\r\n";
+    "\tHELP - listing of the commands:\r\n";
 const uint8_t interpreterHelpMsg11[] =
     "\t\tCommand       +\tRemarks\r\n";
 const uint8_t interpreterHelpMsg12[] =

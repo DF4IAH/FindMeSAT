@@ -60,11 +60,16 @@ const char controllerGreetMsg01[] = "\r\n";
 const char controllerGreetMsg02[] = "+=======================================================+\r\n";
 const char controllerGreetMsg03[] = "*                                                       *\r\n";
 const char controllerGreetMsg04[] = "*  FindMeSAT V2 - by DF4IAH - ARM powered by STM32L496  *\r\n";
-const char controllerGreetMsg11[] = "\tFindMeSAT_V2 version: %08u\r\n";
+
+const char controllerGreetMsg11[] =
+    "\tFindMeSAT_V2 version:\r\n"
+    "\t=====================\r\n"
+    "\r\n"
+    "\t\tDate\t\t%08u\r\n";
 void prvControllerUsbGreet(void)
 {
   uint8_t clrScrBuf[2] = { 0x0c, 0 };
-  char verBuf[48];
+  char verBuf[70];
 
   sprintf(verBuf, controllerGreetMsg11, FINDMESAT_VERSION);
 
@@ -72,40 +77,34 @@ void prvControllerUsbGreet(void)
 
   usbToHostWait(clrScrBuf, 1);
   usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
-
   usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
-
   usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
-
   usbToHostWait((uint8_t*) controllerGreetMsg04, strlen(controllerGreetMsg04));
-
   usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
-
   usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
-
+  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
   usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
 
   usbToHostWait((uint8_t*) verBuf, strlen(verBuf));
-
   usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
   usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
 
   osSemaphoreRelease(usbToHostBinarySemHandle);
-
-  interpreterPrintHelp();
 }
 
 void prvControllerInitBeforeGreet(void)
 {
   /* USB typing echo */
   xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON);   // TODO: should be from Config-FLASH page
-
 }
 
 void prvControllerInitAfterGreet(void)
 {
   /* Print UID of the ARM-4M */
   prvControllerPrintUID();
+
+  /* Print help table */
+  interpreterPrintHelp();
 
   /* At the last position show the cursor */
   interpreterShowCursor();
@@ -168,11 +167,11 @@ void prvControllerPrintUID(void)
       "\tMCU Info:\r\n"
       "\t=========\r\n"
       "\r\n"
-      "\t\tLot-ID:\t\t%s\r\n"
-      "\t\tWafer:\t\t%lu\r\n"
-      "\t\tPos. X/Y:\t%2lu/%2lu\r\n"
-      "\t\tPackage(s):\t%s\r\n"
-      "\t\tFlash size:\t%4u kB\r\n\r\n\r\n",
+      "\t\tLot-ID\t\t%s\r\n"
+      "\t\tWafer\t\t%lu\r\n"
+      "\t\tPos. X/Y\t%2lu/%2lu\r\n"
+      "\t\tPackage(s)\t%s\r\n"
+      "\t\tFlash size\t%4u kB\r\n\r\n\r\n",
       lotBuf, uidWaf, uidPosX, uidPosY, packagePtr, flashSize);
 
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
