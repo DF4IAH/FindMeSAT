@@ -42,7 +42,7 @@ void controllerControllerTaskInit(void)
   prvControllerInitBeforeGreet();
 
   /* Delay until the USB CDC init phase is over */
-  osDelayUntil(&prevWakeTime, 2900);
+  osDelayUntil(&prevWakeTime, 3500);
 
   /* Greetings to the USB CDC */
   prvControllerUsbGreet();
@@ -58,9 +58,9 @@ void controllerControllerTaskLoop(void)
 
 /* Private functions ---------------------------------------------------------*/
 const char controllerGreetMsg01[] = "\r\n";
-const char controllerGreetMsg02[] = "+=======================================================+\r\n";
-const char controllerGreetMsg03[] = "*                                                       *\r\n";
-const char controllerGreetMsg04[] = "*  FindMeSAT V2 - by DF4IAH - ARM powered by STM32L496  *\r\n";
+const char controllerGreetMsg02[] = "+===========================================================+\r\n";
+const char controllerGreetMsg03[] = "*                                                           *\r\n";
+const char controllerGreetMsg04[] = "*  FindMeSAT V2 - by DF4IAH - ARM powered by STM32L496ZG-P  *\r\n";
 
 const char controllerGreetMsg11[] =
     "\tFindMeSAT_V2 version:\r\n"
