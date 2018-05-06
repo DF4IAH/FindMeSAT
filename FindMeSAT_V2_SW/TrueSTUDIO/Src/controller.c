@@ -15,6 +15,7 @@
 #include "cmsis_os.h"
 #include "usb.h"
 #include "interpreter.h"
+#include "adc.h"
 
 #include "controller.h"
 
@@ -29,7 +30,7 @@ extern EventGroupHandle_t usbToHostEventGroupHandle;
 static void prvControllerInitBeforeGreet(void);
 static void prvControllerInitAfterGreet(void);
 static void prvControllerUsbGreet(void);
-static void prvControllerPrintUID(void);
+static void prvControllerPrintMCU(void);
 
 
 /* Global functions ----------------------------------------------------------*/
@@ -100,8 +101,8 @@ void prvControllerInitBeforeGreet(void)
 
 void prvControllerInitAfterGreet(void)
 {
-  /* Print UID of the ARM-4M */
-  prvControllerPrintUID();
+  /* Print MCU infos */
+  prvControllerPrintMCU();
 
   /* Print help table */
   interpreterPrintHelp();
@@ -117,10 +118,10 @@ const char controllerPackages0x04[] = "LQFP144, WLCSP81 or WLCSP72";
 const char controllerPackages0x10[] = "UFBGA169";
 const char controllerPackages0x11[] = "WLCSP100";
 const char controllerPackages0xXX[] = "(reserved)";
-void prvControllerPrintUID(void)
+void prvControllerPrintMCU(void)
 {
   char lotBuf[8];
-  char buf[140] = { 0 };
+  char buf[220] = { 0 };
   const char *packagePtr = NULL;
 
   uint32_t uidPosX    = (*((uint32_t*)  UID_BASE     )      ) & 0X0000ffffUL;
@@ -160,7 +161,18 @@ void prvControllerPrintUID(void)
     packagePtr = controllerPackages0xXX;
   }
 
-  uint16_t flashSize = (uint16_t) ((*((uint32_t*) FLASHSIZE_BASE)) & 0x0000ffffUL);
+  uint16_t flashSize      = (uint16_t) ((*((uint32_t*) FLASHSIZE_BASE)) & 0x0000ffffUL);
+
+  /* Request ADC1 Vdda */
+  uint32_t adc1Vdda_mV = adcGetVdda_mV();
+
+  /* Request ADC1 Vbat */
+  uint32_t adc1Vbat_mV    = adcGetVbat_mV();
+
+  /* Request ADC1 Temp */
+  int32_t  adc1Temp_100   = adcGetTemp_100();
+  int16_t  adc1Temp_100_i = adc1Temp_100 / 100;
+  uint16_t adc1Temp_100_f = adc1Temp_100 >= 0 ?  (adc1Temp_100 % 100) : (-adc1Temp_100 % 100);
 
   sprintf(buf,
       "\r\n"
@@ -171,8 +183,11 @@ void prvControllerPrintUID(void)
       "\t\tWafer\t\t%lu\r\n"
       "\t\tPos. X/Y\t%2lu/%2lu\r\n"
       "\t\tPackage(s)\t%s\r\n"
-      "\t\tFlash size\t%4u kB\r\n\r\n\r\n",
-      lotBuf, uidWaf, uidPosX, uidPosY, packagePtr, flashSize);
+      "\t\tFlash size\t%4u kB\r\n"
+      "\t\tVdda\t\t%4lu mV\r\n"
+      "\t\tVbat\t\t%4lu mV\r\n"
+      "\t\tMCU Temp.\t%+02d.%02u C\r\n\r\n\r\n",
+      lotBuf, uidWaf, uidPosX, uidPosY, packagePtr, flashSize, adc1Vdda_mV, adc1Vbat_mV, adc1Temp_100_i, adc1Temp_100_f);
 
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) buf, strlen(buf));
