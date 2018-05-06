@@ -114,7 +114,7 @@
 #define configUSE_16_BIT_TICKS                   0
 #define configUSE_MUTEXES                        1
 #define configQUEUE_REGISTRY_SIZE                8
-#define configCHECK_FOR_STACK_OVERFLOW           1
+#define configCHECK_FOR_STACK_OVERFLOW           2
 #define configUSE_MALLOC_FAILED_HOOK             1
 #define configUSE_APPLICATION_TASK_TAG           1
 #define configUSE_COUNTING_SEMAPHORES            1
@@ -199,6 +199,9 @@ standard names. */
 
 #define USB_TO_HOST_EG__BUF_EMPTY     0x000001
 #define USB_TO_HOST_EG__ECHO_ON       0x000002
+
+#define ADC__CONV_RUN                 0x000001
+#define ADC__CONV_AVAIL               0x000002
 /* USER CODE END 2 */
 
 /* USER CODE BEGIN Defines */   	      

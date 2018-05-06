@@ -74,6 +74,7 @@ osSemaphoreId usbToHostBinarySemHandle;
 extern uint8_t usbFromHostISRBuf[64];
 extern uint32_t usbFromHostISRBufLen;
 EventGroupHandle_t usbToHostEventGroupHandle;
+EventGroupHandle_t adcEventGroupHandle;
 
 /* USER CODE END Variables */
 
@@ -153,6 +154,7 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   usbToHostEventGroupHandle = xEventGroupCreate();
+  adcEventGroupHandle = xEventGroupCreate();
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */

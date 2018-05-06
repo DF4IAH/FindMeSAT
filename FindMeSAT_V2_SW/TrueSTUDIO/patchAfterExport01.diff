@@ -1,18 +1,27 @@
-diff -r -U3 Middlewares/Third_Party/FreeRTOS/Source/include/StackMacros.h Middlewares_b/Third_Party/FreeRTOS/Source/include/StackMacros.h
---- a/Middlewares/Third_Party/FreeRTOS/Source/include/StackMacros.h	2018-04-30 18:55:03.000000000 +0200
-+++ b/Middlewares/Third_Party/FreeRTOS/Source/include/StackMacros.h	2018-04-30 19:08:26.000000000 +0200
+diff -U3 -r a/Middlewares/Third_Party/FreeRTOS/Source/include/StackMacros.h b/Middlewares/Third_Party/FreeRTOS/Source/include/StackMacros.h
+--- a/Middlewares/Third_Party/FreeRTOS/Source/include/StackMacros.h	2018-03-07 21:41:51.000000000 +0100
++++ b/Middlewares/Third_Party/FreeRTOS/Source/include/StackMacros.h	2018-05-06 11:05:28.000000000 +0200
 @@ -94,7 +94,7 @@
  		/* Is the currently saved stack pointer within the stack limit? */								\
  		if( pxCurrentTCB->pxTopOfStack <= pxCurrentTCB->pxStack )										\
  		{																								\
 -			vApplicationStackOverflowHook( ( TaskHandle_t ) pxCurrentTCB, pxCurrentTCB->pcTaskName );	\
-+			vApplicationStackOverflowHook( ( TaskHandle_t ) pxCurrentTCB, (signed char *) pxCurrentTCB->pcTaskName );	\
++			vApplicationStackOverflowHook( ( TaskHandle_t ) pxCurrentTCB, ( signed char * ) pxCurrentTCB->pcTaskName );	\
  		}																								\
  	}
  
-diff -r -U3 Middlewares/Third_Party/FreeRTOS/Source/tasks.c Middlewares_b/Third_Party/FreeRTOS/Source/tasks.c
---- a/Middlewares/Third_Party/FreeRTOS/Source/tasks.c	2018-04-30 18:55:03.000000000 +0200
-+++ b/Middlewares/Third_Party/FreeRTOS/Source/tasks.c	2018-04-30 19:09:52.000000000 +0200
+@@ -129,7 +129,7 @@
+ 			( pulStack[ 2 ] != ulCheckValue ) ||												\
+ 			( pulStack[ 3 ] != ulCheckValue ) )												\
+ 		{																								\
+-			vApplicationStackOverflowHook( ( TaskHandle_t ) pxCurrentTCB, pxCurrentTCB->pcTaskName );	\
++			vApplicationStackOverflowHook( ( TaskHandle_t ) pxCurrentTCB, ( signed char * ) pxCurrentTCB->pcTaskName );	\
+ 		}																								\
+ 	}
+ 
+diff -U3 -r a/Middlewares/Third_Party/FreeRTOS/Source/tasks.c b/Middlewares/Third_Party/FreeRTOS/Source/tasks.c
+--- a/Middlewares/Third_Party/FreeRTOS/Source/tasks.c	2018-03-07 21:41:51.000000000 +0100
++++ b/Middlewares/Third_Party/FreeRTOS/Source/tasks.c	2018-05-06 10:45:25.000000000 +0200
 @@ -427,7 +427,7 @@
  
  /* Callback function prototypes. --------------------------*/

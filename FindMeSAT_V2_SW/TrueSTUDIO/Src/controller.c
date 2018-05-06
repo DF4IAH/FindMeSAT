@@ -163,8 +163,8 @@ void prvControllerPrintMCU(void)
 
   uint16_t flashSize      = (uint16_t) ((*((uint32_t*) FLASHSIZE_BASE)) & 0x0000ffffUL);
 
-  /* Request ADC1 Vrefint*/
-  uint32_t adc1Vrefint_mV = adcGetVrefint_mV();
+  /* Request ADC1 Vdda */
+  uint32_t adc1Vdda_mV = adcGetVdda_mV();
 
   /* Request ADC1 Vbat */
   uint32_t adc1Vbat_mV    = adcGetVbat_mV();
@@ -184,10 +184,10 @@ void prvControllerPrintMCU(void)
       "\t\tPos. X/Y\t%2lu/%2lu\r\n"
       "\t\tPackage(s)\t%s\r\n"
       "\t\tFlash size\t%4u kB\r\n"
-      "\t\tVrefint\t\t%4lu mV\r\n"
+      "\t\tVdda\t\t%4lu mV\r\n"
       "\t\tVbat\t\t%4lu mV\r\n"
       "\t\tMCU Temp.\t%+02d.%02u C\r\n\r\n\r\n",
-      lotBuf, uidWaf, uidPosX, uidPosY, packagePtr, flashSize, adc1Vrefint_mV, adc1Vbat_mV, adc1Temp_100_i, adc1Temp_100_f);
+      lotBuf, uidWaf, uidPosX, uidPosY, packagePtr, flashSize, adc1Vdda_mV, adc1Vbat_mV, adc1Temp_100_i, adc1Temp_100_f);
 
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) buf, strlen(buf));
