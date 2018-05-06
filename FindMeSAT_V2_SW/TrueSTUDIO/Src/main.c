@@ -155,7 +155,7 @@ int main(void)
   if (!(RCC->CSR & 0xff000000UL)) {
     /* Disable SMPS */
     HAL_GPIO_WritePin(PORT_SMPS, PIN_SMPS_SWITCH_ENABLE, GPIO_PIN_RESET);
-    __asm volatile( "" );
+    __asm volatile( "ISB" );
     HAL_GPIO_WritePin(PORT_SMPS, PIN_SMPS_ENABLE, GPIO_PIN_RESET);
 
     /* ARM software reset to be done */
@@ -454,7 +454,7 @@ void SystemResetbyARMcore(void)
   /* Switch off SMPS first */
   HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1);
   HAL_GPIO_WritePin(PORT_SMPS, PIN_SMPS_SWITCH_ENABLE, GPIO_PIN_RESET);
-  __asm volatile( "" );
+  __asm volatile( "ISB" );
   HAL_GPIO_WritePin(PORT_SMPS, PIN_SMPS_ENABLE, GPIO_PIN_RESET);
 
   /* Set SW reset bit */

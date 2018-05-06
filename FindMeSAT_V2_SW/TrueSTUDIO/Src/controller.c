@@ -69,15 +69,12 @@ const char controllerGreetMsg11[] =
     "\t\tDate\t\t%08u\r\n";
 void prvControllerUsbGreet(void)
 {
-  uint8_t clrScrBuf[2] = { 0x0c, 0 };
   char verBuf[70];
 
   sprintf(verBuf, controllerGreetMsg11, FINDMESAT_VERSION);
 
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
 
-  usbToHostWait(clrScrBuf, 1);
-  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
   usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
   usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
   usbToHostWait((uint8_t*) controllerGreetMsg04, strlen(controllerGreetMsg04));
