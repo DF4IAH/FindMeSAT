@@ -75,6 +75,8 @@
 #define AX1_MOSI_GPIO_Port GPIOC
 #define AX1_MISO_Pin GPIO_PIN_2
 #define AX1_MISO_GPIO_Port GPIOC
+#define SX_NRESET_Pin GPIO_PIN_3
+#define SX_NRESET_GPIO_Port GPIOA
 #define AX0_NSS_Pin GPIO_PIN_4
 #define AX0_NSS_GPIO_Port GPIOA
 #define AX0_SCK_Pin GPIO_PIN_5
@@ -83,6 +85,14 @@
 #define AX0_MISO_GPIO_Port GPIOA
 #define AX0_MOSI_Pin GPIO_PIN_7
 #define AX0_MOSI_GPIO_Port GPIOA
+#define SX_DIO2_Pin GPIO_PIN_14
+#define SX_DIO2_GPIO_Port GPIOF
+#define SX_DIO0_Pin GPIO_PIN_15
+#define SX_DIO0_GPIO_Port GPIOF
+#define SX_DIO3_Pin GPIO_PIN_11
+#define SX_DIO3_GPIO_Port GPIOE
+#define SX_DIO1_Pin GPIO_PIN_13
+#define SX_DIO1_GPIO_Port GPIOE
 #define AX1_SCK_Pin GPIO_PIN_10
 #define AX1_SCK_GPIO_Port GPIOB
 #define AX1_NSS_Pin GPIO_PIN_12
