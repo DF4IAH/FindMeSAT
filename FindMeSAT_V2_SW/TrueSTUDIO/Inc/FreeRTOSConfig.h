@@ -202,6 +202,10 @@ standard names. */
 
 #define ADC__CONV_RUN                 0x000001
 #define ADC__CONV_AVAIL               0x000002
+
+#define SPI_SPI1_EG__RDY              0x000001
+#define SPI_SPI1_EG__ERROR            0x000002
+
 /* USER CODE END 2 */
 
 /* USER CODE BEGIN Defines */   	      

@@ -62,18 +62,21 @@
 /* USER CODE END Includes */
 
 extern SPI_HandleTypeDef hspi1;
-extern SPI_HandleTypeDef hspi2;
 
 /* USER CODE BEGIN Private defines */
+#define SPI1_BUFFERSIZE 64
 
 /* USER CODE END Private defines */
 
 extern void _Error_Handler(char *, int);
 
 void MX_SPI1_Init(void);
-void MX_SPI2_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi);
+void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi);
+
+void spiDetectShieldSX1272(void);
 
 /* USER CODE END Prototypes */
 

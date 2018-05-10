@@ -71,20 +71,14 @@
 #define GPS_1PPS_GPIO_Port GPIOF
 #define MCO_Pin GPIO_PIN_0
 #define MCO_GPIO_Port GPIOH
-#define AX1_MOSI_Pin GPIO_PIN_1
-#define AX1_MOSI_GPIO_Port GPIOC
-#define AX1_MISO_Pin GPIO_PIN_2
-#define AX1_MISO_GPIO_Port GPIOC
 #define SX_NRESET_Pin GPIO_PIN_3
 #define SX_NRESET_GPIO_Port GPIOA
-#define AX0_NSS_Pin GPIO_PIN_4
-#define AX0_NSS_GPIO_Port GPIOA
-#define AX0_SCK_Pin GPIO_PIN_5
-#define AX0_SCK_GPIO_Port GPIOA
-#define AX0_MISO_Pin GPIO_PIN_6
-#define AX0_MISO_GPIO_Port GPIOA
-#define AX0_MOSI_Pin GPIO_PIN_7
-#define AX0_MOSI_GPIO_Port GPIOA
+#define SPI_A_SCK_Pin GPIO_PIN_5
+#define SPI_A_SCK_GPIO_Port GPIOA
+#define SPI_A_MISO_Pin GPIO_PIN_6
+#define SPI_A_MISO_GPIO_Port GPIOA
+#define SPI_A_MOSI_Pin GPIO_PIN_7
+#define SPI_A_MOSI_GPIO_Port GPIOA
 #define SX_DIO2_Pin GPIO_PIN_14
 #define SX_DIO2_GPIO_Port GPIOF
 #define SX_DIO0_Pin GPIO_PIN_15
@@ -93,14 +87,10 @@
 #define SX_DIO3_GPIO_Port GPIOE
 #define SX_DIO1_Pin GPIO_PIN_13
 #define SX_DIO1_GPIO_Port GPIOE
-#define AX1_SCK_Pin GPIO_PIN_10
-#define AX1_SCK_GPIO_Port GPIOB
-#define AX1_NSS_Pin GPIO_PIN_12
-#define AX1_NSS_GPIO_Port GPIOB
 #define LD3_Pin GPIO_PIN_14
 #define LD3_GPIO_Port GPIOB
-#define AX0_SEL_Pin GPIO_PIN_14
-#define AX0_SEL_GPIO_Port GPIOD
+#define SPI_A_SEL_Pin GPIO_PIN_14
+#define SPI_A_SEL_GPIO_Port GPIOD
 #define USB_OverCurrent_Pin GPIO_PIN_5
 #define USB_OverCurrent_GPIO_Port GPIOG
 #define USB_PowerSwitchOn_Pin GPIO_PIN_6
@@ -162,7 +152,7 @@
 /* USER CODE BEGIN Private defines */
 #define USE_FULL_ASSERT     1U
 
-#define FINDMESAT_VERSION   20180506U
+#define FINDMESAT_VERSION   20180510U
 
 typedef void * TaskHandle_t;
 
