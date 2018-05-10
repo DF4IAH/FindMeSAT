@@ -35,7 +35,7 @@
 "34","PA0","I/O","",""
 "35","PA1","I/O","",""
 "36","PA2","I/O","",""
-"37","PA3","Output","GPIO_Output","SX_NRESET[CN9_1]"
+"37","PA3","Input","GPIO_Input","SX_RESET[CN9_1]"
 "38","VSS","Power","",""
 "39","VDD","Power","",""
 "40","PA4","I/O","",""

@@ -16,6 +16,7 @@
 #include "usb.h"
 #include "interpreter.h"
 #include "adc.h"
+#include "spi.h"
 
 #include "controller.h"
 

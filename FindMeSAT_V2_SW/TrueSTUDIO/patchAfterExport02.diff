@@ -1,11 +1,9 @@
-diff -U3 -r a/Src/main.c b/Src/main.c
---- a/Src/main.c	2018-05-05 21:10:18.000000000 +0200
-+++ b/Src/main.c	2018-05-05 21:07:32.000000000 +0200
-@@ -251,6 +251,7 @@
-   RCC_OscInitStruct.HSICalibrationValue = 64;
+diff -U2 -r a/Src/main.c b/Src/main.c
+--- a/Src/main.c	2018-05-10 15:29:55.000000000 +0200
++++ b/Src/main.c	2018-05-10 15:32:07.000000000 +0200
+@@ -252,4 +252,5 @@
    RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
    RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
 +  RCC_OscInitStruct.PLL.PLLM = 2;
    RCC_OscInitStruct.PLL.PLLN = 20;
    RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-   RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV8;

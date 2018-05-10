@@ -66,6 +66,9 @@ extern SPI_HandleTypeDef hspi1;
 /* USER CODE BEGIN Private defines */
 #define SPI1_BUFFERSIZE 64
 
+#define SPI_WR_FLAG   (1 << 7)
+#define SPI_RD_FLAG   (0 << 7)
+
 /* USER CODE END Private defines */
 
 extern void _Error_Handler(char *, int);
@@ -75,6 +78,16 @@ void MX_SPI1_Init(void);
 /* USER CODE BEGIN Prototypes */
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi);
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi);
+
+void spiProcessSpiMsg(uint8_t msgLen);
+uint8_t spiProcessSpiReturnWait(void);
+
+void spiSX1272Frequency_MHz(float mhz);
+void spiSX1272DioMapping(void);
+void spiSX1272FifoRxSetToBasePtr(void);
+void spiSX1272Mode_LoRaWAN_TX(void);
+void spiSX1272Mode_LoRaWAN_RX(void);
+void spiSX1272Mode_Sleep(void);
 
 void spiDetectShieldSX1272(void);
 

@@ -60,6 +60,19 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
+/* TheThingsNetwork - assigned codes to this device */
+const char *devEUI  = "0065737065726F31";                   //  8 bytes
+const char *devAddr = "26011E42";                           //  4 bytes
+const char *nwkSKey = "4386E7FF679BF9810462B2192B2F5211";   // 16 bytes
+const char *appSKey = "ADDA9AD9B4D746323E221E7E69447DF5";   // 16 bytes
+
+const char *sendMacSetDeveui  = "mac set deveui 0065737065726F31\r\n";
+const char *sendMacSetAdrOk   = "mac set adr on\r\n";
+const char *sendMacSetDevadr  = "mac set devadr 26011E42\r\n";
+const char *sendMacSetNwkskey = "mac set nwkskey 4386E7FF679BF9810462B2192B2F5211\r\n";
+const char *sendMacSetAppskey = "mac set appskey ADDA9AD9B4D746323E221E7E69447DF5\r\n";
+
+const char *sendPayload       = "mac tx uncnf 0 ";
 
 extern EventGroupHandle_t spiEventGroupHandle;
 
@@ -240,17 +253,12 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
 }
 
 
-const uint16_t spiWait_MaxWaitEGMs = 500;
-void spiDetectShieldSX1272(void)
+void spiProcessSpiMsg(uint8_t msgLen)
 {
-  /* Reset pulse for SX1272 */
-  HAL_GPIO_WritePin(SX_NRESET_GPIO_Port, SX_NRESET_Pin, GPIO_PIN_RESET);
-  osDelay(1);
-  HAL_GPIO_WritePin(SX_NRESET_GPIO_Port, SX_NRESET_Pin, GPIO_PIN_SET);
-
-  /* Request RD-address 0x42 RegVersion */
   HAL_GPIO_WritePin(SPI_A_SEL_GPIO_Port, SPI_A_SEL_Pin, GPIO_PIN_RESET);
-  if(HAL_SPI_TransmitReceive_DMA(&hspi1, (uint8_t*) aSpi1TxBuffer, (uint8_t *) aSpi1RxBuffer, 2) != HAL_OK)
+  aSpi1TxBuffer[msgLen] = 0;
+  volatile HAL_StatusTypeDef status = HAL_SPI_TransmitReceive_DMA(&hspi1, (uint8_t*) aSpi1TxBuffer, (uint8_t *) aSpi1RxBuffer, msgLen);
+  if (status != HAL_OK)
   {
     HAL_GPIO_WritePin(SPI_A_SEL_GPIO_Port, SPI_A_SEL_Pin, GPIO_PIN_SET);
 
@@ -258,18 +266,289 @@ void spiDetectShieldSX1272(void)
     Error_Handler();
   }
   HAL_GPIO_WritePin(SPI_A_SEL_GPIO_Port, SPI_A_SEL_Pin, GPIO_PIN_SET);
+}
+
+const uint16_t spiWait_MaxWaitEGMs = 500;
+uint8_t spiProcessSpiReturnWait(void)
+{
+  uint8_t ret = 0;
+
+  EventBits_t eb = xEventGroupWaitBits(spiEventGroupHandle, SPI_SPI1_EG__RDY | SPI_SPI1_EG__ERROR, SPI_SPI1_EG__RDY | SPI_SPI1_EG__ERROR, 0, spiWait_MaxWaitEGMs);
+  if (eb & SPI_SPI1_EG__ERROR) {
+    Error_Handler();
+  } else if (eb & SPI_SPI1_EG__RDY) {
+    ret = 1;
+  }
+  return ret;
+}
+
+
+void spiSX1272Frequency_MHz(float mhz)
+{
+  float fVal = (mhz * 1e6 * (1UL << 19)) / 32e6;
+  uint32_t regVal = (uint32_t) (fVal + 0.5f);
+
+  /* Set frequency register */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x06;
+  aSpi1TxBuffer[1] = (uint8_t) ((regVal >> 16) & 0xffUL);
+  aSpi1TxBuffer[2] = (uint8_t) ((regVal >>  8) & 0xffUL);
+  aSpi1TxBuffer[3] = (uint8_t) ((regVal >>  0) & 0xffUL);
+  spiProcessSpiMsg(4);
+}
+
+void spiSX1272DioMapping(void)
+{
+  /* DIO0..DIO5 settings */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x40;
+  aSpi1TxBuffer[1] = (0b00 << 6) | (0b00 << 4) | (0b00 << 2) | (0b00 << 0);  // DIO0: SYNC Addr, DIO1: DCLK, DIO2: DATA, DIO3: Timeout
+  aSpi1TxBuffer[2] = (0b11 << 6) | (0b11 << 4) | (0b1 << 0);  // DIO4: Mode ready, DIO5: RSSI / Preamble detected, selection: Preamble detection
+  spiProcessSpiMsg(3);
+}
+
+void spiSX1272FifoRxSetToBasePtr(void)
+{
+  aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x0f;
+  spiProcessSpiMsg(2);
+  uint8_t fifoRxBaseAddr = aSpi1RxBuffer[1];
+
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
+  aSpi1TxBuffer[1] = fifoRxBaseAddr;
+  spiProcessSpiMsg(2);
+}
+
+void spiSX1272Mode_LoRaWAN_TX(void)
+{
+  /* Switch to LoRa mode (sleep) */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  aSpi1TxBuffer[1] = (1 << 7);
+  spiProcessSpiMsg(2);
+
+  /* PA ramp time 50us */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0a;
+  aSpi1TxBuffer[1] = 0b1000;
+  spiProcessSpiMsg(2);
+
+  /* Modem Config */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
+  aSpi1TxBuffer[1] = (0b00 << 6) | (0b001 << 3) | (0b0 << 2) | (0b1 << 1) | (0b1 << 0);
+  aSpi1TxBuffer[2] = (0b1100 << 4) | (0b0 << 3) | (0x1 << 2) | (0b00 << 0);
+  spiProcessSpiMsg(3);
+
+  /* Sync word */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x39;
+  aSpi1TxBuffer[1] = 0x34;
+  spiProcessSpiMsg(2);
+
+  /* I/Q inversion bits */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x33;
+  aSpi1TxBuffer[1] = 0x27;
+  spiProcessSpiMsg(2);
+
+  /* I/Q2 inversion bits */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x38;
+  aSpi1TxBuffer[1] = 0x1d;
+  spiProcessSpiMsg(2);
+
+  /* Change to TX mode */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  aSpi1TxBuffer[1] = (1 << 7) | (0b011 << 0);
+  spiProcessSpiMsg(2);
+}
+
+void spiSX1272Mode_LoRaWAN_RX(void)
+{
+  /* Switch to LoRa mode (sleep) */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  aSpi1TxBuffer[1] = (1 << 7);
+  spiProcessSpiMsg(2);
+
+  /* LNA to maximum */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0c;
+  aSpi1TxBuffer[1] = (0b001 << 5) | (0b11 << 0);
+  spiProcessSpiMsg(2);
+
+  /* Modem Config */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
+  aSpi1TxBuffer[1] = (0b00 << 6) | (0b001 << 3) | (0b0 << 2) | (0b1 << 1) | (0b1 << 0);
+  aSpi1TxBuffer[2] = (0b1100 << 4) | (0x1 << 2) | (0b00 << 0);
+  aSpi1TxBuffer[3] = 0x05;
+  spiProcessSpiMsg(4);
+
+  /* Max. payload length */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x23;
+  aSpi1TxBuffer[1] = 0x40;
+  spiProcessSpiMsg(2);
+
+  /* Sync word */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x39;
+  aSpi1TxBuffer[1] = 0x34;
+  spiProcessSpiMsg(2);
+
+  /* I/Q inversion bits */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x33;
+  aSpi1TxBuffer[1] = 0x67;
+  spiProcessSpiMsg(2);
+
+  /* I/Q2 inversion bits */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x38;
+  aSpi1TxBuffer[1] = 0x19;
+  spiProcessSpiMsg(2);
+
+  /* FifoAddrPtr to FifoRxBaseAddr */
+  spiSX1272FifoRxSetToBasePtr();
+
+  /* Change to RX mode */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  aSpi1TxBuffer[1] = (1 << 7) | (0b110 << 0);   // RX_SINGLE
+  aSpi1TxBuffer[1] = (1 << 7) | (0b110 << 0);   // RX_CONTINUOUS
+  spiProcessSpiMsg(2);
+}
+
+float spiSX1272Calc_Channel_to_MHz(uint8_t channel)
+{
+  /* EU863-870*/
+  float mhz = 0.f;
+
+  switch (channel) {
+  case 1:
+    mhz = 868.1f;   // SF7BW125 to SF12BW125
+    break;
+
+  case 2:
+    mhz = 868.3f;   // SF7BW125 to SF12BW125  and  SF7BW250
+    break;
+
+  case 3:
+    mhz = 868.5f;   // SF7BW125 to SF12BW125
+    break;
+
+  case 4:
+    mhz = 867.1f;   // SF7BW125 to SF12BW125
+    break;
+
+  case 5:
+    mhz = 867.3f;   // SF7BW125 to SF12BW125
+    break;
+
+  case 6:
+    mhz = 867.5f;   // SF7BW125 to SF12BW125
+    break;
+
+  case 7:
+    mhz = 867.7f;   // SF7BW125 to SF12BW125
+    break;
+
+  case 8:
+    mhz = 867.9f;   // SF7BW125 to SF12BW125
+    break;
+
+  case 9:
+    mhz = 868.8f;   // FSK
+    break;
+
+  default:
+    Error_Handler();
+  }
+  return mhz;
+}
+
+void spiSX1272Mode_Sleep(void)
+{
+  /* Switch to sleep */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  aSpi1TxBuffer[1] = 0;
+  spiProcessSpiMsg(2);
+}
+
+
+void spiSX1272TTN_loralive(void)
+{
+  /* Application: loralive */
+  uint8_t ttnMsg[52] = { 0 };
+  uint8_t payload[16] = { 0 };
+  uint32_t latitude_1000  = 49473;  // 49473182
+  uint32_t longitude_1000 =  8615;  // 8614814
+
+  payload[ 0] = (uint8_t) (3.3f * 32 + 0.5);  // Voltage
+  payload[ 5] = (uint8_t) 'E';  // ID
+  payload[ 6] = (uint8_t) 22;  // Temperature
+  payload[ 7] = (uint8_t) 50;  // Humidity
+  payload[ 8] = (uint8_t) ((latitude_1000  >> 24) & 0xffUL);
+  payload[ 9] = (uint8_t) ((latitude_1000  >> 16) & 0xffUL);
+  payload[10] = (uint8_t) ((latitude_1000  >>  8) & 0xffUL);
+  payload[11] = (uint8_t) ((latitude_1000  >>  0) & 0xffUL);
+  payload[12] = (uint8_t) ((longitude_1000 >> 24) & 0xffUL);
+  payload[13] = (uint8_t) ((longitude_1000 >> 16) & 0xffUL);
+  payload[14] = (uint8_t) ((longitude_1000 >>  8) & 0xffUL);
+  payload[15] = (uint8_t) ((longitude_1000 >>  0) & 0xffUL);
+
+  int pos = sprintf((char*) ttnMsg, "%s", sendPayload);
+  for (uint8_t idx = 0; idx < 16; ++idx) {
+    pos += sprintf((char*) ttnMsg + pos, "%02X", payload[idx]);
+  }
+
+  __asm volatile( "nop" );
+}
+
+
+void spiDetectShieldSX1272(void)
+{
+  GPIO_InitTypeDef GPIO_InitStruct;
+  uint8_t sxVersion = 0;
+
+  /* Prepare SX_RESET structure */
+  GPIO_InitStruct.Pin = SX_RESET_Pin;
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+  GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+
+  /* Reset pulse for SX1272 */
+  HAL_GPIO_WritePin(SX_RESET_GPIO_Port, SX_RESET_Pin, GPIO_PIN_SET);
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  HAL_GPIO_Init(SX_RESET_GPIO_Port, &GPIO_InitStruct);
+  osDelay(1);
+  HAL_GPIO_WritePin(SX_RESET_GPIO_Port, SX_RESET_Pin, GPIO_PIN_RESET);
+  osDelay(5);
+  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
+  HAL_GPIO_Init(SX_RESET_GPIO_Port, &GPIO_InitStruct);
+
+  /* Request RD-address 0x42 RegVersion */
+  aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x42;
+  spiProcessSpiMsg(2);
 
   // Process returned data
-  EventBits_t eb = xEventGroupWaitBits(spiEventGroupHandle, SPI_SPI1_EG__RDY | SPI_SPI1_EG__ERROR, SPI_SPI1_EG__RDY | SPI_SPI1_EG__ERROR, 0, spiWait_MaxWaitEGMs);
-  if (eb & SPI_SPI1_EG__RDY) {
-    uint8_t ver = aSpi1RxBuffer[1];
-    UNUSED(ver);
-    __asm volatile( "nop" );
-
-  } else if (eb & SPI_SPI1_EG__ERROR) {
-    __asm volatile( "nop" );
-
+  if (spiProcessSpiReturnWait()) {
+    sxVersion = aSpi1RxBuffer[1];
   }
+
+  /* We can handle Version 0x22 only */
+  if (sxVersion != 0x22) {
+    Error_Handler();
+  }
+
+  spiSX1272Mode_Sleep();
+  spiSX1272Frequency_MHz(spiSX1272Calc_Channel_to_MHz(4));
+  spiSX1272DioMapping();
+
+  /* Mask out Timeout IRQ */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x11;
+  aSpi1TxBuffer[1] = 0x00;
+  spiProcessSpiMsg(2);
+
+  /* Set the registers for LoRaWAN TTN transmissions */
+  spiSX1272Mode_LoRaWAN_RX();
+
+  do {
+    aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x12;
+    spiProcessSpiMsg(2);
+
+    volatile uint8_t irq = aSpi1RxBuffer[1];
+    if (irq & 0x7f) {
+      aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x12;
+      aSpi1TxBuffer[1] = irq;
+      spiProcessSpiMsg(2);
+    }
+  } while (1);
 }
 
 /* USER CODE END 1 */

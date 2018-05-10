@@ -71,8 +71,8 @@
 #define GPS_1PPS_GPIO_Port GPIOF
 #define MCO_Pin GPIO_PIN_0
 #define MCO_GPIO_Port GPIOH
-#define SX_NRESET_Pin GPIO_PIN_3
-#define SX_NRESET_GPIO_Port GPIOA
+#define SX_RESET_Pin GPIO_PIN_3
+#define SX_RESET_GPIO_Port GPIOA
 #define SPI_A_SCK_Pin GPIO_PIN_5
 #define SPI_A_SCK_GPIO_Port GPIOA
 #define SPI_A_MISO_Pin GPIO_PIN_6

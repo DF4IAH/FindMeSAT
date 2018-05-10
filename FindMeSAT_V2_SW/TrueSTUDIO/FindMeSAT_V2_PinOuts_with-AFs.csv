@@ -35,7 +35,7 @@
 "34","PA0","I/O","","","","TIM2_CH1","TIM5_CH1","TIM8_ETR","","","","USART2_CTS","UART4_TX","","","","","SAI1_EXTCLK","TIM2_ETR","EVENTOUT"
 "35","PA1","I/O","","","","TIM2_CH2","TIM5_CH2","","I2C1_SMBA","SPI1_SCK","","USART2_DE/USART2_RTS","UART4_RX","","","LCD_SEG0","","","TIM15_CH1N","EVENTOUT"
 "36","PA2","I/O","","","","TIM2_CH3","TIM5_CH3","","","","","USART2_TX","LPUART1_TX","","QUADSPI_BK1_NCS","LCD_SEG1","","SAI2_EXTCLK","TIM15_CH1","EVENTOUT"
-"37","PA3","Output","GPIO_Output","SX_NRESET[CN9_1]","","TIM2_CH4","TIM5_CH4","","","","","USART2_RX","LPUART1_RX","","QUADSPI_CLK","LCD_SEG2","","SAI1_MCLK_A","TIM15_CH2","EVENTOUT"
+"37","PA3","Input","GPIO_Input","SX_RESET[CN9_1]","","TIM2_CH4","TIM5_CH4","","","","","USART2_RX","LPUART1_RX","","QUADSPI_CLK","LCD_SEG2","","SAI1_MCLK_A","TIM15_CH2","EVENTOUT"
 "38","VSS","Power","","","","","","","","","","","","","","","","","",""
 "39","VDD","Power","","","","","","","","","","","","","","","","","",""
 "40","PA4","I/O","","","","","","","","SPI1_NSS","SPI3_NSS","USART2_CK","","","DCMI_HSYNC","","","SAI1_FS_B","LPTIM2_OUT","EVENTOUT"
