@@ -255,16 +255,26 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
 
 void spiProcessSpiMsg(uint8_t msgLen)
 {
-  HAL_GPIO_WritePin(SPI_A_SEL_GPIO_Port, SPI_A_SEL_Pin, GPIO_PIN_RESET);
-  aSpi1TxBuffer[msgLen] = 0;
-  volatile HAL_StatusTypeDef status = HAL_SPI_TransmitReceive_DMA(&hspi1, (uint8_t*) aSpi1TxBuffer, (uint8_t *) aSpi1RxBuffer, msgLen);
-  if (status != HAL_OK)
-  {
-    HAL_GPIO_WritePin(SPI_A_SEL_GPIO_Port, SPI_A_SEL_Pin, GPIO_PIN_SET);
+  HAL_StatusTypeDef status = 0;
+  uint8_t errCnt = 0;
 
-    /* Transfer error in transmission process */
-    Error_Handler();
-  }
+  aSpi1TxBuffer[msgLen] = 0;
+  do {
+    HAL_GPIO_WritePin(SPI_A_SEL_GPIO_Port, SPI_A_SEL_Pin, GPIO_PIN_RESET);
+
+    status = HAL_SPI_TransmitReceive_DMA(&hspi1, (uint8_t*) aSpi1TxBuffer, (uint8_t *) aSpi1RxBuffer, msgLen);
+    if (status != HAL_OK)
+    {
+      HAL_GPIO_WritePin(SPI_A_SEL_GPIO_Port, SPI_A_SEL_Pin, GPIO_PIN_SET);
+
+      osDelay(1);
+
+      if (++errCnt >= 100) {
+        /* Transfer error in transmission process */
+        Error_Handler();
+      }
+    }
+  } while (status != HAL_OK);
   HAL_GPIO_WritePin(SPI_A_SEL_GPIO_Port, SPI_A_SEL_Pin, GPIO_PIN_SET);
 }
 
@@ -282,127 +292,6 @@ uint8_t spiProcessSpiReturnWait(void)
   return ret;
 }
 
-
-void spiSX1272Frequency_MHz(float mhz)
-{
-  float fVal = (mhz * 1e6 * (1UL << 19)) / 32e6;
-  uint32_t regVal = (uint32_t) (fVal + 0.5f);
-
-  /* Set frequency register */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x06;
-  aSpi1TxBuffer[1] = (uint8_t) ((regVal >> 16) & 0xffUL);
-  aSpi1TxBuffer[2] = (uint8_t) ((regVal >>  8) & 0xffUL);
-  aSpi1TxBuffer[3] = (uint8_t) ((regVal >>  0) & 0xffUL);
-  spiProcessSpiMsg(4);
-}
-
-void spiSX1272DioMapping(void)
-{
-  /* DIO0..DIO5 settings */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x40;
-  aSpi1TxBuffer[1] = (0b00 << 6) | (0b00 << 4) | (0b00 << 2) | (0b00 << 0);  // DIO0: SYNC Addr, DIO1: DCLK, DIO2: DATA, DIO3: Timeout
-  aSpi1TxBuffer[2] = (0b11 << 6) | (0b11 << 4) | (0b1 << 0);  // DIO4: Mode ready, DIO5: RSSI / Preamble detected, selection: Preamble detection
-  spiProcessSpiMsg(3);
-}
-
-void spiSX1272FifoRxSetToBasePtr(void)
-{
-  aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x0f;
-  spiProcessSpiMsg(2);
-  uint8_t fifoRxBaseAddr = aSpi1RxBuffer[1];
-
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
-  aSpi1TxBuffer[1] = fifoRxBaseAddr;
-  spiProcessSpiMsg(2);
-}
-
-void spiSX1272Mode_LoRaWAN_TX(void)
-{
-  /* Switch to LoRa mode (sleep) */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
-  aSpi1TxBuffer[1] = (1 << 7);
-  spiProcessSpiMsg(2);
-
-  /* PA ramp time 50us */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0a;
-  aSpi1TxBuffer[1] = 0b1000;
-  spiProcessSpiMsg(2);
-
-  /* Modem Config */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
-  aSpi1TxBuffer[1] = (0b00 << 6) | (0b001 << 3) | (0b0 << 2) | (0b1 << 1) | (0b1 << 0);
-  aSpi1TxBuffer[2] = (0b1100 << 4) | (0b0 << 3) | (0x1 << 2) | (0b00 << 0);
-  spiProcessSpiMsg(3);
-
-  /* Sync word */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x39;
-  aSpi1TxBuffer[1] = 0x34;
-  spiProcessSpiMsg(2);
-
-  /* I/Q inversion bits */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x33;
-  aSpi1TxBuffer[1] = 0x27;
-  spiProcessSpiMsg(2);
-
-  /* I/Q2 inversion bits */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x38;
-  aSpi1TxBuffer[1] = 0x1d;
-  spiProcessSpiMsg(2);
-
-  /* Change to TX mode */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
-  aSpi1TxBuffer[1] = (1 << 7) | (0b011 << 0);
-  spiProcessSpiMsg(2);
-}
-
-void spiSX1272Mode_LoRaWAN_RX(void)
-{
-  /* Switch to LoRa mode (sleep) */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
-  aSpi1TxBuffer[1] = (1 << 7);
-  spiProcessSpiMsg(2);
-
-  /* LNA to maximum */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0c;
-  aSpi1TxBuffer[1] = (0b001 << 5) | (0b11 << 0);
-  spiProcessSpiMsg(2);
-
-  /* Modem Config */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
-  aSpi1TxBuffer[1] = (0b00 << 6) | (0b001 << 3) | (0b0 << 2) | (0b1 << 1) | (0b1 << 0);
-  aSpi1TxBuffer[2] = (0b1100 << 4) | (0x1 << 2) | (0b00 << 0);
-  aSpi1TxBuffer[3] = 0x05;
-  spiProcessSpiMsg(4);
-
-  /* Max. payload length */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x23;
-  aSpi1TxBuffer[1] = 0x40;
-  spiProcessSpiMsg(2);
-
-  /* Sync word */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x39;
-  aSpi1TxBuffer[1] = 0x34;
-  spiProcessSpiMsg(2);
-
-  /* I/Q inversion bits */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x33;
-  aSpi1TxBuffer[1] = 0x67;
-  spiProcessSpiMsg(2);
-
-  /* I/Q2 inversion bits */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x38;
-  aSpi1TxBuffer[1] = 0x19;
-  spiProcessSpiMsg(2);
-
-  /* FifoAddrPtr to FifoRxBaseAddr */
-  spiSX1272FifoRxSetToBasePtr();
-
-  /* Change to RX mode */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
-  aSpi1TxBuffer[1] = (1 << 7) | (0b110 << 0);   // RX_SINGLE
-  aSpi1TxBuffer[1] = (1 << 7) | (0b110 << 0);   // RX_CONTINUOUS
-  spiProcessSpiMsg(2);
-}
 
 float spiSX1272Calc_Channel_to_MHz(uint8_t channel)
 {
@@ -446,10 +335,146 @@ float spiSX1272Calc_Channel_to_MHz(uint8_t channel)
     mhz = 868.8f;   // FSK
     break;
 
+  case  0:
+  case 16:
+    mhz = 869.525f; // RX2 channel
+    break;
+
   default:
     Error_Handler();
   }
   return mhz;
+}
+
+void spiSX1272Frequency_MHz(float mhz)
+{
+  float fVal = (mhz * 1e6 * (1UL << 19)) / 32e6;
+  uint32_t regVal = (uint32_t) (fVal + 0.5f);
+
+  /* Set frequency register */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x06;
+  aSpi1TxBuffer[1] = (uint8_t) ((regVal >> 16) & 0xffUL);
+  aSpi1TxBuffer[2] = (uint8_t) ((regVal >>  8) & 0xffUL);
+  aSpi1TxBuffer[3] = (uint8_t) ((regVal >>  0) & 0xffUL);
+  spiProcessSpiMsg(4);
+}
+
+void spiSX1272Dio_Mapping(void)
+{
+  /* DIO0..DIO5 settings */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x40;
+  aSpi1TxBuffer[1] = (0b00 << 6) | (0b00 << 4) | (0b00 << 2) | (0b00 << 0);  // DIO0: SYNC Addr, DIO1: DCLK, DIO2: DATA, DIO3: Timeout
+  aSpi1TxBuffer[2] = (0b11 << 6) | (0b11 << 4) | (0b1 << 0);  // DIO4: Mode ready, DIO5: RSSI / Preamble detected, selection: Preamble detection
+  spiProcessSpiMsg(3);
+}
+
+void spiSX1272LoRa_Fifo_Init(void)
+{
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
+  aSpi1TxBuffer[1] = 0x00;    // RegFifoAddrPtr
+  aSpi1TxBuffer[2] = 0x80;    // RegFifoTxBaseAddr
+  aSpi1TxBuffer[3] = 0x00;    // RegFifoRxBaseAddr
+  aSpi1TxBuffer[4] = 0x00;    // FifoRxCurrentAddr
+  spiProcessSpiMsg(5);
+}
+
+void spiSX1272LoRa_Fifo_RxSetToBasePtr(void)
+{
+  aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x0f;
+  spiProcessSpiMsg(2);
+  uint8_t fifoRxBaseAddr = aSpi1RxBuffer[1];    // RegFifoRxBaseAddr
+
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
+  aSpi1TxBuffer[1] = fifoRxBaseAddr;
+  spiProcessSpiMsg(2);
+}
+
+void spiSX1272Mode_LoRa_TX(void)
+{
+  /* Switch to LoRa mode (sleep) */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  aSpi1TxBuffer[1] = (1 << 7);
+  spiProcessSpiMsg(2);
+
+  /* PA ramp time 50us */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0a;
+  aSpi1TxBuffer[1] = 0b1000;
+  spiProcessSpiMsg(2);
+
+  /* Modem Config */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
+  aSpi1TxBuffer[1] = (0b00 << 6) | (0b001 << 3) | (0b0 << 2) | (0b1 << 1) | (0b1 << 0);
+  aSpi1TxBuffer[2] = (0b1100 << 4) | (0b0 << 3) | (0x1 << 2) | (0b00 << 0);
+  spiProcessSpiMsg(3);
+
+  /* Sync word */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x39;
+  aSpi1TxBuffer[1] = 0x34;
+  spiProcessSpiMsg(2);
+
+  /* I/Q inversion bits */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x33;
+  aSpi1TxBuffer[1] = 0x27;
+  spiProcessSpiMsg(2);
+
+  /* I/Q2 inversion bits */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x38;
+  aSpi1TxBuffer[1] = 0x1d;
+  spiProcessSpiMsg(2);
+
+  /* Change to TX mode */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  aSpi1TxBuffer[1] = (1 << 7) | (0b011 << 0);
+  spiProcessSpiMsg(2);
+}
+
+void spiSX1272Mode_LoRa_RX(void)
+{
+  /* Switch to LoRa mode (sleep) */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  aSpi1TxBuffer[1] = (1 << 7);
+  spiProcessSpiMsg(2);
+
+  /* LNA to maximum */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0c;
+  aSpi1TxBuffer[1] = (0b001 << 5) | (0b11 << 0);
+  spiProcessSpiMsg(2);
+
+  /* Modem Config */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
+  aSpi1TxBuffer[1] = (0b00 << 6) | (0b001 << 3) | (0b0 << 2) | (0b1 << 1) | (0b1 << 0);
+  aSpi1TxBuffer[2] = (0b1100 << 4) | (0x1 << 2) | (0b00 << 0);
+  aSpi1TxBuffer[3] = 0x05;
+  spiProcessSpiMsg(4);
+
+  /* Max. payload length */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x23;
+  aSpi1TxBuffer[1] = 0x40;
+  spiProcessSpiMsg(2);
+
+  /* Sync word */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x39;
+  aSpi1TxBuffer[1] = 0x34;
+  spiProcessSpiMsg(2);
+
+  /* I/Q inversion bits */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x33;
+  aSpi1TxBuffer[1] = 0x67;
+  spiProcessSpiMsg(2);
+
+  /* I/Q2 inversion bits */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x38;
+  aSpi1TxBuffer[1] = 0x19;
+  spiProcessSpiMsg(2);
+
+  /* FifoAddrPtr to FifoRxBaseAddr */
+  spiSX1272LoRa_Fifo_RxSetToBasePtr();
+
+  /* Change to RX mode */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  //aSpi1TxBuffer[1] = (1 << 7) | (0b110 << 0);   // RX_SINGLE
+  aSpi1TxBuffer[1] = (1 << 7) | (0b101 << 0);   // RX_CONTINUOUS
+  spiProcessSpiMsg(2);
 }
 
 void spiSX1272Mode_Sleep(void)
@@ -461,7 +486,7 @@ void spiSX1272Mode_Sleep(void)
 }
 
 
-void spiSX1272TTN_loralive(void)
+void spiSX1272LoRa_TTN_loralive(void)
 {
   /* Application: loralive */
   uint8_t ttnMsg[52] = { 0 };
@@ -527,27 +552,52 @@ void spiDetectShieldSX1272(void)
   }
 
   spiSX1272Mode_Sleep();
-  spiSX1272Frequency_MHz(spiSX1272Calc_Channel_to_MHz(4));
-  spiSX1272DioMapping();
+  spiSX1272Frequency_MHz(spiSX1272Calc_Channel_to_MHz(0));    // RX2 channel
+  spiSX1272Dio_Mapping();
+  spiSX1272LoRa_Fifo_Init();
 
   /* Mask out Timeout IRQ */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x11;
-  aSpi1TxBuffer[1] = 0x00;
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x11;    // RegIrqFlagsMask
+  aSpi1TxBuffer[1] = 0x80;
   spiProcessSpiMsg(2);
 
   /* Set the registers for LoRaWAN TTN transmissions */
-  spiSX1272Mode_LoRaWAN_RX();
+  spiSX1272Mode_LoRa_RX();
 
+  volatile uint16_t rxHeaderCnt;
+  volatile uint16_t rxValidPktCnt;
+  volatile uint8_t  modemStat;
+  volatile uint8_t  rssiWideband;
   do {
-    aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x12;
+    aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x12;    // RegIrqFlags
     spiProcessSpiMsg(2);
-
     volatile uint8_t irq = aSpi1RxBuffer[1];
-    if (irq & 0x7f) {
-      aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x12;
+
+    if (irq) {
+      aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x12;    // RegIrqFlags
       aSpi1TxBuffer[1] = irq;
       spiProcessSpiMsg(2);
+
+      aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x14;    // RegIrqFlags
+      spiProcessSpiMsg(5);
+      rxHeaderCnt   = (aSpi1RxBuffer[1] * 256UL) | aSpi1RxBuffer[2];
+      rxValidPktCnt = (aSpi1RxBuffer[3] * 256UL) | aSpi1RxBuffer[4];
+
+      aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x18;    // RegModemStat
+      spiProcessSpiMsg(2);
+      modemStat = aSpi1RxBuffer[1];
+
+      aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x2c;    // RegRssiWideband
+      spiProcessSpiMsg(2);
+      rssiWideband = aSpi1RxBuffer[1];
+
+      __asm volatile( "nop" );
+      (void) rxHeaderCnt;
+      (void) rxValidPktCnt;
+      (void) modemStat;
+      (void) rssiWideband;
     }
+
   } while (1);
 }
 

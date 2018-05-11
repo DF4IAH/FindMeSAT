@@ -82,12 +82,16 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi);
 void spiProcessSpiMsg(uint8_t msgLen);
 uint8_t spiProcessSpiReturnWait(void);
 
+float spiSX1272Calc_Channel_to_MHz(uint8_t channel);
 void spiSX1272Frequency_MHz(float mhz);
-void spiSX1272DioMapping(void);
-void spiSX1272FifoRxSetToBasePtr(void);
-void spiSX1272Mode_LoRaWAN_TX(void);
-void spiSX1272Mode_LoRaWAN_RX(void);
+void spiSX1272Dio_Mapping(void);
+void spiSX1272LoRa_Fifo_Init(void);
+void spiSX1272LoRa_Fifo_RxSetToBasePtr(void);
+void spiSX1272Mode_LoRa_TX(void);
+void spiSX1272Mode_LoRa_RX(void);
 void spiSX1272Mode_Sleep(void);
+
+void spiSX1272LoRa_TTN_loralive(void);
 
 void spiDetectShieldSX1272(void);
 
