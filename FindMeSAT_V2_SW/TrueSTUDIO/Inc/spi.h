@@ -91,9 +91,7 @@ void spiSX1272Mode_LoRa_TX(void);
 void spiSX1272Mode_LoRa_RX(void);
 void spiSX1272Mode_Sleep(void);
 
-void spiSX1272LoRa_TTN_loralive(void);
-
-void spiDetectShieldSX1272(void);
+uint8_t spiDetectShieldSX1272(void);
 
 /* USER CODE END Prototypes */
 

@@ -60,19 +60,17 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-/* TheThingsNetwork - assigned codes to this device */
-const char *devEUI  = "0065737065726F31";                   //  8 bytes
-const char *devAddr = "26011E42";                           //  4 bytes
-const char *nwkSKey = "4386E7FF679BF9810462B2192B2F5211";   // 16 bytes
-const char *appSKey = "ADDA9AD9B4D746323E221E7E69447DF5";   // 16 bytes
+/* TheThingsNetwork - assigned codes to this device - sufficient for R1.0 [LW10, LW102] */
+const uint8_t  devEUI_LE[8]         = { 0x31U, 0x6FU, 0x72U, 0x65U, 0x70U, 0x73U, 0x65U, 0x00U };
+const uint8_t  devAddr_LE[4]        = { 0x42U, 0x1EU, 0x01U, 0x26U };
+const uint8_t  appEUI_LE[8]         = { 0x00U, 0x86U, 0x00U, 0xD0U, 0x7EU, 0xD5U, 0xB3U, 0x70U };
+const uint8_t  FNwkSIntKey_LE[16]   = { 0x11U, 0x52U, 0x2FU, 0x2BU, 0x19U, 0xB2U, 0x62U, 0x04U, 0x81U, 0xF9U, 0x9BU, 0x67U, 0xFFU, 0xE7U, 0x86U, 0x43U };
+const uint8_t* SNwkSIntKey_LE       =  FNwkSIntKey_LE;
+const uint8_t* NwkSEncKey_LE        =  FNwkSIntKey_LE;
+const uint8_t  appSKey_LE[16]       = { 0xF5U, 0x7DU, 0x44U, 0x69U, 0x7EU, 0x1EU, 0x22U, 0x3EU, 0x32U, 0x46U, 0xD7U, 0xB4U, 0xD9U, 0x9AU, 0xDAU, 0xADU };
 
-const char *sendMacSetDeveui  = "mac set deveui 0065737065726F31\r\n";
-const char *sendMacSetAdrOk   = "mac set adr on\r\n";
-const char *sendMacSetDevadr  = "mac set devadr 26011E42\r\n";
-const char *sendMacSetNwkskey = "mac set nwkskey 4386E7FF679BF9810462B2192B2F5211\r\n";
-const char *sendMacSetAppskey = "mac set appskey ADDA9AD9B4D746323E221E7E69447DF5\r\n";
-
-const char *sendPayload       = "mac tx uncnf 0 ";
+const uint8_t  nwkSKey_BE[16]       = { 0x43U, 0x86U, 0xE7U, 0xFFU, 0x67U, 0x9BU, 0xF9U, 0x81U, 0x04U, 0x62U, 0xB2U, 0x19U, 0x2BU, 0x2FU, 0x52U, 0x11U };
+const uint8_t  appSKey_BE[16]       = { 0xADU, 0xDAU, 0x9AU, 0xD9U, 0xB4U, 0xD7U, 0x46U, 0x32U, 0x3EU, 0x22U, 0x1EU, 0x7EU, 0x69U, 0x44U, 0x7DU, 0xF5U };
 
 extern EventGroupHandle_t spiEventGroupHandle;
 
@@ -407,6 +405,12 @@ void spiSX1272Mode_LoRa_TX(void)
   aSpi1TxBuffer[2] = (0b1100 << 4) | (0b0 << 3) | (0x1 << 2) | (0b00 << 0);
   spiProcessSpiMsg(3);
 
+  /* Preamble length */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x20;    // RegPreambleMSB, LSB
+  aSpi1TxBuffer[1] = 0x00;
+  aSpi1TxBuffer[2] = 0x08;  // +4 = 12 symbols
+  spiProcessSpiMsg(3);
+
   /* Sync word */
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x39;
   aSpi1TxBuffer[1] = 0x34;
@@ -452,6 +456,12 @@ void spiSX1272Mode_LoRa_RX(void)
   aSpi1TxBuffer[1] = 0x40;
   spiProcessSpiMsg(2);
 
+  /* Preamble length */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x20;    // RegPreambleMSB, LSB
+  aSpi1TxBuffer[1] = 0x01;
+  aSpi1TxBuffer[2] = 0x00;  // +4 = 260 symbols at max.
+  spiProcessSpiMsg(3);
+
   /* Sync word */
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x39;
   aSpi1TxBuffer[1] = 0x34;
@@ -486,37 +496,7 @@ void spiSX1272Mode_Sleep(void)
 }
 
 
-void spiSX1272LoRa_TTN_loralive(void)
-{
-  /* Application: loralive */
-  uint8_t ttnMsg[52] = { 0 };
-  uint8_t payload[16] = { 0 };
-  uint32_t latitude_1000  = 49473;  // 49473182
-  uint32_t longitude_1000 =  8615;  // 8614814
-
-  payload[ 0] = (uint8_t) (3.3f * 32 + 0.5);  // Voltage
-  payload[ 5] = (uint8_t) 'E';  // ID
-  payload[ 6] = (uint8_t) 22;  // Temperature
-  payload[ 7] = (uint8_t) 50;  // Humidity
-  payload[ 8] = (uint8_t) ((latitude_1000  >> 24) & 0xffUL);
-  payload[ 9] = (uint8_t) ((latitude_1000  >> 16) & 0xffUL);
-  payload[10] = (uint8_t) ((latitude_1000  >>  8) & 0xffUL);
-  payload[11] = (uint8_t) ((latitude_1000  >>  0) & 0xffUL);
-  payload[12] = (uint8_t) ((longitude_1000 >> 24) & 0xffUL);
-  payload[13] = (uint8_t) ((longitude_1000 >> 16) & 0xffUL);
-  payload[14] = (uint8_t) ((longitude_1000 >>  8) & 0xffUL);
-  payload[15] = (uint8_t) ((longitude_1000 >>  0) & 0xffUL);
-
-  int pos = sprintf((char*) ttnMsg, "%s", sendPayload);
-  for (uint8_t idx = 0; idx < 16; ++idx) {
-    pos += sprintf((char*) ttnMsg + pos, "%02X", payload[idx]);
-  }
-
-  __asm volatile( "nop" );
-}
-
-
-void spiDetectShieldSX1272(void)
+uint8_t spiDetectShieldSX1272(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct;
   uint8_t sxVersion = 0;
@@ -546,9 +526,9 @@ void spiDetectShieldSX1272(void)
     sxVersion = aSpi1RxBuffer[1];
   }
 
-  /* We can handle Version 0x22 only */
   if (sxVersion != 0x22) {
-    Error_Handler();
+    /* We can handle Version 0x22 only */
+    return 0;
   }
 
   spiSX1272Mode_Sleep();
@@ -558,30 +538,34 @@ void spiDetectShieldSX1272(void)
 
   /* Mask out Timeout IRQ */
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x11;    // RegIrqFlagsMask
-  aSpi1TxBuffer[1] = 0x80;
+  aSpi1TxBuffer[1] = 0x90;
   spiProcessSpiMsg(2);
 
-  /* Set the registers for LoRaWAN TTN transmissions */
+  /* Set the registers for LoRaWAN transmissions */
+  spiSX1272Mode_LoRa_TX();
+
+#if 0
+  char debugBuf[1024] = { 0 };
+  int debugLen = 0;
+
   spiSX1272Mode_LoRa_RX();
 
-  volatile uint16_t rxHeaderCnt;
-  volatile uint16_t rxValidPktCnt;
-  volatile uint8_t  modemStat;
-  volatile uint8_t  rssiWideband;
+  uint8_t  modemStat;
+  uint8_t  rssiWideband;
+  uint16_t rxHeaderCnt;
+  uint16_t rxValidPktCnt;
+  uint8_t  rxNbBytes;
+  uint8_t  fifoRxCurrentAddr;
+
   do {
     aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x12;    // RegIrqFlags
     spiProcessSpiMsg(2);
-    volatile uint8_t irq = aSpi1RxBuffer[1];
+    uint8_t irq = aSpi1RxBuffer[1];
 
     if (irq) {
       aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x12;    // RegIrqFlags
       aSpi1TxBuffer[1] = irq;
       spiProcessSpiMsg(2);
-
-      aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x14;    // RegIrqFlags
-      spiProcessSpiMsg(5);
-      rxHeaderCnt   = (aSpi1RxBuffer[1] * 256UL) | aSpi1RxBuffer[2];
-      rxValidPktCnt = (aSpi1RxBuffer[3] * 256UL) | aSpi1RxBuffer[4];
 
       aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x18;    // RegModemStat
       spiProcessSpiMsg(2);
@@ -591,14 +575,57 @@ void spiDetectShieldSX1272(void)
       spiProcessSpiMsg(2);
       rssiWideband = aSpi1RxBuffer[1];
 
-      __asm volatile( "nop" );
-      (void) rxHeaderCnt;
-      (void) rxValidPktCnt;
-      (void) modemStat;
-      (void) rssiWideband;
-    }
+      aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x14;    // RegIrqFlags
+      spiProcessSpiMsg(5);
+      rxHeaderCnt   = ((uint16_t)aSpi1RxBuffer[1] << 8) | aSpi1RxBuffer[2];
+      rxValidPktCnt = ((uint16_t)aSpi1RxBuffer[3] << 8) | aSpi1RxBuffer[4];
 
+      debugLen = sprintf(debugBuf, "irq=%02x: modem=%02x, rssiWB=%03u rxHdr=%05u rxPkt=%05u", irq, modemStat, rssiWideband, rxHeaderCnt, rxValidPktCnt);
+
+      /* FIFO readout */
+      {
+        /* Positioning of the FIFO addr ptr */
+        {
+          aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x13;    // RegRxNbBytes
+          spiProcessSpiMsg(2);
+          rxNbBytes = aSpi1RxBuffer[1];
+
+          aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x10;    // RegFifoRxCurrentAddr
+          spiProcessSpiMsg(2);
+          fifoRxCurrentAddr = aSpi1RxBuffer[1];
+
+          aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;    // RegFifoAddrPtr
+          aSpi1TxBuffer[1] = fifoRxCurrentAddr - rxNbBytes;
+          spiProcessSpiMsg(2);
+
+          debugLen += sprintf(debugBuf + debugLen, " rxNbBytes=%03u fifoRxCurrentAddr=%02x:", rxNbBytes, fifoRxCurrentAddr);
+        }
+        __asm volatile( "nop" );
+
+        /* FIFO read out */
+        if (rxNbBytes < sizeof(aSpi1RxBuffer)) {
+          aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x00;    // RegFifo
+          spiProcessSpiMsg(1 + rxNbBytes);
+          for (uint8_t idx = 0; idx < rxNbBytes; ++idx) {
+            debugLen += sprintf(debugBuf + debugLen, " %02x", aSpi1RxBuffer[1 + idx]);
+          }
+        } else {
+          /* Buffer to small */
+          Error_Handler();
+        }
+
+        /* Prepare FIFO for next packet */
+        spiSX1272LoRa_Fifo_RxSetToBasePtr();
+
+        debugBuf[debugLen] = 0;
+        __asm volatile( "nop" );
+      }
+    }
   } while (1);
+#endif
+
+  /* SX1272 mbed shield found and ready for transmissions */
+  return 1;
 }
 
 /* USER CODE END 1 */

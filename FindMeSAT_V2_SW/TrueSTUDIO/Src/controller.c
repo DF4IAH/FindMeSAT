@@ -17,6 +17,7 @@
 #include "interpreter.h"
 #include "adc.h"
 #include "spi.h"
+#include "LoRaWAN.h"
 
 #include "controller.h"
 
@@ -26,6 +27,8 @@
 /* Private variables ---------------------------------------------------------*/
 extern osSemaphoreId      usbToHostBinarySemHandle;
 extern EventGroupHandle_t usbToHostEventGroupHandle;
+extern LoRaWANctx_t       loRaWANctx;
+extern LoraliveApp_t      loraliveApp;
 
 /* Private function prototypes -----------------------------------------------*/
 static void prvControllerInitBeforeGreet(void);
@@ -97,7 +100,34 @@ void prvControllerInitBeforeGreet(void)
   xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON);   // TODO: should be from Config-FLASH page
 
   /* Check for attached SX1272_mbed_shield */
-  spiDetectShieldSX1272();
+  if (spiDetectShieldSX1272()) {
+    /* Get LoRaWAN context from NVM */
+    LoRaWANctx_readNVM();
+
+    /* TODO: Test pushing of data */
+    {
+      loraliveApp.id = 'E';
+
+      loraliveApp.voltage_32_v  = (uint8_t) (3.3f * 32 + 0.5f);
+
+      loraliveApp.dust025_10_hi = 0U; loraliveApp.dust025_10_lo = 0U;
+      loraliveApp.dust025_10_hi = 0U; loraliveApp.dust025_10_lo = 0U;
+
+      uint32_t latitude_1000 = 49473;
+      loraliveApp.u.l14.latitude_1000_sl24  = (uint8_t) ((latitude_1000  >> 24) & 0xffUL);
+      loraliveApp.u.l14.latitude_1000_sl16  = (uint8_t) ((latitude_1000  >> 16) & 0xffUL);
+      loraliveApp.u.l14.latitude_1000_sl08  = (uint8_t) ((latitude_1000  >>  8) & 0xffUL);
+      loraliveApp.u.l14.latitude_1000_sl00  = (uint8_t) ((latitude_1000  >>  0) & 0xffUL);
+
+      uint32_t longitude_1000 = 8615;
+      loraliveApp.u.l14.longitude_1000_sl24 = (uint8_t) ((longitude_1000 >> 24) & 0xffUL);
+      loraliveApp.u.l14.longitude_1000_sl16 = (uint8_t) ((longitude_1000 >> 16) & 0xffUL);
+      loraliveApp.u.l14.longitude_1000_sl08 = (uint8_t) ((longitude_1000 >>  8) & 0xffUL);
+      loraliveApp.u.l14.longitude_1000_sl00 = (uint8_t) ((longitude_1000 >>  0) & 0xffUL);
+
+      LoRaWAN_App_loralive_pushUp(&loRaWANctx, &loraliveApp, 14);
+    }
+  }
 }
 
 void prvControllerInitAfterGreet(void)
