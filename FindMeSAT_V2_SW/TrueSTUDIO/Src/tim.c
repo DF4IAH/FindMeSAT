@@ -98,22 +98,7 @@ void MX_TIM5_Init(void)
   sConfigIC.ICSelection = TIM_ICSELECTION_DIRECTTI;
   sConfigIC.ICPrescaler = TIM_ICPSC_DIV1;
   sConfigIC.ICFilter = 0;
-  if (HAL_TIM_IC_ConfigChannel(&htim5, &sConfigIC, TIM_CHANNEL_1) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
   if (HAL_TIM_IC_ConfigChannel(&htim5, &sConfigIC, TIM_CHANNEL_2) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
-  if (HAL_TIM_IC_ConfigChannel(&htim5, &sConfigIC, TIM_CHANNEL_3) != HAL_OK)
-  {
-    _Error_Handler(__FILE__, __LINE__);
-  }
-
-  if (HAL_TIM_IC_ConfigChannel(&htim5, &sConfigIC, TIM_CHANNEL_4) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
@@ -133,17 +118,14 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     __HAL_RCC_TIM5_CLK_ENABLE();
   
     /**TIM5 GPIO Configuration    
-    PF6     ------> TIM5_CH1
-    PF7     ------> TIM5_CH2
-    PF8     ------> TIM5_CH3
-    PF9     ------> TIM5_CH4 
+    PF7     ------> TIM5_CH2 
     */
-    GPIO_InitStruct.Pin = TIM5_CH1_Pin|TIM5_CH2_Pin|TIM5_CH3_Pin|TIM5_CH4_Pin;
+    GPIO_InitStruct.Pin = GPS_1PPS_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_NOPULL;
+    GPIO_InitStruct.Pull = GPIO_PULLUP;
     GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
     GPIO_InitStruct.Alternate = GPIO_AF2_TIM5;
-    HAL_GPIO_Init(GPIOF, &GPIO_InitStruct);
+    HAL_GPIO_Init(GPS_1PPS_GPIO_Port, &GPIO_InitStruct);
 
     /* TIM5 interrupt Init */
     HAL_NVIC_SetPriority(TIM5_IRQn, 5, 0);
@@ -166,12 +148,9 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
     __HAL_RCC_TIM5_CLK_DISABLE();
   
     /**TIM5 GPIO Configuration    
-    PF6     ------> TIM5_CH1
-    PF7     ------> TIM5_CH2
-    PF8     ------> TIM5_CH3
-    PF9     ------> TIM5_CH4 
+    PF7     ------> TIM5_CH2 
     */
-    HAL_GPIO_DeInit(GPIOF, TIM5_CH1_Pin|TIM5_CH2_Pin|TIM5_CH3_Pin|TIM5_CH4_Pin);
+    HAL_GPIO_DeInit(GPS_1PPS_GPIO_Port, GPS_1PPS_Pin);
 
     /* TIM5 interrupt Deinit */
     HAL_NVIC_DisableIRQ(TIM5_IRQn);
