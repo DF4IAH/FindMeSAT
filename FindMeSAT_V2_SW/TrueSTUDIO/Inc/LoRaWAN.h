@@ -11,6 +11,9 @@
 #include "stm32l4xx_hal.h"
 
 
+#define LoRaWAN_App_loralive_pushUp__FRMPayloadMax    48
+
+
 typedef enum LoRaWANMAC_CID {
 
   ResetInd_UP             = 0x01,   // ABP devices only, LW 1.1
@@ -97,10 +100,6 @@ typedef struct LoRaWANctx {
   uint32_t          FCntUp;
   uint32_t          NFCntDwn;         // LW 1.0: FCntDwn
   uint32_t          AFCntDwn;
-  uint32_t          x3;
-  uint32_t          x4;
-  uint32_t          x5;
-  uint32_t          x6;
 
 } LoRaWANctx_t;
 
@@ -159,8 +158,21 @@ typedef struct LoraliveApp {
 } LoraliveApp_t;
 
 
+typedef struct FRMPayloadBlockA {
+
+  uint8_t   variant;
+  uint32_t  _noUse;
+  uint8_t   Dir;
+  uint8_t   DevAddr[4];
+  uint32_t  FCntUp_FCntDwn;
+  uint8_t   _pad;
+  uint8_t   i;
+
+} FRMPayloadBlockA_t;
+
+
 void LoRaWANctx_readNVM(void);
 void LoRaWANctx_applyKeys_loralive(void);
-void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t size);
+void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, uint8_t FPort, LoraliveApp_t* app, uint8_t size);
 
 #endif /* LORAWAN_H_ */
