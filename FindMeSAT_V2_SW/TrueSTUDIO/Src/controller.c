@@ -101,8 +101,8 @@ void prvControllerInitBeforeGreet(void)
 
   /* Check for attached SX1272_mbed_shield */
   if (spiDetectShieldSX1272()) {
-    /* Get LoRaWAN context from NVM */
-    LoRaWANctx_readNVM();
+    /* Init LoRaWAM module */
+    LoRaWAN_Init();
 
     /* TODO: Test pushing of data */
     {

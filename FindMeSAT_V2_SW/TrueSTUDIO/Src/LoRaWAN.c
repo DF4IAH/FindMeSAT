@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include "crypto.h"
+#include "crc.h"
 
 #include "FreeRTOS.h"
 #include "stm32l496xx.h"
@@ -16,8 +17,11 @@
 
 
 
+/* Non-volatile counters in the RTC_Backup domain */
+LoRaWANctxBkpRam_t *const LoRaWANctxBkpRam      = (void*) 0x40002850UL;
+
 /* Network context of LoRaWAN */
-LoRaWANctx_t loRaWANctx = { 0 };
+LoRaWANctx_t loRaWANctx                         = { 0 };
 
 /* Application data for loralive */
 LoraliveApp_t loraliveApp = { 0 };
@@ -38,7 +42,7 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
 
     /* Encode application data */
     uint8_t* key            = (FPort > 0) ?  ctx->appSKey : ctx->NwkSEncKey;
-    FRMPayloadBlockA_t a_i  = { 0x01U, 0x00000000UL, 0x00, { ctx->DevAddr[0], ctx->DevAddr[1], ctx->DevAddr[2], ctx->DevAddr[3] }, ctx->FCntUp, 0x00, 0x00 };
+    FRMPayloadBlockA_t a_i  = { 0x01U, 0x00000000UL, 0x00, { ctx->DevAddr[0], ctx->DevAddr[1], ctx->DevAddr[2], ctx->DevAddr[3] }, ctx->bkpRAM->FCntUp, 0x00, 0x00 };
 
     uint8_t k = (appSize + 15U) >> 4;
     for (uint8_t i = 1; i <= k; ++i) {
@@ -60,7 +64,29 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
 }
 
 
-void LoRaWANctx_readNVM(void)
+void LoRaWAN_Init(void)
+{
+  const uint8_t bkpRAMLen = &LoRaWANctxBkpRam->_end - &LoRaWANctxBkpRam->LoRaWANcrc;
+  loRaWANctx.bkpRAM = LoRaWANctxBkpRam;
+
+  // Check CRC
+  uint32_t crcC = crcCalc((&LoRaWANctxBkpRam->LoRaWANcrc) + 1, bkpRAMLen - 1);
+  if (crcC != LoRaWANctxBkpRam->LoRaWANcrc) {
+    /* Non valid content - reset all to zero */
+    uint32_t* ptr = &LoRaWANctxBkpRam->LoRaWANcrc;
+    for (uint8_t idx = 1; idx < bkpRAMLen; idx++) {
+      *++ptr = 0UL;
+    }
+
+    /* Calc new CRC */
+    LoRaWANctxBkpRam->LoRaWANcrc = crcCalc((&LoRaWANctxBkpRam->LoRaWANcrc) + 1, bkpRAMLen - 1);
+  }
+
+  /* Setup data from FLASH NVM */
+  LoRaWANctx_readFLASH();
+}
+
+void LoRaWANctx_readFLASH(void)
 {
   /* TODO: read from NVM instead of clearing all counters and keys */
   memset(&loRaWANctx, 0, sizeof(LoRaWANctx_t));
@@ -107,6 +133,7 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, uint8_t FPort, LoraliveApp_t
       app, size);
 
   // TODO: continue here
+
 }
 
 

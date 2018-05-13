@@ -68,38 +68,60 @@ typedef enum LoRaWANVersion {
 } LoRaWANVersion_t;
 
 
-typedef struct LoRaWANctx {
+typedef struct LoRaWANctxBkpRam {
 
-  /* Device specific */
-  uint8_t           DevEUI[8];
-  uint8_t           DevAddr[4];
+  /* Skip first entries */
+  uint32_t              _skip[16];
 
-  /* Network / MAC specific */
-  LoRaWANVersion_t  LoRaWAN_ver;
-  uint8_t           NwkKey[16];       // Network root key (for OTA devices)
-  uint8_t           FNwkSIntKey[16];
-  uint8_t           SNwkSIntKey[16];
-  uint8_t           NwkSEncKey[16];
-  uint8_t           JSIntKey[16];     // (for OTA devices)
-  uint8_t           JSEncKey[16];     // (for OTA devices)
-
-  /* Join Server specific */
-  uint8_t           JoinEUI[8];
-  uint16_t          DevNonce;
-  uint32_t          ServerNonce;      // actual 3 octets
-  uint32_t          Home_NetID;       // actual 3 octets
-  uint8_t           DLSettings;
-  uint8_t           RxDelay;
-  uint8_t           CFList[16];
-
-  /* Application specific */
-  uint8_t           appEUI[8];
-  uint8_t           appSKey[16];
+  /* CRC */
+  uint32_t              LoRaWANcrc;
 
   /* Counters */
-  uint32_t          FCntUp;
-  uint32_t          NFCntDwn;         // LW 1.0: FCntDwn
-  uint32_t          AFCntDwn;
+  uint32_t              FCntUp;
+  uint32_t              NFCntDwn;         // LW 1.0: FCntDwn
+  uint32_t              AFCntDwn;
+
+  uint32_t              n8_n8_DLSettings8_RxDelay8;
+  uint32_t              CFList_03_02_01_00;
+  uint32_t              CFList_07_06_05_04;
+  uint32_t              CFList_11_10_09_08;
+  uint32_t              CFList_15_14_13_12;
+
+  uint32_t              _end;
+
+} LoRaWANctxBkpRam_t;
+
+typedef struct LoRaWANctx {
+
+  /* Non-volatile counters */
+  LoRaWANctxBkpRam_t*   bkpRAM;
+
+
+  /* Device specific */
+  uint8_t               DevEUI[8];
+  uint8_t               DevAddr[4];
+
+  /* Network / MAC specific */
+  LoRaWANVersion_t      LoRaWAN_ver;
+  uint8_t               NwkKey[16];       // Network root key (for OTA devices)
+  uint8_t               FNwkSIntKey[16];
+  uint8_t               SNwkSIntKey[16];
+  uint8_t               NwkSEncKey[16];
+  uint8_t               JSIntKey[16];     // (for OTA devices)
+  uint8_t               JSEncKey[16];     // (for OTA devices)
+
+  /* Join Server specific */
+  uint8_t               JoinEUI[8];
+  uint16_t              DevNonce;
+  uint32_t              ServerNonce;      // actual 3 octets
+  uint32_t              Home_NetID;       // actual 3 octets
+  //uint8_t             DLSettings;
+  //uint8_t             RxDelay;
+  //uint8_t             CFList[16];
+
+  /* Application specific */
+  uint8_t               appEUI[8];
+  uint8_t               appSKey[16];
 
 } LoRaWANctx_t;
 
@@ -171,7 +193,9 @@ typedef struct FRMPayloadBlockA {
 } FRMPayloadBlockA_t;
 
 
-void LoRaWANctx_readNVM(void);
+void LoRaWAN_Init(void);
+
+void LoRaWANctx_readFLASH(void);
 void LoRaWANctx_applyKeys_loralive(void);
 void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, uint8_t FPort, LoraliveApp_t* app, uint8_t size);
 
