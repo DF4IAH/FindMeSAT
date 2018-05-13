@@ -108,7 +108,7 @@ void HAL_CRC_MspDeInit(CRC_HandleTypeDef* crcHandle)
 /* USER CODE BEGIN 1 */
 uint32_t crcCalc(const uint32_t* ptr, uint32_t len)
 {
-  return HAL_CRC_Calculate(&hcrc, ptr, len);
+  return HAL_CRC_Calculate(&hcrc, (uint32_t*) ptr, len);
 }
 
 /* USER CODE END 1 */

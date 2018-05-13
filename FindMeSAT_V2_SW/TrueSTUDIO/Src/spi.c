@@ -366,6 +366,15 @@ void spiSX1272Dio_Mapping(void)
   spiProcessSpiMsg(3);
 }
 
+void spiSX1272LoRa_setTxMsgLen(uint8_t payloadLen)
+{
+  /* Message length to transmit */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x22;    // RegPayloadLength
+  aSpi1TxBuffer[1] = payloadLen;
+  spiProcessSpiMsg(2);
+}
+
+
 void spiSX1272LoRa_Fifo_Init(void)
 {
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
@@ -384,6 +393,17 @@ void spiSX1272LoRa_Fifo_RxSetToBasePtr(void)
 
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
   aSpi1TxBuffer[1] = fifoRxBaseAddr;
+  spiProcessSpiMsg(2);
+}
+
+void spiSX1272LoRa_Fifo_TxSetToBasePtr(void)
+{
+  aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x0e;
+  spiProcessSpiMsg(2);
+  uint8_t fifoTxBaseAddr = aSpi1RxBuffer[1];    // RegFifoTxBaseAddr
+
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
+  aSpi1TxBuffer[1] = fifoTxBaseAddr;
   spiProcessSpiMsg(2);
 }
 
@@ -487,11 +507,20 @@ void spiSX1272Mode_LoRa_RX(void)
   spiProcessSpiMsg(2);
 }
 
-void spiSX1272Mode_Sleep(void)
+void spiSX1272Mode(spiSX1272_Mode_t mode)
 {
-  /* Switch to sleep */
+  /* Read current register */
+  aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x01;
+  spiProcessSpiMsg(2);
+  uint8_t curMode = aSpi1RxBuffer[1];
+
+  /* Modify */
+  curMode &= 0b11111000U;
+  curMode |= mode & 0b111U;
+
+  /* Write back current mode */
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
-  aSpi1TxBuffer[1] = 0;
+  aSpi1TxBuffer[1] = curMode;
   spiProcessSpiMsg(2);
 }
 
@@ -531,7 +560,7 @@ uint8_t spiDetectShieldSX1272(void)
     return 0;
   }
 
-  spiSX1272Mode_Sleep();
+  spiSX1272Mode(STANDBY);
   spiSX1272Frequency_MHz(spiSX1272Calc_Channel_to_MHz(0));    // RX2 channel
   spiSX1272Dio_Mapping();
   spiSX1272LoRa_Fifo_Init();

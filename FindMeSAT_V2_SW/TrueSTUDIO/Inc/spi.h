@@ -69,6 +69,17 @@ extern SPI_HandleTypeDef hspi1;
 #define SPI_WR_FLAG   (1 << 7)
 #define SPI_RD_FLAG   (0 << 7)
 
+typedef enum spiSX1272_Mode {
+  SLEEP                   = 0b000,
+  STANDBY                 = 0b001,
+  FSTX                    = 0b010,
+  TX                      = 0b011,
+  FSRX                    = 0b100,
+  RXCONTINUOUS            = 0b101,
+  RXSINGLE                = 0b110,
+  CAD                     = 0b111
+} spiSX1272_Mode_t;
+
 /* USER CODE END Private defines */
 
 extern void _Error_Handler(char *, int);
@@ -85,11 +96,13 @@ uint8_t spiProcessSpiReturnWait(void);
 float spiSX1272Calc_Channel_to_MHz(uint8_t channel);
 void spiSX1272Frequency_MHz(float mhz);
 void spiSX1272Dio_Mapping(void);
+void spiSX1272LoRa_setTxMsgLen(uint8_t payloadLen);
 void spiSX1272LoRa_Fifo_Init(void);
 void spiSX1272LoRa_Fifo_RxSetToBasePtr(void);
+void spiSX1272LoRa_Fifo_TxSetToBasePtr(void);
 void spiSX1272Mode_LoRa_TX(void);
 void spiSX1272Mode_LoRa_RX(void);
-void spiSX1272Mode_Sleep(void);
+void spiSX1272Mode(spiSX1272_Mode_t mode);
 
 uint8_t spiDetectShieldSX1272(void);
 
