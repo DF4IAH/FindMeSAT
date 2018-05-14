@@ -415,7 +415,7 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, uint8_t FPort, LoraliveApp_t
 
     /* FRMPayload */
     msg_FRMPayload_Len = LoRaWAN_App_loralive_data2FRMPayload(ctx,
-        msg_FRMPayload_Encoded, /* LoRaWAN_FRMPayloadMax */ 0,      // TODO: first test without FRMPayload
+        msg_FRMPayload_Encoded, LoRaWAN_FRMPayloadMax,
         app);
   }
 
