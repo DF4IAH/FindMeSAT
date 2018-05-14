@@ -56,8 +56,8 @@ typedef struct LoRaWANctx {
 
 
   /* Device specific */
-  uint8_t                             DevEUI[8];
-  uint32_t                            DevAddr;
+  uint8_t                             DevEUI_LE[8];
+  uint8_t                             DevAddr_LE[4];
 
   /* Network / MAC specific */
   LoRaWANVersion_t                    LoRaWAN_ver;
@@ -69,7 +69,7 @@ typedef struct LoRaWANctx {
   uint8_t                             JSEncKey[16];     // (for OTA devices)
 
   /* Join Server specific */
-  uint8_t                             JoinEUI[8];
+  uint8_t                             JoinEUI_LE[8];
   uint16_t                            DevNonce;
   uint32_t                            ServerNonce;      // actual 3 octets
   uint32_t                            Home_NetID;       // actual 3 octets
@@ -78,7 +78,7 @@ typedef struct LoRaWANctx {
   //uint8_t                           CFList[16];
 
   /* Application specific */
-  uint8_t                             AppEUI[8];
+  uint8_t                             AppEUI_LE[8];
   uint8_t                             AppSKey[16];
 
   /* Current transmission */
@@ -121,6 +121,9 @@ typedef enum LoRaWAN_MajorBF {
 #define LoRaWAN_FCtl_ClassB_SL        4
 #define LoRaWAN_FCtl_FPending_SL      4
 #define LoRaWAN_FCtl_FOptsLen_SL      0
+
+
+uint8_t GET_BYTE_OF_WORD(uint32_t word, uint8_t pos);
 
 
 typedef enum LoRaWANMAC_CID {
@@ -176,8 +179,8 @@ typedef struct FRMPayloadBlockA_Up {
   uint8_t                             variant;
   uint32_t                            _noUse;
   uint8_t                             Dir;
-  uint32_t                            DevAddr;
-  uint32_t                            FCntUp_FCntDn;
+  uint8_t                             DevAddr[4];
+  uint8_t                             FCntUp[4];
   uint8_t                             _pad;
   uint8_t                             idx;
 } FRMPayloadBlockA_Up_t;
@@ -186,20 +189,20 @@ typedef struct MICBlockB0_Up {
   uint8_t                             variant;
   uint32_t                            _noUse;
   uint8_t                             Dir;
-  uint32_t                            DevAddr;
-  uint32_t                            FCntUp_FCntDn;
+  uint8_t                             DevAddr[4];
+  uint8_t                             FCntUp[4];
   uint8_t                             _pad;
   uint8_t                             len;
 } MICBlockB0_Up_t;
 
 typedef struct MICBlockB1_Up {
   uint8_t                             variant;
-  uint16_t                            ConfFCnt;
+  uint8_t                             ConfFCnt[2];
   uint8_t                             TxDr;
   uint8_t                             TxCh;
   uint8_t                             Dir;
-  uint32_t                            DevAddr;
-  uint32_t                            FCntUp;
+  uint8_t                             DevAddr[4];
+  uint8_t                             FCntUp[4];
   uint8_t                             _pad;
   uint8_t                             len;
 } MICBlockB1_Up_t;
@@ -207,11 +210,11 @@ typedef struct MICBlockB1_Up {
 
 typedef struct MICBlockB0_Dn {
   uint8_t                             variant;
-  uint16_t                            ConfFCnt;
+  uint8_t                             ConfFCnt[2];
   uint16_t                            _noUse;
   uint8_t                             Dir;
-  uint32_t                            DevAddr;
-  uint32_t                            FCntUp_FCntDn;
+  uint8_t                             DevAddr[4];
+  uint8_t                             FCntDn[4];
   uint8_t                             _pad;
   uint8_t                             len;
 } MICBlockB0_Dn_t;
