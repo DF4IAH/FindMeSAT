@@ -23,6 +23,24 @@ extern uint8_t aSpi1TxBuffer[SPI1_BUFFERSIZE];
 extern uint8_t aSpi1RxBuffer[SPI1_BUFFERSIZE];
 
 
+/* TheThingsNetwork - assigned codes to this device - sufficient for R1.0 [LW10, LW102] */
+//const char *TTNdevAddr = "26011E42";
+//const char *TTNnwkSKey = "4386E7FF679BF9810462B2192B2F5211";
+//const char *TTNappSKey = "ADDA9AD9B4D746323E221E7E69447DF5";
+
+
+const uint32_t DevAddr				=  0x26011E42UL;
+
+const uint8_t  DevEUI_LE[8]         = { 0x31U, 0x6FU, 0x72U, 0x65U, 0x70U, 0x73U, 0x65U, 0x00U };
+const uint8_t  AppEUI_LE[8]         = { 0x00U, 0x86U, 0x00U, 0xD0U, 0x7EU, 0xD5U, 0xB3U, 0x70U };
+const uint8_t  FNwkSIntKey_LE[16]   = { 0x11U, 0x52U, 0x2FU, 0x2BU, 0x19U, 0xB2U, 0x62U, 0x04U, 0x81U, 0xF9U, 0x9BU, 0x67U, 0xFFU, 0xE7U, 0x86U, 0x43U };
+//const uint8_t* SNwkSIntKey_LE     =  FNwkSIntKey_LE;
+//const uint8_t* NwkSEncKey_LE      =  FNwkSIntKey_LE;
+const uint8_t  AppSKey_LE[16]       = { 0xF5U, 0x7DU, 0x44U, 0x69U, 0x7EU, 0x1EU, 0x22U, 0x3EU, 0x32U, 0x46U, 0xD7U, 0xB4U, 0xD9U, 0x9AU, 0xDAU, 0xADU };
+
+const uint8_t  NwkSKey_BE[16]       = { 0x43U, 0x86U, 0xE7U, 0xFFU, 0x67U, 0x9BU, 0xF9U, 0x81U, 0x04U, 0x62U, 0xB2U, 0x19U, 0x2BU, 0x2FU, 0x52U, 0x11U };
+const uint8_t  AppSKey_BE[16]       = { 0xADU, 0xDAU, 0x9AU, 0xD9U, 0xB4U, 0xD7U, 0x46U, 0x32U, 0x3EU, 0x22U, 0x1EU, 0x7EU, 0x69U, 0x44U, 0x7DU, 0xF5U };
+
 /* Non-volatile counters in the RTC_Backup domain */
 volatile LoRaWANctxBkpRam_t *const LoRaWANctxBkpRam     = (void*) 0x40002850UL;
 
@@ -64,7 +82,7 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
     memcpy((char*) pad48, app, appSize);
 
     /* Encode application data */
-    uint8_t* key  = (FPort > 0) ?  ctx->appSKey : ctx->NwkSEncKey;
+    uint8_t* key  = (FPort > 0) ?  ctx->AppSKey : ctx->NwkSEncKey;
     FRMPayloadBlockA_Up_t a_i  = { 0x01U, 0x00000000UL, (uint8_t) ctx->Dir, ctx->DevAddr, ctx->bkpRAM->FCntUp, 0x00, 0x00 };
 
     uint8_t k = (appSize + 15U) >> 4;
@@ -183,24 +201,13 @@ void LoRaWANctx_readFLASH(void)
 
 void LoRaWANctx_applyKeys_loralive(void)
 {
-  const uint8_t  DevEUI_LE[8]         = { 0x31U, 0x6FU, 0x72U, 0x65U, 0x70U, 0x73U, 0x65U, 0x00U };
   memcpy(&(loRaWANctx.DevEUI), &DevEUI_LE, sizeof(DevEUI_LE));
-
-  const uint32_t DevAddr              = 0x26011E42;
   loRaWANctx.DevAddr = DevAddr;
-
-  const uint8_t  appEUI_LE[8]         = { 0x00U, 0x86U, 0x00U, 0xD0U, 0x7EU, 0xD5U, 0xB3U, 0x70U };
-  memcpy(&(loRaWANctx.appEUI), &appEUI_LE, sizeof(appEUI_LE));
-
-  const uint8_t  FNwkSIntKey_LE[16]   = { 0x11U, 0x52U, 0x2FU, 0x2BU, 0x19U, 0xB2U, 0x62U, 0x04U, 0x81U, 0xF9U, 0x9BU, 0x67U, 0xFFU, 0xE7U, 0x86U, 0x43U };
-  //const uint8_t  nwkSKey_BE[16]     = { 0x43U, 0x86U, 0xE7U, 0xFFU, 0x67U, 0x9BU, 0xF9U, 0x81U, 0x04U, 0x62U, 0xB2U, 0x19U, 0x2BU, 0x2FU, 0x52U, 0x11U };
+  memcpy(&(loRaWANctx.AppEUI), &AppEUI_LE, sizeof(AppEUI_LE));
   memcpy(&(loRaWANctx.FNwkSIntKey), &FNwkSIntKey_LE, sizeof(FNwkSIntKey_LE));
-  memcpy(&(loRaWANctx.SNwkSIntKey), &FNwkSIntKey_LE, sizeof(FNwkSIntKey_LE));
-  memcpy(&(loRaWANctx.NwkSEncKey),  &FNwkSIntKey_LE, sizeof(FNwkSIntKey_LE));
-
-  const uint8_t  appSKey_LE[16]       = { 0xF5U, 0x7DU, 0x44U, 0x69U, 0x7EU, 0x1EU, 0x22U, 0x3EU, 0x32U, 0x46U, 0xD7U, 0xB4U, 0xD9U, 0x9AU, 0xDAU, 0xADU };
-  //const uint8_t  appSKey_BE[16]     = { 0xADU, 0xDAU, 0x9AU, 0xD9U, 0xB4U, 0xD7U, 0x46U, 0x32U, 0x3EU, 0x22U, 0x1EU, 0x7EU, 0x69U, 0x44U, 0x7DU, 0xF5U };
-  memcpy(&(loRaWANctx.appSKey), &appSKey_LE, sizeof(appSKey_LE));
+  memcpy(&(loRaWANctx.SNwkSIntKey), &FNwkSIntKey_LE, sizeof(FNwkSIntKey_LE));    // Take FNwkSIntKey
+  memcpy(&(loRaWANctx.NwkSEncKey),  &FNwkSIntKey_LE, sizeof(FNwkSIntKey_LE));    // Take FNwkSIntKey
+  memcpy(&(loRaWANctx.AppSKey), &AppSKey_LE, sizeof(AppSKey_LE));
 
   /* Current transmission state */
   loRaWANctx.LoRaWAN_ver              = LoRaWANVersion_10;    // TheThingsNetwork - assigned codes to this device - sufficient for R1.0 [LW10, LW102]
@@ -210,7 +217,7 @@ void LoRaWANctx_applyKeys_loralive(void)
   loRaWANctx.FCtrl_ACK                = 0U;
   loRaWANctx.FCtrl_ClassB             = 0U;
   loRaWANctx.FCtrl_FPending           = 0U;
-  loRaWANctx.FPort                    = 1U;   // Default App port
+  loRaWANctx.FPort                    = 2U;   // Default App port for "mapme" mapper
   loRaWANctx.ConfFCnt                 = 0U;
   loRaWANctx.TxDr                     = 0U;
   loRaWANctx.TxCh                     = 0U;

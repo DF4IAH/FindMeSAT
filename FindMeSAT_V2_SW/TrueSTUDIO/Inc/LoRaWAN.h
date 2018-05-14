@@ -78,8 +78,8 @@ typedef struct LoRaWANctx {
   //uint8_t                           CFList[16];
 
   /* Application specific */
-  uint8_t                             appEUI[8];
-  uint8_t                             appSKey[16];
+  uint8_t                             AppEUI[8];
+  uint8_t                             AppSKey[16];
 
   /* Current transmission */
   LoRaWANctxDir_t                     Dir;

@@ -94,15 +94,18 @@ void spiProcessSpiMsg(uint8_t msgLen);
 uint8_t spiProcessSpiReturnWait(void);
 
 float spiSX1272Calc_Channel_to_MHz(uint8_t channel);
+
 void spiSX1272Frequency_MHz(float mhz);
 void spiSX1272Dio_Mapping(void);
+
 void spiSX1272LoRa_setTxMsgLen(uint8_t payloadLen);
 void spiSX1272LoRa_Fifo_Init(void);
 void spiSX1272LoRa_Fifo_RxSetToBasePtr(void);
 void spiSX1272LoRa_Fifo_TxSetToBasePtr(void);
+
+void spiSX1272Mode(spiSX1272_Mode_t mode);
 void spiSX1272Mode_LoRa_TX(void);
 void spiSX1272Mode_LoRa_RX(void);
-void spiSX1272Mode(spiSX1272_Mode_t mode);
 
 uint8_t spiDetectShieldSX1272(void);
 

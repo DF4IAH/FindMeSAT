@@ -60,18 +60,6 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-/* TheThingsNetwork - assigned codes to this device - sufficient for R1.0 [LW10, LW102] */
-const uint8_t  devEUI_LE[8]         = { 0x31U, 0x6FU, 0x72U, 0x65U, 0x70U, 0x73U, 0x65U, 0x00U };
-const uint8_t  devAddr_LE[4]        = { 0x42U, 0x1EU, 0x01U, 0x26U };
-const uint8_t  appEUI_LE[8]         = { 0x00U, 0x86U, 0x00U, 0xD0U, 0x7EU, 0xD5U, 0xB3U, 0x70U };
-const uint8_t  FNwkSIntKey_LE[16]   = { 0x11U, 0x52U, 0x2FU, 0x2BU, 0x19U, 0xB2U, 0x62U, 0x04U, 0x81U, 0xF9U, 0x9BU, 0x67U, 0xFFU, 0xE7U, 0x86U, 0x43U };
-const uint8_t* SNwkSIntKey_LE       =  FNwkSIntKey_LE;
-const uint8_t* NwkSEncKey_LE        =  FNwkSIntKey_LE;
-const uint8_t  appSKey_LE[16]       = { 0xF5U, 0x7DU, 0x44U, 0x69U, 0x7EU, 0x1EU, 0x22U, 0x3EU, 0x32U, 0x46U, 0xD7U, 0xB4U, 0xD9U, 0x9AU, 0xDAU, 0xADU };
-
-const uint8_t  nwkSKey_BE[16]       = { 0x43U, 0x86U, 0xE7U, 0xFFU, 0x67U, 0x9BU, 0xF9U, 0x81U, 0x04U, 0x62U, 0xB2U, 0x19U, 0x2BU, 0x2FU, 0x52U, 0x11U };
-const uint8_t  appSKey_BE[16]       = { 0xADU, 0xDAU, 0x9AU, 0xD9U, 0xB4U, 0xD7U, 0x46U, 0x32U, 0x3EU, 0x22U, 0x1EU, 0x7EU, 0x69U, 0x44U, 0x7DU, 0xF5U };
-
 extern EventGroupHandle_t spiEventGroupHandle;
 
 /* Buffer used for transmission */
@@ -344,6 +332,7 @@ float spiSX1272Calc_Channel_to_MHz(uint8_t channel)
   return mhz;
 }
 
+
 void spiSX1272Frequency_MHz(float mhz)
 {
   float fVal = (mhz * 1e6 * (1UL << 19)) / 32e6;
@@ -366,6 +355,7 @@ void spiSX1272Dio_Mapping(void)
   spiProcessSpiMsg(3);
 }
 
+
 void spiSX1272LoRa_setTxMsgLen(uint8_t payloadLen)
 {
   /* Message length to transmit */
@@ -373,7 +363,6 @@ void spiSX1272LoRa_setTxMsgLen(uint8_t payloadLen)
   aSpi1TxBuffer[1] = payloadLen;
   spiProcessSpiMsg(2);
 }
-
 
 void spiSX1272LoRa_Fifo_Init(void)
 {
@@ -404,6 +393,24 @@ void spiSX1272LoRa_Fifo_TxSetToBasePtr(void)
 
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
   aSpi1TxBuffer[1] = fifoTxBaseAddr;
+  spiProcessSpiMsg(2);
+}
+
+
+void spiSX1272Mode(spiSX1272_Mode_t mode)
+{
+  /* Read current register */
+  aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x01;
+  spiProcessSpiMsg(2);
+  uint8_t curMode = aSpi1RxBuffer[1];
+
+  /* Modify */
+  curMode &= 0b11111000U;
+  curMode |= mode & 0b111U;
+
+  /* Write back current mode */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  aSpi1TxBuffer[1] = curMode;
   spiProcessSpiMsg(2);
 }
 
@@ -504,23 +511,6 @@ void spiSX1272Mode_LoRa_RX(void)
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
   //aSpi1TxBuffer[1] = (1 << 7) | (0b110 << 0);   // RX_SINGLE
   aSpi1TxBuffer[1] = (1 << 7) | (0b101 << 0);   // RX_CONTINUOUS
-  spiProcessSpiMsg(2);
-}
-
-void spiSX1272Mode(spiSX1272_Mode_t mode)
-{
-  /* Read current register */
-  aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x01;
-  spiProcessSpiMsg(2);
-  uint8_t curMode = aSpi1RxBuffer[1];
-
-  /* Modify */
-  curMode &= 0b11111000U;
-  curMode |= mode & 0b111U;
-
-  /* Write back current mode */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
-  aSpi1TxBuffer[1] = curMode;
   spiProcessSpiMsg(2);
 }
 
