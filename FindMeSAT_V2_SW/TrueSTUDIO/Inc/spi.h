@@ -104,8 +104,10 @@ void spiSX1272LoRa_Fifo_RxSetToBasePtr(void);
 void spiSX1272LoRa_Fifo_TxSetToBasePtr(void);
 
 void spiSX1272Mode(spiSX1272_Mode_t mode);
-void spiSX1272Mode_LoRa_TX(void);
-void spiSX1272Mode_LoRa_RX(void);
+void spiSX1272Mode_LoRa_TX(uint8_t channel);
+void spiSX1272Mode_LoRa_RX(uint8_t channel);
+
+void spiSX1272_WaitUntil_TxRxDone(void);
 
 uint8_t spiDetectShieldSX1272(void);
 
