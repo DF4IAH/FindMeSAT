@@ -65,7 +65,7 @@ static void LoRaWAN_FOpts_Encrypt(LoRaWANctx_t* ctx,
 
   FRMPayloadBlockA_Up_t a_i  = {
     0x01U,
-    0x00000000UL,
+    { 0x00U, 0x00U, 0x00U, 0x00U },
     (uint8_t) ctx->Dir,
     { ctx->DevAddr_LE[0],
       ctx->DevAddr_LE[1],
@@ -143,7 +143,7 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
 
       FRMPayloadBlockA_Up_t a_i  = {
         0x01U,
-        0x00000000UL,
+        { 0x00U, 0x00U, 0x00U, 0x00U },
         (uint8_t) ctx->Dir,
         { ctx->DevAddr_LE[0],
           ctx->DevAddr_LE[1],
@@ -191,14 +191,14 @@ static uint32_t LoRaWAN_calc_MIC(LoRaWANctx_t* ctx, const uint8_t* msg_Buf, uint
 {
   uint32_t  mic;
   uint8_t   cmacLen;
-  uint8_t   cmacBuf[64];
+  uint8_t   cmacBuf[64] = { 0 };
 
   if (ctx->Dir == Up) {
     /* Uplink */
 
     MICBlockB0_Up_t b0 = {
       0x49U,
-      0x00000000UL,
+      { 0x00U, 0x00, 0x00U, 00U },
       (uint8_t) Up,
       { ctx->DevAddr_LE[0],
         ctx->DevAddr_LE[1],
@@ -271,7 +271,7 @@ static uint32_t LoRaWAN_calc_MIC(LoRaWANctx_t* ctx, const uint8_t* msg_Buf, uint
       0x49U,
       { GET_BYTE_OF_WORD(ctx->ConfFCnt, 0),
         GET_BYTE_OF_WORD(ctx->ConfFCnt, 1) },
-      (uint16_t) 0x0000U,
+      { 0x00U, 0x00U },
       (uint8_t) Dn,
       { ctx->DevAddr_LE[0],
         ctx->DevAddr_LE[1],

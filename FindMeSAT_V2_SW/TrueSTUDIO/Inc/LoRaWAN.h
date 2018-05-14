@@ -177,7 +177,7 @@ typedef enum LoRaWANMAC_CID {
 
 typedef struct FRMPayloadBlockA_Up {
   uint8_t                             variant;
-  uint32_t                            _noUse;
+  uint8_t                             _noUse[4];
   uint8_t                             Dir;
   uint8_t                             DevAddr[4];
   uint8_t                             FCntUp[4];
@@ -187,7 +187,7 @@ typedef struct FRMPayloadBlockA_Up {
 
 typedef struct MICBlockB0_Up {
   uint8_t                             variant;
-  uint32_t                            _noUse;
+  uint8_t                             _noUse[4];
   uint8_t                             Dir;
   uint8_t                             DevAddr[4];
   uint8_t                             FCntUp[4];
@@ -211,7 +211,7 @@ typedef struct MICBlockB1_Up {
 typedef struct MICBlockB0_Dn {
   uint8_t                             variant;
   uint8_t                             ConfFCnt[2];
-  uint16_t                            _noUse;
+  uint8_t                             _noUse[2];
   uint8_t                             Dir;
   uint8_t                             DevAddr[4];
   uint8_t                             FCntDn[4];
@@ -222,15 +222,15 @@ typedef struct MICBlockB0_Dn {
 
 typedef struct LoraliveApp {
 
-  uint8_t                           voltage_32_v;
+  uint8_t                             voltage_32_v;
 
   /* Big endian */
-  uint8_t                           dust025_10_hi;
-  uint8_t                           dust025_10_lo;
+  uint8_t                             dust025_10_hi;
+  uint8_t                             dust025_10_lo;
 
   /* Big endian */
-  uint8_t                           dust100_10_hi;
-  uint8_t                           dust100_10_lo;
+  uint8_t                             dust100_10_hi;
+  uint8_t                             dust100_10_lo;
 
   char  id;
 
@@ -239,35 +239,35 @@ typedef struct LoraliveApp {
     } l6;
 
     struct loraliveApp_len8 {
-      int8_t                        temperature;
-      uint8_t                       humidity_100;
+      int8_t                          temperature;
+      uint8_t                         humidity_100;
     } l8;
 
     struct loraliveApp_len14 {
-      uint8_t                       latitude_1000_sl24;
-      uint8_t                       latitude_1000_sl16;
-      uint8_t                       latitude_1000_sl08;
-      uint8_t                       latitude_1000_sl00;
+      uint8_t                         latitude_1000_sl24;
+      uint8_t                         latitude_1000_sl16;
+      uint8_t                         latitude_1000_sl08;
+      uint8_t                         latitude_1000_sl00;
 
-      uint8_t                       longitude_1000_sl24;
-      uint8_t                       longitude_1000_sl16;
-      uint8_t                       longitude_1000_sl08;
-      uint8_t                       longitude_1000_sl00;
+      uint8_t                         longitude_1000_sl24;
+      uint8_t                         longitude_1000_sl16;
+      uint8_t                         longitude_1000_sl08;
+      uint8_t                         longitude_1000_sl00;
     } l14;
 
     struct loraliveApp_len16 {
-      int8_t                        temperature;
-      uint8_t                       humidity_100;
+      int8_t                          temperature;
+      uint8_t                         humidity_100;
 
-      uint8_t                       latitude_1000_sl24;
-      uint8_t                       latitude_1000_sl16;
-      uint8_t                       latitude_1000_sl08;
-      uint8_t                       latitude_1000_sl00;
+      uint8_t                         latitude_1000_sl24;
+      uint8_t                         latitude_1000_sl16;
+      uint8_t                         latitude_1000_sl08;
+      uint8_t                         latitude_1000_sl00;
 
-      uint8_t                       longitude_1000_sl24;
-      uint8_t                       longitude_1000_sl16;
-      uint8_t                       longitude_1000_sl08;
-      uint8_t                       longitude_1000_sl00;
+      uint8_t                         longitude_1000_sl24;
+      uint8_t                         longitude_1000_sl16;
+      uint8_t                         longitude_1000_sl08;
+      uint8_t                         longitude_1000_sl00;
     } l16;
   } u;
 
