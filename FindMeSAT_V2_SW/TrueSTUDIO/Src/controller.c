@@ -125,7 +125,8 @@ void prvControllerInitBeforeGreet(void)
       loraliveApp.u.l14.longitude_1000_sl08 = (uint8_t) ((longitude_1000 >>  8) & 0xffUL);
       loraliveApp.u.l14.longitude_1000_sl00 = (uint8_t) ((longitude_1000 >>  0) & 0xffUL);
 
-      LoRaWAN_App_loralive_pushUp(&loRaWANctx, 1, &loraliveApp, 14);
+      LoRaWAN_App_loralive_pushUp(&loRaWANctx, &loraliveApp, 14);
+      LoRaWAN_App_loralive_receiveLoop(&loRaWANctx);
     }
   }
 }

@@ -279,6 +279,7 @@ void LoRaWAN_Init(void);
 
 void LoRaWANctx_readFLASH(void);
 void LoRaWANctx_applyKeys_loralive(void);
-void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, uint8_t FPort, LoraliveApp_t* app, uint8_t size);
+void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t size);
+void LoRaWAN_App_loralive_receiveLoop(LoRaWANctx_t* ctx);
 
 #endif /* LORAWAN_H_ */

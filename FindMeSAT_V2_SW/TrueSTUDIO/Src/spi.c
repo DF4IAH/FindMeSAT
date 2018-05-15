@@ -62,11 +62,14 @@
 /* Private define ------------------------------------------------------------*/
 extern EventGroupHandle_t spiEventGroupHandle;
 
+/* Holds RTOS timing info */
+uint32_t spiPreviousWakeTime = 0UL;
+
 /* Buffer used for transmission */
-uint8_t aSpi1TxBuffer[SPI1_BUFFERSIZE] = { 0 };
+volatile uint8_t aSpi1TxBuffer[SPI1_BUFFERSIZE] = { 0 };
 
 /* Buffer used for reception */
-uint8_t aSpi1RxBuffer[SPI1_BUFFERSIZE] = { 0 };
+volatile uint8_t aSpi1RxBuffer[SPI1_BUFFERSIZE] = { 0 };
 
 /* USER CODE END 0 */
 
@@ -367,14 +370,13 @@ void spiSX1272LoRa_setTxMsgLen(uint8_t payloadLen)
 void spiSX1272LoRa_Fifo_Init(void)
 {
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
-  aSpi1TxBuffer[1] = 0x00;    // RegFifoAddrPtr
-  aSpi1TxBuffer[2] = 0x80;    // RegFifoTxBaseAddr
-  aSpi1TxBuffer[3] = 0x00;    // RegFifoRxBaseAddr
-  aSpi1TxBuffer[4] = 0x00;    // FifoRxCurrentAddr
-  spiProcessSpiMsg(5);
+  aSpi1TxBuffer[1] = 0x00;    // 0x0D RegFifoAddrPtr
+  aSpi1TxBuffer[2] = 0x80;    // 0x0E RegFifoTxBaseAddr
+  aSpi1TxBuffer[3] = 0x00;    // 0x0F RegFifoRxBaseAddr
+  spiProcessSpiMsg(4);
 }
 
-void spiSX1272LoRa_Fifo_RxSetToBasePtr(void)
+void spiSX1272LoRa_Fifo_SetRxBaseToFifoPtr(void)
 {
   aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x0f;
   spiProcessSpiMsg(2);
@@ -385,7 +387,7 @@ void spiSX1272LoRa_Fifo_RxSetToBasePtr(void)
   spiProcessSpiMsg(2);
 }
 
-void spiSX1272LoRa_Fifo_TxSetToBasePtr(void)
+void spiSX1272LoRa_Fifo_SetTxBaseToFifoPtr(void)
 {
   aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x0e;
   spiProcessSpiMsg(2);
@@ -414,11 +416,16 @@ void spiSX1272Mode(spiSX1272_Mode_t mode)
   spiProcessSpiMsg(2);
 }
 
-void spiSX1272Mode_LoRa_TX(uint8_t channel)
+void spiSX1272Mode_LoRa_TX_Preps(uint8_t channel, uint8_t msgLen)
 {
-  /* Switch to LoRa mode (standby) */
+  /* Change to SLEEP mode for switching to LoRa */
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
-  aSpi1TxBuffer[1] = (1 << 7) | (STANDBY << 0);   // bit7:LoRangeMode
+  aSpi1TxBuffer[1] = MODE_LoRa | SLEEP;
+  spiProcessSpiMsg(2);
+
+  /* Change to STANDBY mode for TX preparations */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  aSpi1TxBuffer[1] = MODE_LoRa | STANDBY;
   spiProcessSpiMsg(2);
 
   /* Set channel */
@@ -434,13 +441,13 @@ void spiSX1272Mode_LoRa_TX(uint8_t channel)
 
   /* PA ramp time 50us */
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0a;
-  aSpi1TxBuffer[1] = 0b1000;
+  aSpi1TxBuffer[1] = LOW_PWR_PLL_OFF | PA_RAMP_50us;
   spiProcessSpiMsg(2);
 
   /* Modem Config */
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
-  aSpi1TxBuffer[1] = (  0b00 << 6) | (0b001 << 3) | (0b0 << 2) | ( 0b1 << 1) | (0b1 << 0);
-  aSpi1TxBuffer[2] = (0b1100 << 4) | (  0b0 << 3) | (0x1 << 2) | (0b00 << 0);
+  aSpi1TxBuffer[1] = BW_125kHz | CR_4_5     | IHM_OFF    | PAYLOAD_CRC_ON | LDRO_ON;
+  aSpi1TxBuffer[2] = SF12_DR0  | TXCONT_OFF;
   spiProcessSpiMsg(3);
 
   /* Preamble length */
@@ -464,19 +471,27 @@ void spiSX1272Mode_LoRa_TX(uint8_t channel)
   aSpi1TxBuffer[1] = 0x1d;
   spiProcessSpiMsg(2);
 
+  /* Set transmit message length */
+  spiSX1272LoRa_setTxMsgLen(msgLen);
+
+#if 0
+  /* Change to STANDBY mode for FIFO access */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  aSpi1TxBuffer[1] = MODE_LoRa | STANDBY;
+  spiProcessSpiMsg(2);
+#endif
+}
+
+void spiSX1272Mode_LoRa_TX_Run(void)
+{
   /* Change to TX mode */
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
-  aSpi1TxBuffer[1] = (1 << 7) | (0b011 << 0);
+  aSpi1TxBuffer[1] = MODE_LoRa | TX;
   spiProcessSpiMsg(2);
 }
 
 void spiSX1272Mode_LoRa_RX(uint8_t channel)
 {
-  /* Switch to LoRa mode (standby) */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
-  aSpi1TxBuffer[1] = (1 << 7) | (STANDBY << 0);   // bit7:LoRangeMode
-  spiProcessSpiMsg(2);
-
   /* Set channel */
   spiSX1272Frequency_MHz(spiSX1272Calc_Channel_to_MHz(channel));
 
@@ -488,15 +503,10 @@ void spiSX1272Mode_LoRa_RX(uint8_t channel)
   aSpi1TxBuffer[1] = (0b001 << 5) | (0b11 << 0);
   spiProcessSpiMsg(2);
 
-  /* RegRxConfig */
-  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
-  aSpi1TxBuffer[1] = 0x8e;
-  spiProcessSpiMsg(2);
-
   /* Modem Config */
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
-  aSpi1TxBuffer[1] = (  0b00 << 6) | (0b001 << 3) | ( 0b0 << 2) | (0b1 << 1) | (0b1 << 0);
-  aSpi1TxBuffer[2] = (0b1100 << 4) | (  0x1 << 2) | (0b00 << 0);
+  aSpi1TxBuffer[1] = BW_125kHz | CR_4_5     | IHM_OFF | PAYLOAD_CRC_ON | LDRO_ON;
+  aSpi1TxBuffer[2] = SF12_DR0  | AGC_AUTO_ON;
   aSpi1TxBuffer[3] = 0x05;
   spiProcessSpiMsg(4);
 
@@ -527,16 +537,52 @@ void spiSX1272Mode_LoRa_RX(uint8_t channel)
   spiProcessSpiMsg(2);
 
   /* Reset RX FIFO */
-  spiSX1272LoRa_Fifo_RxSetToBasePtr();
+  spiSX1272LoRa_Fifo_Init();
 
   /* Change to RX mode */
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
-  //aSpi1TxBuffer[1]  = (1 << 7) | (RXSINGLE      << 0);   // LongRangeMode, RX_SINGLE
-  aSpi1TxBuffer[1]    = (1 << 7) | (RXCONTINUOUS  << 0);   // LongRangeMode, RX_CONTINUOUS
+  //aSpi1TxBuffer[1]  = MODE_LoRa | RXSINGLE;
+  aSpi1TxBuffer[1]    = MODE_LoRa | RXCONTINUOUS;
   spiProcessSpiMsg(2);
 }
 
-void spiSX1272_WaitUntil_TxRxDone(void)
+void spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime)
+{
+  char  debugBuf[1024]  = { 0 };
+  int   debugLen        =   0;
+
+  /* Use TxDone and RxDone - mask out all other IRQs */
+  aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x11;    // RegIrqFlagsMask
+  aSpi1TxBuffer[1] = ~0b01001000;
+  spiProcessSpiMsg(2);
+
+  do {
+    aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x12;    // RegIrqFlags
+    spiProcessSpiMsg(2);
+    uint8_t irq = aSpi1RxBuffer[1];
+
+    if (irq) {
+      if (doPreviousWakeTime) {
+        spiPreviousWakeTime = osKernelSysTick();
+      }
+
+      aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x12;    // RegIrqFlags
+      aSpi1TxBuffer[1] = 0xff;    // Reset all flags
+      spiProcessSpiMsg(2);
+
+      debugLen = sprintf(debugBuf, "irq=0x%02x, spiPreviousWakeTime=%09ld.", irq, spiPreviousWakeTime);
+      __asm volatile( "nop" );
+      (void) debugLen;
+      (void) debugBuf;
+      return;
+    }
+
+    /* Avoid blocking loop on IRQ state */
+    osThreadYield();
+  } while (1);
+}
+
+void spiSX1272_WaitUntil_RxDone(uint32_t processUntil)
 {
   char  debugBuf[1024]  = { 0 };
   int   debugLen        =   0;
@@ -569,7 +615,7 @@ void spiSX1272_WaitUntil_TxRxDone(void)
       uint16_t rxHeaderCnt   = ((uint16_t)aSpi1RxBuffer[1] << 8) | aSpi1RxBuffer[2];
       uint16_t rxValidPktCnt = ((uint16_t)aSpi1RxBuffer[3] << 8) | aSpi1RxBuffer[4];
 
-      debugLen = sprintf(debugBuf, "irq=%02x: modem=%02x, rssiWB=%03u rxHdr=%05u rxPkt=%05u", irq, modemStat, rssiWideband, rxHeaderCnt, rxValidPktCnt);
+      debugLen = sprintf(debugBuf, "irq=%02x: modem=%02x rssiWB=%03u rxHdr=%05u rxPkt=%05u", irq, modemStat, rssiWideband, rxHeaderCnt, rxValidPktCnt);
 
       aSpi1TxBuffer[0] = SPI_RD_FLAG | 0x13;    // RegRxNbBytes
       spiProcessSpiMsg(2);
@@ -605,17 +651,21 @@ void spiSX1272_WaitUntil_TxRxDone(void)
         __asm volatile( "nop" );
 
         /* Prepare FIFO for next packet */
-        spiSX1272LoRa_Fifo_RxSetToBasePtr();
+        spiSX1272LoRa_Fifo_SetRxBaseToFifoPtr();
 
-        debugBuf[debugLen] = 0;
         __asm volatile( "nop" );
+        (void) debugLen;
         (void) debugBuf;
       }
-      break;
     }
 
-    /* Avoid busy loop on IRQ state */
-    osDelay(1);
+    /* Timeout check */
+    if ((processUntil) && ((osKernelSysTick() - spiPreviousWakeTime)  >= processUntil)) {
+      return;
+    }
+
+    /* Avoid blocking loop on IRQ state */
+    osThreadYield();
   } while (1);
 }
 
