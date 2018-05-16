@@ -144,6 +144,18 @@ typedef enum spiSX1272_PaRamp {
   LOW_PWR_PLL_ON          = (0b1 << 4)
 } spiSX1272_PaRamp_t;
 
+typedef enum spiSX1272_LNA {
+  LnaBoost_OFF            = (0b00 << 0),
+  LnaBoost_ON             = (0b11 << 0),
+
+  LnaGain_G1              = (0b001 << 5),
+  LnaGain_G2              = (0b010 << 5),
+  LnaGain_G3              = (0b011 << 5),
+  LnaGain_G4              = (0b100 << 5),
+  LnaGain_G5              = (0b101 << 5),
+  LnaGain_G6              = (0b110 << 5)
+} spiSX1272_LNA_t;
+
 /* USER CODE END Private defines */
 
 extern void _Error_Handler(char *, int);
@@ -154,8 +166,7 @@ void MX_SPI1_Init(void);
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi);
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi);
 
-void spiProcessSpiMsg(uint8_t msgLen);
-uint8_t spiProcessSpiReturnWait(void);
+uint8_t  spiProcessSpiMsg(uint8_t msgLen);
 
 float spiSX1272Calc_Channel_to_MHz(uint8_t channel);
 
