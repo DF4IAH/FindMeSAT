@@ -14,6 +14,8 @@
 #include "FreeRTOS.h"
 #include "stm32l496xx.h"
 #include "cmsis_os.h"
+#include "stm32l4xx_nucleo_144.h"
+#include "stm32l4xx_hal.h"
 
 #include "spi.h"
 
@@ -31,17 +33,17 @@ extern uint8_t aSpi1RxBuffer[SPI1_BUFFERSIZE];
 //const char *TTNnwkSKey = "4386E7FF679BF9810462B2192B2F5211";
 //const char *TTNappSKey = "ADDA9AD9B4D746323E221E7E69447DF5";
 
-const uint8_t  DevAddr_LE[4]		= { 0x42U, 0x1EU, 0x01U, 0x26U };
-const uint8_t  DevEUI_LE[8]         = { 0x31U, 0x6FU, 0x72U, 0x65U, 0x70U, 0x73U, 0x65U, 0x00U };
-const uint8_t  AppEUI_LE[8]         = { 0x00U, 0x86U, 0x00U, 0xD0U, 0x7EU, 0xD5U, 0xB3U, 0x70U };
-const uint8_t  NwkSKey_LE[16]       = { 0x11U, 0x52U, 0x2FU, 0x2BU, 0x19U, 0xB2U, 0x62U, 0x04U, 0x81U, 0xF9U, 0x9BU, 0x67U, 0xFFU, 0xE7U, 0x86U, 0x43U };
-const uint8_t  AppSKey_LE[16]       = { 0xF5U, 0x7DU, 0x44U, 0x69U, 0x7EU, 0x1EU, 0x22U, 0x3EU, 0x32U, 0x46U, 0xD7U, 0xB4U, 0xD9U, 0x9AU, 0xDAU, 0xADU };
+const uint8_t  DevAddr_LE[4]		                        = { 0x42U, 0x1EU, 0x01U, 0x26U };
+const uint8_t  DevEUI_LE[8]                             = { 0x31U, 0x6FU, 0x72U, 0x65U, 0x70U, 0x73U, 0x65U, 0x00U };
+const uint8_t  AppEUI_LE[8]                             = { 0x00U, 0x86U, 0x00U, 0xD0U, 0x7EU, 0xD5U, 0xB3U, 0x70U };
+const uint8_t  NwkSKey_LE[16]                           = { 0x11U, 0x52U, 0x2FU, 0x2BU, 0x19U, 0xB2U, 0x62U, 0x04U, 0x81U, 0xF9U, 0x9BU, 0x67U, 0xFFU, 0xE7U, 0x86U, 0x43U };
+const uint8_t  AppSKey_LE[16]                           = { 0xF5U, 0x7DU, 0x44U, 0x69U, 0x7EU, 0x1EU, 0x22U, 0x3EU, 0x32U, 0x46U, 0xD7U, 0xB4U, 0xD9U, 0x9AU, 0xDAU, 0xADU };
 
-const uint8_t  DevAddr_BE[4]		= { 0x26U, 0x01U, 0x1EU, 0x42U };
-const uint8_t  DevEUI_BE[8]         = { 0x00U, 0x65U, 0x73U, 0x70U, 0x65U, 0x72U, 0x6FU, 0x31U };
-const uint8_t  AppEUI_BE[8]         = { 0x70U, 0xB3U, 0xD5U, 0x7EU, 0xD0U, 0x00U, 0x86U, 0x00U };
-const uint8_t  NwkSKey_BE[16]       = { 0x43U, 0x86U, 0xE7U, 0xFFU, 0x67U, 0x9BU, 0xF9U, 0x81U, 0x04U, 0x62U, 0xB2U, 0x19U, 0x2BU, 0x2FU, 0x52U, 0x11U };
-const uint8_t  AppSKey_BE[16]       = { 0xADU, 0xDAU, 0x9AU, 0xD9U, 0xB4U, 0xD7U, 0x46U, 0x32U, 0x3EU, 0x22U, 0x1EU, 0x7EU, 0x69U, 0x44U, 0x7DU, 0xF5U };
+const uint8_t  DevAddr_BE[4]		                        = { 0x26U, 0x01U, 0x1EU, 0x42U };
+const uint8_t  DevEUI_BE[8]                             = { 0x00U, 0x65U, 0x73U, 0x70U, 0x65U, 0x72U, 0x6FU, 0x31U };
+const uint8_t  AppEUI_BE[8]                             = { 0x70U, 0xB3U, 0xD5U, 0x7EU, 0xD0U, 0x00U, 0x86U, 0x00U };
+const uint8_t  NwkSKey_BE[16]                           = { 0x43U, 0x86U, 0xE7U, 0xFFU, 0x67U, 0x9BU, 0xF9U, 0x81U, 0x04U, 0x62U, 0xB2U, 0x19U, 0x2BU, 0x2FU, 0x52U, 0x11U };
+const uint8_t  AppSKey_BE[16]                           = { 0xADU, 0xDAU, 0x9AU, 0xD9U, 0xB4U, 0xD7U, 0x46U, 0x32U, 0x3EU, 0x22U, 0x1EU, 0x7EU, 0x69U, 0x44U, 0x7DU, 0xF5U };
 
 /* Non-volatile counters in the RTC_Backup domain */
 volatile LoRaWANctxBkpRam_t *const LoRaWANctxBkpRam     = (void*) 0x40002850UL;
@@ -50,7 +52,7 @@ volatile LoRaWANctxBkpRam_t *const LoRaWANctxBkpRam     = (void*) 0x40002850UL;
 LoRaWANctx_t loRaWANctx                                 = { 0 };
 
 /* Application data for loralive */
-LoraliveApp_t loraliveApp = { 0 };
+LoraliveApp_t loraliveApp                               = { 0 };
 
 
 inline
@@ -70,10 +72,10 @@ static void LoRaWAN_FOpts_Encrypt(LoRaWANctx_t* ctx,
     0x01U,
     { 0x00U, 0x00U, 0x00U, 0x00U },
     (uint8_t) ctx->Dir,
-    { ctx->DevAddr_LE[0],
-      ctx->DevAddr_LE[1],
-      ctx->DevAddr_LE[2],
-      ctx->DevAddr_LE[3] },
+    { ctx->DevAddr[0],
+      ctx->DevAddr[1],
+      ctx->DevAddr[2],
+      ctx->DevAddr[3] },
     { GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 0),
       GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 1),
       GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 2),
@@ -148,10 +150,10 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
         0x01U,
         { 0x00U, 0x00U, 0x00U, 0x00U },
         (uint8_t) ctx->Dir,
-        { ctx->DevAddr_LE[0],
-          ctx->DevAddr_LE[1],
-          ctx->DevAddr_LE[2],
-          ctx->DevAddr_LE[3] },
+        { ctx->DevAddr[0],
+          ctx->DevAddr[1],
+          ctx->DevAddr[2],
+          ctx->DevAddr[3] },
         { GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 0),
           GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 1),
           GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 2),
@@ -202,10 +204,10 @@ static void LoRaWAN_calc_MIC_append(LoRaWANctx_t* ctx, uint8_t* msg_Buf, uint8_t
       0x49U,
       { 0x00U, 0x00, 0x00U, 00U },
       (uint8_t) Up,
-      { ctx->DevAddr_LE[0],
-        ctx->DevAddr_LE[1],
-        ctx->DevAddr_LE[2],
-        ctx->DevAddr_LE[3] },
+      { ctx->DevAddr[0],
+        ctx->DevAddr[1],
+        ctx->DevAddr[2],
+        ctx->DevAddr[3] },
       { GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 0),
         GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 1),
         GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 2),
@@ -239,10 +241,10 @@ static void LoRaWAN_calc_MIC_append(LoRaWANctx_t* ctx, uint8_t* msg_Buf, uint8_t
         ctx->TxDr,
         ctx->TxCh,
         (uint8_t) Up,
-        { ctx->DevAddr_LE[0],
-          ctx->DevAddr_LE[1],
-          ctx->DevAddr_LE[2],
-          ctx->DevAddr_LE[3] },
+        { ctx->DevAddr[0],
+          ctx->DevAddr[1],
+          ctx->DevAddr[2],
+          ctx->DevAddr[3] },
         { GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 0),
           GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 1),
           GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 2),
@@ -277,10 +279,10 @@ static void LoRaWAN_calc_MIC_append(LoRaWANctx_t* ctx, uint8_t* msg_Buf, uint8_t
         GET_BYTE_OF_WORD(ctx->ConfFCnt, 1) },
       { 0x00U, 0x00U },
       (uint8_t) Dn,
-      { ctx->DevAddr_LE[0],
-        ctx->DevAddr_LE[1],
-        ctx->DevAddr_LE[2],
-        ctx->DevAddr_LE[3] },
+      { ctx->DevAddr[0],
+        ctx->DevAddr[1],
+        ctx->DevAddr[2],
+        ctx->DevAddr[3] },
       { GET_BYTE_OF_WORD(ctx->bkpRAM->AFCntDwn, 0),
         GET_BYTE_OF_WORD(ctx->bkpRAM->AFCntDwn, 1),
         GET_BYTE_OF_WORD(ctx->bkpRAM->AFCntDwn, 2),
@@ -343,13 +345,31 @@ void LoRaWANctx_readFLASH(void)
 
 void LoRaWANctx_applyKeys_loralive(void)
 {
-  memcpy(&(loRaWANctx.DevEUI_LE),   &DevEUI_LE,  sizeof(DevEUI_LE));
-  memcpy(&(loRaWANctx.DevAddr_LE),  &DevAddr_LE, sizeof(DevAddr_LE));
-  memcpy(&(loRaWANctx.AppEUI_LE),   &AppEUI_LE,  sizeof(AppEUI_LE));
+#if 1
+  memcpy(&(loRaWANctx.DevAddr),     &DevAddr_LE, sizeof(DevAddr_LE));
+#else
+  memcpy(&(loRaWANctx.DevAddr),     &DevAddr_BE, sizeof(DevAddr_BE));
+#endif
+
+#if 1
+  memcpy(&(loRaWANctx.DevEUI),      &DevEUI_LE,  sizeof(DevEUI_LE));
+  memcpy(&(loRaWANctx.AppEUI),      &AppEUI_LE,  sizeof(AppEUI_LE));
+#else
+  memcpy(&(loRaWANctx.DevEUI),      &DevEUI_BE,  sizeof(DevEUI_BE));
+  memcpy(&(loRaWANctx.AppEUI),      &AppEUI_BE,  sizeof(AppEUI_BE));
+#endif
+
+#if 0
+  memcpy(&(loRaWANctx.FNwkSIntKey), &NwkSKey_LE, sizeof(NwkSKey_LE));
+  memcpy(&(loRaWANctx.SNwkSIntKey), &NwkSKey_LE, sizeof(NwkSKey_LE));
+  memcpy(&(loRaWANctx.NwkSEncKey),  &NwkSKey_LE, sizeof(NwkSKey_LE));
+  memcpy(&(loRaWANctx.AppSKey),     &AppSKey_LE, sizeof(AppSKey_LE));
+#else
   memcpy(&(loRaWANctx.FNwkSIntKey), &NwkSKey_BE, sizeof(NwkSKey_BE));
-  memcpy(&(loRaWANctx.SNwkSIntKey), &NwkSKey_BE, sizeof(NwkSKey_BE));    // Take FNwkSIntKey
-  memcpy(&(loRaWANctx.NwkSEncKey),  &NwkSKey_BE, sizeof(NwkSKey_BE));    // Take FNwkSIntKey
+  memcpy(&(loRaWANctx.SNwkSIntKey), &NwkSKey_BE, sizeof(NwkSKey_BE));
+  memcpy(&(loRaWANctx.NwkSEncKey),  &NwkSKey_BE, sizeof(NwkSKey_BE));
   memcpy(&(loRaWANctx.AppSKey),     &AppSKey_BE, sizeof(AppSKey_BE));
+#endif
 
   /* Current transmission state */
   loRaWANctx.LoRaWAN_ver              = LoRaWANVersion_10;    // TheThingsNetwork - assigned codes to this device - sufficient for R1.0 [LW10, LW102]
@@ -368,6 +388,8 @@ void LoRaWANctx_applyKeys_loralive(void)
 
 void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t size)
 {
+  static uint8_t toggle                                             = 0U;
+
   /* Timers */
   volatile uint32_t ts1TXStart                                      =  0UL;
   volatile uint32_t ts2TXStop                                       =  0UL;
@@ -423,11 +445,13 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
     }
 
     /* FRMPayload */
-#if 0
-    msg_FRMPayload_Len = LoRaWAN_App_loralive_data2FRMPayload(ctx,
-        msg_FRMPayload_Encoded, LoRaWAN_FRMPayloadMax,
-        app);
-#endif
+    if (toggle) {
+      msg_FRMPayload_Len = LoRaWAN_App_loralive_data2FRMPayload(ctx,
+          msg_FRMPayload_Encoded, LoRaWAN_FRMPayloadMax,
+          app);
+      }
+    HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, ( toggle ?  GPIO_PIN_SET : GPIO_PIN_RESET));    // Greem
+    toggle = !toggle;
   }
 
   /* Message sequencer */
@@ -438,7 +462,7 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
 
     /* DevAddr */
     for (uint8_t i = 0; i < 4; i++) {
-      msg_Buf[msg_Len++] = ctx->DevAddr_LE[i];
+      msg_Buf[msg_Len++] = ctx->DevAddr[i];
     }
 
     /* FCtrl */
@@ -484,18 +508,22 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
     memcpy(aSpi1TxBuffer + 1, (char*) msg_Buf, msg_Len);
     spiProcessSpiMsg(1 + msg_Len);
 
-    ts1TXStart = getRunTimeCounterValue();
-
     /* Transmit FIFO content */
-    spiSX1272Mode_LoRa_TX_Run();
+    {
+      HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);    // Red on
+      ts1TXStart = getRunTimeCounterValue();
 
-    /* Wait until the message is being sent */
-    spiSX1272_WaitUntil_TxDone(1);
+      /* Start transmission */
+      spiSX1272Mode_LoRa_TX_Run();
 
-    ts2TXStop = getRunTimeCounterValue();
+      /* Wait until the message is being sent */
+      spiSX1272_WaitUntil_TxDone(1);
+
+      HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);    // Red off
+      ts2TXStop = getRunTimeCounterValue();
+    }
 
     __asm volatile( "nop" );
-    (void) spiPreviousWakeTime;
     (void) ts1TXStart;
     (void) ts2TXStop;
   }
@@ -504,18 +532,22 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
 void LoRaWAN_App_loralive_receiveLoop(LoRaWANctx_t* ctx)
 {
   /* Switch on the receiver */
+  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);    // Blue on
   spiSX1272Mode_LoRa_RX(1);
   spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 1950);
 
   /* Switch to RX2 channel */
+  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);    // Blue off
   spiSX1272Mode_LoRa_RX(0);
   spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 4950);
 
   /* Switch back to RX1: Ch1 channel, again */
+  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);    // Blue on
   spiSX1272Mode_LoRa_RX(1);
   spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 5950);
 
   /* Switch to RX2 channel, again */
+  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);    // Blue off
   spiSX1272Mode_LoRa_RX(0);
-  spiSX1272_WaitUntil_RxDone(0);
+  spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 7000);
 }

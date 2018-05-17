@@ -538,8 +538,8 @@ void spiSX1272Mode_LoRa_RX(uint8_t channel)
 
 void spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime)
 {
-  char  debugBuf[1024]  = { 0 };
-  int   debugLen        =   0;
+//char  debugBuf[1024]  = { 0 };
+//int   debugLen        =   0;
 
   /* Use TxDone and RxDone - mask out all other IRQs */
   aSpi1TxBuffer[0] = SPI_WR_FLAG | 0x11;    // RegIrqFlagsMask
@@ -560,10 +560,12 @@ void spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime)
       aSpi1TxBuffer[1] = 0xff;    // Reset all flags
       spiProcessSpiMsg(2);
 
+#if 0
       debugLen = sprintf(debugBuf, "irq=0x%02x, spiPreviousWakeTime=%09ld.", irq, spiPreviousWakeTime);
       __asm volatile( "nop" );
       (void) debugLen;
       (void) debugBuf;
+#endif
       return;
     }
 
@@ -650,7 +652,7 @@ void spiSX1272_WaitUntil_RxDone(uint32_t processUntil)
     }
 
     /* Timeout check */
-    if ((processUntil) && ((osKernelSysTick() - spiPreviousWakeTime)  >= processUntil)) {
+    if ((processUntil) && (osKernelSysTick() >= processUntil)) {
       return;
     }
 

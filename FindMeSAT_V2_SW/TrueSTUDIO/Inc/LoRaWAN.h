@@ -56,8 +56,8 @@ typedef struct LoRaWANctx {
 
 
   /* Device specific */
-  uint8_t                             DevEUI_LE[8];
-  uint8_t                             DevAddr_LE[4];
+  uint8_t                             DevEUI[8];
+  uint8_t                             DevAddr[4];
 
   /* Network / MAC specific */
   LoRaWANVersion_t                    LoRaWAN_ver;
@@ -78,7 +78,7 @@ typedef struct LoRaWANctx {
   //uint8_t                           CFList[16];
 
   /* Application specific */
-  uint8_t                             AppEUI_LE[8];
+  uint8_t                             AppEUI[8];
   uint8_t                             AppSKey[16];
 
   /* Current transmission */

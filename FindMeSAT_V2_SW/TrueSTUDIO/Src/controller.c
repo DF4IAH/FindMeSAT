@@ -29,6 +29,7 @@ extern osSemaphoreId      usbToHostBinarySemHandle;
 extern EventGroupHandle_t usbToHostEventGroupHandle;
 extern LoRaWANctx_t       loRaWANctx;
 extern LoraliveApp_t      loraliveApp;
+extern uint32_t           spiPreviousWakeTime;
 
 /* Private function prototypes -----------------------------------------------*/
 static void prvControllerInitBeforeGreet(void);
@@ -125,8 +126,16 @@ void prvControllerInitBeforeGreet(void)
       loraliveApp.u.l14.longitude_1000_sl08 = (uint8_t) ((longitude_1000 >>  8) & 0xffUL);
       loraliveApp.u.l14.longitude_1000_sl00 = (uint8_t) ((longitude_1000 >>  0) & 0xffUL);
 
-      LoRaWAN_App_loralive_pushUp(&loRaWANctx, &loraliveApp, 14);
-      LoRaWAN_App_loralive_receiveLoop(&loRaWANctx);
+      /* TODO_ DEBUG Loop tp be removed */
+      for (uint8_t i = 0; i < 3; i++) {
+        LoRaWAN_App_loralive_pushUp(&loRaWANctx, &loraliveApp, 14);
+        LoRaWAN_App_loralive_receiveLoop(&loRaWANctx);
+      }
+
+      while (1) {
+        spiPreviousWakeTime = osKernelSysTick();
+        LoRaWAN_App_loralive_receiveLoop(&loRaWANctx);
+      }
     }
   }
 }
