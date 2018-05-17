@@ -52,6 +52,7 @@ void controllerControllerTaskInit(void)
   /* Greetings to the USB CDC */
   prvControllerUsbGreet();
 
+  /* Inits to be done after USB/DCD connection is established */
   prvControllerInitAfterGreet();
 }
 
@@ -104,39 +105,6 @@ void prvControllerInitBeforeGreet(void)
   if (spiDetectShieldSX1272()) {
     /* Init LoRaWAM module */
     LoRaWAN_Init();
-
-    /* TODO: Test pushing of data */
-    {
-      loraliveApp.id = 'E';
-
-      loraliveApp.voltage_32_v  = (uint8_t) (3.3f * 32 + 0.5f);
-
-      loraliveApp.dust025_10_hi = 0U; loraliveApp.dust025_10_lo = 0U;
-      loraliveApp.dust025_10_hi = 0U; loraliveApp.dust025_10_lo = 0U;
-
-      uint32_t latitude_1000 = 49473;
-      loraliveApp.u.l14.latitude_1000_sl24  = (uint8_t) ((latitude_1000  >> 24) & 0xffUL);
-      loraliveApp.u.l14.latitude_1000_sl16  = (uint8_t) ((latitude_1000  >> 16) & 0xffUL);
-      loraliveApp.u.l14.latitude_1000_sl08  = (uint8_t) ((latitude_1000  >>  8) & 0xffUL);
-      loraliveApp.u.l14.latitude_1000_sl00  = (uint8_t) ((latitude_1000  >>  0) & 0xffUL);
-
-      uint32_t longitude_1000 = 8615;
-      loraliveApp.u.l14.longitude_1000_sl24 = (uint8_t) ((longitude_1000 >> 24) & 0xffUL);
-      loraliveApp.u.l14.longitude_1000_sl16 = (uint8_t) ((longitude_1000 >> 16) & 0xffUL);
-      loraliveApp.u.l14.longitude_1000_sl08 = (uint8_t) ((longitude_1000 >>  8) & 0xffUL);
-      loraliveApp.u.l14.longitude_1000_sl00 = (uint8_t) ((longitude_1000 >>  0) & 0xffUL);
-
-      /* TODO_ DEBUG Loop tp be removed */
-      for (uint8_t i = 0; i < 3; i++) {
-        LoRaWAN_App_loralive_pushUp(&loRaWANctx, &loraliveApp, 14);
-        LoRaWAN_App_loralive_receiveLoop(&loRaWANctx);
-      }
-
-      while (1) {
-        spiPreviousWakeTime = osKernelSysTick();
-        LoRaWAN_App_loralive_receiveLoop(&loRaWANctx);
-      }
-    }
   }
 }
 
@@ -150,6 +118,54 @@ void prvControllerInitAfterGreet(void)
 
   /* At the last position show the cursor */
   interpreterShowCursor();
+
+  /* Test LoRaWAN access */
+  if (loRaWANctx.bkpRAM)
+  {
+    loraliveApp.id = 'E';
+
+    loraliveApp.voltage_32_v  = (uint8_t) (3.3f * 32 + 0.5f);
+
+    loraliveApp.dust025_10_hi = 0U; loraliveApp.dust025_10_lo = 0U;
+    loraliveApp.dust025_10_hi = 0U; loraliveApp.dust025_10_lo = 0U;
+
+    uint32_t latitude_1000 = 49473;
+    loraliveApp.u.l14.latitude_1000_sl24  = (uint8_t) ((latitude_1000  >> 24) & 0xffUL);
+    loraliveApp.u.l14.latitude_1000_sl16  = (uint8_t) ((latitude_1000  >> 16) & 0xffUL);
+    loraliveApp.u.l14.latitude_1000_sl08  = (uint8_t) ((latitude_1000  >>  8) & 0xffUL);
+    loraliveApp.u.l14.latitude_1000_sl00  = (uint8_t) ((latitude_1000  >>  0) & 0xffUL);
+
+    uint32_t longitude_1000 = 8615;
+    loraliveApp.u.l14.longitude_1000_sl24 = (uint8_t) ((longitude_1000 >> 24) & 0xffUL);
+    loraliveApp.u.l14.longitude_1000_sl16 = (uint8_t) ((longitude_1000 >> 16) & 0xffUL);
+    loraliveApp.u.l14.longitude_1000_sl08 = (uint8_t) ((longitude_1000 >>  8) & 0xffUL);
+    loraliveApp.u.l14.longitude_1000_sl00 = (uint8_t) ((longitude_1000 >>  0) & 0xffUL);
+
+    /* TODO_ DEBUG Loop tp be removed */
+    for (uint8_t i = 0; i < 3; i++) {
+      osSemaphoreWait(usbToHostBinarySemHandle, 0);
+      usbToHostWait((uint8_t*) "\r\nTX\r\n", 6);
+      osSemaphoreRelease(usbToHostBinarySemHandle);
+
+      LoRaWAN_App_loralive_pushUp(&loRaWANctx, &loraliveApp, 14);
+
+      osSemaphoreWait(usbToHostBinarySemHandle, 0);
+      usbToHostWait((uint8_t*) "\r\nRX:\r\n", 6);
+      osSemaphoreRelease(usbToHostBinarySemHandle);
+
+      LoRaWAN_App_loralive_receiveLoop(&loRaWANctx);
+    }
+
+    while (1) {
+      spiPreviousWakeTime = osKernelSysTick();
+
+      osSemaphoreWait(usbToHostBinarySemHandle, 0);
+      usbToHostWait((uint8_t*) "\r\nRX:\r\n", 6);
+      osSemaphoreRelease(usbToHostBinarySemHandle);
+
+      LoRaWAN_App_loralive_receiveLoop(&loRaWANctx);
+    }
+  }
 }
 
 const char controllerPackages0x00[] = "LQFP64";

@@ -18,14 +18,17 @@
 #include "stm32l4xx_hal.h"
 
 #include "spi.h"
+#include "usb.h"
 
 
 /* Holds RTOS timing info */
 extern uint32_t spiPreviousWakeTime;
 
 /* SPI communication buffers */
-extern uint8_t aSpi1TxBuffer[SPI1_BUFFERSIZE];
-extern uint8_t aSpi1RxBuffer[SPI1_BUFFERSIZE];
+extern uint8_t            spi1TxBuffer[SPI1_BUFFERSIZE];
+extern uint8_t            spi1RxBuffer[SPI1_BUFFERSIZE];
+
+extern osSemaphoreId      usbToHostBinarySemHandle;
 
 
 /* TheThingsNetwork - assigned codes to this device - sufficient for R1.0 [LW10, LW102] */
@@ -504,8 +507,8 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
 
     /* Push the message to the FIFO */
     uint8_t fifoCmd = SPI_WR_FLAG | 0x00;
-    memcpy(aSpi1TxBuffer, &fifoCmd, 1);
-    memcpy(aSpi1TxBuffer + 1, (char*) msg_Buf, msg_Len);
+    memcpy(spi1TxBuffer, &fifoCmd, 1);
+    memcpy(spi1TxBuffer + 1, (char*) msg_Buf, msg_Len);
     spiProcessSpiMsg(1 + msg_Len);
 
     /* Transmit FIFO content */
@@ -531,20 +534,35 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
 
 void LoRaWAN_App_loralive_receiveLoop(LoRaWANctx_t* ctx)
 {
+  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  usbToHostWait((uint8_t*) "\r\n  RX1: ", 9);
+  osSemaphoreRelease(usbToHostBinarySemHandle);
+
   /* Switch on the receiver */
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);    // Blue on
   spiSX1272Mode_LoRa_RX(1);
   spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 1950);
+
+  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  usbToHostWait((uint8_t*) "\r\n  RX2: ", 9);
+  osSemaphoreRelease(usbToHostBinarySemHandle);
 
   /* Switch to RX2 channel */
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);    // Blue off
   spiSX1272Mode_LoRa_RX(0);
   spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 4950);
 
+  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  usbToHostWait((uint8_t*) "\r\n  RX1: ", 9);
+  osSemaphoreRelease(usbToHostBinarySemHandle);
   /* Switch back to RX1: Ch1 channel, again */
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);    // Blue on
   spiSX1272Mode_LoRa_RX(1);
   spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 5950);
+
+  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  usbToHostWait((uint8_t*) "\r\n  RX2: ", 9);
+  osSemaphoreRelease(usbToHostBinarySemHandle);
 
   /* Switch to RX2 channel, again */
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);    // Blue off
