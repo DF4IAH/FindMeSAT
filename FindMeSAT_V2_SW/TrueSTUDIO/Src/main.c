@@ -51,6 +51,7 @@
 #include "stm32l4xx_hal.h"
 #include "cmsis_os.h"
 #include "adc.h"
+#include "crc.h"
 #include "dma.h"
 #include "i2c.h"
 #include "usart.h"
@@ -194,6 +195,7 @@ int main(void)
   MX_I2C1_Init();
   MX_RTC_Init();
   MX_ADC1_Init();
+  MX_CRC_Init();
   /* USER CODE BEGIN 2 */
 
   /* Enable external SMPS for Vdd12 */
