@@ -106,8 +106,6 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
   uint8_t len;
 
   {
-    uint8_t ecbPad[16];
-
     /* Forge a byte sequence out of the App */
     {
       /* Application: loralive */
@@ -147,7 +145,7 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
 
     /* Encode application data */
     if (blocks) {
-      uint8_t* key = (ctx->FPort > 0) ?  ctx->AppSKey : ctx->NwkSEncKey;
+      const uint8_t* key = (ctx->FPort > 0) ?  ctx->AppSKey : ctx->NwkSEncKey;
 
       FRMPayloadBlockA_Up_t a_i  = {
         0x01U,
@@ -167,9 +165,11 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
 
       /* Process all blocks */
       {
-        uint8_t blockPos = 0;
+        uint8_t blockPos = 0U;
 
         for (uint8_t i = 1; i <= blocks; i++) {
+          uint8_t ecbPad[16]  = { 0U };
+
           a_i.idx = i;
 
           /* Create crypto modulator */
@@ -181,7 +181,7 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
             payloadEncoded[blockPos + idx] = ecbPad[idx] ^ payload[blockPos + idx];
 
             /* Cut block on message size */
-            if ((blockPos + idx) >= len) {
+            if ((blockPos + idx) >= (len - 1)) {
               return len;
             }
           }
@@ -191,7 +191,6 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
       }
     }
   }
-
   return 0;
 }
 
@@ -391,8 +390,6 @@ void LoRaWANctx_applyKeys_loralive(void)
 
 void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t size)
 {
-  static uint8_t toggle                                             = 0U;
-
   /* Timers */
   volatile uint32_t ts1TXStart                                      =  0UL;
   volatile uint32_t ts2TXStop                                       =  0UL;
@@ -448,13 +445,9 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
     }
 
     /* FRMPayload */
-    if (toggle) {
-      msg_FRMPayload_Len = LoRaWAN_App_loralive_data2FRMPayload(ctx,
-          msg_FRMPayload_Encoded, LoRaWAN_FRMPayloadMax,
-          app);
-      }
-    HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, ( toggle ?  GPIO_PIN_SET : GPIO_PIN_RESET));    // Greem
-    toggle = !toggle;
+    msg_FRMPayload_Len = LoRaWAN_App_loralive_data2FRMPayload(ctx,
+        msg_FRMPayload_Encoded, LoRaWAN_FRMPayloadMax,
+        app);
   }
 
   /* Message sequencer */
