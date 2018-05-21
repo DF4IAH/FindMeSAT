@@ -68,6 +68,11 @@ static void LoRaWAN_FOpts_Encrypt(LoRaWANctx_t* ctx,
     uint8_t* msg_FOpts_Encoded,
     const uint8_t* msg_FOpts_Buf, uint8_t msg_FOpts_Len)
 {
+  /* Short way out when nothing to do */
+  if (!msg_FOpts_Len) {
+    return;
+  }
+
   /* Create crypto xor matrix */
   uint8_t* key  = ctx->NwkSEncKey;
 
@@ -418,7 +423,7 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
       // LoRaWAN V1.1 spec @p64: send ResetInd MAC for the first time in the FOpt field (after reset)
       // each packet has to set that, until a response with ResetInd MAC comes
       msg_FOpts_Len = 0U;
-      msg_FOpts_Buf[msg_FOpts_Len++] = (uint8_t) ResetInd_UP;
+      //msg_FOpts_Buf[msg_FOpts_Len++] = (uint8_t) ResetInd_UP;
 
       /* Encode FOpts */
       LoRaWAN_FOpts_Encrypt(ctx,
