@@ -63,6 +63,7 @@
 
 #define B1_UserButton_Pin GPIO_PIN_13
 #define B1_UserButton_GPIO_Port GPIOC
+#define B1_UserButton_EXTI_IRQn EXTI15_10_IRQn
 #define OSC32_IN_Pin GPIO_PIN_14
 #define OSC32_IN_GPIO_Port GPIOC
 #define OSC32_OUT_Pin GPIO_PIN_15
