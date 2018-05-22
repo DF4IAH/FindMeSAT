@@ -611,7 +611,8 @@ void spiSX1272_WaitUntil_RxDone(uint32_t processUntil)
 
   /* Use TxDone and RxDone - mask out all other IRQs */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x11;    // RegIrqFlagsMask
-  spi1TxBuffer[1] = (uint8_t) ~0b01001000U;
+  spi1TxBuffer[1] = 0U;
+  //spi1TxBuffer[1] = (uint8_t) ~0b01001000U;
   spiProcessSpiMsg(2);
 
   do {

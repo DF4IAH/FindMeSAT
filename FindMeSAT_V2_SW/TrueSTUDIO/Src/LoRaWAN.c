@@ -449,7 +449,7 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
       msg_FCnt = (uint16_t) ctx->bkpRAM->FCntUp;
     }
 
-#if 0
+#if 1
     /* FRMPayload */
     msg_FRMPayload_Len = LoRaWAN_App_loralive_data2FRMPayload(ctx,
         msg_FRMPayload_Encoded, LoRaWAN_FRMPayloadMax,
