@@ -141,7 +141,7 @@ void prvControllerInitAfterGreet(void)
     loraliveApp.u.l14.longitude_1000_sl08 = (uint8_t) ((longitude_1000 >>  8) & 0xffUL);
     loraliveApp.u.l14.longitude_1000_sl00 = (uint8_t) ((longitude_1000 >>  0) & 0xffUL);
 
-    /* TODO_ DEBUG Loop tp be removed */
+    /* TODO_ DEBUG Loop to be removed */
     for (uint8_t i = 0; i < 3; i++) {
       osSemaphoreWait(usbToHostBinarySemHandle, 0);
       usbToHostWait((uint8_t*) "\r\nTX\r\n", 6);

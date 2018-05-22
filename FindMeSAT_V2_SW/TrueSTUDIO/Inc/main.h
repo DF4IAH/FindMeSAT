@@ -63,6 +63,7 @@
 
 #define B1_UserButton_Pin GPIO_PIN_13
 #define B1_UserButton_GPIO_Port GPIOC
+#define B1_UserButton_EXTI_IRQn EXTI15_10_IRQn
 #define OSC32_IN_Pin GPIO_PIN_14
 #define OSC32_IN_GPIO_Port GPIOC
 #define OSC32_OUT_Pin GPIO_PIN_15
@@ -81,12 +82,13 @@
 #define SPI_A_MOSI_GPIO_Port GPIOA
 #define SX_DIO2_Pin GPIO_PIN_14
 #define SX_DIO2_GPIO_Port GPIOF
+#define SX_DIO2_EXTI_IRQn EXTI15_10_IRQn
 #define SX_DIO0_Pin GPIO_PIN_15
 #define SX_DIO0_GPIO_Port GPIOF
+#define SX_DIO0_EXTI_IRQn EXTI15_10_IRQn
 #define SX_DIO3_Pin GPIO_PIN_11
 #define SX_DIO3_GPIO_Port GPIOE
-#define SX_DIO1_Pin GPIO_PIN_13
-#define SX_DIO1_GPIO_Port GPIOE
+#define SX_DIO3_EXTI_IRQn EXTI15_10_IRQn
 #define LD3_Pin GPIO_PIN_14
 #define LD3_GPIO_Port GPIOB
 #define SPI_A_SEL_Pin GPIO_PIN_14
@@ -152,7 +154,7 @@
 /* USER CODE BEGIN Private defines */
 #define USE_FULL_ASSERT     1U
 
-#define FINDMESAT_VERSION   20180518U
+#define FINDMESAT_VERSION   20180519U
 
 typedef void * TaskHandle_t;
 

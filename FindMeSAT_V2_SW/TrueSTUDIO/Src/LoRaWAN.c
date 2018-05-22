@@ -68,6 +68,11 @@ static void LoRaWAN_FOpts_Encrypt(LoRaWANctx_t* ctx,
     uint8_t* msg_FOpts_Encoded,
     const uint8_t* msg_FOpts_Buf, uint8_t msg_FOpts_Len)
 {
+  /* Short way out when nothing to do */
+  if (!msg_FOpts_Len) {
+    return;
+  }
+
   /* Create crypto xor matrix */
   uint8_t* key  = ctx->NwkSEncKey;
 
@@ -418,7 +423,7 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
       // LoRaWAN V1.1 spec @p64: send ResetInd MAC for the first time in the FOpt field (after reset)
       // each packet has to set that, until a response with ResetInd MAC comes
       msg_FOpts_Len = 0U;
-      msg_FOpts_Buf[msg_FOpts_Len++] = (uint8_t) ResetInd_UP;
+      //msg_FOpts_Buf[msg_FOpts_Len++] = (uint8_t) ResetInd_UP;
 
       /* Encode FOpts */
       LoRaWAN_FOpts_Encrypt(ctx,
@@ -444,10 +449,12 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
       msg_FCnt = (uint16_t) ctx->bkpRAM->FCntUp;
     }
 
+#if 1
     /* FRMPayload */
     msg_FRMPayload_Len = LoRaWAN_App_loralive_data2FRMPayload(ctx,
         msg_FRMPayload_Encoded, LoRaWAN_FRMPayloadMax,
         app);
+#endif
   }
 
   /* Message sequencer */
@@ -491,8 +498,8 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
 
   /* Push the complete message to the FIFO and go to transmission mode */
   {
-    /* Prepare TX for channel 1 (TX1/RX1) */
-    spiSX1272Mode_LoRa_TX_Preps(1, msg_Len);
+    /* Prepare TX for channel 2 (TX1/RX1) */
+    spiSX1272Mode_LoRa_TX_Preps(2, msg_Len);
 
     /* Prepare the FIFO */
     spiSX1272LoRa_Fifo_Init();
@@ -531,9 +538,9 @@ void LoRaWAN_App_loralive_receiveLoop(LoRaWANctx_t* ctx)
   usbToHostWait((uint8_t*) "\r\n  RX1: ", 9);
   osSemaphoreRelease(usbToHostBinarySemHandle);
 
-  /* Switch on the receiver */
+  /* Switch on the receiver RX1 channel 2 */
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);    // Blue on
-  spiSX1272Mode_LoRa_RX(1);
+  spiSX1272Mode_LoRa_RX(2);
   spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 1950);
 
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
@@ -548,9 +555,9 @@ void LoRaWAN_App_loralive_receiveLoop(LoRaWANctx_t* ctx)
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) "\r\n  RX1: ", 9);
   osSemaphoreRelease(usbToHostBinarySemHandle);
-  /* Switch back to RX1: Ch1 channel, again */
+  /* Switch back to RX1: Ch2 channel, again */
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);    // Blue on
-  spiSX1272Mode_LoRa_RX(1);
+  spiSX1272Mode_LoRa_RX(2);
   spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 5950);
 
   osSemaphoreWait(usbToHostBinarySemHandle, 0);

@@ -59,10 +59,13 @@
 #include "cmsis_os.h"
 
 #include "usb.h"
+#include "exti.h"
+
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
 extern EventGroupHandle_t spiEventGroupHandle;
+extern EventGroupHandle_t extiEventGroupHandle;
 extern osSemaphoreId      usbToHostBinarySemHandle;
 
 /* Holds RTOS timing info */
@@ -608,14 +611,30 @@ void spiSX1272_WaitUntil_RxDone(uint32_t processUntil)
 
   /* Use TxDone and RxDone - mask out all other IRQs */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x11;    // RegIrqFlagsMask
-  spi1TxBuffer[1] = (uint8_t) ~0b01001000U;
+  spi1TxBuffer[1] = 0U;
+  //spi1TxBuffer[1] = (uint8_t) ~0b01001000U;
   spiProcessSpiMsg(2);
 
   do {
+    /* Wait for EXTI / IRQ line(s) */
+    TickType_t ticks = 1;
+    uint32_t now = osKernelSysTick();
+    if (processUntil > now) {
+      ticks = (processUntil - now) / portTICK_PERIOD_MS;
+    }
+    EventBits_t eb = xEventGroupWaitBits(extiEventGroupHandle, 0x003FUL, 0x003FUL, 0, ticks);
+    if (!eb) {
+      /* Timeout check */
+      if ((processUntil) && (osKernelSysTick() >= processUntil)) {
+        return;
+      }
+      continue;
+    }
+
+    /* Get the current IRQ flags */
     spi1TxBuffer[0] = SPI_RD_FLAG | 0x12;    // RegIrqFlags
     spiProcessSpiMsg(2);
     uint8_t irq = spi1RxBuffer[1];
-
     if (irq) {
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x12;    // RegIrqFlags
       spi1TxBuffer[1] = 0xff;    // Reset all flags
@@ -684,8 +703,10 @@ void spiSX1272_WaitUntil_RxDone(uint32_t processUntil)
       return;
     }
 
+#if 0
     /* Avoid blocking loop on IRQ state */
     osThreadYield();
+#endif
   } while (1);
 }
 
