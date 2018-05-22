@@ -75,6 +75,8 @@ extern uint8_t usbFromHostISRBuf[64];
 extern uint32_t usbFromHostISRBufLen;
 EventGroupHandle_t usbToHostEventGroupHandle;
 EventGroupHandle_t adcEventGroupHandle;
+EventGroupHandle_t extiEventGroupHandle;
+EventGroupHandle_t spiEventGroupHandle;
 
 /* USER CODE END Variables */
 
@@ -155,6 +157,8 @@ void MX_FREERTOS_Init(void) {
   /* add semaphores, ... */
   usbToHostEventGroupHandle = xEventGroupCreate();
   adcEventGroupHandle = xEventGroupCreate();
+  extiEventGroupHandle = xEventGroupCreate();
+  spiEventGroupHandle = xEventGroupCreate();
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -175,7 +179,7 @@ void MX_FREERTOS_Init(void) {
   usbFromHostTaskHandle = osThreadCreate(osThread(usbFromHostTask), NULL);
 
   /* definition and creation of controllerTask */
-  osThreadDef(controllerTask, StartControllerTask, osPriorityNormal, 0, 256);
+  osThreadDef(controllerTask, StartControllerTask, osPriorityNormal, 0, 1024);
   controllerTaskHandle = osThreadCreate(osThread(controllerTask), NULL);
 
   /* definition and creation of interpreterTask */
