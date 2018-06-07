@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <sys/time.h>
 #include "crypto.h"
 #include "crc.h"
 
@@ -499,13 +500,16 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
 
   /* Push the complete message to the FIFO and go to transmission mode */
   {
-    /* Prepare TX for a randomly selected channel (TX1/RX1) */
     static uint8_t s_channel = 255;
     uint8_t channel;
+
+    srand(getRunTimeCounterValue());
     do {
       channel = rand() % 8;
     } while (channel == s_channel);
     s_channel = channel;
+
+    /* Prepare TX for a randomly selected channel (TX1/RX1) */
     spiSX1272Mode_LoRa_TX_Preps(channel, msg_Len);
 
     /* Prepare the FIFO */
