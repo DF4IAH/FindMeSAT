@@ -467,8 +467,8 @@ void spiSX1272Mode_LoRa_TX_Preps(uint8_t channel, uint8_t msgLen)
 
   /* Modem config */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
-  spi1TxBuffer[1] = BW_125kHz | CR_4_5     | IHM_OFF | PAYLOAD_CRC_ON | LDRO_ON;
-  spi1TxBuffer[2] = SF12_DR0  | TXCONT_OFF | 0x0;
+  spi1TxBuffer[1] = BW_125kHz | CR_4_5     | IHM_OFF | PAYLOAD_CRC_ON | LDRO_OFF;
+  spi1TxBuffer[2] = SF7_DR5  | TXCONT_OFF | 0x0;
   spiProcessSpiMsg(3);
 
   /* Preamble length */
