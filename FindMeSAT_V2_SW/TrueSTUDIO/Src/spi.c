@@ -255,7 +255,7 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
 
 
 const uint16_t spiWait_MaxWaitEGMs = 500;
-static uint8_t spiProcessSpiReturnWait(void)
+uint8_t spiProcessSpiReturnWait(void)
 {
   EventBits_t eb = xEventGroupWaitBits(spiEventGroupHandle, SPI_SPI1_EG__RDY | SPI_SPI1_EG__ERROR, SPI_SPI1_EG__RDY | SPI_SPI1_EG__ERROR, 0, spiWait_MaxWaitEGMs);
   if (eb & SPI_SPI1_EG__RDY) {
@@ -292,60 +292,6 @@ uint8_t spiProcessSpiMsg(uint8_t msgLen)
   } while (status != HAL_OK);
 
   return spiProcessSpiReturnWait();
-}
-
-
-float spiSX1272Calc_Channel_to_MHz(uint8_t channel)
-{
-  /* EU863-870*/
-  float mhz = 0.f;
-
-  switch (channel) {
-  case 1:
-    mhz = 868.1f;   // SF7BW125 to SF12BW125
-    break;
-
-  case 2:
-    mhz = 868.3f;   // SF7BW125 to SF12BW125  and  SF7BW250
-    break;
-
-  case 3:
-    mhz = 868.5f;   // SF7BW125 to SF12BW125
-    break;
-
-  case 4:
-    mhz = 867.1f;   // SF7BW125 to SF12BW125
-    break;
-
-  case 5:
-    mhz = 867.3f;   // SF7BW125 to SF12BW125
-    break;
-
-  case 6:
-    mhz = 867.5f;   // SF7BW125 to SF12BW125
-    break;
-
-  case 7:
-    mhz = 867.7f;   // SF7BW125 to SF12BW125
-    break;
-
-  case 8:
-    mhz = 867.9f;   // SF7BW125 to SF12BW125
-    break;
-
-  case 9:
-    mhz = 868.8f;   // FSK
-    break;
-
-  case  0:
-  case 16:
-    mhz = 869.525f; // RX2 channel
-    break;
-
-  default:
-    Error_Handler();
-  }
-  return mhz;
 }
 
 
@@ -429,11 +375,10 @@ void spiSX1272Mode(spiSX1272_Mode_t mode)
   spiProcessSpiMsg(2);
 }
 
-void spiSX1272Mode_LoRa_TX_Preps(uint8_t channel, uint8_t msgLen)
+void spiSX1272Mode_LoRa_TX_Preps(float frequency, uint8_t msgLen)
 {
-  const float     f             = spiSX1272Calc_Channel_to_MHz(channel);
-  const uint32_t  f_mhz         = (uint32_t) f;
-  const uint8_t   f_mhz_f1      = (uint8_t) (((uint32_t) (f * 10.f)) % 10);
+  const uint32_t  f_mhz         = (uint32_t) frequency;
+  const uint8_t   f_mhz_f1      = (uint8_t) (((uint32_t) (frequency * 10.f)) % 10);
 
   volatile uint8_t  buf[256]    = { 0 };
   volatile uint32_t bufLen      = 0UL;
@@ -446,13 +391,13 @@ void spiSX1272Mode_LoRa_TX_Preps(uint8_t channel, uint8_t msgLen)
   /* Interrupt DIO lines activation */
   spiSX1272Dio_Mapping();
 
-  bufLen = sprintf((char*) buf, "Ch=%d (%03ld.%01d MHz)\r\n", channel, f_mhz, f_mhz_f1);
+  bufLen = sprintf((char*) buf, "f = %03ld.%01d MHz\r\n", f_mhz, f_mhz_f1);
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) buf, bufLen);
   osSemaphoreRelease(usbToHostBinarySemHandle);
 
-  /* Set channel */
-  spiSX1272Frequency_MHz(spiSX1272Calc_Channel_to_MHz(channel));
+  /* Set frequency */
+  spiSX1272Frequency_MHz(frequency);
 
   /* Change to STANDBY mode for TX preparations */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
@@ -467,14 +412,14 @@ void spiSX1272Mode_LoRa_TX_Preps(uint8_t channel, uint8_t msgLen)
 
   /* Modem config */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
-  spi1TxBuffer[1] = BW_125kHz | CR_4_5     | IHM_OFF | PAYLOAD_CRC_ON | LDRO_OFF;
-  spi1TxBuffer[2] = SF7_DR5  | TXCONT_OFF | 0x0;
+  spi1TxBuffer[1] = BW_125kHz | CR_4_5     | IHM_OFF | PAYLOAD_CRC_ON | LDRO_ON;
+  spi1TxBuffer[2] = SF12_DR0  | TXCONT_OFF | 0x0;
   spiProcessSpiMsg(3);
 
   /* Preamble length */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x20;
   spi1TxBuffer[1] = 0x00;    // RegPreambleMSB, LSB
-  spi1TxBuffer[2] = 0x0a;    // +4 = 12 symbols
+  spi1TxBuffer[2] = 0x0a;    // +4 = 14 symbols
   spiProcessSpiMsg(3);
 
   /* Sync word */
@@ -504,22 +449,21 @@ void spiSX1272Mode_LoRa_TX_Run(void)
   spiProcessSpiMsg(2);
 }
 
-void spiSX1272Mode_LoRa_RX(uint8_t channel)
+void spiSX1272Mode_LoRa_RX(float frequency)
 {
-  const float     f             = spiSX1272Calc_Channel_to_MHz(channel);
-  const uint32_t  f_mhz         = (uint32_t) f;
-  const uint8_t   f_mhz_f1      = (uint8_t) (((uint32_t) (f * 10.f)) % 10);
+  const uint32_t  f_mhz         = (uint32_t) frequency;
+  const uint8_t   f_mhz_f1      = (uint8_t) (((uint32_t) (frequency * 10.f)) % 10);
 
   volatile uint8_t  buf[256]    = { 0 };
   volatile uint32_t bufLen      = 0UL;
 
-  bufLen = sprintf((char*) buf, "Ch=%d (%03ld.%01d MHz)\r\n", channel, f_mhz, f_mhz_f1);
+  bufLen = sprintf((char*) buf, "f = %03ld.%01d MHz\r\n", f_mhz, f_mhz_f1);
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) buf, bufLen);
   osSemaphoreRelease(usbToHostBinarySemHandle);
 
   /* Set channel */
-  spiSX1272Frequency_MHz(f);
+  spiSX1272Frequency_MHz(frequency);
 
   /* Interrupt DIO lines activation */
   spiSX1272Dio_Mapping();

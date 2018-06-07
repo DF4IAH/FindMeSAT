@@ -166,9 +166,8 @@ void MX_SPI1_Init(void);
 void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi);
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi);
 
+uint8_t spiProcessSpiReturnWait(void);
 uint8_t  spiProcessSpiMsg(uint8_t msgLen);
-
-float spiSX1272Calc_Channel_to_MHz(uint8_t channel);
 
 void spiSX1272Frequency_MHz(float mhz);
 void spiSX1272Dio_Mapping(void);
@@ -179,9 +178,9 @@ void spiSX1272LoRa_Fifo_SetRxBaseToFifoPtr(void);
 void spiSX1272LoRa_Fifo_SetTxBaseToFifoPtr(void);
 
 void spiSX1272Mode(spiSX1272_Mode_t mode);
-void spiSX1272Mode_LoRa_TX_Preps(uint8_t channel, uint8_t msgLen);
+void spiSX1272Mode_LoRa_TX_Preps(float frequency, uint8_t msgLen);
 void spiSX1272Mode_LoRa_TX_Run(void);
-void spiSX1272Mode_LoRa_RX(uint8_t channel);
+void spiSX1272Mode_LoRa_RX(float frequency);
 
 void spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime);
 void spiSX1272_WaitUntil_RxDone(uint32_t processUntil);

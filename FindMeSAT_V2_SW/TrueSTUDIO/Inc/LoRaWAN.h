@@ -57,29 +57,33 @@ typedef struct LoRaWANctx {
 
   /* Device specific */
   uint8_t                             DevEUI[8];
-  uint8_t                             DevAddr[4];
+  uint8_t                             DevAddr[4];           // JOIN-ACCEPT
+  uint16_t                            DevNonce;             // JOIN-REQUEST, REJOIN-REQUEST
+  uint32_t                            Home_NetID;           // JOIN-ACCEPT - 3 bytes
 
   /* Network / MAC specific */
   LoRaWANVersion_t                    LoRaWAN_ver;
-  uint8_t                             NwkKey[16];       // Network root key (for OTA devices)
-  uint8_t                             FNwkSIntKey[16];
-  uint8_t                             SNwkSIntKey[16];
-  uint8_t                             NwkSEncKey[16];
-  uint8_t                             JSIntKey[16];     // (for OTA devices)
-  uint8_t                             JSEncKey[16];     // (for OTA devices)
+  uint8_t                             NwkKey[16];           // Network root key (for OTA devices)
+//uint8_t                             FNwkSKey[16];         // JOIN-ACCEPT
+  uint8_t                             FNwkSIntKey[16];      // JOIN-ACCEPT (derived from: NwkKey)
+  uint8_t                             SNwkSIntKey[16];      // JOIN-ACCEPT (derived from: NwkKey)
+  uint8_t                             NwkSEncKey[16];       // JOIN-ACCEPT (derived from: NwkKey)
+  uint8_t                             JSIntKey[16];         // (for OTA devices)
+  uint8_t                             JSEncKey[16];         // (for OTA devices)
+  uint8_t                             DLSettings;           // JOIN-ACCEPT
+  uint8_t                             RXDelay;              // JOIN-ACCEPT
+  uint8_t                             CFList[16];           // JOIN-ACCEPT - EU-868: Freq Ch3[2:0], Freq Ch4[2:0], Freq Ch5[2:0], Freq Ch6[2:0], Freq Ch7[2:0], CFListType[0]
+  float                               Ch_Frequencies_MHz[8];
+  uint8_t                             Ch_EnabledMsk;
 
   /* Join Server specific */
-  uint8_t                             JoinEUI_LE[8];
-  uint16_t                            DevNonce;
-  uint32_t                            ServerNonce;      // actual 3 octets
-  uint32_t                            Home_NetID;       // actual 3 octets
-  //uint8_t                           DLSettings;
-  //uint8_t                           RxDelay;
-  //uint8_t                           CFList[16];
+//uint8_t                             JoinEUI_1V1[8];       // JOIN-REQUEST, REJOIN-REQUEST
+//uint32_t                            JoinNonce_1V1;        // JOIN-ACCEPT
+//uint32_t                            ServerNonce_1V1;      // 3 bytes
 
   /* Application specific */
   uint8_t                             AppEUI[8];
-  uint8_t                             AppSKey[16];
+  uint8_t                             AppSKey[16];   // JOIN-ACCEPT (derived from: AppKey)
 
   /* Current transmission */
   LoRaWANctxDir_t                     Dir;
@@ -220,6 +224,25 @@ typedef struct MICBlockB0_Dn {
 } MICBlockB0_Dn_t;
 
 
+typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
+  MIC_JOINREQUEST                     = 1,
+} LoRaWAN_CalcMIC_JOINREQUEST_t;
+
+
+typedef struct LoRaWAN_Message {
+volatile uint8_t  msg_Len;
+volatile uint8_t  msg_Buf[LoRaWAN_MsgLenMax];
+uint8_t           msg_MHDR;
+uint8_t           msg_FCtrl;
+uint16_t          msg_FCnt;
+uint8_t           msg_FOpts_Len;
+uint8_t           msg_FOpts_Buf[16];
+uint8_t           msg_FOpts_Encoded[16];
+uint8_t           msg_FRMPayload_Len;
+uint8_t           msg_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax];
+} LoRaWAN_Message_t;
+
+
 typedef struct LoraliveApp {
 
   uint8_t                             voltage_32_v;
@@ -275,11 +298,19 @@ typedef struct LoraliveApp {
 
 
 
+float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, uint8_t dflt);
+
 void LoRaWAN_Init(void);
 
 void LoRaWANctx_readFLASH(void);
-void LoRaWANctx_applyKeys_loralive(void);
-void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t size);
-void LoRaWAN_App_loralive_receiveLoop(LoRaWANctx_t* ctx);
+void LoRaWANctx_applyKeys_trackMeApp(void);
+
+void LoRaWAN_MAC_JOINREQUEST(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg);
+
+void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg);
+void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t timeout_ms);
+
+void LoRaWAN_App_trackMeApp_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t size);
+void LoRaWAN_App_trackMeApp_receiveLoop(LoRaWANctx_t* ctx);
 
 #endif /* LORAWAN_H_ */

@@ -122,6 +122,7 @@ void prvControllerInitAfterGreet(void)
   /* Test LoRaWAN access */
   if (loRaWANctx.bkpRAM)
   {
+#if 0
     loraliveApp.id = 'E';
 
     loraliveApp.voltage_32_v  = (uint8_t) (3.3f * 32 + 0.5f);
@@ -147,13 +148,13 @@ void prvControllerInitAfterGreet(void)
       usbToHostWait((uint8_t*) "\r\nTX\r\n", 6);
       osSemaphoreRelease(usbToHostBinarySemHandle);
 
-      LoRaWAN_App_loralive_pushUp(&loRaWANctx, &loraliveApp, 14);
+      LoRaWAN_App_trackMeApp_pushUp(&loRaWANctx, &loraliveApp, 14);
 
       osSemaphoreWait(usbToHostBinarySemHandle, 0);
       usbToHostWait((uint8_t*) "\r\nRX:\r\n", 6);
       osSemaphoreRelease(usbToHostBinarySemHandle);
 
-      LoRaWAN_App_loralive_receiveLoop(&loRaWANctx);
+      LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
     }
 
     while (1) {
@@ -163,8 +164,9 @@ void prvControllerInitAfterGreet(void)
       usbToHostWait((uint8_t*) "\r\nRX:\r\n", 6);
       osSemaphoreRelease(usbToHostBinarySemHandle);
 
-      LoRaWAN_App_loralive_receiveLoop(&loRaWANctx);
+      LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
     }
+#endif
   }
 }
 
