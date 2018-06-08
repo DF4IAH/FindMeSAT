@@ -592,7 +592,7 @@ void AES_CTR_xcrypt_buffer(struct AES_ctx* ctx, uint8_t* buf, uint32_t length)
 
 /* CMAC from flexibity-team/AES-CMAC-RFC, modified by DF4IAH */
 
-static void cryptoAesCmac_xor_128(const uint8_t* a, const uint8_t* b, uint8_t* out) {
+static void cryptoAesCmac_xor_128(volatile uint8_t* a, volatile const uint8_t* b, uint8_t* out) {
   for (uint8_t i = 0; i < cryptoAesCmac_BLOCK_SIZE; i++) {
     out[i] = a[i] ^ b[i];
   }
@@ -632,7 +632,7 @@ static void cryptoAesCmac_generate_subkey(const uint8_t* key, uint8_t* K1, uint8
   }
 }
 
-static void cryptoAesCmac_padding(const uint8_t* lastb, uint8_t* pad, int32_t length) {
+static void cryptoAesCmac_padding(volatile uint8_t* lastb, uint8_t* pad, int32_t length) {
   /* original last block */
   for (uint8_t j = 0; j < cryptoAesCmac_BLOCK_SIZE; j++) {
     if (j < length) {
@@ -647,7 +647,7 @@ static void cryptoAesCmac_padding(const uint8_t* lastb, uint8_t* pad, int32_t le
   }
 }
 
-void cryptoAesCmac(const uint8_t aesKey128[16], const uint8_t* input, uint32_t length, uint8_t* outMac) {
+void cryptoAesCmac(const uint8_t aesKey128[16], volatile uint8_t* input, uint32_t length, uint8_t* outMac) {
   uint8_t X[cryptoAesCmac_BLOCK_SIZE], Y[cryptoAesCmac_BLOCK_SIZE], M_last[cryptoAesCmac_BLOCK_SIZE], padded[cryptoAesCmac_BLOCK_SIZE];
   uint8_t K1[cryptoAesCmac_BLOCK_SIZE], K2[cryptoAesCmac_BLOCK_SIZE];
   uint8_t flag;
