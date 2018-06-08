@@ -222,10 +222,29 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
   return 0;
 }
 
+uint8_t LoRaWAN_calc_randomChannel(LoRaWANctx_t* ctx)
+{
+  static uint8_t s_channel = 255;
+  uint8_t channel;
+
+  do {
+    channel = 1 + (rand() % 8);
+    if (!((1UL << channel) & ctx->Ch_EnabledMsk)) {
+      /* Channel disabled, try another channel */
+      channel = s_channel;
+    }
+  } while (channel == s_channel);
+  s_channel = channel;
+
+  return channel;
+}
+
 float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, uint8_t dflt)
 {
   /* EU863-870*/
   float mhz = 0.f;
+
+  HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);    // Green off
 
   switch (channel) {
   case 1:
@@ -266,6 +285,7 @@ float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, uint8_t df
 
   case  0:
   case 16:
+    HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);    // Green on
     mhz = 869.525f; // RX2 channel
     break;
 
@@ -488,14 +508,27 @@ void LoRaWAN_Init(void)
   }
   loRaWANctx.Ch_EnabledMsk = 0xff;  // All channels valid
 
-  /* JOIN-REQUEST request */
+  /* JOIN-REQUEST prepare and transmission */
   LoRaWAN_MAC_JOINREQUEST(&loRaWANctx, &loRaWanTxMsg);
+  spiSX1272Frequency_MHz(
+      LoRaWAN_calc_Channel_to_MHz(&loRaWANctx,
+          LoRaWAN_calc_randomChannel(&loRaWANctx),
+          0)
+      );  // Switch to RX1 - randomized channel
   LoRaWAN_TX_msg(&loRaWANctx, &loRaWanTxMsg);
 
-  /* JOIN-ACCEPT response*/
+  /* JOIN-ACCEPT response - DELAY1 */
+#if 0
   LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, 5750);
-  spiSX1272Frequency_MHz(LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, 16, 1));  // Switch to RX2
-  LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, 1000);
+  (void) loRaWanRxMsg.msg_Len;
+  (void) loRaWanRxMsg.msg_Buf;
+#endif
+
+  /* JOIN-ACCEPT response - DELAY2 at RX2 */
+  spiSX1272Frequency_MHz(LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, 16, 1));
+  LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, 5750 + 1000);
+  (void) loRaWanRxMsg.msg_Len;
+  (void) loRaWanRxMsg.msg_Buf;
 
   __asm volatile( "nop" );
 }
@@ -543,44 +576,32 @@ void LoRaWAN_MAC_JOINREQUEST(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
   }
 
   /* DevNonce */
+  {
 #ifdef LORAWAN_1V02
-  ctx->DevNonce[0] = rand() & 0xffU;
-  ctx->DevNonce[1] = rand() & 0xffU;
+    ctx->DevNonce[0] = rand() & 0xffU;
+    ctx->DevNonce[1] = rand() & 0xffU;
 #endif
 
-  msg->msg_Buf[msg->msg_Len++] = ctx->DevNonce[0];
-  msg->msg_Buf[msg->msg_Len++] = ctx->DevNonce[1];
+    msg->msg_Buf[msg->msg_Len++] = ctx->DevNonce[0];
+    msg->msg_Buf[msg->msg_Len++] = ctx->DevNonce[1];
 
-  /* MIC */
-  LoRaWAN_calc_MIC_msgAppend(msg, ctx, MIC_JOINREQUEST);
+    /* MIC */
+    LoRaWAN_calc_MIC_msgAppend(msg, ctx, MIC_JOINREQUEST);
 
 #ifdef LORAWAN_1V1
-  if (!(++ctx->DevNonce[0])) {
-    ++ctx->DevNonce[1];
-  }
+    if (!(++ctx->DevNonce[0])) {
+      ++ctx->DevNonce[1];
+    }
 #endif
+  }
 }
 
 void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
 {
   /* Push the complete message to the FIFO and go to transmission mode */
-  static uint8_t s_channel = 255;
-  uint8_t channel;
 
-  do {
-    channel = 1 + (rand() % 8);
-    if (!((1UL << channel) & ctx->Ch_EnabledMsk)) {
-      /* Channel disabled, try another channel */
-      channel = s_channel;
-    }
-  } while (channel == s_channel);
-  s_channel = channel;
-
-  /* Get the current frequency for the channel number [1..8] */
-  float frequency = LoRaWAN_calc_Channel_to_MHz(ctx, channel, 0);
-
-  /* Prepare TX for a randomly selected channel (TX1/RX1) */
-  spiSX1272Mode_LoRa_TX_Preps(frequency, msg->msg_Len);
+  /* Prepare TX */
+  spiSX1272Mode_LoRa_TX_Preps(msg->msg_Len);
 
   /* Prepare the FIFO */
   spiSX1272LoRa_Fifo_Init();
@@ -611,12 +632,26 @@ void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t timeout_
   uint32_t startTime  = now;
   uint32_t stopTime   = startTime + timeout_ms;
 
+  /* Prepare RX */
+  spiSX1272Mode_LoRa_RX_Preps();
+
+  /* Prepare the FIFO */
+  spiSX1272LoRa_Fifo_Init();
+  spiSX1272LoRa_Fifo_SetRxBaseToFifoPtr();
+
+  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);    // Blue on
+
+  /* Start receiver */
+  spiSX1272Mode_LoRa_RXcont_Run();
+
   while (stopTime > now) {
     //LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
     spiSX1272_WaitUntil_RxDone(startTime + timeout_ms);
 
     now = osKernelSysTick();
   }
+
+  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);    // Blue oFF
 }
 
 void LoRaWAN_App_trackMeApp_pushUp(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, LoraliveApp_t* app, uint8_t size)

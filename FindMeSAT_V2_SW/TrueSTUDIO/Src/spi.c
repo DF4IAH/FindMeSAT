@@ -297,8 +297,20 @@ uint8_t spiProcessSpiMsg(uint8_t msgLen)
 
 void spiSX1272Frequency_MHz(float mhz)
 {
-  float fVal = (mhz * 1e6 * (1UL << 19)) / 32e6;
-  uint32_t regVal = (uint32_t) (fVal + 0.5f);
+  const uint32_t    fmt_mhz     = (uint32_t) mhz;
+  const uint8_t     fmt_mhz_f1  = (uint8_t) (((uint32_t) (mhz * 10.f)) % 10);
+  volatile uint8_t  buf[256]    = { 0 };
+  volatile uint32_t bufLen      = 0UL;
+
+  /* Debugging information */
+  bufLen = sprintf((char*) buf, "f = %03ld.%01d MHz\r\n", fmt_mhz, fmt_mhz_f1);
+  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  usbToHostWait((uint8_t*) buf, bufLen);
+  osSemaphoreRelease(usbToHostBinarySemHandle);
+
+  /* Register value calc */
+  float     fVal    = (mhz * 1e6 * (1UL << 19)) / 32e6;
+  uint32_t  regVal  = (uint32_t) (fVal + 0.5f);
 
   /* Set frequency register */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x06;
@@ -375,14 +387,8 @@ void spiSX1272Mode(spiSX1272_Mode_t mode)
   spiProcessSpiMsg(2);
 }
 
-void spiSX1272Mode_LoRa_TX_Preps(float frequency, uint8_t msgLen)
+void spiSX1272Mode_LoRa_TX_Preps(uint8_t msgLen)
 {
-  const uint32_t  f_mhz         = (uint32_t) frequency;
-  const uint8_t   f_mhz_f1      = (uint8_t) (((uint32_t) (frequency * 10.f)) % 10);
-
-  volatile uint8_t  buf[256]    = { 0 };
-  volatile uint32_t bufLen      = 0UL;
-
   /* Change to SLEEP mode for switching to LoRa */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
   spi1TxBuffer[1] = MODE_LoRa | SLEEP;
@@ -390,14 +396,6 @@ void spiSX1272Mode_LoRa_TX_Preps(float frequency, uint8_t msgLen)
 
   /* Interrupt DIO lines activation */
   spiSX1272Dio_Mapping();
-
-  bufLen = sprintf((char*) buf, "f = %03ld.%01d MHz\r\n", f_mhz, f_mhz_f1);
-  osSemaphoreWait(usbToHostBinarySemHandle, 0);
-  usbToHostWait((uint8_t*) buf, bufLen);
-  osSemaphoreRelease(usbToHostBinarySemHandle);
-
-  /* Set frequency */
-  spiSX1272Frequency_MHz(frequency);
 
   /* Change to STANDBY mode for TX preparations */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
@@ -449,22 +447,47 @@ void spiSX1272Mode_LoRa_TX_Run(void)
   spiProcessSpiMsg(2);
 }
 
-void spiSX1272Mode_LoRa_RX(float frequency)
+void spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime)
 {
-  const uint32_t  f_mhz         = (uint32_t) frequency;
-  const uint8_t   f_mhz_f1      = (uint8_t) (((uint32_t) (frequency * 10.f)) % 10);
+//char  debugBuf[1024]  = { 0 };
+//int   debugLen        =   0;
 
-  volatile uint8_t  buf[256]    = { 0 };
-  volatile uint32_t bufLen      = 0UL;
+  /* Use TxDone and RxDone - mask out all other IRQs */
+  spi1TxBuffer[0] = SPI_WR_FLAG | 0x11;    // RegIrqFlagsMask
+  spi1TxBuffer[1] = ~0b01001000;
+  spiProcessSpiMsg(2);
 
-  bufLen = sprintf((char*) buf, "f = %03ld.%01d MHz\r\n", f_mhz, f_mhz_f1);
-  osSemaphoreWait(usbToHostBinarySemHandle, 0);
-  usbToHostWait((uint8_t*) buf, bufLen);
-  osSemaphoreRelease(usbToHostBinarySemHandle);
+  do {
+    spi1TxBuffer[0] = SPI_RD_FLAG | 0x12;    // RegIrqFlags
+    spiProcessSpiMsg(2);
+    uint8_t irq = spi1RxBuffer[1];
 
-  /* Set channel */
-  spiSX1272Frequency_MHz(frequency);
+    if (irq) {
+      if (doPreviousWakeTime) {
+        spiPreviousWakeTime = osKernelSysTick();
+      }
 
+      spi1TxBuffer[0] = SPI_WR_FLAG | 0x12;    // RegIrqFlags
+      spi1TxBuffer[1] = 0xff;    // Reset all flags
+      spiProcessSpiMsg(2);
+
+#if 0
+      debugLen = sprintf(debugBuf, "irq=0x%02x, spiPreviousWakeTime=%09ld.", irq, spiPreviousWakeTime);
+      __asm volatile( "nop" );
+      (void) debugLen;
+      (void) debugBuf;
+#endif
+      return;
+    }
+
+    /* Avoid blocking loop on IRQ state */
+    osThreadYield();
+  } while (1);
+}
+
+
+void spiSX1272Mode_LoRa_RX_Preps(void)
+{
   /* Interrupt DIO lines activation */
   spiSX1272Dio_Mapping();
 
@@ -510,42 +533,12 @@ void spiSX1272Mode_LoRa_RX(float frequency)
   spiProcessSpiMsg(2);
 }
 
-void spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime)
+void spiSX1272Mode_LoRa_RXcont_Run(void)
 {
-//char  debugBuf[1024]  = { 0 };
-//int   debugLen        =   0;
-
-  /* Use TxDone and RxDone - mask out all other IRQs */
-  spi1TxBuffer[0] = SPI_WR_FLAG | 0x11;    // RegIrqFlagsMask
-  spi1TxBuffer[1] = ~0b01001000;
+  /* Change to TX mode */
+  spi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+  spi1TxBuffer[1] = MODE_LoRa | RXCONTINUOUS;
   spiProcessSpiMsg(2);
-
-  do {
-    spi1TxBuffer[0] = SPI_RD_FLAG | 0x12;    // RegIrqFlags
-    spiProcessSpiMsg(2);
-    uint8_t irq = spi1RxBuffer[1];
-
-    if (irq) {
-      if (doPreviousWakeTime) {
-        spiPreviousWakeTime = osKernelSysTick();
-      }
-
-      spi1TxBuffer[0] = SPI_WR_FLAG | 0x12;    // RegIrqFlags
-      spi1TxBuffer[1] = 0xff;    // Reset all flags
-      spiProcessSpiMsg(2);
-
-#if 0
-      debugLen = sprintf(debugBuf, "irq=0x%02x, spiPreviousWakeTime=%09ld.", irq, spiPreviousWakeTime);
-      __asm volatile( "nop" );
-      (void) debugLen;
-      (void) debugBuf;
-#endif
-      return;
-    }
-
-    /* Avoid blocking loop on IRQ state */
-    osThreadYield();
-  } while (1);
 }
 
 void spiSX1272_WaitUntil_RxDone(uint32_t processUntil)

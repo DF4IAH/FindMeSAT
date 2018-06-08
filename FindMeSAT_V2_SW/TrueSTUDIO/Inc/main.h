@@ -154,7 +154,7 @@
 /* USER CODE BEGIN Private defines */
 #define USE_FULL_ASSERT     1U
 
-#define FINDMESAT_VERSION   20180608U
+#define FINDMESAT_VERSION   20180609U
 
 typedef void * TaskHandle_t;
 

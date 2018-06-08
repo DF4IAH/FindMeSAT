@@ -300,6 +300,7 @@ typedef struct LoraliveApp {
 
 
 
+uint8_t LoRaWAN_calc_randomChannel(LoRaWANctx_t* ctx);
 float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, uint8_t dflt);
 
 void LoRaWAN_Init(void);

@@ -178,11 +178,12 @@ void spiSX1272LoRa_Fifo_SetRxBaseToFifoPtr(void);
 void spiSX1272LoRa_Fifo_SetTxBaseToFifoPtr(void);
 
 void spiSX1272Mode(spiSX1272_Mode_t mode);
-void spiSX1272Mode_LoRa_TX_Preps(float frequency, uint8_t msgLen);
+void spiSX1272Mode_LoRa_TX_Preps(uint8_t msgLen);
 void spiSX1272Mode_LoRa_TX_Run(void);
-void spiSX1272Mode_LoRa_RX(float frequency);
-
 void spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime);
+
+void spiSX1272Mode_LoRa_RX_Preps(void);
+void spiSX1272Mode_LoRa_RXcont_Run(void);
 void spiSX1272_WaitUntil_RxDone(uint32_t processUntil);
 
 uint8_t spiDetectShieldSX1272(void);
