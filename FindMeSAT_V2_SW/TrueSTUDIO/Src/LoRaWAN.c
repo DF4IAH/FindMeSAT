@@ -539,6 +539,8 @@ void LoRaWAN_Init(void)
   loRaWANctx.SpreadingFactor = 12;  // Set DR0_SF12
   uint32_t tsEndOfTx = LoRaWAN_TX_msg(&loRaWANctx, &loRaWanTxMsg);
 
+  __asm volatile( "nop" );
+
 #if 0
   /* JOIN-ACCEPT response - DELAY1 */
   LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, tsEndOfTx + 5990);

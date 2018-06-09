@@ -73,7 +73,7 @@ void usbUsbToHostTaskInit(void)
 {
   uint8_t inChr = 0;
 
-  HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);                                  // Red on
+  //HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);                                  // Red on
 
   /* Give time for USB CDC to come up */
   osDelay(2500);
@@ -83,8 +83,8 @@ void usbUsbToHostTaskInit(void)
   }
   xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
 
-  HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                                // Red off
-  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);                                  // Blue on
+  //HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                                // Red off
+  //HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);                                  // Blue on
 
   /* Init connection with dummy data */
   for (uint32_t cnt = 15; cnt; cnt--) {
@@ -92,7 +92,7 @@ void usbUsbToHostTaskInit(void)
     osDelay(10);
   }
   osDelay(250);
-  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);                                // Blue off
+  //HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);                                // Blue off
 }
 
 void usbUsbToHostTaskLoop(void)
@@ -139,12 +139,12 @@ void usbUsbToHostTaskLoop(void)
         /* Group-Bit for empty queue set */
         xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
 
-        HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                          // Red off
+        //HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                          // Red off
         break;
 
       } else {
         /* USB EP busy - try again */
-        HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);                            // Red on
+        //HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);                            // Red on
 
         /* Delay for next USB packet to come and go */
         osDelay(1);
@@ -154,7 +154,7 @@ void usbUsbToHostTaskLoop(void)
     if (!retryCnt) {
       /* USB EP still busy - drop whole buffer content */
       bufCtr = 0;
-      HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);                              // Red on
+      //HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);                              // Red on
     }
   }
 }
@@ -162,12 +162,12 @@ void usbUsbToHostTaskLoop(void)
 
 void usbUsbFromHostTaskInit(void)
 {
-  HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);                                  // Green on
+  //HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);                                  // Green on
 
   /* Give time for USB CDC to come up */
   osDelay(2500);
 
-  HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                                // Green off
+  //HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                                // Green off
 }
 
 void usbUsbFromHostTaskLoop(void)
@@ -179,7 +179,7 @@ void usbUsbFromHostTaskLoop(void)
 
   if (usbFromHostISRBufLen) {
     lightOnCtr = lightOnMax;
-    HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);                                // Green on
+    //HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);                                // Green on
 
     /* USB OUT EP from host put data into the buffer */
     uint8_t* bufPtr = usbFromHostISRBuf;
@@ -204,7 +204,7 @@ void usbUsbFromHostTaskLoop(void)
 
   case 1:
     --lightOnCtr;
-    HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                            // Green off
+    //HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                            // Green off
     break;
 
   default:
