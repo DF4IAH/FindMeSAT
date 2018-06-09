@@ -95,6 +95,7 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    FCtrl_FPending;
   volatile uint8_t                    FPort;
   volatile uint16_t                   ConfFCnt;
+  volatile uint8_t                    SpreadingFactor;
   volatile uint8_t                    TxDr;
   volatile uint8_t                    TxCh;
 
@@ -310,8 +311,8 @@ void LoRaWANctx_applyKeys_trackMeApp(void);
 
 void LoRaWAN_MAC_JOINREQUEST(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg);
 
-void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg);
-void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t timeout_ms);
+uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg);
+void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime);
 
 void LoRaWAN_App_trackMeApp_pushUp(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, LoraliveApp_t* app, uint8_t size);
 void LoRaWAN_App_trackMeApp_receiveLoop(LoRaWANctx_t* ctx);

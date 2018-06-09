@@ -58,6 +58,7 @@
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
+#include "LoRaWAN.h"
 
 /* USER CODE END Includes */
 
@@ -113,13 +114,14 @@ typedef enum spiSX1272_ModemConfig2 {
   TXCONT_OFF              = (0b0 << 3),
   TXCONT_ON               = (0b1 << 3),
 
-  SF6_DR6                 = ( 6 << 4),
-  SF7_DR5                 = ( 7 << 4),
-  SF8_DR4                 = ( 8 << 4),
-  SF9_DR3                 = ( 9 << 4),
-  SF10_DR2                = (10 << 4),
-  SF11_DR1                = (11 << 4),
-  SF12_DR0                = (12 << 4)
+  SFx_DRy_MASK_SHIFT      =  4,
+  SF6_DR6                 =  6,
+  SF7_DR5                 =  7,
+  SF8_DR4                 =  8,
+  SF9_DR3                 =  9,
+  SF10_DR2                = 10,
+  SF11_DR1                = 11,
+  SF12_DR0                = 12,
 } spiSX1272_ModemConfig2_t;
 
 typedef enum spiSX1272_PaRamp {
@@ -156,6 +158,17 @@ typedef enum spiSX1272_LNA {
   LnaGain_G6              = (0b110 << 5)
 } spiSX1272_LNA_t;
 
+typedef enum spiSX1272_IRQ_Mask {
+  CadDetectedMask         = 0,
+  FhssChangeChannelMask   = 1,
+  CadDoneMask             = 2,
+  TxDoneMask              = 3,
+  ValidHeaderMask         = 4,
+  PayloadCrcErrorMask     = 5,
+  RxDoneMask              = 6,
+  RxTimeoutMask           = 7
+} spiSX1272_IRQ_Mask_t;
+
 /* USER CODE END Private defines */
 
 extern void _Error_Handler(char *, int);
@@ -167,24 +180,23 @@ void HAL_SPI_TxRxCpltCallback(SPI_HandleTypeDef *hspi);
 void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi);
 
 uint8_t spiProcessSpiReturnWait(void);
-uint8_t  spiProcessSpiMsg(uint8_t msgLen);
+uint8_t spiProcessSpiMsg(uint8_t msgLen);
 
 void spiSX1272Frequency_MHz(float mhz);
-void spiSX1272Dio_Mapping(void);
+void spiSX1272Dio_Mapping_TX(void);
+void spiSX1272Dio_Mapping_RX(void);
 
+uint8_t spiSX1272Mode_LoRa_GetBroadbandRSSI(void);
 void spiSX1272LoRa_setTxMsgLen(uint8_t payloadLen);
 void spiSX1272LoRa_Fifo_Init(void);
 void spiSX1272LoRa_Fifo_SetRxBaseToFifoPtr(void);
 void spiSX1272LoRa_Fifo_SetTxBaseToFifoPtr(void);
 
 void spiSX1272Mode(spiSX1272_Mode_t mode);
-void spiSX1272Mode_LoRa_TX_Preps(uint8_t msgLen);
-void spiSX1272Mode_LoRa_TX_Run(void);
-void spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime);
-
-void spiSX1272Mode_LoRa_RX_Preps(void);
-void spiSX1272Mode_LoRa_RXcont_Run(void);
-void spiSX1272_WaitUntil_RxDone(uint32_t processUntil);
+void spiSX1272_TX_Preps(LoRaWANctx_t* ctx, uint8_t msgLen);
+uint32_t spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime, uint32_t stopTime);
+void spiSX1272_RX_Preps(LoRaWANctx_t* ctx);
+uint8_t spiSX1272_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime);
 
 uint8_t spiDetectShieldSX1272(void);
 
