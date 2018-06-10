@@ -187,7 +187,7 @@ void prvControllerPrintMCU(void)
   uint32_t uidPosY    = (*((uint32_t*)  UID_BASE     ) >> 16) & 0X0000ffffUL;
   uint32_t uidWaf     = (*((uint32_t*) (UID_BASE + 4))      ) & 0X000000ffUL;
   char* uidLot        = ((char*)       (UID_BASE + 5));
-  memcpy(lotBuf, uidLot, 7);
+  memcpy((void*)lotBuf, (const void*)uidLot, 7);
   lotBuf[7] = 0;
 
   uint32_t package    = (*((uint32_t*)  PACKAGE_BASE))        & 0X0000001fUL;

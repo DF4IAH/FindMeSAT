@@ -106,6 +106,9 @@ void cryptoAesCmac(const uint8_t aesKey128[16], volatile uint8_t* input, uint32_
 
 /* DF4IAH code follows ... */
 
-void cryptoAesEcb(const uint8_t aesKey128[16], uint8_t* inOut);
+void cryptoAesEcb_Encrypt(const uint8_t aesKey128[16], uint8_t* inOut);
+void cryptoAesEcb_Decrypt(const uint8_t aesKey128[16], uint8_t* inOut);
+void cryptoAesCbc_Encrypt(const uint8_t aesKey128[16], uint8_t* inOut, uint32_t len);
+void cryptoAesCbc_Decrypt(const uint8_t aesKey128[16], uint8_t* inOut, uint32_t len);
 
 #endif /* CRYPTO_H_ */

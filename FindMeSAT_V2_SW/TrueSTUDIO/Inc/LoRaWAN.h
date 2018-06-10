@@ -96,6 +96,7 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    FPort;
   volatile uint16_t                   ConfFCnt;
   volatile uint8_t                    SpreadingFactor;
+  volatile float                      Frequency;
   volatile uint8_t                    TxDr;
   volatile uint8_t                    TxCh;
 

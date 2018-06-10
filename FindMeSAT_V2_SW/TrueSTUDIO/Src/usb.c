@@ -60,7 +60,7 @@ void usbFromHostFromIRQ(const uint8_t* buf, uint32_t len)
 		if (lLen > lMaxLen) {
 			lLen = lMaxLen;
 		}
-		memcpy(usbFromHostISRBuf, buf, lLen);
+		memcpy((void*)usbFromHostISRBuf, (const void*)buf, lLen);
 		usbFromHostISRBuf[lLen] = 0;
 		__asm volatile( "ISB" );
 		usbFromHostISRBufLen = lLen;

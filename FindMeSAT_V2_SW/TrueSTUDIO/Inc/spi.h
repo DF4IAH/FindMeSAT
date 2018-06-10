@@ -189,14 +189,15 @@ void spiSX1272Dio_Mapping_RX(void);
 uint8_t spiSX1272Mode_LoRa_GetBroadbandRSSI(void);
 void spiSX1272LoRa_setTxMsgLen(uint8_t payloadLen);
 void spiSX1272LoRa_Fifo_Init(void);
-void spiSX1272LoRa_Fifo_SetRxBaseToFifoPtr(void);
-void spiSX1272LoRa_Fifo_SetTxBaseToFifoPtr(void);
+void spiSX1272LoRa_Fifo_SetFifoPtrFromRxBase(void);
+void spiSX1272LoRa_Fifo_SetFifoPtrFromTxBase(void);
 
 void spiSX1272Mode(spiSX1272_Mode_t mode);
-void spiSX1272_TX_Preps(LoRaWANctx_t* ctx, uint8_t msgLen);
+void spiSX1272Register_IRQ_clearAll(void);
+void spiSX1272_TX_Preps(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg);
 uint32_t spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime, uint32_t stopTime);
 void spiSX1272_RX_Preps(LoRaWANctx_t* ctx);
-uint8_t spiSX1272_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime);
+void spiSX1272_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime);
 
 uint8_t spiDetectShieldSX1272(void);
 
