@@ -512,8 +512,12 @@ void LoRaWAN_Init(void)
   /* Seed randomizer */
   {
     /* Prepare and start the receiver */
-    spiSX1272_RX_Preps(&loRaWANctx);
-    spiSX1272Mode(MODE_LoRa | RXCONTINUOUS);
+    loRaWANctx.Frequency = LoRaWAN_calc_Channel_to_MHz(
+        &loRaWANctx,
+        16,
+        1);                                   // Most traffic on the RX2 channel
+    loRaWANctx.SpreadingFactor = SF7_DR5;     // Use that SF for more noise
+    spiSX1272_TxRx_Preps(&loRaWANctx, TxRx_Mode_RX_Randomizer, NULL);
 
     /* Forging the random number */
     {
@@ -546,11 +550,11 @@ void LoRaWAN_Init(void)
     /* JOIN-REQUEST prepare and transmission */
     {
       /* Adjust the context */
-      loRaWANctx.SpreadingFactor = SF12_DR0;    // Use that SF
       loRaWANctx.Frequency = LoRaWAN_calc_Channel_to_MHz(
           &loRaWANctx,
           LoRaWAN_calc_randomChannel(&loRaWANctx),
           0);                                   // Randomized RX1 frequency
+      loRaWANctx.SpreadingFactor = SF10_DR2;    // Use that SF
 
       /* Forge the message */
       LoRaWAN_MAC_JOINREQUEST(&loRaWANctx, &loRaWanTxMsg);
@@ -561,19 +565,33 @@ void LoRaWAN_Init(void)
 
     /* JOIN-ACCEPT */
     {
-#if 0
       /* JOIN-ACCEPT response after JOIN_ACCEPT_DELAY1 at RX1 */
-      LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, tsEndOfTx + 5990);
-#endif
+      // Same frequency and SF as during transmission
+      LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, tsEndOfTx + 5995);
 
-      /* JOIN-ACCEPT response after JOIN_ACCEPT_DELAY2 at RX2 */
-      spiSX1272Frequency_MHz(LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, 16, 1));
-      loRaWANctx.SpreadingFactor = 12;  // Set DR0_SF12
-      LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, tsEndOfTx + 8990);
+      /* Listen to the RX2 only when RX1 without success */
+      if (!loRaWanRxMsg.msg_Len) {
+        /* JOIN-ACCEPT response after JOIN_ACCEPT_DELAY2 at RX2 */
+        loRaWANctx.Frequency = LoRaWAN_calc_Channel_to_MHz(
+            &loRaWANctx,
+            0,
+            1);                                   // Jump to RX2 frequency (default value)
+        loRaWANctx.SpreadingFactor = SF12_DR0;    // Use that SF
 
-      (void) loRaWanRxMsg.msg_Len;
-      (void) loRaWanRxMsg.msg_Buf;
-      __asm volatile( "" );
+        /* Prepare receiver and listen to the ether */
+        LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, tsEndOfTx + 7995);
+      }
+
+      /* Process message */
+      if (loRaWanRxMsg.msg_Len) {
+        volatile uint8_t pad[32] = { 0 };
+
+        memcpy((void*)pad, (const void*)loRaWanRxMsg.msg_Buf, loRaWanRxMsg.msg_Len);
+        cryptoAesCbc_Decrypt(loRaWANctx.AppKey, (uint8_t*)&pad, loRaWanRxMsg.msg_Len);
+
+        /* Process the data */
+        __asm volatile ( "" );
+      }
     }
   }
 }
@@ -658,7 +676,7 @@ uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
   /* Push the complete message to the FIFO and go to transmission mode */
 
   /* Prepare TX */
-  spiSX1272_TX_Preps(ctx, msg);
+  spiSX1272_TxRx_Preps(ctx, TxRx_Mode_TX, msg);
 
   /* Prepare the FIFO */
   spiSX1272LoRa_Fifo_Init();
@@ -696,7 +714,7 @@ uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
 void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime)
 {
   /* Prepare RX */
-  spiSX1272_RX_Preps(ctx);
+  spiSX1272_TxRx_Preps(ctx, TxRx_Mode_RX, NULL);
 
   /* Prepare the FIFO */
   spiSX1272LoRa_Fifo_Init();
@@ -713,20 +731,6 @@ void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime
   spiSX1272Mode(MODE_LoRa | SLEEP);
 
   HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);    // Green off
-
-  /* Process message */
-  if (msg->msg_Len) {
-    volatile uint8_t pad[32] = { 0 };
-
-    memcpy((void*)pad, (const void*)msg->msg_Buf, msg->msg_Len);
-    cryptoAesCbc_Decrypt(ctx->AppKey, (uint8_t*)&pad, msg->msg_Len);
-
-    /* Process the data */
-    __asm volatile ( "" );
-  }
-
-  /* Reset buf state */
-  memset((void*)msg, 0, sizeof(msg));
 }
 
 void LoRaWAN_App_trackMeApp_pushUp(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, LoraliveApp_t* app, uint8_t size)
