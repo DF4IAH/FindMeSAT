@@ -684,9 +684,9 @@ uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
 
   /* Push the message to the FIFO */
   {
-    uint8_t fifoCmd = SPI_WR_FLAG | 0x00;
+    uint8_t regFifo = SPI_WR_FLAG | 0x00;
 
-    spi1TxBuffer[0] = fifoCmd;
+    spi1TxBuffer[0] = regFifo;
     memcpy((void*)spi1TxBuffer + 1, (const void*)msg->msg_Buf, msg->msg_Len);
 
     spiProcessSpiMsg(1 + msg->msg_Len);
@@ -703,7 +703,6 @@ uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
     spiSX1272Mode(MODE_LoRa | TX);
     now = osKernelSysTick();
     ts  = spiSX1272_WaitUntil_TxDone(1, now + 1990UL);
-    spiSX1272Mode(MODE_LoRa | SLEEP);
 
     HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);  // Red off
   }
@@ -713,8 +712,26 @@ uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
 
 void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime)
 {
+  uint8_t   debugBuf[256]   = { 0 };
+  uint8_t   debugLen        = 0;
+  uint8_t   modemStat       = 0;
+
   /* Prepare RX */
   spiSX1272_TxRx_Preps(ctx, TxRx_Mode_RX, NULL);
+
+#if 0
+  while (1) {
+    /* Get the current IRQ flags */
+    spi1TxBuffer[0] = SPI_RD_FLAG | 0x18;       // LoRa: RegModemStat
+    spiProcessSpiMsg(2);
+    modemStat = spi1RxBuffer[1];
+
+    if (modemStat & 0x0f) {
+      debugLen += sprintf((char*)debugBuf + debugLen, "modemStat=0x%02X\r\n", modemStat);
+      (void) debugBuf;
+    }
+  }
+#endif
 
   /* Prepare the FIFO */
   spiSX1272LoRa_Fifo_Init();

@@ -642,7 +642,7 @@ void spiSX1272_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime)
 
     now = osKernelSysTick();
     if (stopTime > now) {
-      ticks = (stopTime - now) / portTICK_PERIOD_MS;
+      //ticks = (stopTime - now) / portTICK_PERIOD_MS;
     } else {
       break;
     }
@@ -653,6 +653,12 @@ void spiSX1272_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime)
     spi1TxBuffer[0] = SPI_RD_FLAG | 0x12;       // LoRa: RegIrqFlags
     spiProcessSpiMsg(2);
     irq = spi1RxBuffer[1];
+
+#if 1
+    if (irq) {
+      debugLen += sprintf((char*) debugBuf, "irq=0x%02X\r\n", irq);
+    }
+#endif
 
     if ((eb & EXTI_SX__DIO0) || (irq & (1U << RxDoneMask))) {
       /* Reset all IRQ flags */
