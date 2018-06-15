@@ -70,7 +70,7 @@ extern SPI_HandleTypeDef hspi1;
 #define SPI_WR_FLAG   (1 << 7)
 #define SPI_RD_FLAG   (0 << 7)
 
-typedef enum spiSX1272_Mode {
+typedef enum spiSX127x_Mode {
   SLEEP                   = (0b000 << 0),
   STANDBY                 = (0b001 << 0),
   FSTX                    = (0b010 << 0),
@@ -85,9 +85,9 @@ typedef enum spiSX1272_Mode {
 
   MODE_FSK_OOK            = (0b0 << 7),
   MODE_LoRa               = (0b1 << 7)
-} spiSX1272_Mode_t;
+} spiSX127x_Mode_t;
 
-typedef enum spiSX1272_ModemConfig1 {
+typedef enum spiSX127x_ModemConfig1 {
   LDRO_OFF                = (0b0 << 0),
   LDRO_ON                 = (0b1 << 0),
 
@@ -105,9 +105,9 @@ typedef enum spiSX1272_ModemConfig1 {
   BW_125kHz               = (0b00 << 6),
   BW_250kHz               = (0b01 << 6),
   BW_500kHz               = (0b10 << 6)
-} spiSX1272_ModemConfig1_t;
+} spiSX127x_ModemConfig1_t;
 
-typedef enum spiSX1272_ModemConfig2 {
+typedef enum spiSX127x_ModemConfig2 {
   AGC_AUTO_OFF            = (0b0 << 2),
   AGC_AUTO_ON             = (0b1 << 2),
 
@@ -122,9 +122,9 @@ typedef enum spiSX1272_ModemConfig2 {
   SF10_DR2                = 10,
   SF11_DR1                = 11,
   SF12_DR0                = 12,
-} spiSX1272_ModemConfig2_t;
+} spiSX127x_ModemConfig2_t;
 
-typedef enum spiSX1272_PaRamp {
+typedef enum spiSX127x_PaRamp {
   PA_RAMP_3ms4            = (0b0000 << 0),
   PA_RAMP_2ms             = (0b0001 << 0),
   PA_RAMP_1ms             = (0b0010 << 0),
@@ -144,9 +144,9 @@ typedef enum spiSX1272_PaRamp {
 
   LOW_PWR_PLL_OFF         = (0b0 << 4),
   LOW_PWR_PLL_ON          = (0b1 << 4)
-} spiSX1272_PaRamp_t;
+} spiSX127x_PaRamp_t;
 
-typedef enum spiSX1272_LNA {
+typedef enum spiSX127x_LNA {
   LnaBoost_OFF            = (0b00 << 0),
   LnaBoost_ON             = (0b11 << 0),
 
@@ -156,9 +156,9 @@ typedef enum spiSX1272_LNA {
   LnaGain_G4              = (0b100 << 5),
   LnaGain_G5              = (0b101 << 5),
   LnaGain_G6              = (0b110 << 5)
-} spiSX1272_LNA_t;
+} spiSX127x_LNA_t;
 
-typedef enum spiSX1272_IRQ_Mask {
+typedef enum spiSX127x_IRQ_Mask {
   CadDetectedMask         = 0,
   FhssChangeChannelMask   = 1,
   CadDoneMask             = 2,
@@ -167,7 +167,7 @@ typedef enum spiSX1272_IRQ_Mask {
   PayloadCrcErrorMask     = 5,
   RxDoneMask              = 6,
   RxTimeoutMask           = 7
-} spiSX1272_IRQ_Mask_t;
+} spiSX127x_IRQ_Mask_t;
 
 
 typedef enum TxRx_Mode {
@@ -189,23 +189,23 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi);
 uint8_t spiProcessSpiReturnWait(void);
 uint8_t spiProcessSpiMsg(uint8_t msgLen);
 
-void spiSX1272Reset(void);
-void spiSX1272Frequency_MHz(float mhz);
-void spiSX1272Dio_Mapping(TxRx_Mode_t mode);
+void spiSX127xReset(void);
+void spiSX127xFrequency_MHz(float mhz);
+void spiSX127xDio_Mapping(TxRx_Mode_t mode);
 
-uint8_t spiSX1272Mode_LoRa_GetBroadbandRSSI(void);
-void spiSX1272LoRa_setTxMsgLen(uint8_t payloadLen);
-void spiSX1272LoRa_Fifo_Init(void);
-void spiSX1272LoRa_Fifo_SetFifoPtrFromRxBase(void);
-void spiSX1272LoRa_Fifo_SetFifoPtrFromTxBase(void);
+uint8_t spiSX127xMode_LoRa_GetBroadbandRSSI(void);
+void spiSX127xLoRa_setTxMsgLen(uint8_t payloadLen);
+void spiSX127xLoRa_Fifo_Init(void);
+void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void);
+void spiSX127xLoRa_Fifo_SetFifoPtrFromTxBase(void);
 
-void spiSX1272Mode(spiSX1272_Mode_t mode);
-void spiSX1272Register_IRQ_clearAll(void);
-void spiSX1272_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t* msg);
-uint32_t spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime, uint32_t stopTime);
-void spiSX1272_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime);
+void spiSX127xMode(spiSX127x_Mode_t mode);
+void spiSX127xRegister_IRQ_clearAll(void);
+void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t* msg);
+uint32_t spiSX127x_WaitUntil_TxDone(uint8_t doPreviousWakeTime, uint32_t stopTime);
+void spiSX127x_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime);
 
-uint8_t spiDetectShieldSX1272(void);
+uint8_t spiDetectShieldSX127x(void);
 
 /* USER CODE END Prototypes */
 

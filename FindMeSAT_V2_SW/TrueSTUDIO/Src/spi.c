@@ -297,17 +297,9 @@ uint8_t spiProcessSpiMsg(uint8_t msgLen)
 }
 
 
-void spiSX1272Reset(void)
+void spiSX127xReset(void)
 {
-  GPIO_InitTypeDef GPIO_InitStruct;
-
-  /* Pull pin 6 high of the SX1272 <--> CN9 pin 1 (PA3) of the mbed board */
-  GPIO_InitStruct.Pin   = SX_RESET_Pin;
-  GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-  GPIO_InitStruct.Pull  = GPIO_NOPULL;
-  GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
-  HAL_GPIO_Init(SX_RESET_GPIO_Port, &GPIO_InitStruct);
-
+  /* Pull pin 6 high of the SX127x <--> CN9 pin 1 (PA3) of the mbed board */
   HAL_GPIO_WritePin(SX_RESET_GPIO_Port, SX_RESET_Pin, GPIO_PIN_SET);
 
   /* At least for 100 µs */
@@ -316,14 +308,11 @@ void spiSX1272Reset(void)
   /* Release the reset line */
   HAL_GPIO_WritePin(SX_RESET_GPIO_Port, SX_RESET_Pin, GPIO_PIN_RESET);
 
-  GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-  HAL_GPIO_Init(SX_RESET_GPIO_Port, &GPIO_InitStruct);
-
   /* Delay for 5 ms before accessing the chip */
   HAL_Delay(5);
 }
 
-void spiSX1272Frequency_MHz(float mhz)
+void spiSX127xFrequency_MHz(float mhz)
 {
   const uint32_t    fmt_mhz     = (uint32_t) mhz;
   const uint8_t     fmt_mhz_f1  = (uint8_t) (((uint32_t) (mhz * 10.f)) % 10);
@@ -348,7 +337,7 @@ void spiSX1272Frequency_MHz(float mhz)
   spiProcessSpiMsg(4);
 }
 
-void spiSX1272Dio_Mapping(TxRx_Mode_t mode)
+void spiSX127xDio_Mapping(TxRx_Mode_t mode)
 {
   /* DIO0..DIO5 settings */
 
@@ -378,7 +367,7 @@ void spiSX1272Dio_Mapping(TxRx_Mode_t mode)
 }
 
 
-uint8_t spiSX1272Mode_LoRa_GetBroadbandRSSI(void)
+uint8_t spiSX127xMode_LoRa_GetBroadbandRSSI(void)
 {
   /* Broadband RSSI */
   spi1TxBuffer[0] = SPI_RD_FLAG | 0x2c;
@@ -388,7 +377,7 @@ uint8_t spiSX1272Mode_LoRa_GetBroadbandRSSI(void)
   return spi1RxBuffer[1];
 }
 
-void spiSX1272LoRa_setTxMsgLen(uint8_t payloadLen)
+void spiSX127xLoRa_setTxMsgLen(uint8_t payloadLen)
 {
   /* Message length to transmit */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x22;    // RegPayloadLength
@@ -396,7 +385,7 @@ void spiSX1272LoRa_setTxMsgLen(uint8_t payloadLen)
   spiProcessSpiMsg(2);
 }
 
-void spiSX1272LoRa_Fifo_Init(void)
+void spiSX127xLoRa_Fifo_Init(void)
 {
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
   spi1TxBuffer[1] = 0x00;    // 0x0D RegFifoAddrPtr
@@ -405,7 +394,7 @@ void spiSX1272LoRa_Fifo_Init(void)
   spiProcessSpiMsg(4);
 }
 
-void spiSX1272LoRa_Fifo_SetFifoPtrFromRxBase(void)
+void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void)
 {
   spi1TxBuffer[0] = SPI_RD_FLAG | 0x0f;
   spiProcessSpiMsg(2);
@@ -416,7 +405,7 @@ void spiSX1272LoRa_Fifo_SetFifoPtrFromRxBase(void)
   spiProcessSpiMsg(2);
 }
 
-void spiSX1272LoRa_Fifo_SetFifoPtrFromTxBase(void)
+void spiSX127xLoRa_Fifo_SetFifoPtrFromTxBase(void)
 {
   spi1TxBuffer[0] = SPI_RD_FLAG | 0x0e;
   spiProcessSpiMsg(2);
@@ -428,33 +417,49 @@ void spiSX1272LoRa_Fifo_SetFifoPtrFromTxBase(void)
 }
 
 
-void spiSX1272Mode(spiSX1272_Mode_t mode)
+void spiSX127xMode(spiSX127x_Mode_t mode)
 {
-  /* Write mode */
-  spi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
-  spi1TxBuffer[1] = mode;
-  spiProcessSpiMsg(2);
+  /* Switch RX/TX at PE4259 */
+  switch (mode) {
+  case FSTX:
+  case TX:
+    HAL_GPIO_WritePin(SX_RXTX_EXT_GPIO_Port, SX_RXTX_EXT_Pin, GPIO_PIN_SET);
+
+    /* Write TX mode */
+    spi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+    spi1TxBuffer[1] = mode;
+    spiProcessSpiMsg(2);
+    break;
+
+  default:
+    /* Write any other RX mode */
+    spi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
+    spi1TxBuffer[1] = mode;
+    spiProcessSpiMsg(2);
+
+    HAL_GPIO_WritePin(SX_RXTX_EXT_GPIO_Port, SX_RXTX_EXT_Pin, GPIO_PIN_RESET);
+  }
 }
 
-void spiSX1272Register_IRQ_clearAll(void)
+void spiSX127xRegister_IRQ_clearAll(void)
 {
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x12;     // LoRa: RegIrqFlags
   spi1TxBuffer[1] = 0xff;
   spiProcessSpiMsg(2);
 }
 
-void spiSX1272_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t* msg)
+void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t* msg)
 {
   float   l_f   = ctx->Frequency;
   uint8_t l_SF  = ctx->SpreadingFactor;
 
   /* Switching to LoRa via Reset an SLEEP mode */
-  spiSX1272Reset();
-  spiSX1272Mode(MODE_LoRa | SLEEP);
-  spiSX1272Mode(MODE_LoRa | STANDBY);
+  spiSX127xReset();
+  spiSX127xMode(MODE_LoRa | SLEEP);
+  spiSX127xMode(MODE_LoRa | STANDBY);
 
   /* Set the frequency */
-  spiSX1272Frequency_MHz(l_f);
+  spiSX127xFrequency_MHz(l_f);
 
   /* Sync word */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x39;
@@ -467,10 +472,10 @@ void spiSX1272_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
   spiProcessSpiMsg(2);
 
   /* Reset the IRQ register */
-  spiSX1272Register_IRQ_clearAll();
+  spiSX127xRegister_IRQ_clearAll();
 
   /* Interrupt DIO lines activation */
-  spiSX1272Dio_Mapping(mode);
+  spiSX127xDio_Mapping(mode);
 
   switch (mode) {
   case TxRx_Mode_TX:
@@ -503,10 +508,10 @@ void spiSX1272_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
       spiProcessSpiMsg(2);
 
       /* Set transmit message length */
-      spiSX1272LoRa_setTxMsgLen(msg->msg_Len);
+      spiSX127xLoRa_setTxMsgLen(msg->msg_Len);
 
       /* Prepare the transmitter circuits */
-      spiSX1272Mode(MODE_LoRa | FSTX);
+      spiSX127xMode(MODE_LoRa | FSTX);
     }
     break;
 
@@ -539,7 +544,7 @@ void spiSX1272_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
       spiProcessSpiMsg(2);
 
       /* Prepare the receiver circuits */
-      spiSX1272Mode(MODE_LoRa | FSRX);
+      spiSX127xMode(MODE_LoRa | FSRX);
     }
     break;
 
@@ -556,7 +561,7 @@ void spiSX1272_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
       spiProcessSpiMsg(2);
 
       /* Turn on receiver */
-      spiSX1272Mode(MODE_LoRa | RXCONTINUOUS);
+      spiSX127xMode(MODE_LoRa | RXCONTINUOUS);
     }
     break;
 
@@ -565,7 +570,7 @@ void spiSX1272_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
   }
 }
 
-uint32_t spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime, uint32_t stopTime)
+uint32_t spiSX127x_WaitUntil_TxDone(uint8_t doPreviousWakeTime, uint32_t stopTime)
 {
   uint32_t              ts              = 0UL;
   volatile EventBits_t  eb              = { 0 };
@@ -617,7 +622,7 @@ uint32_t spiSX1272_WaitUntil_TxDone(uint8_t doPreviousWakeTime, uint32_t stopTim
   return 0UL;
 }
 
-void spiSX1272_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime)
+void spiSX127x_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime)
 {
   volatile EventBits_t  eb;
   volatile uint8_t      irq;
@@ -662,7 +667,7 @@ void spiSX1272_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime)
 
     if ((eb & EXTI_SX__DIO0) || (irq & (1U << RxDoneMask))) {
       /* Reset all IRQ flags */
-      spiSX1272Register_IRQ_clearAll();
+      spiSX127xRegister_IRQ_clearAll();
 
       /* Check for CRC */
       if (irq & (1U << PayloadCrcErrorMask)) {
@@ -741,34 +746,13 @@ void spiSX1272_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime)
 }
 
 
-uint8_t spiDetectShieldSX1272(void)
+uint8_t spiDetectShieldSX127x(void)
 {
-  /* Prepare SX_RESET structure */
-  {
-    GPIO_InitTypeDef GPIO_InitStruct;
+  /* Reset pulse for SX127x */
+  spiSX127xReset();
 
-    GPIO_InitStruct.Pin = SX_RESET_Pin;
-    GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
-
-    /* Reset pulse for SX1272 */
-    {
-      HAL_GPIO_WritePin(SX_RESET_GPIO_Port, SX_RESET_Pin, GPIO_PIN_SET);
-      GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
-      HAL_GPIO_Init(SX_RESET_GPIO_Port, &GPIO_InitStruct);
-
-      osDelay(1);
-
-      HAL_GPIO_WritePin(SX_RESET_GPIO_Port, SX_RESET_Pin, GPIO_PIN_RESET);
-      osDelay(5);
-      GPIO_InitStruct.Mode = GPIO_MODE_INPUT;
-      HAL_GPIO_Init(SX_RESET_GPIO_Port, &GPIO_InitStruct);
-    }
-
-    /* Have the device in sleep mode */
-    spiSX1272Mode(SLEEP);
-  }
+  /* Have the device in sleep mode */
+  spiSX127xMode(SLEEP);
 
   /* Request RD-address 0x42 RegVersion */
   {
@@ -785,7 +769,7 @@ uint8_t spiDetectShieldSX1272(void)
     }
   }
 
-  /* SX1272 mbed shield found and ready for transmissions */
+  /* SX127x mbed shield found and ready for transmissions */
   return 1;
 }
 

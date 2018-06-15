@@ -80,19 +80,24 @@
 #define SPI_A_MISO_GPIO_Port GPIOA
 #define SPI_A_MOSI_Pin GPIO_PIN_7
 #define SPI_A_MOSI_GPIO_Port GPIOA
+#define SX_RXTX_EXT_Pin GPIO_PIN_5
+#define SX_RXTX_EXT_GPIO_Port GPIOC
+#define SX_DIO4_Pin GPIO_PIN_12
+#define SX_DIO4_GPIO_Port GPIOF
 #define SX_DIO2_Pin GPIO_PIN_14
 #define SX_DIO2_GPIO_Port GPIOF
-#define SX_DIO2_EXTI_IRQn EXTI15_10_IRQn
 #define SX_DIO0_Pin GPIO_PIN_15
 #define SX_DIO0_GPIO_Port GPIOF
-#define SX_DIO0_EXTI_IRQn EXTI15_10_IRQn
 #define SX_DIO3_Pin GPIO_PIN_11
 #define SX_DIO3_GPIO_Port GPIOE
-#define SX_DIO3_EXTI_IRQn EXTI15_10_IRQn
+#define SX_DIO1_Pin GPIO_PIN_13
+#define SX_DIO1_GPIO_Port GPIOE
 #define LD3_Pin GPIO_PIN_14
 #define LD3_GPIO_Port GPIOB
 #define SPI_A_SEL_Pin GPIO_PIN_14
 #define SPI_A_SEL_GPIO_Port GPIOD
+#define SX_DIO5_Pin GPIO_PIN_15
+#define SX_DIO5_GPIO_Port GPIOD
 #define USB_OverCurrent_Pin GPIO_PIN_5
 #define USB_OverCurrent_GPIO_Port GPIOG
 #define USB_PowerSwitchOn_Pin GPIO_PIN_6
@@ -154,7 +159,7 @@
 /* USER CODE BEGIN Private defines */
 #define USE_FULL_ASSERT     1U
 
-#define FINDMESAT_VERSION   20180611U
+#define FINDMESAT_VERSION   20180615U
 
 typedef void * TaskHandle_t;
 

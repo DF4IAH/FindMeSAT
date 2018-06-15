@@ -101,8 +101,8 @@ void prvControllerInitBeforeGreet(void)
   /* USB typing echo */
   xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON);   // TODO: should be from Config-FLASH page
 
-  /* Check for attached SX1272_mbed_shield */
-  if (spiDetectShieldSX1272()) {
+  /* Check for attached SX127x_mbed_shield */
+  if (spiDetectShieldSX127x()) {
     /* Init LoRaWAM module */
     LoRaWAN_Init();
   }
