@@ -71,6 +71,7 @@ extern SPI_HandleTypeDef hspi1;
 #define SPI_RD_FLAG   (0 << 7)
 
 typedef enum spiSX127x_Mode {
+  TXRX_MODE_MASK          = 0x0f,
   SLEEP                   = (0b000 << 0),
   STANDBY                 = (0b001 << 0),
   FSTX                    = (0b010 << 0),

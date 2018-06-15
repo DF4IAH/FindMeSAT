@@ -441,7 +441,7 @@ void spiSX127xLoRa_Fifo_SetFifoPtrFromTxBase(void)
 void spiSX127xMode(spiSX127x_Mode_t mode)
 {
   /* Switch RX/TX at PE4259 */
-  switch (mode) {
+  switch (mode & TXRX_MODE_MASK) {
   case FSTX:
   case TX:
     HAL_GPIO_WritePin(SX_RXTX_EXT_GPIO_Port, SX_RXTX_EXT_Pin, GPIO_PIN_SET);
