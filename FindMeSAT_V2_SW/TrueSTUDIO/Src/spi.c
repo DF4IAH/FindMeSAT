@@ -292,6 +292,7 @@ uint8_t spiProcessSpiMsg(uint8_t msgLen)
       }
     }
   } while (status != HAL_OK);
+  HAL_GPIO_WritePin(SPI_A_SEL_GPIO_Port, SPI_A_SEL_Pin, GPIO_PIN_SET);
 
   return spiProcessSpiReturnWait();
 }
