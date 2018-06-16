@@ -352,6 +352,7 @@ void spiSX127xFrequency_MHz(float mhz)
 void spiSX127xDio_Mapping(TxRx_Mode_t mode)
 {
   /* DIO0..DIO5 settings */
+  spi1TxBuffer[0] = SPI_WR_FLAG | 0x40;
 
   switch (mode) {
   case TxRx_Mode_TX:
@@ -374,7 +375,6 @@ void spiSX127xDio_Mapping(TxRx_Mode_t mode)
   }
 
   /* Push settings */
-  spi1TxBuffer[0] = SPI_WR_FLAG | 0x40;
   spiProcessSpiMsg(3);
 }
 
@@ -397,7 +397,7 @@ void spiSX127xLoRa_setTxMsgLen(uint8_t payloadLen)
   }
 
   /* Message length to transmit */
-  spi1TxBuffer[0] = SPI_WR_FLAG | 0x22;    // RegPayloadLength
+  spi1TxBuffer[0] = SPI_WR_FLAG | 0x22;       // RegPayloadLength
   spi1TxBuffer[1] = payloadLen;
   spiProcessSpiMsg(2);
 }
@@ -405,9 +405,9 @@ void spiSX127xLoRa_setTxMsgLen(uint8_t payloadLen)
 void spiSX127xLoRa_Fifo_Init(void)
 {
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
-  spi1TxBuffer[1] = 0x00;    // 0x0D RegFifoAddrPtr
-  spi1TxBuffer[2] = 0x80;    // 0x0E RegFifoTxBaseAddr
-  spi1TxBuffer[3] = 0x00;    // 0x0F RegFifoRxBaseAddr
+  spi1TxBuffer[1] = 0x00;                     // 0x0D RegFifoAddrPtr
+  spi1TxBuffer[2] = 0x80;                     // 0x0E RegFifoTxBaseAddr
+  spi1TxBuffer[3] = 0x00;                     // 0x0F RegFifoRxBaseAddr
   spiProcessSpiMsg(4);
 }
 
@@ -415,7 +415,7 @@ void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void)
 {
   spi1TxBuffer[0] = SPI_RD_FLAG | 0x0f;
   spiProcessSpiMsg(2);
-  uint8_t fifoRxBaseAddr = spi1RxBuffer[1];    // RegFifoRxBaseAddr
+  uint8_t fifoRxBaseAddr = spi1RxBuffer[1];   // RegFifoRxBaseAddr
 
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
   spi1TxBuffer[1] = fifoRxBaseAddr;
@@ -440,8 +440,8 @@ void spiSX127xMode(spiSX127x_Mode_t mode)
   switch (mode & TXRX_MODE_MASK) {
   case FSTX:
   case TX:
+    /* Switch to TX path */
     HAL_GPIO_WritePin(SX_RXTX_EXT_GPIO_Port, SX_RXTX_EXT_Pin, GPIO_PIN_SET);
-    //HAL_GPIO_WritePin(SX_RXTX_EXT_GPIO_Port, SX_RXTX_EXT_Pin, GPIO_PIN_RESET);
 
     /* Write TX mode */
     spi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
@@ -455,8 +455,8 @@ void spiSX127xMode(spiSX127x_Mode_t mode)
     spi1TxBuffer[1] = mode;
     spiProcessSpiMsg(2);
 
+    /* Switch to RX path */
     HAL_GPIO_WritePin(SX_RXTX_EXT_GPIO_Port, SX_RXTX_EXT_Pin, GPIO_PIN_RESET);
-    //HAL_GPIO_WritePin(SX_RXTX_EXT_GPIO_Port, SX_RXTX_EXT_Pin, GPIO_PIN_SET);
   }
 
   /* Delay after mode-change */
@@ -534,7 +534,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
 
       /* OverCurrentProtection */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x0b;
-      spi1TxBuffer[1] = (0x1 << 5) | (0xb << 0);                          // OverCurrentProtection OFF, normal: 100mA
+      spi1TxBuffer[1] = (0x1 << 5) | (0xb << 0);                          // OverCurrentProtection ON, normal: 100mA
       spiProcessSpiMsg(2);
 
       /* Preamble length */
@@ -693,7 +693,7 @@ void spiSX127x_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime)
 
     now = osKernelSysTick();
     if (stopTime > now) {
-      //ticks = (stopTime - now) / portTICK_PERIOD_MS;
+      ticks = (stopTime - now) / portTICK_PERIOD_MS;
     } else {
       break;
     }
