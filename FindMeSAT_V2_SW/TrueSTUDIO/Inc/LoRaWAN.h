@@ -87,6 +87,7 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    AppSKey_1V02[16];     // Session key - JOIN-ACCEPT (derived from: AppKey)
 
   /* Current transmission */
+  volatile float                      CrystalPpm;
   volatile LoRaWANctxDir_t            Dir;
   volatile uint8_t                    FCtrl_ADR;
   volatile uint8_t                    FCtrl_ADRACKReq;
@@ -96,7 +97,7 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    FPort;
   volatile uint16_t                   ConfFCnt;
   volatile uint8_t                    SpreadingFactor;
-  volatile float                      Frequency;
+  volatile float                      FrequencyMHz;
   volatile uint8_t                    TxDr;
   volatile uint8_t                    TxCh;
 

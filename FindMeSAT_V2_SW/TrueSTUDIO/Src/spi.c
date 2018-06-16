@@ -300,35 +300,25 @@ uint8_t spiProcessSpiMsg(uint8_t msgLen)
 
 void spiSX127xReset(void)
 {
-  // Activate nRESET
-  {
-    GPIO_InitTypeDef GPIO_InitStruct;
+  GPIO_InitTypeDef GPIO_InitStruct;
 
-    GPIO_InitStruct.Pin   = SX_RESET_Pin;
-    GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
-    GPIO_InitStruct.Pull  = GPIO_NOPULL;
-    GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
-    HAL_GPIO_Init(SX_RESET_GPIO_Port, &GPIO_InitStruct);
+  /* nRESET: Pull pin 6 down of the SX127x <--> CN9 pin 1 (PA3) of the mbed board */
+  HAL_GPIO_WritePin(SX_RESET_GPIO_Port, SX_RESET_Pin, GPIO_PIN_RESET);
 
-    /* Pull pin 6 down of the SX127x <--> CN9 pin 1 (PA3) of the mbed board */
-    HAL_GPIO_WritePin(SX_RESET_GPIO_Port, SX_RESET_Pin, GPIO_PIN_RESET);
-  }
+  GPIO_InitStruct.Pin   = SX_RESET_Pin;
+  GPIO_InitStruct.Mode  = GPIO_MODE_OUTPUT_PP;
+  GPIO_InitStruct.Pull  = GPIO_NOPULL;
+  GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
+  HAL_GPIO_Init(SX_RESET_GPIO_Port, &GPIO_InitStruct);
 
   /* At least for 100 µs */
   HAL_Delay(1);
 
   /* Release the nRESET line */
-  {
-    GPIO_InitTypeDef GPIO_InitStruct;
+  HAL_GPIO_WritePin(SX_RESET_GPIO_Port, SX_RESET_Pin, GPIO_PIN_SET);
 
-    HAL_GPIO_WritePin(SX_RESET_GPIO_Port, SX_RESET_Pin, GPIO_PIN_SET);
-
-    GPIO_InitStruct.Pin   = SX_RESET_Pin;
-    GPIO_InitStruct.Mode  = GPIO_MODE_INPUT;
-    GPIO_InitStruct.Pull  = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_LOW;
-    HAL_GPIO_Init(SX_RESET_GPIO_Port, &GPIO_InitStruct);
-  }
+  GPIO_InitStruct.Mode  = GPIO_MODE_INPUT;
+  HAL_GPIO_Init(SX_RESET_GPIO_Port, &GPIO_InitStruct);
 
   /* Delay for 5 ms before accessing the chip */
   HAL_Delay(5);
@@ -468,6 +458,9 @@ void spiSX127xMode(spiSX127x_Mode_t mode)
     HAL_GPIO_WritePin(SX_RXTX_EXT_GPIO_Port, SX_RXTX_EXT_Pin, GPIO_PIN_RESET);
     //HAL_GPIO_WritePin(SX_RXTX_EXT_GPIO_Port, SX_RXTX_EXT_Pin, GPIO_PIN_SET);
   }
+
+  /* Delay after mode-change */
+  HAL_Delay(25);
 }
 
 void spiSX127xRegister_IRQ_clearAll(void)
@@ -479,7 +472,7 @@ void spiSX127xRegister_IRQ_clearAll(void)
 
 void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t* msg)
 {
-  float   l_f   = ctx->Frequency;
+  float   l_f   = ctx->FrequencyMHz;
   uint8_t l_SF  = ctx->SpreadingFactor << SFx_SHIFT;
 
   /* Switching to LoRa via Reset and SLEEP mode */
@@ -487,28 +480,37 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
-  /* Set the frequency */
-  spiSX127xFrequency_MHz(l_f);
+  /* Set the frequency - OK */
+  spiSX127xFrequency_MHz(l_f * (1 + 1e-6 * ctx->CrystalPpm));
 
-  /* Sync word */
-  spi1TxBuffer[0] = SPI_WR_FLAG | 0x39;
-  spi1TxBuffer[1] = 0x34;
-  spiProcessSpiMsg(2);
-
-  /* ModemConfig1, ModemConfig2 */
+  /* ModemConfig1 - NOFUNC  */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
   spi1TxBuffer[1] = BW_125kHz | CR_4_5 | IHM_OFF;
-  spi1TxBuffer[2] = l_SF | TXCONT_OFF | RX_PAYLOAD_CRC_ON | (0x0 << 0);  // SymbTmeoutMsb = 0
-  spiProcessSpiMsg(3);
+  spiProcessSpiMsg(2);
+
+  /* ModemConfig2 - NOFUNC */
+  spi1TxBuffer[0] = SPI_WR_FLAG | 0x1e;
+  spi1TxBuffer[1] = l_SF | TXCONT_OFF | RX_PAYLOAD_CRC_ON | (0x0 << 0);   // SymbTmeoutMsb = 0
+  spiProcessSpiMsg(2);
 
   /* ModemConfig3 */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x26;
-  spi1TxBuffer[1] = (l_SF >= SF11_DR1 ?  LOW_DR_OPTI_ON : LOW_DR_OPTI_OFF) | AGC_AUTO_ON;
+  spi1TxBuffer[1] = (l_SF >= SF11_DR1_VAL ?  LOW_DR_OPTI_ON : LOW_DR_OPTI_OFF) | AGC_AUTO_ON;
+  spiProcessSpiMsg(2);
+
+  /* PPM Correction */
+  spi1TxBuffer[0] = SPI_WR_FLAG | 0x27;
+  spi1TxBuffer[1] = (uint8_t) (ctx->CrystalPpm * 0.95f);                  // PpmOffset
   spiProcessSpiMsg(2);
 
   /* Frequency hopping disabled */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x24;
   spi1TxBuffer[1] = 0x00;
+  spiProcessSpiMsg(2);
+
+  /* Sync word */
+  spi1TxBuffer[0] = SPI_WR_FLAG | 0x39;
+  spi1TxBuffer[1] = 0x34;
   spiProcessSpiMsg(2);
 
   /* Reset the IRQ register */
@@ -522,25 +524,33 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
     {
       /* TX @ RFO */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x09;
-      spi1TxBuffer[1] = (0x0 << 7) | (0x0 << 4) | (0x3 << 0);     // PA off, MaxPower, TXpwr @ RFO pin
-      spi1TxBuffer[2] = PA_RAMP_50us;                             // PA ramp time 50us
-      spi1TxBuffer[3] = (0x1 << 5) | (0xb << 0);                  // OverCurrentProtection ON, normal: 100mA
-      spiProcessSpiMsg(4);
+      spi1TxBuffer[1] = (0x0 << 7) | (0x4 << 4) | (0xf << 0);             // PA off, MaxPower, TXpwr @ RFO pin
+      spiProcessSpiMsg(2);
+
+      /* PA ramp time */
+      spi1TxBuffer[0] = SPI_WR_FLAG | 0x0a;
+      spi1TxBuffer[1] = PA_RAMP_50us;                                     // PA ramp time 50us
+      spiProcessSpiMsg(2);
+
+      /* OverCurrentProtection */
+      spi1TxBuffer[0] = SPI_WR_FLAG | 0x0b;
+      spi1TxBuffer[1] = (0x1 << 5) | (0xb << 0);                          // OverCurrentProtection OFF, normal: 100mA
+      spiProcessSpiMsg(2);
 
       /* Preamble length */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x20;
-      spi1TxBuffer[1] = 0x00;    // PreambleMsb, PreambleLsb
-      spi1TxBuffer[2] = 0x0a;    // +4 = 14 symbols
+      spi1TxBuffer[1] = 0x00;                                             // PreambleMsb, PreambleLsb
+      spi1TxBuffer[2] = 0x0a;                                             // +4 = 14 symbols
       spiProcessSpiMsg(3);
 
       /* I/Q inversion bits */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x33;
-      spi1TxBuffer[1] = 0x27;   // This is the default value, no inversion
+      spi1TxBuffer[1] = 0x27;                                             // This is the default value, no inversion
       spiProcessSpiMsg(2);
 
       /* I/Q2 inversion bits */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x38;
-      spi1TxBuffer[1] = 0x1d;   // This is the default value, no inversion
+      spi1TxBuffer[1] = 0x1d;                                             // This is the default value, no inversion
       spiProcessSpiMsg(2);
 
       /* Set transmit message length */
@@ -560,7 +570,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
 
       /* Modem Config */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x1f;
-      spi1TxBuffer[1] = (l_SF >= SF10_DR2 ?  0x05 : 0x08);        // SymbtimeoutLsb
+      spi1TxBuffer[1] = (l_SF >= SF10_DR2 ?  0x05 : 0x08);                // SymbtimeoutLsb
       spiProcessSpiMsg(2);
 
       /* Max. payload length */
@@ -570,25 +580,23 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
 
       /* DetectionOptimize */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x31;
-      spi1TxBuffer[1] = 0xc0 | (l_SF >= SF7_DR5 ?  0x03 : 0x05);
+      spi1TxBuffer[1] = 0xc0 | (l_SF >= SF7_DR5_VAL ?  0x03 : 0x05);
       spiProcessSpiMsg(2);
 
       /* DetectionThreshold */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x37;
-      spi1TxBuffer[1] = (l_SF >= SF7_DR5 ?  0x0a : 0x0c);
+      spi1TxBuffer[1] = (l_SF >= SF7_DR5_VAL ?  0x0a : 0x0c);
       spiProcessSpiMsg(2);
 
       /* I/Q inversion bits */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x33;
-      spi1TxBuffer[1] = (0x1 << 6) | 0x27;   // Optimized for inverted IQ
+      spi1TxBuffer[1] = (0x1 << 6) | 0x27;                                // Optimized for inverted IQ
       spiProcessSpiMsg(2);
 
-#if 0  // No more used
       /* I/Q2 inversion bits */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x38;
-      spi1TxBuffer[1] = 0x19;   // Optimized for inverted IQ
+      spi1TxBuffer[1] = 0x19;                                             // Optimized for inverted IQ
       spiProcessSpiMsg(2);
-#endif
 
       /* Prepare the receiver circuits */
       spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | FSRX);
@@ -729,12 +737,18 @@ void spiSX127x_WaitUntil_RxDone(LoRaWAN_Message_t* msg, uint32_t stopTime)
       uint16_t rxHeaderCnt   = ((uint16_t)spi1RxBuffer[1] << 8) | spi1RxBuffer[2];
       uint16_t rxValidPktCnt = ((uint16_t)spi1RxBuffer[3] << 8) | spi1RxBuffer[4];
 
+      /* Check FIFO pointer */
+      spi1TxBuffer[0] = SPI_RD_FLAG | 0x10;   // FifoRxCurrentAddr
+      spiProcessSpiMsg(2);
+      uint8_t fifoRxCurAddr = spi1RxBuffer[1];
+
 #if 1
-      debugLen = sprintf((char*) debugBuf, "eb=0x%08lx | irq=%02x: modem=%02x rssiWB=%03u rssi=%03u packetRssi=%03u packetSnr=%03u rxHdr=%05u rxPkt=%05u",
+      debugLen = sprintf((char*) debugBuf, "eb=0x%08lx | irq=%02x: modem=%02x rssiWB=%03u rssi=%03u packetRssi=%03u packetSnr=%03u rxHdr=%05u rxPkt=%05u fifoCurAddr=%03u",
           (uint32_t)eb, irq,
           modemStat,
           rssiWideband, rssi, packetRssi, packetSnr,
-          rxHeaderCnt, rxValidPktCnt);
+          rxHeaderCnt, rxValidPktCnt,
+          fifoRxCurAddr);
 #endif
 
       spi1TxBuffer[0] = SPI_RD_FLAG | 0x13;    // RegRxNbBytes

@@ -512,11 +512,11 @@ void LoRaWAN_Init(void)
   /* Seed randomizer */
   {
     /* Prepare and start the receiver */
-    loRaWANctx.Frequency = LoRaWAN_calc_Channel_to_MHz(
+    loRaWANctx.FrequencyMHz = LoRaWAN_calc_Channel_to_MHz(
         &loRaWANctx,
         16,
-        1);                                   // Most traffic on the RX2 channel
-    loRaWANctx.SpreadingFactor = SF7_DR5;     // Use that SF for more noise
+        1);                                       // Most traffic on the RX2 channel
+    loRaWANctx.SpreadingFactor = SF7_DR5_VAL;     // Use that SF for more noise
     spiSX127x_TxRx_Preps(&loRaWANctx, TxRx_Mode_RX_Randomizer, NULL);
 
     /* Forging the random number */
@@ -550,11 +550,11 @@ void LoRaWAN_Init(void)
     /* JOIN-REQUEST prepare and transmission */
     {
       /* Adjust the context */
-      loRaWANctx.Frequency = LoRaWAN_calc_Channel_to_MHz(
+      loRaWANctx.FrequencyMHz = LoRaWAN_calc_Channel_to_MHz(
           &loRaWANctx,
           LoRaWAN_calc_randomChannel(&loRaWANctx),
-          0);                                   // Randomized RX1 frequency
-      loRaWANctx.SpreadingFactor = SF10_DR2;    // Use that SF
+          0);                                     // Randomized RX1 frequency
+      loRaWANctx.SpreadingFactor = SF10_DR2_VAL;  // Use that SF
 
       /* Forge the message */
       LoRaWAN_MAC_JOINREQUEST(&loRaWANctx, &loRaWanTxMsg);
@@ -572,11 +572,11 @@ void LoRaWAN_Init(void)
       /* Listen to the RX2 only when RX1 without success */
       if (!loRaWanRxMsg.msg_Len) {
         /* JOIN-ACCEPT response after JOIN_ACCEPT_DELAY2 at RX2 */
-        loRaWANctx.Frequency = LoRaWAN_calc_Channel_to_MHz(
+        loRaWANctx.FrequencyMHz = LoRaWAN_calc_Channel_to_MHz(
             &loRaWANctx,
             0,
-            1);                                   // Jump to RX2 frequency (default value)
-        loRaWANctx.SpreadingFactor = SF12_DR0;    // Use that SF
+            1);                                       // Jump to RX2 frequency (default value)
+        loRaWANctx.SpreadingFactor = SF12_DR0_VAL;    // Use that SF
 
         /* Prepare receiver and listen to the ether */
         LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, tsEndOfTx + 7995);
@@ -599,6 +599,9 @@ void LoRaWAN_Init(void)
 void LoRaWANctx_readFLASH(void)
 {
   /* TODO: read from FLASH NVM instead of default settings */
+
+  /* Crystal drift PPM */
+  loRaWANctx.CrystalPpm = 13.8f;
 
   /* Apply keys of the track_me App */
   LoRaWANctx_applyKeys_trackMeApp();
@@ -625,7 +628,7 @@ void LoRaWANctx_applyKeys_trackMeApp(void)
 #endif
     loRaWANctx.Dir              = Up;
     loRaWANctx.FPort            = 1U;
-    loRaWANctx.SpreadingFactor  = 12U;
+    loRaWANctx.SpreadingFactor  = SF12_DR0_VAL;
   }
 }
 

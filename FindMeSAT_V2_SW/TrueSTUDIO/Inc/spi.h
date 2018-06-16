@@ -124,14 +124,21 @@ typedef enum spiSX127x_ModemConfig2 {
   TXCONT_OFF              = (0b0 << 3),
   TXCONT_ON               = (0b1 << 3),
 
-  SFx_SHIFT               =        4 ,
-  SF6_DR6                 = ( 6 << 4),
-  SF7_DR5                 = ( 7 << 4),
-  SF8_DR4                 = ( 8 << 4),
-  SF9_DR3                 = ( 9 << 4),
-  SF10_DR2                = (10 << 4),
-  SF11_DR1                = (11 << 4),
-  SF12_DR0                = (12 << 4)
+  SFx_SHIFT               =         4 ,
+  SF6_DR6_VAL             =    6      ,
+  SF6_DR6                 = (  6 << 4),
+  SF7_DR5_VAL             =    7      ,
+  SF7_DR5                 = (  7 << 4),
+  SF8_DR4_VAL             =    8      ,
+  SF8_DR4                 = (  8 << 4),
+  SF9_DR3_VAL             =    9      ,
+  SF9_DR3                 = (  9 << 4),
+  SF10_DR2_VAL            =   10      ,
+  SF10_DR2                = ( 10 << 4),
+  SF11_DR1_VAL            =   11      ,
+  SF11_DR1                = ( 11 << 4),
+  SF12_DR0_VAL            =   12      ,
+  SF12_DR0                = ( 12 << 4)
 } spiSX127x_ModemConfig2_t;
 
 typedef enum spiSX127x_ModemConfig3 {
