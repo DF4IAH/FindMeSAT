@@ -55,10 +55,10 @@ typedef struct LoRaWANctx {
   volatile LoRaWANctxBkpRam_t*        bkpRAM;
 
   /* Device specific */
-  uint8_t                             DevEUI[8];
-  volatile uint8_t                    DevAddr[4];           // JOIN-ACCEPT
-  volatile uint8_t                    DevNonce[2];          // JOIN-REQUEST, REJOIN-REQUEST - V1.02: random value
-  volatile uint8_t                    Home_NetID[3];        // JOIN-ACCEPT
+  uint8_t                             DevEUI_LE[8];
+  volatile uint8_t                    DevAddr_LE[4];        // JOIN-ACCEPT
+  volatile uint8_t                    DevNonce_LE[2];       // JOIN-REQUEST, REJOIN-REQUEST - V1.02: random value
+  volatile uint8_t                    Home_NetID_LE[3];     // JOIN-ACCEPT
 
   /* Network / MAC specific */
   LoRaWANVersion_t                    LoRaWAN_ver;
@@ -77,12 +77,12 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    Ch_EnabledMsk;
 
   /* Join Server specific */
-//uint8_t                             JoinEUI_1V1[8];       // JOIN-REQUEST, REJOIN-REQUEST
-//volatile uint8_t                    JoinNonce_1V1[4];     // JOIN-ACCEPT
-//volatile uint8_t                    ServerNonce_1V1[3];
+//uint8_t                             JoinEUI_LE_1V1[8];    // JOIN-REQUEST, REJOIN-REQUEST
+//volatile uint8_t                    JoinNonce_LE_1V1[4];  // JOIN-ACCEPT
+//volatile uint8_t                    ServerNonce_LE_1V1[3];
 
   /* Application specific */
-  uint8_t                             AppEUI[8];
+  uint8_t                             AppEUI_LE[8];
   uint8_t                             AppKey[16];           // Application root key (for OTA devices)
   volatile uint8_t                    AppSKey_1V02[16];     // Session key - JOIN-ACCEPT (derived from: AppKey)
 
