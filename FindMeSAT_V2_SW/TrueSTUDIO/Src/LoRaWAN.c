@@ -540,7 +540,7 @@ void LoRaWAN_Init(void)
     }
 
     /* Return transceiver to sleep mode */
-    spiSX127xMode(MODE_LoRa | SLEEP);
+    spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
   }
 
   /* JOIN-REQUEST and JOIN-ACCEPT */
@@ -700,7 +700,7 @@ uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
     HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);    // Red on
 
     /* Start transmitter and wait until the message is being sent */
-    spiSX127xMode(MODE_LoRa | TX);
+    spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | TX);
     now = osKernelSysTick();
     ts  = spiSX127x_WaitUntil_TxDone(1, now + 1990UL);
 
@@ -743,9 +743,9 @@ void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime
   HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);      // Green on
 
   /* Start receiver and wait for message */
-  spiSX127xMode(MODE_LoRa | RXCONTINUOUS);
+  spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
   spiSX127x_WaitUntil_RxDone(msg, stopTime);
-  spiSX127xMode(MODE_LoRa | SLEEP);
+  spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
 
   HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);    // Green off
 }

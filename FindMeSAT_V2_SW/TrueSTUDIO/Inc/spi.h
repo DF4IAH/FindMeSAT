@@ -124,7 +124,7 @@ typedef enum spiSX127x_ModemConfig2 {
   TXCONT_OFF              = (0b0 << 3),
   TXCONT_ON               = (0b1 << 3),
 
-  SF_MASK                 =        4 ,
+  SFx_SHIFT               =        4 ,
   SF6_DR6                 = ( 6 << 4),
   SF7_DR5                 = ( 7 << 4),
   SF8_DR4                 = ( 8 << 4),
