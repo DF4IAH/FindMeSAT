@@ -483,19 +483,19 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
   /* Set the frequency - OK */
   spiSX127xFrequency_MHz(l_f * (1 + 1e-6 * ctx->CrystalPpm));
 
-  /* ModemConfig1 - NOFUNC  */
+  /* ModemConfig1 */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
   spi1TxBuffer[1] = BW_125kHz | CR_4_5 | IHM_OFF;
   spiProcessSpiMsg(2);
 
-  /* ModemConfig2 - NOFUNC */
+  /* ModemConfig2 */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x1e;
   spi1TxBuffer[1] = l_SF | TXCONT_OFF | RX_PAYLOAD_CRC_ON | (0x0 << 0);   // SymbTmeoutMsb = 0
   spiProcessSpiMsg(2);
 
   /* ModemConfig3 */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x26;
-  spi1TxBuffer[1] = (l_SF >= SF11_DR1_VAL ?  LOW_DR_OPTI_ON : LOW_DR_OPTI_OFF) | AGC_AUTO_ON;
+  spi1TxBuffer[1] = (l_SF >= SF11_DR1 ?  LOW_DR_OPTI_ON : LOW_DR_OPTI_OFF) | AGC_AUTO_ON;
   spiProcessSpiMsg(2);
 
   /* PPM Correction */
@@ -580,12 +580,12 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
 
       /* DetectionOptimize */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x31;
-      spi1TxBuffer[1] = 0xc0 | (l_SF >= SF7_DR5_VAL ?  0x03 : 0x05);
+      spi1TxBuffer[1] = 0xc0 | (l_SF >= SF7_DR5 ?  0x03 : 0x05);
       spiProcessSpiMsg(2);
 
       /* DetectionThreshold */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x37;
-      spi1TxBuffer[1] = (l_SF >= SF7_DR5_VAL ?  0x0a : 0x0c);
+      spi1TxBuffer[1] = (l_SF >= SF7_DR5 ?  0x0a : 0x0c);
       spiProcessSpiMsg(2);
 
       /* I/Q inversion bits */
