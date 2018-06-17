@@ -101,11 +101,14 @@ void AES_CTR_xcrypt_buffer(struct AES_ctx* ctx, uint8_t* buf, uint32_t length);
 
 /* CMAC from flexibity-team/AES-CMAC-RFC, modified by DF4IAH */
 
-void cryptoAesCmac(const uint8_t aesKey128[16], const uint8_t* input, uint32_t length, uint8_t* outMac);
+void cryptoAesCmac(const uint8_t aesKey128[16], volatile uint8_t* input, uint32_t length, uint8_t* outMac);
 
 
 /* DF4IAH code follows ... */
 
-void cryptoAesEcb(const uint8_t aesKey128[16], uint8_t* inOut);
+void cryptoAesEcb_Encrypt(const uint8_t aesKey128[16], uint8_t* inOut);
+void cryptoAesEcb_Decrypt(const uint8_t aesKey128[16], uint8_t* inOut);
+void cryptoAesCbc_Encrypt(const uint8_t aesKey128[16], uint8_t* inOut, uint32_t len);
+void cryptoAesCbc_Decrypt(const uint8_t aesKey128[16], uint8_t* inOut, uint32_t len);
 
 #endif /* CRYPTO_H_ */

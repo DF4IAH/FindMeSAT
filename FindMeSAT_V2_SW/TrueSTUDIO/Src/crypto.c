@@ -251,11 +251,11 @@ void AES_init_ctx(struct AES_ctx* ctx, const uint8_t* key)
 void AES_init_ctx_iv(struct AES_ctx* ctx, const uint8_t* key, const uint8_t* iv)
 {
   KeyExpansion(ctx->RoundKey, key);
-  memcpy (ctx->Iv, iv, AES_BLOCKLEN);
+  memcpy((void*)ctx->Iv, (const void*)iv, AES_BLOCKLEN);
 }
 void AES_ctx_set_iv(struct AES_ctx* ctx, const uint8_t* iv)
 {
-  memcpy (ctx->Iv, iv, AES_BLOCKLEN);
+  memcpy((void*)ctx->Iv, (const void*)iv, AES_BLOCKLEN);
 }
 #endif
 
@@ -493,7 +493,7 @@ void AES_ECB_encrypt(struct AES_ctx *ctx, uint8_t* const buf)
 
 void AES_ECB_decrypt(struct AES_ctx* ctx, uint8_t* const buf)
 {
-  // The next function call decrypts the PlainText with the Key using AES algorithm.
+  // The next function call decrypts the CodedText with the Key using AES algorithm.
   InvCipher((state_t*)buf, ctx->RoundKey);
 }
 
@@ -529,7 +529,7 @@ void AES_CBC_encrypt_buffer(struct AES_ctx *ctx,uint8_t* buf, uint32_t length)
     //printf("Step %d - %d", i/16, i);
   }
   /* store Iv in ctx for next call */
-  memcpy(ctx->Iv, Iv, AES_BLOCKLEN);
+  memcpy((void*)ctx->Iv, (const void*)Iv, AES_BLOCKLEN);
 }
 
 void AES_CBC_decrypt_buffer(struct AES_ctx* ctx, uint8_t* buf,  uint32_t length)
@@ -538,10 +538,10 @@ void AES_CBC_decrypt_buffer(struct AES_ctx* ctx, uint8_t* buf,  uint32_t length)
   uint8_t storeNextIv[AES_BLOCKLEN];
   for (i = 0; i < length; i += AES_BLOCKLEN)
   {
-    memcpy(storeNextIv, buf, AES_BLOCKLEN);
+    memcpy((void*)storeNextIv, (const void*)buf, AES_BLOCKLEN);
     InvCipher((state_t*)buf, ctx->RoundKey);
     XorWithIv(buf, ctx->Iv);
-    memcpy(ctx->Iv, storeNextIv, AES_BLOCKLEN);
+    memcpy((void*)ctx->Iv, (const void*)storeNextIv, AES_BLOCKLEN);
     buf += AES_BLOCKLEN;
   }
 
@@ -564,8 +564,7 @@ void AES_CTR_xcrypt_buffer(struct AES_ctx* ctx, uint8_t* buf, uint32_t length)
   {
     if (bi == AES_BLOCKLEN) /* we need to regen xor compliment in buffer */
     {
-
-      memcpy(buffer, ctx->Iv, AES_BLOCKLEN);
+      memcpy((void*)buffer, (const void*)ctx->Iv, AES_BLOCKLEN);
       Cipher((state_t*)buffer,ctx->RoundKey);
 
       /* Increment Iv and handle overflow */
@@ -592,7 +591,7 @@ void AES_CTR_xcrypt_buffer(struct AES_ctx* ctx, uint8_t* buf, uint32_t length)
 
 /* CMAC from flexibity-team/AES-CMAC-RFC, modified by DF4IAH */
 
-static void cryptoAesCmac_xor_128(const uint8_t* a, const uint8_t* b, uint8_t* out) {
+static void cryptoAesCmac_xor_128(volatile uint8_t* a, volatile const uint8_t* b, uint8_t* out) {
   for (uint8_t i = 0; i < cryptoAesCmac_BLOCK_SIZE; i++) {
     out[i] = a[i] ^ b[i];
   }
@@ -613,7 +612,7 @@ static void cryptoAesCmac_generate_subkey(const uint8_t* key, uint8_t* K1, uint8
   uint8_t tmp[cryptoAesCmac_BLOCK_SIZE];
 
   memset(L, 0, 16);
-  cryptoAesEcb(key, L);
+  cryptoAesEcb_Encrypt(key, L);
 
   if ((L[0] & 0x80) == 0) {       /* If MSB(L) = 0, then K1 = L << 1 */
     cryptoAesCmac_leftshift_onebit(L, K1);
@@ -632,7 +631,7 @@ static void cryptoAesCmac_generate_subkey(const uint8_t* key, uint8_t* K1, uint8
   }
 }
 
-static void cryptoAesCmac_padding(const uint8_t* lastb, uint8_t* pad, int32_t length) {
+static void cryptoAesCmac_padding(volatile uint8_t* lastb, uint8_t* pad, int32_t length) {
   /* original last block */
   for (uint8_t j = 0; j < cryptoAesCmac_BLOCK_SIZE; j++) {
     if (j < length) {
@@ -647,7 +646,7 @@ static void cryptoAesCmac_padding(const uint8_t* lastb, uint8_t* pad, int32_t le
   }
 }
 
-void cryptoAesCmac(const uint8_t aesKey128[16], const uint8_t* input, uint32_t length, uint8_t* outMac) {
+void cryptoAesCmac(const uint8_t aesKey128[16], volatile uint8_t* input, uint32_t length, uint8_t* outMac) {
   uint8_t X[cryptoAesCmac_BLOCK_SIZE], Y[cryptoAesCmac_BLOCK_SIZE], M_last[cryptoAesCmac_BLOCK_SIZE], padded[cryptoAesCmac_BLOCK_SIZE];
   uint8_t K1[cryptoAesCmac_BLOCK_SIZE], K2[cryptoAesCmac_BLOCK_SIZE];
   uint8_t flag;
@@ -680,25 +679,50 @@ void cryptoAesCmac(const uint8_t aesKey128[16], const uint8_t* input, uint32_t l
   memset(X, 0, cryptoAesCmac_BLOCK_SIZE);
   for (uint32_t i = 0; i < n - 1; i++) {
     cryptoAesCmac_xor_128(X, &input[cryptoAesCmac_BLOCK_SIZE * i], Y); /* Y := Mi (+) X  */
-    memcpy(X, Y, cryptoAesCmac_BLOCK_SIZE);
-    cryptoAesEcb(aesKey128, X); /* X := AES-128(KEY, Y); */
+    memcpy((void*)X, (const void*)Y, cryptoAesCmac_BLOCK_SIZE);
+    cryptoAesEcb_Encrypt(aesKey128, X); /* X := AES-128(KEY, Y); */
   }
 
   cryptoAesCmac_xor_128(X, M_last, Y);
 
-  memcpy(X, Y, cryptoAesCmac_BLOCK_SIZE);
-  cryptoAesEcb(aesKey128, X);
+  memcpy((void*)X, (const void*)Y, cryptoAesCmac_BLOCK_SIZE);
+  cryptoAesEcb_Encrypt(aesKey128, X);
 
-  memcpy(outMac, X, cryptoAesCmac_BLOCK_SIZE);
+  memcpy((void*)outMac, (const void*)X, cryptoAesCmac_BLOCK_SIZE);
 }
+
 
 
 /* DF4IAH code follows ... */
 
-void cryptoAesEcb(const uint8_t aesKey128[16], uint8_t* inOut)
+void cryptoAesEcb_Encrypt(const uint8_t aesKey128[16], uint8_t* inOut)
 {
   struct AES_ctx aesCtx = { 0 };
 
   AES_init_ctx(&aesCtx, aesKey128);
   AES_ECB_encrypt(&aesCtx, inOut);
+}
+
+void cryptoAesEcb_Decrypt(const uint8_t aesKey128[16], uint8_t* inOut)
+{
+  struct AES_ctx aesCtx = { 0 };
+
+  AES_init_ctx(&aesCtx, aesKey128);
+  AES_ECB_decrypt(&aesCtx, inOut);
+}
+
+void cryptoAesCbc_Encrypt(const uint8_t aesKey128[16], uint8_t* inOut, uint32_t len)
+{
+  struct AES_ctx aesCtx = { 0 };
+
+  AES_init_ctx(&aesCtx, aesKey128);
+  AES_CBC_encrypt_buffer(&aesCtx, inOut, len);
+}
+
+void cryptoAesCbc_Decrypt(const uint8_t aesKey128[16], uint8_t* inOut, uint32_t len)
+{
+  struct AES_ctx aesCtx = { 0 };
+
+  AES_init_ctx(&aesCtx, aesKey128);
+  AES_CBC_decrypt_buffer(&aesCtx, inOut, len);
 }

@@ -101,8 +101,8 @@ void prvControllerInitBeforeGreet(void)
   /* USB typing echo */
   xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON);   // TODO: should be from Config-FLASH page
 
-  /* Check for attached SX1272_mbed_shield */
-  if (spiDetectShieldSX1272()) {
+  /* Check for attached SX127x_mbed_shield */
+  if (spiDetectShieldSX127x()) {
     /* Init LoRaWAM module */
     LoRaWAN_Init();
   }
@@ -122,6 +122,7 @@ void prvControllerInitAfterGreet(void)
   /* Test LoRaWAN access */
   if (loRaWANctx.bkpRAM)
   {
+#if 0
     loraliveApp.id = 'E';
 
     loraliveApp.voltage_32_v  = (uint8_t) (3.3f * 32 + 0.5f);
@@ -147,13 +148,13 @@ void prvControllerInitAfterGreet(void)
       usbToHostWait((uint8_t*) "\r\nTX\r\n", 6);
       osSemaphoreRelease(usbToHostBinarySemHandle);
 
-      LoRaWAN_App_loralive_pushUp(&loRaWANctx, &loraliveApp, 14);
+      LoRaWAN_App_trackMeApp_pushUp(&loRaWANctx, &loraliveApp, 14);
 
       osSemaphoreWait(usbToHostBinarySemHandle, 0);
       usbToHostWait((uint8_t*) "\r\nRX:\r\n", 6);
       osSemaphoreRelease(usbToHostBinarySemHandle);
 
-      LoRaWAN_App_loralive_receiveLoop(&loRaWANctx);
+      LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
     }
 
     while (1) {
@@ -163,8 +164,9 @@ void prvControllerInitAfterGreet(void)
       usbToHostWait((uint8_t*) "\r\nRX:\r\n", 6);
       osSemaphoreRelease(usbToHostBinarySemHandle);
 
-      LoRaWAN_App_loralive_receiveLoop(&loRaWANctx);
+      LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
     }
+#endif
   }
 }
 
@@ -185,7 +187,7 @@ void prvControllerPrintMCU(void)
   uint32_t uidPosY    = (*((uint32_t*)  UID_BASE     ) >> 16) & 0X0000ffffUL;
   uint32_t uidWaf     = (*((uint32_t*) (UID_BASE + 4))      ) & 0X000000ffUL;
   char* uidLot        = ((char*)       (UID_BASE + 5));
-  memcpy(lotBuf, uidLot, 7);
+  memcpy((void*)lotBuf, (const void*)uidLot, 7);
   lotBuf[7] = 0;
 
   uint32_t package    = (*((uint32_t*)  PACKAGE_BASE))        & 0X0000001fUL;
