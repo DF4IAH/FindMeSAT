@@ -261,27 +261,26 @@ uint8_t spiProcessSpiReturnWait(void)
 {
   EventBits_t eb = xEventGroupWaitBits(spiEventGroupHandle, SPI_SPI1_EG__RDY | SPI_SPI1_EG__ERROR, SPI_SPI1_EG__RDY | SPI_SPI1_EG__ERROR, 0, spiWait_MaxWaitEGMs);
   if (eb & SPI_SPI1_EG__RDY) {
-    return 1;
+    return HAL_OK;
   }
 
   if (eb & SPI_SPI1_EG__ERROR) {
     Error_Handler();
   }
-  return 0;
+  return HAL_ERROR;
 }
 
 uint8_t spiProcessSpiMsg(uint8_t msgLen)
 {
-  HAL_StatusTypeDef status = 0;
-  uint8_t errCnt = 0;
+  HAL_StatusTypeDef status = HAL_OK;
+  uint8_t           errCnt = 0;
 
-  /* Activate low active NSS/SEL */
+  /* Activate low active NSS/SEL transaction */
   HAL_GPIO_WritePin(SPI_A_SEL_GPIO_Port, SPI_A_SEL_Pin, GPIO_PIN_RESET);
 
-  spi1TxBuffer[msgLen] = 0;
   do {
     status = HAL_SPI_TransmitReceive_DMA(&hspi1, (uint8_t*) spi1TxBuffer, (uint8_t *) spi1RxBuffer, msgLen);
-    if (status != HAL_OK)
+    if (status == HAL_BUSY)
     {
       osDelay(1);
 
@@ -291,8 +290,14 @@ uint8_t spiProcessSpiMsg(uint8_t msgLen)
         Error_Handler();
       }
     }
-  } while (status != HAL_OK);
+  } while (status == HAL_BUSY);
+
+  /* Release low active NSS/SEL transaction */
   HAL_GPIO_WritePin(SPI_A_SEL_GPIO_Port, SPI_A_SEL_Pin, GPIO_PIN_SET);
+
+  if (status != HAL_OK) {
+    return status;
+  }
 
   return spiProcessSpiReturnWait();
 }
@@ -406,9 +411,20 @@ void spiSX127xLoRa_Fifo_Init(void)
 {
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
   spi1TxBuffer[1] = 0x00;                     // 0x0D RegFifoAddrPtr
-  spi1TxBuffer[2] = 0x80;                     // 0x0E RegFifoTxBaseAddr
+  spi1TxBuffer[2] = 0xC0;                     // 0x0E RegFifoTxBaseAddr
   spi1TxBuffer[3] = 0x00;                     // 0x0F RegFifoRxBaseAddr
   spiProcessSpiMsg(4);
+}
+
+void spiSX127xLoRa_Fifo_SetFifoPtrFromTxBase(void)
+{
+  spi1TxBuffer[0] = SPI_RD_FLAG | 0x0e;
+  spiProcessSpiMsg(2);
+  uint8_t fifoTxBaseAddr = spi1RxBuffer[1];   // RegFifoTxBaseAddr
+
+  spi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
+  spi1TxBuffer[1] = fifoTxBaseAddr;
+  spiProcessSpiMsg(2);
 }
 
 void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void)
@@ -419,17 +435,6 @@ void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void)
 
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
   spi1TxBuffer[1] = fifoRxBaseAddr;
-  spiProcessSpiMsg(2);
-}
-
-void spiSX127xLoRa_Fifo_SetFifoPtrFromTxBase(void)
-{
-  spi1TxBuffer[0] = SPI_RD_FLAG | 0x0e;
-  spiProcessSpiMsg(2);
-  uint8_t fifoTxBaseAddr = spi1RxBuffer[1];    // RegFifoTxBaseAddr
-
-  spi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
-  spi1TxBuffer[1] = fifoTxBaseAddr;
   spiProcessSpiMsg(2);
 }
 
@@ -810,7 +815,7 @@ uint8_t spiDetectShieldSX127x(void)
   /* Reset pulse for SX127x */
   spiSX127xReset();
 
-  /* Change to sleep mode for modulation change */
+  /* Turn to sleep mode if not already done */
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
 
   /* Request RD-address 0x42 RegVersion */
@@ -818,7 +823,7 @@ uint8_t spiDetectShieldSX127x(void)
     uint8_t sxVersion = 0;
 
     spi1TxBuffer[0] = SPI_RD_FLAG | 0x42;
-    if (spiProcessSpiMsg(2)) {
+    if (HAL_OK == spiProcessSpiMsg(2)) {
       sxVersion = spi1RxBuffer[1];
     }
 
@@ -826,12 +831,12 @@ uint8_t spiDetectShieldSX127x(void)
         &&
         (sxVersion != 0x12)) {  // SX1276
       /* We can handle Version  0x22 (SX1272)  and  0x12 (SX1276) only */
-      return 0;
+      return HAL_ERROR;
     }
   }
 
   /* SX127x mbed shield found and ready for transmissions */
-  return 1;
+  return HAL_OK;
 }
 
 /* USER CODE END 1 */

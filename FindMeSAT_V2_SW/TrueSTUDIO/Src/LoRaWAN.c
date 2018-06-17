@@ -61,7 +61,7 @@ const uint8_t  AppSKey_BE[16]                           = { 0xADU, 0xDAU, 0x9AU,
 const uint8_t  DevEUI_LE[8]                             = { 0x32, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };  // "FMS2_002"
 const uint8_t  AppEUI_LE[8]                             = { 0x08, 0xF6, 0x00, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
 //const uint8_t  JoinEUI_LE[8]                          = { 0 };  // V1.1: former AppEUI
-//const uint8_t  NwkKey_BE[16]                          = { 0 };   // Since LoRaWAN V1.1
+//const uint8_t  NwkKey_BE[16]                          = { 0 };  // Since LoRaWAN V1.1
 //const uint8_t  AppKey_BE[16]                          = { 0x01, 0xE3, 0x27, 0x88, 0xBA, 0x99, 0x2C, 0x45, 0x6D, 0x92, 0xBF, 0xE0, 0xEE, 0xAD, 0xBE, 0x45 };  // findmesat2_001
 const uint8_t  AppKey_BE[16]                            = { 0xD9, 0x0E, 0x09, 0x0B, 0xDB, 0x61, 0xF1, 0xBB, 0x37, 0x4C, 0xE7, 0x9B, 0x23, 0x96, 0x07, 0x11 };  // findmesat2_002
 #endif
@@ -316,10 +316,10 @@ static void LoRaWAN_calc_MIC_msgAppend(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg
 {
   uint8_t* l_NwkKey;
 
-#ifdef LORAWAN_1V02
-    l_NwkKey = (uint8_t*) AppKey_BE;
-#elif LORAWAN_1V1
+#ifdef LORAWAN_1V1
     l_NwkKey = (uint8_t*) NwkKey_BE;
+#else
+    l_NwkKey = (uint8_t*) AppKey_BE;
 #endif
 
   switch (variant) {
@@ -486,6 +486,7 @@ void LoRaWAN_Init(void)
 
     /* Check CRC */
     uint32_t crcC = crcCalc((const uint32_t*) ((&LoRaWANctxBkpRam->LoRaWANcrc) + 1), bkpRAMLen - 1);
+    crcC = 0;  // TODO: remove me!
     if (crcC != LoRaWANctxBkpRam->LoRaWANcrc) {
       /* Non valid content - reset all to zero */
       volatile uint32_t* ptr = &LoRaWANctxBkpRam->LoRaWANcrc;
@@ -537,8 +538,8 @@ void LoRaWAN_Init(void)
       srand(r);
     }
 
-    /* Return transceiver to sleep mode */
-    spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+    /* Return transceiver to STANDBY mode */
+    spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
   }
 
   /* JOIN-REQUEST and JOIN-ACCEPT */
@@ -552,7 +553,7 @@ void LoRaWAN_Init(void)
           &loRaWANctx,
           LoRaWAN_calc_randomChannel(&loRaWANctx),
           0);                                     // Randomized RX1 frequency
-      loRaWANctx.SpreadingFactor = SF12_DR0_VAL;  // Use that SF
+      loRaWANctx.SpreadingFactor = SF10_DR2_VAL;  // Use that SF
 
       /* Forge the message */
       LoRaWAN_MAC_JOINREQUEST(&loRaWANctx, &loRaWanTxMsg);
@@ -652,9 +653,12 @@ void LoRaWAN_MAC_JOINREQUEST(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
 
   /* DevNonce */
   {
-#ifdef LORAWAN_1V02
+#ifndef LORAWAN_1V02__DEBUG
     ctx->DevNonce_LE[0] = rand() & 0xffU;
     ctx->DevNonce_LE[1] = rand() & 0xffU;
+#else
+    ctx->DevNonce_LE[0] = 0;
+    ctx->DevNonce_LE[1] = 0;
 #endif
 
     msg->msg_Buf[msg->msg_Len++] = ctx->DevNonce_LE[0];
@@ -685,10 +689,47 @@ uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
   /* Push the message to the FIFO */
   {
     /* FIFO data register */
+#ifdef SX1276
+    /* Beware: SX1276 FIFO auto-increment bug - reading and writing multiple bytes is not working as specified */
+    const uint8_t txBaseAddr = 0xC0;
+
+    /* Write each byte on its own */
+    for (uint8_t idx = 0, ptr = txBaseAddr; idx < msg->msg_Len; idx++, ptr++) {
+      /* Set FifoAddrPtr */
+      spi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
+      spi1TxBuffer[1] = ptr;
+      spiProcessSpiMsg(2);
+
+      /* Write single byte to the FIFO */
+      spi1TxBuffer[0] = SPI_WR_FLAG | 0x00;
+      spi1TxBuffer[1] = msg->msg_Buf[idx];
+      spiProcessSpiMsg(2);
+    }
+#else
     spi1TxBuffer[0] = SPI_WR_FLAG | 0x00;
     memcpy((void*)spi1TxBuffer + 1, (const void*)msg->msg_Buf, msg->msg_Len);
-
     spiProcessSpiMsg(1 + msg->msg_Len);
+#endif
+
+#ifdef SX1276_TEST
+    /* Beware: SX1276 FIFO auto-increment bug - reading multiple bytes not working */
+    memset((void*) msg->msg_Buf, 0, sizeof(msg->msg_Buf));
+
+    for (uint8_t idx = 0; idx < msg->msg_Len; idx++) {
+      const uint8_t txBaseAddr = 0xC0;
+
+      /* Set FifoAddrPtr */
+      spi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
+      spi1TxBuffer[1] = idx + txBaseAddr;
+      spiProcessSpiMsg(2);
+
+      /* Read data from Fifo */
+      spi1TxBuffer[0] = SPI_RD_FLAG | 0x00;
+      status = spiProcessSpiMsg(2);
+      msg->msg_Buf[idx] = spi1RxBuffer[1];
+    }
+    HAL_Delay(1);
+#endif
   }
 
   /* Transmission */
@@ -743,7 +784,7 @@ void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime
   /* Start receiver and wait for message */
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
   spiSX127x_WaitUntil_RxDone(msg, stopTime);
-  spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+  spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
   HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);    // Green off
 }

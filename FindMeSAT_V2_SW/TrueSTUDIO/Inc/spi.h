@@ -234,8 +234,8 @@ void spiSX127xDio_Mapping(TxRx_Mode_t mode);
 uint8_t spiSX127xMode_LoRa_GetBroadbandRSSI(void);
 void spiSX127xLoRa_setTxMsgLen(uint8_t payloadLen);
 void spiSX127xLoRa_Fifo_Init(void);
-void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void);
 void spiSX127xLoRa_Fifo_SetFifoPtrFromTxBase(void);
+void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void);
 
 void spiSX127xMode(spiSX127x_Mode_t mode);
 void spiSX127xRegister_IRQ_clearAll(void);
