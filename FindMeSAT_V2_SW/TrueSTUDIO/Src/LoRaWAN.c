@@ -25,17 +25,12 @@
 
 
 /* Holds RTOS timing info */
-#if 0
 extern uint32_t           spiPreviousWakeTime;
-#endif
 
 /* SPI communication buffers */
 extern uint8_t            spi1TxBuffer[SPI1_BUFFERSIZE];
 extern uint8_t            spi1RxBuffer[SPI1_BUFFERSIZE];
-
-#if 0
 extern osSemaphoreId      usbToHostBinarySemHandle;
-#endif
 
 
 #ifdef USE_ABP
@@ -566,7 +561,7 @@ void LoRaWAN_Init(void)
     {
       /* JOIN-ACCEPT response after JOIN_ACCEPT_DELAY1 at RX1 */
       // Same frequency and SF as during transmission
-      LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, tsEndOfTx + 5995);
+      LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, tsEndOfTx + 5995 + 1000);
 
       /* Listen to the RX2 only when RX1 without success */
       if (!loRaWanRxMsg.msg_Len) {
@@ -705,11 +700,6 @@ uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
       spi1TxBuffer[1] = msg->msg_Buf[idx];
       spiProcessSpiMsg(2);
     }
-#else
-    spi1TxBuffer[0] = SPI_WR_FLAG | 0x00;
-    memcpy((void*)spi1TxBuffer + 1, (const void*)msg->msg_Buf, msg->msg_Len);
-    spiProcessSpiMsg(1 + msg->msg_Len);
-#endif
 
 #ifdef SX1276_TEST
     /* Beware: SX1276 FIFO auto-increment bug - reading multiple bytes not working */
@@ -729,6 +719,11 @@ uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
       msg->msg_Buf[idx] = spi1RxBuffer[1];
     }
     HAL_Delay(1);
+#endif
+#else
+    spi1TxBuffer[0] = SPI_WR_FLAG | 0x00;
+    memcpy((void*)spi1TxBuffer + 1, (const void*)msg->msg_Buf, msg->msg_Len);
+    spiProcessSpiMsg(1 + msg->msg_Len);
 #endif
   }
 
@@ -753,24 +748,6 @@ void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime
 {
   /* Prepare RX */
   spiSX127x_TxRx_Preps(ctx, TxRx_Mode_RX, NULL);
-
-#if 0
-  uint8_t   debugBuf[256]   = { 0 };
-  uint8_t   debugLen        = 0;
-  uint8_t   modemStat       = 0;
-
-  while (1) {
-    /* Get the current IRQ flags */
-    spi1TxBuffer[0] = SPI_RD_FLAG | 0x18;       // LoRa: RegModemStat
-    spiProcessSpiMsg(2);
-    modemStat = spi1RxBuffer[1];
-
-    if (modemStat & 0x0f) {
-      debugLen += sprintf((char*)debugBuf + debugLen, "modemStat=0x%02X\r\n", modemStat);
-      (void) debugBuf;
-    }
-  }
-#endif
 
   /* Prepare the FIFO */
   spiSX127xLoRa_Fifo_Init();
