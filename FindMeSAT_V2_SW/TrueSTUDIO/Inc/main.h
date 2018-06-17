@@ -79,7 +79,7 @@
 #define SPI_A_MISO_GPIO_Port GPIOA
 #define SPI_A_MOSI_Pin GPIO_PIN_7
 #define SPI_A_MOSI_GPIO_Port GPIOA
-#define SX_RXTX_EXT_Pin GPIO_PIN_5
+#define SX_RXTX_EXT_Pin GPIO_PIN_4
 #define SX_RXTX_EXT_GPIO_Port GPIOC
 #define SX_DIO4_Pin GPIO_PIN_12
 #define SX_DIO4_GPIO_Port GPIOF
