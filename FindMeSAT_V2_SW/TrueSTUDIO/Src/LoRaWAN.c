@@ -8,6 +8,8 @@
 #include "LoRaWAN.h"
 
 #include <string.h>
+#include <stdlib.h>
+#include <sys/time.h>
 #include "crypto.h"
 #include "crc.h"
 
@@ -19,40 +21,60 @@
 
 #include "spi.h"
 #include "usb.h"
+#include "adc.h"
 
 
 /* Holds RTOS timing info */
-extern uint32_t spiPreviousWakeTime;
+#if 0
+extern uint32_t           spiPreviousWakeTime;
+#endif
 
 /* SPI communication buffers */
 extern uint8_t            spi1TxBuffer[SPI1_BUFFERSIZE];
 extern uint8_t            spi1RxBuffer[SPI1_BUFFERSIZE];
 
+#if 0
 extern osSemaphoreId      usbToHostBinarySemHandle;
+#endif
 
+
+#ifdef USE_ABP
 
 /* TheThingsNetwork - assigned codes to this device - sufficient for R1.0 [LW10, LW102] */
 //const char *TTNdevAddr = "26011E42";
 //const char *TTNnwkSKey = "4386E7FF679BF9810462B2192B2F5211";
 //const char *TTNappSKey = "ADDA9AD9B4D746323E221E7E69447DF5";
 
-const uint8_t  DevAddr_LE[4]		                        = { 0x42U, 0x1EU, 0x01U, 0x26U };
+const uint8_t  DevAddr_LE[4]		                        = { 0x3FU, 0x1AU, 0x01U, 0x26U };
 const uint8_t  DevEUI_LE[8]                             = { 0x31U, 0x6FU, 0x72U, 0x65U, 0x70U, 0x73U, 0x65U, 0x00U };
-const uint8_t  AppEUI_LE[8]                             = { 0x00U, 0x86U, 0x00U, 0xD0U, 0x7EU, 0xD5U, 0xB3U, 0x70U };
-const uint8_t  NwkSKey_LE[16]                           = { 0x11U, 0x52U, 0x2FU, 0x2BU, 0x19U, 0xB2U, 0x62U, 0x04U, 0x81U, 0xF9U, 0x9BU, 0x67U, 0xFFU, 0xE7U, 0x86U, 0x43U };
-const uint8_t  AppSKey_LE[16]                           = { 0xF5U, 0x7DU, 0x44U, 0x69U, 0x7EU, 0x1EU, 0x22U, 0x3EU, 0x32U, 0x46U, 0xD7U, 0xB4U, 0xD9U, 0x9AU, 0xDAU, 0xADU };
-
-const uint8_t  DevAddr_BE[4]		                        = { 0x26U, 0x01U, 0x1EU, 0x42U };
-const uint8_t  DevEUI_BE[8]                             = { 0x00U, 0x65U, 0x73U, 0x70U, 0x65U, 0x72U, 0x6FU, 0x31U };
-const uint8_t  AppEUI_BE[8]                             = { 0x70U, 0xB3U, 0xD5U, 0x7EU, 0xD0U, 0x00U, 0x86U, 0x00U };
+const uint8_t  JoinEUI_LE[8]                             = { 0x00U, 0x86U, 0x00U, 0xD0U, 0x7EU, 0xD5U, 0xB3U, 0x70U };
 const uint8_t  NwkSKey_BE[16]                           = { 0x43U, 0x86U, 0xE7U, 0xFFU, 0x67U, 0x9BU, 0xF9U, 0x81U, 0x04U, 0x62U, 0xB2U, 0x19U, 0x2BU, 0x2FU, 0x52U, 0x11U };
 const uint8_t  AppSKey_BE[16]                           = { 0xADU, 0xDAU, 0x9AU, 0xD9U, 0xB4U, 0xD7U, 0x46U, 0x32U, 0x3EU, 0x22U, 0x1EU, 0x7EU, 0x69U, 0x44U, 0x7DU, 0xF5U };
+
+#else
+
+/* USE_OTA */
+
+/* TheThingsNetwork - assigned codes to this device - R1.1 */
+// Device ID   findmesat2_001
+const uint8_t  DevEUI_LE[8]                             = { 0x31, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };  // "FMS2_001"
+const uint8_t  AppEUI_LE[8]                             = { 0x08, 0xF6, 0x00, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
+//const uint8_t  JoinEUI_LE[8]                          = { 0x08, 0xF6, 0x00, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };  // V1.1: former AppEUI
+const uint8_t  NwkKey_BE[8]                             = { 0 };   // Since LoRaWAN V1.1
+const uint8_t  AppKey_BE[16]                            = { 0x01, 0xE3, 0x27, 0x88, 0xBA, 0x99, 0x2C, 0x45, 0x6D, 0x92, 0xBF, 0xE0, 0xEE, 0xAD, 0xBE, 0x45 };
+
+#endif
+
 
 /* Non-volatile counters in the RTC_Backup domain */
 volatile LoRaWANctxBkpRam_t *const LoRaWANctxBkpRam     = (void*) 0x40002850UL;
 
 /* Network context of LoRaWAN */
 LoRaWANctx_t loRaWANctx                                 = { 0 };
+
+/* Message buffers */
+LoRaWAN_Message_t loRaWanTxMsg                          = { 0 };
+LoRaWAN_Message_t loRaWanRxMsg                          = { 0 };
 
 /* Application data for loralive */
 LoraliveApp_t loraliveApp                               = { 0 };
@@ -64,10 +86,12 @@ uint8_t GET_BYTE_OF_WORD(uint32_t word, uint8_t pos)
   return (uint8_t) ((word >> (8 << pos)) & 0x000000ffUL);
 }
 
+
 static void LoRaWAN_FOpts_Encrypt(LoRaWANctx_t* ctx,
     uint8_t* msg_FOpts_Encoded,
     const uint8_t* msg_FOpts_Buf, uint8_t msg_FOpts_Len)
 {
+#if 0
   /* Short way out when nothing to do */
   if (!msg_FOpts_Len) {
     return;
@@ -94,19 +118,21 @@ static void LoRaWAN_FOpts_Encrypt(LoRaWANctx_t* ctx,
 
   /* Create crypto modulator */
   uint8_t ecbPad[16] = { 0 };
-  memcpy(ecbPad, ((char*) &a_i), msg_FOpts_Len);
+  memcpy((void*)ecbPad, ((const void*) &a_i), msg_FOpts_Len);
   cryptoAesEcb(key, ecbPad);
 
   /* Encode FOpts */
   for (uint8_t idx = 0; idx < msg_FOpts_Len; idx++) {
     msg_FOpts_Encoded[idx] = ecbPad[idx] ^ msg_FOpts_Buf[idx];
   }
+#endif
 }
 
 static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
     uint8_t* payloadEncoded, uint8_t maxLen,
     const LoraliveApp_t* app)
 {
+#if 0
   uint8_t payload[48] = { 0 };
   uint8_t len;
 
@@ -178,7 +204,7 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
           a_i.idx = i;
 
           /* Create crypto modulator */
-          memcpy(ecbPad, ((char*) &a_i), 16);
+          memcpy((void*)ecbPad, ((const void*)&a_i), 16);
           cryptoAesEcb(key, ecbPad);
 
           /* Forge encoded data */
@@ -196,11 +222,130 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
       }
     }
   }
+#endif
   return 0;
 }
 
-static void LoRaWAN_calc_MIC_append(LoRaWANctx_t* ctx, uint8_t* msg_Buf, uint8_t msg_Len)
+uint8_t LoRaWAN_calc_randomChannel(LoRaWANctx_t* ctx)
 {
+  static uint8_t s_channel = 255;
+  uint8_t channel;
+
+  do {
+    channel = 1 + (rand() % 8);
+    if (!((1UL << channel) & ctx->Ch_EnabledMsk)) {
+      /* Channel disabled, try another channel */
+      channel = s_channel;
+    }
+  } while (channel == s_channel);
+  s_channel = channel;
+
+  return channel;
+}
+
+float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, uint8_t dflt)
+{
+  /* EU863-870*/
+  float mhz = 0.f;
+
+  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);    // Blue off for any channel of the RX1 timeslot
+
+  switch (channel) {
+  case 1:
+    mhz = 868.1f;   // SF7BW125 to SF12BW125 - default value which never changes
+    break;
+
+  case 2:
+    mhz = 868.3f;   // SF7BW125 to SF12BW125  and  SF7BW250 - default value which never changes
+    break;
+
+  case 3:
+    mhz = 868.5f;   // SF7BW125 to SF12BW125 - default value which never changes
+    break;
+
+  case 4:
+    mhz = 867.1f;   // SF7BW125 to SF12BW125
+    break;
+
+  case 5:
+    mhz = 867.3f;   // SF7BW125 to SF12BW125
+    break;
+
+  case 6:
+    mhz = 867.5f;   // SF7BW125 to SF12BW125
+    break;
+
+  case 7:
+    mhz = 867.7f;   // SF7BW125 to SF12BW125
+    break;
+
+  case 8:
+    mhz = 867.9f;   // SF7BW125 to SF12BW125
+    break;
+
+  case 9:
+    mhz = 868.8f;   // FSK
+    break;
+
+  case  0:
+  case 16:
+    mhz = 869.525f; // RX2 channel
+    HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);    // Blue on when RX2 timeslot channel selected
+    break;
+
+  default:
+    Error_Handler();
+  }
+
+  /* Current channel list */
+  if (!dflt) {
+    if ((1UL << channel) & ctx->Ch_EnabledMsk) {
+      /* Memorized value returned */
+      return ctx->Ch_Frequencies_MHz[channel - 1];
+    }
+  }
+
+  /* Default value returned */
+  return mhz;
+}
+
+
+
+static void LoRaWAN_calc_MIC_msgAppend(LoRaWAN_Message_t* msg, LoRaWANctx_t* ctx, LoRaWAN_CalcMIC_JOINREQUEST_t variant)
+{
+  uint8_t* l_NwkKey;
+
+#ifdef LORAWAN_1V02
+    l_NwkKey = (uint8_t*) AppKey_BE;
+#elif LORAWAN_1V1
+    l_NwkKey = (uint8_t*) NwkKey_BE;
+#endif
+
+  switch (variant) {
+  case MIC_JOINREQUEST:
+  {
+    uint8_t cmac[16];
+    uint8_t i;
+
+    // V1.01: cmac = aes128_cmac(AppKey, MHDR | AppEUI  | DevEUI | DevNonce)
+    // V1.1:  cmac = aes128_cmac(NwkKey, MHDR | JoinEUI | DevEUI | DevNonce)
+    // MIC = cmac[0..3]
+
+    /* msg contains data for CMAC hashing already */
+    cryptoAesCmac(l_NwkKey, msg->msg_Buf,
+        sizeof(msg->msg_MHDR) + sizeof(ctx->AppEUI) + sizeof(ctx->DevEUI) + sizeof(ctx->DevNonce),
+        cmac);
+
+    /* MIC to buffer */
+    for (i = 0; i < 4; i++) {
+      msg->msg_Buf[msg->msg_Len++] = cmac[i];
+    }
+  }
+  break;
+
+  case MIC_DATAMESSAGE:
+  {
+#if 0
   uint8_t   cmacLen;
   uint8_t   cmacBuf[64] = { 0 };
 
@@ -225,8 +370,8 @@ static void LoRaWAN_calc_MIC_append(LoRaWANctx_t* ctx, uint8_t* msg_Buf, uint8_t
 
     /* Concatenate b0 and message */
     cmacLen = sizeof(MICBlockB0_Up_t);
-    memcpy(cmacBuf, (char*) &b0, cmacLen);
-    memcpy(cmacBuf + cmacLen, msg_Buf, msg_Len);
+    memcpy((void*)cmacBuf, ((const void*)&b0, cmacLen);
+    memcpy((void*)cmacBuf + cmacLen, (const void*)msg_Buf, msg_Len);
     cmacLen += msg_Len;
 
     uint8_t cmacF[16];
@@ -262,8 +407,8 @@ static void LoRaWAN_calc_MIC_append(LoRaWANctx_t* ctx, uint8_t* msg_Buf, uint8_t
 
       /* Concatenate b1 and message */
       cmacLen = sizeof(MICBlockB1_Up_t);
-      memcpy(cmacBuf, (char*) &b1, cmacLen);
-      memcpy(cmacBuf + cmacLen, msg_Buf, msg_Len);
+      memcpy((void*)cmacBuf, (const void*)&b1, cmacLen);
+      memcpy((void*)cmacBuf + cmacLen, (const void*)msg_Buf, msg_Len);
       cmacLen += msg_Len;
 
       uint8_t cmacS[16];
@@ -300,8 +445,8 @@ static void LoRaWAN_calc_MIC_append(LoRaWANctx_t* ctx, uint8_t* msg_Buf, uint8_t
 
     /* Concatenate b0 and message */
     cmacLen = sizeof(MICBlockB0_Dn_t);
-    memcpy(cmacBuf, (char*) &b0, cmacLen);
-    memcpy(cmacBuf + cmacLen, msg_Buf, msg_Len);
+    memcpy((void*)cmacBuf, (const void*)&b0, cmacLen);
+    memcpy((void*)cmacBuf + cmacLen, (const void*)msg_Buf, msg_Len);
     cmacLen += msg_Len;
 
     uint8_t cmac[16];
@@ -317,88 +462,297 @@ static void LoRaWAN_calc_MIC_append(LoRaWANctx_t* ctx, uint8_t* msg_Buf, uint8_t
 
   /* Should not happen */
   Error_Handler();
+#endif
+  }
+  break;
+
+  default:
+  {
+    // Nothing to do
+  }
+
+  }  // switch ()
 }
 
 
 void LoRaWAN_Init(void)
 {
   const uint8_t bkpRAMLen = &LoRaWANctxBkpRam->_end - &LoRaWANctxBkpRam->LoRaWANcrc;
-  loRaWANctx.bkpRAM = LoRaWANctxBkpRam;
 
-  // Check CRC
-  uint32_t crcC = crcCalc((const uint32_t*) ((&LoRaWANctxBkpRam->LoRaWANcrc) + 1), bkpRAMLen - 1);
-  if (crcC != LoRaWANctxBkpRam->LoRaWANcrc) {
-    /* Non valid content - reset all to zero */
-    volatile uint32_t* ptr = &LoRaWANctxBkpRam->LoRaWANcrc;
-    for (uint8_t idx = 1; idx < bkpRAMLen; idx++) {
-      *++ptr = 0UL;
+  /* Prepare LoRaWAN context */
+  {
+    memset(&loRaWANctx, 0, sizeof(loRaWANctx));
+    loRaWANctx.bkpRAM = LoRaWANctxBkpRam;
+
+    /* Check CRC */
+    uint32_t crcC = crcCalc((const uint32_t*) ((&LoRaWANctxBkpRam->LoRaWANcrc) + 1), bkpRAMLen - 1);
+    if (crcC != LoRaWANctxBkpRam->LoRaWANcrc) {
+      /* Non valid content - reset all to zero */
+      volatile uint32_t* ptr = &LoRaWANctxBkpRam->LoRaWANcrc;
+      for (uint8_t idx = 1; idx < bkpRAMLen; idx++) {
+        *++ptr = 0UL;
+      }
+
+      /* Calc new CRC */
+      LoRaWANctxBkpRam->LoRaWANcrc = crcCalc((const uint32_t*) ((&LoRaWANctxBkpRam->LoRaWANcrc) + 1), bkpRAMLen - 1);
     }
-
-    /* Calc new CRC */
-    LoRaWANctxBkpRam->LoRaWANcrc = crcCalc((const uint32_t*) ((&LoRaWANctxBkpRam->LoRaWANcrc) + 1), bkpRAMLen - 1);
   }
 
   /* Setup data from FLASH NVM */
   LoRaWANctx_readFLASH();
+
+  /* Copy default channel settings */
+  {
+    for (uint8_t ch = 1; ch <= 8; ch++) {
+      loRaWANctx.Ch_Frequencies_MHz[ch - 1]  = LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, ch, 1);  // Default values
+    }
+    loRaWANctx.Ch_EnabledMsk = 0xff;    // All channels valid
+  }
+
+  /* Seed randomizer */
+  {
+    /* Prepare and start the receiver */
+    loRaWANctx.Frequency = LoRaWAN_calc_Channel_to_MHz(
+        &loRaWANctx,
+        16,
+        1);                                   // Most traffic on the RX2 channel
+    loRaWANctx.SpreadingFactor = SF7_DR5;     // Use that SF for more noise
+    spiSX127x_TxRx_Preps(&loRaWANctx, TxRx_Mode_RX_Randomizer, NULL);
+
+    /* Forging the random number */
+    {
+      uint32_t r = 0x12345678U;
+      for (uint8_t cnt = 32; cnt; cnt--) {
+        uint8_t rssi;
+        uint32_t rotBit;
+
+        /* Left rotating */
+        rotBit    = r >> 31;
+        r       <<= 1;
+        r        |= rotBit;
+
+        /* Read the current broadband RSSI value */
+        HAL_Delay(1);
+        rssi = spiSX127xMode_LoRa_GetBroadbandRSSI();
+        r ^= rssi;
+      }
+      srand(r);
+    }
+
+    /* Return transceiver to sleep mode */
+    spiSX127xMode(MODE_LoRa | SLEEP);
+  }
+
+  /* JOIN-REQUEST and JOIN-ACCEPT */
+  {
+    uint32_t tsEndOfTx;
+
+    /* JOIN-REQUEST prepare and transmission */
+    {
+      /* Adjust the context */
+      loRaWANctx.Frequency = LoRaWAN_calc_Channel_to_MHz(
+          &loRaWANctx,
+          LoRaWAN_calc_randomChannel(&loRaWANctx),
+          0);                                   // Randomized RX1 frequency
+      loRaWANctx.SpreadingFactor = SF10_DR2;    // Use that SF
+
+      /* Forge the message */
+      LoRaWAN_MAC_JOINREQUEST(&loRaWANctx, &loRaWanTxMsg);
+
+      /* Prepare transmitter and go on-air */
+      tsEndOfTx = LoRaWAN_TX_msg(&loRaWANctx, &loRaWanTxMsg);
+    }
+
+    /* JOIN-ACCEPT */
+    {
+      /* JOIN-ACCEPT response after JOIN_ACCEPT_DELAY1 at RX1 */
+      // Same frequency and SF as during transmission
+      LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, tsEndOfTx + 5995);
+
+      /* Listen to the RX2 only when RX1 without success */
+      if (!loRaWanRxMsg.msg_Len) {
+        /* JOIN-ACCEPT response after JOIN_ACCEPT_DELAY2 at RX2 */
+        loRaWANctx.Frequency = LoRaWAN_calc_Channel_to_MHz(
+            &loRaWANctx,
+            0,
+            1);                                   // Jump to RX2 frequency (default value)
+        loRaWANctx.SpreadingFactor = SF12_DR0;    // Use that SF
+
+        /* Prepare receiver and listen to the ether */
+        LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, tsEndOfTx + 7995);
+      }
+
+      /* Process message */
+      if (loRaWanRxMsg.msg_Len) {
+        volatile uint8_t pad[32] = { 0 };
+
+        memcpy((void*)pad, (const void*)loRaWanRxMsg.msg_Buf, loRaWanRxMsg.msg_Len);
+        cryptoAesCbc_Decrypt(loRaWANctx.AppKey, (uint8_t*)&pad, loRaWanRxMsg.msg_Len);
+
+        /* Process the data */
+        __asm volatile ( "" );
+      }
+    }
+  }
 }
 
 void LoRaWANctx_readFLASH(void)
 {
   /* TODO: read from FLASH NVM instead of default settings */
 
-  /* Apply keys of the loralive App */
-  LoRaWANctx_applyKeys_loralive();
+  /* Apply keys of the track_me App */
+  LoRaWANctx_applyKeys_trackMeApp();
 }
 
-void LoRaWANctx_applyKeys_loralive(void)
+void LoRaWANctx_applyKeys_trackMeApp(void)
 {
-#if 1
-  memcpy(&(loRaWANctx.DevAddr),     &DevAddr_LE, sizeof(DevAddr_LE));
-#else
-  memcpy(&(loRaWANctx.DevAddr),     &DevAddr_BE, sizeof(DevAddr_BE));
+  /* The root key(s) and EUIs */
+  {
+    memcpy((void*)loRaWANctx.DevEUI,    (const void*)&DevEUI_LE,  sizeof(DevEUI_LE));
+    memcpy((void*)loRaWANctx.AppEUI,    (const void*)&AppEUI_LE,  sizeof(AppEUI_LE));
+#ifdef LORAWAN_1V1
+    memcpy((void*)loRaWANctx.JoinEUI),  (const void*)&JoinEUI_LE, sizeof(JoinEUI_LE));
 #endif
-
-#if 1
-  memcpy(&(loRaWANctx.DevEUI),      &DevEUI_LE,  sizeof(DevEUI_LE));
-  memcpy(&(loRaWANctx.AppEUI),      &AppEUI_LE,  sizeof(AppEUI_LE));
-#else
-  memcpy(&(loRaWANctx.DevEUI),      &DevEUI_BE,  sizeof(DevEUI_BE));
-  memcpy(&(loRaWANctx.AppEUI),      &AppEUI_BE,  sizeof(AppEUI_BE));
-#endif
-
-#if 0
-  memcpy(&(loRaWANctx.FNwkSIntKey), &NwkSKey_LE, sizeof(NwkSKey_LE));
-  memcpy(&(loRaWANctx.SNwkSIntKey), &NwkSKey_LE, sizeof(NwkSKey_LE));
-  memcpy(&(loRaWANctx.NwkSEncKey),  &NwkSKey_LE, sizeof(NwkSKey_LE));
-  memcpy(&(loRaWANctx.AppSKey),     &AppSKey_LE, sizeof(AppSKey_LE));
-#else
-  memcpy(&(loRaWANctx.FNwkSIntKey), &NwkSKey_BE, sizeof(NwkSKey_BE));
-  memcpy(&(loRaWANctx.SNwkSIntKey), &NwkSKey_BE, sizeof(NwkSKey_BE));
-  memcpy(&(loRaWANctx.NwkSEncKey),  &NwkSKey_BE, sizeof(NwkSKey_BE));
-  memcpy(&(loRaWANctx.AppSKey),     &AppSKey_BE, sizeof(AppSKey_BE));
-#endif
+    memcpy((void*)loRaWANctx.AppKey,    (const void*)&AppKey_BE,  sizeof(AppKey_BE));
+  }
 
   /* Current transmission state */
-  loRaWANctx.LoRaWAN_ver              = LoRaWANVersion_10;    // TheThingsNetwork - assigned codes to this device - sufficient for R1.0 [LW10, LW102]
-  loRaWANctx.Dir                      = Up;
-  loRaWANctx.FCtrl_ADR                = 0U;
-  loRaWANctx.FCtrl_ADRACKReq          = 0U;
-  loRaWANctx.FCtrl_ACK                = 0U;
-  loRaWANctx.FCtrl_ClassB             = 0U;
-  loRaWANctx.FCtrl_FPending           = 0U;
-  loRaWANctx.FPort                    = 1U;
-//loRaWANctx.FPort                    = 2U;   // Default App port for "mapme" mapper
-  loRaWANctx.ConfFCnt                 = 0U;
-  loRaWANctx.TxDr                     = 0U;
-  loRaWANctx.TxCh                     = 0U;
+  {
+#ifdef LORAWAN_1V02
+    loRaWANctx.LoRaWAN_ver      = LoRaWANVersion_10;
+#elif defined LORAWAN_1V1
+    loRaWANctx.LoRaWAN_ver      = LoRaWANVersion_11;
+#endif
+    loRaWANctx.Dir              = Up;
+    loRaWANctx.FPort            = 1U;
+    loRaWANctx.SpreadingFactor  = 12U;
+  }
 }
 
-void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t size)
+void LoRaWAN_MAC_JOINREQUEST(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
 {
-  /* Timers */
-  volatile uint32_t ts1TXStart                                      =  0UL;
-  volatile uint32_t ts2TXStop                                       =  0UL;
+  uint8_t i;
 
+  /* Start new message */
+  memset((void*)msg, 0, sizeof(LoRaWAN_Message_t));
+
+  /* MHDR */
+  msg->msg_MHDR = (((uint8_t) JoinRequest) << LoRaWAN_MHDR_MType_SL) | (((uint8_t) LoRaWAN_R1) << LoRaWAN_MHDR_Major_SL);
+  msg->msg_Buf[msg->msg_Len++] = msg->msg_MHDR;
+
+  /* AppEUI[0:7]  (JoinEUI[0:7]) */
+  for (i = 0; i < 8; i++) {
+    msg->msg_Buf[msg->msg_Len++] = ctx->AppEUI[i];
+  }
+
+  /* DevEUI[0:7] */
+  for (i = 0; i < 8; i++) {
+    msg->msg_Buf[msg->msg_Len++] = ctx->DevEUI[i];
+  }
+
+  /* DevNonce */
+  {
+#ifdef LORAWAN_1V02
+    ctx->DevNonce[0] = rand() & 0xffU;
+    ctx->DevNonce[1] = rand() & 0xffU;
+#endif
+
+    msg->msg_Buf[msg->msg_Len++] = ctx->DevNonce[0];
+    msg->msg_Buf[msg->msg_Len++] = ctx->DevNonce[1];
+
+    /* MIC */
+    LoRaWAN_calc_MIC_msgAppend(msg, ctx, MIC_JOINREQUEST);
+
+#ifdef LORAWAN_1V1
+    if (!(++ctx->DevNonce[0])) {
+      ++ctx->DevNonce[1];
+    }
+#endif
+  }
+}
+
+uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
+{
+  /* Push the complete message to the FIFO and go to transmission mode */
+
+  /* Prepare TX */
+  spiSX127x_TxRx_Preps(ctx, TxRx_Mode_TX, msg);
+
+  /* Prepare the FIFO */
+  spiSX127xLoRa_Fifo_Init();
+  spiSX127xLoRa_Fifo_SetFifoPtrFromTxBase();
+
+  /* Push the message to the FIFO */
+  {
+    uint8_t regFifo = SPI_WR_FLAG | 0x00;
+
+    spi1TxBuffer[0] = regFifo;
+    memcpy((void*)spi1TxBuffer + 1, (const void*)msg->msg_Buf, msg->msg_Len);
+
+    spiProcessSpiMsg(1 + msg->msg_Len);
+  }
+
+  /* Transmission */
+  uint32_t ts;
+  {
+    uint32_t now;
+
+    HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);    // Red on
+
+    /* Start transmitter and wait until the message is being sent */
+    spiSX127xMode(MODE_LoRa | TX);
+    now = osKernelSysTick();
+    ts  = spiSX127x_WaitUntil_TxDone(1, now + 1990UL);
+
+    HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);  // Red off
+  }
+
+  return ts;
+}
+
+void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime)
+{
+  /* Prepare RX */
+  spiSX127x_TxRx_Preps(ctx, TxRx_Mode_RX, NULL);
+
+#if 0
+  uint8_t   debugBuf[256]   = { 0 };
+  uint8_t   debugLen        = 0;
+  uint8_t   modemStat       = 0;
+
+  while (1) {
+    /* Get the current IRQ flags */
+    spi1TxBuffer[0] = SPI_RD_FLAG | 0x18;       // LoRa: RegModemStat
+    spiProcessSpiMsg(2);
+    modemStat = spi1RxBuffer[1];
+
+    if (modemStat & 0x0f) {
+      debugLen += sprintf((char*)debugBuf + debugLen, "modemStat=0x%02X\r\n", modemStat);
+      (void) debugBuf;
+    }
+  }
+#endif
+
+  /* Prepare the FIFO */
+  spiSX127xLoRa_Fifo_Init();
+  spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase();
+
+  /* Clear receiving buffer */
+  memset((void*)msg, 0, sizeof(msg));
+
+  HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);      // Green on
+
+  /* Start receiver and wait for message */
+  spiSX127xMode(MODE_LoRa | RXCONTINUOUS);
+  spiSX127x_WaitUntil_RxDone(msg, stopTime);
+  spiSX127xMode(MODE_LoRa | SLEEP);
+
+  HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);    // Green off
+}
+
+void LoRaWAN_App_trackMeApp_pushUp(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, LoraliveApp_t* app, uint8_t size)
+{
+#if 0
   volatile uint8_t  msg_Len;
   volatile uint8_t  msg_Buf[LoRaWAN_MsgLenMax]                      = { 0 };
   uint8_t           msg_MHDR;
@@ -409,11 +763,11 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
   uint8_t           msg_FOpts_Encoded[16]                           = { 0 };
   uint8_t           msg_FRMPayload_Len                              =   0U;
   uint8_t           msg_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax]   = { 0 };
-
+#endif
 
   /* PHY Payload: MHDR | MACPayload | MIC */
   /* MHDR */
-  msg_MHDR = (((uint8_t) UnconfDataUp) << LoRaWAN_MHDR_MType_SL) | (((uint8_t) LoRaWAN_R1) << LoRaWAN_MHDR_Major_SL);
+  msg->msg_MHDR = (((uint8_t) UnconfDataUp) << LoRaWAN_MHDR_MType_SL) | (((uint8_t) LoRaWAN_R1) << LoRaWAN_MHDR_Major_SL);
 
   /* MACPayload: FHDR | FPort | FRMPayload */
   {
@@ -422,37 +776,37 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
       /* FOpts */
       // LoRaWAN V1.1 spec @p64: send ResetInd MAC for the first time in the FOpt field (after reset)
       // each packet has to set that, until a response with ResetInd MAC comes
-      msg_FOpts_Len = 0U;
-      //msg_FOpts_Buf[msg_FOpts_Len++] = (uint8_t) ResetInd_UP;
+      msg->msg_FOpts_Len = 0U;
+      //msg->msg_FOpts_Buf[msg->msg_FOpts_Len++] = (uint8_t) ResetInd_UP;
 
       /* Encode FOpts */
-      LoRaWAN_FOpts_Encrypt(ctx,
-          msg_FOpts_Encoded,
-          msg_FOpts_Buf, msg_FOpts_Len);
+      LoRaWAN_FOpts_Encrypt(ctx,  // TODO: msg alone
+          msg->msg_FOpts_Encoded,
+          msg->msg_FOpts_Buf, msg->msg_FOpts_Len);
 
       /* FCtrl */
       if (ctx->Dir == Up) {
-        msg_FCtrl = (ctx->FCtrl_ADR         << LoRaWAN_FCtl_ADR_SL      ) |
-                    (ctx->FCtrl_ADRACKReq   << LoRaWAN_FCtl_ADRACKReq_SL) |
-                    (ctx->FCtrl_ACK         << LoRaWAN_FCtl_ACK_SL      ) |
-                    (ctx->FCtrl_ClassB      << LoRaWAN_FCtl_ClassB_SL   ) |
-                    (msg_FOpts_Len          << LoRaWAN_FCtl_FOptsLen_SL );
+        msg->msg_FCtrl = (ctx->FCtrl_ADR         << LoRaWAN_FCtl_ADR_SL      ) |
+                         (ctx->FCtrl_ADRACKReq   << LoRaWAN_FCtl_ADRACKReq_SL) |
+                         (ctx->FCtrl_ACK         << LoRaWAN_FCtl_ACK_SL      ) |
+                         (ctx->FCtrl_ClassB      << LoRaWAN_FCtl_ClassB_SL   ) |
+                         (msg->msg_FOpts_Len     << LoRaWAN_FCtl_FOptsLen_SL );
 
       } else /* if (ctx->Dir == Dn) */ {
-        msg_FCtrl = (ctx->FCtrl_ADR         << LoRaWAN_FCtl_ADR_SL      ) |
-                    (ctx->FCtrl_ACK         << LoRaWAN_FCtl_ACK_SL      ) |
-                    (ctx->FCtrl_FPending    << LoRaWAN_FCtl_FPending_SL ) |
-                    (msg_FOpts_Len          << LoRaWAN_FCtl_FOptsLen_SL );
+        msg->msg_FCtrl = (ctx->FCtrl_ADR         << LoRaWAN_FCtl_ADR_SL      ) |
+                         (ctx->FCtrl_ACK         << LoRaWAN_FCtl_ACK_SL      ) |
+                         (ctx->FCtrl_FPending    << LoRaWAN_FCtl_FPending_SL ) |
+                         (msg->msg_FOpts_Len     << LoRaWAN_FCtl_FOptsLen_SL );
       }
 
       /* FCnt */
-      msg_FCnt = (uint16_t) ctx->bkpRAM->FCntUp;
+      msg->msg_FCnt = (uint16_t) ctx->bkpRAM->FCntUp;
     }
 
 #if 1
     /* FRMPayload */
-    msg_FRMPayload_Len = LoRaWAN_App_loralive_data2FRMPayload(ctx,
-        msg_FRMPayload_Encoded, LoRaWAN_FRMPayloadMax,
+    msg->msg_FRMPayload_Len = LoRaWAN_App_loralive_data2FRMPayload(ctx,
+        msg->msg_FRMPayload_Encoded, LoRaWAN_FRMPayloadMax,
         app);
 #endif
   }
@@ -460,79 +814,47 @@ void LoRaWAN_App_loralive_pushUp(LoRaWANctx_t* ctx, LoraliveApp_t* app, uint8_t 
   /* Message sequencer */
   {
     /* MHDR */
-    msg_Len               = 0U;
-    msg_Buf[msg_Len++]    = msg_MHDR;
+    msg->msg_Len                    = 0U;
+    msg->msg_Buf[msg->msg_Len++]    = msg->msg_MHDR;
 
     /* DevAddr */
     for (uint8_t i = 0; i < 4; i++) {
-      msg_Buf[msg_Len++] = ctx->DevAddr[i];
+      msg->msg_Buf[msg->msg_Len++] = ctx->DevAddr[i];
     }
 
     /* FCtrl */
-    msg_Buf[msg_Len++]    = msg_FCtrl;
+    msg->msg_Buf[msg->msg_Len++]    = msg->msg_FCtrl;
 
     /* FCnt */
-    msg_Buf[msg_Len++]    = (uint8_t) ((msg_FCnt >>  0) & 0xffU);
-    msg_Buf[msg_Len++]    = (uint8_t) ((msg_FCnt >>  8) & 0xffU);
+    msg->msg_Buf[msg->msg_Len++]    = (uint8_t) ((msg->msg_FCnt >>  0) & 0xffU);
+    msg->msg_Buf[msg->msg_Len++]    = (uint8_t) ((msg->msg_FCnt >>  8) & 0xffU);
 
     /* FOpts (encoded) - not emitted when msg_FOpts_Len == 0 */
-    for (uint8_t FOpts_Idx = 0; FOpts_Idx < msg_FOpts_Len; FOpts_Idx++) {
-      msg_Buf[msg_Len++]  = msg_FOpts_Encoded[FOpts_Idx];
+    for (uint8_t FOpts_Idx = 0; FOpts_Idx < msg->msg_FOpts_Len; FOpts_Idx++) {
+      msg->msg_Buf[msg->msg_Len++]  = msg->msg_FOpts_Encoded[FOpts_Idx];
     }
 
     /* Drop this part when no FRMPayload exists */
-    if (msg_FRMPayload_Len) {
+    if (msg->msg_FRMPayload_Len) {
       /* FPort */
-      msg_Buf[msg_Len++]  = ctx->FPort;
+      msg->msg_Buf[msg->msg_Len++]  = ctx->FPort;
 
       /* FRMPayload */
-      for (uint8_t FRMPayload_Idx = 0; FRMPayload_Idx < msg_FRMPayload_Len; FRMPayload_Idx++) {
-        msg_Buf[msg_Len++]  = msg_FRMPayload_Encoded[FRMPayload_Idx];
+      for (uint8_t FRMPayload_Idx = 0; FRMPayload_Idx < msg->msg_FRMPayload_Len; FRMPayload_Idx++) {
+        msg->msg_Buf[msg->msg_Len++]  = msg->msg_FRMPayload_Encoded[FRMPayload_Idx];
       }
     }
 
     /* MIC */
-    LoRaWAN_calc_MIC_append(ctx, (uint8_t*) msg_Buf, msg_Len);
-    msg_Len += 4;
+    LoRaWAN_calc_MIC_msgAppend(msg, ctx, MIC_DATAMESSAGE);
   }
 
   /* Push the complete message to the FIFO and go to transmission mode */
-  {
-    /* Prepare TX for channel 2 (TX1/RX1) */
-    spiSX1272Mode_LoRa_TX_Preps(2, msg_Len);
-
-    /* Prepare the FIFO */
-    spiSX1272LoRa_Fifo_Init();
-    spiSX1272LoRa_Fifo_SetTxBaseToFifoPtr();
-
-    /* Push the message to the FIFO */
-    uint8_t fifoCmd = SPI_WR_FLAG | 0x00;
-    memcpy(spi1TxBuffer, &fifoCmd, 1);
-    memcpy(spi1TxBuffer + 1, (char*) msg_Buf, msg_Len);
-    spiProcessSpiMsg(1 + msg_Len);
-
-    /* Transmit FIFO content */
-    {
-      HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);    // Red on
-      ts1TXStart = getRunTimeCounterValue();
-
-      /* Start transmission */
-      spiSX1272Mode_LoRa_TX_Run();
-
-      /* Wait until the message is being sent */
-      spiSX1272_WaitUntil_TxDone(1);
-
-      HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);    // Red off
-      ts2TXStop = getRunTimeCounterValue();
-    }
-
-    __asm volatile( "nop" );
-    (void) ts1TXStart;
-    (void) ts2TXStop;
-  }
+  //LoRaWAN_tx_msg(ctx, msg);
 }
 
-void LoRaWAN_App_loralive_receiveLoop(LoRaWANctx_t* ctx)
+#if 0
+void LoRaWAN_App_trackMeApp_receiveLoop(LoRaWANctx_t* ctx)
 {
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) "\r\n  RX1: ", 9);
@@ -540,8 +862,8 @@ void LoRaWAN_App_loralive_receiveLoop(LoRaWANctx_t* ctx)
 
   /* Switch on the receiver RX1 channel 2 */
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);    // Blue on
-  spiSX1272Mode_LoRa_RX(2);
-  spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 1950);
+  spiSX127xMode_LoRa_RX(2);
+  spiSX127x_WaitUntil_RxDone(spiPreviousWakeTime + 1950);
 
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) "\r\n  RX2: ", 9);
@@ -549,16 +871,16 @@ void LoRaWAN_App_loralive_receiveLoop(LoRaWANctx_t* ctx)
 
   /* Switch to RX2 channel */
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);    // Blue off
-  spiSX1272Mode_LoRa_RX(0);
-  spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 4950);
+  spiSX127xMode_LoRa_RX(0);
+  spiSX127x_WaitUntil_RxDone(spiPreviousWakeTime + 4950);
 
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) "\r\n  RX1: ", 9);
   osSemaphoreRelease(usbToHostBinarySemHandle);
   /* Switch back to RX1: Ch2 channel, again */
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);    // Blue on
-  spiSX1272Mode_LoRa_RX(2);
-  spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 5950);
+  spiSX127xMode_LoRa_RX(2);
+  spiSX127x_WaitUntil_RxDone(spiPreviousWakeTime + 5950);
 
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) "\r\n  RX2: ", 9);
@@ -566,6 +888,7 @@ void LoRaWAN_App_loralive_receiveLoop(LoRaWANctx_t* ctx)
 
   /* Switch to RX2 channel, again */
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);    // Blue off
-  spiSX1272Mode_LoRa_RX(0);
-  spiSX1272_WaitUntil_RxDone(spiPreviousWakeTime + 7000);
+  spiSX127xMode_LoRa_RX(0);
+  spiSX127x_WaitUntil_RxDone(spiPreviousWakeTime + 7000);
 }
+#endif
