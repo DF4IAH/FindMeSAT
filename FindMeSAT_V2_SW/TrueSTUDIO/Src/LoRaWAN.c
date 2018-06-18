@@ -684,47 +684,9 @@ uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg)
   /* Push the message to the FIFO */
   {
     /* FIFO data register */
-#ifdef SX1276
-    /* Beware: SX1276 FIFO auto-increment bug - reading and writing multiple bytes is not working as specified */
-    const uint8_t txBaseAddr = 0xC0;
-
-    /* Write each byte on its own */
-    for (uint8_t idx = 0, ptr = txBaseAddr; idx < msg->msg_Len; idx++, ptr++) {
-      /* Set FifoAddrPtr */
-      spi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
-      spi1TxBuffer[1] = ptr;
-      spiProcessSpiMsg(2);
-
-      /* Write single byte to the FIFO */
-      spi1TxBuffer[0] = SPI_WR_FLAG | 0x00;
-      spi1TxBuffer[1] = msg->msg_Buf[idx];
-      spiProcessSpiMsg(2);
-    }
-
-#ifdef SX1276_TEST
-    /* Beware: SX1276 FIFO auto-increment bug - reading multiple bytes not working */
-    memset((void*) msg->msg_Buf, 0, sizeof(msg->msg_Buf));
-
-    for (uint8_t idx = 0; idx < msg->msg_Len; idx++) {
-      const uint8_t txBaseAddr = 0xC0;
-
-      /* Set FifoAddrPtr */
-      spi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;
-      spi1TxBuffer[1] = idx + txBaseAddr;
-      spiProcessSpiMsg(2);
-
-      /* Read data from Fifo */
-      spi1TxBuffer[0] = SPI_RD_FLAG | 0x00;
-      status = spiProcessSpiMsg(2);
-      msg->msg_Buf[idx] = spi1RxBuffer[1];
-    }
-    HAL_Delay(1);
-#endif
-#else
     spi1TxBuffer[0] = SPI_WR_FLAG | 0x00;
     memcpy((void*)spi1TxBuffer + 1, (const void*)msg->msg_Buf, msg->msg_Len);
     spiProcessSpiMsg(1 + msg->msg_Len);
-#endif
   }
 
   /* Transmission */
@@ -753,17 +715,20 @@ void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime
   spiSX127xLoRa_Fifo_Init();
   spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase();
 
-  /* Clear receiving buffer */
+  /* Clear receiving message buffer */
   memset((void*)msg, 0, sizeof(msg));
 
   HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);      // Green on
 
-  /* Start receiver and wait for message */
+  /* Turn on receiver continuously and wait for the next message */
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
   spiSX127x_WaitUntil_RxDone(msg, stopTime);
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
   HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);    // Green off
+
+  /* Process the message*/
+
 }
 
 void LoRaWAN_App_trackMeApp_pushUp(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, LoraliveApp_t* app, uint8_t size)
