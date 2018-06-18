@@ -595,7 +595,7 @@ void LoRaWANctx_readFLASH(void)
   /* TODO: read from FLASH NVM instead of default settings */
 
   /* Crystal drift PPM */
-  loRaWANctx.CrystalPpm = 13.8f;
+  loRaWANctx.CrystalPpm = 0.0f;  //13.8f;
 
   /* Apply keys of the track_me App */
   LoRaWANctx_applyKeys_trackMeApp();
@@ -722,7 +722,7 @@ void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime
 
   /* Turn on receiver continuously and wait for the next message */
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
-  spiSX127x_WaitUntil_RxDone(msg, stopTime);
+  spiSX127x_WaitUntil_RxDone(ctx, msg, stopTime);
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
   HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);    // Green off
