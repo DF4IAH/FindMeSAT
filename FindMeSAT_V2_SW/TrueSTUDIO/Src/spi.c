@@ -578,11 +578,6 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
       spi1TxBuffer[1] = 0x40;
       spiProcessSpiMsg(2);
 
-      /* DetectionOptimize */
-      spi1TxBuffer[0] = SPI_WR_FLAG | 0x31;
-      spi1TxBuffer[1] = 0xc0 | (l_SF >= SF7_DR5 ?  0x03 : 0x05);
-      spiProcessSpiMsg(2);
-
       /* DetectionThreshold */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x37;
       spi1TxBuffer[1] = (l_SF >= SF7_DR5 ?  0x0a : 0x0c);
@@ -597,6 +592,19 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x38;
       spi1TxBuffer[1] = 0x19;                                             // Optimized for inverted IQ
       spiProcessSpiMsg(2);
+
+      /* Bugfix 2013-09 Rev.1 Section 2.3 - Receiver Spurious Reception of a LoRa Signal */
+      {
+        /* DetectionOptimize & BugFix (automatic disabled) */
+        spi1TxBuffer[0] = SPI_WR_FLAG | 0x31;
+        spi1TxBuffer[1] = 0x40 | (l_SF >= SF7_DR5 ?  0x03 : 0x05);        // Instead of 0xc0 --> 0x40
+        spiProcessSpiMsg(2);
+
+        spi1TxBuffer[0] = SPI_WR_FLAG | 0x2f;
+        spi1TxBuffer[1] = 0x40;
+        spi1TxBuffer[2] = 0x00;
+        spiProcessSpiMsg(3);
+      }
 
       /* Prepare the receiver circuits */
       spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | FSRX);
