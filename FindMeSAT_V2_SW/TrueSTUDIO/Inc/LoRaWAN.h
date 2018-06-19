@@ -88,6 +88,7 @@ typedef struct LoRaWANctx {
 
   /* Current transmission */
   volatile float                      CrystalPpm;
+  volatile float                      GatewayPpm;
   volatile LoRaWANctxDir_t            Dir;
   volatile uint8_t                    FCtrl_ADR;
   volatile uint8_t                    FCtrl_ADRACKReq;

@@ -485,19 +485,18 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
-#if 0
-  /* Set the frequency */
-  spiSX127xFrequency_MHz(l_f * (1 + 1e-6 * ctx->CrystalPpm));
-#endif
-
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
+#ifdef PPM_CALIBRATION
+  spi1TxBuffer[1] = BW_7kHz8  | CR_4_5 | IHM_OFF;                                             // ModemConfig1
+#else
   spi1TxBuffer[1] = BW_125kHz | CR_4_5 | IHM_OFF;                                             // ModemConfig1
+#endif
   spi1TxBuffer[2] = l_SF | TXCONT_OFF | RX_PAYLOAD_CRC_ON | (0b00 << 0);                      // ModemConfig2 with SymbTmeoutMsb = 0b00
   spiProcessSpiMsg(3);
 
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x26;
   spi1TxBuffer[1] = (l_SF >= SF11_DR1 ?  LOW_DR_OPTI_ON : LOW_DR_OPTI_OFF) | AGC_AUTO_ON;     // ModemConfig3
-  spi1TxBuffer[2] = (uint8_t) (ctx->CrystalPpm * 0.95f);                                      // PPM Correction
+  spi1TxBuffer[2] = (uint8_t) (ctx->CrystalPpm *  0.95f);                                     // PPM Correction
   spiProcessSpiMsg(3);
 
   /* Frequency hopping disabled */
@@ -523,7 +522,11 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
       spiSX127xFrequency_MHz(l_f * (1 + 1e-6 * ctx->CrystalPpm));
 
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x09;
+#ifdef PPM_CALIBRATION
+      spi1TxBuffer[1] = (0x0 << 7) | (0x0 << 4) | (0x0 << 0);             // minimal power @ RFO pin
+#else
       spi1TxBuffer[1] = (0x0 << 7) | (0x4 << 4) | (0xf << 0);             // PA off, MaxPower, TXpwr @ RFO pin
+#endif
       spi1TxBuffer[2] = PA_RAMP_50us;                                     // PA ramp time 50us
       spi1TxBuffer[3] = (0x1 << 5) | (0xb << 0);                          // OverCurrentProtection ON, normal: 100mA
       spiProcessSpiMsg(4);
@@ -558,7 +561,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
   case TxRx_Mode_RX:
     {
       /* Set the frequency */
-      spiSX127xFrequency_MHz(l_f * (1 + 1e-6 * ctx->CrystalPpm)  - 29.200e-3);
+      spiSX127xFrequency_MHz(l_f * (1 + (1e-6 * ctx->CrystalPpm) - (1e-6 * ctx->GatewayPpm)));
 
       /* LNA to maximum */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x0c;

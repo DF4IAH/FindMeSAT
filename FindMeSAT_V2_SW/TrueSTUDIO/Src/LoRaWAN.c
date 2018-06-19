@@ -544,11 +544,16 @@ void LoRaWAN_Init(void)
     /* JOIN-REQUEST prepare and transmission */
     {
       /* Adjust the context */
+#ifdef PPM_CALIBRATION
+      loRaWANctx.FrequencyMHz = 870.0;
+      loRaWANctx.SpreadingFactor = SF12_DR0_VAL;
+#else
       loRaWANctx.FrequencyMHz = LoRaWAN_calc_Channel_to_MHz(
           &loRaWANctx,
           LoRaWAN_calc_randomChannel(&loRaWANctx),
           0);                                     // Randomized RX1 frequency
       loRaWANctx.SpreadingFactor = SF10_DR2_VAL;  // Use that SF
+#endif
 
       /* Forge the message */
       LoRaWAN_MAC_JOINREQUEST(&loRaWANctx, &loRaWanTxMsg);
@@ -595,7 +600,8 @@ void LoRaWANctx_readFLASH(void)
   /* TODO: read from FLASH NVM instead of default settings */
 
   /* Crystal drift PPM */
-  loRaWANctx.CrystalPpm = 0.0f;  //13.8f;
+  loRaWANctx.CrystalPpm = +13.79f;        // Real value of this device
+  loRaWANctx.GatewayPpm = +47.47f;        // iC880a known crystal drift
 
   /* Apply keys of the track_me App */
   LoRaWANctx_applyKeys_trackMeApp();
@@ -605,12 +611,12 @@ void LoRaWANctx_applyKeys_trackMeApp(void)
 {
   /* The root key(s) and EUIs */
   {
-    memcpy((void*)loRaWANctx.DevEUI_LE,    (const void*)&DevEUI_LE,  sizeof(DevEUI_LE));
-    memcpy((void*)loRaWANctx.AppEUI_LE,    (const void*)&AppEUI_LE,  sizeof(AppEUI_LE));
+    memcpy((void*)loRaWANctx.DevEUI_LE,   (const void*)&DevEUI_LE,  sizeof(DevEUI_LE));
+    memcpy((void*)loRaWANctx.AppEUI_LE,   (const void*)&AppEUI_LE,  sizeof(AppEUI_LE));
 #ifdef LORAWAN_1V1
-    memcpy((void*)loRaWANctx.JoinEUI_LE),  (const void*)&JoinEUI_LE, sizeof(JoinEUI_LE));
+    memcpy((void*)loRaWANctx.JoinEUI_LE), (const void*)&JoinEUI_LE, sizeof(JoinEUI_LE));
 #endif
-    memcpy((void*)loRaWANctx.AppKey,       (const void*)&AppKey_BE,  sizeof(AppKey_BE));
+    memcpy((void*)loRaWANctx.AppKey,      (const void*)&AppKey_BE,  sizeof(AppKey_BE));
   }
 
   /* Current transmission state */
