@@ -612,7 +612,7 @@ void LoRaWANctx_readFLASH(void)
 
   /* Crystal drift PPM */
   loRaWANctx.CrystalPpm = +13.79f;        // Real value of this device
-  loRaWANctx.GatewayPpm = +47.47f;        // iC880a known crystal drift
+  loRaWANctx.GatewayPpm =  -0.70f;        // Gateway drift
 
   /* Apply keys of the track_me App */
   LoRaWANctx_applyKeys_trackMeApp();

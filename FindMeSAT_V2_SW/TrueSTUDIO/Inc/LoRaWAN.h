@@ -104,7 +104,8 @@ typedef struct LoRaWANctx {
   volatile float                      FrequencyMHz;
   volatile uint8_t                    TxDr;
   volatile uint8_t                    TxCh;
-
+  volatile int16_t                    LastRSSI_dBm;
+  volatile int16_t                    LastPacketStrength_dBm;
 } LoRaWANctx_t;
 
 

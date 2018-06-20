@@ -498,7 +498,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
 
       /* Set bit to start */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x3b;
-      spi1TxBuffer[1] = 0x42;                                                                   // RegImageCal
+      spi1TxBuffer[1] = 0x42;                                                                 // RegImageCal
       spiProcessSpiMsg(2);
 
       /* Wait until the balancing process has finished */
@@ -516,7 +516,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
         /* Test for completion */
         if (!(balState & 0x20)) {
           t1 = getRunTimeCounterValue();
-          ctx->LastIqBalTemp        = temp - 212;                                                    // Temperature device compensated
+          ctx->LastIqBalTemp        = temp - 212;                                             // Temperature device compensated
           ctx->LastIqBalTimeUs      = t0;
           ctx->LastIqBalDurationUs  = t1 - t0;
           break;
@@ -573,7 +573,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
       spiSX127xFrequency_MHz(l_f * (1 + 1e-6 * ctx->CrystalPpm));
 
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x09;
-#ifdef PPM_CALIBRATION
+#ifndef PPM_CALIBRATION
       spi1TxBuffer[1] = (0x0 << 7) | (0x0 << 4) | (0x0 << 0);             // minimal power @ RFO pin
 #else
       spi1TxBuffer[1] = (0x0 << 7) | (0x4 << 4) | (0xf << 0);             // PA off, MaxPower, TXpwr @ RFO pin
@@ -742,10 +742,13 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint3
     /* Get the RF states */
     spi1TxBuffer[0] = SPI_RD_FLAG | 0x18;
     spiProcessSpiMsg(5);
-    uint8_t modemStat   = spi1RxBuffer[1];                                          // LoRa: RegModemStat
-    uint8_t packetSnr   = spi1RxBuffer[2];                                          // LoRa: RegPktSnrValue
-    uint8_t packetRssi  = spi1RxBuffer[3];                                          // LoRa: RegPktRssiValue
-    uint8_t rssi        = spi1RxBuffer[4];                                          // LoRa: RegRssiValue
+    uint8_t   modemStat   = spi1RxBuffer[1];                                        // LoRa: RegModemStat
+    int8_t    packetSnr   = spi1RxBuffer[2];                                        // LoRa: RegPktSnrValue
+    uint8_t   packetRssi  = spi1RxBuffer[3];                                        // LoRa: RegPktRssiValue
+    uint16_t  rssi        = spi1RxBuffer[4];                                        // LoRa: RegRssiValue
+
+    ctx->LastRSSI_dBm             = (int16_t) (packetSnr >= 0 ?  (-157 + 16.0/15.0 * packetRssi)  : (-157 +                                 (int16_t)rssi));
+    ctx->LastPacketStrength_dBm   = (int16_t) (packetSnr >= 0 ?  (-157 +             rssi)        : (-157 + packetRssi + 0.25 * packetSnr                ));
 
     spi1TxBuffer[0] = SPI_RD_FLAG | 0x28;
     spiProcessSpiMsg(5);
@@ -780,14 +783,14 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint3
         "timespan=%10lu -->\t" \
         "irq=0x%02x \t" \
         "modemStat=0x%02x \t" \
-        "rssiWideband=%3u \trssi=%3u \tpacketRssi=%3u \tpacketSnr=%3u \t\t" \
+        "rssiWideband=%+-i dBm \tRSSI=%-4i dBm \tPacket Strength=%-4i dBm \tpacketSnr=%-4i dB \t\t" \
         "rxHdrCnt=%5u \trxValidPktCnt=%5u \t\t" \
         "fifoRxByteAddr=0x%02x \tfifoCurAddr=0x%02x \t\t" \
         "feiHz=%7ld \tfeiPpm=%+7ld\r\n",
         (now - spiPreviousWakeTime),
         irq,
         modemStat,
-        rssiWideband, rssi, packetRssi, packetSnr,
+        -157 + rssiWideband, ctx->LastRSSI_dBm, ctx->LastPacketStrength_dBm, packetSnr,
         rxHeaderCnt, rxValidPktCnt,
         fifoRxByteAddr, fifoRxCurAddr,
         (int32_t)feiHz, (int32_t)feiPpm);
