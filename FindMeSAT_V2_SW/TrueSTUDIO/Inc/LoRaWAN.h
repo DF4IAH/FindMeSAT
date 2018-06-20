@@ -59,6 +59,11 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    DevAddr_LE[4];        // JOIN-ACCEPT
   volatile uint8_t                    DevNonce_LE[2];       // JOIN-REQUEST, REJOIN-REQUEST - V1.02: random value
   volatile uint8_t                    Home_NetID_LE[3];     // JOIN-ACCEPT
+  volatile uint32_t                   LastIqBalTimeUs;      // Last point of system time when procedure was done
+  volatile uint32_t                   LastIqBalDurationUs;  // Duration of balancing procedure
+  volatile int8_t                     LastIqBalTemp;        // Temperature degC when last I/Q balancing took place
+  volatile float                      CrystalPpm;           // PPM value to correct local device crystal drift
+  volatile float                      GatewayPpm;           // PPM value to adjust RX for remote gateway crystal drift
 
   /* Network / MAC specific */
   LoRaWANVersion_t                    LoRaWAN_ver;
@@ -87,8 +92,6 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    AppSKey_1V02[16];     // Session key - JOIN-ACCEPT (derived from: AppKey)
 
   /* Current transmission */
-  volatile float                      CrystalPpm;
-  volatile float                      GatewayPpm;
   volatile LoRaWANctxDir_t            Dir;
   volatile uint8_t                    FCtrl_ADR;
   volatile uint8_t                    FCtrl_ADRACKReq;

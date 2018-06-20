@@ -503,6 +503,17 @@ void LoRaWAN_Init(void)
   }
   loRaWANctx.Ch_EnabledMsk = 0xff;    // All channels valid
 
+  /* I/Q balancing */
+  {
+    loRaWANctx.FrequencyMHz = LoRaWAN_calc_Channel_to_MHz(
+        &loRaWANctx,
+        1,
+        1);                                       // First channel abt. in the middle of the band
+
+    /* Do I/Q balancing in FSK/OOK mode */
+    spiSX127x_TxRx_Preps(&loRaWANctx, TxRx_Mode_IQ_Balancing, NULL);
+  }
+
   /* Seed randomizer */
   {
     /* Prepare and start the receiver */

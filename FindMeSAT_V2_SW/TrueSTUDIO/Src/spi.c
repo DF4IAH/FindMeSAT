@@ -480,11 +480,62 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t
   float   l_f   = ctx->FrequencyMHz;
   uint8_t l_SF  = ctx->SpreadingFactor << SFx_SHIFT;
 
-  /* Switching to LoRa via Reset and SLEEP mode */
+  /* Reset to POR/Reset defaults */
   spiSX127xReset();
+
+  if (TxRx_Mode_IQ_Balancing == mode) {
+    /* Switching to FSK/OOK via SLEEP mode */
+    spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+    spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
+
+    /* Set the frequency */
+    spiSX127xFrequency_MHz(l_f * (1 + 1e-6 * ctx->CrystalPpm));
+
+    /* Start I/Q balancing */
+    {
+      uint8_t balState;
+      uint8_t temp;
+
+      /* Set bit to start */
+      spi1TxBuffer[0] = SPI_WR_FLAG | 0x3b;
+      spi1TxBuffer[1] = 0x42;                                                                   // RegImageCal
+      spiProcessSpiMsg(2);
+
+      /* Wait until the balancing process has finished */
+      uint32_t t0 = getRunTimeCounterValue();
+      uint32_t t1;
+      do {
+        HAL_Delay(1);
+
+        /* Request balancing state */
+        spi1TxBuffer[0] = SPI_RD_FLAG | 0x3b;
+        spiProcessSpiMsg(3);
+        balState  = spi1RxBuffer[1];
+        temp      = spi1RxBuffer[2];
+
+        /* Test for completion */
+        if (!(balState & 0x20)) {
+          t1 = getRunTimeCounterValue();
+          ctx->LastIqBalTemp        = temp - 212;                                                    // Temperature device compensated
+          ctx->LastIqBalTimeUs      = t0;
+          ctx->LastIqBalDurationUs  = t1 - t0;
+          break;
+        }
+      } while (1);
+    }
+
+    /* Return to LoRa mode */
+    spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+    spiSX127xMode(MODE_LoRa    | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+
+    return;
+  }
+
+  /* Switching to LoRa via SLEEP mode */
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
+  /* Common presets for TX / RX */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
 #ifdef PPM_CALIBRATION
   spi1TxBuffer[1] = BW_7kHz8  | CR_4_5 | IHM_OFF;                                             // ModemConfig1
