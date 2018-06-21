@@ -15,17 +15,61 @@
 #define LoRaWAN_FRMPayloadMax         48
 
 
+/* Bit-mask for the loRaWANEventGroup */
+typedef enum LORAWAN_EGW_BM {
+  LORAWAN_EGW__DO_INIT                = 0x00000001UL,
+  LORAWAN_EGW__QUEUE_IN               = 0x00000010UL,
+  LORAWAN_EGW__QUEUE_OUT              = 0x00000020UL,
+} LORAWAN_EGW_BM_t;
+
+/* Command types for the loraInQueue */
+typedef enum loraInQueueCmds {
+  loraInQueueCmds__NOP                = 0,
+  loraInQueueCmds__Init,
+} loraInQueueCmds_t;
+
+/* FSM states of the loRaWANLoRaWANTaskLoop */
+typedef enum Fsm_States {
+  Fsm_NOP                             = 0,
+
+  Fsm_RX1,
+  Fsm_RX2,
+  Fsm_JoinRequestRX1,
+  Fsm_JoinRequestRX2,
+
+  Fsm_MAC_Decode                      = 0x10,
+  Fsm_MAC_JoinRequest,
+  Fsm_MAC_JoinResponse,
+
+} Fsm_States_t;
+
+
+/* LoRaWAN RX windows */
+typedef enum LoRaWAN_RX_windows {
+  LORAWAN_RX_PREPARE_MS               =   10,
+  LORAWAN_EU868_MAX_TX_DURATION_MS    = 3000,                                                   // TODO: Search for right number
+
+  LORAWAN_EU868_DELAY1_MS             = 1000,
+  LORAWAN_EU868_DELAY2_MS             = 2000,
+
+  LORAWAN_EU868_JOIN_ACCEPT_DELAY1_MS = 5000,
+  LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS = 6000,
+} LoRaWAN_RX_windows_t;
+
+/* LoRaWAN version information */
 typedef enum LoRaWANVersion {
   LoRaWANVersion_10                   = 0,
   LoRaWANVersion_11                   = 1,
 } LoRaWANVersion_t;
 
+/* LoRaWAN direction of transmission - Up: device --> gateway / Dn: device <-- gateway */
 typedef enum LoRaWANctxDir {
   Up                                  = 0,
   Dn                                  = 1
 } LoRaWANctxDir_t;
 
 
+/* Memory assignment of the non-volatile memory section of the timer */
 typedef struct LoRaWANctxBkpRam {
 
   /* Skip first entries */
@@ -36,7 +80,7 @@ typedef struct LoRaWANctxBkpRam {
 
   /* Counters */
   uint32_t                            FCntUp;
-  uint32_t                            NFCntDwn;         // LW 1.0: FCntDwn
+  uint32_t                            NFCntDwn;                                                 // LW 1.0: FCntDwn
   uint32_t                            AFCntDwn;
 
   uint32_t                            n8_n8_DLSettings8_RxDelay8;
@@ -54,37 +98,47 @@ typedef struct LoRaWANctx {
   /* Non-volatile counters */
   volatile LoRaWANctxBkpRam_t*        bkpRAM;
 
+  /* FSM */
+  volatile Fsm_States_t               FsmState;
+
   /* Device specific */
-  uint8_t                             DevEUI[8];
-  volatile uint8_t                    DevAddr[4];           // JOIN-ACCEPT
-  volatile uint8_t                    DevNonce[2];          // JOIN-REQUEST, REJOIN-REQUEST - V1.02: random value
-  volatile uint8_t                    Home_NetID[3];        // JOIN-ACCEPT
+  uint8_t                             DevEUI_LE[8];
+  volatile uint8_t                    DevAddr_LE[4];                                            // JOIN-ACCEPT
+  volatile uint8_t                    DevNonce_LE[2];                                           // JOIN-REQUEST, REJOIN-REQUEST - V1.02: random value
+  volatile uint8_t                    Home_NetID_LE[3];                                         // JOIN-ACCEPT
+  volatile uint32_t                   LastIqBalTimeUs;                                          // Last point of system time when procedure was done
+  volatile uint32_t                   LastIqBalDurationUs;                                      // Duration of balancing procedure
+  volatile int8_t                     LastIqBalTemp;                                            // Temperature degC when last I/Q balancing took place
+  volatile float                      CrystalPpm;                                               // PPM value to correct local device crystal drift
+  volatile float                      GatewayPpm;                                               // PPM value to adjust RX for remote gateway crystal drift
 
   /* Network / MAC specific */
   LoRaWANVersion_t                    LoRaWAN_ver;
-//uint8_t                             NwkKey_1V1[16];       // Network root key (for OTA devices)
-  volatile uint8_t                    NwkSKey_1V02[16];     // Session key - JOIN-ACCEPT (derived from: AppKey)
-//uint8_t                             FNwkSKey_1V1[16];     // JOIN-ACCEPT
-//uint8_t                             FNwkSIntKey_1V1[16];  // JOIN-ACCEPT (derived from: NwkKey)
-//uint8_t                             SNwkSIntKey_1V1[16];  // JOIN-ACCEPT (derived from: NwkKey)
-//uint8_t                             NwkSEncKey_1V1[16];   // JOIN-ACCEPT (derived from: NwkKey)
-//uint8_t                             JSIntKey_1V1[16];     // (for OTA devices)
-//uint8_t                             JSEncKey_1V1[16];     // (for OTA devices)
-  volatile uint8_t                    DLSettings;           // JOIN-ACCEPT
-  volatile uint8_t                    RXDelay;              // JOIN-ACCEPT
-  volatile uint8_t                    CFList[16];           // JOIN-ACCEPT - EU-868: Freq Ch3[2:0], Freq Ch4[2:0], Freq Ch5[2:0], Freq Ch6[2:0], Freq Ch7[2:0], CFListType[0]
+//uint8_t                             NwkKey_1V1[16];                                           // Network root key (for OTA devices)
+  volatile uint8_t                    NwkSKey_1V02[16];                                         // Session key - JOIN-ACCEPT (derived from: AppKey)
+//uint8_t                             FNwkSKey_1V1[16];                                         // JOIN-ACCEPT
+//uint8_t                             FNwkSIntKey_1V1[16];                                      // JOIN-ACCEPT (derived from: NwkKey)
+//uint8_t                             SNwkSIntKey_1V1[16];                                      // JOIN-ACCEPT (derived from: NwkKey)
+//uint8_t                             NwkSEncKey_1V1[16];                                       // JOIN-ACCEPT (derived from: NwkKey)
+//uint8_t                             JSIntKey_1V1[16];                                         // (for OTA devices)
+//uint8_t                             JSEncKey_1V1[16];                                         // (for OTA devices)
+  volatile uint8_t                    NetID_LE[3];                                              // JOIN-RESPONSE
+  volatile uint8_t                    DLSettings;                                               // JOIN-ACCEPT
+  volatile uint8_t                    RXDelay;                                                  // JOIN-ACCEPT
+  volatile uint8_t                    CFList[16];                                               // JOIN-ACCEPT - EU-868: Freq Ch3[2:0], Freq Ch4[2:0], Freq Ch5[2:0], Freq Ch6[2:0], Freq Ch7[2:0], CFListType[0]
   volatile float                      Ch_Frequencies_MHz[8];
   volatile uint8_t                    Ch_EnabledMsk;
 
   /* Join Server specific */
-//uint8_t                             JoinEUI_1V1[8];       // JOIN-REQUEST, REJOIN-REQUEST
-//volatile uint8_t                    JoinNonce_1V1[4];     // JOIN-ACCEPT
-//volatile uint8_t                    ServerNonce_1V1[3];
+//uint8_t                             JoinEUI_LE_1V1[8];                                        // JOIN-REQUEST, REJOIN-REQUEST
+//volatile uint8_t                    JoinNonce_LE_1V1[4];                                      // JOIN-ACCEPT
+//volatile uint8_t                    ServerNonce_LE_1V1[3];
 
   /* Application specific */
-  uint8_t                             AppEUI[8];
-  uint8_t                             AppKey[16];           // Application root key (for OTA devices)
-  volatile uint8_t                    AppSKey_1V02[16];     // Session key - JOIN-ACCEPT (derived from: AppKey)
+  uint8_t                             AppEUI_LE[8];
+  uint8_t                             AppKey[16];                                               // Application root key (for OTA devices)
+  volatile uint8_t                    AppNonce_LE[3];                                           // JOIN-RESPONSE
+  volatile uint8_t                    AppSKey_1V02[16];                                         // Session key - JOIN-ACCEPT (derived from: AppKey)
 
   /* Current transmission */
   volatile LoRaWANctxDir_t            Dir;
@@ -96,10 +150,14 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    FPort;
   volatile uint16_t                   ConfFCnt;
   volatile uint8_t                    SpreadingFactor;
-  volatile float                      Frequency;
+  volatile float                      FrequencyMHz;
   volatile uint8_t                    TxDr;
   volatile uint8_t                    TxCh;
-
+  volatile int16_t                    LastRSSIDbm;
+//volatile int16_t                    LastPacketStrengthDBm;
+  volatile int8_t                     LastPacketSnrDb;
+  volatile float                      LastFeiHz;
+  volatile float                      LastFeiPpm;
 } LoRaWANctx_t;
 
 
@@ -135,8 +193,8 @@ uint8_t GET_BYTE_OF_WORD(uint32_t word, uint8_t pos);
 
 typedef enum LoRaWANMAC_CID {
 
-  ResetInd_UP                         = 0x01,   // ABP devices only, LW 1.1
-  ResetConf_DN                        = 0x01,   // ABP devices only, LW 1.1
+  ResetInd_UP                         = 0x01,                                                   // ABP devices only, LW 1.1
+  ResetConf_DN                        = 0x01,                                                   // ABP devices only, LW 1.1
 
   LinkCheckReq_UP                     = 0x02,
   LinkCheckAns_DN                     = 0x02,
@@ -233,7 +291,7 @@ typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
 } LoRaWAN_CalcMIC_JOINREQUEST_t;
 
 
-typedef struct LoRaWAN_Message {
+typedef struct LoRaWAN_TX_Message {
 volatile uint8_t  msg_Len;
 volatile uint8_t  msg_Buf[LoRaWAN_MsgLenMax];
 uint8_t           msg_MHDR;
@@ -244,7 +302,12 @@ uint8_t           msg_FOpts_Buf[16];
 uint8_t           msg_FOpts_Encoded[16];
 uint8_t           msg_FRMPayload_Len;
 uint8_t           msg_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax];
-} LoRaWAN_Message_t;
+} LoRaWAN_TX_Message_t;
+
+typedef struct LoRaWAN_RX_Message {
+volatile uint8_t  msg_Len;
+volatile uint8_t  msg_Buf[LoRaWAN_MsgLenMax];
+} LoRaWAN_RX_Message_t;
 
 
 typedef struct LoraliveApp {
@@ -305,17 +368,23 @@ typedef struct LoraliveApp {
 uint8_t LoRaWAN_calc_randomChannel(LoRaWANctx_t* ctx);
 float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, uint8_t dflt);
 
-void LoRaWAN_Init(void);
-
 void LoRaWANctx_readFLASH(void);
 void LoRaWANctx_applyKeys_trackMeApp(void);
 
-void LoRaWAN_MAC_JOINREQUEST(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg);
+void LoRaWAN_QueueIn_Process(void);
 
-uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg);
-void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime);
+uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg);
+void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t tsEndOfTx, uint32_t startfterTxMs, uint32_t stopAfterTxMs);
 
-void LoRaWAN_App_trackMeApp_pushUp(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, LoraliveApp_t* app, uint8_t size);
+void LoRaWAN_MAC_JOINREQUEST_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg);
+uint8_t LoRaWAN_MAC_JOINACCEPT_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg);
+
+void LoRaWAN_App_trackMeApp_pushUp(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg, LoraliveApp_t* app, uint8_t size);
+#if 0
 void LoRaWAN_App_trackMeApp_receiveLoop(LoRaWANctx_t* ctx);
+#endif
+
+void loRaWANLoRaWANTaskInit(void);
+void loRaWANLoRaWANTaskLoop(void);
 
 #endif /* LORAWAN_H_ */
