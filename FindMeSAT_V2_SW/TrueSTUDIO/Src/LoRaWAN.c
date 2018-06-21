@@ -600,7 +600,7 @@ void LoRaWAN_Init(void)
         LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg, tsEndOfTx + 9998);
       }
 
-      /* Process message */
+      /* Process the message */
       if (loRaWanRxMsg.msg_Len) {
         uint8_t decPad[64] = { 0 };
         uint8_t micPad[16] = { 0 };
@@ -613,15 +613,21 @@ void LoRaWAN_Init(void)
         }
         memset(decPad + loRaWanRxMsg.msg_Len, 0, sizeof(decPad) - loRaWanRxMsg.msg_Len);
 
-        /*
-        cmac = aes128_cmac(AppKey,  MHDR | AppNonce | NetID | DevAddr | DLSettings | RxDelay | CFList)
-        MIC = cmac[0..3] */
-
         /* Check MIC */
-        cryptoAesCmac(loRaWANctx.AppKey, decPad, loRaWanRxMsg.msg_Len, micPad);
+        cryptoAesCmac(loRaWANctx.AppKey, decPad, loRaWanRxMsg.msg_Len - 4, micPad);
+        uint8_t micMatch = 1;
+        for (uint8_t idx = 0; idx < 4; idx++) {
+          if (micPad[idx] != decPad[idx + 29]) {
+            micMatch = 0;
+            break;
+          }
+        }
 
         /* Process the data */
-        __asm volatile ( "" );
+        if (micMatch) {
+
+
+        }
       }
     }
   }
