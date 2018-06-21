@@ -27,6 +27,9 @@
 /* Private variables ---------------------------------------------------------*/
 extern osSemaphoreId      usbToHostBinarySemHandle;
 extern EventGroupHandle_t usbToHostEventGroupHandle;
+extern EventGroupHandle_t loRaWANEventGroupHandle;
+extern osMessageQId       loraInQueueHandle;
+extern osMessageQId       loraOutQueueHandle;
 extern LoRaWANctx_t       loRaWANctx;
 extern LoraliveApp_t      loraliveApp;
 extern uint32_t           spiPreviousWakeTime;
@@ -99,12 +102,24 @@ void prvControllerUsbGreet(void)
 void prvControllerInitBeforeGreet(void)
 {
   /* USB typing echo */
-  xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON);   // TODO: should be from Config-FLASH page
+  xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON);                       // TODO: should be from Config-FLASH page
 
   /* Check for attached SX127x_mbed_shield */
-  if (spiDetectShieldSX127x()) {
-    /* Init LoRaWAM module */
-    LoRaWAN_Init();
+  if (HAL_OK == spiDetectShieldSX127x()) {
+    /* Send INIT message to the LoRaWAN task */
+    const uint8_t maxWaitMs = 25;
+    uint8_t msgToLoRaWAN[2] = { 1, loraInQueueCmds__Init };
+
+    /* Write message into loraInQueue */
+    for (uint8_t idx = 0; idx < sizeof(msgToLoRaWAN); idx++) {
+      xQueueSendToBack(loraInQueueHandle, msgToLoRaWAN + idx, maxWaitMs);
+    }
+
+    /* Set QUEUE_IN bit */
+    xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
+
+    /* Give up rest of process time */
+    osThreadYield();
   }
 }
 

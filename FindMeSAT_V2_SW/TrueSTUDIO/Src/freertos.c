@@ -57,6 +57,7 @@
 #include "controller.h"
 #include "interpreter.h"
 #include "usb.h"
+#include "LoRaWAN.h"
 
 /* USER CODE END Includes */
 
@@ -66,8 +67,11 @@ osThreadId usbToHostTaskHandle;
 osThreadId usbFromHostTaskHandle;
 osThreadId controllerTaskHandle;
 osThreadId interpreterTaskHandle;
+osThreadId loRaWANTaskHandle;
 osMessageQId usbToHostQueueHandle;
 osMessageQId usbFromHostQueueHandle;
+osMessageQId loraInQueueHandle;
+osMessageQId loraOutQueueHandle;
 osSemaphoreId usbToHostBinarySemHandle;
 
 /* USER CODE BEGIN Variables */
@@ -77,6 +81,7 @@ EventGroupHandle_t usbToHostEventGroupHandle;
 EventGroupHandle_t adcEventGroupHandle;
 EventGroupHandle_t extiEventGroupHandle;
 EventGroupHandle_t spiEventGroupHandle;
+EventGroupHandle_t loRaWANEventGroupHandle;
 
 /* USER CODE END Variables */
 
@@ -86,6 +91,7 @@ void StartUsbToHostTask(void const * argument);
 void StartUsbFromHostTask(void const * argument);
 void StartControllerTask(void const * argument);
 void StartInterpreterTask(void const * argument);
+void StartLoRaWANTask(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -159,6 +165,7 @@ void MX_FREERTOS_Init(void) {
   adcEventGroupHandle = xEventGroupCreate();
   extiEventGroupHandle = xEventGroupCreate();
   spiEventGroupHandle = xEventGroupCreate();
+  loRaWANEventGroupHandle = xEventGroupCreate();
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* USER CODE BEGIN RTOS_TIMERS */
@@ -186,6 +193,10 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(interpreterTask, StartInterpreterTask, osPriorityAboveNormal, 0, 128);
   interpreterTaskHandle = osThreadCreate(osThread(interpreterTask), NULL);
 
+  /* definition and creation of loRaWANTask */
+  osThreadDef(loRaWANTask, StartLoRaWANTask, osPriorityAboveNormal, 0, 1024);
+  loRaWANTaskHandle = osThreadCreate(osThread(loRaWANTask), NULL);
+
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
   /* USER CODE END RTOS_THREADS */
@@ -199,6 +210,14 @@ void MX_FREERTOS_Init(void) {
   osMessageQDef(usbFromHostQueue, 32, uint8_t);
   usbFromHostQueueHandle = osMessageCreate(osMessageQ(usbFromHostQueue), NULL);
 
+  /* definition and creation of loraInQueue */
+  osMessageQDef(loraInQueue, 32, uint8_t);
+  loraInQueueHandle = osMessageCreate(osMessageQ(loraInQueue), NULL);
+
+  /* definition and creation of loraOutQueue */
+  osMessageQDef(loraOutQueue, 32, uint8_t);
+  loraOutQueueHandle = osMessageCreate(osMessageQ(loraOutQueue), NULL);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   vQueueAddToRegistry(usbToHostQueueHandle,     "USBtoHostQ");
@@ -206,6 +225,8 @@ void MX_FREERTOS_Init(void) {
   vQueueAddToRegistry(usbToHostBinarySemHandle, "USBtoHost");
   vQueueAddToRegistry(usbFromHostQueueHandle,   "USBfromHostQ");
   vQueueAddToRegistry(usbToHostBinarySemHandle, "USBfromHostBSem");
+  vQueueAddToRegistry(loraInQueueHandle,        "loraInQ");
+  vQueueAddToRegistry(loraOutQueueHandle,       "loraOutQ");
   /* USER CODE END RTOS_QUEUES */
 }
 
@@ -286,12 +307,31 @@ void StartInterpreterTask(void const * argument)
   osDelay(100);
 
   interpreterInterpreterTaskInit();
+
   /* Infinite loop */
   for(;;)
   {
     interpreterInterpreterTaskLoop();
   }
   /* USER CODE END StartInterpreterTask */
+}
+
+/* StartLoRaWANTask function */
+void StartLoRaWANTask(void const * argument)
+{
+  /* USER CODE BEGIN StartLoRaWANTask */
+
+  /* Give DefaultTask time to prepare the device */
+  osDelay(100);
+
+  loRaWANLoRaWANTaskInit();
+
+  /* Infinite loop */
+  for(;;)
+  {
+    loRaWANLoRaWANTaskLoop();
+  }
+  /* USER CODE END StartLoRaWANTask */
 }
 
 /* USER CODE BEGIN Application */

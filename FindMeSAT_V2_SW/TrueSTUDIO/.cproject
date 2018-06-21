@@ -37,7 +37,6 @@
 								<option id="com.atollic.truestudio.as.symbols.defined.1889587949" name="Defined symbols" superClass="com.atollic.truestudio.as.symbols.defined" useByScannerDiscovery="false" valueType="definedSymbols">
 									<listOptionValue builtIn="false" value="USE_STM32L4XX_NUCLEO_144_SMPS" />
 									<listOptionValue builtIn="false" value="USE_ADP5301ACBZ" />
-									<listOptionValue builtIn="false" value="LORAWAN_1V02" />
 								</option>
 								<option id="com.atollic.truestudio.common_options.target.interwork.1391481002" name="Mix ARM/Thumb" superClass="com.atollic.truestudio.common_options.target.interwork" useByScannerDiscovery="false" />
 								<inputType id="com.atollic.truestudio.as.input.374932590" name="Input" superClass="com.atollic.truestudio.as.input" />
@@ -63,7 +62,10 @@
 									<listOptionValue builtIn="false" value="STM32L496xx" />
 									<listOptionValue builtIn="false" value="USE_STM32L4XX_NUCLEO_144_SMPS" />
 									<listOptionValue builtIn="false" value="USE_ADP5301ACBZ" />
+									<listOptionValue builtIn="false" value="SX1276" />
 									<listOptionValue builtIn="false" value="LORAWAN_1V02" />
+									<listOptionValue builtIn="false" value="NO_LORAWAN_1V1" />
+									<listOptionValue builtIn="false" value="NO_PPM_CALIBRATION" />
 								</option>
 								<option id="com.atollic.truestudio.common_options.target.endianess.1854274048" name="Endianess" superClass="com.atollic.truestudio.common_options.target.endianess" useByScannerDiscovery="false" value="com.atollic.truestudio.common_options.target.endianess.little" valueType="enumerated" />
 								<option id="com.atollic.truestudio.common_options.target.mcpu.191909026" name="Microcontroller" superClass="com.atollic.truestudio.common_options.target.mcpu" useByScannerDiscovery="false" value="STM32L496ZG" valueType="enumerated" />
