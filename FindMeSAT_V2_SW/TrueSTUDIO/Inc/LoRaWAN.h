@@ -75,6 +75,7 @@ typedef struct LoRaWANctx {
 //uint8_t                             NwkSEncKey_1V1[16];   // JOIN-ACCEPT (derived from: NwkKey)
 //uint8_t                             JSIntKey_1V1[16];     // (for OTA devices)
 //uint8_t                             JSEncKey_1V1[16];     // (for OTA devices)
+  volatile uint8_t                    NetID_LE[3];          // JOIN-RESPONSE
   volatile uint8_t                    DLSettings;           // JOIN-ACCEPT
   volatile uint8_t                    RXDelay;              // JOIN-ACCEPT
   volatile uint8_t                    CFList[16];           // JOIN-ACCEPT - EU-868: Freq Ch3[2:0], Freq Ch4[2:0], Freq Ch5[2:0], Freq Ch6[2:0], Freq Ch7[2:0], CFListType[0]
@@ -89,6 +90,7 @@ typedef struct LoRaWANctx {
   /* Application specific */
   uint8_t                             AppEUI_LE[8];
   uint8_t                             AppKey[16];           // Application root key (for OTA devices)
+  volatile uint8_t                    AppNonce_LE[3];       // JOIN-RESPONSE
   volatile uint8_t                    AppSKey_1V02[16];     // Session key - JOIN-ACCEPT (derived from: AppKey)
 
   /* Current transmission */
@@ -242,7 +244,7 @@ typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
 } LoRaWAN_CalcMIC_JOINREQUEST_t;
 
 
-typedef struct LoRaWAN_Message {
+typedef struct LoRaWAN_TX_Message {
 volatile uint8_t  msg_Len;
 volatile uint8_t  msg_Buf[LoRaWAN_MsgLenMax];
 uint8_t           msg_MHDR;
@@ -253,7 +255,12 @@ uint8_t           msg_FOpts_Buf[16];
 uint8_t           msg_FOpts_Encoded[16];
 uint8_t           msg_FRMPayload_Len;
 uint8_t           msg_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax];
-} LoRaWAN_Message_t;
+} LoRaWAN_TX_Message_t;
+
+typedef struct LoRaWAN_RX_Message {
+volatile uint8_t  msg_Len;
+volatile uint8_t  msg_Buf[LoRaWAN_MsgLenMax];
+} LoRaWAN_RX_Message_t;
 
 
 typedef struct LoraliveApp {
@@ -319,12 +326,13 @@ void LoRaWAN_Init(void);
 void LoRaWANctx_readFLASH(void);
 void LoRaWANctx_applyKeys_trackMeApp(void);
 
-void LoRaWAN_MAC_JOINREQUEST(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg);
+void LoRaWAN_MAC_JOINREQUEST(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg);
+uint8_t LoRaWAN_MAC_JOINACCEPT(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t tsEndOfTx);
 
-uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg);
-void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime);
+uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg);
+void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t stopTime);
 
-void LoRaWAN_App_trackMeApp_pushUp(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, LoraliveApp_t* app, uint8_t size);
+void LoRaWAN_App_trackMeApp_pushUp(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg, LoraliveApp_t* app, uint8_t size);
 void LoRaWAN_App_trackMeApp_receiveLoop(LoRaWANctx_t* ctx);
 
 #endif /* LORAWAN_H_ */

@@ -475,7 +475,7 @@ void spiSX127xRegister_IRQ_clearAll(void)
   spiProcessSpiMsg(2);
 }
 
-void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_Message_t* msg)
+void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg)
 {
   float   l_f   = ctx->FrequencyMHz;
   uint8_t l_SF  = ctx->SpreadingFactor << SFx_SHIFT;
@@ -716,7 +716,7 @@ uint32_t spiSX127x_WaitUntil_TxDone(uint8_t doPreviousWakeTime, uint32_t stopTim
   return ts;
 }
 
-void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_Message_t* msg, uint32_t stopTime)
+void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t stopTime)
 {
   volatile EventBits_t  eb;
   volatile uint8_t      irq;
