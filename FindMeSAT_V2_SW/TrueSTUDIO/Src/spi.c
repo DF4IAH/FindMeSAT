@@ -256,10 +256,10 @@ void HAL_SPI_ErrorCallback(SPI_HandleTypeDef *hspi)
 }
 
 
-const uint16_t spiWait_MaxWaitEGMs = 500;
+const uint16_t spiWait_EGW_MaxWaitTicks = 500;
 uint8_t spiProcessSpiReturnWait(void)
 {
-  EventBits_t eb = xEventGroupWaitBits(spiEventGroupHandle, SPI_SPI1_EG__RDY | SPI_SPI1_EG__ERROR, SPI_SPI1_EG__RDY | SPI_SPI1_EG__ERROR, 0, spiWait_MaxWaitEGMs);
+  EventBits_t eb = xEventGroupWaitBits(spiEventGroupHandle, SPI_SPI1_EG__RDY | SPI_SPI1_EG__ERROR, SPI_SPI1_EG__RDY | SPI_SPI1_EG__ERROR, 0, spiWait_EGW_MaxWaitTicks);
   if (eb & SPI_SPI1_EG__RDY) {
     return HAL_OK;
   }
@@ -338,7 +338,7 @@ void spiSX127xFrequency_MHz(float mhz)
   volatile uint32_t bufLen      = 0UL;
 
   /* Debugging information */
-  bufLen = sprintf((char*) buf, "f = %03ld.%01d MHz\r\n", fmt_mhz, fmt_mhz_f1);
+  bufLen = sprintf((char*) buf, "LoRaWAN: f = %03ld.%01d MHz\r\n", fmt_mhz, fmt_mhz_f1);
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) buf, bufLen);
   osSemaphoreRelease(usbToHostBinarySemHandle);
@@ -702,7 +702,7 @@ uint32_t spiSX127x_WaitUntil_TxDone(uint8_t doPreviousWakeTime, uint32_t stopTim
 
     if ((eb & EXTI_SX__DIO0) || (irq & (1U << TxDoneMask))) {
       /* Remember point of time when TxDone was set */
-      ts = osKernelSysTick();
+      ts = xTaskGetTickCount();
       if (doPreviousWakeTime) {
         spiPreviousWakeTime = ts;
       }
@@ -720,7 +720,7 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
 {
   volatile EventBits_t  eb;
   volatile uint8_t      irq;
-  uint32_t              now             = osKernelSysTick();
+  uint32_t              now             = xTaskGetTickCount();
 #if 0
   char                  debugBuf[512]   = { 0 };
   int                   debugLen        = 0;
@@ -837,7 +837,7 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
     }
 
     eb  = xEventGroupWaitBits(extiEventGroupHandle, EXTI_SX__DIO0, EXTI_SX__DIO0, 0, ticks);
-    now = osKernelSysTick();
+    now = xTaskGetTickCount();
 
     /* Get the current IRQ flags */
     spi1TxBuffer[0] = SPI_RD_FLAG | 0x12;     // LoRa: RegIrqFlags
