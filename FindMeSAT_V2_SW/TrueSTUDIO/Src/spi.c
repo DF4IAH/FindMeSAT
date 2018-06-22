@@ -599,7 +599,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
       if (!msg) {
         Error_Handler();
       }
-      spiSX127xLoRa_setTxMsgLen(msg->msg_Len);
+      spiSX127xLoRa_setTxMsgLen(msg->msg_encoded_Len);
 
       /* Prepare the transmitter circuits */
       spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | FSTX);
@@ -940,8 +940,8 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
           spiProcessSpiMsg(1 + rxNbBytes);
 
           /* Copy SPI receive buffer content to msg object */
-          memcpy((void*)msg->msg_Buf, (const void*)spi1RxBuffer + 1, rxNbBytes);
-          msg->msg_Len = rxNbBytes;
+          memcpy((void*)msg->msg_encoded_Buf, (const void*)spi1RxBuffer + 1, rxNbBytes);
+          msg->msg_encoded_Len = rxNbBytes;
 
 #if 0
           for (uint8_t idx = 0; idx < rxNbBytes; ++idx) {

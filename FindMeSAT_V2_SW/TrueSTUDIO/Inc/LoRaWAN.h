@@ -32,15 +32,44 @@ typedef enum loraInQueueCmds {
 typedef enum Fsm_States {
   Fsm_NOP                             = 0,
 
-  Fsm_RX1,
+  Fsm_RX1                             = 0x01,
   Fsm_RX2,
   Fsm_JoinRequestRX1,
   Fsm_JoinRequestRX2,
 
-  Fsm_MAC_Decode                      = 0x10,
-  Fsm_MAC_JoinRequest,
-  Fsm_MAC_JoinResponse,
+  Fsm_TX                              = 0x09,
 
+  Fsm_MAC_Decode                      = 0x10,
+
+  Fsm_MAC_JoinRequest,
+  Fsm_MAC_JoinAccept,
+
+  Fsm_MAC_LinkCheckReq,
+  Fsm_MAC_LinkCheckAns,
+
+  Fsm_MAC_LinkADRReq,
+  Fsm_MAC_LinkADRAns,
+
+  Fsm_MAC_DutyCycleReq,
+  Fsm_MAC_DutyCycleAns,
+
+  Fsm_MAC_RXParamSetupReq,
+  Fsm_MAC_RXParamSetupAns,
+
+  Fsm_MAC_DevStatusReq,
+  Fsm_MAC_DevStatusAns,
+
+  Fsm_MAC_NewChannelReq,
+  Fsm_MAC_NewChannelAns,
+
+  Fsm_MAC_RXTimingSetupReq,
+  Fsm_MAC_RXTimingSetupAns,
+
+  Fsm_MAC_TxParamSetupReq,
+  Fsm_MAC_TxParamSetupAns,
+
+  Fsm_MAC_DlChannelReq,
+  Fsm_MAC_DlChannelAns,
 } Fsm_States_t;
 
 
@@ -148,7 +177,8 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    FCtrl_ClassB;
   volatile uint8_t                    FCtrl_FPending;
   volatile uint8_t                    FPort;
-  volatile uint16_t                   ConfFCnt;
+  volatile uint32_t                   FCntUp;
+  volatile uint32_t                   FCntDown;
   volatile uint8_t                    SpreadingFactor;
   volatile float                      FrequencyMHz;
   volatile uint8_t                    TxDr;
@@ -292,21 +322,38 @@ typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
 
 
 typedef struct LoRaWAN_TX_Message {
-volatile uint8_t  msg_Len;
-volatile uint8_t  msg_Buf[LoRaWAN_MsgLenMax];
-uint8_t           msg_MHDR;
-uint8_t           msg_FCtrl;
-uint16_t          msg_FCnt;
-uint8_t           msg_FOpts_Len;
-uint8_t           msg_FOpts_Buf[16];
-uint8_t           msg_FOpts_Encoded[16];
-uint8_t           msg_FRMPayload_Len;
-uint8_t           msg_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax];
+
+/* Ready for transport section */
+volatile uint8_t  msg_encoded_Len;
+volatile uint8_t  msg_encoded_Buf[LoRaWAN_MsgLenMax];
+
+
+/* Prepare section */
+uint8_t           msg_prep_MHDR;
+uint8_t           msg_prep_FCtrl;
+uint16_t          msg_prep_FCnt;
+//
+uint8_t           msg_prep_FOpts_Len;
+uint8_t           msg_prep_FOpts_Buf[16];
+#ifdef LORAWAN_1V1
+uint8_t           msg_prep_FOpts_Encoded[16];
+#endif
+//
+uint8_t           msg_prep_FPort_absent;
+uint8_t           msg_prep_FPort;
+//
+uint8_t           msg_prep_FRMPayload_Len;
+uint8_t           msg_prep_FRMPayload_Buf[LoRaWAN_FRMPayloadMax];
+uint8_t           msg_prep_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax];
+
 } LoRaWAN_TX_Message_t;
 
 typedef struct LoRaWAN_RX_Message {
-volatile uint8_t  msg_Len;
-volatile uint8_t  msg_Buf[LoRaWAN_MsgLenMax];
+
+/* Received data section */
+volatile uint8_t  msg_encoded_Len;
+volatile uint8_t  msg_encoded_Buf[LoRaWAN_MsgLenMax];
+
 } LoRaWAN_RX_Message_t;
 
 
