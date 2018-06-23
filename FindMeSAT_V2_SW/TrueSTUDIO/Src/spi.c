@@ -57,6 +57,7 @@
 #include <string.h>
 
 #include "FreeRTOS.h"
+#include "stm32l4xx_nucleo_144.h"
 #include "stm32l496xx.h"
 #include "cmsis_os.h"
 
@@ -318,7 +319,7 @@ void spiSX127xReset(void)
   HAL_GPIO_Init(SX_RESET_GPIO_Port, &GPIO_InitStruct);
 
   /* At least for 100 µs */
-  HAL_Delay(1);
+  osDelay(1);
 
   /* Release the nRESET line */
   HAL_GPIO_WritePin(SX_RESET_GPIO_Port, SX_RESET_Pin, GPIO_PIN_SET);
@@ -327,7 +328,7 @@ void spiSX127xReset(void)
   HAL_GPIO_Init(SX_RESET_GPIO_Port, &GPIO_InitStruct);
 
   /* Delay for 5 ms before accessing the chip */
-  HAL_Delay(5);
+  osDelay(5);
 }
 
 void spiSX127xFrequency_MHz(float mhz)
@@ -465,7 +466,7 @@ void spiSX127xMode(spiSX127x_Mode_t mode)
   }
 
   /* Delay after mode-change */
-  HAL_Delay(25);
+  osDelay(25);
 }
 
 void spiSX127xRegister_IRQ_clearAll(void)
@@ -477,21 +478,29 @@ void spiSX127xRegister_IRQ_clearAll(void)
 
 void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg)
 {
-  float   l_f   = ctx->FrequencyMHz;
-  uint8_t l_SF  = ctx->SpreadingFactor << SFx_SHIFT;
+  uint32_t  PreviousWakeTime  = 0UL;
+  float     l_f               = ctx->FrequencyMHz;
+  uint8_t   l_SF              = ctx->SpreadingFactor << SFx_SHIFT;
 
   if (TxRx_Mode_IQ_Balancing == mode) {
     /* Switching to FSK/OOK via SLEEP mode */
     spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
-    spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
     /* Set the frequency */
     spiSX127xFrequency_MHz(l_f * (1 + 1e-6 * ctx->CrystalPpm));
+
+    /* Warm up receiver before balancing - wait until USB DCD is ready */
+    spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
+    osDelayUntil(&PreviousWakeTime, 3600);
+    spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
     /* Start I/Q balancing */
     {
       uint8_t balState;
       uint8_t temp;
+
+      /* Blue LED on */
+      HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);
 
       /* Set bit to start */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x3b;
@@ -502,7 +511,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
       uint32_t t0 = getRunTimeCounterValue();
       uint32_t t1;
       do {
-        HAL_Delay(1);
+        osDelay(1);
 
         /* Request balancing state */
         spi1TxBuffer[0] = SPI_RD_FLAG | 0x3b;
@@ -520,6 +529,9 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
         }
       } while (1);
     }
+
+    /* Blue LED off */
+    HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);
 
     /* Return to LoRa mode */
     spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);

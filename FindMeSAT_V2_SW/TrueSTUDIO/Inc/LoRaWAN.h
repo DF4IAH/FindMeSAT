@@ -318,12 +318,13 @@ typedef struct MICBlockB0_Dn {
 typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
   MIC_JOINREQUEST                     = 0x01,
   MIC_DATAMESSAGE                     = 0x11,
-} LoRaWAN_CalcMIC_JOINREQUEST_t;
+} LoRaWAN_CalcMIC_VARIANT_t;
 
 
 typedef struct LoRaWAN_TX_Message {
 
 /* Ready for transport section */
+volatile uint8_t  msg_encoded_EncDone;
 volatile uint8_t  msg_encoded_Len;
 volatile uint8_t  msg_encoded_Buf[LoRaWAN_MsgLenMax];
 
@@ -412,24 +413,10 @@ typedef struct LoraliveApp {
 
 
 
-uint8_t LoRaWAN_calc_randomChannel(LoRaWANctx_t* ctx);
-float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, uint8_t dflt);
-
-void LoRaWANctx_readFLASH(void);
 void LoRaWANctx_applyKeys_trackMeApp(void);
 
-void LoRaWAN_QueueIn_Process(void);
-
-uint32_t LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg);
-void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t tsEndOfTx, uint32_t startfterTxMs, uint32_t stopAfterTxMs);
-
-void LoRaWAN_MAC_JOINREQUEST_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg);
-uint8_t LoRaWAN_MAC_JOINACCEPT_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg);
-
-void LoRaWAN_App_trackMeApp_pushUp(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg, LoraliveApp_t* app, uint8_t size);
-#if 0
-void LoRaWAN_App_trackMeApp_receiveLoop(LoRaWANctx_t* ctx);
-#endif
+uint8_t LoRaWAN_calc_randomChannel(LoRaWANctx_t* ctx);
+float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, uint8_t dflt);
 
 void loRaWANLoRaWANTaskInit(void);
 void loRaWANLoRaWANTaskLoop(void);

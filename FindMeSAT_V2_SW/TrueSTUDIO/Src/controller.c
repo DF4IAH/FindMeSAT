@@ -117,9 +117,6 @@ void prvControllerInitBeforeGreet(void)
 
     /* Set QUEUE_IN bit */
     xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
-
-    /* Give up rest of process time */
-    osThreadYield();
   }
 }
 
