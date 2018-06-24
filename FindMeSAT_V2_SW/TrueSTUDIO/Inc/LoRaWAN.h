@@ -109,7 +109,11 @@ typedef struct LoRaWANctxBkpRam {
 
   /* Counters */
   uint32_t                            FCntUp;
-  uint32_t                            NFCntDwn;                                                 // LW 1.0: FCntDwn
+#ifdef LORAWAN_1V02
+  uint32_t                            FCntDwn;
+#elif LORAWAN_1V1
+  uint32_t                            NFCntDwn;
+#endif
   uint32_t                            AFCntDwn;
 
   uint32_t                            n8_n8_DLSettings8_RxDelay8;
@@ -144,7 +148,7 @@ typedef struct LoRaWANctx {
   /* Network / MAC specific */
   LoRaWANVersion_t                    LoRaWAN_ver;
 //uint8_t                             NwkKey_1V1[16];                                           // Network root key (for OTA devices)
-  volatile uint8_t                    NwkSKey_1V02[16];                                         // Session key - JOIN-ACCEPT (derived from: AppKey)
+  volatile uint8_t                    NwkSKey[16];                                              // Session key - JOIN-ACCEPT (derived from: AppKey)
 //uint8_t                             FNwkSKey_1V1[16];                                         // JOIN-ACCEPT
 //uint8_t                             FNwkSIntKey_1V1[16];                                      // JOIN-ACCEPT (derived from: NwkKey)
 //uint8_t                             SNwkSIntKey_1V1[16];                                      // JOIN-ACCEPT (derived from: NwkKey)
@@ -167,7 +171,7 @@ typedef struct LoRaWANctx {
   uint8_t                             AppEUI_LE[8];
   uint8_t                             AppKey[16];                                               // Application root key (for OTA devices)
   volatile uint8_t                    AppNonce_LE[3];                                           // JOIN-RESPONSE
-  volatile uint8_t                    AppSKey_1V02[16];                                         // Session key - JOIN-ACCEPT (derived from: AppKey)
+  volatile uint8_t                    AppSKey[16];                                              // Session key - JOIN-ACCEPT (derived from: AppKey)
 
   /* Current transmission */
   volatile LoRaWANctxDir_t            Dir;
@@ -176,9 +180,8 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    FCtrl_ACK;
   volatile uint8_t                    FCtrl_ClassB;
   volatile uint8_t                    FCtrl_FPending;
+  volatile uint8_t                    FCtrl_FOptsLen;
   volatile uint8_t                    FPort;
-  volatile uint32_t                   FCntUp;
-  volatile uint32_t                   FCntDown;
   volatile uint8_t                    SpreadingFactor;
   volatile float                      FrequencyMHz;
   volatile uint8_t                    TxDr;
@@ -207,15 +210,15 @@ typedef enum LoRaWAN_MajorBF {
 } LoRaWAN_MajorBF_t;
 
 
-#define LoRaWAN_MHDR_MType_SL         5
-#define LoRaWAN_MHDR_Major_SL         0
+#define LoRaWAN_MHDR_MType_SHIFT      5
+#define LoRaWAN_MHDR_Major_SHIFT      0
 
-#define LoRaWAN_FCtl_ADR_SL           7
-#define LoRaWAN_FCtl_ADRACKReq_SL     6
-#define LoRaWAN_FCtl_ACK_SL           5
-#define LoRaWAN_FCtl_ClassB_SL        4
-#define LoRaWAN_FCtl_FPending_SL      4
-#define LoRaWAN_FCtl_FOptsLen_SL      0
+#define LoRaWAN_FCtl_ADR_SHIFT        7
+#define LoRaWAN_FCtl_ADRACKReq_SHIFT  6
+#define LoRaWAN_FCtl_ACK_SHIFT        5
+#define LoRaWAN_FCtl_ClassB_SHIFT     4
+#define LoRaWAN_FCtl_FPending_SHIFT   4
+#define LoRaWAN_FCtl_FOptsLen_SHIFT   0
 
 
 uint8_t GET_BYTE_OF_WORD(uint32_t word, uint8_t pos);
@@ -280,6 +283,18 @@ typedef struct FRMPayloadBlockA_Up {
   uint8_t                             idx;
 } FRMPayloadBlockA_Up_t;
 
+#ifdef LORAWAN_1V02
+typedef struct FRMPayloadBlockA_Dn {
+  uint8_t                             variant;
+  uint8_t                             _noUse[4];
+  uint8_t                             Dir;
+  uint8_t                             DevAddr[4];
+  uint8_t                             FCntDn[4];
+  uint8_t                             _pad;
+  uint8_t                             idx;
+} FRMPayloadBlockA_Dn_t;
+#endif
+
 typedef struct MICBlockB0_Up {
   uint8_t                             variant;
   uint8_t                             _noUse[4];
@@ -290,6 +305,7 @@ typedef struct MICBlockB0_Up {
   uint8_t                             len;
 } MICBlockB0_Up_t;
 
+#ifdef LORAWAN_1V1
 typedef struct MICBlockB1_Up {
   uint8_t                             variant;
   uint8_t                             ConfFCnt[2];
@@ -301,8 +317,19 @@ typedef struct MICBlockB1_Up {
   uint8_t                             _pad;
   uint8_t                             len;
 } MICBlockB1_Up_t;
+#endif
 
-
+#ifdef LORAWAN_1V02
+typedef struct MICBlockB0_Dn {
+  uint8_t                             variant;
+  uint8_t                             _noUse[4];
+  uint8_t                             Dir;
+  uint8_t                             DevAddr[4];
+  uint8_t                             FCntDn[4];
+  uint8_t                             _pad;
+  uint8_t                             len;
+} MICBlockB0_Dn_t;
+#elif LORAWAN_1V1
 typedef struct MICBlockB0_Dn {
   uint8_t                             variant;
   uint8_t                             ConfFCnt[2];
@@ -313,6 +340,7 @@ typedef struct MICBlockB0_Dn {
   uint8_t                             _pad;
   uint8_t                             len;
 } MICBlockB0_Dn_t;
+#endif
 
 
 typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
@@ -332,7 +360,7 @@ volatile uint8_t  msg_encoded_Buf[LoRaWAN_MsgLenMax];
 /* Prepare section */
 uint8_t           msg_prep_MHDR;
 uint8_t           msg_prep_FCtrl;
-uint16_t          msg_prep_FCnt;
+uint8_t           msg_prep_FCnt[2];
 //
 uint8_t           msg_prep_FOpts_Len;
 uint8_t           msg_prep_FOpts_Buf[16];
@@ -354,6 +382,38 @@ typedef struct LoRaWAN_RX_Message {
 /* Received data section */
 volatile uint8_t  msg_encoded_Len;
 volatile uint8_t  msg_encoded_Buf[LoRaWAN_MsgLenMax];
+
+
+/* parted section */
+//uint8_t           msg_parted_Msg_Len;
+//
+uint8_t           msg_parted_MHDR;
+uint8_t           msg_parted_MType;
+uint8_t           msg_parted_Major;
+//
+uint8_t           msg_parted_FHDR;
+//
+uint8_t           msg_parted_DevAddr[4];
+//
+uint8_t           msg_parted_FCtrl;
+uint8_t           msg_parted_FCtrl_ADR;
+uint8_t           msg_parted_FCtrl_ACK;
+uint8_t           msg_parted_FCtrl_FPending;
+uint8_t           msg_parted_FCtrl_FOptsLen;
+//
+uint8_t           msg_parted_FCntDwn[2];
+//
+uint8_t           msg_parted_FOpts_Len;
+uint8_t           msg_parted_FOpts_Buf[16];
+//
+uint8_t           msg_parted_FPort_absent;
+uint8_t           msg_parted_FPort;
+//
+uint8_t           msg_parted_FRMPayload_Len;
+uint8_t           msg_parted_FRMPayload_Buf[LoRaWAN_FRMPayloadMax];
+uint8_t           msg_parted_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax];
+//
+uint8_t           msg_parted_MIC_Buf[4];
 
 } LoRaWAN_RX_Message_t;
 
