@@ -72,6 +72,7 @@ osMessageQId usbToHostQueueHandle;
 osMessageQId usbFromHostQueueHandle;
 osMessageQId loraInQueueHandle;
 osMessageQId loraOutQueueHandle;
+osMessageQId loraMacQueueHandle;
 osSemaphoreId usbToHostBinarySemHandle;
 
 /* USER CODE BEGIN Variables */
@@ -218,6 +219,10 @@ void MX_FREERTOS_Init(void) {
   osMessageQDef(loraOutQueue, 32, uint8_t);
   loraOutQueueHandle = osMessageCreate(osMessageQ(loraOutQueue), NULL);
 
+  /* definition and creation of loraMacQueue */
+  osMessageQDef(loraMacQueue, 32, uint8_t);
+  loraMacQueueHandle = osMessageCreate(osMessageQ(loraMacQueue), NULL);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   vQueueAddToRegistry(usbToHostQueueHandle,     "USBtoHostQ");
@@ -227,6 +232,7 @@ void MX_FREERTOS_Init(void) {
   vQueueAddToRegistry(usbToHostBinarySemHandle, "USBfromHostBSem");
   vQueueAddToRegistry(loraInQueueHandle,        "loraInQ");
   vQueueAddToRegistry(loraOutQueueHandle,       "loraOutQ");
+  vQueueAddToRegistry(loraMacQueueHandle,       "loraMacQ");
   /* USER CODE END RTOS_QUEUES */
 }
 

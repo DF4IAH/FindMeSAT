@@ -41,6 +41,8 @@ typedef enum Fsm_States {
 
   Fsm_MAC_Decode                      = 0x10,
 
+  Fsm_MAC_Proc,
+
   Fsm_MAC_JoinRequest,
   Fsm_MAC_JoinAccept,
 
@@ -191,6 +193,8 @@ typedef struct LoRaWANctx {
   volatile int8_t                     LastPacketSnrDb;
   volatile float                      LastFeiHz;
   volatile float                      LastFeiPpm;
+  volatile uint8_t                    LastLinkCheckPpm_SNR;                                     // MAC: LinkCheckAns
+  volatile uint8_t                    LastLinkCheckGW_cnt;                                      // MAC: LinkCheckAns
 } LoRaWANctx_t;
 
 
@@ -391,8 +395,6 @@ uint8_t           msg_parted_MHDR;
 uint8_t           msg_parted_MType;
 uint8_t           msg_parted_Major;
 //
-uint8_t           msg_parted_FHDR;
-//
 uint8_t           msg_parted_DevAddr[4];
 //
 uint8_t           msg_parted_FCtrl;
@@ -477,6 +479,11 @@ void LoRaWANctx_applyKeys_trackMeApp(void);
 
 uint8_t LoRaWAN_calc_randomChannel(LoRaWANctx_t* ctx);
 float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, uint8_t dflt);
+
+void LoRaWAN_MAC_Queue_Push(uint8_t* macAry, uint8_t cnt);
+void LoRaWAN_MAC_Queue_Pull(uint8_t* macAry, uint8_t cnt);
+void LoRaWAN_MAC_Queue_Reset(void);
+uint8_t LoRaWAN_MAC_Queue_isAvail(void);
 
 void loRaWANLoRaWANTaskInit(void);
 void loRaWANLoRaWANTaskLoop(void);
