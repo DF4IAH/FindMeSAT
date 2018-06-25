@@ -333,17 +333,6 @@ void spiSX127xReset(void)
 
 void spiSX127xFrequency_MHz(float mhz)
 {
-  const uint32_t    fmt_mhz     = (uint32_t) mhz;
-  const uint8_t     fmt_mhz_f1  = (uint8_t) (((uint32_t) (mhz * 10.f)) % 10);
-  volatile uint8_t  buf[256]    = { 0 };
-  volatile uint32_t bufLen      = 0UL;
-
-  /* Debugging information */
-  bufLen = sprintf((char*) buf, "LoRaWAN: f = %03ld.%01d MHz\r\n", fmt_mhz, fmt_mhz_f1);
-  osSemaphoreWait(usbToHostBinarySemHandle, 0);
-  usbToHostWait((uint8_t*) buf, bufLen);
-  osSemaphoreRelease(usbToHostBinarySemHandle);
-
   /* Register value calc */
   float     fVal    = (mhz * 1e6 * (1UL << 19)) / 32e6;
   uint32_t  regVal  = (uint32_t) (fVal + 0.5f);
@@ -383,6 +372,21 @@ void spiSX127xDio_Mapping(TxRx_Mode_t mode)
 
   /* Push settings */
   spiProcessSpiMsg(3);
+}
+
+uint8_t spiSX127xDR_to_SF(DataRates_t dr)
+{
+  if (DR0_SF12_125kHz_LoRa <= dr && dr <= DR5_SF7_125kHz_LoRa) {
+    /* 125 kHz */
+    return (12 - (uint8_t)dr);
+
+  } else if (DR6_SF7_250kHz_LoRa) {
+    /* 250 kHz */
+    return 7;
+  }
+
+  /* No LoRa mode */
+  return 0;
 }
 
 
@@ -478,9 +482,13 @@ void spiSX127xRegister_IRQ_clearAll(void)
 
 void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg)
 {
-  uint32_t  PreviousWakeTime  = 0UL;
-  float     l_f               = ctx->FrequencyMHz;
-  uint8_t   l_SF              = ctx->SpreadingFactor << SFx_SHIFT;
+  const float       l_f               = ctx->FrequencyMHz;
+  const uint8_t     l_SF              = ctx->SpreadingFactor << SFx_SHIFT;
+  const uint32_t    fmt_mhz           = (uint32_t) l_f;
+  const uint8_t     fmt_mhz_f1        = (uint8_t) (((uint32_t) (l_f * 10.f)) % 10);
+  uint32_t          PreviousWakeTime  = 0UL;
+  volatile uint8_t  buf[256]          = { 0 };
+  volatile uint32_t bufLen            = 0UL;
 
   if (TxRx_Mode_IQ_Balancing == mode) {
     /* Switching to FSK/OOK via SLEEP mode */
@@ -543,6 +551,12 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
   /* Switching to LoRa via SLEEP mode */
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
+
+  /* Debugging information */
+  bufLen = sprintf((char*) buf, "LoRaWAN: f = %03ld.%01d MHz,\t SF = %02d\r\n", fmt_mhz, fmt_mhz_f1, ctx->SpreadingFactor);
+  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  usbToHostWait((uint8_t*) buf, bufLen);
+  osSemaphoreRelease(usbToHostBinarySemHandle);
 
   /* Common presets for TX / RX */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;

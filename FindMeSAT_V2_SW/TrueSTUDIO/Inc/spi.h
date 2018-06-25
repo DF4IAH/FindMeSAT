@@ -231,6 +231,7 @@ uint8_t spiProcessSpiMsg(uint8_t msgLen);
 void spiSX127xReset(void);
 void spiSX127xFrequency_MHz(float mhz);
 void spiSX127xDio_Mapping(TxRx_Mode_t mode);
+uint8_t spiSX127xDR_to_SF(DataRates_t dr);
 
 uint8_t spiSX127xMode_LoRa_GetBroadbandRSSI(void);
 void spiSX127xLoRa_setTxMsgLen(uint8_t payloadLen);

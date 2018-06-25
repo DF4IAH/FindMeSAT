@@ -77,7 +77,7 @@ typedef enum Fsm_States {
 
 /* LoRaWAN RX windows */
 typedef enum LoRaWAN_RX_windows {
-  LORAWAN_RX_PREPARE_MS               =   10,
+  LORAWAN_RX_PREPARE_MS               =   25,
   LORAWAN_EU868_MAX_TX_DURATION_MS    = 3000,                                                   // TODO: Search for right number
 
   LORAWAN_EU868_DELAY1_MS             = 1000,
@@ -92,6 +92,12 @@ typedef enum LoRaWANVersion {
   LoRaWANVersion_10                   = 0,
   LoRaWANVersion_11                   = 1,
 } LoRaWANVersion_t;
+
+typedef enum CurrentWindow {
+  CurWin_none                         = 0,
+  CurWin_RXTX1,
+  CurWin_RXTX2
+} CurrentWindow_t;
 
 /* LoRaWAN direction of transmission - Up: device --> gateway / Dn: device <-- gateway */
 typedef enum LoRaWANctxDir {
@@ -177,7 +183,6 @@ typedef struct LoRaWANctx {
 //uint8_t                             JSIntKey_1V1[16];                                         // (for OTA devices)
 //uint8_t                             JSEncKey_1V1[16];                                         // (for OTA devices)
   volatile uint8_t                    NetID_LE[3];                                              // JOIN-RESPONSE
-  volatile uint8_t                    DLSettings;                                               // JOIN-ACCEPT
   volatile uint8_t                    RXDelay;                                                  // JOIN-ACCEPT
   volatile uint8_t                    CFList[16];                                               // JOIN-ACCEPT - EU-868: Freq Ch3[2:0], Freq Ch4[2:0], Freq Ch5[2:0], Freq Ch6[2:0], Freq Ch7[2:0], CFListType[0]
   volatile float                      Ch_Frequencies_MHz[16];
@@ -188,7 +193,9 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    LinkCheck_Ppm_SNR;                                        // MAC: LinkCheckAns
   volatile uint8_t                    LinkCheck_GW_cnt;                                         // MAC: LinkCheckAns
   volatile uint8_t                    LinkADR_TxPowerReduction_dB;                              // MAC: LinkADRReq
-  volatile DataRates_t                LinkADR_DataRate;                                         // MAC: LinkADRReq
+  volatile DataRates_t                LinkADR_DataRate_TX1;                                     // MAC: LinkADRReq
+  volatile uint8_t                    LinkADR_DataRate_RX1_DRofs;                               // JoinAccept
+  volatile DataRates_t                LinkADR_DataRate_RXTX2;                                   // MAC: LinkADRReq
   volatile uint16_t                   LinkADR_ChannelMask;                                      // MAC: LinkADRReq
   volatile uint8_t                    LinkADR_NbTrans;                                          // MAC: LinkADRReq - unconfirmed up packets multiple transmissions
   volatile ChMaskCntl_t               LinkADR_ChMaskCntl;                                       // MAC: LinkADRReq
@@ -207,6 +214,7 @@ typedef struct LoRaWANctx {
 
 
   /* Current transmission */
+  volatile CurrentWindow_t            Current_RXTX_Window;                                      // RX/TX1, RX/TX2 or none
   volatile LoRaWANctxDir_t            Dir;
   volatile uint8_t                    FCtrl_ADR;
   volatile uint8_t                    FCtrl_ADRACKReq;
@@ -217,8 +225,8 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    FPort;
   volatile uint8_t                    SpreadingFactor;
   volatile float                      FrequencyMHz;
-  volatile uint8_t                    TxDr;
-  volatile uint8_t                    TxCh;
+
+  /* Last radio measurements */
   volatile int16_t                    LastRSSIDbm;
 //volatile int16_t                    LastPacketStrengthDBm;
   volatile int8_t                     LastPacketSnrDb;
