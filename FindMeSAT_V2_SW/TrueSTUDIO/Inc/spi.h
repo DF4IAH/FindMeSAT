@@ -211,6 +211,7 @@ typedef enum spiSX127x_IRQ_Mask {
 typedef enum TxRx_Mode {
   TxRx_Mode_TX            = 0x01,
   TxRx_Mode_RX            = 0x11,
+  TxRx_Mode_RX2           = 0x12,
   TxRx_Mode_RX_Randomizer = 0x1f,
   TxRx_Mode_IQ_Balancing  = 0x9e,
 } TxRx_Mode_t;

@@ -1008,6 +1008,7 @@ static uint8_t LoRaWAN_calc_RxMsg_Decoder(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_
           break;
         }
       }
+      msg->msg_parted_MIC_Valid = micValid;
     }
   }
 
@@ -1171,6 +1172,8 @@ static void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
     /* Start transmitter and wait until the message is being sent */
     spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | TX);
     now             = xTaskGetTickCount();
+
+    /* Wait until TX has finished - the transceiver changes to STANDBY by itself */
     ctx->TsEndOfTx  = spiSX127x_WaitUntil_TxDone(now + LORAWAN_EU868_MAX_TX_DURATION_MS);
 
     HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                                // Red off
@@ -1194,7 +1197,7 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
   uint32_t diffToTxNowMs  = tsNow - ctx->TsEndOfTx;
   if (diffToTxNowMs < diffToTxStartMs) {
     /* Prepare RX */
-    spiSX127x_TxRx_Preps(ctx, TxRx_Mode_RX, NULL);
+    spiSX127x_TxRx_Preps(ctx, (ctx->Current_RXTX_Window == CurWin_RXTX2 ?  TxRx_Mode_RX2 : TxRx_Mode_RX), NULL);
 
     /* Prepare the FIFO */
     spiSX127xLoRa_Fifo_Init();
@@ -1203,14 +1206,16 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
     /* Sleep until JOIN_ACCEPT_DELAY1 window comes */
     vTaskDelayUntil(&xLastWakeTime, diffToTxStartMs / portTICK_PERIOD_MS);
 
-    HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);                                    // Green on
+    HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);                                  // Green on
 
     /* Turn on receiver continuously and wait for the next message */
     spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
     spiSX127x_WaitUntil_RxDone(ctx, msg, ctx->TsEndOfTx + diffToTxStopMs);
-    spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
-    HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                                  // Green off
+    /* After the RX time decide weather to be able for changing the frequency quickly or to turn the receiver off */
+    spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | ((ctx->Current_RXTX_Window == CurWin_RXTX2 ?  FSRX : STANDBY)));
+
+    HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                                // Green off
   }
 }
 
@@ -1620,21 +1625,21 @@ JR_next_try:
 
       /* Decode the RX msg */
       {
-        uint8_t len = LoRaWAN_calc_RxMsg_Decoder(&loRaWANctx, &loRaWanRxMsg);
+        LoRaWAN_calc_RxMsg_Decoder(&loRaWANctx, &loRaWanRxMsg);
 
-        if (len) {
+        if (loRaWanRxMsg.msg_parted_MIC_Valid) {
           /* USB: info */
           usbLog("LoRaWAN: Decoder informs: successfully decoded packet!\r\n\r\n");
 
           /* Single MAC command can be handled within the FSM directly */
-          if ((loRaWanRxMsg.msg_parted_FOpts_Len              >= 1) &&
+          if ((loRaWanRxMsg.msg_parted_FCtrl_FOptsLen         >= 1) &&
              (!loRaWanRxMsg.msg_parted_FPort_absent)                &&
               (loRaWanRxMsg.msg_parted_FPort                  != 0))
           {
             /* Push all MAC data to the MAC queue from FOpts_Buf */
-            LoRaWAN_MAC_Queue_Push(loRaWanRxMsg.msg_parted_FOpts_Buf, loRaWanRxMsg.msg_parted_FOpts_Len);
+            LoRaWAN_MAC_Queue_Push(loRaWanRxMsg.msg_parted_FOpts_Buf, loRaWanRxMsg.msg_parted_FCtrl_FOptsLen);
 
-          } else if ((loRaWanRxMsg.msg_parted_FOpts_Len       == 0) &&
+          } else if ((loRaWanRxMsg.msg_parted_FCtrl_FOptsLen  == 0) && //
                     (!loRaWanRxMsg.msg_parted_FPort_absent)         &&
                      (loRaWanRxMsg.msg_parted_FPort           == 0) &&
                      (loRaWanRxMsg.msg_parted_FRMPayload_Len  >= 1))

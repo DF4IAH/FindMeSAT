@@ -78,7 +78,7 @@ typedef enum Fsm_States {
 /* LoRaWAN RX windows */
 typedef enum LoRaWAN_RX_windows {
   LORAWAN_RX_PREPARE_MS               =   15,
-  LORAWAN_FRQ_HOPPING_MS              =  100,                                                   // BAD: 0 - 110, GOOD: 115 - ...
+  LORAWAN_FRQ_HOPPING_MS              =   60,                                                   // BAD: 0 - 48, GOOD: 49 - ...
   LORAWAN_EU868_MAX_TX_DURATION_MS    = 2000,                                                   // TODO: Search for right value
 
   LORAWAN_EU868_DELAY1_MS             = 1000,
@@ -230,7 +230,7 @@ typedef struct LoRaWANctx {
 
   /* Last radio measurements */
   volatile int16_t                    LastRSSIDbm;
-//volatile int16_t                    LastPacketStrengthDBm;
+  volatile int16_t                    LastPacketStrengthDBm;
   volatile int8_t                     LastPacketSnrDb;
   volatile float                      LastFeiHz;
   volatile float                      LastFeiPpm;
@@ -444,7 +444,6 @@ uint8_t           msg_parted_FCtrl_FOptsLen;
 //
 uint8_t           msg_parted_FCntDwn[2];
 //
-uint8_t           msg_parted_FOpts_Len;
 uint8_t           msg_parted_FOpts_Buf[16];
 //
 uint8_t           msg_parted_FPort_absent;
@@ -455,6 +454,7 @@ uint8_t           msg_parted_FRMPayload_Buf[LoRaWAN_FRMPayloadMax];
 uint8_t           msg_parted_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax];
 //
 uint8_t           msg_parted_MIC_Buf[4];
+uint8_t           msg_parted_MIC_Valid;
 
 } LoRaWAN_RX_Message_t;
 
