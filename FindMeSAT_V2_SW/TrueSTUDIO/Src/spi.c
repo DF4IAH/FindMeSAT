@@ -71,9 +71,6 @@ extern EventGroupHandle_t spiEventGroupHandle;
 extern EventGroupHandle_t extiEventGroupHandle;
 extern osSemaphoreId      usbToHostBinarySemHandle;
 
-/* Holds RTOS timing info */
-uint32_t spiPreviousWakeTime = 0UL;
-
 /* Buffer used for transmission */
 volatile uint8_t spi1TxBuffer[SPI1_BUFFERSIZE] = { 0 };
 
@@ -483,9 +480,9 @@ void spiSX127xRegister_IRQ_clearAll(void)
 void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg)
 {
   const float       l_f               = ctx->FrequencyMHz;
-  const uint8_t     l_SF              = ctx->SpreadingFactor << SFx_SHIFT;
+  const uint8_t     l_SF              = (ctx->SpreadingFactor & 0x0f) << SFx_SHIFT;
   const uint32_t    fmt_mhz           = (uint32_t) l_f;
-  const uint8_t     fmt_mhz_f1        = (uint8_t) (((uint32_t) (l_f * 10.f)) % 10);
+  const uint16_t    fmt_mhz_f1        = (uint16_t) (((uint32_t) (l_f * 1000.f)) % 1000);
   uint32_t          PreviousWakeTime  = 0UL;
   volatile uint8_t  buf[256]          = { 0 };
   volatile uint32_t bufLen            = 0UL;
@@ -553,7 +550,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
   spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
   /* Debugging information */
-  bufLen = sprintf((char*) buf, "LoRaWAN: f = %03ld.%01d MHz,\t SF = %02d\r\n", fmt_mhz, fmt_mhz_f1, ctx->SpreadingFactor);
+  bufLen = sprintf((char*) buf, "LoRaWAN: f = %03lu.%03u MHz,\t SF = %02u\r\n", fmt_mhz, fmt_mhz_f1, ctx->SpreadingFactor);
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*) buf, bufLen);
   osSemaphoreRelease(usbToHostBinarySemHandle);
@@ -702,7 +699,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
   }
 }
 
-uint32_t spiSX127x_WaitUntil_TxDone(uint8_t doPreviousWakeTime, uint32_t stopTime)
+uint32_t spiSX127x_WaitUntil_TxDone(uint32_t stopTime)
 {
   uint32_t              ts              = 0UL;
   volatile EventBits_t  eb              = { 0 };
@@ -719,26 +716,25 @@ uint32_t spiSX127x_WaitUntil_TxDone(uint8_t doPreviousWakeTime, uint32_t stopTim
     uint32_t now = osKernelSysTick();
     if (stopTime > now) {
       ticks = (stopTime - now) / portTICK_PERIOD_MS;
-    }
-    eb = xEventGroupWaitBits(extiEventGroupHandle, EXTI_SX__DIO0, EXTI_SX__DIO0, 0, ticks);
+      eb = xEventGroupWaitBits(extiEventGroupHandle, EXTI_SX__DIO0, EXTI_SX__DIO0, 0, ticks);
 
-    spi1TxBuffer[0] = SPI_RD_FLAG | 0x12;     // RegIrqFlags
-    spiProcessSpiMsg(2);
-    irq = spi1RxBuffer[1];
-
-    if ((eb & EXTI_SX__DIO0) || (irq & (1U << TxDoneMask))) {
-      /* Remember point of time when TxDone was set */
-      ts = xTaskGetTickCount();
-      if (doPreviousWakeTime) {
-        spiPreviousWakeTime = ts;
-      }
-
-      /* Reset all IRQ flags */
-      spi1TxBuffer[0] = SPI_WR_FLAG | 0x12;   // RegIrqFlags
-      spi1TxBuffer[1] = 0xff;
+      spi1TxBuffer[0] = SPI_RD_FLAG | 0x12;     // RegIrqFlags
       spiProcessSpiMsg(2);
+      irq = spi1RxBuffer[1];
+
+      if ((eb & EXTI_SX__DIO0) || (irq & (1U << TxDoneMask))) {
+        /* Remember point of time when TxDone was set */
+        ts = xTaskGetTickCount();
+
+        /* Reset all IRQ flags */
+        spi1TxBuffer[0] = SPI_WR_FLAG | 0x12;   // RegIrqFlags
+        spi1TxBuffer[1] = 0xff;
+        spiProcessSpiMsg(2);
+      }
     }
   }
+
+  /* Time of TX completed */
   return ts;
 }
 

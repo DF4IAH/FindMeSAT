@@ -501,15 +501,39 @@ void vApplicationMallocFailedHook(void)
   vAssertCalled(__FILE__, __LINE__);
 }
 
+//#define LED_IDLE_DEBUG
 void  vApplicationIdleHook(void)
 {
-  /* Reduce clock frequency to 2 MHz */
-  // TODO: TBD
+  /* vApplicationIdleHook() will only be called if configUSE_IDLE_HOOK is set
+  to 1 in FreeRTOSConfig.h. It will be called on each iteration of the idle
+  task. It is essential that code added to this hook function never attempts
+  to block in any way (for example, call xQueueReceive() with a block time
+  specified, or call vTaskDelay()). If the application makes use of the
+  vTaskDelete() API function (as this demo application does) then it is also
+  important that vApplicationIdleHook() is permitted to return to its calling
+  function, because it is the responsibility of the idle task to clean up
+  memory allocated by the kernel to any task that has since been deleted. */
+  /* TODO:
+   * 1) Reduce 80 MHz  to  2 MHz
+   * 2)  go to LPRun  (SMPS 2 High (-->  MR range 1) --> MR range 2 --> LPR
+   * 3)  Go to LPSleep
+   *
+   * WAKEUP
+   * 1)  In LPRun go to 80 MHz (LPR --> MR range 2 (--> MR range 1) --> SMPS 2 High)
+   * 2)  Increase 2 MHz to 80 MHz
+   */
+#ifdef LED_IDLE_DEBUG
+  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);                                    // Blue on
+#endif
 
   /* Go into sleep mode */
   __asm volatile( "WFI" );
 
-  /* Nothing to do when returning from sleep mode */
+#ifdef LED_IDLE_DEBUG
+  HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);                                  // Blue off
+#endif
+  /* Increase clock frequency to 80 MHz */
+  // TODO: TBD
 }
 /* USER CODE END 4 */
 

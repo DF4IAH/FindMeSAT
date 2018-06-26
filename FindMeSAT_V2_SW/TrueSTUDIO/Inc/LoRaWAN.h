@@ -39,7 +39,7 @@ typedef enum Fsm_States {
 
   Fsm_TX                              = 0x09,
 
-  Fsm_MAC_Decode                      = 0x10,
+  Fsm_MAC_Decoder                     = 0x10,
 
   Fsm_MAC_Proc,
 
@@ -77,8 +77,9 @@ typedef enum Fsm_States {
 
 /* LoRaWAN RX windows */
 typedef enum LoRaWAN_RX_windows {
-  LORAWAN_RX_PREPARE_MS               =   25,
-  LORAWAN_EU868_MAX_TX_DURATION_MS    = 3000,                                                   // TODO: Search for right number
+  LORAWAN_RX_PREPARE_MS               =   15,
+  LORAWAN_FRQ_HOPPING_MS              =  100,                                                   // BAD: 0 - 110, GOOD: 115 - ...
+  LORAWAN_EU868_MAX_TX_DURATION_MS    = 2000,                                                   // TODO: Search for right value
 
   LORAWAN_EU868_DELAY1_MS             = 1000,
   LORAWAN_EU868_DELAY2_MS             = 2000,
@@ -214,6 +215,7 @@ typedef struct LoRaWANctx {
 
 
   /* Current transmission */
+  volatile uint32_t                   TsEndOfTx;                                                // Timestamp of last TX end
   volatile CurrentWindow_t            Current_RXTX_Window;                                      // RX/TX1, RX/TX2 or none
   volatile LoRaWANctxDir_t            Dir;
   volatile uint8_t                    FCtrl_ADR;
