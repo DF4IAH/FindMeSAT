@@ -500,6 +500,17 @@ void vApplicationMallocFailedHook(void)
    provide information on how the remaining heap might be fragmented). */
   vAssertCalled(__FILE__, __LINE__);
 }
+
+void  vApplicationIdleHook(void)
+{
+  /* Reduce clock frequency to 2 MHz */
+  // TODO: TBD
+
+  /* Go into sleep mode */
+  __asm volatile( "WFI" );
+
+  /* Nothing to do when returning from sleep mode */
+}
 /* USER CODE END 4 */
 
 /**
