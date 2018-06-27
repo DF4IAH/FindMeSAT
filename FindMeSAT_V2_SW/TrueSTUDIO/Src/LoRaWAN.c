@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <math.h>
 #include <sys/time.h>
 #include "crypto.h"
 #include "crc.h"
@@ -181,6 +182,353 @@ static void LoRaWAN_QueueIn_Process(void)
 clrInBuf:
   bufCtr = bufMsgLen = 0;
   memset(buf, 0, sizeof(buf));
+}
+
+
+static uint8_t LoRaWAN_PayloadCompress_TrackMeApp(uint8_t outBuf[], const TrackMeApp_t* trackMeApp_UL)
+{
+  uint8_t outLen = 0;
+
+  /* TTN Mapper entities */
+  if ((  -90.0 <= trackMeApp_UL->latitude_deg    && trackMeApp_UL->latitude_deg    <=    90.0) &&
+      ( -180.0 <= trackMeApp_UL->longitude_deg   && trackMeApp_UL->longitude_deg   <=   180.0) &&
+      (-8192.0 <= trackMeApp_UL->altitude_m      && trackMeApp_UL->altitude_m      <= 57343.0) &&
+      (    1.0 <= trackMeApp_UL->accuracy_10thM  && trackMeApp_UL->accuracy_10thM  <=  1262.0)) {
+
+    uint32_t lat = (int32_t) ((  90.0 + trackMeApp_UL->latitude_deg ) * 10000.0);
+    uint32_t lon = (int32_t) (( 180.0 + trackMeApp_UL->longitude_deg) * 10000.0);
+    uint16_t alt = (int16_t) ( 8192.0 + trackMeApp_UL->altitude_m);
+    uint8_t  acc = (uint8_t) (log10(trackMeApp_UL->accuracy_10thM) / log10(1.25));
+
+    outBuf[0]  = (lat >> 13) & 0xff;                                                            // 8 bits
+    outBuf[1]  = (lat >>  5) & 0xff;                                                            // 8 bits
+    outBuf[2]  = (lat <<  3) & 0xf8;                                                            // 5 bits
+
+    outBuf[2] |= (lon >> 19) & 0x07;                                                            // 3 bits
+    outBuf[3]  = (lon >> 11) & 0xff;                                                            // 8 bits
+    outBuf[4]  = (lon >>  3) & 0xff;                                                            // 8 bits
+    outBuf[5]  = (lon <<  5) & 0xf8;                                                            // 3 bits
+
+    outBuf[5] |= (alt >> 11) & 0x07;                                                            // 5 bits
+    outBuf[6]  = (alt >>  3) & 0xff;                                                            // 8 bits
+    outBuf[7]  = (alt <<  5) & 0xe0;                                                            // 3 bits
+
+    outBuf[7] |=  acc        & 0x1f;                                                            // 5 bits
+    outLen    += 8;
+
+
+    /* Motion vector entities */
+    if (trackMeApp_UL->course_deg || trackMeApp_UL->speed_m_s) {
+      uint8_t   crs     = trackMeApp_UL->course_deg % 360;
+      float     spd     = trackMeApp_UL->speed_m_s;
+      uint32_t  spdMan  = 0UL;
+      uint8_t   spdExp  = 32U;
+
+      if (spd) {
+        spdExp  = (32 - 4) + ceil(log10(spd));
+        spdMan  = spd * pow(10, (32 - spdExp));
+      }
+
+      outBuf[8]    = (crs    >>  1) & 0xff;                                                     // 8 bits
+      outBuf[9]    = (crs    <<  7) & 0x80;                                                     // 1 bit
+
+      outBuf[9]   |= (spdMan >> 10) & 0x7f;                                                     // 7 bits (5 decimal digits)
+      outBuf[10]   = (spdMan >>  2) & 0xff;                                                     // 8 bits
+      outBuf[11]   = (spdMan <<  6) & 0xc0;                                                     // 2 bits
+
+      outBuf[11]  |=  spdExp        & 0x3f;                                                     // 6 bits
+      outLen      += 4;
+
+      if (trackMeApp_UL->vertspeed_m_s    ||
+          trackMeApp_UL->vbat_mV          ||
+          trackMeApp_UL->ibat_uA          ||
+          trackMeApp_UL->temp_100th_C     ||
+          trackMeApp_UL->humitidy_1000th  ||
+          trackMeApp_UL->baro_Pa) {
+        uint8_t flags = 0x00;
+        float     vSpd  = trackMeApp_UL->vertspeed_m_s;
+        uint16_t  vbat  = trackMeApp_UL->vbat_mV;
+        int32_t   ibat  = trackMeApp_UL->ibat_uA;
+        int32_t   temp  = trackMeApp_UL->temp_100th_C;
+        uint16_t  rh    = trackMeApp_UL->humitidy_1000th;
+        uint32_t  baro  = trackMeApp_UL->baro_Pa;
+
+        if (fabs(vSpd) >= 0.1f) {
+          flags |= 0x01;
+        }
+        if (vbat) {
+          flags |= 0x04;
+        }
+        if (ibat) {
+          flags |= 0x08;
+        }
+        if (temp) {
+          flags |= 0x10;
+        }
+        if (rh) {
+          flags |= 0x20;
+        }
+        if (baro) {
+          flags |= 0x40;
+        }
+        outBuf[outLen++] = flags;
+
+        if (fabs(vSpd) >= 0.1f) {
+          uint8_t   vSpdSgn =  0;
+          uint32_t  vSpdMan =  0;
+          uint8_t   vSpdExp = 32;
+
+          if (vSpd < 0.0) {
+            vSpdSgn = 1;
+            vSpd = -vSpd;
+          }
+          vSpdExp  = (32 - 4) + ceil(log10(vSpd));
+          vSpdMan  = vSpd * pow(10, (32 - vSpdExp));
+
+          outBuf[outLen] = (vSpdSgn << 7);                                                      // 1 bit
+
+          outBuf[outLen++]  |= (vSpdMan >> 10) & 0x7f;                                          // 7 bits (5 decimal digits)
+          outBuf[outLen++]   = (vSpdMan >>  2) & 0xff;                                          // 8 bits
+          outBuf[outLen]     = (vSpdMan <<  6) & 0xc0;                                          // 2 bits
+
+          outBuf[outLen++]  |=  vSpdExp        & 0x3f;                                          // 6 bits
+        }
+
+        if (vbat) {
+          vbat /= 10;
+
+          outBuf[outLen++]   = (vbat  >> 8) & 0xff;
+          outBuf[outLen++]   =  vbat        & 0xff;
+        }
+
+        if (ibat) {
+          uint8_t   ibatSgn  = 0;
+          uint16_t  ibatBA;
+
+          if (ibat < 0) {
+            ibatSgn   = 1;
+            ibatBA    = (uint16_t) (-ibat / 100);
+          } else {
+            ibatBA    = (uint16_t) ( ibat / 100);
+          }
+
+          outBuf[outLen]     = (ibatSgn << 7) & 0x80;
+          outBuf[outLen++]  |= (ibatBA  >> 8) & 0x7f;
+          outBuf[outLen++]   =  ibatBA        & 0xff;
+        }
+
+        if (temp) {
+          uint8_t   tempSgn  = 0;
+          uint16_t  tempBA;
+
+          if (temp < 0) {
+            tempSgn   = 1;
+            tempBA    = (uint16_t) (-temp);
+          } else {
+            tempBA    = (uint16_t) ( temp);
+          }
+
+          outBuf[outLen]     = (tempSgn << 7) & 0x80;
+          outBuf[outLen++]  |= (tempBA  >> 8) & 0x7f;
+          outBuf[outLen++]   =  tempBA        & 0xff;
+        }
+
+        if (rh) {
+          uint8_t rhBA    = (int8_t) (rh / 5);
+
+          outBuf[outLen++] = rhBA;                                                               // 8 bits
+        }
+
+        if (baro) {
+          uint16_t  baroBA  = baro >> 1;
+
+          outBuf[outLen++]  = (baroBA >> 8) & 0xff;                                             // 8 bits
+          outBuf[outLen++]  =  baroBA       & 0xff;                                             // 8 bits
+        }
+      }
+    }
+  }
+
+  return outLen;
+}
+
+static uint8_t LoRaWAN_PayloadExpand_TrackMeApp(TrackMeApp_t* trackMeApp_DL, const uint8_t* compressedMsg, uint8_t compressedMsgLen)
+{
+
+  return 0;
+/*
+function Decoder(bytes, port) {
+  // Decode an uplink message from a buffer
+  // (array) of bytes to an object of fields.
+  var decoded = {};
+
+  decoded.latitude  = 0.0;
+  decoded.longitude = 0.0;
+  decoded.altitude  = 0;
+  decoded.accuracy  = 1262.0;
+  decoded.course    = 0;
+  decoded.speed     = 0;
+  decoded.flags     = 0x00;
+
+  // if (port === 1) decoded.led = bytes[0];
+  if (port === 1) {
+    if (bytes.length >= 8) {
+      decoded.latitude  =   -90.0 + ((((bytes[0] & 0xff) << 13) | ((bytes[1] & 0xff) <<  5) | ((bytes[2] & 0xf8) >> 3)) / 10000.0);
+      decoded.longitude =  -180.0 + ((((bytes[2] & 0x07) << 19) | ((bytes[3] & 0xff) << 11) | ((bytes[4] & 0xff) << 3) | ((bytes[5] & 0xe0) >> 5)) / 10000.0);
+      decoded.altitude  = -8192.0 +  (((bytes[5] & 0x1f) << 11) | ((bytes[6] & 0xff) <<  3) | ((bytes[7] & 0xe0) >> 5));
+      decoded.accuracy  = Math.pow(1.25, (bytes[7] & 0x1f));
+
+      if (bytes.length >= 12) {
+        var spdMan = 0;
+        var spdExp = 32;
+
+        decoded.course  = ((bytes[8] & 0xff) << 1) | ((bytes[9] & 0x80) >> 7);
+
+        spdMan = ((bytes[9]  & 0x7f) << 10) | (bytes[10] << 2) | ((bytes[11] & 0xc0) >> 6);
+        spdExp = ( bytes[11] & 0x3f);
+        decoded.speed = Number(spdMan) * Math.pow(10, (spdExp - 32));
+
+        if (bytes.length >= 13) {
+          var idx = 12;
+
+          decoded.flags = bytes[idx++];
+
+          if (decoded.flags & 0x01) {
+            var vSpdSgn   = (bytes[idx]     & 0x80) >> 7;
+            var vSpdMan   = (bytes[idx++]   & 0x7f) << 10;
+                vSpdMan  |= (bytes[idx++]   & 0xff) << 2;
+                vSpdMan  |= (bytes[idx]     & 0xc0) >> 6;
+            var vSpdExp   = (bytes[idx++]   & 0x3f);
+
+            vSpd = Number(vSpdMan) * Math.pow(10, (vSpdExp - 32));
+            if (vSpdSgn) {
+              vSpd = -vSpd;
+            }
+            decoded.vertspeed = vSpd;
+          }
+
+          if (decoded.flags & 0x04) {
+            var vbat     = (bytes[idx++] & 0xff) << 8;
+                vbat    |=  bytes[idx++];
+
+            decoded.vbat = vbat/ 100.0;
+          }
+
+          if (decoded.flags & 0x08) {
+            var ibatSgn  = (bytes[idx] & 0x80) >> 7;
+            var ibat     = (bytes[idx++] & 0x7f) << 8;
+                ibat    |=  bytes[idx++];
+
+            if (ibatSgn === 1) {
+              ibat= -ibat;
+            }
+
+            decoded.ibat = ibat/ 10000.0;
+          }
+
+          if (decoded.flags & 0x10) {
+            var tempSgn = (bytes[idx] & 0x80) >> 7;
+            var temp   = (bytes[idx++] & 0x7f) << 8;
+                temp  |=  bytes[idx++];
+
+            if (tempSgn === 1) {
+              temp = -temp;
+            }
+
+            decoded.temp = temp / 100.0;
+          }
+
+          if (decoded.flags & 0x20) {
+            decoded.hygro = bytes[idx++] / 2.0;
+          }
+
+          if (decoded.flags & 0x40) {
+            var baro   = bytes[idx++] << 8;
+                baro  |= bytes[idx++];
+            decoded.baro = baro / 50.0;
+          }
+        }
+      }
+    }
+  }
+
+  // Thin security
+  decoded.ts = Date.now();
+  decoded.cm = ((0x0392ea84 + (decoded.ts & 0x7fffffff)) % 0x17ef23ab) ^ ((0x339dc627 + (decoded.ts & 0x07ffffff) * 7) % 0x2a29e2cc);
+  return decoded;
+}
+ */
+}
+
+
+#ifdef NEW
+static uint8_t LoRaWAN_PayloadCompress_LoraliveApp(const LoraliveApp_t* loraliveApp_UL)
+{
+
+  return 0;
+
+/*
+
+
+
+ */
+}
+#endif
+
+static uint8_t LoRaWAN_PayloadExpand_LoraliveApp(LoraliveApp_t* loraliveApp_DL, const uint8_t* compressedMsg, uint8_t compressedMsgLen)
+{
+
+  return 0;
+
+/*
+function Decoder(bytes, port) {
+  var voltage = bytes[0]/32;
+  var dust025 = (256.0*bytes[1] + bytes[2])/10;
+  var dust100 = (256.0*bytes[3] + bytes[4])/10;
+  var id = String.fromCharCode(bytes[5]);
+  if(bytes.length == 14) {
+    var latitude = (256.0*256*256*bytes[6]+256*256*bytes[7]+256*bytes[8]+bytes[9])/1000;
+    var longitude = (256.0*256*256*bytes[10]+256*256*bytes[11]+256*bytes[12]+bytes[13])/1000;
+    return {
+      state:[id,voltage],
+      dust:[dust025,dust100],
+      position:[latitude,longitude]
+    };
+  } if(bytes.length == 16) {
+    var temperature = bytes[6];
+    var humidity = bytes[7];
+    var latitude = (256.0*256*256*bytes[8]+256*256*bytes[9]+256*bytes[10]+bytes[11])/1000;
+    var longitude = (256.0*256*256*bytes[12]+256*256*bytes[13]+256*bytes[14]+bytes[15])/1000;
+    return {
+      state:[id,voltage],
+      dust:[dust025,dust100, temperature, humidity],
+      position:[latitude,longitude]
+    };
+  } if(bytes.length == 8) {
+    var temperature = bytes[6];
+    var humidity = bytes[7];
+    return {
+      state:[id,voltage],
+      dust:[dust025,dust100, temperature, humidity],
+    };
+  } else {
+    return {
+      state:[id,voltage],
+      dust:[dust025,dust100],
+    };
+  }
+}
+// sample payload (in hexadecimal)
+// 90 00 30 00 60 4D 00 00 C0 8F 00 00 21 F8
+// 90 = 4.5V
+//    00 30 = 4.8 ppm of 2.5 μm fine dust
+//          00 60 = 9.6 ppm 10 μm fine dust
+//                4D = 'M' Marcus fine dust sensor
+//                    00 00 C0 8F = 49.295° North (Wiesloch)
+//                              00 00 21 F8 = 8.696° West (Wiesloch)
+// 90 00 30 00 60 4D 10 10
+//
+ */
 }
 
 
@@ -1061,6 +1409,39 @@ static void LoRaWAN_calc_RxMsg_Reset(LoRaWAN_RX_Message_t* msg)
 }
 
 
+static void LoRaWAN_calc_PayloadExpand(LoRaWAN_RX_Message_t* msg)
+{
+  if (msg->msg_parted_FRMPayload_Len) {
+    uint8_t variant = 1;
+
+    switch (variant) {
+    case /* PayloadExpand_TrackMeApp */ 1:
+      {
+        TrackMeApp_t trackMeApp_DL = { 0 };
+
+        /* Expand the message into TrackMeApp data structure */
+        LoRaWAN_PayloadExpand_TrackMeApp(&trackMeApp_DL, msg->msg_parted_FRMPayload_Buf, msg->msg_parted_FRMPayload_Len);
+
+        /* Send message to the controller */
+        // TODO
+      }
+      break;
+
+    case /* PayloadExpand_LoraliveApp */ 2:
+      {
+        LoraliveApp_t loraliveApp_DL = { 0 };
+
+        LoRaWAN_PayloadExpand_LoraliveApp(&loraliveApp_DL, msg->msg_parted_FRMPayload_Buf, msg->msg_parted_FRMPayload_Len);
+
+        /* Send message to the controller */
+        // TODO
+      }
+      break;
+    }
+  }
+}
+
+
 const uint32_t maxWaitMs  = 100;
 void LoRaWAN_MAC_Queue_Push(uint8_t* macAry, uint8_t cnt)
 {
@@ -1631,25 +2012,37 @@ JR_next_try:
           /* USB: info */
           usbLog("LoRaWAN: Decoder informs: successfully decoded packet!\r\n\r\n");
 
+          /* Default setting */
+          loRaWANctx.FsmState = Fsm_NOP;
+
           /* Single MAC command can be handled within the FSM directly */
-          if ((loRaWanRxMsg.msg_parted_FCtrl_FOptsLen         >= 1) &&
-             (!loRaWanRxMsg.msg_parted_FPort_absent)                &&
-              (loRaWanRxMsg.msg_parted_FPort                  != 0))
+          if ((loRaWanRxMsg.msg_parted_FCtrl_FOptsLen          > 0) &&                          // FOpts MAC
+             ( loRaWanRxMsg.msg_parted_FPort_absent                 ||                          // no FPort0 MAC
+              (loRaWanRxMsg.msg_parted_FPort                  != 0)))
           {
             /* Push all MAC data to the MAC queue from FOpts_Buf */
             LoRaWAN_MAC_Queue_Push(loRaWanRxMsg.msg_parted_FOpts_Buf, loRaWanRxMsg.msg_parted_FCtrl_FOptsLen);
 
-          } else if ((loRaWanRxMsg.msg_parted_FCtrl_FOptsLen  == 0) && //
-                    (!loRaWanRxMsg.msg_parted_FPort_absent)         &&
+            /* MAC processing */
+            loRaWANctx.FsmState = Fsm_MAC_Proc;
+
+          } else if ((loRaWanRxMsg.msg_parted_FCtrl_FOptsLen  == 0) &&                          // no FOpts MAC
+                    (!loRaWanRxMsg.msg_parted_FPort_absent)         &&                          // Payload MAC
                      (loRaWanRxMsg.msg_parted_FPort           == 0) &&
-                     (loRaWanRxMsg.msg_parted_FRMPayload_Len  >= 1))
+                     (loRaWanRxMsg.msg_parted_FRMPayload_Len   > 0))
           {
             /* Push all MAC data to the MAC queue from FRMPayload_Buf[] */
             LoRaWAN_MAC_Queue_Push(loRaWanRxMsg.msg_parted_FRMPayload_Buf, loRaWanRxMsg.msg_parted_FRMPayload_Len);
+
+            /* MAC processing */
+            loRaWANctx.FsmState = Fsm_MAC_Proc;
           }
 
-          /* MAC processing */
-          loRaWANctx.FsmState = Fsm_MAC_Proc;
+          /* Downlink data processing */
+          if ((loRaWanRxMsg.msg_parted_FPort > 0) && (loRaWanRxMsg.msg_parted_FRMPayload_Len > 0)) {
+            /* Downlink Payload data */
+            LoRaWAN_calc_PayloadExpand(&loRaWanRxMsg);
+          }
 
         } else {
           /* USB: info */

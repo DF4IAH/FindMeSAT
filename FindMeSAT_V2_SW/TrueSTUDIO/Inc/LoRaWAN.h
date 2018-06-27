@@ -394,69 +394,96 @@ typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
 
 typedef struct LoRaWAN_TX_Message {
 
-/* Ready for transport section */
-volatile uint8_t  msg_encoded_EncDone;
-volatile uint8_t  msg_encoded_Len;
-volatile uint8_t  msg_encoded_Buf[LoRaWAN_MsgLenMax];
+  /* Ready for transport section */
+  volatile uint8_t                    msg_encoded_EncDone;
+  volatile uint8_t                    msg_encoded_Len;
+  volatile uint8_t                    msg_encoded_Buf[LoRaWAN_MsgLenMax];
 
 
-/* Prepare section */
-uint8_t           msg_prep_MHDR;
-uint8_t           msg_prep_FCtrl;
-uint8_t           msg_prep_FCnt[2];
-//
-uint8_t           msg_prep_FOpts_Len;
-uint8_t           msg_prep_FOpts_Buf[16];
+  /* Prepare section */
+  uint8_t                             msg_prep_MHDR;
+  uint8_t                             msg_prep_FCtrl;
+  uint8_t                             msg_prep_FCnt[2];
+  //
+  uint8_t                             msg_prep_FOpts_Len;
+  uint8_t                             msg_prep_FOpts_Buf[16];
 #ifdef LORAWAN_1V1
-uint8_t           msg_prep_FOpts_Encoded[16];
+  uint8_t                             msg_prep_FOpts_Encoded[16];
 #endif
-//
-uint8_t           msg_prep_FPort_absent;
-uint8_t           msg_prep_FPort;
-//
-uint8_t           msg_prep_FRMPayload_Len;
-uint8_t           msg_prep_FRMPayload_Buf[LoRaWAN_FRMPayloadMax];
-uint8_t           msg_prep_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax];
+  //
+  uint8_t                             msg_prep_FPort_absent;
+  uint8_t                             msg_prep_FPort;
+  //
+  uint8_t                             msg_prep_FRMPayload_Len;
+  uint8_t                             msg_prep_FRMPayload_Buf[LoRaWAN_FRMPayloadMax];
+  uint8_t                             msg_prep_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax];
 
 } LoRaWAN_TX_Message_t;
 
 typedef struct LoRaWAN_RX_Message {
 
-/* Received data section */
-volatile uint8_t  msg_encoded_Len;
-volatile uint8_t  msg_encoded_Buf[LoRaWAN_MsgLenMax];
+  /* Received data section */
+  volatile uint8_t                    msg_encoded_Len;
+  volatile uint8_t                    msg_encoded_Buf[LoRaWAN_MsgLenMax];
 
 
-/* parted section */
-//uint8_t           msg_parted_Msg_Len;
-//
-uint8_t           msg_parted_MHDR;
-uint8_t           msg_parted_MType;
-uint8_t           msg_parted_Major;
-//
-uint8_t           msg_parted_DevAddr[4];
-//
-uint8_t           msg_parted_FCtrl;
-uint8_t           msg_parted_FCtrl_ADR;
-uint8_t           msg_parted_FCtrl_ACK;
-uint8_t           msg_parted_FCtrl_FPending;
-uint8_t           msg_parted_FCtrl_FOptsLen;
-//
-uint8_t           msg_parted_FCntDwn[2];
-//
-uint8_t           msg_parted_FOpts_Buf[16];
-//
-uint8_t           msg_parted_FPort_absent;
-uint8_t           msg_parted_FPort;
-//
-uint8_t           msg_parted_FRMPayload_Len;
-uint8_t           msg_parted_FRMPayload_Buf[LoRaWAN_FRMPayloadMax];
-uint8_t           msg_parted_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax];
-//
-uint8_t           msg_parted_MIC_Buf[4];
-uint8_t           msg_parted_MIC_Valid;
+  /* parted section */
+//uint8_t                             msg_parted_Msg_Len;
+  //
+  uint8_t                             msg_parted_MHDR;
+  uint8_t                             msg_parted_MType;
+  uint8_t                             msg_parted_Major;
+  //
+  uint8_t                             msg_parted_DevAddr[4];
+  //
+  uint8_t                             msg_parted_FCtrl;
+  uint8_t                             msg_parted_FCtrl_ADR;
+  uint8_t                             msg_parted_FCtrl_ACK;
+  uint8_t                             msg_parted_FCtrl_FPending;
+  uint8_t                             msg_parted_FCtrl_FOptsLen;
+  //
+  uint8_t                             msg_parted_FCntDwn[2];
+  //
+  uint8_t                             msg_parted_FOpts_Buf[16];
+  //
+  uint8_t                             msg_parted_FPort_absent;
+  uint8_t                             msg_parted_FPort;
+  //
+  uint8_t                             msg_parted_FRMPayload_Len;
+  uint8_t                             msg_parted_FRMPayload_Buf[LoRaWAN_FRMPayloadMax];
+  uint8_t                             msg_parted_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax];
+  //
+  uint8_t                             msg_parted_MIC_Buf[4];
+  uint8_t                             msg_parted_MIC_Valid;
 
 } LoRaWAN_RX_Message_t;
+
+
+/* LoRaWAN Application specific data structures */
+
+typedef struct TrackMeApp {
+
+  /* TTN Mapper entities */
+  float                               latitude_deg;
+  float                               longitude_deg;
+  float                               altitude_m;
+  uint16_t                            accuracy_10thM;
+
+  /* Motion vector entities */
+  uint8_t                             course_deg;
+  float                               speed_m_s;
+  float                               vertspeed_m_s;
+
+  /* Weather entities */
+  int32_t                             temp_100th_C;
+  uint16_t                            humitidy_1000th;
+  uint32_t                            baro_Pa;
+
+  /* System entities */
+  uint16_t                            vbat_mV;
+  int32_t                             ibat_uA;
+
+} TrackMeApp_t;
 
 
 typedef struct LoraliveApp {
