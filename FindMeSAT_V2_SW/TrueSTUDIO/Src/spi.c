@@ -599,7 +599,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
       spiSX127xFrequency_MHz(l_f * (1 + 1e-6 * ctx->CrystalPpm));
 
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x09;
-#ifndef PPM_CALIBRATION
+#ifdef PPM_CALIBRATION
       spi1TxBuffer[1] = (0x0 << 7) | (0x0 << 4) | (0x0 << 0);             // minimal power @ RFO pin
 #else
       spi1TxBuffer[1] = (0x0 << 7) | (0x4 << 4) | (0xf << 0);             // PA off, MaxPower, TXpwr @ RFO pin

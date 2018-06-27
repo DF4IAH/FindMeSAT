@@ -1656,11 +1656,11 @@ void loRaWANLoRaWANTaskInit(void)
 
     loRaWANctx.Current_RXTX_Window          = CurWin_none;                                      // out of any window
     loRaWANctx.LinkADR_TxPowerReduction_dB  = 0;                                                // No power reduction
-//  loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) DR0_SF12_125kHz_LoRa;               // Start slowly
-    loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) DR3_SF9_125kHz_LoRa;                // TODO: remove me!
+    loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) DR0_SF12_125kHz_LoRa;               // Start slowly
+//  loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) DR3_SF9_125kHz_LoRa;                // TODO: remove me!
     loRaWANctx.LinkADR_DataRate_RX1_DRofs   = 0;                                                // Default
-//  loRaWANctx.LinkADR_DataRate_RXTX2       = (DataRates_t) DR0_SF12_125kHz_LoRa;               // Default for RXTX2
-    loRaWANctx.LinkADR_DataRate_RXTX2       = (DataRates_t) DR3_SF9_125kHz_LoRa;                // TODO: remove me!
+    loRaWANctx.LinkADR_DataRate_RXTX2       = (DataRates_t) DR0_SF12_125kHz_LoRa;               // Default for RXTX2
+//  loRaWANctx.LinkADR_DataRate_RXTX2       = (DataRates_t) DR3_SF9_125kHz_LoRa;                // TODO: remove me!
     loRaWANctx.LinkADR_ChannelMask          =  0x0007U;                                         // Enable default channels (1-3) only
     loRaWANctx.LinkADR_NbTrans              =  1;                                               // Default
     loRaWANctx.LinkADR_ChMaskCntl           = ChMaskCntl__appliesTo_1to16;                      // Mask settings are valid
@@ -1825,7 +1825,7 @@ void loRaWANLoRaWANTaskLoop(void)
         /* Receive on RX1 frequency */
         LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg,
             LORAWAN_EU868_JOIN_ACCEPT_DELAY1_MS - LORAWAN_RX_PREPARE_MS,
-            LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS - LORAWAN_RX_PREPARE_MS);                       // Same frequency and SF as during transmission
+            LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS - LORAWAN_FRQ_HOPPING_MS);                      // Same frequency and SF as during transmission
 
         if (loRaWanRxMsg.msg_encoded_Len == 0) {
           /* Receive response at JOINREQUEST_RX2 */
@@ -1867,7 +1867,7 @@ void loRaWANLoRaWANTaskLoop(void)
         /* Listen on RX2 frequency */
         LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg,
             LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS - LORAWAN_RX_PREPARE_MS,
-            LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS + LORAWAN_EU868_MAX_TX_DURATION_MS - LORAWAN_RX_PREPARE_MS);
+            LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS + LORAWAN_EU868_MAX_TX_DURATION_MS - LORAWAN_FRQ_HOPPING_MS);
 
         if (loRaWanRxMsg.msg_encoded_Len == 0) {
           usbLog("LoRaWAN: Failed to RX.\r\n");
