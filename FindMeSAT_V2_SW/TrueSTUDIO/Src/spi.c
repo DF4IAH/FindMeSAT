@@ -342,6 +342,73 @@ void spiSX127xFrequency_MHz(float mhz)
   spiProcessSpiMsg(4);
 }
 
+uint8_t spiSX127xPower_GetSetting(LoRaWANctx_t* ctx)
+{
+  int16_t pow_dBm = 14L - ctx->LinkADR_TxPowerReduction_dB;
+  uint8_t reg = 0;
+
+  if (pow_dBm >= +14) {
+    reg = (0x4 << 4) | (0xf << 0);                                                              // MaxPower +14dBm, TXpwr @ RFO pin
+
+  } else if (pow_dBm >= +12) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >= +10) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >=  +8) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >=  +6) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >=  +4) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >=  +2) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >=   0) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >=  -2) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >=  -4) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >=  -6) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >=  -8) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >= -10) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >= -12) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >= -14) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >= -16) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >= -18) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else if (pow_dBm >= -20) {
+    reg = (0x0 << 4) | (0x0 << 0);
+
+  } else {
+    reg = (0x0 << 4) | (0x0 << 0);                                                              // Minimal power @ RFO pin
+  }
+
+  /* No PA used */
+  return (0x0 << 7) || reg;
+}
+
 void spiSX127xDio_Mapping(TxRx_Mode_t mode)
 {
   /* DIO0..DIO5 settings */
@@ -600,9 +667,14 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
 
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x09;
 #ifdef PPM_CALIBRATION
-      spi1TxBuffer[1] = (0x0 << 7) | (0x0 << 4) | (0x0 << 0);             // minimal power @ RFO pin
+      spi1TxBuffer[1] = (0x0 << 7) | (0x0 << 4) | (0x0 << 0);             // Minimal power @ RFO pin
+#elif 1  // POWER_CALIBRATION
+      ctx->LinkADR_TxPowerReduction_dB  = 0;
+      ctx->LinkADR_DataRate_TX1         = DR5_SF7_125kHz_LoRa;
+      ctx->LinkADR_DataRate_RXTX2       = DR5_SF7_125kHz_LoRa;
+      spi1TxBuffer[1] = spiSX127xPower_GetSetting(ctx);
 #else
-      spi1TxBuffer[1] = (0x0 << 7) | (0x4 << 4) | (0xf << 0);             // PA off, MaxPower, TXpwr @ RFO pin
+      spi1TxBuffer[1] = spiSX127xPower_GetSetting(ctx);
 #endif
       spi1TxBuffer[2] = PA_RAMP_50us;                                     // PA ramp time 50us
       spi1TxBuffer[3] = (0x1 << 5) | (0xb << 0);                          // OverCurrentProtection ON, normal: 100mA

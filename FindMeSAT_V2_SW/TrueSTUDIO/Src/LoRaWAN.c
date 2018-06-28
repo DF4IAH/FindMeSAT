@@ -1805,6 +1805,39 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX2(void)
   }
 }
 
+static void loRaWANLoRaWANTaskLoop__JoinRequest_NextTry(void)
+{
+  if (JoinRequest == (loRaWanTxMsg.msg_prep_MHDR >> LoRaWAN_MHDR_MType_SHIFT)) {
+    /* Try again with new JOINREQUEST - clears loRaWanTxMsg by itself */
+    loRaWANctx.FsmState = Fsm_MAC_JoinRequest;
+
+  } else if (ConfDataUp == (loRaWanTxMsg.msg_prep_MHDR >> LoRaWAN_MHDR_MType_SHIFT)) {
+    switch (loRaWanTxMsg.msg_prep_FOpts_Buf[0]) {
+    case LinkCheckReq_UP:
+      {
+        loRaWANctx.FsmState = Fsm_MAC_JoinRequest;
+      }
+      break;
+
+    default:
+      loRaWANctx.FsmState = Fsm_NOP;
+    }
+  }
+
+  /* Sequence has ended */
+  LoRaWAN_calc_TxMsg_Reset(&loRaWANctx, &loRaWanTxMsg);
+
+  /* Remove RX message */
+  LoRaWAN_calc_RxMsg_Reset(&loRaWanRxMsg);
+
+  /* Delay 2s before retransmitting */
+  EventBits_t eb = xEventGroupWaitBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_IN, LORAWAN_EGW__QUEUE_IN, 0, 1000 / portTICK_PERIOD_MS);
+  if (eb) {
+    /* New message came in - Rest of sleep time dropped */
+    LoRaWAN_QueueIn_Process();
+  }
+}
+
 static void loRaWANLoRaWANTaskLoop__JoinRequestRX1(void)
 {
   if (loRaWANctx.TsEndOfTx) {
@@ -1837,39 +1870,6 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX1(void)
   } else {  // if (tsEndOfTx)
     /* Reset FSM */
     loRaWANctx.FsmState = Fsm_NOP;
-  }
-}
-
-static void loRaWANLoRaWANTaskLoop__JoinRequest_NextTry(void)
-{
-  if (JoinRequest == (loRaWanTxMsg.msg_prep_MHDR >> LoRaWAN_MHDR_MType_SHIFT)) {
-    /* Try again with new JOINREQUEST - clears loRaWanTxMsg by itself */
-    loRaWANctx.FsmState = Fsm_MAC_JoinRequest;
-
-  } else if (ConfDataUp == (loRaWanTxMsg.msg_prep_MHDR >> LoRaWAN_MHDR_MType_SHIFT)) {
-    switch (loRaWanTxMsg.msg_prep_FOpts_Buf[0]) {
-    case LinkCheckReq_UP:
-      {
-        loRaWANctx.FsmState = Fsm_MAC_JoinRequest;
-      }
-      break;
-
-    default:
-      loRaWANctx.FsmState = Fsm_NOP;
-    }
-  }
-
-  /* Sequence has ended */
-  LoRaWAN_calc_TxMsg_Reset(&loRaWANctx, &loRaWanTxMsg);
-
-  /* Remove RX message */
-  LoRaWAN_calc_RxMsg_Reset(&loRaWanRxMsg);
-
-  /* Delay 2s before retransmitting */
-  EventBits_t eb = xEventGroupWaitBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_IN, LORAWAN_EGW__QUEUE_IN, 0, 1000 / portTICK_PERIOD_MS);
-  if (eb) {
-    /* New message came in - Rest of sleep time dropped */
-    LoRaWAN_QueueIn_Process();
   }
 }
 
@@ -2638,6 +2638,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RejoinParamSetupAns(void)
 }
 #endif
 
+
 void loRaWANLoRaWANTaskLoop(void)
 {
   EventBits_t eb;
@@ -2684,6 +2685,7 @@ void loRaWANLoRaWANTaskLoop(void)
     break;
 
   case Fsm_MAC_JoinAccept:
+    while (1) ;  // TODO: remove me!
     loRaWANLoRaWANTaskLoop__Fsm_MAC_JoinAccept();
     break;
 
