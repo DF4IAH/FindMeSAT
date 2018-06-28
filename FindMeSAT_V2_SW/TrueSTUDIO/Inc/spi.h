@@ -211,6 +211,7 @@ typedef enum spiSX127x_IRQ_Mask {
 typedef enum TxRx_Mode {
   TxRx_Mode_TX            = 0x01,
   TxRx_Mode_RX            = 0x11,
+  TxRx_Mode_RX2           = 0x12,
   TxRx_Mode_RX_Randomizer = 0x1f,
   TxRx_Mode_IQ_Balancing  = 0x9e,
 } TxRx_Mode_t;
@@ -231,6 +232,7 @@ uint8_t spiProcessSpiMsg(uint8_t msgLen);
 void spiSX127xReset(void);
 void spiSX127xFrequency_MHz(float mhz);
 void spiSX127xDio_Mapping(TxRx_Mode_t mode);
+uint8_t spiSX127xDR_to_SF(DataRates_t dr);
 
 uint8_t spiSX127xMode_LoRa_GetBroadbandRSSI(void);
 void spiSX127xLoRa_setTxMsgLen(uint8_t payloadLen);
@@ -241,7 +243,7 @@ void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void);
 void spiSX127xMode(spiSX127x_Mode_t mode);
 void spiSX127xRegister_IRQ_clearAll(void);
 void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg);
-uint32_t spiSX127x_WaitUntil_TxDone(uint8_t doPreviousWakeTime, uint32_t stopTime);
+uint32_t spiSX127x_WaitUntil_TxDone(uint32_t stopTime);
 void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t stopTime);
 
 uint8_t spiDetectShieldSX127x(void);

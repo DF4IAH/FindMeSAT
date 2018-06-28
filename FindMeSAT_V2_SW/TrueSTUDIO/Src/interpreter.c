@@ -20,7 +20,7 @@
 extern osMessageQId       usbFromHostQueueHandle;
 extern osSemaphoreId      usbToHostBinarySemHandle;
 extern EventGroupHandle_t usbToHostEventGroupHandle;
-extern uint8_t usbClrScrBuf[4];
+extern char               usbClrScrBuf[4];
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -72,9 +72,7 @@ void interpreterInterpreterTaskLoop(void)
         usbToHost(&chr, 1);
         if (chr == 0x0d) {
           /* Add a LF for the terminal */
-          osSemaphoreWait(usbToHostBinarySemHandle, 0);
-          usbToHostWait((uint8_t*) "\n", 1);
-          osSemaphoreRelease(usbToHostBinarySemHandle);
+          usbLog("\n");
         }
       }
 
@@ -156,20 +154,14 @@ void interpreterPrintHelp(void)
   osSemaphoreRelease(usbToHostBinarySemHandle);
 }
 
-const uint8_t interpreterShowCursor01[] =
-    "> ";
 void interpreterShowCursor(void)
 {
-  osSemaphoreWait(usbToHostBinarySemHandle, 0);
-  usbToHostWait(interpreterShowCursor01, strlen((char*) interpreterShowCursor01));
-  osSemaphoreRelease(usbToHostBinarySemHandle);
+  usbLog("> ");
 }
 
 void interpreterClearScreen(void)
 {
-  osSemaphoreWait(usbToHostBinarySemHandle, 0);
-  usbToHostWait(usbClrScrBuf, strlen((char*) usbClrScrBuf));
-  osSemaphoreRelease(usbToHostBinarySemHandle);
+  usbLog(usbClrScrBuf);
 }
 
 
@@ -193,11 +185,7 @@ void prvDoInterprete(const uint8_t *buf, uint32_t len)
 }
 
 
-const uint8_t interpreterUnknownCommand01[] =
-    "\r\n?? unknown command - please try 'help' ??\r\n\r\n";
 void prvUnknownCommand(void)
 {
-  osSemaphoreWait(usbToHostBinarySemHandle, 0);
-  usbToHostWait(interpreterUnknownCommand01, strlen((char*) interpreterUnknownCommand01));
-  osSemaphoreRelease(usbToHostBinarySemHandle);
+  usbLog("\r\n?? unknown command - please try 'help' ??\r\n\r\n");
 }
