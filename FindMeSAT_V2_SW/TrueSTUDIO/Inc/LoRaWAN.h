@@ -26,6 +26,7 @@ typedef enum LORAWAN_EGW_BM {
 typedef enum loraInQueueCmds {
   loraInQueueCmds__NOP                = 0,
   loraInQueueCmds__Init,
+  loraInQueueCmds__TrackMeApplUp,
 } loraInQueueCmds_t;
 
 /* FSM states of the loRaWANLoRaWANTaskLoop */
@@ -99,6 +100,10 @@ typedef enum CurrentWindow {
   CurWin_RXTX1,
   CurWin_RXTX2
 } CurrentWindow_t;
+
+typedef enum LoRaWAN_SIGNAL {
+  LoRaSIG_Ready                       = 1,
+} LoRaWAN_SIGNAL_t;
 
 /* LoRaWAN direction of transmission - Up: device --> gateway / Dn: device <-- gateway */
 typedef enum LoRaWANctxDir {
@@ -463,7 +468,7 @@ typedef struct LoRaWAN_RX_Message {
 
 /* LoRaWAN Application specific data structures */
 
-typedef struct TrackMeApp {
+typedef struct TrackMeApp_up {
 
   /* TTN Mapper entities */
   float                               latitude_deg;
@@ -472,12 +477,12 @@ typedef struct TrackMeApp {
   uint16_t                            accuracy_10thM;
 
   /* Motion vector entities */
-  uint8_t                             course_deg;
+  uint8_t                             course_deg_x2;
   float                               speed_m_s;
   float                               vertspeed_m_s;
 
   /* Weather entities */
-  int32_t                             temp_100th_C;
+  int16_t                             temp_100th_C;
   uint16_t                            humitidy_1000th;
   uint32_t                            baro_Pa;
 
@@ -485,10 +490,16 @@ typedef struct TrackMeApp {
   uint16_t                            vbat_mV;
   int32_t                             ibat_uA;
 
-} TrackMeApp_t;
+} TrackMeApp_up_t;
+
+typedef struct TrackMeApp_down {
+
+  /* TBD */
+
+} TrackMeApp_down_t;
 
 
-typedef struct LoraliveApp {
+typedef struct LoraliveApp_up {
 
   uint8_t                             voltage_32_v;
 
@@ -539,7 +550,13 @@ typedef struct LoraliveApp {
     } l16;
   } u;
 
-} LoraliveApp_t;
+} LoraliveApp_up_t;
+
+typedef struct LoraliveApp_down {
+
+  /* TBD */
+
+} LoraliveApp_down_t;
 
 
 
@@ -548,7 +565,7 @@ void LoRaWANctx_applyKeys_trackMeApp(void);
 uint8_t LoRaWAN_calc_randomChannel(LoRaWANctx_t* ctx);
 float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, uint8_t dflt);
 
-void LoRaWAN_MAC_Queue_Push(uint8_t* macAry, uint8_t cnt);
+void LoRaWAN_MAC_Queue_Push(const uint8_t* macAry, uint8_t cnt);
 void LoRaWAN_MAC_Queue_Pull(uint8_t* macAry, uint8_t cnt);
 void LoRaWAN_MAC_Queue_Reset(void);
 uint8_t LoRaWAN_MAC_Queue_isAvail(uint8_t* snoop);

@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <math.h>
 #include "FreeRTOS.h"
 #include "stm32l496xx.h"
 #include "cmsis_os.h"
@@ -25,44 +26,34 @@
 
 
 /* Private variables ---------------------------------------------------------*/
-extern osSemaphoreId      usbToHostBinarySemHandle;
-extern EventGroupHandle_t usbToHostEventGroupHandle;
-extern EventGroupHandle_t loRaWANEventGroupHandle;
-extern osMessageQId       loraInQueueHandle;
-extern osMessageQId       loraOutQueueHandle;
-extern LoRaWANctx_t       loRaWANctx;
-extern LoraliveApp_t      loraliveApp;
-extern uint32_t           spiPreviousWakeTime;
+extern osMessageQId         loraInQueueHandle;
+extern osMessageQId         loraOutQueueHandle;
+extern osTimerId            controllerSendTimerHandle;
+extern osSemaphoreId        usbToHostBinarySemHandle;
+extern osSemaphoreId        trackMeApplUpBinarySemHandle;
+extern osSemaphoreId        trackMeApplUpDataBinarySemHandle;
+extern osSemaphoreId        trackMeApplDownDataBinarySemHandle;
+extern EventGroupHandle_t   usbToHostEventGroupHandle;
+extern EventGroupHandle_t   loRaWANEventGroupHandle;
+extern EventGroupHandle_t   controllerEventGroupHandle;
+
+extern LoRaWANctx_t         loRaWANctx;
+
+/* Application data for track_me */
+extern TrackMeApp_up_t      trackMeApp_up;
+extern TrackMeApp_down_t    trackMeApp_down;
+
+extern LoraliveApp_up_t     loraliveApp_up;
+extern LoraliveApp_down_t   loraliveApp_down;
+
+const uint16_t              Controller_MaxWaitMs = 100;
+
 
 /* Private function prototypes -----------------------------------------------*/
 static void prvControllerInitBeforeGreet(void);
 static void prvControllerInitAfterGreet(void);
 static void prvControllerUsbGreet(void);
 static void prvControllerPrintMCU(void);
-
-
-/* Global functions ----------------------------------------------------------*/
-void controllerControllerTaskInit(void)
-{
-  uint32_t prevWakeTime = 0;
-
-  /* Inits to be done before the USB CDC messaging is ready */
-  prvControllerInitBeforeGreet();
-
-  /* Delay until the USB CDC init phase is over */
-  osDelayUntil(&prevWakeTime, 3500);
-
-  /* Greetings to the USB CDC */
-  prvControllerUsbGreet();
-
-  /* Inits to be done after USB/DCD connection is established */
-  prvControllerInitAfterGreet();
-}
-
-void controllerControllerTaskLoop(void)
-{
-  osDelay(100);
-}
 
 
 /* Private functions ---------------------------------------------------------*/
@@ -107,12 +98,12 @@ void prvControllerInitBeforeGreet(void)
   /* Check for attached SX127x_mbed_shield */
   if (HAL_OK == spiDetectShieldSX127x()) {
     /* Send INIT message to the LoRaWAN task */
-    const uint8_t maxWaitMs = 25;
-    uint8_t msgToLoRaWAN[2] = { 1, loraInQueueCmds__Init };
+    const uint8_t c_maxWaitMs = 25;
+    const uint8_t c_msgToLoRaWAN[2] = { 1, loraInQueueCmds__Init };
 
     /* Write message into loraInQueue */
-    for (uint8_t idx = 0; idx < sizeof(msgToLoRaWAN); idx++) {
-      xQueueSendToBack(loraInQueueHandle, msgToLoRaWAN + idx, maxWaitMs);
+    for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
+      xQueueSendToBack(loraInQueueHandle, c_msgToLoRaWAN + idx, c_maxWaitMs);
     }
 
     /* Set QUEUE_IN bit */
@@ -135,29 +126,29 @@ void prvControllerInitAfterGreet(void)
   if (loRaWANctx.bkpRAM)
   {
 #if 0
-    loraliveApp.id = 'E';
+    loraliveApp_up.id = 'E';
 
-    loraliveApp.voltage_32_v  = (uint8_t) (3.3f * 32 + 0.5f);
+    loraliveApp_up.voltage_32_v  = (uint8_t) (3.3f * 32 + 0.5f);
 
-    loraliveApp.dust025_10_hi = 0U; loraliveApp.dust025_10_lo = 0U;
-    loraliveApp.dust025_10_hi = 0U; loraliveApp.dust025_10_lo = 0U;
+    loraliveApp_up.dust025_10_hi = 0U; loraliveApp_up.dust025_10_lo = 0U;
+    loraliveApp_up.dust025_10_hi = 0U; loraliveApp_up.dust025_10_lo = 0U;
 
     uint32_t latitude_1000 = 49473;
-    loraliveApp.u.l14.latitude_1000_sl24  = (uint8_t) ((latitude_1000  >> 24) & 0xffUL);
-    loraliveApp.u.l14.latitude_1000_sl16  = (uint8_t) ((latitude_1000  >> 16) & 0xffUL);
-    loraliveApp.u.l14.latitude_1000_sl08  = (uint8_t) ((latitude_1000  >>  8) & 0xffUL);
-    loraliveApp.u.l14.latitude_1000_sl00  = (uint8_t) ((latitude_1000  >>  0) & 0xffUL);
+    loraliveApp_up.u.l14.latitude_1000_sl24  = (uint8_t) ((latitude_1000  >> 24) & 0xffUL);
+    loraliveApp_up.u.l14.latitude_1000_sl16  = (uint8_t) ((latitude_1000  >> 16) & 0xffUL);
+    loraliveApp_up.u.l14.latitude_1000_sl08  = (uint8_t) ((latitude_1000  >>  8) & 0xffUL);
+    loraliveApp_up.u.l14.latitude_1000_sl00  = (uint8_t) ((latitude_1000  >>  0) & 0xffUL);
 
     uint32_t longitude_1000 = 8615;
-    loraliveApp.u.l14.longitude_1000_sl24 = (uint8_t) ((longitude_1000 >> 24) & 0xffUL);
-    loraliveApp.u.l14.longitude_1000_sl16 = (uint8_t) ((longitude_1000 >> 16) & 0xffUL);
-    loraliveApp.u.l14.longitude_1000_sl08 = (uint8_t) ((longitude_1000 >>  8) & 0xffUL);
-    loraliveApp.u.l14.longitude_1000_sl00 = (uint8_t) ((longitude_1000 >>  0) & 0xffUL);
+    loraliveApp_up.u.l14.longitude_1000_sl24 = (uint8_t) ((longitude_1000 >> 24) & 0xffUL);
+    loraliveApp_up.u.l14.longitude_1000_sl16 = (uint8_t) ((longitude_1000 >> 16) & 0xffUL);
+    loraliveApp_up.u.l14.longitude_1000_sl08 = (uint8_t) ((longitude_1000 >>  8) & 0xffUL);
+    loraliveApp_up.u.l14.longitude_1000_sl00 = (uint8_t) ((longitude_1000 >>  0) & 0xffUL);
 
     /* TODO_ DEBUG Loop to be removed */
     for (uint8_t i = 0; i < 3; i++) {
       usbLog("\r\nTX:\r\n");
-      LoRaWAN_App_trackMeApp_pushUp(&loRaWANctx, &loraliveApp, 14);
+      LoRaWAN_App_trackMeApp_pushUp(&loRaWANctx, &loraliveApp_up, 14);
 
       usbLog("\r\nRX:\r\n");
       LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
@@ -251,4 +242,135 @@ void prvControllerPrintMCU(void)
       "\t\tMCU Temp.\t%+02d.%02u C\r\n\r\n\r\n",
       lotBuf, uidWaf, uidPosX, uidPosY, packagePtr, flashSize, adc1Vdda_mV, adc1Vbat_mV, adc1Temp_100_i, adc1Temp_100_f);
   usbLog(buf);
+}
+
+
+void prvControllerGetDataAndUpload(void)
+{
+  const  float  centerLat     =  49.473185f;
+  const  float  centerLon     =   8.614806f;
+  const  float  centerAlt     =  98.0f;
+  const  float  centerAcc     =  20.0f;
+  const  float  radius_m      = 100.0f;
+  const  float  heightAmpl_m  =   3.0f;
+  const  float  height_m_p_s  =   0.1f;
+  const  float  humidityAmpl  = 100.0f;  // +/- 10%
+  static float  simPhase      =   0.0f;
+
+  /* Wait for semaphore to access LoRaWAN TrackMeApp */
+  osSemaphoreWait(trackMeApplUpDataBinarySemHandle, 0);
+
+  /* Fill in data to send */
+  {
+    /* TTN Mapper entities */
+    trackMeApp_up.latitude_deg      = centerLat + ((radius_m / (60.f * 1852.f)) * sin(simPhase * PI/180));
+    trackMeApp_up.longitude_deg     = centerLon + ((radius_m / (60.f * 1852.f)) * cos(simPhase * PI/180) / cos(2*PI * centerLat));
+    trackMeApp_up.altitude_m        = centerAlt + sin(simPhase * PI/180) * heightAmpl_m;
+    trackMeApp_up.accuracy_10thM    = centerAcc + sin(simPhase * PI/180) * 15.0f;
+
+    /* Motion vector entities */
+    trackMeApp_up.course_deg_x2     = (uint8_t) ((360U - (uint16_t)simPhase) >> 1);
+    trackMeApp_up.speed_m_s         = 2*PI*radius_m * (30.f / 360.f);
+    trackMeApp_up.vertspeed_m_s     = cos(simPhase * PI/180) * height_m_p_s;
+
+    /* Weather entities */
+    trackMeApp_up.temp_100th_C      = adcGetTemp_100();
+    trackMeApp_up.humitidy_1000th   = (uint16_t) (500 + sin(simPhase * PI/180) * humidityAmpl);
+    trackMeApp_up.baro_Pa           = 101325;
+
+    /* System entities */
+    trackMeApp_up.vbat_mV           = adcGetVbat_mV();
+    trackMeApp_up.ibat_uA           = -1000;  // drawing from the battery
+
+
+    /* Simulator phase increment - each 10 secs */
+    simPhase += 30.f;
+    if (simPhase > 359.9f) {
+      simPhase = 0.f;
+    }
+  }
+
+  /* Free semaphore */
+  osSemaphoreRelease(trackMeApplUpDataBinarySemHandle);
+
+  /* Signal to take-over data and do upload */
+  {
+    const uint8_t c_msgToLoRaWAN[2] = { 1, loraInQueueCmds__TrackMeApplUp };
+
+    /* Write message into loraInQueue */
+    for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
+      xQueueSendToBack(loraInQueueHandle, c_msgToLoRaWAN + idx, Controller_MaxWaitMs);
+    }
+  }
+}
+
+
+
+/* Global functions ----------------------------------------------------------*/
+void controllerSendTimerCallbackImpl(TimerHandle_t xTimer)
+{
+  /* Set flag for sending and upload data */
+  xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__DO_SEND);
+}
+
+
+void controllerControllerTaskInit(void)
+{
+  uint32_t prevWakeTime = 0;
+
+  /* Inits to be done before the USB CDC messaging is ready */
+  prvControllerInitBeforeGreet();
+
+  /* Delay until the USB CDC init phase is over */
+  osDelayUntil(&prevWakeTime, 3500);
+
+  /* Greetings to the USB CDC */
+  prvControllerUsbGreet();
+
+  /* Inits to be done after USB/DCD connection is established */
+  prvControllerInitAfterGreet();
+}
+
+void controllerControllerTaskLoop(void)
+{
+  /* Controller itself */
+  {
+    EventBits_t eb = xEventGroupWaitBits(controllerEventGroupHandle, Controller_EGW__DO_SEND, Controller_EGW__DO_SEND, 0, 1);
+    if (eb & Controller_EGW__DO_SEND) {
+      prvControllerGetDataAndUpload();
+    }
+  }
+
+  /* LoRaWAN */
+  {
+    EventBits_t eb = xEventGroupWaitBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_OUT, LORAWAN_EGW__QUEUE_OUT, 0, 1);
+    if (eb & LORAWAN_EGW__QUEUE_OUT) {
+      BaseType_t  xStatus;
+      uint8_t     inAry[4]  = { 0 };
+      uint8_t     inLen     = 0;
+
+      xStatus = xQueueReceive(loraOutQueueHandle, &inLen, 1);
+      if (pdPASS == xStatus) {
+        for (uint8_t idx = 0; idx < inLen; idx++) {
+          xStatus = xQueueReceive(loraOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
+          if (pdFALSE == xStatus) {
+            /* Bad communication - drop */
+            return;
+          }
+        }
+      }
+
+      switch (inAry[0]) {
+      case 'R':
+        {
+          /* Ready from LoRaWAN task received - activate upload timer */
+          xStatus = xTimerStart(controllerSendTimerHandle, 1);
+          xStatus = xTimerChangePeriod(controllerSendTimerHandle, 10000 / portTICK_PERIOD_MS, 1);
+        }
+        break;
+      }  // switch
+    }
+  }
+
+  osDelay(100);
 }

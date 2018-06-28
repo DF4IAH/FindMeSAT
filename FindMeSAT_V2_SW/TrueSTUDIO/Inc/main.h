@@ -163,7 +163,12 @@
 /* USER CODE BEGIN Private defines */
 #define USE_FULL_ASSERT     1U
 
+#ifndef PI
+# define PI                 3.14159265358979f
+#endif
+
 #define FINDMESAT_VERSION   20180628U
+
 
 typedef void * TaskHandle_t;
 

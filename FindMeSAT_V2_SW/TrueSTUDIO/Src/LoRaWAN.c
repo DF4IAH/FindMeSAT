@@ -25,19 +25,18 @@
 #include "adc.h"
 
 
-/* Holds RTOS timing info */
-extern uint32_t           spiPreviousWakeTime;
-
 /* SPI communication buffers */
 extern uint8_t            spi1TxBuffer[SPI1_BUFFERSIZE];
 extern uint8_t            spi1RxBuffer[SPI1_BUFFERSIZE];
 extern osMessageQId       loraInQueueHandle;
 extern osMessageQId       loraOutQueueHandle;
-extern EventGroupHandle_t loRaWANEventGroupHandle;
 extern osMessageQId       loraMacQueueHandle;
+extern osSemaphoreId      trackMeApplUpDataBinarySemHandle;
+extern osSemaphoreId      trackMeApplDownDataBinarySemHandle;
+extern EventGroupHandle_t loRaWANEventGroupHandle;
 
-
-const uint16_t loRaWANWait_EGW_MaxWaitTicks = 60000 / portTICK_PERIOD_MS;                       // One minute
+const uint16_t            loRaWANWait_EGW_MaxWaitTicks  = 60000 / portTICK_PERIOD_MS;           // One minute
+const uint16_t            LoRaWAN_MaxWaitMs             = 100;
 
 
 #ifdef USE_ABP
@@ -73,14 +72,19 @@ const uint8_t  AppKey_BE[16]                            = { 0xD9, 0x0E, 0x09, 0x
 volatile LoRaWANctxBkpRam_t *const LoRaWANctxBkpRam     = (void*) 0x40002850UL;
 
 /* Network context of LoRaWAN */
-LoRaWANctx_t loRaWANctx                                 = { 0 };
+LoRaWANctx_t          loRaWANctx                        = { 0 };
 
 /* Message buffers */
-LoRaWAN_RX_Message_t loRaWanRxMsg                       = { 0 };
-LoRaWAN_TX_Message_t loRaWanTxMsg                       = { 0 };
+LoRaWAN_RX_Message_t  loRaWanRxMsg                      = { 0 };
+LoRaWAN_TX_Message_t  loRaWanTxMsg                      = { 0 };
+
+/* Application data for track_me */
+TrackMeApp_up_t       trackMeApp_up                     = { 0 };
+TrackMeApp_down_t     trackMeApp_down                   = {   };
 
 /* Application data for loralive */
-LoraliveApp_t loraliveApp                               = { 0 };
+LoraliveApp_up_t      loraliveApp_up                    = { 0 };
+LoraliveApp_down_t    loraliveApp_down                  = {   };
 
 
 inline
@@ -184,8 +188,26 @@ clrInBuf:
   memset(buf, 0, sizeof(buf));
 }
 
+static void LoRaWAN_QueueOut_Process(uint8_t signal)
+{
+  switch (signal) {
+    case LoRaSIG_Ready:
+      {
+        const uint8_t c_qM[2] = { 1, (uint8_t)'R' };
 
-static uint8_t LoRaWAN_PayloadCompress_TrackMeApp(uint8_t outBuf[], const TrackMeApp_t* trackMeApp_UL)
+        for (uint8_t idx = 0; idx < sizeof(c_qM); idx++) {
+          xQueueSendToBack(loraOutQueueHandle, c_qM + idx, LoRaWAN_MaxWaitMs / portTICK_PERIOD_MS);
+        }
+
+        /* Set QUEUE_OUT bit */
+        xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_OUT);
+      }
+      break;
+  }
+}
+
+
+static uint8_t LoRaWAN_PayloadCompress_TrackMeApp(uint8_t outBuf[], const TrackMeApp_up_t* trackMeApp_UL)
 {
   uint8_t outLen = 0;
 
@@ -218,8 +240,8 @@ static uint8_t LoRaWAN_PayloadCompress_TrackMeApp(uint8_t outBuf[], const TrackM
 
 
     /* Motion vector entities */
-    if (trackMeApp_UL->course_deg || trackMeApp_UL->speed_m_s) {
-      uint8_t   crs     = trackMeApp_UL->course_deg % 360;
+    if (trackMeApp_UL->course_deg_x2 || trackMeApp_UL->speed_m_s) {
+      uint8_t   crs_x2  = trackMeApp_UL->course_deg_x2 % 180;
       float     spd     = trackMeApp_UL->speed_m_s;
       uint32_t  spdMan  = 0UL;
       uint8_t   spdExp  = 32U;
@@ -229,8 +251,8 @@ static uint8_t LoRaWAN_PayloadCompress_TrackMeApp(uint8_t outBuf[], const TrackM
         spdMan  = spd * pow(10, (32 - spdExp));
       }
 
-      outBuf[8]    = (crs    >>  1) & 0xff;                                                     // 8 bits
-      outBuf[9]    = (crs    <<  7) & 0x80;                                                     // 1 bit
+      outBuf[8]    = (crs_x2 >>  1) & 0xff;                                                     // 8 bits
+      outBuf[9]    = (crs_x2 <<  7) & 0x80;                                                     // 1 bit
 
       outBuf[9]   |= (spdMan >> 10) & 0x7f;                                                     // 7 bits (5 decimal digits)
       outBuf[10]   = (spdMan >>  2) & 0xff;                                                     // 8 bits
@@ -352,7 +374,7 @@ static uint8_t LoRaWAN_PayloadCompress_TrackMeApp(uint8_t outBuf[], const TrackM
   return outLen;
 }
 
-static uint8_t LoRaWAN_PayloadExpand_TrackMeApp(TrackMeApp_t* trackMeApp_DL, const uint8_t* compressedMsg, uint8_t compressedMsgLen)
+static uint8_t LoRaWAN_PayloadExpand_TrackMeApp(TrackMeApp_up_t* trackMeApp_DL, const uint8_t* compressedMsg, uint8_t compressedMsgLen)
 {
 
   return 0;
@@ -462,7 +484,7 @@ function Decoder(bytes, port) {
 
 
 #ifdef NEW
-static uint8_t LoRaWAN_PayloadCompress_LoraliveApp(const LoraliveApp_t* loraliveApp_UL)
+static uint8_t LoRaWAN_PayloadCompress_LoraliveApp(const LoraliveApp_up_t* loraliveApp_UL)
 {
 
   return 0;
@@ -475,7 +497,7 @@ static uint8_t LoRaWAN_PayloadCompress_LoraliveApp(const LoraliveApp_t* loralive
 }
 #endif
 
-static uint8_t LoRaWAN_PayloadExpand_LoraliveApp(LoraliveApp_t* loraliveApp_DL, const uint8_t* compressedMsg, uint8_t compressedMsgLen)
+static uint8_t LoRaWAN_PayloadExpand_LoraliveApp(LoraliveApp_up_t* loraliveApp_DL, const uint8_t* compressedMsg, uint8_t compressedMsgLen)
 {
 
   return 0;
@@ -1078,7 +1100,7 @@ static void LoRaWAN_calc_TxMsg_Compiler(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t*
 {
   /* Clear encoded section */
   msg->msg_encoded_Len = 0U;
-  memset(msg->msg_encoded_Buf, 0, sizeof(msg->msg_encoded_Buf));
+  memset((uint8_t*)msg->msg_encoded_Buf, 0, sizeof(msg->msg_encoded_Buf));
 
   /* PHYPayload */
   {
@@ -1435,7 +1457,7 @@ static void LoRaWAN_calc_PayloadExpand(LoRaWAN_RX_Message_t* msg)
     switch (variant) {
     case /* PayloadExpand_TrackMeApp */ 1:
       {
-        TrackMeApp_t trackMeApp_DL = { 0 };
+        TrackMeApp_up_t trackMeApp_DL = { 0 };
 
         /* Expand the message into TrackMeApp data structure */
         LoRaWAN_PayloadExpand_TrackMeApp(&trackMeApp_DL, msg->msg_parted_FRMPayload_Buf, msg->msg_parted_FRMPayload_Len);
@@ -1447,7 +1469,7 @@ static void LoRaWAN_calc_PayloadExpand(LoRaWAN_RX_Message_t* msg)
 
     case /* PayloadExpand_LoraliveApp */ 2:
       {
-        LoraliveApp_t loraliveApp_DL = { 0 };
+        LoraliveApp_up_t loraliveApp_DL = { 0 };
 
         LoRaWAN_PayloadExpand_LoraliveApp(&loraliveApp_DL, msg->msg_parted_FRMPayload_Buf, msg->msg_parted_FRMPayload_Len);
 
@@ -1460,12 +1482,11 @@ static void LoRaWAN_calc_PayloadExpand(LoRaWAN_RX_Message_t* msg)
 }
 
 
-const uint32_t maxWaitMs  = 100;
-void LoRaWAN_MAC_Queue_Push(uint8_t* macAry, uint8_t cnt)
+void LoRaWAN_MAC_Queue_Push(const uint8_t* macAry, uint8_t cnt)
 {
   /* Send MAC commands with their options */
   for (uint8_t idx = 0; idx < cnt; ++idx) {
-    BaseType_t xStatus = xQueueSendToBack(loraMacQueueHandle, macAry + idx, maxWaitMs / portTICK_PERIOD_MS);
+    BaseType_t xStatus = xQueueSendToBack(loraMacQueueHandle, macAry + idx, LoRaWAN_MaxWaitMs / portTICK_PERIOD_MS);
     if (pdTRUE != xStatus) {
       _Error_Handler(__FILE__, __LINE__);
     }
@@ -1476,7 +1497,7 @@ void LoRaWAN_MAC_Queue_Pull(uint8_t* macAry, uint8_t cnt)
 {
   /* Receive MAC commands with their options */
   for (uint8_t idx = 0; idx < cnt; ++idx) {
-    BaseType_t xStatus = xQueueReceive(loraMacQueueHandle, macAry + idx, maxWaitMs / portTICK_PERIOD_MS);
+    BaseType_t xStatus = xQueueReceive(loraMacQueueHandle, macAry + idx, LoRaWAN_MaxWaitMs / portTICK_PERIOD_MS);
     if (pdTRUE != xStatus) {
       _Error_Handler(__FILE__, __LINE__);
     }
@@ -1503,7 +1524,7 @@ uint8_t LoRaWAN_MAC_Queue_isAvail(uint8_t* snoop)
 #if 0
 static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
     uint8_t* payloadEncoded, uint8_t maxLen,
-    const LoraliveApp_t* app)
+    const LoraliveApp_up_t* app)
 {
   uint8_t payload[48] = { 0 };
   uint8_t len;
@@ -2245,6 +2266,9 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkCheckAns(void)
 {
   uint8_t macAry[2] = { 0 };
 
+  /* Inform controller that link is established */
+  LoRaWAN_QueueOut_Process(LoRaSIG_Ready);
+
   /* USB: info */
   usbLog("LoRaWAN: Got RX LinkCheckAns.\r\n");
 
@@ -2252,6 +2276,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkCheckAns(void)
   loRaWANctx.LinkCheck_Ppm_SNR  = macAry[0];
   loRaWANctx.LinkCheck_GW_cnt   = macAry[1];
   loRaWANctx.FsmState           = Fsm_MAC_Proc;
+
 }
 
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkADRReq(void)
