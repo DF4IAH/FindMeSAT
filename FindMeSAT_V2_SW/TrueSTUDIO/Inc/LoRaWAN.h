@@ -190,7 +190,7 @@ typedef struct LoRaWANctx {
 
   /* MAC communicated data */
   volatile uint8_t                    ADR;                                                      // Setting: global ADR
-  volatile uint8_t                    TX_MAC_Cnt;                                               // MAC list to be sent at next transmission
+  volatile uint8_t                    TX_MAC_Len;                                               // MAC list to be sent at next transmission
   volatile uint8_t                    TX_MAC_Buf[16];                                           // MAC list to be sent at next transmission
   volatile uint8_t                    LinkCheck_Ppm_SNR;                                        // MAC: LinkCheckAns
   volatile uint8_t                    LinkCheck_GW_cnt;                                         // MAC: LinkCheckAns
@@ -225,7 +225,7 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    FCtrl_ACK;
   volatile uint8_t                    FCtrl_ClassB;
   volatile uint8_t                    FCtrl_FPending;
-  volatile uint8_t                    FCtrl_FOptsLen;
+//volatile uint8_t                    FCtrl_FOptsLen;
   volatile uint8_t                    FPort;
   volatile uint8_t                    SpreadingFactor;
   volatile float                      FrequencyMHz;
@@ -404,13 +404,13 @@ typedef struct LoRaWAN_TX_Message {
 
   /* Prepare section */
   uint8_t                             msg_prep_MHDR;
-  uint8_t                             msg_prep_FCtrl;
-  uint8_t                             msg_prep_FCnt[2];
+//uint8_t                             msg_prep_FCtrl;
+//uint8_t                             msg_prep_FCnt[2];
   //
-  uint8_t                             msg_prep_FOpts_Len;
-  uint8_t                             msg_prep_FOpts_Buf[16];
+//uint8_t                             msg_prep_FOpts_Len;
+//uint8_t                             msg_prep_FOpts_Buf[16];
 #ifdef LORAWAN_1V1
-  uint8_t                             msg_prep_FOpts_Encoded[16];
+//uint8_t                             msg_prep_FOpts_Encoded[16];
 #endif
   //
   uint8_t                             msg_prep_FPort_absent;

@@ -348,58 +348,34 @@ uint8_t spiSX127xPower_GetSetting(LoRaWANctx_t* ctx)
   uint8_t reg = 0;
 
   if (pow_dBm >= +14) {
-    reg = (0x4 << 4) | (0xf << 0);                                                              // MaxPower +14dBm, TXpwr @ RFO pin
+    reg = (0x5 << 4) | (0xe << 0);                                                              // MaxPower +14dBm, TXpwr @ RFO pin
 
   } else if (pow_dBm >= +12) {
-    reg = (0x0 << 4) | (0x0 << 0);
+    reg = (0x5 << 4) | (0xc << 0);
 
   } else if (pow_dBm >= +10) {
-    reg = (0x0 << 4) | (0x0 << 0);
+    reg = (0x0 << 4) | (0xe << 0);
 
   } else if (pow_dBm >=  +8) {
-    reg = (0x0 << 4) | (0x0 << 0);
+    reg = (0x0 << 4) | (0xc << 0);
 
   } else if (pow_dBm >=  +6) {
-    reg = (0x0 << 4) | (0x0 << 0);
+    reg = (0x0 << 4) | (0xa << 0);
 
   } else if (pow_dBm >=  +4) {
-    reg = (0x0 << 4) | (0x0 << 0);
+    reg = (0x0 << 4) | (0x8 << 0);
 
   } else if (pow_dBm >=  +2) {
-    reg = (0x0 << 4) | (0x0 << 0);
+    reg = (0x0 << 4) | (0x6 << 0);
 
   } else if (pow_dBm >=   0) {
-    reg = (0x0 << 4) | (0x0 << 0);
+    reg = (0x0 << 4) | (0x4 << 0);
 
   } else if (pow_dBm >=  -2) {
-    reg = (0x0 << 4) | (0x0 << 0);
+    reg = (0x0 << 4) | (0x2 << 0);
 
   } else if (pow_dBm >=  -4) {
-    reg = (0x0 << 4) | (0x0 << 0);
-
-  } else if (pow_dBm >=  -6) {
-    reg = (0x0 << 4) | (0x0 << 0);
-
-  } else if (pow_dBm >=  -8) {
-    reg = (0x0 << 4) | (0x0 << 0);
-
-  } else if (pow_dBm >= -10) {
-    reg = (0x0 << 4) | (0x0 << 0);
-
-  } else if (pow_dBm >= -12) {
-    reg = (0x0 << 4) | (0x0 << 0);
-
-  } else if (pow_dBm >= -14) {
-    reg = (0x0 << 4) | (0x0 << 0);
-
-  } else if (pow_dBm >= -16) {
-    reg = (0x0 << 4) | (0x0 << 0);
-
-  } else if (pow_dBm >= -18) {
-    reg = (0x0 << 4) | (0x0 << 0);
-
-  } else if (pow_dBm >= -20) {
-    reg = (0x0 << 4) | (0x0 << 0);
+    reg = (0x0 << 4) | (0x1 << 0);
 
   } else {
     reg = (0x0 << 4) | (0x0 << 0);                                                              // Minimal power @ RFO pin
@@ -544,8 +520,16 @@ void spiSX127xRegister_IRQ_clearAll(void)
   spiProcessSpiMsg(2);
 }
 
+
+//#define PPM_CALIBRATION
+#define POWER_CALIBRATION
 void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg)
 {
+#ifdef POWER_CALIBRATION
+  ctx->SpreadingFactor                = SF7_DR5_VAL;
+  ctx->LinkADR_TxPowerReduction_dB    = 0;                                                      // Range: 0 - 20 dB reduction
+#endif
+
   const float       l_f               = ctx->FrequencyMHz;
   const uint8_t     l_SF              = (ctx->SpreadingFactor & 0x0f) << SFx_SHIFT;
   const uint32_t    fmt_mhz           = (uint32_t) l_f;
@@ -668,11 +652,6 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x09;
 #ifdef PPM_CALIBRATION
       spi1TxBuffer[1] = (0x0 << 7) | (0x0 << 4) | (0x0 << 0);             // Minimal power @ RFO pin
-#elif 1  // POWER_CALIBRATION
-      ctx->LinkADR_TxPowerReduction_dB  = 0;
-      ctx->LinkADR_DataRate_TX1         = DR5_SF7_125kHz_LoRa;
-      ctx->LinkADR_DataRate_RXTX2       = DR5_SF7_125kHz_LoRa;
-      spi1TxBuffer[1] = spiSX127xPower_GetSetting(ctx);
 #else
       spi1TxBuffer[1] = spiSX127xPower_GetSetting(ctx);
 #endif
@@ -1093,9 +1072,9 @@ uint8_t spiDetectShieldSX127x(void)
       sxVersion = spi1RxBuffer[1];
     }
 
-    if ((sxVersion != 0x22)  // SX1272
+    if ((sxVersion != 0x22)                                                                     // SX1272
         &&
-        (sxVersion != 0x12)) {  // SX1276
+        (sxVersion != 0x12)) {                                                                  // SX1276
       /* We can handle Version  0x22 (SX1272)  and  0x12 (SX1276) only */
       return HAL_ERROR;
     }
