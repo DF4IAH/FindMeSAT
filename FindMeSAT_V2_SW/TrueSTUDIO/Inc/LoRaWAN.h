@@ -189,6 +189,7 @@ typedef struct LoRaWANctx {
   volatile float                      Ch_Frequencies_MHz[16];
 
   /* MAC communicated data */
+  volatile uint8_t                    ADR;                                                      // Setting: global ADR
   volatile uint8_t                    TX_MAC_Cnt;                                               // MAC list to be sent at next transmission
   volatile uint8_t                    TX_MAC_Buf[16];                                           // MAC list to be sent at next transmission
   volatile uint8_t                    LinkCheck_Ppm_SNR;                                        // MAC: LinkCheckAns
@@ -200,6 +201,7 @@ typedef struct LoRaWANctx {
   volatile uint16_t                   LinkADR_ChannelMask;                                      // MAC: LinkADRReq
   volatile uint8_t                    LinkADR_NbTrans;                                          // MAC: LinkADRReq - unconfirmed up packets multiple transmissions
   volatile ChMaskCntl_t               LinkADR_ChMaskCntl;                                       // MAC: LinkADRReq
+  volatile uint8_t                    LinkADR_ChannelMask_OK;                                   // Last channel mask setting whether valid
 
 
   /* Join Server specific */

@@ -1157,7 +1157,7 @@ static void LoRaWAN_calc_TxMsg_Reset(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* ms
   memset(msg, 0, sizeof(LoRaWAN_TX_Message_t));
 
   /* Pre-sets for a new TX message */
-  ctx->FCtrl_ADR = 0; // TODO: set to one when ADR is implemented
+  ctx->FCtrl_ADR = ctx->ADR; // TODO: set to one when ADR is implemented
   ctx->FCtrl_ADRACKReq = 0;
   ctx->FCtrl_ACK = 0;
 }
@@ -1593,7 +1593,7 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
     spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
     spiSX127x_WaitUntil_RxDone(ctx, msg, ctx->TsEndOfTx + diffToTxStopMs);
 
-    /* After the RX time decide weather to be able for changing the frequency quickly or to turn the receiver off */
+    /* After the RX time decide whether to be able for changing the frequency quickly or to turn the receiver off */
     spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | ((ctx->Current_RXTX_Window == CurWin_RXTX2 ?  FSRX : STANDBY)));
 
     HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                                // Green off
@@ -1648,12 +1648,14 @@ void loRaWANLoRaWANTaskInit(void)
   /* Setup data from FLASH NVM */
   LoRaWANctx_readFLASH();
 
-  /* Copy default channel settings */
+  /* Set-up LoRaWAN context */
   {
+    /* Copy default channel settings */
     for (uint8_t ch = 1; ch <= 8; ch++) {
       loRaWANctx.Ch_Frequencies_MHz[ch - 1] = LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, ch, 1);  // Default values / default channels
     }
 
+    loRaWANctx.ADR                          = 1;                                                // Global setting for ADR
     loRaWANctx.Current_RXTX_Window          = CurWin_none;                                      // out of any window
     loRaWANctx.LinkADR_TxPowerReduction_dB  = 0;                                                // No power reduction
     loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) DR0_SF12_125kHz_LoRa;               // Start slowly
@@ -1700,7 +1702,7 @@ void loRaWANLoRaWANTaskInit(void)
     spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
   }
 
-  /* I/Q balancing */
+  /* I/Q balancing - no SX127x reset or band-change after this block without re-balancing I/Q */
   {
     /* Set center frequency of EU-868 */
     loRaWANctx.FrequencyMHz = LoRaWAN_calc_Channel_to_MHz(
@@ -1721,9 +1723,9 @@ void loRaWANLoRaWANTaskInit(void)
 
 void loRaWANLoRaWANTaskLoop(void)
 {
-  const LoRaWANctx_t* ctx                     = &loRaWANctx;
-  static uint8_t      sLinkADR_ChannelMask_OK = 0;
-  EventBits_t         eb;
+  volatile LoRaWANctx_t*  ctx                     = &loRaWANctx;
+  //static uint8_t          sLinkADR_ChannelMask_OK = 0;
+  EventBits_t             eb;
 
   switch (loRaWANctx.FsmState) {
   case Fsm_RX1:
@@ -2273,9 +2275,9 @@ JR_next_try:
         }
         if (newChMaskValid) {
           loRaWANctx.LinkADR_ChannelMask        =  newChMask;
-          sLinkADR_ChannelMask_OK = 1;
+          loRaWANctx.LinkADR_ChannelMask_OK     = 1;
         } else {
-          sLinkADR_ChannelMask_OK = 0;
+          loRaWANctx.LinkADR_ChannelMask_OK     = 0;
         }
 
         loRaWANctx.LinkADR_NbTrans              =  macAry[3] & 0x0f;
@@ -2295,7 +2297,7 @@ JR_next_try:
 
   case Fsm_MAC_LinkADRAns:
     {
-      loRaWANctx.TX_MAC_Buf[loRaWANctx.TX_MAC_Cnt++] = 0b11 | (0x1 & sLinkADR_ChannelMask_OK);  // Power OK, DataRate OK, ChannelMask
+      loRaWANctx.TX_MAC_Buf[loRaWANctx.TX_MAC_Cnt++] = 0b11 | (0x1 & loRaWANctx.LinkADR_ChannelMask_OK);  // Power OK, DataRate OK, ChannelMask
 
       /* USB: info */
       usbLog("LoRaWAN: Going to TX LinkADRAns.\r\n");
