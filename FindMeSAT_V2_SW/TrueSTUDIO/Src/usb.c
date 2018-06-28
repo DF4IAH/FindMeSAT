@@ -26,6 +26,7 @@
 extern osMessageQId       usbToHostQueueHandle;
 extern osMessageQId       usbFromHostQueueHandle;
 extern EventGroupHandle_t usbToHostEventGroupHandle;
+extern osSemaphoreId      usbToHostBinarySemHandle;
 uint8_t                   usbFromHostISRBuf[64]	= { 0 };
 uint32_t                  usbFromHostISRBufLen	= 0;
 
@@ -50,6 +51,13 @@ void usbToHostWait(const uint8_t* buf, uint32_t len)
   }
 }
 
+void usbLog(const char* str)
+{
+  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  usbToHostWait((uint8_t*)str, strlen(str));
+  osSemaphoreRelease(usbToHostBinarySemHandle);
+}
+
 
 void usbFromHostFromIRQ(const uint8_t* buf, uint32_t len)
 {
@@ -68,7 +76,7 @@ void usbFromHostFromIRQ(const uint8_t* buf, uint32_t len)
 }
 
 
-const uint8_t usbClrScrBuf[4] = { 0x0c, 0x0d, 0x0a, 0 };
+const char usbClrScrBuf[4] = { 0x0c, 0x0d, 0x0a, 0 };
 void usbUsbToHostTaskInit(void)
 {
   uint8_t inChr = 0;

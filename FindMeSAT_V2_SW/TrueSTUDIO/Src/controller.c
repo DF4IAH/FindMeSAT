@@ -117,9 +117,6 @@ void prvControllerInitBeforeGreet(void)
 
     /* Set QUEUE_IN bit */
     xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
-
-    /* Give up rest of process time */
-    osThreadYield();
   }
 }
 
@@ -159,26 +156,17 @@ void prvControllerInitAfterGreet(void)
 
     /* TODO_ DEBUG Loop to be removed */
     for (uint8_t i = 0; i < 3; i++) {
-      osSemaphoreWait(usbToHostBinarySemHandle, 0);
-      usbToHostWait((uint8_t*) "\r\nTX\r\n", 6);
-      osSemaphoreRelease(usbToHostBinarySemHandle);
-
+      usbLog("\r\nTX:\r\n");
       LoRaWAN_App_trackMeApp_pushUp(&loRaWANctx, &loraliveApp, 14);
 
-      osSemaphoreWait(usbToHostBinarySemHandle, 0);
-      usbToHostWait((uint8_t*) "\r\nRX:\r\n", 6);
-      osSemaphoreRelease(usbToHostBinarySemHandle);
-
+      usbLog("\r\nRX:\r\n");
       LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
     }
 
     while (1) {
       spiPreviousWakeTime = osKernelSysTick();
 
-      osSemaphoreWait(usbToHostBinarySemHandle, 0);
-      usbToHostWait((uint8_t*) "\r\nRX:\r\n", 6);
-      osSemaphoreRelease(usbToHostBinarySemHandle);
-
+      usbLog("\r\nRX:\r\n");
       LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
     }
 #endif
@@ -262,8 +250,5 @@ void prvControllerPrintMCU(void)
       "\t\tVbat\t\t%4lu mV\r\n"
       "\t\tMCU Temp.\t%+02d.%02u C\r\n\r\n\r\n",
       lotBuf, uidWaf, uidPosX, uidPosY, packagePtr, flashSize, adc1Vdda_mV, adc1Vbat_mV, adc1Temp_100_i, adc1Temp_100_f);
-
-  osSemaphoreWait(usbToHostBinarySemHandle, 0);
-  usbToHostWait((uint8_t*) buf, strlen(buf));
-  osSemaphoreRelease(usbToHostBinarySemHandle);
+  usbLog(buf);
 }
