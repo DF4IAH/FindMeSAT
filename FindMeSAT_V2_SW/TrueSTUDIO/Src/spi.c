@@ -522,7 +522,7 @@ void spiSX127xRegister_IRQ_clearAll(void)
 
 
 //#define PPM_CALIBRATION
-#define POWER_CALIBRATION
+//#define POWER_CALIBRATION
 void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg)
 {
 #ifdef POWER_CALIBRATION

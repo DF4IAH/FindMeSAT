@@ -22,12 +22,22 @@ typedef enum LORAWAN_EGW_BM {
   LORAWAN_EGW__QUEUE_OUT              = 0x00000020UL,
 } LORAWAN_EGW_BM_t;
 
+typedef enum LoRaWAN_SIGNAL {
+  LoRaSIG_Ready                       = 1,
+} LoRaWAN_SIGNAL_t;
+
 /* Command types for the loraInQueue */
 typedef enum loraInQueueCmds {
   loraInQueueCmds__NOP                = 0,
   loraInQueueCmds__Init,
   loraInQueueCmds__TrackMeApplUp,
 } loraInQueueCmds_t;
+
+typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
+  MIC_JOINREQUEST                     = 0x01,
+  MIC_DATAMESSAGE                     = 0x11,
+} LoRaWAN_CalcMIC_VARIANT_t;
+
 
 /* FSM states of the loRaWANLoRaWANTaskLoop */
 typedef enum Fsm_States {
@@ -76,6 +86,12 @@ typedef enum Fsm_States {
 } Fsm_States_t;
 
 
+typedef enum CurrentWindow {
+  CurWin_none                         = 0,
+  CurWin_RXTX1,
+  CurWin_RXTX2
+} CurrentWindow_t;
+
 /* LoRaWAN RX windows */
 typedef enum LoRaWAN_RX_windows {
   LORAWAN_RX_PREPARE_MS               =   25,
@@ -89,161 +105,8 @@ typedef enum LoRaWAN_RX_windows {
   LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS = 6000,
 } LoRaWAN_RX_windows_t;
 
-/* LoRaWAN version information */
-typedef enum LoRaWANVersion {
-  LoRaWANVersion_10                   = 0,
-  LoRaWANVersion_11                   = 1,
-} LoRaWANVersion_t;
 
-typedef enum CurrentWindow {
-  CurWin_none                         = 0,
-  CurWin_RXTX1,
-  CurWin_RXTX2
-} CurrentWindow_t;
-
-typedef enum LoRaWAN_SIGNAL {
-  LoRaSIG_Ready                       = 1,
-} LoRaWAN_SIGNAL_t;
-
-/* LoRaWAN direction of transmission - Up: device --> gateway / Dn: device <-- gateway */
-typedef enum LoRaWANctxDir {
-  Up                                  = 0,
-  Dn                                  = 1
-} LoRaWANctxDir_t;
-
-
-typedef enum DataRates {
-  DR0_SF12_125kHz_LoRa                = 0,
-  DR1_SF11_125kHz_LoRa,
-  DR2_SF10_125kHz_LoRa,
-  DR3_SF9_125kHz_LoRa,
-  DR4_SF8_125kHz_LoRa,
-  DR5_SF7_125kHz_LoRa,
-  DR6_SF7_250kHz_LoRa,
-  DR7_50kHz_FSK,                                                                                // nRF905 "OGN Tracking Protocol" compatible?
-} DataRates_t;
-
-
-typedef enum ChMaskCntl {
-  ChMaskCntl__appliesTo_1to16         = 0,
-  ChMaskCntl__allChannelsON           = 6,
-} ChMaskCntl_t;
-
-
-/* Memory assignment of the non-volatile memory section of the timer */
-typedef struct LoRaWANctxBkpRam {
-
-  /* Skip first entries */
-  uint32_t                            _skip[16];
-
-  /* CRC */
-  uint32_t                            LoRaWANcrc;
-
-  /* Counters */
-  uint32_t                            FCntUp;
-#ifdef LORAWAN_1V02
-  uint32_t                            FCntDwn;
-#elif LORAWAN_1V1
-  uint32_t                            NFCntDwn;
-#endif
-  uint32_t                            AFCntDwn;
-
-  uint32_t                            n8_n8_DLSettings8_RxDelay8;
-  uint32_t                            CFList_03_02_01_00;
-  uint32_t                            CFList_07_06_05_04;
-  uint32_t                            CFList_11_10_09_08;
-  uint32_t                            CFList_15_14_13_12;
-
-  uint32_t                            _end;
-
-} LoRaWANctxBkpRam_t;
-
-typedef struct LoRaWANctx {
-
-  /* Non-volatile counters */
-  volatile LoRaWANctxBkpRam_t*        bkpRAM;
-
-  /* FSM */
-  volatile Fsm_States_t               FsmState;
-
-  /* Device specific */
-  uint8_t                             DevEUI_LE[8];
-  volatile uint8_t                    DevAddr_LE[4];                                            // JOIN-ACCEPT
-  volatile uint8_t                    DevNonce_LE[2];                                           // JOIN-REQUEST, REJOIN-REQUEST - V1.02: random value
-  volatile uint8_t                    Home_NetID_LE[3];                                         // JOIN-ACCEPT
-  volatile uint32_t                   LastIqBalTimeUs;                                          // Last point of system time when procedure was done
-  volatile uint32_t                   LastIqBalDurationUs;                                      // Duration of balancing procedure
-  volatile int8_t                     LastIqBalTemp;                                            // Temperature degC when last I/Q balancing took place
-  volatile float                      CrystalPpm;                                               // PPM value to correct local device crystal drift
-  volatile float                      GatewayPpm;                                               // PPM value to adjust RX for remote gateway crystal drift
-
-
-  /* Network / MAC specific */
-  LoRaWANVersion_t                    LoRaWAN_ver;
-//uint8_t                             NwkKey_1V1[16];                                           // Network root key (for OTA devices)
-  volatile uint8_t                    NwkSKey[16];                                              // Session key - JOIN-ACCEPT (derived from: AppKey)
-//uint8_t                             FNwkSKey_1V1[16];                                         // JOIN-ACCEPT
-//uint8_t                             FNwkSIntKey_1V1[16];                                      // JOIN-ACCEPT (derived from: NwkKey)
-//uint8_t                             SNwkSIntKey_1V1[16];                                      // JOIN-ACCEPT (derived from: NwkKey)
-//uint8_t                             NwkSEncKey_1V1[16];                                       // JOIN-ACCEPT (derived from: NwkKey)
-//uint8_t                             JSIntKey_1V1[16];                                         // (for OTA devices)
-//uint8_t                             JSEncKey_1V1[16];                                         // (for OTA devices)
-  volatile uint8_t                    NetID_LE[3];                                              // JOIN-RESPONSE
-  volatile uint8_t                    RXDelay;                                                  // JOIN-ACCEPT
-  volatile uint8_t                    CFList[16];                                               // JOIN-ACCEPT - EU-868: Freq Ch3[2:0], Freq Ch4[2:0], Freq Ch5[2:0], Freq Ch6[2:0], Freq Ch7[2:0], CFListType[0]
-  volatile float                      Ch_Frequencies_MHz[16];
-
-  /* MAC communicated data */
-  volatile uint8_t                    ADR;                                                      // Setting: global ADR
-  volatile uint8_t                    TX_MAC_Len;                                               // MAC list to be sent at next transmission
-  volatile uint8_t                    TX_MAC_Buf[16];                                           // MAC list to be sent at next transmission
-  volatile uint8_t                    LinkCheck_Ppm_SNR;                                        // MAC: LinkCheckAns
-  volatile uint8_t                    LinkCheck_GW_cnt;                                         // MAC: LinkCheckAns
-  volatile uint8_t                    LinkADR_TxPowerReduction_dB;                              // MAC: LinkADRReq
-  volatile DataRates_t                LinkADR_DataRate_TX1;                                     // MAC: LinkADRReq
-  volatile uint8_t                    LinkADR_DataRate_RX1_DRofs;                               // JoinAccept
-  volatile DataRates_t                LinkADR_DataRate_RXTX2;                                   // MAC: LinkADRReq
-  volatile uint16_t                   LinkADR_ChannelMask;                                      // MAC: LinkADRReq
-  volatile uint8_t                    LinkADR_NbTrans;                                          // MAC: LinkADRReq - unconfirmed up packets multiple transmissions
-  volatile ChMaskCntl_t               LinkADR_ChMaskCntl;                                       // MAC: LinkADRReq
-  volatile uint8_t                    LinkADR_ChannelMask_OK;                                   // Last channel mask setting whether valid
-
-
-  /* Join Server specific */
-//uint8_t                             JoinEUI_LE_1V1[8];                                        // JOIN-REQUEST, REJOIN-REQUEST
-//volatile uint8_t                    JoinNonce_LE_1V1[4];                                      // JOIN-ACCEPT
-//volatile uint8_t                    ServerNonce_LE_1V1[3];
-
-  /* Application specific */
-  uint8_t                             AppEUI_LE[8];
-  uint8_t                             AppKey[16];                                               // Application root key (for OTA devices)
-  volatile uint8_t                    AppNonce_LE[3];                                           // JOIN-RESPONSE
-  volatile uint8_t                    AppSKey[16];                                              // Session key - JOIN-ACCEPT (derived from: AppKey)
-
-
-  /* Current transmission */
-  volatile uint32_t                   TsEndOfTx;                                                // Timestamp of last TX end
-  volatile CurrentWindow_t            Current_RXTX_Window;                                      // RX/TX1, RX/TX2 or none
-  volatile LoRaWANctxDir_t            Dir;
-  volatile uint8_t                    FCtrl_ADR;
-  volatile uint8_t                    FCtrl_ADRACKReq;
-  volatile uint8_t                    FCtrl_ACK;
-  volatile uint8_t                    FCtrl_ClassB;
-  volatile uint8_t                    FCtrl_FPending;
-//volatile uint8_t                    FCtrl_FOptsLen;
-  volatile uint8_t                    FPort;
-  volatile uint8_t                    SpreadingFactor;
-  volatile float                      FrequencyMHz;
-
-  /* Last radio measurements */
-  volatile int16_t                    LastRSSIDbm;
-  volatile int16_t                    LastPacketStrengthDBm;
-  volatile int8_t                     LastPacketSnrDb;
-  volatile float                      LastFeiHz;
-  volatile float                      LastFeiPpm;
-} LoRaWANctx_t;
-
-
+/* MHDR */
 typedef enum LoRaWAN_MTypeBF {
   JoinRequest                         = 0,
   JoinAccept                          = 1,
@@ -259,10 +122,17 @@ typedef enum LoRaWAN_MajorBF {
   LoRaWAN_R1                          = 0,
 } LoRaWAN_MajorBF_t;
 
-
 #define LoRaWAN_MHDR_MType_SHIFT      5
 #define LoRaWAN_MHDR_Major_SHIFT      0
+#define MHDR_SIZE                     (sizeof(uint8_t))
 
+typedef enum LoRaWANVersion {
+  LoRaWANVersion_10                   = 0,
+  LoRaWANVersion_11                   = 1,
+} LoRaWANVersion_t;
+
+
+/* FCtl */
 #define LoRaWAN_FCtl_ADR_SHIFT        7
 #define LoRaWAN_FCtl_ADRACKReq_SHIFT  6
 #define LoRaWAN_FCtl_ACK_SHIFT        5
@@ -271,11 +141,24 @@ typedef enum LoRaWAN_MajorBF {
 #define LoRaWAN_FCtl_FOptsLen_SHIFT   0
 
 
-uint8_t GET_BYTE_OF_WORD(uint32_t word, uint8_t pos);
+/* LoRaWAN direction of transmission - Up: device --> gateway / Dn: device <-- gateway */
+typedef enum LoRaWANctxDir {
+  Up                                  = 0,
+  Dn                                  = 1
+} LoRaWANctxDir_t;
 
+typedef enum DataRates {
+  DR0_SF12_125kHz_LoRa                = 0,
+  DR1_SF11_125kHz_LoRa,
+  DR2_SF10_125kHz_LoRa,
+  DR3_SF9_125kHz_LoRa,
+  DR4_SF8_125kHz_LoRa,
+  DR5_SF7_125kHz_LoRa,
+  DR6_SF7_250kHz_LoRa,
+  DR7_50kHz_FSK,                                                                                // nRF905 "OGN Tracking Protocol" compatible?
+} DataRates_t;
 
 typedef enum LoRaWANMAC_CID {
-
   ResetInd_UP                         = 0x01,                                                   // ABP devices only, LW 1.1
   ResetConf_DN                        = 0x01,                                                   // ABP devices only, LW 1.1
 
@@ -319,10 +202,15 @@ typedef enum LoRaWANMAC_CID {
 
   RejoinParamSetupReq_DN              = 0x0F,
   RejoinParamSetupAns_UP              = 0x0F,
-
 } LoRaWANMAC_CID_t;
 
+typedef enum ChMaskCntl {
+  ChMaskCntl__appliesTo_1to16         = 0,
+  ChMaskCntl__allChannelsON           = 6,
+} ChMaskCntl_t;
 
+
+/* MIC calculation structures */
 typedef struct FRMPayloadBlockA_Up {
   uint8_t                             variant;
   uint8_t                             _noUse[4];
@@ -393,50 +281,146 @@ typedef struct MICBlockB0_Dn {
 #endif
 
 
-typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
-  MIC_JOINREQUEST                     = 0x01,
-  MIC_DATAMESSAGE                     = 0x11,
-} LoRaWAN_CalcMIC_VARIANT_t;
+/* Memory assignment of the non-volatile memory section of the timer */
+typedef struct LoRaWANctxBkpRam {
+  /* Skip first entries */
+  uint32_t                            _skip[16];
+
+  /* CRC */
+  uint32_t                            LoRaWANcrc;
+
+  /* Counters */
+  uint32_t                            FCntUp;
+#ifdef LORAWAN_1V02
+  uint32_t                            FCntDwn;
+#elif LORAWAN_1V1
+  uint32_t                            NFCntDwn;
+#endif
+  uint32_t                            AFCntDwn;
+
+  uint32_t                            n8_n8_DLSettings8_RxDelay8;
+  uint32_t                            CFList_03_02_01_00;
+  uint32_t                            CFList_07_06_05_04;
+  uint32_t                            CFList_11_10_09_08;
+  uint32_t                            CFList_15_14_13_12;
+
+  uint32_t                            _end;
+} LoRaWANctxBkpRam_t;
+
+
+/* Context information */
+typedef struct LoRaWANctx {
+  /* Non-volatile counters */
+  volatile LoRaWANctxBkpRam_t*        bkpRAM;
+
+  /* FSM */
+  volatile Fsm_States_t               FsmState;
+
+  /* Device specific */
+  uint8_t                             DevEUI_LE[8];
+  volatile uint8_t                    DevAddr_LE[4];                                            // JOIN-ACCEPT
+  volatile uint8_t                    DevNonce_LE[2];                                           // JOIN-REQUEST, REJOIN-REQUEST - V1.02: random value
+  volatile uint8_t                    Home_NetID_LE[3];                                         // JOIN-ACCEPT
+
+  /* Network / MAC specific */
+  LoRaWANVersion_t                    LoRaWAN_ver;
+#ifdef LORAWAN_1V1
+  uint8_t                             NwkKey_1V1[16];                                           // Network root key (for OTA devices)
+#endif
+  volatile uint8_t                    NwkSKey[16];                                              // Session key - JOIN-ACCEPT (derived from: AppKey)
+#ifdef LORAWAN_1V1
+  uint8_t                             FNwkSKey_1V1[16];                                         // JOIN-ACCEPT
+  uint8_t                             FNwkSIntKey_1V1[16];                                      // JOIN-ACCEPT (derived from: NwkKey)
+  uint8_t                             SNwkSIntKey_1V1[16];                                      // JOIN-ACCEPT (derived from: NwkKey)
+  uint8_t                             NwkSEncKey_1V1[16];                                       // JOIN-ACCEPT (derived from: NwkKey)
+  uint8_t                             JSIntKey_1V1[16];                                         // (for OTA devices)
+  uint8_t                             JSEncKey_1V1[16];                                         // (for OTA devices)
+#endif
+  volatile uint8_t                    NetID_LE[3];                                              // JOIN-RESPONSE
+  volatile uint8_t                    RXDelay;                                                  // JOIN-ACCEPT
+  volatile uint8_t                    CFList[16];                                               // JOIN-ACCEPT - EU-868: Freq Ch3[2:0], Freq Ch4[2:0], Freq Ch5[2:0], Freq Ch6[2:0], Freq Ch7[2:0], CFListType[0]
+  volatile float                      Ch_Frequencies_MHz[16];
+  volatile float                      GatewayPpm;                                               // PPM value to adjust RX for remote gateway crystal drift
+
+  /* MAC communicated data */
+  volatile uint8_t                    ADR_enabled;                                              // Setting: global ADR
+  volatile uint8_t                    TX_MAC_Len;                                               // MAC list to be sent at next transmission
+  volatile uint8_t                    TX_MAC_Buf[16];                                           // MAC list to be sent at next transmission
+  volatile uint8_t                    LinkCheck_Ppm_SNR;                                        // MAC: LinkCheckAns
+  volatile uint8_t                    LinkCheck_GW_cnt;                                         // MAC: LinkCheckAns
+  volatile uint8_t                    LinkADR_TxPowerReduction_dB;                              // MAC: LinkADRReq
+  volatile DataRates_t                LinkADR_DataRate_TX1;                                     // MAC: LinkADRReq
+  volatile uint8_t                    LinkADR_DataRate_RX1_DRofs;                               // JoinAccept
+  volatile DataRates_t                LinkADR_DataRate_RXTX2;                                   // MAC: LinkADRReq
+  volatile uint16_t                   LinkADR_ChannelMask;                                      // MAC: LinkADRReq
+  volatile uint8_t                    LinkADR_NbTrans;                                          // MAC: LinkADRReq - unconfirmed up packets multiple transmissions
+  volatile ChMaskCntl_t               LinkADR_ChMaskCntl;                                       // MAC: LinkADRReq
+  volatile uint8_t                    LinkADR_ChannelMask_OK;                                   // Last channel mask setting whether valid
+
+  /* Join Server specific */
+#ifdef LORAWAN_1V1
+  uint8_t                             JoinEUI_LE_1V1[8];                                        // JOIN-REQUEST, REJOIN-REQUEST
+  volatile uint8_t                    JoinNonce_LE_1V1[4];                                      // JOIN-ACCEPT
+  volatile uint8_t                    ServerNonce_LE_1V1[3];
+#endif
+
+  /* Application specific */
+  uint8_t                             AppEUI_LE[8];
+  uint8_t                             AppKey[16];                                               // Application root key (for OTA devices)
+  volatile uint8_t                    AppNonce_LE[3];                                           // JOIN-RESPONSE
+  volatile uint8_t                    AppSKey[16];                                              // Session key - JOIN-ACCEPT (derived from: AppKey)
+
+  /* Current transmission */
+  volatile uint32_t                   TsEndOfTx;                                                // Timestamp of last TX end
+  volatile CurrentWindow_t            Current_RXTX_Window;                                      // RX/TX1, RX/TX2 or none
+  volatile LoRaWANctxDir_t            Dir;                                                      // 0:up, 1:down
+  volatile LoRaWAN_MTypeBF_t          MHDR_MType;                                               // Message type in use
+  volatile LoRaWAN_MajorBF_t          MHDR_Major;                                               // Major release to use
+  volatile uint8_t                    FCtrl_ADR;
+  volatile uint8_t                    FCtrl_ADRACKReq;
+  volatile uint8_t                    FCtrl_ACK;
+  volatile uint8_t                    FCtrl_ClassB;
+  volatile uint8_t                    FCtrl_FPending;
+  volatile uint8_t                    FPort_absent;                                             // 1: FPort field absent
+  volatile uint8_t                    FPort;
+  volatile uint8_t                    SpreadingFactor;                                          // This value is taken for the TRX when turned on
+  volatile float                      FrequencyMHz;                                             // This value is taken for the TRX when turned on
+
+  /* Last radio measurements */
+  volatile float                      CrystalPpm;                                               // PPM value to correct local device crystal drift
+  volatile uint32_t                   LastIqBalTimeUs;                                          // Last point of system time when procedure was done
+  volatile uint32_t                   LastIqBalDurationUs;                                      // Duration of balancing procedure
+  volatile int8_t                     LastIqBalTemp;                                            // Temperature degC when last I/Q balancing took place
+  volatile int16_t                    LastRSSIDbm;
+  volatile int16_t                    LastPacketStrengthDBm;
+  volatile int8_t                     LastPacketSnrDb;
+  volatile float                      LastFeiHz;
+  volatile float                      LastFeiPpm;
+} LoRaWANctx_t;
 
 
 typedef struct LoRaWAN_TX_Message {
-
   /* Ready for transport section */
   volatile uint8_t                    msg_encoded_EncDone;
   volatile uint8_t                    msg_encoded_Len;
   volatile uint8_t                    msg_encoded_Buf[LoRaWAN_MsgLenMax];
 
-
   /* Prepare section */
-  uint8_t                             msg_prep_MHDR;
-//uint8_t                             msg_prep_FCtrl;
-//uint8_t                             msg_prep_FCnt[2];
-  //
-//uint8_t                             msg_prep_FOpts_Len;
-//uint8_t                             msg_prep_FOpts_Buf[16];
 #ifdef LORAWAN_1V1
-//uint8_t                             msg_prep_FOpts_Encoded[16];
+  uint8_t                             msg_prep_FOpts_Encoded[16];
+  //
 #endif
-  //
-  uint8_t                             msg_prep_FPort_absent;
-  uint8_t                             msg_prep_FPort;
-  //
   uint8_t                             msg_prep_FRMPayload_Len;
   uint8_t                             msg_prep_FRMPayload_Buf[LoRaWAN_FRMPayloadMax];
   uint8_t                             msg_prep_FRMPayload_Encoded[LoRaWAN_FRMPayloadMax];
-
 } LoRaWAN_TX_Message_t;
 
 typedef struct LoRaWAN_RX_Message {
-
   /* Received data section */
   volatile uint8_t                    msg_encoded_Len;
   volatile uint8_t                    msg_encoded_Buf[LoRaWAN_MsgLenMax];
 
-
   /* parted section */
-//uint8_t                             msg_parted_Msg_Len;
-  //
   uint8_t                             msg_parted_MHDR;
   uint8_t                             msg_parted_MType;
   uint8_t                             msg_parted_Major;
@@ -462,14 +446,11 @@ typedef struct LoRaWAN_RX_Message {
   //
   uint8_t                             msg_parted_MIC_Buf[4];
   uint8_t                             msg_parted_MIC_Valid;
-
 } LoRaWAN_RX_Message_t;
 
 
-/* LoRaWAN Application specific data structures */
-
+/* TrackMeApp */
 typedef struct TrackMeApp_up {
-
   /* TTN Mapper entities */
   float                               latitude_deg;
   float                               longitude_deg;
@@ -489,18 +470,15 @@ typedef struct TrackMeApp_up {
   /* System entities */
   uint16_t                            vbat_mV;
   int32_t                             ibat_uA;
-
 } TrackMeApp_up_t;
 
 typedef struct TrackMeApp_down {
-
   /* TBD */
-
 } TrackMeApp_down_t;
 
 
+/* LoraliveApp */
 typedef struct LoraliveApp_up {
-
   uint8_t                             voltage_32_v;
 
   /* Big endian */
@@ -549,15 +527,17 @@ typedef struct LoraliveApp_up {
       uint8_t                         longitude_1000_sl00;
     } l16;
   } u;
-
 } LoraliveApp_up_t;
 
 typedef struct LoraliveApp_down {
-
   /* TBD */
-
 } LoraliveApp_down_t;
 
+
+
+/* Functions */
+
+uint8_t GET_BYTE_OF_WORD(uint32_t word, uint8_t pos);
 
 
 void LoRaWANctx_applyKeys_trackMeApp(void);
