@@ -90,7 +90,7 @@ LoraliveApp_down_t    loraliveApp_down                  = {   };
 inline
 uint8_t GET_BYTE_OF_WORD(uint32_t word, uint8_t pos)
 {
-  return (uint8_t) (((word) >> (8 << (pos))) & 0x000000ffUL);
+  return (uint8_t) ((word >> (8 * pos)) & 0x000000ffUL);
 }
 
 
@@ -134,80 +134,7 @@ void LoRaWANctx_applyKeys_trackMeApp(void)
 }
 
 
-static void LoRaWAN_QueueIn_Process(void)
-{
-  static uint8_t  buf[32]   = { 0 };
-  static uint8_t  bufCtr    = 0;
-  static uint8_t  bufMsgLen = 0;
-  BaseType_t      xStatus;
-  uint8_t         inChr;
-
-  do {
-    /* Take next character from the queue, if any */
-    inChr = 0;
-    xStatus = xQueueReceive(loraInQueueHandle, &inChr, 100 / portTICK_PERIOD_MS);               // Wait max. 100 ms for completion
-    if (pdPASS == xStatus) {
-      if (!bufMsgLen) {
-        bufMsgLen = inChr;
-
-      } else {
-        /* Process incoming message */
-        buf[bufCtr++] = inChr;
-
-        if (bufCtr == bufMsgLen) {
-          /* Message complete */
-          break;
-        }
-      }
-
-    } else {
-      /* Reset the state of the queue */
-      goto clrInBuf;
-    }
-  } while (1);
-
-  /* Process the message */
-  switch (buf[0]) {
-  case loraInQueueCmds__Init:
-    {
-      /* Set event mask bit for INIT */
-      xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_INIT);
-    }
-    break;
-
-  case loraInQueueCmds__NOP:
-  default:
-    /* Nothing to do */
-    { }
-  }  // switch (buf[0])
-
-
-  /* Clear the buffer */
-clrInBuf:
-  bufCtr = bufMsgLen = 0;
-  memset(buf, 0, sizeof(buf));
-}
-
-static void LoRaWAN_QueueOut_Process(uint8_t signal)
-{
-  switch (signal) {
-    case LoRaSIG_Ready:
-      {
-        const uint8_t c_qM[2] = { 1, (uint8_t)'R' };
-
-        for (uint8_t idx = 0; idx < sizeof(c_qM); idx++) {
-          xQueueSendToBack(loraOutQueueHandle, c_qM + idx, LoRaWAN_MaxWaitMs / portTICK_PERIOD_MS);
-        }
-
-        /* Set QUEUE_OUT bit */
-        xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_OUT);
-      }
-      break;
-  }
-}
-
-
-static uint8_t LoRaWAN_PayloadCompress_TrackMeApp(uint8_t outBuf[], const TrackMeApp_up_t* trackMeApp_UL)
+static uint8_t LoRaWAN_marshalling_PayloadCompress_TrackMeAppUp(uint8_t outBuf[], const TrackMeApp_up_t* trackMeApp_UL)
 {
   uint8_t outLen = 0;
 
@@ -370,11 +297,10 @@ static uint8_t LoRaWAN_PayloadCompress_TrackMeApp(uint8_t outBuf[], const TrackM
       }
     }
   }
-
   return outLen;
 }
 
-static uint8_t LoRaWAN_PayloadExpand_TrackMeApp(TrackMeApp_up_t* trackMeApp_DL, const uint8_t* compressedMsg, uint8_t compressedMsgLen)
+static uint8_t LoRaWAN_marshalling_PayloadExpand_TrackMeAppDown(TrackMeApp_down_t* trackMeApp_DL, const uint8_t* compressedMsg, uint8_t compressedMsgLen)
 {
 
   return 0;
@@ -484,7 +410,7 @@ function Decoder(bytes, port) {
 
 
 #ifdef NEW
-static uint8_t LoRaWAN_PayloadCompress_LoraliveApp(const LoraliveApp_up_t* loraliveApp_UL)
+static uint8_t LoRaWAN_marshalling_PayloadCompress_LoraliveAppUp(const LoraliveApp_up_t* loraliveApp_UL)
 {
 
   return 0;
@@ -495,9 +421,8 @@ static uint8_t LoRaWAN_PayloadCompress_LoraliveApp(const LoraliveApp_up_t* loral
 
  */
 }
-#endif
 
-static uint8_t LoRaWAN_PayloadExpand_LoraliveApp(LoraliveApp_up_t* loraliveApp_DL, const uint8_t* compressedMsg, uint8_t compressedMsgLen)
+static uint8_t LoRaWAN_marshalling_PayloadExpand_LoraliveAppDown(LoraliveApp_up_t* loraliveApp_DL, const uint8_t* compressedMsg, uint8_t compressedMsgLen)
 {
 
   return 0;
@@ -551,6 +476,204 @@ function Decoder(bytes, port) {
 // 90 00 30 00 60 4D 10 10
 //
  */
+}
+#endif
+
+
+#ifdef DOES_THIS_MAKE_SENSE
+static void LoRaWAN_marshalling_PayloadUpCompress(LoRaWAN_RX_Message_t* msg)
+{
+  if (msg->msg_parted_FRMPayload_Len) {
+    uint8_t variant = 1;
+
+    switch (variant) {
+    case /* PayloadCompress_TrackMeAppUp */ 1:
+      {
+        TrackMeApp_up_t trackMeApp_DL = { 0 };
+
+        /* Expand the message into TrackMeApp data structure */
+        LoRaWAN_marshalling_PayloadCompress_TrackMeAppUp(&trackMeApp_DL, msg->msg_parted_FRMPayload_Buf, msg->msg_parted_FRMPayload_Len);
+
+        /* Send message to the controller */
+        // TODO
+      }
+      break;
+
+    case /* PayloadCompress_LoraliveAppUp */ 2:
+      {
+        LoraliveApp_up_t loraliveApp_DL = { 0 };
+
+        LoRaWAN_marshalling_PayloadCompress_LoraliveAppUp(&loraliveApp_DL, msg->msg_parted_FRMPayload_Buf, msg->msg_parted_FRMPayload_Len);
+
+        /* Send message to the controller */
+        // TODO
+      }
+      break;
+    }
+  }
+}
+
+static void LoRaWAN_marshalling_PayloadDownExpand(LoRaWAN_RX_Message_t* msg)
+{
+  if (msg->msg_parted_FRMPayload_Len) {
+    uint8_t variant = 1;
+
+    switch (variant) {
+    case /* PayloadExpand_TrackMeApp */ 1:
+      {
+        TrackMeApp_up_t trackMeApp_DL = { 0 };
+
+        /* Expand the message into TrackMeApp data structure */
+        LoRaWAN_marshalling_PayloadExpand_TrackMeAppDown(&trackMeApp_DL, msg->msg_parted_FRMPayload_Buf, msg->msg_parted_FRMPayload_Len);
+
+        /* Send message to the controller */
+        // TODO
+      }
+      break;
+
+    case /* PayloadExpand_LoraliveApp */ 2:
+      {
+        LoraliveApp_up_t loraliveApp_DL = { 0 };
+
+        LoRaWAN_marshalling_PayloadExpand_LoraliveAppDown(&loraliveApp_DL, msg->msg_parted_FRMPayload_Buf, msg->msg_parted_FRMPayload_Len);
+
+        /* Send message to the controller */
+        // TODO
+      }
+      break;
+    }
+  }
+}
+#endif
+
+
+static void LoRaWAN_QueueIn_Process__Fsm_TX(void)
+{
+  /* Prepare to transmit data buffer */
+  if (loRaWANctx.FsmState == Fsm_NOP) {
+    /* Start preparations for TX */
+    loRaWANctx.FsmState = Fsm_TX;
+
+    /* New data to be compiled first */
+    loRaWanTxMsg.msg_encoded_EncDone = 0;
+
+  } else {
+    /* Drop data when (again?) Join-Request is just exchanged */
+  }
+}
+
+static void LoRaWAN_QueueIn_Process(void)
+{
+  static uint8_t  buf[32]   = { 0 };
+  static uint8_t  bufCtr    = 0;
+  static uint8_t  bufMsgLen = 0;
+  BaseType_t      xStatus;
+  uint8_t         inChr;
+
+  do {
+    /* Take next character from the queue, if any */
+    inChr = 0;
+    xStatus = xQueueReceive(loraInQueueHandle, &inChr, 100 / portTICK_PERIOD_MS);               // Wait max. 100 ms for completion
+    if (pdPASS == xStatus) {
+      if (!bufMsgLen) {
+        bufMsgLen = inChr;
+
+      } else {
+        /* Process incoming message */
+        buf[bufCtr++] = inChr;
+
+        if (bufCtr == bufMsgLen) {
+          /* Message complete */
+          break;
+        }
+      }
+
+    } else {
+      /* Reset the state of the queue */
+      goto error_clrInBuf;
+    }
+  } while (1);
+
+  /* Process the message */
+  switch (buf[0]) {
+  case loraInQueueCmds__Init:
+    {
+      /* Set event mask bit for INIT */
+      xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_INIT);
+    }
+    break;
+
+  case loraInQueueCmds__TrackMeApplUp:
+    {
+      /* Prepare data to upload */
+      {
+        /* Wait for semaphore to access LoRaWAN TrackMeApp */
+        osSemaphoreWait(trackMeApplUpDataBinarySemHandle, 0);
+
+        /* Marshal data for upload */
+        loRaWanTxMsg.msg_prep_FRMPayload_Len = LoRaWAN_marshalling_PayloadCompress_TrackMeAppUp(loRaWanTxMsg.msg_prep_FRMPayload_Buf, &trackMeApp_up);
+
+        /* Free semaphore */
+        osSemaphoreRelease(trackMeApplUpDataBinarySemHandle);
+      }
+
+      /* Prepare to transmit data buffer */
+      LoRaWAN_QueueIn_Process__Fsm_TX();
+    }
+    break;
+
+#if 0
+  case loraInQueueCmds__LoraliveApplUp:
+    {
+      /* Prepare data to upload */
+      {
+        /* Wait for semaphore to access LoRaWAN LoraliveApp */
+        osSemaphoreWait(loraliveApplUpDataBinarySemHandle, 0);
+
+        /* Marshal data for upload */
+        loRaWanTxMsg.msg_prep_FRMPayload_Len = LoRaWAN_marshalling_PayloadCompress_LoraliveAppUp(&(loRaWanTxMsg.msg_prep_FRMPayload_Buf), &loraliveApp_up);
+
+        /* Free semaphore */
+        osSemaphoreRelease(loraliveApplUpDataBinarySemHandle);
+      }
+
+      /* Prepare to transmit data buffer */
+      LoRaWAN_QueueIn_Process__Fsm_TX();
+    }
+    break;
+#endif
+
+  case loraInQueueCmds__NOP:
+  default:
+    /* Nothing to do */
+    { }
+  }  // switch (buf[0])
+
+
+error_clrInBuf:
+  {
+    /* Clear the buffer to sync */
+    bufCtr = bufMsgLen = 0;
+    memset(buf, 0, sizeof(buf));
+  }
+}
+
+static void LoRaWAN_QueueOut_Process(uint8_t signal)
+{
+  switch (signal) {
+    case LoRaSIG_Ready:
+      {
+        const uint8_t c_qM[2] = { 1, (uint8_t)'R' };
+
+        for (uint8_t idx = 0; idx < sizeof(c_qM); idx++) {
+          xQueueSendToBack(loraOutQueueHandle, c_qM + idx, LoRaWAN_MaxWaitMs / portTICK_PERIOD_MS);
+        }
+
+        /* Set QUEUE_OUT bit */
+        xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_OUT);
+      }
+      break;
+  }
 }
 
 
@@ -873,13 +996,13 @@ static void LoRaWAN_calc_TX_MIC(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg, ui
         /* Uplink */
 
         MICBlockB0_Up_t b0 = {
-          0x49U,
-          { 0x00U, 0x00, 0x00U, 00U },
+          0x49,
+          { 0x00, 0x00, 0x00, 0x00 },
           (uint8_t) Up,
           { ctx->DevAddr_LE[0],
             ctx->DevAddr_LE[1],
             ctx->DevAddr_LE[2],
-            ctx->DevAddr_LE[3] },
+            ctx->DevAddr_LE[3]},
           { GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 0),
             GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 1),
             GET_BYTE_OF_WORD(ctx->bkpRAM->FCntUp, 2),
@@ -1449,39 +1572,6 @@ static void LoRaWAN_calc_RxMsg_Reset(LoRaWAN_RX_Message_t* msg)
 }
 
 
-static void LoRaWAN_calc_PayloadExpand(LoRaWAN_RX_Message_t* msg)
-{
-  if (msg->msg_parted_FRMPayload_Len) {
-    uint8_t variant = 1;
-
-    switch (variant) {
-    case /* PayloadExpand_TrackMeApp */ 1:
-      {
-        TrackMeApp_up_t trackMeApp_DL = { 0 };
-
-        /* Expand the message into TrackMeApp data structure */
-        LoRaWAN_PayloadExpand_TrackMeApp(&trackMeApp_DL, msg->msg_parted_FRMPayload_Buf, msg->msg_parted_FRMPayload_Len);
-
-        /* Send message to the controller */
-        // TODO
-      }
-      break;
-
-    case /* PayloadExpand_LoraliveApp */ 2:
-      {
-        LoraliveApp_up_t loraliveApp_DL = { 0 };
-
-        LoRaWAN_PayloadExpand_LoraliveApp(&loraliveApp_DL, msg->msg_parted_FRMPayload_Buf, msg->msg_parted_FRMPayload_Len);
-
-        /* Send message to the controller */
-        // TODO
-      }
-      break;
-    }
-  }
-}
-
-
 void LoRaWAN_MAC_Queue_Push(const uint8_t* macAry, uint8_t cnt)
 {
   /* Send MAC commands with their options */
@@ -1694,7 +1784,7 @@ void loRaWANLoRaWANTaskInit(void)
       loRaWANctx.Ch_Frequencies_MHz[ch - 1] = LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, ch, 1);  // Default values / default channels
     }
 
-    loRaWANctx.ADR                          = 1;                                                // Global setting for ADR
+    loRaWANctx.ADR                          = 0; //1;                                                // Global setting for ADR
     loRaWANctx.Current_RXTX_Window          = CurWin_none;                                      // out of any window
     loRaWANctx.LinkADR_TxPowerReduction_dB  = 0;                                                // No power reduction
     loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) DR0_SF12_125kHz_LoRa;               // Start slowly
@@ -1976,19 +2066,9 @@ static void loRaWANLoRaWANTaskLoop__Fsm_TX(void)
 {
   /* Compile message and TX */
 
-  /* Randomized TX1 frequency */
-  loRaWANctx.FrequencyMHz = LoRaWAN_calc_Channel_to_MHz(
-      &loRaWANctx,
-      LoRaWAN_calc_randomChannel(&loRaWANctx),
-      0);
-  loRaWANctx.SpreadingFactor = spiSX127xDR_to_SF(loRaWANctx.LinkADR_DataRate_TX1);
-
-  /* USB: info */
-  usbLog("LoRaWAN: TX packet.\r\n");
-
   /* Clear RX msg buffer */
   {
-    memset(&loRaWanRxMsg, 0, sizeof(LoRaWAN_RX_Message_t));
+    LoRaWAN_calc_RxMsg_Reset(&loRaWanRxMsg);
     LoRaWAN_MAC_Queue_Reset();
   }
 
@@ -1996,6 +2076,16 @@ static void loRaWANLoRaWANTaskLoop__Fsm_TX(void)
   if (!(loRaWanTxMsg.msg_encoded_EncDone)) {
     LoRaWAN_calc_TxMsg_Compiler(&loRaWANctx, &loRaWanTxMsg);
   }
+
+  /* USB: info */
+  usbLog("LoRaWAN: TX packet.\r\n");
+
+  /* Randomized TX1 frequency */
+  loRaWANctx.FrequencyMHz = LoRaWAN_calc_Channel_to_MHz(
+      &loRaWANctx,
+      LoRaWAN_calc_randomChannel(&loRaWANctx),
+      0);
+  loRaWANctx.SpreadingFactor = spiSX127xDR_to_SF(loRaWANctx.LinkADR_DataRate_TX1);
 
   /* Prepare transmitter and go on-air */
   LoRaWAN_TX_msg(&loRaWANctx, &loRaWanTxMsg);
@@ -2074,8 +2164,8 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_Decoder(void)
 
       /* Downlink data processing */
       if ((loRaWanRxMsg.msg_parted_FPort > 0) && (loRaWanRxMsg.msg_parted_FRMPayload_Len > 0)) {
-        /* Downlink Payload data */
-        LoRaWAN_calc_PayloadExpand(&loRaWanRxMsg);
+        /* Downlink TrackMeApp payload data */
+        LoRaWAN_marshalling_PayloadExpand_TrackMeAppDown(&trackMeApp_down, loRaWanRxMsg.msg_parted_FRMPayload_Buf, loRaWanRxMsg.msg_parted_FRMPayload_Len);
       }
 
     } else {

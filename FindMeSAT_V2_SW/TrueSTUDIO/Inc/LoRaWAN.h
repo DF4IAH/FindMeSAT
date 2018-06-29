@@ -78,8 +78,8 @@ typedef enum Fsm_States {
 
 /* LoRaWAN RX windows */
 typedef enum LoRaWAN_RX_windows {
-  LORAWAN_RX_PREPARE_MS               =   15,
-  LORAWAN_FRQ_HOPPING_MS              =   60,                                                   // BAD: 0 - 48, GOOD: 49 - ...
+  LORAWAN_RX_PREPARE_MS               =   25,
+  LORAWAN_FRQ_HOPPING_MS              =   75,                                                   // BAD: 0 - 48, GOOD: 49 - ...
   LORAWAN_EU868_MAX_TX_DURATION_MS    = 2000,                                                   // TODO: Search for right value
 
   LORAWAN_EU868_DELAY1_MS             = 1000,

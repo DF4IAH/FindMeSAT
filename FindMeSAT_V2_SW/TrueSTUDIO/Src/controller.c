@@ -292,6 +292,7 @@ void prvControllerGetDataAndUpload(void)
 
   /* Free semaphore */
   osSemaphoreRelease(trackMeApplUpDataBinarySemHandle);
+  __asm volatile( "ISB" );
 
   /* Signal to take-over data and do upload */
   {
@@ -301,6 +302,9 @@ void prvControllerGetDataAndUpload(void)
     for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
       xQueueSendToBack(loraInQueueHandle, c_msgToLoRaWAN + idx, Controller_MaxWaitMs);
     }
+
+    /* Set QUEUE_IN bit */
+    xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
   }
 }
 
