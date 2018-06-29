@@ -269,7 +269,7 @@ void prvControllerGetDataAndUpload(void)
     trackMeApp_up.accuracy_10thM    = centerAcc + sin(simPhase * PI/180) * 15.0f;
 
     /* Motion vector entities */
-    trackMeApp_up.course_deg_x2     = (uint8_t) ((360U - (uint16_t)simPhase) >> 1);
+    trackMeApp_up.course_deg        = (uint8_t) (360U - (uint16_t)simPhase);
     trackMeApp_up.speed_m_s         = 2*PI*radius_m * (30.f / 360.f);
     trackMeApp_up.vertspeed_m_s     = cos(simPhase * PI/180) * height_m_p_s;
 

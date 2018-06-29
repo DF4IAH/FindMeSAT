@@ -94,9 +94,9 @@ typedef enum CurrentWindow {
 
 /* LoRaWAN RX windows */
 typedef enum LoRaWAN_RX_windows {
-  LORAWAN_RX_PREPARE_MS               =   25,
-  LORAWAN_FRQ_HOPPING_MS              =   75,                                                   // BAD: 0 - 48, GOOD: 49 - ...
-  LORAWAN_EU868_MAX_TX_DURATION_MS    = 2000,                                                   // TODO: Search for right value
+  LORAWAN_RX_PREPARE_MS               =  125,
+  LORAWAN_FRQ_HOPPING_MS              =  175,                                                   // BAD: 0 - 48, GOOD: 49 - ...
+  LORAWAN_EU868_MAX_TX_DURATION_MS    = 2900,                                                   // TODO: Search for right value
 
   LORAWAN_EU868_DELAY1_MS             = 1000,
   LORAWAN_EU868_DELAY2_MS             = 2000,
@@ -139,6 +139,10 @@ typedef enum LoRaWANVersion {
 #define LoRaWAN_FCtl_ClassB_SHIFT     4
 #define LoRaWAN_FCtl_FPending_SHIFT   4
 #define LoRaWAN_FCtl_FOptsLen_SHIFT   0
+
+
+/* FPort */
+#define FPort_TrackMeAppl_Default     1
 
 
 /* LoRaWAN direction of transmission - Up: device --> gateway / Dn: device <-- gateway */
@@ -458,7 +462,7 @@ typedef struct TrackMeApp_up {
   uint16_t                            accuracy_10thM;
 
   /* Motion vector entities */
-  uint8_t                             course_deg_x2;
+  uint16_t                            course_deg;
   float                               speed_m_s;
   float                               vertspeed_m_s;
 

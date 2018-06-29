@@ -167,8 +167,8 @@ static uint8_t LoRaWAN_marshalling_PayloadCompress_TrackMeAppUp(uint8_t outBuf[]
 
 
     /* Motion vector entities */
-    if (trackMeApp_UL->course_deg_x2 || trackMeApp_UL->speed_m_s) {
-      uint8_t   crs_x2  = trackMeApp_UL->course_deg_x2 % 180;
+    if (trackMeApp_UL->course_deg || trackMeApp_UL->speed_m_s) {
+      uint16_t  crs     = trackMeApp_UL->course_deg % 360;
       float     spd     = trackMeApp_UL->speed_m_s;
       uint32_t  spdMan  = 0UL;
       uint8_t   spdExp  = 32U;
@@ -178,8 +178,8 @@ static uint8_t LoRaWAN_marshalling_PayloadCompress_TrackMeAppUp(uint8_t outBuf[]
         spdMan  = spd * pow(10, (32 - spdExp));
       }
 
-      outBuf[8]    = (crs_x2 >>  1) & 0xff;                                                     // 8 bits
-      outBuf[9]    = (crs_x2 <<  7) & 0x80;                                                     // 1 bit
+      outBuf[8]    = (crs >>  1) & 0xff;                                                     // 8 bits
+      outBuf[9]    = (crs <<  7) & 0x80;                                                     // 1 bit
 
       outBuf[9]   |= (spdMan >> 10) & 0x7f;                                                     // 7 bits (5 decimal digits)
       outBuf[10]   = (spdMan >>  2) & 0xff;                                                     // 8 bits
@@ -1166,6 +1166,23 @@ static void LoRaWAN_calc_RX_MIC(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
   }
 }
 
+static void LoRaWAN_calc_TxMsg_Reset(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
+{
+  /* Reset timestamp of last transmission */
+  ctx->TsEndOfTx = 0UL;
+
+  /* Clear TX message buffer */
+  memset(msg, 0, sizeof(LoRaWAN_TX_Message_t));
+
+  /* Pre-sets for a new TX message */
+  ctx->FCtrl_ADR              = ctx->ADR_enabled;
+  ctx->FCtrl_ADRACKReq        = 0;
+  ctx->FCtrl_ACK              = 0;
+  ctx->FCtrl_ClassB           = 0;
+  ctx->FPort_absent           = 1;
+  ctx->FPort                  = 0;
+}
+
 static void LoRaWAN_calc_TxMsg_MAC_JOINREQUEST(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
 {
   /* JoinRequest does not have encryption and thus no packet compilation follows, instead write directly to msg_encoded[] */
@@ -1214,14 +1231,11 @@ static void LoRaWAN_calc_TxMsg_MAC_JOINREQUEST(LoRaWANctx_t* ctx, LoRaWAN_TX_Mes
 
 static void LoRaWAN_calc_TxMsg_Compiler(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
 {
-#if 0
-  /* Clear encoded section */
-  msg->msg_encoded_Len = 0U;
-  memset((uint8_t*)msg->msg_encoded_Buf, 0, sizeof(msg->msg_encoded_Buf));
-#else
-  /* Start new message and take data from the context */
-  memset(msg, 0, sizeof(LoRaWAN_TX_Message_t));
-#endif
+  /* Start new encoded message */
+  {
+    msg->msg_encoded_Len = 0;
+    memset((uint8_t*)msg->msg_encoded_Buf, 0, sizeof(msg->msg_encoded_Buf));
+  }
 
   /* PHYPayload */
   {
@@ -1279,12 +1293,22 @@ static void LoRaWAN_calc_TxMsg_Compiler(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t*
 
           /* Reset for next entries to be filled in */
           ctx->TX_MAC_Len = 0;
+          memset((uint8_t*) ctx->TX_MAC_Buf, 0, sizeof(ctx->TX_MAC_Buf));
         }  // FOpts
       }  // FHDR
 
       /* FPort - not emitted when FPort_absent is set */
-      if (!(ctx->FPort_absent)) {
-        msg->msg_encoded_Buf[msg->msg_encoded_Len++] = ctx->FPort;
+      {
+        if (msg->msg_prep_FRMPayload_Len) {
+          ctx->FPort_absent = 0;
+          ctx->FPort        = FPort_TrackMeAppl_Default;
+        } else {
+          ctx->FPort_absent = 1;
+        }
+
+        if (!(ctx->FPort_absent)) {
+          msg->msg_encoded_Buf[msg->msg_encoded_Len++] = ctx->FPort;
+        }
       }
 
       /* FRMPayload - not emitted when msg_prep_FRMPayload_Len == 0 */
@@ -1312,19 +1336,11 @@ static void LoRaWAN_calc_TxMsg_Compiler(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t*
   /* Packet now ready for TX */
 }
 
-static void LoRaWAN_calc_TxMsg_Reset(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
+
+static void LoRaWAN_calc_RxMsg_Reset(LoRaWAN_RX_Message_t* msg)
 {
-  /* Reset timestamp of last transmission */
-  ctx->TsEndOfTx = 0UL;
-
-  /* Clear TX message buffer */
-  memset(msg, 0, sizeof(LoRaWAN_TX_Message_t));
-
-  /* Pre-sets for a new TX message */
-  ctx->FPort_absent           = 1;
-  ctx->FCtrl_ADR              = ctx->ADR_enabled;
-  ctx->FCtrl_ADRACKReq        = 0;
-  ctx->FCtrl_ACK              = 0;
+  /* Clear RX message buffer */
+  memset(msg, 0, sizeof(LoRaWAN_RX_Message_t));
 }
 
 static uint8_t LoRaWAN_calc_RxMsg_MAC_JOINACCEPT(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg)
@@ -1575,13 +1591,6 @@ static uint8_t LoRaWAN_calc_RxMsg_Decoder(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_
   return LoRaWAN_calc_FRMPayload_Decrypt(ctx, msg);
 }
 
-static void LoRaWAN_calc_RxMsg_Reset(LoRaWAN_RX_Message_t* msg)
-{
-  /* Clear RX message buffer */
-  memset(msg, 0, sizeof(LoRaWAN_RX_Message_t));
-}
-
-
 void LoRaWAN_MAC_Queue_Push(const uint8_t* macAry, uint8_t cnt)
 {
   /* Send MAC commands with their options */
@@ -1797,6 +1806,8 @@ void loRaWANLoRaWANTaskInit(void)
     loRaWANctx.Current_RXTX_Window          = CurWin_none;                                      // out of any window
     loRaWANctx.MHDR_MType                   = ConfDataUp;                                       // Confirmed data transport in use
     loRaWANctx.MHDR_Major                   = LoRaWAN_R1;                                       // Major release in use
+    loRaWANctx.FPort_absent                 = 1;                                                // Without FRMPayload this field is disabled
+    loRaWANctx.FPort                        = 1;                                                // Default application port
     loRaWANctx.ADR_enabled                  = 0 /* 1 */;        // TODO: remove specials        // Global setting for ADR
     loRaWANctx.LinkADR_TxPowerReduction_dB  = 0;                                                // No power reduction
     loRaWANctx.LinkADR_DataRate_TX1         = DR3_SF9_125kHz_LoRa  /* DR0_SF12_125kHz_LoRa */ ; // Start slowly
