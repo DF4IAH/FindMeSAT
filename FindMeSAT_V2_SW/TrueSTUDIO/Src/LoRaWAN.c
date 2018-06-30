@@ -551,15 +551,20 @@ static void LoRaWAN_QueueIn_Process__Fsm_TX(void)
 {
   /* Prepare to transmit data buffer */
   if (loRaWANctx.FsmState == Fsm_NOP) {
-#ifdef GOOD
+    /* Adjust the context */
+    loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
+    loRaWANctx.FrequencyMHz         = LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, LoRaWAN_calc_randomChannel(&loRaWANctx), 0);                                                                                   // Randomized RX1 frequency
+    loRaWANctx.SpreadingFactor      = spiSX127xDR_to_SF(loRaWANctx.LinkADR_DataRate_TX1);
+
+    /* Requesting for confirmed data up-transport */
+    loRaWANctx.MHDR_MType = ConfDataUp;
+    loRaWANctx.MHDR_Major = LoRaWAN_R1;
+
+    /* Request to encode TX message (again) */
+    loRaWanTxMsg.msg_encoded_EncDone = 0;
+
     /* Start preparations for TX */
     loRaWANctx.FsmState = Fsm_TX;
-#else
-    loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
-#endif
-
-    /* New data to be compiled first */
-    loRaWanTxMsg.msg_encoded_EncDone = 0;
 
   } else {
     /* Drop data when (again?) Join-Request is just exchanged */
