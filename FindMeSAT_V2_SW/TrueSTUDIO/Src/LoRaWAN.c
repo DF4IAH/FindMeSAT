@@ -1682,7 +1682,7 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
 #endif
 
 
-#define DEBUG_TX_TIMING
+//#define DEBUG_TX_TIMING
 
 /* Push the complete message to the FIFO and go to transmission mode */
 static void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
@@ -1733,7 +1733,7 @@ static void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
 }
 
 
-#define DEBUG_RX_TIMING
+//#define DEBUG_RX_TIMING
 
 static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t diffToTxStartMs, uint32_t diffToTxStopMs)
 {
@@ -1780,7 +1780,9 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
       /* After the RX time decide whether to be able for changing the frequency quickly or to turn the receiver off */
       spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | ((ctx->Current_RXTX_Window == CurWin_RXTX2 ?  FSRX : STANDBY)));
     }
+#ifdef DEBUG_RX_TIMING
     rxEndTs = xTaskGetTickCount();
+#endif
 
     HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                                // Green off
   }

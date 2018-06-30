@@ -809,8 +809,8 @@ uint32_t spiSX127x_WaitUntil_TxDone(uint32_t stopTime)
 }
 
 
-#define DEBUG_RX
-#define DEBUG_RX_TIMING
+//#define DEBUG_RX
+//#define DEBUG_RX_TIMING
 
 #ifdef DEBUG_RX
 static void spiSX127x_WaitUntil__RX_analyzer(LoRaWANctx_t* ctx, uint32_t now, uint32_t stopTime)
@@ -911,21 +911,22 @@ static void spiSX127x_WaitUntil__RX_analyzer(LoRaWANctx_t* ctx, uint32_t now, ui
 
 void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t stopTime)
 {
-  static uint8_t        entryCntr       = 0;
   EventBits_t           eb              = 0UL;
   uint8_t               irq;
   uint32_t              now             = xTaskGetTickCount();
-  uint32_t              rxWaitStartTs   = 0UL;
-  uint32_t              rxCadDetTs      = 0UL;
-  uint32_t              rxCadDoneTs     = 0UL;
-  uint32_t              rxVldHdrTs      = 0UL;
-  uint32_t              rxDoneTs        = 0UL;
 //uint8_t               modemStat       = 0;
   uint8_t               packetSnr       = 0;
   uint8_t               packetRssi      = 0;
   uint8_t               rssi            = 0;
 
 #ifdef DEBUG_RX_TIMING
+  static uint8_t        entryCntr       = 0;
+  uint32_t              rxWaitStartTs   = 0UL;
+  uint32_t              rxCadDetTs      = 0UL;
+  uint32_t              rxCadDoneTs     = 0UL;
+  uint32_t              rxVldHdrTs      = 0UL;
+  uint32_t              rxDoneTs        = 0UL;
+
   rxWaitStartTs = xTaskGetTickCount();
 #endif
 
