@@ -94,6 +94,7 @@ typedef enum CurrentWindow {
 
 /* LoRaWAN RX windows */
 typedef enum LoRaWAN_RX_windows {
+  LORAWAN_BALANCING_AT_MOST_MS        =  200,
   LORAWAN_RX_PREPARE_MS               =  125,
   LORAWAN_FRQ_HOPPING_MS              =  175,                                                   // BAD: 0 - 48, GOOD: 49 - ...
   LORAWAN_EU868_MAX_TX_DURATION_MS    = 2900,                                                   // TODO: Search for right value

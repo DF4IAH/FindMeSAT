@@ -51,11 +51,17 @@ void usbToHostWait(const uint8_t* buf, uint32_t len)
   }
 }
 
-void usbLog(const char* str)
+void usbLogLen(const char* str, int len)
 {
   osSemaphoreWait(usbToHostBinarySemHandle, 0);
   usbToHostWait((uint8_t*)str, strlen(str));
   osSemaphoreRelease(usbToHostBinarySemHandle);
+}
+
+inline
+void usbLog(const char* str)
+{
+  usbLogLen(str, strlen(str));
 }
 
 

@@ -534,21 +534,21 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
   const uint8_t     l_SF              = (ctx->SpreadingFactor & 0x0f) << SFx_SHIFT;
   const uint32_t    fmt_mhz           = (uint32_t) l_f;
   const uint16_t    fmt_mhz_f1        = (uint16_t) (((uint32_t) (l_f * 1000.f)) % 1000);
-  uint32_t          PreviousWakeTime  = 0UL;
-  volatile uint8_t  buf[256]          = { 0 };
-  volatile uint32_t bufLen            = 0UL;
 
   if (TxRx_Mode_IQ_Balancing == mode) {
     /* Switching to FSK/OOK via SLEEP mode */
     spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+    spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
     /* Set the frequency */
-    spiSX127xFrequency_MHz(l_f * (1 + 1e-6 * ctx->CrystalPpm));
+    spiSX127xFrequency_MHz(ctx->FrequencyMHz * (1 + 1e-6 * ctx->CrystalPpm));
 
-    /* Warm up receiver before balancing - wait until USB DCD is ready */
+#ifdef TRY
     spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
-    osDelayUntil(&PreviousWakeTime, 3600);
+    TickType_t xLastWakeTime = xTaskGetTickCount();
+    vTaskDelayUntil(&xLastWakeTime, 50 / portTICK_PERIOD_MS);
     spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
+#endif
 
     /* Start I/Q balancing */
     {
@@ -560,7 +560,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
 
       /* Set bit to start */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x3b;
-      spi1TxBuffer[1] = 0x42;                                                                 // RegImageCal
+      spi1TxBuffer[1] = 0x42;                                                                   // RegImageCal
       spiProcessSpiMsg(2);
 
       /* Wait until the balancing process has finished */
@@ -578,7 +578,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
         /* Test for completion */
         if (!(balState & 0x20)) {
           t1 = getRunTimeCounterValue();
-          ctx->LastIqBalTemp        = temp - 212;                                             // Temperature device compensated
+          ctx->LastIqBalTemp        = temp - 212;                                               // Temperature device compensated
           ctx->LastIqBalTimeUs      = t0;
           ctx->LastIqBalDurationUs  = t1 - t0;
           break;
@@ -590,8 +590,8 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
     HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);
 
     /* Return to LoRa mode */
-    spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
     spiSX127xMode(MODE_LoRa    | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+    spiSX127xMode(MODE_LoRa    | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
 
     return;
   }
@@ -604,24 +604,35 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
   }
 
   /* Debugging information */
-  bufLen = sprintf((char*) buf, "LoRaWAN: \t f = %03lu.%03u MHz,\t SF = %02u\r\n\r\n", fmt_mhz, fmt_mhz_f1, ctx->SpreadingFactor);
-  osSemaphoreWait(usbToHostBinarySemHandle, 0);
-  usbToHostWait((uint8_t*) buf, bufLen);
-  osSemaphoreRelease(usbToHostBinarySemHandle);
+  {
+    uint8_t  buf[64];
+    uint32_t bufLen;
+
+    bufLen = sprintf((char*) buf, "LoRaWAN:\t f = %03lu.%03u MHz,\t SF = %02u\r\n", fmt_mhz, fmt_mhz_f1, ctx->SpreadingFactor);
+    osSemaphoreWait(usbToHostBinarySemHandle, 0);
+    usbToHostWait((uint8_t*) buf, bufLen);
+    osSemaphoreRelease(usbToHostBinarySemHandle);
+  }
 
   /* Common presets for TX / RX */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x1d;
 #ifdef PPM_CALIBRATION
-  spi1TxBuffer[1] = BW_7kHz8  | CR_4_5 | IHM_OFF;                                             // ModemConfig1
+  spi1TxBuffer[1] = BW_7kHz8  | CR_4_5 | IHM_OFF;                                               // ModemConfig1
 #else
-  spi1TxBuffer[1] = BW_125kHz | CR_4_5 | IHM_OFF;                                             // ModemConfig1
+  spi1TxBuffer[1] = BW_125kHz | CR_4_5 | IHM_OFF;                                               // ModemConfig1
 #endif
-  spi1TxBuffer[2] = l_SF | TXCONT_OFF | RX_PAYLOAD_CRC_ON | (0b00 << 0);                      // ModemConfig2 with SymbTmeoutMsb = 0b00
+  spi1TxBuffer[2] = l_SF | TXCONT_OFF | RX_PAYLOAD_CRC_ON | (0b00 << 0);                        // ModemConfig2 with SymbTmeoutMsb = 0b00
   spiProcessSpiMsg(3);
 
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x26;
-  spi1TxBuffer[1] = (l_SF >= SF11_DR1 ?  LOW_DR_OPTI_ON : LOW_DR_OPTI_OFF) | AGC_AUTO_ON;     // ModemConfig3
-  spi1TxBuffer[2] = (uint8_t) (ctx->CrystalPpm *  0.95f);                                     // PPM Correction
+  spi1TxBuffer[1] = (l_SF >= SF11_DR1 ?  LOW_DR_OPTI_ON : LOW_DR_OPTI_OFF) | AGC_AUTO_ON;       // ModemConfig3
+  spi1TxBuffer[2] = (uint8_t) (ctx->CrystalPpm *  0.95f);                                       // PPM Correction
+  spiProcessSpiMsg(3);
+
+  /* Preamble length */
+  spi1TxBuffer[0] = SPI_WR_FLAG | 0x20;
+  spi1TxBuffer[1] = 0x00;                                                                       // PreambleMsb, PreambleLsb
+  spi1TxBuffer[2] = 0x0a;                                                                       // +4.5 = 14.5 symbols
   spiProcessSpiMsg(3);
 
   /* Reset the IRQ register */
@@ -651,28 +662,22 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
 
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x09;
 #ifdef PPM_CALIBRATION
-      spi1TxBuffer[1] = (0x0 << 7) | (0x0 << 4) | (0x0 << 0);             // Minimal power @ RFO pin
+      spi1TxBuffer[1] = (0x0 << 7) | (0x0 << 4) | (0x0 << 0);                                   // Minimal power @ RFO pin
 #else
       spi1TxBuffer[1] = spiSX127xPower_GetSetting(ctx);
 #endif
-      spi1TxBuffer[2] = PA_RAMP_50us;                                     // PA ramp time 50us
-      spi1TxBuffer[3] = (0x1 << 5) | (0xb << 0);                          // OverCurrentProtection ON, normal: 100mA
+      spi1TxBuffer[2] = PA_RAMP_50us;                                                           // PA ramp time 50us
+      spi1TxBuffer[3] = (0x1 << 5) | (0xb << 0);                                                // OverCurrentProtection ON, normal: 100mA
       spiProcessSpiMsg(4);
-
-      /* Preamble length */
-      spi1TxBuffer[0] = SPI_WR_FLAG | 0x20;
-      spi1TxBuffer[1] = 0x00;                                             // PreambleMsb, PreambleLsb
-      spi1TxBuffer[2] = 0x0a;                                             // +4 = 14 symbols
-      spiProcessSpiMsg(3);
 
       /* I/Q inversion bits */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x33;
-      spi1TxBuffer[1] = 0x27;                                             // This is the default value, no inversion
+      spi1TxBuffer[1] = 0x27;                                                                   // This is the default value, no inversion
       spiProcessSpiMsg(2);
 
       /* I/Q2 inversion bits */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x38;
-      spi1TxBuffer[1] = 0x1d;                                             // This is the default value, no inversion
+      spi1TxBuffer[1] = 0x1d;                                                                   // This is the default value, no inversion
       spiProcessSpiMsg(2);
 
       /* Set transmit message length */
@@ -706,7 +711,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
       {
         /* DetectionOptimize & BugFix (automatic disabled) */
         spi1TxBuffer[0] = SPI_WR_FLAG | 0x31;
-        spi1TxBuffer[1] = 0x40 | (l_SF >= SF7_DR5 ?  0x03 : 0x05);        // Instead of 0xc0 --> 0x40
+        spi1TxBuffer[1] = 0x40 | (l_SF >= SF7_DR5 ?  0x03 : 0x05);                              // Instead of 0xc0 --> 0x40
         spiProcessSpiMsg(2);
 
         spi1TxBuffer[0] = SPI_WR_FLAG | 0x2f;
@@ -729,12 +734,12 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
 
         /* I/Q inversion bits */
         spi1TxBuffer[0] = SPI_WR_FLAG | 0x33;
-        spi1TxBuffer[1] = (0x1 << 6) | 0x27;                                // Optimized for inverted IQ
+        spi1TxBuffer[1] = (0x1 << 6) | 0x27;                                                    // Optimized for inverted IQ
         spiProcessSpiMsg(2);
 
         /* I/Q2 inversion bits */
         spi1TxBuffer[0] = SPI_WR_FLAG | 0x38;
-        spi1TxBuffer[1] = 0x19;                                             // Optimized for inverted IQ
+        spi1TxBuffer[1] = 0x19;                                                                 // Optimized for inverted IQ
         spiProcessSpiMsg(2);
       }
 
@@ -777,7 +782,11 @@ uint32_t spiSX127x_WaitUntil_TxDone(uint32_t stopTime)
     uint32_t now = osKernelSysTick();
     if (stopTime > now) {
       ticks = (stopTime - now) / portTICK_PERIOD_MS;
-      eb = xEventGroupWaitBits(extiEventGroupHandle, EXTI_SX__DIO0, EXTI_SX__DIO0, 0, ticks);
+      eb = xEventGroupWaitBits(extiEventGroupHandle,
+          EXTI_SX__DIO0,
+          EXTI_SX__DIO0,
+          0,
+          ticks);
 
       spi1TxBuffer[0] = SPI_RD_FLAG | 0x12;     // RegIrqFlags
       spiProcessSpiMsg(2);
@@ -800,11 +809,15 @@ uint32_t spiSX127x_WaitUntil_TxDone(uint32_t stopTime)
 }
 
 
+#define DEBUG_RX
+#define DEBUG_RX_TIMING
+
 #ifdef DEBUG_RX
 static void spiSX127x_WaitUntil__RX_analyzer(LoRaWANctx_t* ctx, uint32_t now, uint32_t stopTime)
 {
-  char  debugBuf[512]   = { 0 };
-  int   debugLen        = 0;
+  TickType_t  xLastWakeTime = now;
+  char        debugBuf[512] = { 0 };
+  int         debugLen      = 0;
 
   do {
     /* Get the current IRQ flags */
@@ -863,6 +876,7 @@ static void spiSX127x_WaitUntil__RX_analyzer(LoRaWANctx_t* ctx, uint32_t now, ui
     uint8_t fifoRxByteAddr = spi1RxBuffer[1];                                       // LoRa: FifoRxByteAddr
 
     debugLen += sprintf((char*) debugBuf + debugLen,
+        "now=%10lu -->\t" \
         "timespan=%10lu -->\t" \
         "irq=0x%02x \t" \
         "modemStat=0x%02x \t" \
@@ -870,6 +884,7 @@ static void spiSX127x_WaitUntil__RX_analyzer(LoRaWANctx_t* ctx, uint32_t now, ui
         "rxHdrCnt=%5u \trxValidPktCnt=%5u \t\t" \
         "fifoRxByteAddr=0x%02x \tfifoCurAddr=0x%02x \t\t" \
         "feiHz=%7ld \tfeiPpm=%+7ld\r\n",
+        now,
         (now - ctx->TsEndOfTx),
         irq,
         modemStat,
@@ -888,21 +903,31 @@ static void spiSX127x_WaitUntil__RX_analyzer(LoRaWANctx_t* ctx, uint32_t now, ui
     }
 
     /* Next iteration */
-    HAL_Delay(20);
-    now = osKernelSysTick();
+    vTaskDelayUntil(&xLastWakeTime, 25 / portTICK_PERIOD_MS);
+    now = xTaskGetTickCount();
   } while (stopTime > now);
 }
 #endif
 
 void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t stopTime)
 {
-  volatile EventBits_t  eb;
-  volatile uint8_t      irq;
+  static uint8_t        entryCntr       = 0;
+  EventBits_t           eb              = 0UL;
+  uint8_t               irq;
   uint32_t              now             = xTaskGetTickCount();
+  uint32_t              rxWaitStartTs   = 0UL;
+  uint32_t              rxCadDetTs      = 0UL;
+  uint32_t              rxCadDoneTs     = 0UL;
+  uint32_t              rxVldHdrTs      = 0UL;
+  uint32_t              rxDoneTs        = 0UL;
 //uint8_t               modemStat       = 0;
   uint8_t               packetSnr       = 0;
   uint8_t               packetRssi      = 0;
   uint8_t               rssi            = 0;
+
+#ifdef DEBUG_RX_TIMING
+  rxWaitStartTs = xTaskGetTickCount();
+#endif
 
   /* Use TxDone and RxDone - mask out all other IRQs */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x11;                                                         // RegIrqFlagsMask
@@ -910,14 +935,16 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
   spiProcessSpiMsg(2);
 
 #ifdef DEBUG_RX
-  spiSX127x_WaitUntil__RX_analyzer(ctx, now, stopTime);
+  if (++entryCntr == 5  ) {
+    spiSX127x_WaitUntil__RX_analyzer(ctx, now, stopTime);
 
-  while (1)  HAL_Delay(250);
+    while (1)  HAL_Delay(250);
+  }
 #endif
 
   do {
     /* Wait for EXTI / IRQ line(s) */
-    volatile TickType_t ticks = 1;
+    TickType_t ticks = 1;
 
     if (stopTime > now) {
       ticks = (stopTime - now) / portTICK_PERIOD_MS;
@@ -925,13 +952,35 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
       break;
     }
 
-    eb  = xEventGroupWaitBits(extiEventGroupHandle, EXTI_SX__DIO0, EXTI_SX__DIO0, 0, ticks);
+    eb  = xEventGroupWaitBits(extiEventGroupHandle,
+        (EXTI_SX__DIO0 | EXTI_SX__DIO1 | EXTI_SX__DIO3),
+        (EXTI_SX__DIO0 | EXTI_SX__DIO1 | EXTI_SX__DIO3),
+        0,
+        ticks);
     now = xTaskGetTickCount();
 
     /* Get the current IRQ flags */
-    spi1TxBuffer[0] = SPI_RD_FLAG | 0x12;     // LoRa: RegIrqFlags
+    spi1TxBuffer[0] = SPI_RD_FLAG | 0x12;                                                       // LoRa: RegIrqFlags
     spiProcessSpiMsg(2);
     irq = spi1RxBuffer[1];
+
+#ifdef DEBUG_RX_TIMING
+    if (!rxCadDetTs   && (irq & (0x1 << 0))) {                                                  // 0 CadDetectedMask
+      rxCadDetTs = xTaskGetTickCount();
+    }
+
+    if (!rxCadDoneTs  && (irq & (0x1 << 2))) {                                                  // 2 CadDoneMask
+      rxCadDoneTs = xTaskGetTickCount();
+    }
+
+    if (!rxVldHdrTs   && (irq & (0x1 << 4))) {                                                  // 4 ValidHeaderMask
+      rxVldHdrTs = xTaskGetTickCount();
+    }
+
+    if (!rxDoneTs     && (irq & (0x1 << 6))) {                                                  // 6 RxDoneMask
+      rxDoneTs = xTaskGetTickCount();
+    }
+#endif
 
     if ((eb & EXTI_SX__DIO0) || (irq & (1U << RxDoneMask))) {
       /* Reset all IRQ flags */
@@ -1049,9 +1098,33 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
       usbToHostWait((uint8_t*) debugBuf, debugLen);
       osSemaphoreRelease(usbToHostBinarySemHandle);
 #endif
+
+#ifdef DEBUG_RX_TIMING
+      {
+        char usbDbgBuf[64];
+        int  len;
+
+        len = sprintf(usbDbgBuf,
+            "(RxDone):\tb=%06lu,\t0=%06lu,\t2=%06lu,\t4=%06lu,\t6=%06lu\r\n",
+            rxWaitStartTs, rxCadDetTs, rxCadDoneTs, rxVldHdrTs, rxDoneTs);
+        usbLogLen(usbDbgBuf, len);
+      }
+#endif
       return;
     }
   } while (1);
+
+#ifdef DEBUG_RX_TIMING
+      {
+        char usbDbgBuf[64];
+        int  len;
+
+        len = sprintf(usbDbgBuf,
+            "(RxDone):\tb=%06lu,\t0=%06lu,\t2=%06lu,\t4=%06lu,\t6=%06lu\r\n",
+            rxWaitStartTs, rxCadDetTs, rxCadDoneTs, rxVldHdrTs, rxDoneTs);
+        usbLogLen(usbDbgBuf, len);
+      }
+#endif
 }
 
 
