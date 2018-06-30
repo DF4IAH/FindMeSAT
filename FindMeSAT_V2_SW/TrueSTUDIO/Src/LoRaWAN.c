@@ -551,8 +551,12 @@ static void LoRaWAN_QueueIn_Process__Fsm_TX(void)
 {
   /* Prepare to transmit data buffer */
   if (loRaWANctx.FsmState == Fsm_NOP) {
+#ifdef GOOD
     /* Start preparations for TX */
     loRaWANctx.FsmState = Fsm_TX;
+#else
+    loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
+#endif
 
     /* New data to be compiled first */
     loRaWanTxMsg.msg_encoded_EncDone = 0;
@@ -1702,7 +1706,7 @@ static void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
     /* Start transmitter and wait until the message is being sent */
     {
       now = xTaskGetTickCount();
-      spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | TX);
+      spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | TX);
     }
 
     /* Wait until TX has finished - the transceiver changes to STANDBY by itself */
@@ -1743,25 +1747,13 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
   TickType_t xLastWakeTime = ctx->TsEndOfTx;
 
   /* Clear receiving message buffer */
-  memset(msg, 0, sizeof(LoRaWAN_RX_Message_t));
+  LoRaWAN_calc_RxMsg_Reset(msg);
 
   uint32_t tsNow          = xTaskGetTickCount();
   uint32_t diffToTxNowMs  = tsNow - ctx->TsEndOfTx;
 
   /* Receive window */
   if (diffToTxNowMs < diffToTxStartMs) {
-#ifdef DOES_NOT_WORK
-    /* Balance I/Q if enough time to start of window is available */
-    if (LORAWAN_BALANCING_AT_MOST_MS < (diffToTxStartMs - diffToTxNowMs)) {
-      rxBalBeginTs = xTaskGetTickCount();
-
-      /* Balance I/Q  */
-      spiSX127x_TxRx_Preps(ctx, TxRx_Mode_IQ_Balancing, NULL);
-
-      rxBalEndTs = xTaskGetTickCount();
-    }
-#endif
-
     /* Prepare RX */
     spiSX127x_TxRx_Preps(ctx, (ctx->Current_RXTX_Window == CurWin_RXTX2 ?  TxRx_Mode_RX2 : TxRx_Mode_RX), NULL);
 
@@ -1777,11 +1769,11 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
     /* Receiver on */
     {
       /* Turn on receiver continuously and wait for the next message */
-      spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
+      spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
       spiSX127x_WaitUntil_RxDone(ctx, msg, ctx->TsEndOfTx + diffToTxStopMs);
 
       /* After the RX time decide whether to be able for changing the frequency quickly or to turn the receiver off */
-      spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | ((ctx->Current_RXTX_Window == CurWin_RXTX2 ?  FSRX : STANDBY)));
+      spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | ((ctx->Current_RXTX_Window == CurWin_RXTX2 ?  FSRX : STANDBY)));
     }
     rxEndTs = xTaskGetTickCount();
 
@@ -1801,7 +1793,7 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
 }
 
 
-#define BALANCING_ENABLED
+//#define INIT_BALANCING_ENABLED
 
 void loRaWANLoRaWANTaskInit(void)
 {
@@ -1913,7 +1905,7 @@ void loRaWANLoRaWANTaskInit(void)
     osDelayUntil(&PreviousWakeTime, 3600);
   }
 
-#ifdef BALANCING_ENABLED
+#ifdef INIT_BALANCING_ENABLED
   /* I/Q balancing - no SX127x reset or band-change without re-balancing */
   {
     /* Set center frequency of EU-868 */
@@ -1939,6 +1931,12 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX1(void)
 
     /* USB: info */
     usbLog("LoRaWAN: RX1 (1 s).\r\n");
+
+    /* Reset to POR/Reset defaults */
+    spiSX127xReset();
+
+    /* Balance I/Q  */
+    spiSX127x_TxRx_Preps(&loRaWANctx, TxRx_Mode_IQ_Balancing, NULL);
 
     /* Accelerated RX1 on request by GW */
     loRaWANctx.SpreadingFactor = spiSX127xDR_to_SF(loRaWANctx.LinkADR_DataRate_TX1 + loRaWANctx.LinkADR_DataRate_RX1_DRofs);
@@ -2048,6 +2046,7 @@ static void loRaWANLoRaWANTaskLoop__JoinRequest_NextTry(void)
   }
 }
 
+
 static void loRaWANLoRaWANTaskLoop__JoinRequestRX1(void)
 {
   if (loRaWANctx.TsEndOfTx) {
@@ -2055,6 +2054,12 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX1(void)
 
     /* USB: info */
     usbLog("LoRaWAN: JOIN-ACCEPT RX1 (5 s).\r\n");
+
+    /* Reset to POR/Reset defaults */
+    spiSX127xReset();
+
+    /* Balance I/Q  */
+    spiSX127x_TxRx_Preps(&loRaWANctx, TxRx_Mode_IQ_Balancing, NULL);
 
     /* Accelerated RX1 on request by GW */
     loRaWANctx.SpreadingFactor = spiSX127xDR_to_SF(loRaWANctx.LinkADR_DataRate_TX1 + loRaWANctx.LinkADR_DataRate_RX1_DRofs);

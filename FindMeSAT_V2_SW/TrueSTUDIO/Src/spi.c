@@ -537,17 +537,17 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
 
   if (TxRx_Mode_IQ_Balancing == mode) {
     /* Switching to FSK/OOK via SLEEP mode */
-    spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
-    spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
+    spiSX127xMode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+    spiSX127xMode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
     /* Set the frequency */
     spiSX127xFrequency_MHz(ctx->FrequencyMHz * (1 + 1e-6 * ctx->CrystalPpm));
 
 #ifdef TRY
-    spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
+    spiSX127xMode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
     TickType_t xLastWakeTime = xTaskGetTickCount();
     vTaskDelayUntil(&xLastWakeTime, 50 / portTICK_PERIOD_MS);
-    spiSX127xMode(MODE_FSK_OOK | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
+    spiSX127xMode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 #endif
 
     /* Start I/Q balancing */
@@ -590,8 +590,8 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
     HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);
 
     /* Return to LoRa mode */
-    spiSX127xMode(MODE_LoRa    | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
-    spiSX127xMode(MODE_LoRa    | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
+    spiSX127xMode(MODE_LoRa    | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+    spiSX127xMode(MODE_LoRa    | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
 
     return;
   }
@@ -599,8 +599,8 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
   /* Skip for RX2 where only frequency and SpreadingFactor is changed */
   if (TxRx_Mode_RX2 != mode) {
     /* Switching to LoRa via SLEEP mode */
-    spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
-    spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
+    spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+    spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
   }
 
   /* Debugging information */
@@ -687,7 +687,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
       spiSX127xLoRa_setTxMsgLen(msg->msg_encoded_Len);
 
       /* Prepare the transmitter circuits */
-      spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | FSTX);
+      spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | FSTX);
     }
     break;
 
@@ -744,7 +744,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
       }
 
       /* Prepare the receiver circuits */
-      spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | FSRX);
+      spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | FSRX);
     }
     break;
 
@@ -756,7 +756,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
       spiProcessSpiMsg(2);
 
       /* Turn on receiver */
-      spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
+      spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
     }
     break;
 
@@ -1134,7 +1134,7 @@ uint8_t spiDetectShieldSX127x(void)
   spiSX127xReset();
 
   /* Turn to sleep mode if not already done */
-  spiSX127xMode(MODE_LoRa | ACCES_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+  spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
 
   /* Request RD-address 0x42 RegVersion */
   {

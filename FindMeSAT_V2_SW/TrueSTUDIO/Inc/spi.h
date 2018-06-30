@@ -89,8 +89,8 @@ typedef enum spiSX127x_Mode {
   MOD_TYPE_OOK            = (0b01 << 5),
 
   /* LoRa Mode */
-  ACCES_SHARE_OFF         = (0b0 << 6),
-  ACCES_SHARE_ON          = (0b1 << 6),
+  ACCESS_SHARE_OFF        = (0b0 << 6),
+  ACCESS_SHARE_ON         = (0b1 << 6),
 
   MODE_FSK_OOK            = (0b0 << 7),
   MODE_LoRa               = (0b1 << 7)
