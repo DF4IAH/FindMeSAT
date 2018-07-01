@@ -1863,9 +1863,9 @@ void loRaWANLoRaWANTaskInit(void)
     loRaWANctx.FPort                        = 1;                                                // Default application port
     loRaWANctx.ADR_enabled                  = 1;                                                // Global setting for ADR
     loRaWANctx.LinkADR_TxPowerReduction_dB  = 0;                                                // No power reduction
-    loRaWANctx.LinkADR_DataRate_TX1         = DR3_SF9_125kHz_LoRa  /* DR0_SF12_125kHz_LoRa */ ; // Start slowly
+    loRaWANctx.LinkADR_DataRate_TX1         = DR0_SF12_125kHz_LoRa;                             // Start slowly
     loRaWANctx.LinkADR_DataRate_RX1_DRofs   = 0;                                                // Default
-    loRaWANctx.LinkADR_DataRate_RXTX2       = DR3_SF9_125kHz_LoRa  /* DR0_SF12_125kHz_LoRa */ ; // Default for RXTX2
+    loRaWANctx.LinkADR_DataRate_RXTX2       = DR0_SF12_125kHz_LoRa;                             // Default for RXTX2
     loRaWANctx.LinkADR_ChannelMask          = 0x0007U;                                          // Enable default channels (1-3) only
     loRaWANctx.LinkADR_NbTrans              = 1;                                                // Default
     loRaWANctx.LinkADR_ChMaskCntl           = ChMaskCntl__appliesTo_1to16;                      // Mask settings are valid
@@ -2022,7 +2022,11 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX2(void)
 
 static void loRaWANLoRaWANTaskLoop__JoinRequest_NextTry(void)
 {
-  if (JoinRequest == loRaWANctx.MHDR_MType) {
+  if ((JoinRequest  == loRaWANctx.MHDR_MType) ||
+      (JoinAccept   == loRaWANctx.MHDR_MType)) {
+    /* Delay 2..10 secs */
+    osDelay(2000 + rand() % 8000);
+
     /* Try again with new JOINREQUEST - clears loRaWanTxMsg by itself */
     loRaWANctx.FsmState = Fsm_MAC_JoinRequest;
 
@@ -2126,20 +2130,15 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX2(void)
       }
 #endif
 
+      /* Try again with new JOINREQUEST */
       loRaWANLoRaWANTaskLoop__JoinRequest_NextTry();
 
     } else {  // if (loRaWanRxMsg.msg_encoded_Len == 0) {} else
       /* USB: info */
       usbLog("LoRaWAN: JOIN-RESPONSE received within window JR-Delay_RX2.\r\n");
 
-      if (JoinRequest == loRaWANctx.MHDR_MType) {
-        /* Continue with the JoinAccept handling */
-        loRaWANctx.FsmState = Fsm_MAC_JoinAccept;
-
-      } else if (ConfDataUp == loRaWANctx.MHDR_MType) {
-        /* Process the message */
-        loRaWANctx.FsmState = Fsm_MAC_Decoder;
-      }
+      /* Continue with the JoinAccept handling */
+      loRaWANctx.FsmState = Fsm_MAC_JoinAccept;
     }
 
   } else {  // if (tsEndOfTx)
@@ -2272,14 +2271,20 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_Decoder(void)
       /* USB: info */
       usbLog("LoRaWAN: Decoder informs: FAIL - bad format.\r\n");
 
-      /* Sequence has ended */
-      LoRaWAN_calc_TxMsg_Reset(&loRaWANctx, &loRaWanTxMsg);
+      if ((JoinRequest  == (loRaWanRxMsg.msg_parted_MHDR >> LoRaWAN_MHDR_MType_SHIFT)) ||
+          (JoinAccept   == (loRaWanRxMsg.msg_parted_MHDR >> LoRaWAN_MHDR_MType_SHIFT))) {
+        loRaWANLoRaWANTaskLoop__JoinRequest_NextTry();
 
-      /* Remove RX message */
-      LoRaWAN_calc_RxMsg_Reset(&loRaWanRxMsg);
+      } else {
+        /* Sequence has ended */
+        LoRaWAN_calc_TxMsg_Reset(&loRaWANctx, &loRaWanTxMsg);
 
-      /* Nothing to do with that */
-      loRaWANctx.FsmState = Fsm_NOP;
+        /* Remove RX message */
+        LoRaWAN_calc_RxMsg_Reset(&loRaWanRxMsg);
+
+        /* Nothing to do with that */
+        loRaWANctx.FsmState = Fsm_NOP;
+      }
     }
   }
 }
