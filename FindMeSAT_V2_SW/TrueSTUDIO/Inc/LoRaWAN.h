@@ -345,6 +345,8 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    RXDelay;                                                  // JOIN-ACCEPT
   volatile uint8_t                    CFList[16];                                               // JOIN-ACCEPT - EU-868: Freq Ch3[2:0], Freq Ch4[2:0], Freq Ch5[2:0], Freq Ch6[2:0], Freq Ch7[2:0], CFListType[0]
   volatile float                      Ch_Frequencies_MHz[16];
+  volatile DataRates_t                Ch_DataRateTX_min[16];
+  volatile DataRates_t                Ch_DataRateTX_max[16];
   volatile float                      GatewayPpm;                                               // PPM value to adjust RX for remote gateway crystal drift
 
   /* MAC communicated data */
@@ -358,9 +360,9 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    LinkADR_DataRate_RX1_DRofs;                               // JoinAccept
   volatile DataRates_t                LinkADR_DataRate_RXTX2;                                   // MAC: LinkADRReq
   volatile uint16_t                   LinkADR_ChannelMask;                                      // MAC: LinkADRReq
+  volatile uint8_t                    LinkADR_ChannelMask_OK;                                   // Last channel mask setting whether valid
   volatile uint8_t                    LinkADR_NbTrans;                                          // MAC: LinkADRReq - unconfirmed up packets multiple transmissions
   volatile ChMaskCntl_t               LinkADR_ChMaskCntl;                                       // MAC: LinkADRReq
-  volatile uint8_t                    LinkADR_ChannelMask_OK;                                   // Last channel mask setting whether valid
   volatile uint8_t                    DutyCycle_MaxDutyCycle;                                   // MAC: DutyCycleReq
 
   /* Join Server specific */
