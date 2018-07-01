@@ -250,7 +250,7 @@ void prvControllerGetDataAndUpload(void)
   const  float  centerLat     =  49.473185f;
   const  float  centerLon     =   8.614806f;
   const  float  centerAlt     =  98.0f;
-  const  float  centerAcc     =  20.0f;
+  const  float  centerAcc     =   5.0f;
   const  float  radius_m      = 100.0f;
   const  float  heightAmpl_m  =   3.0f;
   const  float  height_m_p_s  =   0.1f;
@@ -266,7 +266,7 @@ void prvControllerGetDataAndUpload(void)
     trackMeApp_up.latitude_deg      = centerLat + ((radius_m / (60.f * 1852.f)) * sin(simPhase * PI/180));
     trackMeApp_up.longitude_deg     = centerLon + ((radius_m / (60.f * 1852.f)) * cos(simPhase * PI/180) / cos(2*PI * centerLat));
     trackMeApp_up.altitude_m        = centerAlt + sin(simPhase * PI/180) * heightAmpl_m;
-    trackMeApp_up.accuracy_10thM    = centerAcc + sin(simPhase * PI/180) * 15.0f;
+    trackMeApp_up.accuracy_10thM    = centerAcc + sin(simPhase * PI/180) * 2.0f;
 
     /* Motion vector entities */
     trackMeApp_up.course_deg        = (uint8_t) (360U - (uint16_t)simPhase);

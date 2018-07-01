@@ -95,8 +95,8 @@ typedef enum CurrentWindow {
 /* LoRaWAN RX windows */
 typedef enum LoRaWAN_RX_windows {
   LORAWAN_BALANCING_AT_MOST_MS        =  200,
-  LORAWAN_RX_PREPARE_MS               =  125,
-  LORAWAN_FRQ_HOPPING_MS              =  175,                                                   // BAD: 0 - 48, GOOD: 49 - ...
+  LORAWAN_RX_PREPARE_MS               =   25,
+  LORAWAN_FRQ_HOPPING_MS              =   75,                                                   // BAD: 0 - 48, GOOD: 49 - ...
   LORAWAN_EU868_MAX_TX_DURATION_MS    = 2900,                                                   // TODO: Search for right value
 
   LORAWAN_EU868_DELAY1_MS             = 1000,
@@ -361,6 +361,7 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    LinkADR_NbTrans;                                          // MAC: LinkADRReq - unconfirmed up packets multiple transmissions
   volatile ChMaskCntl_t               LinkADR_ChMaskCntl;                                       // MAC: LinkADRReq
   volatile uint8_t                    LinkADR_ChannelMask_OK;                                   // Last channel mask setting whether valid
+  volatile uint8_t                    DutyCycle_MaxDutyCycle;                                   // MAC: DutyCycleReq
 
   /* Join Server specific */
 #ifdef LORAWAN_1V1

@@ -530,10 +530,12 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
   ctx->LinkADR_TxPowerReduction_dB    = 0;                                                      // Range: 0 - 20 dB reduction
 #endif
 
-  const float       l_f               = ctx->FrequencyMHz;
-  const uint8_t     l_SF              = (ctx->SpreadingFactor & 0x0f) << SFx_SHIFT;
-  const uint32_t    fmt_mhz           = (uint32_t) l_f;
-  const uint16_t    fmt_mhz_f1        = (uint16_t) (((uint32_t) (l_f * 1000.f)) % 1000);
+  const float     l_f               = ctx->FrequencyMHz;
+  const uint8_t   l_SF              = (ctx->SpreadingFactor & 0x0f) << SFx_SHIFT;
+  uint32_t        fmt_mhz;
+  uint16_t        fmt_mhz_f1;
+
+  mainCalc_Float2Int(l_f, &fmt_mhz, &fmt_mhz_f1);
 
   if (TxRx_Mode_IQ_Balancing == mode) {
     /* Switching to FSK/OOK via SLEEP mode */

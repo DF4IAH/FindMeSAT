@@ -2422,14 +2422,13 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkCheckReq(void)
   loRaWANctx.FrequencyMHz         = LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, LoRaWAN_calc_randomChannel(&loRaWANctx), 0);                                                                                   // Randomized RX1 frequency
   loRaWANctx.SpreadingFactor      = spiSX127xDR_to_SF(loRaWANctx.LinkADR_DataRate_TX1);
 
+  /* MAC to be added */
+  loRaWANctx.TX_MAC_Buf[loRaWANctx.TX_MAC_Len++] = LinkCheckReq_UP;
+  loRaWanTxMsg.msg_encoded_EncDone = 0;
+
   /* Requesting for confirmed data up-transport */
   loRaWANctx.MHDR_MType = ConfDataUp;
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
-
-  loRaWANctx.TX_MAC_Buf[loRaWANctx.TX_MAC_Len++] = LinkCheckReq_UP;
-
-  /* Request to encode TX message (again) */
-  loRaWanTxMsg.msg_encoded_EncDone = 0;
 
   /* USB: info */
   usbLog("\r\nLoRaWAN: Going to TX LinkCheckReq.\r\n");
@@ -2523,10 +2522,19 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkADRReq(void)
 
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkADRAns(void)
 {
+  /* Adjust the context */
+  loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
+  loRaWANctx.FrequencyMHz         = LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, LoRaWAN_calc_randomChannel(&loRaWANctx), 0);                                                                                   // Randomized RX1 frequency
+  loRaWANctx.SpreadingFactor      = spiSX127xDR_to_SF(loRaWANctx.LinkADR_DataRate_TX1);
+
   /* MAC to be added */
   loRaWANctx.TX_MAC_Buf[loRaWANctx.TX_MAC_Len++] = LinkADRAns_UP;
   loRaWANctx.TX_MAC_Buf[loRaWANctx.TX_MAC_Len++] = 0b110 | (0x1 & loRaWANctx.LinkADR_ChannelMask_OK);  // Power-change OK, DataRate-change OK, ChannelMask-change is context
   loRaWanTxMsg.msg_encoded_EncDone = 0;
+
+  /* Requesting for confirmed data up-transport */
+  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* USB: info */
   usbLog("\r\nLoRaWAN: Going to TX LinkADRAns.\r\n");
@@ -2541,11 +2549,21 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DutyCycleReq(void)
 
   uint8_t macBuf[1] = { 0 };
 
-  /* USB: info */
-  usbLog("LoRaWAN: Got RX DutyCycleReq.\r\n");
-
+  /* Pull data from the MAC_Queue and store in context */
   LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
-//      loRaWANctx.xxx = macBuf[0];
+  loRaWANctx.DutyCycle_MaxDutyCycle = macBuf[0] & 0x0f;
+
+  /* USB: info */
+  {
+    char usbDbgBuf[64];
+    int  len;
+
+    len = sprintf(usbDbgBuf,
+        "LoRaWAN: Got RX DutyCycleReq: Max duty cycle=%02u\r\n",
+        loRaWANctx.DutyCycle_MaxDutyCycle);
+    usbLogLen(usbDbgBuf, len);
+  }
+
   loRaWANctx.FsmState = Fsm_MAC_DutyCycleAns;
 }
 
@@ -2559,8 +2577,16 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DutyCycleAns(void)
   loRaWANctx.FrequencyMHz         = LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, LoRaWAN_calc_randomChannel(&loRaWANctx), 0);                                                                                   // Randomized RX1 frequency
   loRaWANctx.SpreadingFactor      = spiSX127xDR_to_SF(loRaWANctx.LinkADR_DataRate_TX1);
 
+  /* MAC to be added */
+  loRaWANctx.TX_MAC_Buf[loRaWANctx.TX_MAC_Len++] = DutyCycleAns_UP;
+  loRaWanTxMsg.msg_encoded_EncDone = 0;
+
+  /* Requesting for confirmed data up-transport */
+  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_Major = LoRaWAN_R1;
+
   /* Prepare for transmission */
-  loRaWANctx.FsmState             = Fsm_NOP;    // TODO
+  loRaWANctx.FsmState = Fsm_TX;
 }
 
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RXParamSetupReq(void)
@@ -2569,14 +2595,30 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RXParamSetupReq(void)
 
   uint8_t macBuf[4] = { 0 };
 
-  /* USB: info */
-  usbLog("LoRaWAN: Got RX RXParamSetupReq.\r\n");
-
+  /* Pull data from the MAC_Queue and store in context */
   LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
-//      loRaWANctx.xxx = macBuf[0];
-//      loRaWANctx.xxx = macBuf[1];
-//      loRaWANctx.xxx = macBuf[2];
-//      loRaWANctx.xxx = macBuf[3];
+  uint8_t dlSettings                      = macBuf[0];
+  loRaWANctx.LinkADR_DataRate_RXTX2       = (DataRates_t) (dlSettings & 0x0f);
+  loRaWANctx.LinkADR_DataRate_RX1_DRofs   = (dlSettings & 0x70) >> 4;
+  loRaWANctx.Ch_Frequencies_MHz[15]       = LoRaWAN_calc_CFListEntry_2_FrqMHz(macBuf + 1);      // New TXRX2 frequency
+
+  /* USB: info */
+  {
+    char      usbDbgBuf[128];
+    int       len;
+    uint32_t  fmt_mhz;
+    uint16_t  fmt_mhz_f1;
+
+    mainCalc_Float2Int(loRaWANctx.Ch_Frequencies_MHz[15], &fmt_mhz, &fmt_mhz_f1);
+
+    len = sprintf(usbDbgBuf,
+        "LoRaWAN: Got RX RXParamSetupReq: DR-RXTX2=DR%u, DRoffs-RX1=+%u DRs, RX/TX2 f = %03lu.%03u MHz\r\n",
+        loRaWANctx.LinkADR_DataRate_RXTX2,
+        loRaWANctx.LinkADR_DataRate_RX1_DRofs,
+        fmt_mhz, fmt_mhz_f1);
+    usbLogLen(usbDbgBuf, len);
+  }
+
   loRaWANctx.FsmState = Fsm_MAC_RXParamSetupAns;
 }
 
@@ -2590,36 +2632,77 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RXParamSetupAns(void)
   loRaWANctx.FrequencyMHz         = LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, LoRaWAN_calc_randomChannel(&loRaWANctx), 0);                                                                                   // Randomized RX1 frequency
   loRaWANctx.SpreadingFactor      = spiSX127xDR_to_SF(loRaWANctx.LinkADR_DataRate_TX1);
 
+  /* MAC to be added */
+  loRaWANctx.TX_MAC_Buf[loRaWANctx.TX_MAC_Len++] = RXParamSetupAns_UP;
+  loRaWANctx.TX_MAC_Buf[loRaWANctx.TX_MAC_Len++] = 0b111;                                       // RX1DRoffset ACK, RX2 Data rate ACK, Channel ACK
+  loRaWanTxMsg.msg_encoded_EncDone = 0;
+
+  /* Requesting for confirmed data up-transport */
+  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_Major = LoRaWAN_R1;
+
   /* Prepare for transmission */
-  loRaWANctx.FsmState             = Fsm_NOP;    // TODO
+  loRaWANctx.FsmState = Fsm_TX;
 }
 
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DevStatusReq(void)
 {
   /* MAC CID 0x06 - dn:DevStatusReq --> up:DevStatusAns */
 
-  uint8_t macBuf[1] = { 0 };
+  //uint8_t macBuf[0] = { 0 };
+
+  /* Pull data from the MAC_Queue and store in context */
+  //LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
 
   /* USB: info */
-  usbLog("LoRaWAN: Got RX DevStatusReq.\r\n");
+  {
+    char usbDbgBuf[64];
+    int  len;
 
-  LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
-//      loRaWANctx.xxx = macBuf[0];
+    len = sprintf(usbDbgBuf,
+        "LoRaWAN: Got RX DevStatusReq: (no data)\r\n");
+    usbLogLen(usbDbgBuf, len);
+  }
+
   loRaWANctx.FsmState = Fsm_MAC_DevStatusAns;
 }
 
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DevStatusAns(void)
 {
+  int margin = loRaWANctx.LastPacketSnrDb;
+  if (margin > 31) {
+    margin = 31;
+  } else if (margin < -31) {
+    margin = -31;
+  }
+
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX DevStatusAns.\r\n");
+  {
+    char usbDbgBuf[128];
+    int  len;
+
+    len = sprintf(usbDbgBuf,
+        "\r\nLoRaWAN: Going to TX DevStatusAns: Battery=Ext.Power(0), Margin=%3ddB\r\n",
+        margin);
+    usbLogLen(usbDbgBuf, len);
+  }
 
   /* Adjust the context */
   loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
   loRaWANctx.FrequencyMHz         = LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, LoRaWAN_calc_randomChannel(&loRaWANctx), 0);                                                                                   // Randomized RX1 frequency
   loRaWANctx.SpreadingFactor      = spiSX127xDR_to_SF(loRaWANctx.LinkADR_DataRate_TX1);
 
+  /* MAC to be added */
+  loRaWANctx.TX_MAC_Buf[loRaWANctx.TX_MAC_Len++] = DevStatusAns_UP;
+  loRaWANctx.TX_MAC_Buf[loRaWANctx.TX_MAC_Len++] = margin & 0x3f;
+  loRaWanTxMsg.msg_encoded_EncDone = 0;
+
+  /* Requesting for confirmed data up-transport */
+  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_Major = LoRaWAN_R1;
+
   /* Prepare for transmission */
-  loRaWANctx.FsmState             = Fsm_NOP;    // TODO
+  loRaWANctx.FsmState = Fsm_TX;
 }
 
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_NewChannelReq(void)
