@@ -344,9 +344,12 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    NetID_LE[3];                                              // JOIN-RESPONSE
   volatile uint8_t                    RXDelay;                                                  // JOIN-ACCEPT
   volatile uint8_t                    CFList[16];                                               // JOIN-ACCEPT - EU-868: Freq Ch3[2:0], Freq Ch4[2:0], Freq Ch5[2:0], Freq Ch6[2:0], Freq Ch7[2:0], CFListType[0]
-  volatile float                      Ch_Frequencies_MHz[16];
+  volatile uint8_t                    Ch_Selected;                                              // Fixed or randomly assigned channel
+  volatile float                      Ch_FrequenciesUplink_MHz[16];                             // Default / MAC:NewChannelReq
+  volatile float                      Ch_FrequenciesDownlink_MHz[16];                           // Default / MAC:NewChannelReq / MAC:DlChannelReq
   volatile DataRates_t                Ch_DataRateTX_min[16];
   volatile DataRates_t                Ch_DataRateTX_max[16];
+  volatile DataRates_t                Ch_DataRateTX_Selected[16];
   volatile float                      GatewayPpm;                                               // PPM value to adjust RX for remote gateway crystal drift
 
   /* MAC communicated data */
@@ -364,6 +367,9 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    LinkADR_NbTrans;                                          // MAC: LinkADRReq - unconfirmed up packets multiple transmissions
   volatile ChMaskCntl_t               LinkADR_ChMaskCntl;                                       // MAC: LinkADRReq
   volatile uint8_t                    DutyCycle_MaxDutyCycle;                                   // MAC: DutyCycleReq
+  volatile uint8_t                    Channel_DataRateValid;                                    // MAC: NewChannelReq
+  volatile uint8_t                    Channel_FrequencyValid;                                   // MAC: NewChannelReq, DlChannelReq
+  volatile uint8_t                    Channel_FrequencyExists;                                  // MAC: DlChannelReq
 
   /* Join Server specific */
 #ifdef LORAWAN_1V1
@@ -391,8 +397,8 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    FCtrl_FPending;
   volatile uint8_t                    FPort_absent;                                             // 1: FPort field absent
   volatile uint8_t                    FPort;
-  volatile uint8_t                    SpreadingFactor;                                          // This value is taken for the TRX when turned on
   volatile float                      FrequencyMHz;                                             // This value is taken for the TRX when turned on
+  volatile uint8_t                    SpreadingFactor;                                          // This value is taken for the TRX when turned on
 
   /* Last radio measurements */
   volatile float                      CrystalPpm;                                               // PPM value to correct local device crystal drift
@@ -551,7 +557,7 @@ uint8_t GET_BYTE_OF_WORD(uint32_t word, uint8_t pos);
 void LoRaWANctx_applyKeys_trackMeApp(void);
 
 uint8_t LoRaWAN_calc_randomChannel(LoRaWANctx_t* ctx);
-float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, uint8_t dflt);
+float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, LoRaWANctxDir_t dir, uint8_t dflt);
 
 void LoRaWAN_MAC_Queue_Push(const uint8_t* macAry, uint8_t cnt);
 void LoRaWAN_MAC_Queue_Pull(uint8_t* macAry, uint8_t cnt);

@@ -385,21 +385,21 @@ uint8_t spiSX127xPower_GetSetting(LoRaWANctx_t* ctx)
   return (0x0 << 7) || reg;
 }
 
-void spiSX127xDio_Mapping(TxRx_Mode_t mode)
+void spiSX127xDio_Mapping(DIO_TxRx_Mode_t mode)
 {
   /* DIO0..DIO5 settings */
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x40;
 
   switch (mode) {
-  case TxRx_Mode_TX:
+  case DIO_TxRx_Mode_TX:
     {
       spi1TxBuffer[1] = (0b01 << 6) | (0b10 << 4) | (0b00 << 2) | (0b01 << 0);  // DIO0: TX done, DIO1: CadDetected, DIO2: FhssChangeChannel, DIO3: ValidHeader
       spi1TxBuffer[2] = (0b01 << 6) | (0b00 << 4);                              // DIO4: PllLock, DIO5: ModeReady
     }
     break;
 
-  case TxRx_Mode_RX:
-  case TxRx_Mode_RX_Randomizer:
+  case DIO_TxRx_Mode_RX:
+  case DIO_TxRx_Mode_RX_Randomizer:
     {
       spi1TxBuffer[1] = (0b00 << 6) | (0b10 << 4) | (0b00 << 2) | (0b01 << 0);  // DIO0: RX done, DIO1: CadDetected, DIO2: FhssChangeChannel, DIO3: ValidHeader
       spi1TxBuffer[2] = (0b01 << 6) | (0b00 << 4);                              // DIO4: PllLock, DIO5: ModeReady
@@ -523,12 +523,31 @@ void spiSX127xRegister_IRQ_clearAll(void)
 
 //#define PPM_CALIBRATION
 //#define POWER_CALIBRATION
-void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg)
+void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg)
 {
 #ifdef POWER_CALIBRATION
-  ctx->SpreadingFactor                = SF7_DR5_VAL;
-  ctx->LinkADR_TxPowerReduction_dB    = 0;                                                      // Range: 0 - 20 dB reduction
-#endif
+  ctx->SpreadingFactor              = SF7_DR5_VAL;
+  ctx->LinkADR_TxPowerReduction_dB  = 0;                                                        // Range: 0 - 20 dB reduction
+# ifdef PPM_CALIBRATION
+  loRaWANctx.FrequencyMHz           = 870.0;
+  loRaWANctx.SpreadingFactor        = SF12_DR0_VAL;
+# endif
+#else
+  ctx->FrequencyMHz                 = LoRaWAN_calc_Channel_to_MHz(
+                                        ctx,
+                                        ctx->Ch_Selected,
+                                        ctx->Dir,
+                                        0);                                                     // Jump to RX2 frequency (default frequency)
+
+  if (CurWin_RXTX1 == ctx->Current_RXTX_Window) {
+    /* RX1 - DownLink */
+    ctx->SpreadingFactor  = spiSX127xDR_to_SF(ctx->Ch_DataRateTX_Selected[ctx->Ch_Selected - 1] + ctx->LinkADR_DataRate_RX1_DRofs);
+
+  } else if (CurWin_RXTX2 == ctx->Current_RXTX_Window) {
+    /* RX2 - DownLink */
+    ctx->SpreadingFactor  = spiSX127xDR_to_SF(ctx->Ch_DataRateTX_Selected[ctx->Ch_Selected - 1]);
+  }
+#endif  //
 
   const float     l_f               = ctx->FrequencyMHz;
   const uint8_t   l_SF              = (ctx->SpreadingFactor & 0x0f) << SFx_SHIFT;
@@ -537,7 +556,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
 
   mainCalc_Float2Int(l_f, &fmt_mhz, &fmt_mhz_f1);
 
-  if (TxRx_Mode_IQ_Balancing == mode) {
+  if (DIO_TxRx_Mode_IQ_Balancing == mode) {
     /* Switching to FSK/OOK via SLEEP mode */
     spiSX127xMode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
     spiSX127xMode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
@@ -599,7 +618,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
   }
 
   /* Skip for RX2 where only frequency and SpreadingFactor is changed */
-  if (TxRx_Mode_RX2 != mode) {
+  if (DIO_TxRx_Mode_RX2 != mode) {
     /* Switching to LoRa via SLEEP mode */
     spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
     spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
@@ -641,7 +660,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
   spiSX127xRegister_IRQ_clearAll();
 
   /* Skip for RX2 where only frequency and SpreadingFactor is changed */
-  if (TxRx_Mode_RX2 != mode) {
+  if (DIO_TxRx_Mode_RX2 != mode) {
     /* Frequency hopping disabled */
     spi1TxBuffer[0] = SPI_WR_FLAG | 0x24;
     spi1TxBuffer[1] = 0x00;
@@ -657,7 +676,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
   }
 
   switch (mode) {
-  case TxRx_Mode_TX:
+  case DIO_TxRx_Mode_TX:
     {
       /* Set the frequency */
       spiSX127xFrequency_MHz(l_f * (1 + 1e-6 * ctx->CrystalPpm));
@@ -694,8 +713,8 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
     }
     break;
 
-  case TxRx_Mode_RX:
-  case TxRx_Mode_RX2:
+  case DIO_TxRx_Mode_RX:
+  case DIO_TxRx_Mode_RX2:
     {
       /* Set the frequency */
       spiSX127xFrequency_MHz(l_f * (1 + (1e-6 * ctx->CrystalPpm) - (1e-6 * ctx->GatewayPpm)));
@@ -724,7 +743,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
       }
 
       /* Skip for RX2 where only frequency and SpreadingFactor is changed */
-      if (TxRx_Mode_RX2 != mode) {
+      if (DIO_TxRx_Mode_RX2 != mode) {
         /* LNA to maximum */
         spi1TxBuffer[0] = SPI_WR_FLAG | 0x0c;
         spi1TxBuffer[1] = LnaGain_G1 | LnaBoost_Lf_XXX | LnaBoost_Hf_ON;
@@ -751,7 +770,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Messag
     }
     break;
 
-  case TxRx_Mode_RX_Randomizer:
+  case DIO_TxRx_Mode_RX_Randomizer:
     {
       /* LNA to maximum */
       spi1TxBuffer[0] = SPI_WR_FLAG | 0x0c;

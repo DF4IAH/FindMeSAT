@@ -369,7 +369,7 @@ void controllerControllerTaskLoop(void)
         {
           /* Ready from LoRaWAN task received - activate upload timer */
           xStatus = xTimerStart(controllerSendTimerHandle, 1);
-          xStatus = xTimerChangePeriod(controllerSendTimerHandle, 30000 / portTICK_PERIOD_MS, 1);
+          xStatus = xTimerChangePeriod(controllerSendTimerHandle, 5 * 60 * 1000 / portTICK_PERIOD_MS, 1);   // 5 minutes
         }
         break;
       }  // switch
