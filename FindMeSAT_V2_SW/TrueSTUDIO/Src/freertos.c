@@ -73,7 +73,10 @@ osMessageQId usbFromHostQueueHandle;
 osMessageQId loraInQueueHandle;
 osMessageQId loraOutQueueHandle;
 osMessageQId loraMacQueueHandle;
+osTimerId controllerSendTimerHandle;
 osSemaphoreId usbToHostBinarySemHandle;
+osSemaphoreId trackMeApplUpDataBinarySemHandle;
+osSemaphoreId trackMeApplDownDataBinarySemHandle;
 
 /* USER CODE BEGIN Variables */
 extern uint8_t usbFromHostISRBuf[64];
@@ -83,6 +86,7 @@ EventGroupHandle_t adcEventGroupHandle;
 EventGroupHandle_t extiEventGroupHandle;
 EventGroupHandle_t spiEventGroupHandle;
 EventGroupHandle_t loRaWANEventGroupHandle;
+EventGroupHandle_t controllerEventGroupHandle;
 
 /* USER CODE END Variables */
 
@@ -93,6 +97,7 @@ void StartUsbFromHostTask(void const * argument);
 void StartControllerTask(void const * argument);
 void StartInterpreterTask(void const * argument);
 void StartLoRaWANTask(void const * argument);
+void controllerSendTimerCallback(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -176,6 +181,14 @@ void MX_FREERTOS_Init(void) {
   osSemaphoreDef(usbToHostBinarySem);
   usbToHostBinarySemHandle = osSemaphoreCreate(osSemaphore(usbToHostBinarySem), 1);
 
+  /* definition and creation of trackMeApplUpDataBinarySem */
+  osSemaphoreDef(trackMeApplUpDataBinarySem);
+  trackMeApplUpDataBinarySemHandle = osSemaphoreCreate(osSemaphore(trackMeApplUpDataBinarySem), 1);
+
+  /* definition and creation of trackMeApplDownDataBinarySem */
+  osSemaphoreDef(trackMeApplDownDataBinarySem);
+  trackMeApplDownDataBinarySemHandle = osSemaphoreCreate(osSemaphore(trackMeApplDownDataBinarySem), 1);
+
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */
   usbToHostEventGroupHandle = xEventGroupCreate();
@@ -183,10 +196,18 @@ void MX_FREERTOS_Init(void) {
   extiEventGroupHandle = xEventGroupCreate();
   spiEventGroupHandle = xEventGroupCreate();
   loRaWANEventGroupHandle = xEventGroupCreate();
+  controllerEventGroupHandle = xEventGroupCreate();
   /* USER CODE END RTOS_SEMAPHORES */
+
+  /* Create the timer(s) */
+  /* definition and creation of controllerSendTimer */
+  osTimerDef(controllerSendTimer, controllerSendTimerCallback);
+  controllerSendTimerHandle = osTimerCreate(osTimer(controllerSendTimer), osTimerPeriodic, NULL);
 
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
+  vTimerSetTimerID(controllerSendTimerHandle, "controllerSendTmr");
+
   /* USER CODE END RTOS_TIMERS */
 
   /* Create the thread(s) */
@@ -354,6 +375,14 @@ void StartLoRaWANTask(void const * argument)
     loRaWANLoRaWANTaskLoop();
   }
   /* USER CODE END StartLoRaWANTask */
+}
+
+/* controllerSendTimerCallback function */
+void controllerSendTimerCallback(void const * argument)
+{
+  /* USER CODE BEGIN controllerSendTimerCallback */
+  controllerSendTimerCallbackImpl((TimerHandle_t) argument);
+  /* USER CODE END controllerSendTimerCallback */
 }
 
 /* USER CODE BEGIN Application */

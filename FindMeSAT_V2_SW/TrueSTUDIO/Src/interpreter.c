@@ -12,15 +12,17 @@
 #include <cmsis_os.h>
 #include "main.h"
 #include "usb.h"
+#include "controller.h"
 
 #include "interpreter.h"
 
 
 /* Variables -----------------------------------------------------------------*/
-extern osMessageQId       usbFromHostQueueHandle;
-extern osSemaphoreId      usbToHostBinarySemHandle;
-extern EventGroupHandle_t usbToHostEventGroupHandle;
-extern char               usbClrScrBuf[4];
+extern osMessageQId         usbFromHostQueueHandle;
+extern osSemaphoreId        usbToHostBinarySemHandle;
+extern EventGroupHandle_t   usbToHostEventGroupHandle;
+extern EventGroupHandle_t   controllerEventGroupHandle;
+extern char                 usbClrScrBuf[4];
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -115,6 +117,8 @@ const uint8_t interpreterHelpMsg21[] =
 const uint8_t interpreterHelpMsg22[] =
     "\t\thelp\t\tPrint this list of commands.\r\n";
 const uint8_t interpreterHelpMsg23[] =
+    "\t\tpush\t\tPush current readings up to LoRa TTN server.\r\n";
+const uint8_t interpreterHelpMsg24[] =
     "\t\trestart\t\tRestart this device.\r\n";
 void interpreterPrintHelp(void)
 {
@@ -144,6 +148,9 @@ void interpreterPrintHelp(void)
   //usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
   usbToHostWait(interpreterHelpMsg23, strlen((char*) interpreterHelpMsg23));
+  //usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
+
+  usbToHostWait(interpreterHelpMsg24, strlen((char*) interpreterHelpMsg24));
   //usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
   //usbToHostWait(interpreterHelpMsg12, strlen((char*) interpreterHelpMsg12));
@@ -178,6 +185,10 @@ void prvDoInterprete(const uint8_t *buf, uint32_t len)
 
   } else if(!strncmp("restart", cb, 7) && (7 == len)) {
     SystemResetbyARMcore();
+
+  } else if(!strncmp("push", cb, 4) && (4 == len)) {
+    /* Set flag for sending and upload data */
+    xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__DO_SEND);
 
   } else {
     prvUnknownCommand();

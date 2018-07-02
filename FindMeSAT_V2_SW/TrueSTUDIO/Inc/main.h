@@ -163,7 +163,12 @@
 /* USER CODE BEGIN Private defines */
 #define USE_FULL_ASSERT     1U
 
-#define FINDMESAT_VERSION   20180628U
+#ifndef PI
+# define PI                 3.14159265358979f
+#endif
+
+#define FINDMESAT_VERSION   20180702U
+
 
 typedef void * TaskHandle_t;
 
@@ -176,6 +181,8 @@ void SystemResetbyARMcore(void);
 void vAssertCalled( const char *pcFile, uint32_t ulLine);
 void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName);
 void vApplicationMallocFailedHook(void);
+
+void mainCalc_Float2Int(float in, uint32_t* out_i, uint16_t* out_p1000);
 
 /* USER CODE END Private defines */
 
