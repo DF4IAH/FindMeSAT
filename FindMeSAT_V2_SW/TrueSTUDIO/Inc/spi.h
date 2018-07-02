@@ -89,8 +89,8 @@ typedef enum spiSX127x_Mode {
   MOD_TYPE_OOK            = (0b01 << 5),
 
   /* LoRa Mode */
-  ACCES_SHARE_OFF         = (0b0 << 6),
-  ACCES_SHARE_ON          = (0b1 << 6),
+  ACCESS_SHARE_OFF        = (0b0 << 6),
+  ACCESS_SHARE_ON         = (0b1 << 6),
 
   MODE_FSK_OOK            = (0b0 << 7),
   MODE_LoRa               = (0b1 << 7)
@@ -208,13 +208,13 @@ typedef enum spiSX127x_IRQ_Mask {
 } spiSX127x_IRQ_Mask_t;
 
 
-typedef enum TxRx_Mode {
-  TxRx_Mode_TX            = 0x01,
-  TxRx_Mode_RX            = 0x11,
-  TxRx_Mode_RX2           = 0x12,
-  TxRx_Mode_RX_Randomizer = 0x1f,
-  TxRx_Mode_IQ_Balancing  = 0x9e,
-} TxRx_Mode_t;
+typedef enum DIO_TxRx_Mode {
+  DIO_TxRx_Mode_TX            = 0x01,
+  DIO_TxRx_Mode_RX            = 0x11,
+  DIO_TxRx_Mode_RX2           = 0x12,
+  DIO_TxRx_Mode_RX_Randomizer = 0x1f,
+  DIO_TxRx_Mode_IQ_Balancing  = 0x9e,
+} DIO_TxRx_Mode_t;
 
 /* USER CODE END Private defines */
 
@@ -231,7 +231,7 @@ uint8_t spiProcessSpiMsg(uint8_t msgLen);
 
 void spiSX127xReset(void);
 void spiSX127xFrequency_MHz(float mhz);
-void spiSX127xDio_Mapping(TxRx_Mode_t mode);
+void spiSX127xDio_Mapping(DIO_TxRx_Mode_t mode);
 uint8_t spiSX127xDR_to_SF(DataRates_t dr);
 
 uint8_t spiSX127xMode_LoRa_GetBroadbandRSSI(void);
@@ -242,7 +242,7 @@ void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void);
 
 void spiSX127xMode(spiSX127x_Mode_t mode);
 void spiSX127xRegister_IRQ_clearAll(void);
-void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg);
+void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg);
 uint32_t spiSX127x_WaitUntil_TxDone(uint32_t stopTime);
 void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t stopTime);
 

@@ -535,6 +535,17 @@ void  vApplicationIdleHook(void)
   /* Increase clock frequency to 80 MHz */
   // TODO: TBD
 }
+
+void mainCalc_Float2Int(float in, uint32_t* out_i, uint16_t* out_p1000)
+{
+  if (in < 0) {
+    in = -in;
+  }
+
+  *out_i      = (uint32_t) in;
+  *out_p1000  = (uint16_t) (((uint32_t) (in * 1000.f)) % 1000);
+}
+
 /* USER CODE END 4 */
 
 /**
