@@ -12,6 +12,8 @@
 /* Bit-mask for the controllerEventGroup */
 typedef enum Controller_EGW_BM {
   Controller_EGW__DO_SEND             = 0x00000001UL,
+  Controller_EGW__DO_LINKCHECKREQ     = 0x00000002UL,
+  Controller_EGW__DO_DEVICETIMEREQ    = 0x00000004UL,
 } Controller_EGW_BM_t;
 
 

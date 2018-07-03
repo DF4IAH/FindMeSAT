@@ -15,11 +15,19 @@
 #define LoRaWAN_FRMPayloadMax         48
 
 
+/* UTC --> GPS  leap seconds adjustment: +18 s as of 2018-07-01 */
+#define GPS_UTC_LEAP_SECS             (+18)
+
+
 /* Bit-mask for the loRaWANEventGroup */
 typedef enum LORAWAN_EGW_BM {
-  LORAWAN_EGW__DO_INIT                = 0x00000001UL,
-  LORAWAN_EGW__QUEUE_IN               = 0x00000010UL,
-  LORAWAN_EGW__QUEUE_OUT              = 0x00000020UL,
+  LORAWAN_EGW__QUEUE_IN               = 0x00000001UL,
+  LORAWAN_EGW__QUEUE_OUT              = 0x00000002UL,
+
+  LORAWAN_EGW__DO_INIT                = 0x00000010UL,
+
+  LORAWAN_EGW__DO_LINKCHECKREQ        = 0x00000100UL,
+  LORAWAN_EGW__DO_DEVICETIMEREQ       = 0x00000200UL,
 } LORAWAN_EGW_BM_t;
 
 typedef enum LoRaWAN_SIGNAL {
@@ -83,6 +91,9 @@ typedef enum Fsm_States {
 
   Fsm_MAC_DlChannelReq,
   Fsm_MAC_DlChannelAns,
+
+  Fsm_MAC_DeviceTimeReq,
+  Fsm_MAC_DeviceTimeAns,
 } Fsm_States_t;
 
 
@@ -326,6 +337,7 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    DevAddr_LE[4];                                            // JOIN-ACCEPT
   volatile uint8_t                    DevNonce_LE[2];                                           // JOIN-REQUEST, REJOIN-REQUEST - V1.02: random value
   volatile uint8_t                    Home_NetID_LE[3];                                         // JOIN-ACCEPT
+  volatile uint64_t                   BootTime_UTC_ms;                                          // UTC time of xTaskGetTickCount() == 0 (init of the Free-RTOS) in ms
 
   /* Network / MAC specific */
   LoRaWANVersion_t                    LoRaWAN_ver;
@@ -367,6 +379,9 @@ typedef struct LoRaWANctx {
   volatile uint8_t                    LinkADR_NbTrans;                                          // MAC: LinkADRReq - unconfirmed up packets multiple transmissions
   volatile ChMaskCntl_t               LinkADR_ChMaskCntl;                                       // MAC: LinkADRReq
   volatile uint8_t                    DutyCycle_MaxDutyCycle;                                   // MAC: DutyCycleReq
+  volatile uint8_t                    TxParamSetup_MaxEIRP_dBm;                                 // MAC: TxParamSetupReq
+  volatile uint16_t                   TxParamSetup_UplinkDwellTime_ms;                          // MAC: TxParamSetupReq
+  volatile uint16_t                   TxParamSetup_DownlinkDwellTime_ms;                        // MAC: TxParamSetupReq
   volatile uint8_t                    Channel_DataRateValid;                                    // MAC: NewChannelReq
   volatile uint8_t                    Channel_FrequencyValid;                                   // MAC: NewChannelReq, DlChannelReq
   volatile uint8_t                    Channel_FrequencyExists;                                  // MAC: DlChannelReq

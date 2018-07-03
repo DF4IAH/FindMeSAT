@@ -585,7 +585,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
       spiProcessSpiMsg(2);
 
       /* Wait until the balancing process has finished */
-      uint32_t t0 = getRunTimeCounterValue();
+      uint32_t t0 = getRunTimeCounterValue();                                                   // Returns us since ARM init
       uint32_t t1;
       do {
         osDelay(1);
@@ -600,7 +600,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
         if (!(balState & 0x20)) {
           t1 = getRunTimeCounterValue();
           ctx->LastIqBalTemp        = temp - 212;                                               // Temperature device compensated
-          ctx->LastIqBalTimeUs      = t0;
+          ctx->LastIqBalTimeUs      = t0;                                                       // Returns us since ARM init
           ctx->LastIqBalDurationUs  = t1 - t0;
           break;
         }
@@ -801,7 +801,7 @@ uint32_t spiSX127x_WaitUntil_TxDone(uint32_t stopTime)
   {
     /* Wait for EXTI / IRQ line(s) */
     TickType_t ticks = 1;
-    uint32_t now = osKernelSysTick();
+    uint32_t now = xTaskGetTickCount();
     if (stopTime > now) {
       ticks = (stopTime - now) / portTICK_PERIOD_MS;
       eb = xEventGroupWaitBits(extiEventGroupHandle,
