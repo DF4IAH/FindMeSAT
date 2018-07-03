@@ -155,7 +155,7 @@ void prvControllerInitAfterGreet(void)
     }
 
     while (1) {
-      spiPreviousWakeTime = osKernelSysTick();
+      spiPreviousWakeTime = xTaskGetTickCount();
 
       usbLog("\r\nRX:\r\n");
       LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
@@ -339,15 +339,34 @@ void controllerControllerTaskLoop(void)
 {
   /* Controller itself */
   {
-    EventBits_t eb = xEventGroupWaitBits(controllerEventGroupHandle, Controller_EGW__DO_SEND, Controller_EGW__DO_SEND, 0, 1);
+    /* Keep controllerEventGroupHandle for 25 ms */
+    EventBits_t eb = xEventGroupWaitBits(controllerEventGroupHandle,
+        Controller_EGW__DO_SEND | Controller_EGW__DO_LINKCHECKREQ | Controller_EGW__DO_DEVICETIMEREQ,
+        Controller_EGW__DO_SEND | Controller_EGW__DO_LINKCHECKREQ | Controller_EGW__DO_DEVICETIMEREQ,
+        0, 25 / portTICK_PERIOD_MS);
+
     if (eb & Controller_EGW__DO_SEND) {
       prvControllerGetDataAndUpload();
+    }
+
+    if (eb & Controller_EGW__DO_LINKCHECKREQ) {
+      /**/
+      xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_LINKCHECKREQ);
+    }
+
+    if (eb & Controller_EGW__DO_DEVICETIMEREQ) {
+      xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_DEVICETIMEREQ);
     }
   }
 
   /* LoRaWAN */
   {
-    EventBits_t eb = xEventGroupWaitBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_OUT, LORAWAN_EGW__QUEUE_OUT, 0, 1);
+    /* Check for new data from the LoRaWAN module */
+    EventBits_t eb = xEventGroupWaitBits(loRaWANEventGroupHandle,
+        LORAWAN_EGW__QUEUE_OUT,
+        LORAWAN_EGW__QUEUE_OUT,
+        0, 1);
+
     if (eb & LORAWAN_EGW__QUEUE_OUT) {
       BaseType_t  xStatus;
       uint8_t     inAry[4]  = { 0 };
@@ -370,11 +389,12 @@ void controllerControllerTaskLoop(void)
           /* Ready from LoRaWAN task received - activate upload timer */
           xStatus = xTimerStart(controllerSendTimerHandle, 1);
           xStatus = xTimerChangePeriod(controllerSendTimerHandle, 5 * 60 * 1000 / portTICK_PERIOD_MS, 1);   // 5 minutes
+
+          /* Request LoRaWAN link check and network time */
+          xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_LINKCHECKREQ | LORAWAN_EGW__DO_DEVICETIMEREQ);
         }
         break;
       }  // switch
     }
   }
-
-  osDelay(100);
 }
