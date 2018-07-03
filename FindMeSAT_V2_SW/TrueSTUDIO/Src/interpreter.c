@@ -119,6 +119,10 @@ const uint8_t interpreterHelpMsg22[] =
 const uint8_t interpreterHelpMsg23[] =
     "\t\tpush\t\tPush current readings up to LoRa TTN server.\r\n";
 const uint8_t interpreterHelpMsg24[] =
+    "\t\treqcheck\tRequest LoRaWAN link check.\r\n";
+const uint8_t interpreterHelpMsg25[] =
+    "\t\treqtime\t\tRequest LoRaWAN UTC time.\r\n";
+const uint8_t interpreterHelpMsg26[] =
     "\t\trestart\t\tRestart this device.\r\n";
 void interpreterPrintHelp(void)
 {
@@ -153,6 +157,12 @@ void interpreterPrintHelp(void)
   usbToHostWait(interpreterHelpMsg24, strlen((char*) interpreterHelpMsg24));
   //usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
 
+  usbToHostWait(interpreterHelpMsg25, strlen((char*) interpreterHelpMsg25));
+  //usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
+
+  usbToHostWait(interpreterHelpMsg26, strlen((char*) interpreterHelpMsg26));
+  //usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
+
   //usbToHostWait(interpreterHelpMsg12, strlen((char*) interpreterHelpMsg12));
 
   usbToHostWait(interpreterHelpMsg01, strlen((char*) interpreterHelpMsg01));
@@ -183,12 +193,20 @@ void prvDoInterprete(const uint8_t *buf, uint32_t len)
   } else if (!strncmp("help", cb, 4) && (4 == len)) {
     interpreterPrintHelp();
 
-  } else if(!strncmp("restart", cb, 7) && (7 == len)) {
-    SystemResetbyARMcore();
-
   } else if(!strncmp("push", cb, 4) && (4 == len)) {
     /* Set flag for sending and upload data */
     xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__DO_SEND);
+
+  } else if(!strncmp("reqcheck", cb, 8) && (8 == len)) {
+    /* Set flag for requesting LoRaWAN link check */
+    xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__DO_LINKCHECKREQ);
+
+  } else if(!strncmp("reqtime", cb, 7) && (7 == len)) {
+    /* Set flag for requesting LoRaWAN time */
+    xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__DO_DEVICETIMEREQ);
+
+  } else if(!strncmp("restart", cb, 7) && (7 == len)) {
+    SystemResetbyARMcore();
 
   } else {
     prvUnknownCommand();

@@ -138,7 +138,7 @@ void mainDefaultTaskLoop(void)
   usbToHost(buf, strlen((char*) buf));
 #endif
 
-  osDelay(1000);
+  osDelay(60 * 1000);
 }
 
 /* USER CODE END 0 */
