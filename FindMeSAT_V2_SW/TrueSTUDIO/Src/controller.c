@@ -28,6 +28,11 @@
 /* Private variables ---------------------------------------------------------*/
 extern osMessageQId         loraInQueueHandle;
 extern osMessageQId         loraOutQueueHandle;
+extern osMessageQId         gpscomInQueueHandle;
+extern osMessageQId         gpscomOutQueueHandle;
+extern osMessageQId         sensorsInQueueHandle;
+extern osMessageQId         sensorsOutQueueHandle;
+extern osMessageQId         interOutQueueHandle;
 extern osTimerId            controllerSendTimerHandle;
 extern osSemaphoreId        usbToHostBinarySemHandle;
 extern osSemaphoreId        trackMeApplUpBinarySemHandle;
@@ -99,7 +104,7 @@ void prvControllerInitBeforeGreet(void)
   if (HAL_OK == spiDetectShieldSX127x()) {
     /* Send INIT message to the LoRaWAN task */
     const uint8_t c_maxWaitMs = 25;
-    const uint8_t c_msgToLoRaWAN[2] = { 1, loraInQueueCmds__Init };
+    const uint8_t c_msgToLoRaWAN[2] = { 1, LoraInQueueCmds__Init };
 
     /* Write message into loraInQueue */
     for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
@@ -107,7 +112,7 @@ void prvControllerInitBeforeGreet(void)
     }
 
     /* Set QUEUE_IN bit */
-    xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
+    xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
   }
 }
 
@@ -296,7 +301,7 @@ void prvControllerGetDataAndUpload(void)
 
   /* Signal to take-over data and do upload */
   {
-    const uint8_t c_msgToLoRaWAN[2] = { 1, loraInQueueCmds__TrackMeApplUp };
+    const uint8_t c_msgToLoRaWAN[2] = { 1, LoraInQueueCmds__TrackMeApplUp };
 
     /* Write message into loraInQueue */
     for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
@@ -304,17 +309,108 @@ void prvControllerGetDataAndUpload(void)
     }
 
     /* Set QUEUE_IN bit */
-    xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
+    xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
   }
 }
 
+
+void prvPushToLoraInQueue(const uint8_t* cmdAry, uint8_t cmdLen)
+{
+  for (uint8_t idx = 0; idx < cmdLen; ++idx) {
+    xQueueSendToBack(loraInQueueHandle, cmdAry + idx, 1);
+  }
+  xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
+}
+
+void prvPullFromInterpreterOutQueue(void)
+{
+  BaseType_t  xStatus;
+  uint8_t     inAry[4]  = { 0 };
+  uint8_t     inLen     = 0;
+
+  xStatus = xQueueReceive(loraOutQueueHandle, &inLen, 1);
+  if (pdPASS == xStatus) {
+    for (uint8_t idx = 0; idx < inLen; idx++) {
+      xStatus = xQueueReceive(loraOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
+      if (pdFALSE == xStatus) {
+        /* Bad communication - drop */
+        return;
+      }
+    }
+  }
+
+  switch (inAry[0]) {
+  case InterOutQueueCmds__DoSendDataUp:
+    {
+      prvControllerGetDataAndUpload();
+    }
+    break;
+
+  case InterOutQueueCmds__LinkCheckReq:
+    {
+      const uint8_t cmdAry[2] = { 1, LoraInQueueCmds__LinkCheckReq };
+      prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+    }
+    break;
+
+  case InterOutQueueCmds__DeviceTimeReq:
+    {
+      const uint8_t cmdAry[2] = { 1, LoraInQueueCmds__DeviceTimeReq };
+      prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+    }
+    break;
+
+  case InterOutQueueCmds__PwrRedDb:
+    {
+      const uint8_t pwrRed_db = inAry[1];
+      const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__PwrRedDb, pwrRed_db };
+      prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+    }
+    break;
+  }  // switch
+
+}
+
+void prvPullFromLoraOutQueue(void)
+{
+  BaseType_t  xStatus;
+  uint8_t     inAry[4]  = { 0 };
+  uint8_t     inLen     = 0;
+
+  xStatus = xQueueReceive(loraOutQueueHandle, &inLen, 1);
+  if (pdPASS == xStatus) {
+    for (uint8_t idx = 0; idx < inLen; idx++) {
+      xStatus = xQueueReceive(loraOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
+      if (pdFALSE == xStatus) {
+        /* Bad communication - drop */
+        return;
+      }
+    }
+  }
+
+  switch (inAry[0]) {
+  case LoraOutQueueCmds__Connected:
+    {
+      /* Ready from LoRaWAN task received - activate upload timer */
+      xStatus = xTimerStart(controllerSendTimerHandle, 1);
+      xStatus = xTimerChangePeriod(controllerSendTimerHandle, 5 * 60 * 1000 / portTICK_PERIOD_MS, 1);   // 5 minutes
+
+      /* Request LoRaWAN link check and network time */
+      const uint8_t cmdAry[4] = {
+          1, LoraInQueueCmds__LinkCheckReq,
+          1, LoraInQueueCmds__DeviceTimeReq };
+      prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+    }
+    break;
+  }  // switch
+}
 
 
 /* Global functions ----------------------------------------------------------*/
 void controllerSendTimerCallbackImpl(TimerHandle_t xTimer)
 {
   /* Set flag for sending and upload data */
-  xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__DO_SEND);
+  xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__INTER_SENS_DO_SEND);
 }
 
 
@@ -337,64 +433,24 @@ void controllerControllerTaskInit(void)
 
 void controllerControllerTaskLoop(void)
 {
-  /* Controller itself */
-  {
-    /* Keep controllerEventGroupHandle for 25 ms */
-    EventBits_t eb = xEventGroupWaitBits(controllerEventGroupHandle,
-        Controller_EGW__DO_SEND | Controller_EGW__DO_LINKCHECKREQ | Controller_EGW__DO_DEVICETIMEREQ,
-        Controller_EGW__DO_SEND | Controller_EGW__DO_LINKCHECKREQ | Controller_EGW__DO_DEVICETIMEREQ,
-        0, 25 / portTICK_PERIOD_MS);
+  /* Keep controllerEventGroupHandle for 25 ms */
+  EventBits_t eb = xEventGroupWaitBits(controllerEventGroupHandle,
+      Controller_EGW__INTER_QUEUE_OUT | Controller_EGW__LORA_QUEUE_OUT | Controller_EGW__INTER_SENS_DO_SEND,
+      0,
+      0, 25 / portTICK_PERIOD_MS);
 
-    if (eb & Controller_EGW__DO_SEND) {
-      prvControllerGetDataAndUpload();
-    }
-
-    if (eb & Controller_EGW__DO_LINKCHECKREQ) {
-      /**/
-      xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__DO_LINKCHECKREQ);
-    }
-
-    if (eb & Controller_EGW__DO_DEVICETIMEREQ) {
-      xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__DO_DEVICETIMEREQ);
-    }
+  if (eb & Controller_EGW__INTER_QUEUE_OUT) {
+    xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__INTER_QUEUE_OUT);
+    prvPullFromInterpreterOutQueue();
   }
 
-  /* LoRaWAN */
-  {
-    /* Check for new data from the LoRaWAN module */
-    EventBits_t eb = xEventGroupWaitBits(loraEventGroupHandle,
-        LORAWAN_EGW__QUEUE_OUT,
-        LORAWAN_EGW__QUEUE_OUT,
-        0, 1);
+  if (eb & Controller_EGW__LORA_QUEUE_OUT) {
+    xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__LORA_QUEUE_OUT);
+    prvPullFromLoraOutQueue();
+  }
 
-    if (eb & LORAWAN_EGW__QUEUE_OUT) {
-      BaseType_t  xStatus;
-      uint8_t     inAry[4]  = { 0 };
-      uint8_t     inLen     = 0;
-
-      xStatus = xQueueReceive(loraOutQueueHandle, &inLen, 1);
-      if (pdPASS == xStatus) {
-        for (uint8_t idx = 0; idx < inLen; idx++) {
-          xStatus = xQueueReceive(loraOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
-          if (pdFALSE == xStatus) {
-            /* Bad communication - drop */
-            return;
-          }
-        }
-      }
-
-      switch (inAry[0]) {
-      case 'R':
-        {
-          /* Ready from LoRaWAN task received - activate upload timer */
-          xStatus = xTimerStart(controllerSendTimerHandle, 1);
-          xStatus = xTimerChangePeriod(controllerSendTimerHandle, 5 * 60 * 1000 / portTICK_PERIOD_MS, 1);   // 5 minutes
-
-          /* Request LoRaWAN link check and network time */
-          xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__DO_LINKCHECKREQ | LORAWAN_EGW__DO_DEVICETIMEREQ);
-        }
-        break;
-      }  // switch
-    }
+  if (eb & Controller_EGW__INTER_SENS_DO_SEND) {
+    xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__INTER_SENS_DO_SEND);
+    prvControllerGetDataAndUpload();
   }
 }

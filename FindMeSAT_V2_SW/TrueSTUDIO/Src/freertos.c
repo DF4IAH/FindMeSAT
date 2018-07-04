@@ -81,6 +81,7 @@ osMessageQId gpscomInQueueHandle;
 osMessageQId gpscomOutQueueHandle;
 osMessageQId sensorsOutQueueHandle;
 osMessageQId sensorsInQueueHandle;
+osMessageQId interOutQueueHandle;
 osTimerId controllerSendTimerHandle;
 osSemaphoreId usbToHostBinarySemHandle;
 osSemaphoreId trackMeApplUpDataBinarySemHandle;
@@ -298,6 +299,10 @@ void MX_FREERTOS_Init(void) {
   osMessageQDef(sensorsInQueue, 8, uint8_t);
   sensorsInQueueHandle = osMessageCreate(osMessageQ(sensorsInQueue), NULL);
 
+  /* definition and creation of interOutQueue */
+  osMessageQDef(interOutQueue, 8, uint8_t);
+  interOutQueueHandle = osMessageCreate(osMessageQ(interOutQueue), NULL);
+
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
   vQueueAddToRegistry(usbToHostQueueHandle,     "USBtoHostQ");
@@ -312,6 +317,7 @@ void MX_FREERTOS_Init(void) {
   vQueueAddToRegistry(gpscomOutQueueHandle,     "gpscomOutQ");
   vQueueAddToRegistry(sensorsInQueueHandle,     "sensorsInQ");
   vQueueAddToRegistry(sensorsOutQueueHandle,    "sensorsOutQ");
+  vQueueAddToRegistry(interOutQueueHandle,      "interOutQ");
   /* USER CODE END RTOS_QUEUES */
 }
 

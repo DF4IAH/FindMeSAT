@@ -12,6 +12,16 @@
 #endif
 
 
+/* Command types for the interpreterOutQueue */
+typedef enum InterOutQueueCmds {
+  InterOutQueueCmds__NOP              = 0,
+  InterOutQueueCmds__DoSendDataUp,
+  InterOutQueueCmds__LinkCheckReq,
+  InterOutQueueCmds__DeviceTimeReq,
+  InterOutQueueCmds__PwrRedDb,
+} InterOutQueueCmds_t;
+
+
 void interpreterPrintHelp(void);
 void interpreterShowCursor(void);
 

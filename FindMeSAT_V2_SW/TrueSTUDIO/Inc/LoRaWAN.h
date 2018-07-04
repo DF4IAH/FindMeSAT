@@ -24,26 +24,28 @@
 
 
 /* Bit-mask for the loRaWANEventGroup */
-typedef enum LORAWAN_EGW_BM {
-  LORAWAN_EGW__QUEUE_IN               = 0x00000001UL,
-  LORAWAN_EGW__QUEUE_OUT              = 0x00000002UL,
+typedef enum Lora_EGW_BM {
+  Lora_EGW__QUEUE_IN                  = 0x00000001UL,
+  Lora_EGW__QUEUE_OUT                 = 0x00000002UL,
 
-  LORAWAN_EGW__DO_INIT                = 0x00000010UL,
-
-  LORAWAN_EGW__DO_LINKCHECKREQ        = 0x00000100UL,
-  LORAWAN_EGW__DO_DEVICETIMEREQ       = 0x00000200UL,
-} LORAWAN_EGW_BM_t;
-
-typedef enum LoRaWAN_SIGNAL {
-  LoRaSIG_Ready                       = 1,
-} LoRaWAN_SIGNAL_t;
+  Lora_EGW__DO_INIT                   = 0x00000010UL,
+} Lora_EGW_BM_t;
 
 /* Command types for the loraInQueue */
-typedef enum loraInQueueCmds {
-  loraInQueueCmds__NOP                = 0,
-  loraInQueueCmds__Init,
-  loraInQueueCmds__TrackMeApplUp,
-} loraInQueueCmds_t;
+typedef enum LoraInQueueCmds {
+  LoraInQueueCmds__NOP                = 0,
+  LoraInQueueCmds__Init,
+  LoraInQueueCmds__LinkCheckReq,
+  LoraInQueueCmds__DeviceTimeReq,
+  LoraInQueueCmds__PwrRedDb,
+  LoraInQueueCmds__TrackMeApplUp,
+} LoraInQueueCmds_t;
+
+/* Command types for the loraOutQueue */
+typedef enum LoraOutQueueCmds {
+  LoraOutQueueCmds__NOP                = 0,
+  LoraOutQueueCmds__Connected,
+} LoraOutQueueCmds_t;
 
 typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
   MIC_JOINREQUEST                     = 0x01,

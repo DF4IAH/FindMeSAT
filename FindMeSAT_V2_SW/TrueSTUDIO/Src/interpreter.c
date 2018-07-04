@@ -8,8 +8,12 @@
 /* Includes ------------------------------------------------------------------*/
 #include <sys/_stdint.h>
 #include <cmsis_os.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "FreeRTOS.h"
+#include "stm32l496xx.h"
+#include "cmsis_os.h"
 #include "main.h"
 #include "usb.h"
 #include "controller.h"
@@ -19,10 +23,13 @@
 
 /* Variables -----------------------------------------------------------------*/
 extern osMessageQId         usbFromHostQueueHandle;
+extern osMessageQId         interOutQueueHandle;
 extern osSemaphoreId        usbToHostBinarySemHandle;
 extern EventGroupHandle_t   usbToHostEventGroupHandle;
 extern EventGroupHandle_t   controllerEventGroupHandle;
 extern char                 usbClrScrBuf[4];
+
+const uint16_t              Interpreter_MaxWaitMs = 100;
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -113,6 +120,19 @@ void interpreterClearScreen(void)
 
 
 /* Private functions ---------------------------------------------------------*/
+void prvUnknownCommand(void)
+{
+  usbLog("\r\n?? unknown command - please try 'help' ??\r\n\r\n");
+}
+
+void prvPushToInterOutQueue(const uint8_t* cmdAry, uint8_t cmdLen)
+{
+  for (uint8_t idx = 0; idx < cmdLen; ++idx) {
+    xQueueSendToBack(interOutQueueHandle, cmdAry + idx, 1);
+  }
+  xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__INTER_QUEUE_OUT);
+}
+
 void prvDoInterprete(const uint8_t *buf, uint32_t len)
 {
   const char *cb = (const char*) buf;
@@ -125,28 +145,31 @@ void prvDoInterprete(const uint8_t *buf, uint32_t len)
 
   } else if(!strncmp("push", cb, 4) && (4 == len)) {
     /* Set flag for sending and upload data */
-    xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__DO_SEND);
+    const uint8_t pushAry[2]  = { 1, InterOutQueueCmds__DoSendDataUp };
+    prvPushToInterOutQueue(pushAry, sizeof(pushAry));
 
   } else if(!strncmp("reqcheck", cb, 8) && (8 == len)) {
-    /* Set flag for requesting LoRaWAN link check */
-    xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__DO_LINKCHECKREQ);
+    /* LoRaWAN link check message */
+    const uint8_t pushAry[2]  = { 1, InterOutQueueCmds__LinkCheckReq };
+    prvPushToInterOutQueue(pushAry, sizeof(pushAry));
 
   } else if(!strncmp("reqtime", cb, 7) && (7 == len)) {
-    /* Set flag for requesting LoRaWAN time */
-    xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__DO_DEVICETIMEREQ);
+    /* LoRaWAN device time message */
+    const uint8_t pushAry[2]  = { 1, InterOutQueueCmds__DeviceTimeReq };
+    prvPushToInterOutQueue(pushAry, sizeof(pushAry));
 
   } else if(!strncmp("restart", cb, 7) && (7 == len)) {
     SystemResetbyARMcore();
 
+  } else if(!strncmp("setred", cb, 6) && (6 < len)) {
+    const long    val         = strtol(cb + 7, NULL, 10);
+    const uint8_t pwrRed      = (uint8_t) val;
+    const uint8_t pushAry[3]  = { 2, InterOutQueueCmds__PwrRedDb, pwrRed };
+    prvPushToInterOutQueue(pushAry, sizeof(pushAry));
+
   } else {
     prvUnknownCommand();
   }
-}
-
-
-void prvUnknownCommand(void)
-{
-  usbLog("\r\n?? unknown command - please try 'help' ??\r\n\r\n");
 }
 
 
