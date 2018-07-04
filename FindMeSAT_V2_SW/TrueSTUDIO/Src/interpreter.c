@@ -6,10 +6,10 @@
  */
 
 /* Includes ------------------------------------------------------------------*/
-#include <string.h>
-#include "FreeRTOS.h"
 #include <sys/_stdint.h>
 #include <cmsis_os.h>
+#include <string.h>
+#include "FreeRTOS.h"
 #include "main.h"
 #include "usb.h"
 #include "controller.h"
@@ -32,76 +32,6 @@ static void prvDoInterprete(const uint8_t *buf, uint32_t len);
 static void prvUnknownCommand(void);
 
 /* Global functions ----------------------------------------------------------*/
-void interpreterInterpreterTaskInit(void)
-{
-  uint8_t inChr = 0;
-
-  /* Clear queue */
-  while (xQueueReceive(usbFromHostQueueHandle, &inChr, 0) == pdPASS) {
-  }
-}
-
-void interpreterInterpreterTaskLoop(void)
-{
-  static uint8_t inBuf[64] = { 0 };
-  static uint32_t inBufPos = 0;
-  static uint8_t prevCr = 0;
-  uint8_t chr;
-  BaseType_t xStatus;
-
-  /* Wait for input from the USB CDC host */
-  xStatus = xQueueReceive(usbFromHostQueueHandle, &chr, portMAX_DELAY);
-  if (pdPASS == xStatus) {
-    /* CR/LF handling */
-    if (chr == 0x0d) {
-      prevCr = 1;
-
-    } else if (chr == 0x0a) {
-      if (!prevCr) {
-        chr = 0x0d;
-      }
-      prevCr = 0;
-
-    } else {
-      prevCr = 0;
-    }
-
-    /* Process valid data */
-    if (chr) {
-      /* Echoing back to USB CDC IN when enabled */
-      EventBits_t eb = xEventGroupWaitBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON, 0, 0, 1);
-      if (eb & USB_TO_HOST_EG__BUF_EMPTY) {
-        usbToHost(&chr, 1);
-        if (chr == 0x0d) {
-          /* Add a LF for the terminal */
-          usbLog("\n");
-        }
-      }
-
-      /* Concatenate for the interpreter buffer */
-      if ((chr != 0x0a) && (chr != 0x0d)) {
-        inBuf[inBufPos++] = chr;
-      }
-    }
-
-    /* Process line */
-    if ((chr == 0x0d) || (inBufPos >= (sizeof(inBuf) - 1))) {
-      inBuf[inBufPos] = 0;
-
-      /* Interpreter */
-      if (inBufPos && (inBufPos < (sizeof(inBuf) - 1))) {
-        prvDoInterprete(inBuf, inBufPos);
-      }
-      interpreterShowCursor();
-
-      /* Prepare for next command */
-      memset(inBuf, 0, sizeof(inBuf));
-      inBufPos = 0;
-    }
-  }
-}
-
-
 const uint8_t interpreterHelpMsg01[] =
     "\r\n";
 const uint8_t interpreterHelpMsg02[] =
@@ -217,4 +147,74 @@ void prvDoInterprete(const uint8_t *buf, uint32_t len)
 void prvUnknownCommand(void)
 {
   usbLog("\r\n?? unknown command - please try 'help' ??\r\n\r\n");
+}
+
+
+void interpreterInterpreterTaskInit(void)
+{
+  uint8_t inChr = 0;
+
+  /* Clear queue */
+  while (xQueueReceive(usbFromHostQueueHandle, &inChr, 0) == pdPASS) {
+  }
+}
+
+void interpreterInterpreterTaskLoop(void)
+{
+  static uint8_t inBuf[64] = { 0 };
+  static uint32_t inBufPos = 0;
+  static uint8_t prevCr = 0;
+  uint8_t chr;
+  BaseType_t xStatus;
+
+  /* Wait for input from the USB CDC host */
+  xStatus = xQueueReceive(usbFromHostQueueHandle, &chr, portMAX_DELAY);
+  if (pdPASS == xStatus) {
+    /* CR/LF handling */
+    if (chr == 0x0d) {
+      prevCr = 1;
+
+    } else if (chr == 0x0a) {
+      if (!prevCr) {
+        chr = 0x0d;
+      }
+      prevCr = 0;
+
+    } else {
+      prevCr = 0;
+    }
+
+    /* Process valid data */
+    if (chr) {
+      /* Echoing back to USB CDC IN when enabled */
+      EventBits_t eb = xEventGroupWaitBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON, 0, 0, 1);
+      if (eb & USB_TO_HOST_EG__BUF_EMPTY) {
+        usbToHost(&chr, 1);
+        if (chr == 0x0d) {
+          /* Add a LF for the terminal */
+          usbLog("\n");
+        }
+      }
+
+      /* Concatenate for the interpreter buffer */
+      if ((chr != 0x0a) && (chr != 0x0d)) {
+        inBuf[inBufPos++] = chr;
+      }
+    }
+
+    /* Process line */
+    if ((chr == 0x0d) || (inBufPos >= (sizeof(inBuf) - 1))) {
+      inBuf[inBufPos] = 0;
+
+      /* Interpreter */
+      if (inBufPos && (inBufPos < (sizeof(inBuf) - 1))) {
+        prvDoInterprete(inBuf, inBufPos);
+      }
+      interpreterShowCursor();
+
+      /* Prepare for next command */
+      memset(inBuf, 0, sizeof(inBuf));
+      inBufPos = 0;
+    }
+  }
 }

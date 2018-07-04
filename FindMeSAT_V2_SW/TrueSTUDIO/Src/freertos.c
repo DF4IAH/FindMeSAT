@@ -58,6 +58,8 @@
 #include "interpreter.h"
 #include "usb.h"
 #include "LoRaWAN.h"
+#include "gpsCom.h"
+#include "sensors.h"
 
 /* USER CODE END Includes */
 
@@ -67,12 +69,18 @@ osThreadId usbToHostTaskHandle;
 osThreadId usbFromHostTaskHandle;
 osThreadId controllerTaskHandle;
 osThreadId interpreterTaskHandle;
-osThreadId loRaWANTaskHandle;
+osThreadId loraTaskHandle;
+osThreadId gpscomTaskHandle;
+osThreadId sensorsTaskHandle;
 osMessageQId usbToHostQueueHandle;
 osMessageQId usbFromHostQueueHandle;
 osMessageQId loraInQueueHandle;
 osMessageQId loraOutQueueHandle;
 osMessageQId loraMacQueueHandle;
+osMessageQId gpscomInQueueHandle;
+osMessageQId gpscomOutQueueHandle;
+osMessageQId sensorsOutQueueHandle;
+osMessageQId sensorsInQueueHandle;
 osTimerId controllerSendTimerHandle;
 osSemaphoreId usbToHostBinarySemHandle;
 osSemaphoreId trackMeApplUpDataBinarySemHandle;
@@ -85,8 +93,10 @@ EventGroupHandle_t usbToHostEventGroupHandle;
 EventGroupHandle_t adcEventGroupHandle;
 EventGroupHandle_t extiEventGroupHandle;
 EventGroupHandle_t spiEventGroupHandle;
-EventGroupHandle_t loRaWANEventGroupHandle;
+EventGroupHandle_t loraEventGroupHandle;
 EventGroupHandle_t controllerEventGroupHandle;
+EventGroupHandle_t gpscomEventGroupHandle;
+EventGroupHandle_t sensorsEventGroupHandle;
 
 /* USER CODE END Variables */
 
@@ -96,7 +106,9 @@ void StartUsbToHostTask(void const * argument);
 void StartUsbFromHostTask(void const * argument);
 void StartControllerTask(void const * argument);
 void StartInterpreterTask(void const * argument);
-void StartLoRaWANTask(void const * argument);
+void StartLoraTask(void const * argument);
+void StartGpscomTask(void const * argument);
+void StartSensorsTask(void const * argument);
 void controllerSendTimerCallback(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
@@ -195,8 +207,10 @@ void MX_FREERTOS_Init(void) {
   adcEventGroupHandle = xEventGroupCreate();
   extiEventGroupHandle = xEventGroupCreate();
   spiEventGroupHandle = xEventGroupCreate();
-  loRaWANEventGroupHandle = xEventGroupCreate();
+  loraEventGroupHandle = xEventGroupCreate();
   controllerEventGroupHandle = xEventGroupCreate();
+  gpscomEventGroupHandle = xEventGroupCreate();
+  sensorsEventGroupHandle = xEventGroupCreate();
   /* USER CODE END RTOS_SEMAPHORES */
 
   /* Create the timer(s) */
@@ -231,9 +245,17 @@ void MX_FREERTOS_Init(void) {
   osThreadDef(interpreterTask, StartInterpreterTask, osPriorityNormal, 0, 128);
   interpreterTaskHandle = osThreadCreate(osThread(interpreterTask), NULL);
 
-  /* definition and creation of loRaWANTask */
-  osThreadDef(loRaWANTask, StartLoRaWANTask, osPriorityRealtime, 0, 1024);
-  loRaWANTaskHandle = osThreadCreate(osThread(loRaWANTask), NULL);
+  /* definition and creation of loraTask */
+  osThreadDef(loraTask, StartLoraTask, osPriorityRealtime, 0, 1024);
+  loraTaskHandle = osThreadCreate(osThread(loraTask), NULL);
+
+  /* definition and creation of gpscomTask */
+  osThreadDef(gpscomTask, StartGpscomTask, osPriorityAboveNormal, 0, 128);
+  gpscomTaskHandle = osThreadCreate(osThread(gpscomTask), NULL);
+
+  /* definition and creation of sensorsTask */
+  osThreadDef(sensorsTask, StartSensorsTask, osPriorityAboveNormal, 0, 128);
+  sensorsTaskHandle = osThreadCreate(osThread(sensorsTask), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -249,16 +271,32 @@ void MX_FREERTOS_Init(void) {
   usbFromHostQueueHandle = osMessageCreate(osMessageQ(usbFromHostQueue), NULL);
 
   /* definition and creation of loraInQueue */
-  osMessageQDef(loraInQueue, 32, uint8_t);
+  osMessageQDef(loraInQueue, 8, uint8_t);
   loraInQueueHandle = osMessageCreate(osMessageQ(loraInQueue), NULL);
 
   /* definition and creation of loraOutQueue */
-  osMessageQDef(loraOutQueue, 32, uint8_t);
+  osMessageQDef(loraOutQueue, 8, uint8_t);
   loraOutQueueHandle = osMessageCreate(osMessageQ(loraOutQueue), NULL);
 
   /* definition and creation of loraMacQueue */
   osMessageQDef(loraMacQueue, 32, uint8_t);
   loraMacQueueHandle = osMessageCreate(osMessageQ(loraMacQueue), NULL);
+
+  /* definition and creation of gpscomInQueue */
+  osMessageQDef(gpscomInQueue, 8, uint8_t);
+  gpscomInQueueHandle = osMessageCreate(osMessageQ(gpscomInQueue), NULL);
+
+  /* definition and creation of gpscomOutQueue */
+  osMessageQDef(gpscomOutQueue, 8, uint8_t);
+  gpscomOutQueueHandle = osMessageCreate(osMessageQ(gpscomOutQueue), NULL);
+
+  /* definition and creation of sensorsOutQueue */
+  osMessageQDef(sensorsOutQueue, 32, uint8_t);
+  sensorsOutQueueHandle = osMessageCreate(osMessageQ(sensorsOutQueue), NULL);
+
+  /* definition and creation of sensorsInQueue */
+  osMessageQDef(sensorsInQueue, 8, uint8_t);
+  sensorsInQueueHandle = osMessageCreate(osMessageQ(sensorsInQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
@@ -270,6 +308,10 @@ void MX_FREERTOS_Init(void) {
   vQueueAddToRegistry(loraInQueueHandle,        "loraInQ");
   vQueueAddToRegistry(loraOutQueueHandle,       "loraOutQ");
   vQueueAddToRegistry(loraMacQueueHandle,       "loraMacQ");
+  vQueueAddToRegistry(gpscomInQueueHandle,      "gpscomInQ");
+  vQueueAddToRegistry(gpscomOutQueueHandle,     "gpscomOutQ");
+  vQueueAddToRegistry(sensorsInQueueHandle,     "sensorsInQ");
+  vQueueAddToRegistry(sensorsOutQueueHandle,    "sensorsOutQ");
   /* USER CODE END RTOS_QUEUES */
 }
 
@@ -359,22 +401,58 @@ void StartInterpreterTask(void const * argument)
   /* USER CODE END StartInterpreterTask */
 }
 
-/* StartLoRaWANTask function */
-void StartLoRaWANTask(void const * argument)
+/* StartLoraTask function */
+void StartLoraTask(void const * argument)
 {
-  /* USER CODE BEGIN StartLoRaWANTask */
+  /* USER CODE BEGIN StartLoraTask */
 
   /* Give DefaultTask time to prepare the device */
   osDelay(100);
 
-  loRaWANLoRaWANTaskInit();
+  loRaWANLoraTaskInit();
 
   /* Infinite loop */
   for(;;)
   {
-    loRaWANLoRaWANTaskLoop();
+    loRaWANLoraTaskLoop();
   }
-  /* USER CODE END StartLoRaWANTask */
+  /* USER CODE END StartLoraTask */
+}
+
+/* StartGpscomTask function */
+void StartGpscomTask(void const * argument)
+{
+  /* USER CODE BEGIN StartGpscomTask */
+
+  /* Give DefaultTask time to prepare the device */
+  osDelay(100);
+
+  gpscomGpscomTaskInit();
+
+  /* Infinite loop */
+  for(;;)
+  {
+    gpscomGpscomTaskLoop();
+  }
+  /* USER CODE END StartGpscomTask */
+}
+
+/* StartSensorsTask function */
+void StartSensorsTask(void const * argument)
+{
+  /* USER CODE BEGIN StartSensorsTask */
+
+  /* Give DefaultTask time to prepare the device */
+  osDelay(100);
+
+  sensorsSensorsTaskInit();
+
+  /* Infinite loop */
+  for(;;)
+  {
+    sensorsSensorsTaskLoop();
+  }
+  /* USER CODE END StartSensorsTask */
 }
 
 /* controllerSendTimerCallback function */

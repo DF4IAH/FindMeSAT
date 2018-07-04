@@ -60,7 +60,6 @@
 #include "stm32l4xx_nucleo_144.h"
 #include "stm32l496xx.h"
 #include "cmsis_os.h"
-
 #include "usb.h"
 #include "exti.h"
 

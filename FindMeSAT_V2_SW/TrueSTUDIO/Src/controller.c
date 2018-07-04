@@ -34,7 +34,7 @@ extern osSemaphoreId        trackMeApplUpBinarySemHandle;
 extern osSemaphoreId        trackMeApplUpDataBinarySemHandle;
 extern osSemaphoreId        trackMeApplDownDataBinarySemHandle;
 extern EventGroupHandle_t   usbToHostEventGroupHandle;
-extern EventGroupHandle_t   loRaWANEventGroupHandle;
+extern EventGroupHandle_t   loraEventGroupHandle;
 extern EventGroupHandle_t   controllerEventGroupHandle;
 
 extern LoRaWANctx_t         loRaWANctx;
@@ -107,7 +107,7 @@ void prvControllerInitBeforeGreet(void)
     }
 
     /* Set QUEUE_IN bit */
-    xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
+    xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
   }
 }
 
@@ -304,7 +304,7 @@ void prvControllerGetDataAndUpload(void)
     }
 
     /* Set QUEUE_IN bit */
-    xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
+    xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
   }
 }
 
@@ -351,18 +351,18 @@ void controllerControllerTaskLoop(void)
 
     if (eb & Controller_EGW__DO_LINKCHECKREQ) {
       /**/
-      xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_LINKCHECKREQ);
+      xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__DO_LINKCHECKREQ);
     }
 
     if (eb & Controller_EGW__DO_DEVICETIMEREQ) {
-      xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_DEVICETIMEREQ);
+      xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__DO_DEVICETIMEREQ);
     }
   }
 
   /* LoRaWAN */
   {
     /* Check for new data from the LoRaWAN module */
-    EventBits_t eb = xEventGroupWaitBits(loRaWANEventGroupHandle,
+    EventBits_t eb = xEventGroupWaitBits(loraEventGroupHandle,
         LORAWAN_EGW__QUEUE_OUT,
         LORAWAN_EGW__QUEUE_OUT,
         0, 1);
@@ -391,7 +391,7 @@ void controllerControllerTaskLoop(void)
           xStatus = xTimerChangePeriod(controllerSendTimerHandle, 5 * 60 * 1000 / portTICK_PERIOD_MS, 1);   // 5 minutes
 
           /* Request LoRaWAN link check and network time */
-          xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_LINKCHECKREQ | LORAWAN_EGW__DO_DEVICETIMEREQ);
+          xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__DO_LINKCHECKREQ | LORAWAN_EGW__DO_DEVICETIMEREQ);
         }
         break;
       }  // switch

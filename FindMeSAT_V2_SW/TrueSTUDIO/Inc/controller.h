@@ -7,6 +7,9 @@
 
 #ifndef CONTROLLER_H_
 #define CONTROLLER_H_
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
 
 /* Bit-mask for the controllerEventGroup */
@@ -22,4 +25,8 @@ void controllerSendTimerCallbackImpl(TimerHandle_t xTimer);
 void controllerControllerTaskInit(void);
 void controllerControllerTaskLoop(void);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* CONTROLLER_H_ */

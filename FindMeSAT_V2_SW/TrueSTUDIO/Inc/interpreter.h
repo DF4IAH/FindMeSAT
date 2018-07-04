@@ -7,12 +7,19 @@
 
 #ifndef INTERPRETER_H_
 #define INTERPRETER_H_
+#ifdef __cplusplus
+ extern "C" {
+#endif
 
-
-void interpreterInterpreterTaskInit(void);
-void interpreterInterpreterTaskLoop(void);
 
 void interpreterPrintHelp(void);
 void interpreterShowCursor(void);
 
+void interpreterInterpreterTaskInit(void);
+void interpreterInterpreterTaskLoop(void);
+
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* INTERPRETER_H_ */

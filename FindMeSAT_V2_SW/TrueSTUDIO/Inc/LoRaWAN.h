@@ -7,6 +7,10 @@
 
 #ifndef LORAWAN_H_
 #define LORAWAN_H_
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 
 #include "stm32l4xx_hal.h"
 
@@ -579,7 +583,11 @@ void LoRaWAN_MAC_Queue_Pull(uint8_t* macAry, uint8_t cnt);
 void LoRaWAN_MAC_Queue_Reset(void);
 uint8_t LoRaWAN_MAC_Queue_isAvail(uint8_t* snoop);
 
-void loRaWANLoRaWANTaskInit(void);
-void loRaWANLoRaWANTaskLoop(void);
+void loRaWANLoraTaskInit(void);
+void loRaWANLoraTaskLoop(void);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* LORAWAN_H_ */

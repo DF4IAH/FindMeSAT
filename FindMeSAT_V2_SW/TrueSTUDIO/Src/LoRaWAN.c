@@ -5,8 +5,6 @@
  *      Author: DF4IAH
  */
 
-#include "LoRaWAN.h"
-
 #define __STDC_WANT_LIB_EXT1__ 1
 
 #include <string.h>
@@ -16,16 +14,16 @@
 #include <sys/time.h>
 #include "crypto.h"
 #include "crc.h"
-
 #include "FreeRTOS.h"
 #include "stm32l496xx.h"
 #include "cmsis_os.h"
 #include "stm32l4xx_nucleo_144.h"
 #include "stm32l4xx_hal.h"
-
 #include "spi.h"
 #include "usb.h"
 #include "adc.h"
+
+#include "LoRaWAN.h"
 
 
 /* SPI communication buffers */
@@ -36,7 +34,7 @@ extern osMessageQId       loraOutQueueHandle;
 extern osMessageQId       loraMacQueueHandle;
 extern osSemaphoreId      trackMeApplUpDataBinarySemHandle;
 extern osSemaphoreId      trackMeApplDownDataBinarySemHandle;
-extern EventGroupHandle_t loRaWANEventGroupHandle;
+extern EventGroupHandle_t loraEventGroupHandle;
 
 const uint16_t            loRaWANWait_EGW_MaxWaitTicks  = 60000 / portTICK_PERIOD_MS;           // One minute
 const uint16_t            LoRaWAN_MaxWaitMs             = 100;
@@ -600,7 +598,7 @@ static void LoRaWAN_QueueIn_Process(void)
 
     } else {
       /* Reset the state of the queue */
-      goto error_clrInBuf;
+      goto loRaWAN_Error_clrInBuf;
     }
   } while (1);
 
@@ -609,7 +607,7 @@ static void LoRaWAN_QueueIn_Process(void)
   case loraInQueueCmds__Init:
     {
       /* Set event mask bit for INIT */
-      xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_INIT);
+      xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__DO_INIT);
     }
     break;
 
@@ -660,7 +658,7 @@ static void LoRaWAN_QueueIn_Process(void)
   }  // switch (buf[0])
 
 
-error_clrInBuf:
+loRaWAN_Error_clrInBuf:
   {
     /* Clear the buffer to sync */
     bufCtr = bufMsgLen = 0;
@@ -680,7 +678,7 @@ static void LoRaWAN_QueueOut_Process(uint8_t signal)
         }
 
         /* Set QUEUE_OUT bit */
-        xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_OUT);
+        xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__QUEUE_OUT);
       }
       break;
   }
@@ -1812,7 +1810,7 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
 
 //#define INIT_BALANCING_ENABLED
 
-void loRaWANLoRaWANTaskInit(void)
+void loRaWANLoraTaskInit(void)
 {
   const uint8_t bkpRAMLen = &LoRaWANctxBkpRam->_end - &LoRaWANctxBkpRam->LoRaWANcrc;
 
@@ -1823,7 +1821,7 @@ void loRaWANLoRaWANTaskInit(void)
 
   /* Wait until controller signals to init */
   do {
-    EventBits_t eb = xEventGroupWaitBits(loRaWANEventGroupHandle,
+    EventBits_t eb = xEventGroupWaitBits(loraEventGroupHandle,
         LORAWAN_EGW__QUEUE_IN | LORAWAN_EGW__DO_INIT,
         LORAWAN_EGW__QUEUE_IN | LORAWAN_EGW__DO_INIT,
         0, loRaWANWait_EGW_MaxWaitTicks);
@@ -2067,7 +2065,7 @@ static void loRaWANLoRaWANTaskLoop__JoinRequest_NextTry(void)
   LoRaWAN_calc_RxMsg_Reset(&loRaWanRxMsg);
 
   /* Delay 2s before retransmitting */
-  EventBits_t eb = xEventGroupWaitBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_IN, LORAWAN_EGW__QUEUE_IN, 0, 1000 / portTICK_PERIOD_MS);
+  EventBits_t eb = xEventGroupWaitBits(loraEventGroupHandle, LORAWAN_EGW__QUEUE_IN, LORAWAN_EGW__QUEUE_IN, 0, 1000 / portTICK_PERIOD_MS);
   if (eb) {
     /* New message came in - Rest of sleep time dropped */
     LoRaWAN_QueueIn_Process();
@@ -3204,7 +3202,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RejoinParamSetupAns(void)
 #endif
 
 
-void loRaWANLoRaWANTaskLoop(void)
+void loRaWANLoraTaskLoop(void)
 {
   EventBits_t eb;
 
@@ -3400,26 +3398,26 @@ void loRaWANLoRaWANTaskLoop(void)
     loRaWANctx.FsmState = Fsm_NOP;
     // Fall-through.
   case Fsm_NOP:
-    eb = xEventGroupWaitBits(loRaWANEventGroupHandle,
+    eb = xEventGroupWaitBits(loraEventGroupHandle,
         LORAWAN_EGW__QUEUE_IN | LORAWAN_EGW__DO_LINKCHECKREQ | LORAWAN_EGW__DO_DEVICETIMEREQ,
         0,
         0, loRaWANWait_EGW_MaxWaitTicks);
 
     if (eb & LORAWAN_EGW__QUEUE_IN) {
       /* Clear event group bit */
-      xEventGroupClearBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
+      xEventGroupClearBits(loraEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
 
       LoRaWAN_QueueIn_Process();
 
     } else if (eb & LORAWAN_EGW__DO_LINKCHECKREQ) {
       /* Clear event group bit */
-      xEventGroupClearBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_LINKCHECKREQ);
+      xEventGroupClearBits(loraEventGroupHandle, LORAWAN_EGW__DO_LINKCHECKREQ);
 
       loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
 
     } else if (eb & LORAWAN_EGW__DO_DEVICETIMEREQ) {
       /* Clear event group bit */
-      xEventGroupClearBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_DEVICETIMEREQ);
+      xEventGroupClearBits(loraEventGroupHandle, LORAWAN_EGW__DO_DEVICETIMEREQ);
 
       loRaWANctx.FsmState = Fsm_MAC_DeviceTimeReq;
     }
