@@ -19,6 +19,7 @@
 #include "cmsis_os.h"
 #include "stm32l4xx_nucleo_144.h"
 #include "stm32l4xx_hal.h"
+#include "controller.h"
 #include "spi.h"
 #include "usb.h"
 #include "adc.h"
@@ -27,17 +28,19 @@
 
 
 /* SPI communication buffers */
-extern uint8_t            spi1TxBuffer[SPI1_BUFFERSIZE];
-extern uint8_t            spi1RxBuffer[SPI1_BUFFERSIZE];
-extern osMessageQId       loraInQueueHandle;
-extern osMessageQId       loraOutQueueHandle;
-extern osMessageQId       loraMacQueueHandle;
-extern osSemaphoreId      trackMeApplUpDataBinarySemHandle;
-extern osSemaphoreId      trackMeApplDownDataBinarySemHandle;
-extern EventGroupHandle_t loraEventGroupHandle;
+extern uint8_t              spi1TxBuffer[SPI1_BUFFERSIZE];
+extern uint8_t              spi1RxBuffer[SPI1_BUFFERSIZE];
+extern osMessageQId         loraInQueueHandle;
+extern osMessageQId         loraOutQueueHandle;
+extern osMessageQId         loraMacQueueHandle;
+extern osSemaphoreId        trackMeApplUpDataBinarySemHandle;
+extern osSemaphoreId        trackMeApplDownDataBinarySemHandle;
+extern EventGroupHandle_t   loraEventGroupHandle;
+extern EventGroupHandle_t   controllerEventGroupHandle;
 
-const uint16_t            loRaWANWait_EGW_MaxWaitTicks  = 60000 / portTICK_PERIOD_MS;           // One minute
-const uint16_t            LoRaWAN_MaxWaitMs             = 100;
+
+const uint16_t              loRaWANWait_EGW_MaxWaitTicks      = 60000 / portTICK_PERIOD_MS;           // One minute
+const uint16_t              LoRaWAN_MaxWaitMs                 = 100;
 
 
 #ifdef USE_ABP
@@ -47,25 +50,25 @@ const uint16_t            LoRaWAN_MaxWaitMs             = 100;
 //const char *TTNnwkSKey = "4386E7FF679BF9810462B2192B2F5211";
 //const char *TTNappSKey = "ADDA9AD9B4D746323E221E7E69447DF5";
 
-const uint8_t  DevAddr_LE[4]		                        = { 0x3FU, 0x1AU, 0x01U, 0x26U };
-const uint8_t  DevEUI_LE[8]                             = { 0x31U, 0x6FU, 0x72U, 0x65U, 0x70U, 0x73U, 0x65U, 0x00U };
-const uint8_t  JoinEUI_LE[8]                            = { 0x00U, 0x86U, 0x00U, 0xD0U, 0x7EU, 0xD5U, 0xB3U, 0x70U };
-const uint8_t  NwkSKey_BE[16]                           = { 0x43U, 0x86U, 0xE7U, 0xFFU, 0x67U, 0x9BU, 0xF9U, 0x81U, 0x04U, 0x62U, 0xB2U, 0x19U, 0x2BU, 0x2FU, 0x52U, 0x11U };
-const uint8_t  AppSKey_BE[16]                           = { 0xADU, 0xDAU, 0x9AU, 0xD9U, 0xB4U, 0xD7U, 0x46U, 0x32U, 0x3EU, 0x22U, 0x1EU, 0x7EU, 0x69U, 0x44U, 0x7DU, 0xF5U };
+const uint8_t               DevAddr_LE[4]		                  = { 0x3FU, 0x1AU, 0x01U, 0x26U };
+const uint8_t               DevEUI_LE[8]                      = { 0x31U, 0x6FU, 0x72U, 0x65U, 0x70U, 0x73U, 0x65U, 0x00U };
+const uint8_t               JoinEUI_LE[8]                     = { 0x00U, 0x86U, 0x00U, 0xD0U, 0x7EU, 0xD5U, 0xB3U, 0x70U };
+const uint8_t               NwkSKey_BE[16]                    = { 0x43U, 0x86U, 0xE7U, 0xFFU, 0x67U, 0x9BU, 0xF9U, 0x81U, 0x04U, 0x62U, 0xB2U, 0x19U, 0x2BU, 0x2FU, 0x52U, 0x11U };
+const uint8_t               AppSKey_BE[16]                    = { 0xADU, 0xDAU, 0x9AU, 0xD9U, 0xB4U, 0xD7U, 0x46U, 0x32U, 0x3EU, 0x22U, 0x1EU, 0x7EU, 0x69U, 0x44U, 0x7DU, 0xF5U };
 
 #else
 
 /* USE_OTAA */
 
-/* TheThingsNetwork - assigned codes to this device - R1.1 */
+/* TheThingsNetwork - assigned codes to this device - R1.03 */
 // Device ID   findmesat2_002
-//const uint8_t  DevEUI_LE[8]                           = { 0x31, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };  // "FMS2_001"
-const uint8_t  DevEUI_LE[8]                             = { 0x32, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };  // "FMS2_002"
-const uint8_t  AppEUI_LE[8]                             = { 0x08, 0xF6, 0x00, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
-//const uint8_t  JoinEUI_LE[8]                          = { 0 };                                // V1.1: former AppEUI
-//const uint8_t  NwkKey_BE[16]                          = { 0 };                                // Since LoRaWAN V1.1
-//const uint8_t  AppKey_BE[16]                          = { 0x01, 0xE3, 0x27, 0x88, 0xBA, 0x99, 0x2C, 0x45, 0x6D, 0x92, 0xBF, 0xE0, 0xEE, 0xAD, 0xBE, 0x45 };  // findmesat2_001
-const uint8_t  AppKey_BE[16]                            = { 0xD9, 0x0E, 0x09, 0x0B, 0xDB, 0x61, 0xF1, 0xBB, 0x37, 0x4C, 0xE7, 0x9B, 0x23, 0x96, 0x07, 0x11 };  // findmesat2_002
+//const uint8_t             DevEUI_LE[8]                      = { 0x31, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };                                                 // "FMS2_001"
+const uint8_t               DevEUI_LE[8]                      = { 0x32, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };                                                 // "FMS2_002"
+const uint8_t               AppEUI_LE[8]                      = { 0x08, 0xF6, 0x00, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
+//const uint8_t             JoinEUI_LE[8]                     = { 0 };                                                                                              // V1.1: former AppEUI
+//const uint8_t             NwkKey_BE[16]                     = { 0 };                                                                                              // Since LoRaWAN V1.1
+//const uint8_t             AppKey_BE[16]                     = { 0x01, 0xE3, 0x27, 0x88, 0xBA, 0x99, 0x2C, 0x45, 0x6D, 0x92, 0xBF, 0xE0, 0xEE, 0xAD, 0xBE, 0x45 }; // findmesat2_001
+const uint8_t               AppKey_BE[16]                     = { 0xD9, 0x0E, 0x09, 0x0B, 0xDB, 0x61, 0xF1, 0xBB, 0x37, 0x4C, 0xE7, 0x9B, 0x23, 0x96, 0x07, 0x11 }; // findmesat2_002
 #endif
 
 
@@ -73,19 +76,19 @@ const uint8_t  AppKey_BE[16]                            = { 0xD9, 0x0E, 0x09, 0x
 volatile LoRaWANctxBkpRam_t *const LoRaWANctxBkpRam     = (void*) 0x40002850UL;
 
 /* Network context of LoRaWAN */
-LoRaWANctx_t          loRaWANctx                        = { 0 };
+LoRaWANctx_t                loRaWANctx                        = { 0 };
 
 /* Message buffers */
-LoRaWAN_RX_Message_t  loRaWanRxMsg                      = { 0 };
-LoRaWAN_TX_Message_t  loRaWanTxMsg                      = { 0 };
+LoRaWAN_RX_Message_t        loRaWanRxMsg                      = { 0 };
+LoRaWAN_TX_Message_t        loRaWanTxMsg                      = { 0 };
 
 /* Application data for track_me */
-TrackMeApp_up_t       trackMeApp_up                     = { 0 };
-TrackMeApp_down_t     trackMeApp_down                   = {   };
+TrackMeApp_up_t             trackMeApp_up                     = { 0 };
+TrackMeApp_down_t           trackMeApp_down                   = {   };
 
 /* Application data for loralive */
-LoraliveApp_up_t      loraliveApp_up                    = { 0 };
-LoraliveApp_down_t    loraliveApp_down                  = {   };
+LoraliveApp_up_t            loraliveApp_up                    = { 0 };
+LoraliveApp_down_t          loraliveApp_down                  = {   };
 
 
 inline
@@ -695,7 +698,7 @@ static void LoRaWAN_QueueOut_Process(uint8_t cmd)
         }
 
         /* Set QUEUE_OUT bit */
-        xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_OUT);
+        xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__LORA_QUEUE_OUT);
       }
       break;
   }

@@ -29,7 +29,7 @@ extern EventGroupHandle_t   usbToHostEventGroupHandle;
 extern EventGroupHandle_t   controllerEventGroupHandle;
 extern char                 usbClrScrBuf[4];
 
-const uint16_t              Interpreter_MaxWaitMs = 100;
+const uint16_t              Interpreter_MaxWaitMs             = 100;
 
 /* Private variables ---------------------------------------------------------*/
 

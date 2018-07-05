@@ -26,7 +26,6 @@
 /* Bit-mask for the loRaWANEventGroup */
 typedef enum Lora_EGW_BM {
   Lora_EGW__QUEUE_IN                  = 0x00000001UL,
-  Lora_EGW__QUEUE_OUT                 = 0x00000002UL,
 
   Lora_EGW__DO_INIT                   = 0x00000010UL,
 } Lora_EGW_BM_t;

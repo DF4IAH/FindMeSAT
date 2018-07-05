@@ -170,7 +170,7 @@
 #define FINDMESAT_VERSION   20180705U
 
 
-typedef void * TaskHandle_t;
+typedef void* TaskHandle_t;
 
 void mainDefaultTaskInit(void);
 void mainDefaultTaskLoop(void);

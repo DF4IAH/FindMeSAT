@@ -51,7 +51,7 @@ extern TrackMeApp_down_t    trackMeApp_down;
 extern LoraliveApp_up_t     loraliveApp_up;
 extern LoraliveApp_down_t   loraliveApp_down;
 
-const uint16_t              Controller_MaxWaitMs = 100;
+const uint16_t              Controller_MaxWaitMs              = 100;
 
 
 /* Private function prototypes -----------------------------------------------*/
