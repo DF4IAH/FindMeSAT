@@ -81,6 +81,8 @@
 #define SPI_A_MOSI_GPIO_Port GPIOA
 #define SX_RXTX_EXT_Pin GPIO_PIN_4
 #define SX_RXTX_EXT_GPIO_Port GPIOC
+#define GPS_TX_Pin GPIO_PIN_5
+#define GPS_TX_GPIO_Port GPIOC
 #define SX_DIO4_Pin GPIO_PIN_12
 #define SX_DIO4_GPIO_Port GPIOF
 #define SX_DIO4_EXTI_IRQn EXTI15_10_IRQn
@@ -96,6 +98,8 @@
 #define SX_DIO1_Pin GPIO_PIN_13
 #define SX_DIO1_GPIO_Port GPIOE
 #define SX_DIO1_EXTI_IRQn EXTI15_10_IRQn
+#define GPS_RX_Pin GPIO_PIN_10
+#define GPS_RX_GPIO_Port GPIOB
 #define LD3_Pin GPIO_PIN_14
 #define LD3_GPIO_Port GPIOB
 #define SPI_A_SEL_Pin GPIO_PIN_14
