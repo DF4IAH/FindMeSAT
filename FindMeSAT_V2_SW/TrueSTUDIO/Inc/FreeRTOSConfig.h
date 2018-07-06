@@ -113,7 +113,7 @@
 #define configUSE_STATS_FORMATTING_FUNCTIONS     1
 #define configUSE_16_BIT_TICKS                   0
 #define configUSE_MUTEXES                        1
-#define configQUEUE_REGISTRY_SIZE                8
+#define configQUEUE_REGISTRY_SIZE                32
 #define configCHECK_FOR_STACK_OVERFLOW           2
 #define configUSE_MALLOC_FAILED_HOOK             1
 #define configUSE_APPLICATION_TASK_TAG           1

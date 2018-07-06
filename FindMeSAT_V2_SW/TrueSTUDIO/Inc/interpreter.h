@@ -18,6 +18,9 @@ typedef enum InterOutQueueCmds {
   InterOutQueueCmds__DoSendDataUp,
   InterOutQueueCmds__LinkCheckReq,
   InterOutQueueCmds__DeviceTimeReq,
+  InterOutQueueCmds__ConfirmedPackets,
+  InterOutQueueCmds__ADRset,
+  InterOutQueueCmds__DRset,
   InterOutQueueCmds__PwrRedDb,
 } InterOutQueueCmds_t;
 

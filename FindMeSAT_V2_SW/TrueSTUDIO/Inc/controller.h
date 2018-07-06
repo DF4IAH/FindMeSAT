@@ -15,7 +15,7 @@
 /* Bit-mask for the controllerEventGroup */
 typedef enum Controller_EGW_BM {
   Controller_EGW__INTER_QUEUE_OUT     = 0x00000002UL,
-  Controller_EGW__INTER_SENS_DO_SEND  = 0x00000003UL,
+  Controller_EGW__INTER_SENS_DO_SEND  = 0x00000004UL,
   Controller_EGW__LORA_QUEUE_OUT      = 0x00000020UL,
   Controller_EGW__GPSCOM_QUEUE_OUT    = 0x00000200UL,
   Controller_EGW__SENSORS_QUEUE_OUT   = 0x00002000UL,

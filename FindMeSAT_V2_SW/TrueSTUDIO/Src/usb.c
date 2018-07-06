@@ -116,61 +116,63 @@ void usbUsbToHostTaskLoop(void)
   uint8_t inChr;
   BaseType_t xStatus;
 
-  /* Take next character from the queue - at least update each 100ms */
-  inChr = 0;
-  xStatus = xQueueReceive(usbToHostQueueHandle, &inChr, 100 / portTICK_PERIOD_MS);
-  if ((pdPASS == xStatus) && inChr) {
-    /* Group-Bit for empty queue cleared */
-    xEventGroupClearBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
+  do {
+    /* Take next character from the queue - at least update each 100ms */
+    inChr = 0;
+    xStatus = xQueueReceive(usbToHostQueueHandle, &inChr, 100 / portTICK_PERIOD_MS);
+    if ((pdPASS == xStatus) && inChr) {
+      /* Group-Bit for empty queue cleared */
+      xEventGroupClearBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
 
-    buf[bufCtr++] = inChr;
+      buf[bufCtr++] = inChr;
 
-  } else {
-    if (pdPASS != xStatus) {
-      /* Group-Bit for empty queue set */
-      xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
-    }
-  }
-
-  /* Flush when 0 or when buffer is full */
-  if (!inChr || (bufCtr >= (sizeof(buf) - 1))) {
-    uint32_t retryCnt;
-
-    /* Do not send empty buffer */
-    if (!bufCtr) {
-      return;
-    }
-
-    buf[bufCtr] = 0;
-    for (retryCnt = 25; retryCnt; --retryCnt) {
-      /* Transmit to USB host */
-      uint8_t ucRetVal = CDC_Transmit_FS(buf, bufCtr);
-      if (USBD_BUSY != ucRetVal) {
-        /* Data accepted for transmission */
-        bufCtr = 0;
-        buf[0] = 0;
-
+    } else {
+      if (pdPASS != xStatus) {
         /* Group-Bit for empty queue set */
         xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
-
-        //HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                          // Red off
-        break;
-
-      } else {
-        /* USB EP busy - try again */
-        //HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);                            // Red on
-
-        /* Delay for next USB packet to come and go */
-        osDelay(1);
       }
     }
 
-    if (!retryCnt) {
-      /* USB EP still busy - drop whole buffer content */
-      bufCtr = 0;
-      //HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);                              // Red on
+    /* Flush when 0 or when buffer is full */
+    if (!inChr || (bufCtr >= (sizeof(buf) - 1))) {
+      uint32_t retryCnt;
+
+      /* Do not send empty buffer */
+      if (!bufCtr) {
+        return;
+      }
+
+      buf[bufCtr] = 0;
+      for (retryCnt = 25; retryCnt; --retryCnt) {
+        /* Transmit to USB host */
+        uint8_t ucRetVal = CDC_Transmit_FS(buf, bufCtr);
+        if (USBD_BUSY != ucRetVal) {
+          /* Data accepted for transmission */
+          bufCtr = 0;
+          buf[0] = 0;
+
+          /* Group-Bit for empty queue set */
+          xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__BUF_EMPTY);
+
+          //HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                          // Red off
+          break;
+
+        } else {
+          /* USB EP busy - try again */
+          //HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);                            // Red on
+
+          /* Delay for next USB packet to come and go */
+          osDelay(1);
+        }
+      }
+
+      if (!retryCnt) {
+        /* USB EP still busy - drop whole buffer content */
+        bufCtr = 0;
+        //HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);                              // Red on
+      }
     }
-  }
+  } while (!xQueueIsQueueEmptyFromISR(usbToHostQueueHandle));
 }
 
 

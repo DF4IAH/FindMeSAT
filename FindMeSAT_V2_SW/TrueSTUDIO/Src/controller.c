@@ -328,47 +328,72 @@ void prvPullFromInterpreterOutQueue(void)
   uint8_t     inAry[4]  = { 0 };
   uint8_t     inLen     = 0;
 
-  xStatus = xQueueReceive(loraOutQueueHandle, &inLen, 1);
-  if (pdPASS == xStatus) {
-    for (uint8_t idx = 0; idx < inLen; idx++) {
-      xStatus = xQueueReceive(loraOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
-      if (pdFALSE == xStatus) {
-        /* Bad communication - drop */
-        return;
+  do {
+    xStatus = xQueueReceive(interOutQueueHandle, &inLen, 1);
+    if (pdPASS == xStatus) {
+      for (uint8_t idx = 0; idx < inLen; idx++) {
+        xStatus = xQueueReceive(interOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
+        if (pdFALSE == xStatus) {
+          /* Bad communication - drop */
+          return;
+        }
       }
     }
-  }
 
-  switch (inAry[0]) {
-  case InterOutQueueCmds__DoSendDataUp:
-    {
-      prvControllerGetDataAndUpload();
-    }
-    break;
+    switch (inAry[0]) {
+    case InterOutQueueCmds__DoSendDataUp:
+      {
+        prvControllerGetDataAndUpload();
+      }
+      break;
 
-  case InterOutQueueCmds__LinkCheckReq:
-    {
-      const uint8_t cmdAry[2] = { 1, LoraInQueueCmds__LinkCheckReq };
-      prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
-    }
-    break;
+    case InterOutQueueCmds__LinkCheckReq:
+      {
+        const uint8_t cmdAry[2] = { 1, LoraInQueueCmds__LinkCheckReq };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
 
-  case InterOutQueueCmds__DeviceTimeReq:
-    {
-      const uint8_t cmdAry[2] = { 1, LoraInQueueCmds__DeviceTimeReq };
-      prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
-    }
-    break;
+    case InterOutQueueCmds__DeviceTimeReq:
+      {
+        const uint8_t cmdAry[2] = { 1, LoraInQueueCmds__DeviceTimeReq };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
 
-  case InterOutQueueCmds__PwrRedDb:
-    {
-      const uint8_t pwrRed_db = inAry[1];
-      const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__PwrRedDb, pwrRed_db };
-      prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
-    }
-    break;
-  }  // switch
+    case InterOutQueueCmds__ConfirmedPackets:
+      {
+        const uint8_t confSet = inAry[1];
+        const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__ConfirmedPackets, confSet };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
 
+    case InterOutQueueCmds__ADRset:
+      {
+        const uint8_t adrSet = inAry[1];
+        const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__ADRset, adrSet };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
+
+    case InterOutQueueCmds__DRset:
+      {
+        const uint8_t drSet = inAry[1];
+        const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__DRset, drSet };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
+
+    case InterOutQueueCmds__PwrRedDb:
+      {
+        const uint8_t pwrRed_db = inAry[1];
+        const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__PwrRedDb, pwrRed_db };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
+    }  // switch
+  } while (!xQueueIsQueueEmptyFromISR(interOutQueueHandle));
 }
 
 void prvPullFromLoraOutQueue(void)
@@ -377,32 +402,34 @@ void prvPullFromLoraOutQueue(void)
   uint8_t     inAry[4]  = { 0 };
   uint8_t     inLen     = 0;
 
-  xStatus = xQueueReceive(loraOutQueueHandle, &inLen, 1);
-  if (pdPASS == xStatus) {
-    for (uint8_t idx = 0; idx < inLen; idx++) {
-      xStatus = xQueueReceive(loraOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
-      if (pdFALSE == xStatus) {
-        /* Bad communication - drop */
-        return;
+  do {
+    xStatus = xQueueReceive(loraOutQueueHandle, &inLen, 1);
+    if (pdPASS == xStatus) {
+      for (uint8_t idx = 0; idx < inLen; idx++) {
+        xStatus = xQueueReceive(loraOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
+        if (pdFALSE == xStatus) {
+          /* Bad communication - drop */
+          return;
+        }
       }
     }
-  }
 
-  switch (inAry[0]) {
-  case LoraOutQueueCmds__Connected:
-    {
-      /* Ready from LoRaWAN task received - activate upload timer */
-      xStatus = xTimerStart(controllerSendTimerHandle, 1);
-      xStatus = xTimerChangePeriod(controllerSendTimerHandle, 5 * 60 * 1000 / portTICK_PERIOD_MS, 1);   // 5 minutes
+    switch (inAry[0]) {
+    case LoraOutQueueCmds__Connected:
+      {
+        /* Ready from LoRaWAN task received - activate upload timer */
+        xStatus = xTimerStart(controllerSendTimerHandle, 1);
+        xStatus = xTimerChangePeriod(controllerSendTimerHandle, 5 * 60 * 1000 / portTICK_PERIOD_MS, 1);   // 5 minutes
 
-      /* Request LoRaWAN link check and network time */
-      const uint8_t cmdAry[4] = {
-          1, LoraInQueueCmds__LinkCheckReq,
-          1, LoraInQueueCmds__DeviceTimeReq };
-      prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
-    }
-    break;
-  }  // switch
+        /* Request LoRaWAN link check and network time */
+        const uint8_t cmdAry[4] = {
+            1, LoraInQueueCmds__LinkCheckReq,
+            1, LoraInQueueCmds__DeviceTimeReq };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
+    }  // switch
+  } while (!xQueueIsQueueEmptyFromISR(loraOutQueueHandle));
 }
 
 

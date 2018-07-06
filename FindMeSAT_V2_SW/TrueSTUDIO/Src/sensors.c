@@ -40,44 +40,45 @@ void sensorsSensorsTaskLoop(void)
   BaseType_t      xStatus;
   uint8_t         inChr;
 
-  /* Wait for input from the controller */
   do {
-    /* Take next character from the queue, if any */
-    inChr = 0;
-    xStatus = xQueueReceive(sensorsInQueueHandle, &inChr, 100 / portTICK_PERIOD_MS);            // Wait max. 100 ms for completion
-    if (pdPASS == xStatus) {
-      if (!s_bufMsgLen) {
-        s_bufMsgLen = inChr;
+    /* Wait for input from the controller */
+    do {
+      /* Take next character from the queue, if any */
+      inChr = 0;
+      xStatus = xQueueReceive(sensorsInQueueHandle, &inChr, 100 / portTICK_PERIOD_MS);            // Wait max. 100 ms for completion
+      if (pdPASS == xStatus) {
+        if (!s_bufMsgLen) {
+          s_bufMsgLen = inChr;
+
+        } else {
+          /* Process incoming message */
+          s_buf[s_bufCtr++] = inChr;
+
+          if (s_bufCtr == s_bufMsgLen) {
+            /* Message complete */
+            break;
+          }
+        }  // if (!s_bufMsgLen) else
 
       } else {
-        /* Process incoming message */
-        s_buf[s_bufCtr++] = inChr;
+        /* Reset the state of the queue */
+        goto sensors_Error_clrInBuf;
+      }
+    } while (1);
 
-        if (s_bufCtr == s_bufMsgLen) {
-          /* Message complete */
-          break;
-        }
-      }  // if (!s_bufMsgLen) else
-
-    } else {
-      /* Reset the state of the queue */
-      goto sensors_Error_clrInBuf;
-    }
-  } while (1);
-
-  /* Process the message */
-  switch (s_buf[0]) {
-  case 0:  //SensorsInQueueCmds__XXX:
-    {
-//      /* Set event mask bit for INIT */
-//      xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__DO_INIT);
-    }
-    break;
-  default:
-    /* Nothing to do */
-    { }
-  }  // switch (s_buf[0])
-
+    /* Process the message */
+    switch (s_buf[0]) {
+    case 0:  //SensorsInQueueCmds__XXX:
+      {
+  //      /* Set event mask bit for INIT */
+  //      xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__DO_INIT);
+      }
+      break;
+    default:
+      /* Nothing to do */
+      { }
+    }  // switch (s_buf[0])
+  } while (!xQueueIsQueueEmptyFromISR(sensorsInQueueHandle));
 
 sensors_Error_clrInBuf:
   {

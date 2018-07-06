@@ -555,11 +555,14 @@ static void LoRaWAN_QueueIn_Process__Fsm_TX(void)
 {
   /* Prepare to transmit data buffer */
   if (loRaWANctx.FsmState == Fsm_NOP) {
+    /* USB: info */
+    usbLog("\r\nLoRaWAN: Going to send sensors data.\r\n");
+
     /* Adjust the context */
     loRaWANctx.Ch_Selected  = LoRaWAN_calc_randomChannel(&loRaWANctx);                // Randomized RX1 frequency
 
     /* Requesting for confirmed data up-transport */
-    loRaWANctx.MHDR_MType = ConfDataUp;
+    loRaWANctx.MHDR_MType = loRaWANctx.ConfirmedPackets_enabled ?  ConfDataUp : UnconfDataUp;
     loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
     /* Request to encode TX message (again) */
@@ -582,101 +585,152 @@ static void LoRaWAN_QueueIn_Process(void)
   uint8_t         inChr;
 
   do {
-    /* Take next character from the queue, if any */
-    inChr = 0;
-    xStatus = xQueueReceive(loraInQueueHandle, &inChr, 100 / portTICK_PERIOD_MS);               // Wait max. 100 ms for completion
-    if (pdPASS == xStatus) {
-      if (!bufMsgLen) {
-        bufMsgLen = inChr;
+    do {
+      /* Take next character from the queue, if any */
+      inChr = 0;
+      xStatus = xQueueReceive(loraInQueueHandle, &inChr, 100 / portTICK_PERIOD_MS);               // Wait max. 100 ms for completion
+      if (pdPASS == xStatus) {
+        if (!bufMsgLen) {
+          bufMsgLen = inChr;
+
+        } else {
+          /* Process incoming message */
+          buf[bufCtr++] = inChr;
+
+          if (bufCtr == bufMsgLen) {
+            /* Message complete */
+            break;
+          }
+        }
 
       } else {
-        /* Process incoming message */
-        buf[bufCtr++] = inChr;
+        /* Reset the state of the queue */
+        goto loRaWAN_Error_clrInBuf;
+      }
+    } while (1);
 
-        if (bufCtr == bufMsgLen) {
-          /* Message complete */
-          break;
+    /* Process the message */
+    switch (buf[0]) {
+    case LoraInQueueCmds__Init:
+      {
+        /* Set event mask bit for INIT */
+        xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__DO_INIT);
+      }
+      break;
+
+    case LoraInQueueCmds__TrackMeApplUp:
+      {
+        /* Prepare data to upload */
+        {
+          /* Wait for semaphore to access LoRaWAN TrackMeApp */
+          osSemaphoreWait(trackMeApplUpDataBinarySemHandle, 0);
+
+          /* Marshal data for upload */
+          loRaWanTxMsg.msg_prep_FRMPayload_Len = LoRaWAN_marshalling_PayloadCompress_TrackMeAppUp(loRaWanTxMsg.msg_prep_FRMPayload_Buf, &trackMeApp_up);
+
+          /* Free semaphore */
+          osSemaphoreRelease(trackMeApplUpDataBinarySemHandle);
+        }
+
+        /* Prepare to transmit data buffer */
+        LoRaWAN_QueueIn_Process__Fsm_TX();
+      }
+      break;
+
+    case LoraInQueueCmds__LinkCheckReq:
+      {
+        if (loRaWANctx.FsmState == Fsm_NOP) {
+          loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
+        } else {
+          xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__DO_LINKCHECKREQ);
         }
       }
+      break;
 
-    } else {
-      /* Reset the state of the queue */
-      goto loRaWAN_Error_clrInBuf;
-    }
-  } while (1);
-
-  /* Process the message */
-  switch (buf[0]) {
-  case LoraInQueueCmds__Init:
-    {
-      /* Set event mask bit for INIT */
-      xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__DO_INIT);
-    }
-    break;
-
-  case LoraInQueueCmds__TrackMeApplUp:
-    {
-      /* Prepare data to upload */
+    case LoraInQueueCmds__DeviceTimeReq:
       {
-        /* Wait for semaphore to access LoRaWAN TrackMeApp */
-        osSemaphoreWait(trackMeApplUpDataBinarySemHandle, 0);
-
-        /* Marshal data for upload */
-        loRaWanTxMsg.msg_prep_FRMPayload_Len = LoRaWAN_marshalling_PayloadCompress_TrackMeAppUp(loRaWanTxMsg.msg_prep_FRMPayload_Buf, &trackMeApp_up);
-
-        /* Free semaphore */
-        osSemaphoreRelease(trackMeApplUpDataBinarySemHandle);
+        if (loRaWANctx.FsmState == Fsm_NOP) {
+          loRaWANctx.FsmState = Fsm_MAC_DeviceTimeReq;
+        } else {
+          xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__DO_DEVICETIMEREQ);
+        }
       }
+      break;
 
-      /* Prepare to transmit data buffer */
-      LoRaWAN_QueueIn_Process__Fsm_TX();
-    }
-    break;
-
-  case LoraInQueueCmds__LinkCheckReq:
-    {
-      if (loRaWANctx.FsmState == Fsm_NOP) {
-        loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
+    case LoraInQueueCmds__ConfirmedPackets:
+      {
+        const uint8_t confSet               = buf[1];
+        loRaWANctx.ConfirmedPackets_enabled = confSet ?  1 : 0;
       }
-    }
-    break;
+      break;
 
-  case LoraInQueueCmds__DeviceTimeReq:
-    {
-      if (loRaWANctx.FsmState == Fsm_NOP) {
-        loRaWANctx.FsmState = Fsm_MAC_DeviceTimeReq;
+    case LoraInQueueCmds__ADRset:
+      {
+        const uint8_t adrSet    = buf[1];
+        loRaWANctx.ADR_enabled  = adrSet ?  1 : 0;
       }
-    }
-    break;
+      break;
 
+    case LoraInQueueCmds__DRset:
+      {
+        DataRates_t drSet = buf[1];
+        if (drSet > DR5_SF7_125kHz_LoRa) {
+          drSet   = DR5_SF7_125kHz_LoRa;
+        }
+
+        loRaWANctx.ADR_enabled  = 0;
+
+        /* Set all RX1 channels with manual DataRate */
+        for (uint8_t idx = 0; idx < 15; idx++) {
+          loRaWANctx.Ch_DataRateTX_Selected[idx] = drSet;
+        }
+      }
+      break;
+
+    case LoraInQueueCmds__PwrRedDb:
+      {
+        uint8_t pwrRed = buf[1];
+        if (pwrRed > 20) {
+          pwrRed = 20;
+        }
+
+        loRaWANctx.ADR_enabled                  = 0;
+        loRaWANctx.LinkADR_TxPowerReduction_dB  = pwrRed;
+
+        /* Do a link check after current power reduction setting */
+        if (loRaWANctx.FsmState == Fsm_NOP) {
+          loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
+        }
+      }
+      break;
 
 #if 0
-  case loraInQueueCmds__LoraliveApplUp:
-    {
-      /* Prepare data to upload */
+    case loraInQueueCmds__LoraliveApplUp:
       {
-        /* Wait for semaphore to access LoRaWAN LoraliveApp */
-        osSemaphoreWait(loraliveApplUpDataBinarySemHandle, 0);
+        /* Prepare data to upload */
+        {
+          /* Wait for semaphore to access LoRaWAN LoraliveApp */
+          osSemaphoreWait(loraliveApplUpDataBinarySemHandle, 0);
 
-        /* Marshal data for upload */
-        loRaWanTxMsg.msg_prep_FRMPayload_Len = LoRaWAN_marshalling_PayloadCompress_LoraliveAppUp(&(loRaWanTxMsg.msg_prep_FRMPayload_Buf), &loraliveApp_up);
+          /* Marshal data for upload */
+          loRaWanTxMsg.msg_prep_FRMPayload_Len = LoRaWAN_marshalling_PayloadCompress_LoraliveAppUp(&(loRaWanTxMsg.msg_prep_FRMPayload_Buf), &loraliveApp_up);
 
-        /* Free semaphore */
-        osSemaphoreRelease(loraliveApplUpDataBinarySemHandle);
+          /* Free semaphore */
+          osSemaphoreRelease(loraliveApplUpDataBinarySemHandle);
+        }
+
+        /* Prepare to transmit data buffer */
+        LoRaWAN_QueueIn_Process__Fsm_TX();
       }
-
-      /* Prepare to transmit data buffer */
-      LoRaWAN_QueueIn_Process__Fsm_TX();
-    }
-    break;
+      break;
 #endif
 
-  case LoraInQueueCmds__NOP:
-  default:
-    /* Nothing to do */
-    { }
-  }  // switch (buf[0])
-
+    case LoraInQueueCmds__NOP:
+    default:
+      /* Nothing to do */
+      { }
+    }  // switch (buf[0])
+  } while (!xQueueIsQueueEmptyFromISR(loraInQueueHandle));  // do {} while();
 
 loRaWAN_Error_clrInBuf:
   {
@@ -1289,6 +1343,9 @@ static void LoRaWAN_calc_TxMsg_Compiler_Standard(LoRaWANctx_t* ctx, LoRaWAN_TX_M
 
         /* FCtrl */
         {
+          /* Take global ADR setting */
+          ctx->FCtrl_ADR = ctx->ADR_enabled;
+
           uint8_t l_FCtrl = (ctx->FCtrl_ADR       << LoRaWAN_FCtl_ADR_SHIFT)       |
                             (ctx->FCtrl_ADRACKReq << LoRaWAN_FCtl_ADRACKReq_SHIFT) |
                             (ctx->FCtrl_ACK       << LoRaWAN_FCtl_ACK_SHIFT)       |
@@ -1404,6 +1461,9 @@ static uint8_t LoRaWAN_calc_RxMsg_Decoder_MHDR_JOINACCEPT(LoRaWANctx_t* ctx, LoR
     if (micMatch) {
       uint8_t encPad[16] = { 0 };
       uint8_t keyPad[16] = { 0 };
+
+      /* Increment uplink FCnt */
+      loRaWANctx.bkpRAM->FCntUp++;
 
       /* Copy values into own device context */
       uint8_t decPadIdx = 0;
@@ -1585,18 +1645,23 @@ static uint8_t LoRaWAN_calc_RxMsg_Decoder_Standard(LoRaWANctx_t* ctx, LoRaWAN_RX
 
   /* Confirmed frame does update frame counters */
   {
-    /* FCntUp */
-    if (loRaWanRxMsg.msg_parted_FCtrl_ACK) {
-      ctx->bkpRAM->FCntUp++;
+    if (ctx->ConfirmedPackets_enabled) {
+      if (loRaWanRxMsg.msg_parted_FCtrl_ACK) {
+        /* FCntUp */
+        ctx->bkpRAM->FCntUp++;
 
 #ifdef LORAWAN_1V1
-      if (ctx->MHDR_MType == JoinAccept)
-      if (!(++(ctx->DevNonce_LE[0]))) {
-        ++(ctx->DevNonce_LE[1]);
-      }
+        if (ctx->MHDR_MType == JoinAccept)
+        if (!(++(ctx->DevNonce_LE[0]))) {
+          ++(ctx->DevNonce_LE[1]);
+        }
 #endif
-    }
+      }
 
+    } else {  // if (ctx->ConfirmedPackets_enabled) else
+      /* FCntUp */
+      ctx->bkpRAM->FCntUp++;
+    }
 
     /* FCntDwn */
     {
@@ -1655,6 +1720,7 @@ void LoRaWAN_MAC_Queue_Reset(void)
   xQueueReset(loraMacQueueHandle);
 }
 
+#if 0
 uint8_t LoRaWAN_MAC_Queue_isAvail(uint8_t* snoop)
 {
   uint8_t* fill = snoop;
@@ -1666,6 +1732,7 @@ uint8_t LoRaWAN_MAC_Queue_isAvail(uint8_t* snoop)
 
   return pdTRUE == xQueuePeek(loraMacQueueHandle, fill, 1);
 }
+#endif
 
 #if 0
 static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
@@ -1896,10 +1963,11 @@ void loRaWANLoraTaskInit(void)
     loRaWANctx.Ch_DataRateTX_max[16 - 1]                                                      = DR5_SF7_125kHz_LoRa;
 
     loRaWANctx.Current_RXTX_Window          = CurWin_none;                                      // out of any window
-    loRaWANctx.MHDR_MType                   = ConfDataUp;                                       // Confirmed data transport in use
-    loRaWANctx.MHDR_Major                   = LoRaWAN_R1;                                       // Major release in use
+//  loRaWANctx.MHDR_MType                   = ConfDataUp;                                       // Confirmed data transport in use
+//  loRaWANctx.MHDR_Major                   = LoRaWAN_R1;                                       // Major release in use
     loRaWANctx.FPort_absent                 = 1;                                                // Without FRMPayload this field is disabled
     loRaWANctx.FPort                        = 1;                                                // Default application port
+    loRaWANctx.ConfirmedPackets_enabled     = 1;                                                // ConfDataUp to be used
     loRaWANctx.ADR_enabled                  = 1;                                                // Global setting for ADR
     loRaWANctx.LinkADR_TxPowerReduction_dB  = 0;                                                // No power reduction
     loRaWANctx.LinkADR_DataRate_TX1         = loRaWANctx.Ch_DataRateTX_Selected[ 1 - 1];        // RX1 - Channel 1 as an example
@@ -2040,17 +2108,27 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX2(void)
 
         /* Delay 2..10 secs */
         osDelay(2000 + rand() % 8000);
+
+        loRaWANctx.FsmState = Fsm_TX;
 #else
-        loRaWANctx.FsmState = Fsm_NOP;
+        /* Work on MAC queue to clean it up */
+        loRaWANctx.FsmState = Fsm_MAC_Proc;
 #endif
 
       } else {
-        loRaWANctx.FsmState = Fsm_NOP;
+        /* Increment uplink FCnt */
+        loRaWANctx.bkpRAM->FCntUp++;
+
+        /* USB: info */
+        usbLog("\r\n\r\n");
+
+        /* Work on MAC queue to clean it up */
+        loRaWANctx.FsmState = Fsm_MAC_Proc;
       }
 
     } else {
       /* USB: info */
-      usbLog("LoRaWAN: received packet within RX2 window.\r\n");
+      usbLog("LoRaWAN: received packet within RX2 window.\r\n\r\n");
 
       /* Process message */
       loRaWANctx.FsmState = Fsm_MAC_Decoder;
@@ -2062,23 +2140,11 @@ static void loRaWANLoRaWANTaskLoop__JoinRequest_NextTry(void)
 {
   if ((JoinRequest  == loRaWANctx.MHDR_MType) ||
       (JoinAccept   == loRaWANctx.MHDR_MType)) {
-    /* Delay 1..3 secs */
-    osDelay(1000 + rand() % 2000);
-
     /* Try again with new JOINREQUEST - clears loRaWanTxMsg by itself */
     loRaWANctx.FsmState = Fsm_MAC_JoinRequest;
 
-  } else if (ConfDataUp == loRaWANctx.MHDR_MType) {
-    switch (loRaWANctx.TX_MAC_Buf[0]) {
-    case LinkCheckReq_UP:
-      {
-        loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
-      }
-      break;
-
-    default:
-      loRaWANctx.FsmState = Fsm_NOP;
-    }
+  } else {
+    loRaWANctx.FsmState = Fsm_MAC_Proc;
   }
 
   /* Sequence has ended */
@@ -2087,8 +2153,9 @@ static void loRaWANLoRaWANTaskLoop__JoinRequest_NextTry(void)
   /* Remove RX message */
   LoRaWAN_calc_RxMsg_Reset(&loRaWanRxMsg);
 
-  /* Delay 2s before retransmitting */
-  EventBits_t eb = xEventGroupWaitBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN, Lora_EGW__QUEUE_IN, 0, 1000 / portTICK_PERIOD_MS);
+  /* Delay 1..3 s before retransmitting */
+  uint16_t rnd_1to3 = 1000 + (rand() % 2000);
+  EventBits_t eb = xEventGroupWaitBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN, Lora_EGW__QUEUE_IN, 0, rnd_1to3 / portTICK_PERIOD_MS);
   if (eb) {
     /* New message came in - Rest of sleep time dropped */
     LoRaWAN_QueueIn_Process();
@@ -2328,7 +2395,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_Proc(void)
 {
   /* MAC queue processing */
 
-  if (LoRaWAN_MAC_Queue_isAvail(NULL)) {
+  if (!xQueueIsQueueEmptyFromISR(loraMacQueueHandle)) {
     uint8_t mac = 0;
     LoRaWAN_MAC_Queue_Pull(&mac, 1);
 
@@ -2433,6 +2500,9 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_JoinAccept(void)
       usbLogLen(usbDbgBuf, len);
     }
 
+    /* Switch to unconfirmed packet mode */
+    loRaWANctx.ConfirmedPackets_enabled = 0;
+
     /* Inform the controller that link is established */
     LoRaWAN_QueueOut_Process(LoraOutQueueCmds__Connected);
 
@@ -2458,7 +2528,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkCheckReq(void)
   loRaWanTxMsg.msg_encoded_EncDone = 0;
 
   /* Requesting for confirmed data up-transport */
-  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_MType = loRaWANctx.ConfirmedPackets_enabled ?  ConfDataUp : UnconfDataUp;
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* USB: info */
@@ -2543,9 +2613,11 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkADRReq(void)
       usbLogLen(usbDbgBuf, len);
     }
 
-    if (!LoRaWAN_MAC_Queue_isAvail(&nextMac)) {
+    if (xQueueIsQueueEmptyFromISR(loraMacQueueHandle)) {
       break;
     }
+
+    LoRaWAN_MAC_Queue_Pull(&nextMac, sizeof(nextMac));
     if (LinkADRReq_DN != nextMac) {
       break;
     }
@@ -2567,7 +2639,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkADRAns(void)
   loRaWanTxMsg.msg_encoded_EncDone = 0;
 
   /* Requesting for confirmed data up-transport */
-  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_MType = loRaWANctx.ConfirmedPackets_enabled ?  ConfDataUp : UnconfDataUp;
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* USB: info */
@@ -2617,7 +2689,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DutyCycleAns(void)
   loRaWanTxMsg.msg_encoded_EncDone = 0;
 
   /* Requesting for confirmed data up-transport */
-  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_MType = loRaWANctx.ConfirmedPackets_enabled ?  ConfDataUp : UnconfDataUp;
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* Prepare for transmission */
@@ -2673,7 +2745,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RXParamSetupAns(void)
   loRaWanTxMsg.msg_encoded_EncDone = 0;
 
   /* Requesting for confirmed data up-transport */
-  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_MType = loRaWANctx.ConfirmedPackets_enabled ?  ConfDataUp : UnconfDataUp;
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* Prepare for transmission */
@@ -2733,7 +2805,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DevStatusAns(void)
   loRaWanTxMsg.msg_encoded_EncDone = 0;
 
   /* Requesting for confirmed data up-transport */
-  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_MType = loRaWANctx.ConfirmedPackets_enabled ?  ConfDataUp : UnconfDataUp;
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* Prepare for transmission */
@@ -2822,7 +2894,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_NewChannelAns(void)
   loRaWanTxMsg.msg_encoded_EncDone = 0;
 
   /* Requesting for confirmed data up-transport */
-  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_MType = loRaWANctx.ConfirmedPackets_enabled ?  ConfDataUp : UnconfDataUp;
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* Prepare for transmission */
@@ -2895,7 +2967,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DlChannelAns(void)
   loRaWanTxMsg.msg_encoded_EncDone = 0;
 
   /* Requesting for confirmed data up-transport */
-  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_MType = loRaWANctx.ConfirmedPackets_enabled ?  ConfDataUp : UnconfDataUp;
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* Prepare for transmission */
@@ -2947,7 +3019,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RXTimingSetupAns(void)
   loRaWanTxMsg.msg_encoded_EncDone = 0;
 
   /* Requesting for confirmed data up-transport */
-  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_MType = loRaWANctx.ConfirmedPackets_enabled ?  ConfDataUp : UnconfDataUp;
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* Prepare for transmission */
@@ -3018,7 +3090,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DeviceTimeReq(void)
   loRaWanTxMsg.msg_encoded_EncDone = 0;
 
   /* Requesting for confirmed data up-transport */
-  loRaWANctx.MHDR_MType = ConfDataUp;
+  loRaWANctx.MHDR_MType = loRaWANctx.ConfirmedPackets_enabled ?  ConfDataUp : UnconfDataUp;
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* USB: info */
@@ -3034,7 +3106,6 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DeviceTimeAns(void)
   uint32_t  timeDiffNowTx_ms        = xTaskGetTickCount();
   uint32_t  SystemTimeSinceBoot_ms  = timeDiffNowTx_ms;
   double    timeDeviceTimeReqNow;
-
 
   LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
   uint32_t l_gps_epoc_s         = ((uint32_t)macBuf[3] << 24) | ((uint32_t)macBuf[2] << 24) | ((uint32_t)macBuf[1] << 24) | ((uint32_t)macBuf[0]);
@@ -3422,7 +3493,7 @@ void loRaWANLoraTaskLoop(void)
     // Fall-through.
   case Fsm_NOP:
     eb = xEventGroupWaitBits(loraEventGroupHandle,
-        Lora_EGW__QUEUE_IN,
+        Lora_EGW__QUEUE_IN | Lora_EGW__DO_LINKCHECKREQ | Lora_EGW__DO_DEVICETIMEREQ,
         0,
         0, loRaWANWait_EGW_MaxWaitTicks);
 
@@ -3430,7 +3501,22 @@ void loRaWANLoraTaskLoop(void)
       /* Clear event group bit */
       xEventGroupClearBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
 
+      /* Read in queue and work on that commands */
       LoRaWAN_QueueIn_Process();
+
+    } else if (eb & Lora_EGW__DO_LINKCHECKREQ) {
+      /* Clear event group bit */
+      xEventGroupClearBits(loraEventGroupHandle, Lora_EGW__DO_LINKCHECKREQ);
+
+      /* LinkCheckReq is next on the priority table */
+      loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
+
+    } else if (eb & Lora_EGW__DO_DEVICETIMEREQ) {
+      /* Clear event group bit */
+      xEventGroupClearBits(loraEventGroupHandle, Lora_EGW__DO_DEVICETIMEREQ);
+
+      /* LinkCheckReq is last on the priority table */
+      loRaWANctx.FsmState = Fsm_MAC_DeviceTimeReq;
     }
   }  // switch ()
 }
