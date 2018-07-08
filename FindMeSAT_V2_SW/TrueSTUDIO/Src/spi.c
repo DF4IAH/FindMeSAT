@@ -626,12 +626,10 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
   /* Debugging information */
   {
     uint8_t  buf[64];
-    uint32_t bufLen;
+    int bufLen;
 
     bufLen = sprintf((char*) buf, "LoRaWAN:\t f = %03lu.%03u MHz,\t SF = %02u\r\n", fmt_mhz, fmt_mhz_f1, ctx->SpreadingFactor);
-    osSemaphoreWait(usbToHostBinarySemHandle, 0);
-    usbToHostWait((uint8_t*) buf, bufLen);
-    osSemaphoreRelease(usbToHostBinarySemHandle);
+    usbLogLen((char*) buf, bufLen);
   }
 
   /* Common presets for TX / RX */

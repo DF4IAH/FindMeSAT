@@ -171,7 +171,7 @@
 # define PI                 3.14159265358979f
 #endif
 
-#define FINDMESAT_VERSION   20180706U
+#define FINDMESAT_VERSION   20180708U
 
 
 typedef void* TaskHandle_t;

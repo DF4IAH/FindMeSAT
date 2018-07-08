@@ -2017,7 +2017,7 @@ void loRaWANLoraTaskInit(void)
   {
     uint32_t PreviousWakeTime = 0UL;
 
-    osDelayUntil(&PreviousWakeTime, 3600);
+    osDelayUntil(&PreviousWakeTime, 4000);
   }
 
 #ifdef INIT_BALANCING_ENABLED

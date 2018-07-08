@@ -71,28 +71,31 @@ const char controllerGreetMsg11[] =
     "\tFindMeSAT_V2 version:\r\n"
     "\t=====================\r\n"
     "\r\n"
-    "\t\tDate\t\t%08u\r\n";
+    "\t\tSoftware date\t%08u\r\n";
 void prvControllerUsbGreet(void)
 {
-  char verBuf[70];
+  char verBuf[128];
 
   sprintf(verBuf, controllerGreetMsg11, FINDMESAT_VERSION);
 
-  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  /* usbToHost block */
+  {
+    osSemaphoreWait(usbToHostBinarySemHandle, 0);
 
-  usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
-  usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
-  usbToHostWait((uint8_t*) controllerGreetMsg04, strlen(controllerGreetMsg04));
-  usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
-  usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
-  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
-  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
+    usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
+    usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
+    usbToHostWait((uint8_t*) controllerGreetMsg04, strlen(controllerGreetMsg04));
+    usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
+    usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
+    usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
+    usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
 
-  usbToHostWait((uint8_t*) verBuf, strlen(verBuf));
-  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
-  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
+    usbToHostWait((uint8_t*) verBuf, strlen(verBuf));
+    usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
+    usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
 
-  osSemaphoreRelease(usbToHostBinarySemHandle);
+    osSemaphoreRelease(usbToHostBinarySemHandle);
+  }
 }
 
 void prvControllerInitBeforeGreet(void)
@@ -102,6 +105,7 @@ void prvControllerInitBeforeGreet(void)
 
   /* Check for attached SX127x_mbed_shield */
   if (HAL_OK == spiDetectShieldSX127x()) {
+#if 0
     /* Send INIT message to the LoRaWAN task */
     const uint8_t c_maxWaitMs = 25;
     const uint8_t c_msgToLoRaWAN[2] = { 1, LoraInQueueCmds__Init };
@@ -113,6 +117,7 @@ void prvControllerInitBeforeGreet(void)
 
     /* Set QUEUE_IN bit */
     xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
+#endif
   }
 }
 
@@ -232,7 +237,7 @@ void prvControllerPrintMCU(void)
   int16_t  adc1Temp_100_i = adc1Temp_100 / 100;
   uint16_t adc1Temp_100_f = adc1Temp_100 >= 0 ?  (adc1Temp_100 % 100) : (-adc1Temp_100 % 100);
 
-  sprintf(buf,
+  int len = sprintf(buf,
       "\r\n"
       "\tMCU Info:\r\n"
       "\t=========\r\n"
@@ -246,7 +251,7 @@ void prvControllerPrintMCU(void)
       "\t\tVbat\t\t%4lu mV\r\n"
       "\t\tMCU Temp.\t%+02d.%02u C\r\n\r\n\r\n",
       lotBuf, uidWaf, uidPosX, uidPosY, packagePtr, flashSize, adc1Vdda_mV, adc1Vbat_mV, adc1Temp_100_i, adc1Temp_100_f);
-  usbLog(buf);
+  usbLogLen(buf, len);
 }
 
 

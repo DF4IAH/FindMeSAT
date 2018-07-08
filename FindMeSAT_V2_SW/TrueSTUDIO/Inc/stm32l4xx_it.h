@@ -68,9 +68,13 @@ void EXTI15_10_IRQHandler(void);
 void RTC_Alarm_IRQHandler(void);
 void TIM5_IRQHandler(void);
 void UART5_IRQHandler(void);
+void DMA2_Channel1_IRQHandler(void);
+void DMA2_Channel2_IRQHandler(void);
 void DMA2_Channel3_IRQHandler(void);
 void DMA2_Channel4_IRQHandler(void);
 void OTG_FS_IRQHandler(void);
+void DMA2_Channel6_IRQHandler(void);
+void DMA2_Channel7_IRQHandler(void);
 
 #ifdef __cplusplus
 }

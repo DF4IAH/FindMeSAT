@@ -58,6 +58,8 @@
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
+#include <cmsis_os.h>
+#include "FreeRTOS.h"
 
 /* USER CODE END Includes */
 
@@ -76,6 +78,9 @@ void MX_UART5_Init(void);
 void MX_USART3_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
+void HAL_UART_TxCpltCallback(UART_HandleTypeDef *UartHandle);
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *UartHandle);
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *UartHandle);
 
 /* USER CODE END Prototypes */
 

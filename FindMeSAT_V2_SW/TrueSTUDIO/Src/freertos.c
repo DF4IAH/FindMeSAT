@@ -83,6 +83,7 @@ osMessageQId sensorsOutQueueHandle;
 osMessageQId sensorsInQueueHandle;
 osMessageQId interOutQueueHandle;
 osTimerId controllerSendTimerHandle;
+osTimerId gpscomtRXTimerHandle;
 osSemaphoreId usbToHostBinarySemHandle;
 osSemaphoreId trackMeApplUpDataBinarySemHandle;
 osSemaphoreId trackMeApplDownDataBinarySemHandle;
@@ -111,6 +112,7 @@ void StartLoraTask(void const * argument);
 void StartGpscomTask(void const * argument);
 void StartSensorsTask(void const * argument);
 void controllerSendTimerCallback(void const * argument);
+void gpscomtRXTimerCallback(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -219,9 +221,14 @@ void MX_FREERTOS_Init(void) {
   osTimerDef(controllerSendTimer, controllerSendTimerCallback);
   controllerSendTimerHandle = osTimerCreate(osTimer(controllerSendTimer), osTimerPeriodic, NULL);
 
+  /* definition and creation of gpscomtRXTimer */
+  osTimerDef(gpscomtRXTimer, gpscomtRXTimerCallback);
+  gpscomtRXTimerHandle = osTimerCreate(osTimer(gpscomtRXTimer), osTimerPeriodic, NULL);
+
   /* USER CODE BEGIN RTOS_TIMERS */
   /* start timers, add new ones, ... */
   vTimerSetTimerID(controllerSendTimerHandle, "controllerSendTmr");
+  vTimerSetTimerID(gpscomtRXTimerHandle, "gpscomRXTmr");
 
   /* USER CODE END RTOS_TIMERS */
 
@@ -247,11 +254,11 @@ void MX_FREERTOS_Init(void) {
   interpreterTaskHandle = osThreadCreate(osThread(interpreterTask), NULL);
 
   /* definition and creation of loraTask */
-  osThreadDef(loraTask, StartLoraTask, osPriorityRealtime, 0, 1024);
+  osThreadDef(loraTask, StartLoraTask, osPriorityHigh, 0, 1024);
   loraTaskHandle = osThreadCreate(osThread(loraTask), NULL);
 
   /* definition and creation of gpscomTask */
-  osThreadDef(gpscomTask, StartGpscomTask, osPriorityAboveNormal, 0, 128);
+  osThreadDef(gpscomTask, StartGpscomTask, osPriorityRealtime, 0, 1024);
   gpscomTaskHandle = osThreadCreate(osThread(gpscomTask), NULL);
 
   /* definition and creation of sensorsTask */
@@ -305,19 +312,17 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE BEGIN RTOS_QUEUES */
   /* add queues, ... */
-  vQueueAddToRegistry(usbToHostQueueHandle,     "USBtoHostQ");
-  vQueueAddToRegistry(usbToHostBinarySemHandle, "USBtoHostEG");
-  vQueueAddToRegistry(usbToHostBinarySemHandle, "USBtoHost");
-  vQueueAddToRegistry(usbFromHostQueueHandle,   "USBfromHostQ");
-  vQueueAddToRegistry(usbToHostBinarySemHandle, "USBfromHostBSem");
-  vQueueAddToRegistry(loraInQueueHandle,        "loraInQ");
-  vQueueAddToRegistry(loraOutQueueHandle,       "loraOutQ");
-  vQueueAddToRegistry(loraMacQueueHandle,       "loraMacQ");
-  vQueueAddToRegistry(gpscomInQueueHandle,      "gpscomInQ");
-  vQueueAddToRegistry(gpscomOutQueueHandle,     "gpscomOutQ");
-  vQueueAddToRegistry(sensorsInQueueHandle,     "sensorsInQ");
-  vQueueAddToRegistry(sensorsOutQueueHandle,    "sensorsOutQ");
-  vQueueAddToRegistry(interOutQueueHandle,      "interOutQ");
+  vQueueAddToRegistry(usbToHostQueueHandle,       "USBtoHostQ");
+  vQueueAddToRegistry(usbToHostBinarySemHandle,   "USBtoHostBSem");
+  vQueueAddToRegistry(usbFromHostQueueHandle,     "USBfromHostQ");
+  vQueueAddToRegistry(loraInQueueHandle,          "loraInQ");
+  vQueueAddToRegistry(loraOutQueueHandle,         "loraOutQ");
+  vQueueAddToRegistry(loraMacQueueHandle,         "loraMacQ");
+  vQueueAddToRegistry(gpscomInQueueHandle,        "gpscomInQ");
+  vQueueAddToRegistry(gpscomOutQueueHandle,       "gpscomOutQ");
+  vQueueAddToRegistry(sensorsInQueueHandle,       "sensorsInQ");
+  vQueueAddToRegistry(sensorsOutQueueHandle,      "sensorsOutQ");
+  vQueueAddToRegistry(interOutQueueHandle,        "interOutQ");
   /* USER CODE END RTOS_QUEUES */
 }
 
@@ -467,6 +472,14 @@ void controllerSendTimerCallback(void const * argument)
   /* USER CODE BEGIN controllerSendTimerCallback */
   controllerSendTimerCallbackImpl((TimerHandle_t) argument);
   /* USER CODE END controllerSendTimerCallback */
+}
+
+/* gpscomtRXTimerCallback function */
+void gpscomtRXTimerCallback(void const * argument)
+{
+  /* USER CODE BEGIN gpscomtRXTimerCallback */
+  gpscomtRXTimerCallbackImpl((TimerHandle_t) argument);
+  /* USER CODE END gpscomtRXTimerCallback */
 }
 
 /* USER CODE BEGIN Application */
