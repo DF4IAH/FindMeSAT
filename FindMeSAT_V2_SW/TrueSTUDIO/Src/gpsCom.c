@@ -7,6 +7,8 @@
 
 #include <sys/_stdint.h>
 #include <string.h>
+#include <stdlib.h>
+#include <math.h>
 #include "stm32l4xx_hal.h"
 #include "cmsis_os.h"
 #include "FreeRTOS.h"
@@ -24,11 +26,15 @@ extern osTimerId            gpscomtRXTimerHandle;
 extern EventGroupHandle_t   gpscomEventGroupHandle;
 extern UART_HandleTypeDef*  usartHuart3;
 
+
+GpscomGpsCtx_t              gpscomGpsCtx                      = { };
+
+
 static uint8_t              gpscomGpsTxDmaBuf[128]            = { 0 };
 
 static uint16_t             gpscomGpsRxDmaBufLast             = 0;
 static uint16_t             gpscomGpsRxDmaBufIdx              = 0;
-static uint8_t              gpscomGpsRxDmaBuf[128]            = { 0 };
+static uint8_t              gpscomGpsRxDmaBuf[2048]           = { 0 };
 
 static uint8_t              gpscomGpsRxLineBufIdx             = 0;
 static uint8_t              gpscomGpsRxLineBuf[128]           = { 0 };
@@ -36,13 +42,224 @@ static uint8_t              gpscomGpsRxLineBuf[128]           = { 0 };
 
 /* Global functions ----------------------------------------------------------*/
 
+static float prvGpscomCalc_NmeaLonLat_float(float dddmm, uint8_t indicator)
+{
+  float latLon_deg  = floor(dddmm / 100.);
+  float latLon_min  = dddmm - (latLon_deg * 100.);
+
+  latLon_deg += latLon_min / 60.;
+
+  /* Sign reversal */
+  if ((indicator == 'W') || (indicator == 'S')) {
+    latLon_deg = -latLon_deg;
+  }
+
+  return latLon_deg;
+}
+
+static uint8_t prvGpscomNmeaChecksum(char* outBuf, const uint8_t* inBuf, uint16_t len)
+{
+  char l_crcPad[3] = { 0 };
+
+  if ((len > 10) && inBuf) {
+    const uint16_t starIdx = len - 5;
+
+    if (*(inBuf + starIdx) == '*') {
+      uint8_t sum = 0;
+
+      for (uint16_t idx = 1; idx < starIdx; idx++) {
+        sum ^= *(inBuf + idx);
+      }
+      sprintf(l_crcPad, "%02X", sum);
+
+      if (outBuf) {
+        memcpy(outBuf, l_crcPad, 2);
+      }
+      return ((l_crcPad[0] == inBuf[starIdx + 1]) && (l_crcPad[1] == inBuf[starIdx + 2])) ?  1 : 0;
+    }
+  }
+  return 0;
+}
+
+static uint16_t prvGpscomNmeaParserStringParser__forwardColon(const char* inBuf, uint16_t inLen, uint16_t inBufIdx)
+{
+  char c = *(inBuf + inBufIdx++);
+
+  /* Forward to next colon */
+  while (c != ',') {
+    if (inBufIdx >= inLen) {
+      return min(inBufIdx, inLen);
+    }
+
+    c = *(inBuf + inBufIdx++);
+  }
+
+  /* Return one position after the colon */
+  return inBufIdx;
+}
+
+static HAL_StatusTypeDef prvGpscomNmeaParserStringParser(const char* inBuf, uint16_t inLen, const char* fmtAry, float* fAry, int32_t* iAry, uint8_t* bAry)
+{
+  const uint8_t fmtLen  = strlen(fmtAry);
+  uint8_t       fmtIdx  = 0;
+  uint16_t      inIdx   = 0U;
+  uint8_t       fAryIdx = 0U;
+  uint8_t       iAryIdx = 0U;
+  uint8_t       bAryIdx = 0U;
+
+  while (fmtIdx < fmtLen) {
+    char fmt = *(fmtAry + fmtIdx++);
+
+    switch (fmt) {
+    case 'f':
+      {
+        /* Floating point */
+        {
+          float f = atoff(inBuf + inIdx);
+          fAry[fAryIdx++] = f;
+        }
+
+        inIdx = prvGpscomNmeaParserStringParser__forwardColon(inBuf, inLen, inIdx);
+      }
+      break;
+
+    case 'i':
+      {
+        /* integer */
+        {
+          int i = atoi(inBuf + inIdx);
+          iAry[iAryIdx++] = i;
+        }
+
+        inIdx = prvGpscomNmeaParserStringParser__forwardColon(inBuf, inLen, inIdx);
+      }
+      break;
+
+    case 'b':
+      {
+        /* byte */
+        if (inIdx < inLen) {
+          uint8_t b = *(((uint8_t*) inBuf) + inIdx++);
+          if (b != ',') {
+            bAry[bAryIdx++] = b;
+            inIdx++;
+
+          } else {
+            bAry[bAryIdx++] = 0U;
+          }
+        }
+      }
+      break;
+
+    default:
+      /* Bad format identifier */
+      return HAL_ERROR;
+    }
+  }
+  return HAL_OK;
+}
+
+static void prvGpscomNmeaParser__GGA(const char* buf, uint16_t len)
+{
+  float   fAry[8] = { 0. };
+  int32_t iAry[8] = { 0L };
+  uint8_t bAry[8] = { 0U };
+  uint8_t fIdx = 0, iIdx = 0, bIdx = 0;
+
+  prvGpscomNmeaParserStringParser(buf + 7, len - 7, "ffbfbiiffbfbii", fAry, iAry, bAry);
+
+  xSemaphoreTake(gpscomGpsCtxMutex, portMAX_DELAY);
+  {
+    gpscomGpsCtx.time     = fAry[fIdx++];
+    gpscomGpsCtx.lat_deg  = prvGpscomCalc_NmeaLonLat_float(fAry[fIdx++], bAry[bIdx++]);
+    gpscomGpsCtx.lon_deg  = prvGpscomCalc_NmeaLonLat_float(fAry[fIdx++], bAry[bIdx++]);
+    gpscomGpsCtx.mode     = (GpsMode_t) iAry[iIdx++];
+    gpscomGpsCtx.satsUse  = iAry[iIdx++];
+    // TODO: . . .
+  }
+  xSemaphoreGive(gpscomGpsCtxMutex);
+
+  __asm volatile( "ISB" );
+}
+
+static void prvGpscomNmeaParser__GLL(const char* buf, uint16_t len)
+{
+}
+
+static void prvGpscomNmeaParser__GSA(const char* buf, uint16_t len)
+{
+}
+
+static void prvGpscomNmeaParser__GSV(const char* buf, uint16_t len)
+{
+}
+
+static void prvGpscomNmeaParser__RMC(const char* buf, uint16_t len)
+{
+}
+
+static void prvGpscomNmeaParser__VTG(const char* buf, uint16_t len)
+{
+}
+
+static void prvGpscomNmeaParser__PMT(const char* buf, uint16_t len)
+{
+}
+
+static void prvGpscomNmeaParser(const char* buf, uint16_t len)
+{
+  if        ((!strncmp(buf + 1, "GPGGA", 5)) ||
+             (!strncmp(buf + 1, "GNGGA", 5))) {
+    /* Global Positioning System Fix Data */
+    prvGpscomNmeaParser__GGA(buf, len);
+
+  } else if ((!strncmp(buf + 1, "GPGLL", 5)) ||
+             (!strncmp(buf + 1, "GNGLL", 5))) {
+    /* GLL - Geographic Position - Latitude / Longitude */
+    prvGpscomNmeaParser__GLL(buf, len);
+
+  } else if ((!strncmp(buf + 1, "GPGSA", 5)) ||
+             (!strncmp(buf + 1, "GNGSA", 5))) {
+    /* GSA - GNSS DOP and Active Satellites */
+    prvGpscomNmeaParser__GSA(buf, len);
+
+  } else if ((!strncmp(buf + 1, "GPGSV", 5)) ||
+             (!strncmp(buf + 1, "GLGSV", 5))) {
+    /* GSV - GNSS Satellites in View */
+    prvGpscomNmeaParser__GSV(buf, len);
+
+  } else if ((!strncmp(buf + 1, "GPRMC", 5)) ||
+             (!strncmp(buf + 1, "GNRMC", 5))) {
+    /* RMC - Recommended Minimum Specific GNSS Data */
+    prvGpscomNmeaParser__RMC(buf, len);
+
+  } else if ( !strncmp(buf + 1, "GPVTG", 5)) {
+    /* VTG - Course Over Ground and Ground Speed */
+    prvGpscomNmeaParser__VTG(buf, len);
+
+  } else if (!strncmp(buf + 1, "PMT", 3)) {
+    /* System response messages */
+    prvGpscomNmeaParser__PMT(buf, len);
+  }
+}
+
 static void prvGpscomInterpreter(const uint8_t* buf, uint16_t len)
 {
-  char l_buf[32];
+  uint8_t chkVld = prvGpscomNmeaChecksum(NULL, buf, len);
 
+#if 1
   /* Debugging */
-  int l_len = sprintf(l_buf, "%c%c%c%c - len=%3u\r\n", buf[0], buf[1], buf[2], buf[3], len);
-  usbLogLen((const char*) l_buf, l_len);
+  {
+    char  l_buf[64];
+    int   l_len = sprintf(l_buf, "%c%c%c%c%c%c ... %c%c%c - len=%3u   valid=%u\r\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5],  buf[len - 5], buf[len - 4], buf[len - 3], len, chkVld);
+
+    usbLogLen(l_buf, l_len);
+  }
+#endif
+
+  if (chkVld) {
+    prvGpscomNmeaParser((const char*) buf, len);
+  }
 }
 
 static void prvGpscomGpsTX(const uint8_t* cmdBuf, uint8_t cmdLen)
@@ -75,52 +292,57 @@ static void prvGpscomGpsTX(const uint8_t* cmdBuf, uint8_t cmdLen)
 
 static void prvGpscomGpsServiceRX(void)
 {
-  /* Find last written byte */
-  gpscomGpsRxDmaBufIdx = gpscomGpsRxDmaBufLast + strnlen((char*)gpscomGpsRxDmaBuf + gpscomGpsRxDmaBufLast, sizeof(gpscomGpsRxDmaBuf) - gpscomGpsRxDmaBufLast);
+  taskDISABLE_INTERRUPTS();
 
-  /* Slice DMA buffer data to the line buffer */
-  while (gpscomGpsRxDmaBufLast < gpscomGpsRxDmaBufIdx) {
-    char c;
+  /* Interrupt locked block */
+  {
+    /* Find last written byte */
+    gpscomGpsRxDmaBufIdx = gpscomGpsRxDmaBufLast + strnlen((char*)gpscomGpsRxDmaBuf + gpscomGpsRxDmaBufLast, sizeof(gpscomGpsRxDmaBuf) - gpscomGpsRxDmaBufLast);
 
-    /* Byte copy */
-    gpscomGpsRxLineBuf[gpscomGpsRxLineBufIdx++] = c = gpscomGpsRxDmaBuf[gpscomGpsRxDmaBufLast];
-    gpscomGpsRxDmaBuf[gpscomGpsRxDmaBufLast++]  = 0;
+    /* Slice DMA buffer data to the line buffer */
+    while (gpscomGpsRxDmaBufLast < gpscomGpsRxDmaBufIdx) {
+      char c;
 
-    /* Process line buffer after line feed (LF) */
-    if (c == '\n' || gpscomGpsRxLineBufIdx == sizeof(gpscomGpsRxLineBuf)) {
-      uint8_t buf[ sizeof(gpscomGpsRxLineBuf) ];
-      uint8_t len;
+      /* Byte copy */
+      gpscomGpsRxLineBuf[gpscomGpsRxLineBufIdx++] = c = gpscomGpsRxDmaBuf[gpscomGpsRxDmaBufLast];
+      gpscomGpsRxDmaBuf[gpscomGpsRxDmaBufLast++]  = 0;
 
-      /* Create a work copy of the line buffer - DMA disabled block */
-      {
-        //HAL_UART_DMAPause(usartUart5Handle);
-        taskENTER_CRITICAL();
+      /* Process line buffer after line feed (LF) */
+      if (c == '\n' || gpscomGpsRxLineBufIdx == sizeof(gpscomGpsRxLineBuf)) {
+        uint8_t buf[ sizeof(gpscomGpsRxLineBuf) ];
+        uint8_t len;
 
-        /* Make a work copy */
-        len = gpscomGpsRxLineBufIdx;
-        memcpy(buf, gpscomGpsRxLineBuf, len);
+        /* Create a work copy of the line buffer - DMA disabled block */
+        {
+          /* Make a work copy */
+          len = gpscomGpsRxLineBufIdx;
+          memcpy(buf, gpscomGpsRxLineBuf, len);
 
-        /* Clear the line buffer */
-        gpscomGpsRxLineBufIdx = 0;
-        memset(gpscomGpsRxLineBuf, 0, sizeof(gpscomGpsRxLineBuf));
+          /* Clear the line buffer */
+          gpscomGpsRxLineBufIdx = 0;
+          memset(gpscomGpsRxLineBuf, 0, sizeof(gpscomGpsRxLineBuf));
+        }
 
-        //HAL_UART_DMAResume(usartUart5Handle);
-        taskEXIT_CRITICAL();
+        /* Work on line buffer content */
+        prvGpscomInterpreter(buf, len);
       }
+    }
 
-      /* Work on line buffer content */
-      prvGpscomInterpreter(buf, len);
+    /* Loop around */
+    if (gpscomGpsRxDmaBufLast >= sizeof(gpscomGpsRxDmaBuf)) {
+      gpscomGpsRxDmaBufLast = 0U;
     }
   }
 
-  if (gpscomGpsRxDmaBufIdx >= sizeof(gpscomGpsRxDmaBuf)) {
-    gpscomGpsRxDmaBufLast = gpscomGpsRxDmaBufIdx = 0U;
-  }
+  taskENABLE_INTERRUPTS();
 }
 
 static void prvGpscomGpsRX(void)
 {
   const uint16_t dmaBufSize = sizeof(gpscomGpsRxDmaBuf);
+
+  /* Reset working indexes */
+  gpscomGpsRxDmaBufLast = gpscomGpsRxDmaBufIdx = 0U;
 
   /* Start RX DMA */
   if (HAL_UART_Receive_DMA(usartHuart3, gpscomGpsRxDmaBuf, dmaBufSize) != HAL_OK)

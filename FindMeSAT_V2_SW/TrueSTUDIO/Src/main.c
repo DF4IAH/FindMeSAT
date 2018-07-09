@@ -527,7 +527,7 @@ void  vApplicationIdleHook(void)
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);                                    // Blue on
 #endif
 
-  /* Go into sleep mode */
+  /* Enter sleep mode */
   __asm volatile( "WFI" );
 
 #ifdef LED_IDLE_DEBUG
