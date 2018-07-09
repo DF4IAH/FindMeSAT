@@ -23,11 +23,12 @@ extern osThreadId           gpsComTaskHandle;
 extern osMessageQId         gpscomInQueueHandle;
 extern osMessageQId         gpscomOutQueueHandle;
 extern osTimerId            gpscomtRXTimerHandle;
+extern osMutexId            gpscomCtxMutexHandle;
 extern EventGroupHandle_t   gpscomEventGroupHandle;
 extern UART_HandleTypeDef*  usartHuart3;
 
 
-GpscomGpsCtx_t              gpscomGpsCtx                      = { };
+volatile GpscomGpsCtx_t     gpscomGpsCtx                      = { 0 };
 
 
 static uint8_t              gpscomGpsTxDmaBuf[128]            = { 0 };
@@ -114,21 +115,27 @@ static HAL_StatusTypeDef prvGpscomNmeaParserStringParser(const char* inBuf, uint
     case 'f':
       {
         /* Floating point */
-        {
+        if (*(inBuf + inIdx) != ',') {
           float f = atoff(inBuf + inIdx);
           fAry[fAryIdx++] = f;
+          inIdx = prvGpscomNmeaParserStringParser__forwardColon(inBuf, inLen, inIdx);
+
+        } else {
+          fAry[fAryIdx++] = 0.f;
         }
 
-        inIdx = prvGpscomNmeaParserStringParser__forwardColon(inBuf, inLen, inIdx);
       }
       break;
 
     case 'i':
       {
         /* integer */
-        {
+        if (*(inBuf + inIdx) != ',') {
           int i = atoi(inBuf + inIdx);
           iAry[iAryIdx++] = i;
+
+        } else {
+          iAry[iAryIdx++] = 0;
         }
 
         inIdx = prvGpscomNmeaParserStringParser__forwardColon(inBuf, inLen, inIdx);
@@ -161,41 +168,229 @@ static HAL_StatusTypeDef prvGpscomNmeaParserStringParser(const char* inBuf, uint
 
 static void prvGpscomNmeaParser__GGA(const char* buf, uint16_t len)
 {
-  float   fAry[8] = { 0. };
-  int32_t iAry[8] = { 0L };
-  uint8_t bAry[8] = { 0U };
+  float   fAry[6] = { 0. };
+  int32_t iAry[4] = { 0L };
+  uint8_t bAry[4] = { 0U };
   uint8_t fIdx = 0, iIdx = 0, bIdx = 0;
 
   prvGpscomNmeaParserStringParser(buf + 7, len - 7, "ffbfbiiffbfbii", fAry, iAry, bAry);
 
-  xSemaphoreTake(gpscomGpsCtxMutex, portMAX_DELAY);
+  /* Try to get the mutex within that short time or drop the message */
+  if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, GpscomNmeaDataMutexWaitMax / portTICK_PERIOD_MS))
   {
     gpscomGpsCtx.time     = fAry[fIdx++];
     gpscomGpsCtx.lat_deg  = prvGpscomCalc_NmeaLonLat_float(fAry[fIdx++], bAry[bIdx++]);
     gpscomGpsCtx.lon_deg  = prvGpscomCalc_NmeaLonLat_float(fAry[fIdx++], bAry[bIdx++]);
-    gpscomGpsCtx.mode     = (GpsMode_t) iAry[iIdx++];
+    gpscomGpsCtx.piv      = (GpsPosIndicatorValues_t) iAry[iIdx++];
     gpscomGpsCtx.satsUse  = iAry[iIdx++];
-    // TODO: . . .
-  }
-  xSemaphoreGive(gpscomGpsCtxMutex);
+    gpscomGpsCtx.hdop     = fAry[fIdx++];
+    gpscomGpsCtx.alt_m    = fAry[fIdx++];
 
-  __asm volatile( "ISB" );
+    /* Give mutex back */
+    xSemaphoreGive(gpscomCtxMutexHandle);
+  }
 }
 
 static void prvGpscomNmeaParser__GLL(const char* buf, uint16_t len)
 {
+  float   fAry[3] = { 0. };
+  int32_t iAry[0] = {    };
+  uint8_t bAry[4] = { 0U };
+  uint8_t fIdx = 0, /* iIdx = 0, */ bIdx = 0;
+
+  prvGpscomNmeaParserStringParser(buf + 7, len - 7, "fbfbfbb", fAry, iAry, bAry);
+
+  /* Try to get the mutex within that short time or drop the message */
+  if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, GpscomNmeaDataMutexWaitMax / portTICK_PERIOD_MS))
+  {
+    // TODO: function not verified, yet!
+    //memset(&gpscomGpsCtx, 0, sizeof(gpscomGpsCtx));    // TODO: remove me!
+
+    gpscomGpsCtx.lat_deg  = prvGpscomCalc_NmeaLonLat_float(fAry[fIdx++], bAry[bIdx++]);
+    gpscomGpsCtx.lon_deg  = prvGpscomCalc_NmeaLonLat_float(fAry[fIdx++], bAry[bIdx++]);
+    gpscomGpsCtx.time     = fAry[fIdx++];
+
+    const char status     = bAry[bIdx++];
+    gpscomGpsCtx.status   = (status == 'A') ?  GpsStatus__valid : (status == 'V') ?  GpsStatus__notValid : gpscomGpsCtx.status;
+
+    const char mode       = bAry[bIdx++];
+    switch (mode) {
+    case 'A':
+      gpscomGpsCtx.mode   = GpsMode__A_Autonomous;
+      break;
+
+    case 'D':
+      gpscomGpsCtx.mode   = GpsMode__D_DGPS;
+      break;
+
+    case 'N':
+      gpscomGpsCtx.mode   = GpsMode__N_DatNotValid;
+      break;
+
+    case 'R':
+      gpscomGpsCtx.mode   = GpsMode__R_CoarsePosition;
+      break;
+
+    case 'S':
+      gpscomGpsCtx.mode   = GpsMode__S_Simulator;
+      break;
+
+    default:
+      { /* Skip setting */ }
+    }
+
+    /* Give mutex back */
+    xSemaphoreGive(gpscomCtxMutexHandle);
+  }
 }
 
 static void prvGpscomNmeaParser__GSA(const char* buf, uint16_t len)
 {
+  float   fAry[ 3] = { 0. };
+  int32_t iAry[13] = { 0L };
+  uint8_t bAry[ 1] = { 0U };
+  uint8_t fIdx = 0, iIdx = 0, bIdx = 0;
+
+  prvGpscomNmeaParserStringParser(buf + 7, len - 7, "biiiiiiiiiiiiifff", fAry, iAry, bAry);
+
+  /* Try to get the mutex within that short time or drop the message */
+  if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, GpscomNmeaDataMutexWaitMax / portTICK_PERIOD_MS))
+  {
+    /* Status and modes */
+    const char mode1      = bAry[bIdx++];
+    gpscomGpsCtx.mode1    = (mode1 == 'A') ?  GpsMode1__A_Automatic : (mode1 == 'M') ?  GpsMode1__M_Manual : gpscomGpsCtx.mode1;
+    gpscomGpsCtx.mode2    = (GpsMode2_t) iAry[iIdx++];
+
+#if 0  // Done by GSV
+    /* Satellite receiver channels */
+    for (uint8_t ch = 1; ch <= Gps_Rcvr_Channels; ch++) {
+      gpscomGpsCtx.sv[ch - 1] = iAry[iIdx++];
+    }
+#endif
+
+    /* Dilution of precision */
+    gpscomGpsCtx.pdop     = fAry[fIdx++];
+    gpscomGpsCtx.hdop     = fAry[fIdx++];
+    gpscomGpsCtx.vdop     = fAry[fIdx++];
+
+    /* Give mutex back */
+    xSemaphoreGive(gpscomCtxMutexHandle);
+  }
 }
 
 static void prvGpscomNmeaParser__GSV(const char* buf, uint16_t len)
 {
+  float   fAry[ 0] = {    };
+  int32_t iAry[19] = { 0L };
+  uint8_t bAry[ 0] = {    };
+  uint8_t /* fIdx = 0, */ iIdx = 0 /*, bIdx = 0 */ ;
+
+  prvGpscomNmeaParserStringParser(buf + 7, len - 7, "iiiiiiiiiiiiiiiiiii", fAry, iAry, bAry);
+
+  /* Try to get the mutex within that short time or drop the message */
+  if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, GpscomNmeaDataMutexWaitMax / portTICK_PERIOD_MS))
+  {
+    /* Pages */
+    const int32_t pages     = iAry[iIdx++];
+    const int32_t thisPage  = iAry[iIdx++];
+    gpscomGpsCtx.satsView   = iAry[iIdx++];
+
+    /* Sanity check */
+    if (thisPage < 1 || thisPage > pages) {
+      return;
+    }
+
+    /* Satellite channels (GPS / GLONASS) */
+    {
+      uint8_t chStart = 0;
+      uint8_t chEnd   = 0;
+      if (buf[2] == 'P') {
+        /* GPS entries */
+        chStart =  1 + ((thisPage - 1) << 2);
+        chEnd   =  min((thisPage << 2), gpscomGpsCtx.satsView);
+
+      } else if (buf[2] == 'N') {
+        /* GLONASS entries */
+        chStart = Gps_Channels + 1 + ((thisPage - 1) << 2);
+        chEnd   = Gps_Channels + min((thisPage << 2), gpscomGpsCtx.satsView);
+      }
+
+      if (chStart && chEnd) {
+        /* All channels in use */
+        for (uint8_t ch = chStart; ch <= chEnd; ch++) {
+          gpscomGpsCtx.sv   [ch - 1]  = iAry[iIdx++];
+          gpscomGpsCtx.sElev[ch - 1]  = iAry[iIdx++];
+          gpscomGpsCtx.sAzim[ch - 1]  = iAry[iIdx++];
+          gpscomGpsCtx.sSNR [ch - 1]  = iAry[iIdx++];
+        }
+      }
+    }
+
+    /* Give mutex back */
+    xSemaphoreGive(gpscomCtxMutexHandle);
+  }
 }
 
 static void prvGpscomNmeaParser__RMC(const char* buf, uint16_t len)
 {
+  float   fAry[5] = { 0. };
+  int32_t iAry[2] = { 0L };
+  uint8_t bAry[5] = { 0U };
+  uint8_t fIdx = 0, iIdx = 0, bIdx = 0;
+
+  prvGpscomNmeaParserStringParser(buf + 7, len - 7, "fbfbfbffiibb", fAry, iAry, bAry);
+
+  /* Try to get the mutex within that short time or drop the message */
+  if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, GpscomNmeaDataMutexWaitMax / portTICK_PERIOD_MS))
+  {
+    gpscomGpsCtx.time       = fAry[fIdx++];
+
+    const char status       = bAry[bIdx++];
+    gpscomGpsCtx.status     = (status == 'A') ?  GpsStatus__valid : (status == 'V') ?  GpsStatus__notValid : gpscomGpsCtx.status;
+
+    gpscomGpsCtx.lat_deg    = prvGpscomCalc_NmeaLonLat_float(fAry[fIdx++], bAry[bIdx++]);
+    gpscomGpsCtx.lon_deg    = prvGpscomCalc_NmeaLonLat_float(fAry[fIdx++], bAry[bIdx++]);
+
+    gpscomGpsCtx.speed_kts  = fAry[fIdx++];
+    gpscomGpsCtx.course_deg = fAry[fIdx++];
+
+    gpscomGpsCtx.date       = iAry[iIdx++];
+
+    const int32_t magVar    = iAry[iIdx++];
+    (void) magVar;
+
+    const uint8_t magSen    = bAry[bIdx++];
+    (void) magSen;
+
+    const char mode         = bAry[bIdx++];
+    switch (mode) {
+    case 'A':
+      gpscomGpsCtx.mode     = GpsMode__A_Autonomous;
+      break;
+
+    case 'D':
+      gpscomGpsCtx.mode     = GpsMode__D_DGPS;
+      break;
+
+    case 'N':
+      gpscomGpsCtx.mode     = GpsMode__N_DatNotValid;
+      break;
+
+    case 'R':
+      gpscomGpsCtx.mode     = GpsMode__R_CoarsePosition;
+      break;
+
+    case 'S':
+      gpscomGpsCtx.mode     = GpsMode__S_Simulator;
+      break;
+
+    default:
+      { /* Skip setting */ }
+    }
+
+    /* Give mutex back */
+    xSemaphoreGive(gpscomCtxMutexHandle);
+  }
 }
 
 static void prvGpscomNmeaParser__VTG(const char* buf, uint16_t len)

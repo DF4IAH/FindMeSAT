@@ -84,9 +84,10 @@ osMessageQId sensorsInQueueHandle;
 osMessageQId interOutQueueHandle;
 osTimerId controllerSendTimerHandle;
 osTimerId gpscomtRXTimerHandle;
+osMutexId gpscomCtxMutexHandle;
+osMutexId trackMeApplUpDataMutexHandle;
+osMutexId trackMeApplDnDataMutexHandle;
 osSemaphoreId usbToHostBinarySemHandle;
-osSemaphoreId trackMeApplUpDataBinarySemHandle;
-osSemaphoreId trackMeApplDownDataBinarySemHandle;
 
 /* USER CODE BEGIN Variables */
 extern uint8_t usbFromHostISRBuf[64];
@@ -187,6 +188,19 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE END Init */
 
+  /* Create the mutex(es) */
+  /* definition and creation of gpscomCtxMutex */
+  osMutexDef(gpscomCtxMutex);
+  gpscomCtxMutexHandle = osMutexCreate(osMutex(gpscomCtxMutex));
+
+  /* definition and creation of trackMeApplUpDataMutex */
+  osMutexDef(trackMeApplUpDataMutex);
+  trackMeApplUpDataMutexHandle = osMutexCreate(osMutex(trackMeApplUpDataMutex));
+
+  /* definition and creation of trackMeApplDnDataMutex */
+  osMutexDef(trackMeApplDnDataMutex);
+  trackMeApplDnDataMutexHandle = osMutexCreate(osMutex(trackMeApplDnDataMutex));
+
   /* USER CODE BEGIN RTOS_MUTEX */
   /* add mutexes, ... */
   /* USER CODE END RTOS_MUTEX */
@@ -195,14 +209,6 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of usbToHostBinarySem */
   osSemaphoreDef(usbToHostBinarySem);
   usbToHostBinarySemHandle = osSemaphoreCreate(osSemaphore(usbToHostBinarySem), 1);
-
-  /* definition and creation of trackMeApplUpDataBinarySem */
-  osSemaphoreDef(trackMeApplUpDataBinarySem);
-  trackMeApplUpDataBinarySemHandle = osSemaphoreCreate(osSemaphore(trackMeApplUpDataBinarySem), 1);
-
-  /* definition and creation of trackMeApplDownDataBinarySem */
-  osSemaphoreDef(trackMeApplDownDataBinarySem);
-  trackMeApplDownDataBinarySemHandle = osSemaphoreCreate(osSemaphore(trackMeApplDownDataBinarySem), 1);
 
   /* USER CODE BEGIN RTOS_SEMAPHORES */
   /* add semaphores, ... */

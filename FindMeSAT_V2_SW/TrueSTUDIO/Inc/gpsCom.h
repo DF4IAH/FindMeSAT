@@ -30,7 +30,18 @@ typedef enum gpscomInQueueCmds {
 } gpscomInQueueCmds_t;
 
 
-#define Gps_Channels                  16
+#define Gps_Rcvr_Channels             12
+#define Gps_Channels                  24
+
+typedef enum GpsPosIndicatorValues {
+ GpsPosInd__0_FixNotAvailable         = 0,
+ GpsPosInd__1_GPS_SPS_Mode_FixValid,
+ GpsPosInd__2_DGPS_SPS_Mode_FixValid,
+ GpsPosInd__3_NotSupported,
+ GpsPosInd__4_NotSupported,
+ GpsPosInd__5_NotSupported,
+ GpsPosInd__6_DeadReck_FixValid
+} GpsPosIndicatorValues_t;
 
 typedef enum GpsStatus {
   GpsStatus__notValid                 = 0,
@@ -58,14 +69,17 @@ typedef enum GpsMode2 {
 } GpsMode2_t;
 
 
+#define GpscomNmeaDataMutexWaitMax    5                                                         // 5 ms at most to wait for the NMEA data mutex
+
 typedef struct GpscomGpsCtx {
 
   /* Last timestamp */
   float                               time;
-  int32_t                             data;
+  int32_t                             date;
 
   /* Status and modes */
   GpsStatus_t                         status;
+  GpsPosIndicatorValues_t             piv;
   GpsMode_t                           mode;
   GpsMode1_t                          mode1;
   GpsMode2_t                          mode2;
@@ -88,11 +102,11 @@ typedef struct GpscomGpsCtx {
   uint8_t                             satsUse;
   uint8_t                             satsView;
 
-  /* Channel array */
-  int32_t                             sv[Gps_Channels];
-  int32_t                             sElev[Gps_Channels];
-  int32_t                             sAzim[Gps_Channels];
-  int32_t                             sSNR[Gps_Channels];
+  /* Channel array - GPS (12ch), GLONASS (12ch) */
+  int32_t                             sv[   Gps_Channels << 1];
+  int32_t                             sElev[Gps_Channels << 1];
+  int32_t                             sAzim[Gps_Channels << 1];
+  int32_t                             sSNR[ Gps_Channels << 1];
 
 } GpscomGpsCtx_t;
 

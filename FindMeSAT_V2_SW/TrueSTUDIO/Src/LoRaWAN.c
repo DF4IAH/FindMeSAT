@@ -33,8 +33,8 @@ extern uint8_t              spi1RxBuffer[SPI1_BUFFERSIZE];
 extern osMessageQId         loraInQueueHandle;
 extern osMessageQId         loraOutQueueHandle;
 extern osMessageQId         loraMacQueueHandle;
-extern osSemaphoreId        trackMeApplUpDataBinarySemHandle;
-extern osSemaphoreId        trackMeApplDownDataBinarySemHandle;
+extern osMutexId            trackMeApplUpDataMutexHandle;
+extern osMutexId            trackMeApplDnDataMutexHandle;
 extern EventGroupHandle_t   loraEventGroupHandle;
 extern EventGroupHandle_t   controllerEventGroupHandle;
 
@@ -622,18 +622,22 @@ static void LoRaWAN_QueueIn_Process(void)
       {
         /* Prepare data to upload */
         {
-          /* Wait for semaphore to access LoRaWAN TrackMeApp */
-          osSemaphoreWait(trackMeApplUpDataBinarySemHandle, 0);
+          /* Take mutex to access LoRaWAN TrackMeApp */
+          if (pdTRUE == xSemaphoreTake(trackMeApplUpDataMutexHandle, 500 / portTICK_PERIOD_MS)) {
+            /* Marshal data for upload */
+            loRaWanTxMsg.msg_prep_FRMPayload_Len = LoRaWAN_marshalling_PayloadCompress_TrackMeAppUp(loRaWanTxMsg.msg_prep_FRMPayload_Buf, &trackMeApp_up);
 
-          /* Marshal data for upload */
-          loRaWanTxMsg.msg_prep_FRMPayload_Len = LoRaWAN_marshalling_PayloadCompress_TrackMeAppUp(loRaWanTxMsg.msg_prep_FRMPayload_Buf, &trackMeApp_up);
+            /* Give back mutex */
+            xSemaphoreGive(trackMeApplUpDataMutexHandle);
 
-          /* Free semaphore */
-          osSemaphoreRelease(trackMeApplUpDataBinarySemHandle);
+            /* Prepare to transmit data buffer */
+            LoRaWAN_QueueIn_Process__Fsm_TX();
+
+          } else {
+            /* No luck, abort plan to transmit */
+            loRaWANctx.FsmState = Fsm_NOP;
+          }
         }
-
-        /* Prepare to transmit data buffer */
-        LoRaWAN_QueueIn_Process__Fsm_TX();
       }
       break;
 

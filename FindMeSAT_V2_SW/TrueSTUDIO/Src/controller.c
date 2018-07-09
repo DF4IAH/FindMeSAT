@@ -34,10 +34,10 @@ extern osMessageQId         sensorsInQueueHandle;
 extern osMessageQId         sensorsOutQueueHandle;
 extern osMessageQId         interOutQueueHandle;
 extern osTimerId            controllerSendTimerHandle;
+extern osMutexId            trackMeApplUpDataMutexHandle;
+extern osMutexId            trackMeApplDnDataMutexHandle;
 extern osSemaphoreId        usbToHostBinarySemHandle;
 extern osSemaphoreId        trackMeApplUpBinarySemHandle;
-extern osSemaphoreId        trackMeApplUpDataBinarySemHandle;
-extern osSemaphoreId        trackMeApplDownDataBinarySemHandle;
 extern EventGroupHandle_t   usbToHostEventGroupHandle;
 extern EventGroupHandle_t   loraEventGroupHandle;
 extern EventGroupHandle_t   controllerEventGroupHandle;
@@ -267,54 +267,56 @@ void prvControllerGetDataAndUpload(void)
   const  float  humidityAmpl  = 100.0f;  // +/- 10%
   static float  simPhase      =   0.0f;
 
-  /* Wait for semaphore to access LoRaWAN TrackMeApp */
-  osSemaphoreWait(trackMeApplUpDataBinarySemHandle, 0);
+  /* Take mutex to access LoRaWAN TrackMeApp */
+  if (pdTRUE == xSemaphoreTake(trackMeApplUpDataMutexHandle, 500 / portTICK_PERIOD_MS)) {
+    /* Fill in data to send */
+    {
+      /* TTN Mapper entities */
+      trackMeApp_up.latitude_deg      = centerLat + ((radius_m / (60.f * 1852.f)) * sin(simPhase * PI/180));
+      trackMeApp_up.longitude_deg     = centerLon + ((radius_m / (60.f * 1852.f)) * cos(simPhase * PI/180) / cos(2*PI * centerLat));
+      trackMeApp_up.altitude_m        = centerAlt + sin(simPhase * PI/180) * heightAmpl_m;
+      trackMeApp_up.accuracy_10thM    = centerAcc + sin(simPhase * PI/180) * 2.0f;
 
-  /* Fill in data to send */
-  {
-    /* TTN Mapper entities */
-    trackMeApp_up.latitude_deg      = centerLat + ((radius_m / (60.f * 1852.f)) * sin(simPhase * PI/180));
-    trackMeApp_up.longitude_deg     = centerLon + ((radius_m / (60.f * 1852.f)) * cos(simPhase * PI/180) / cos(2*PI * centerLat));
-    trackMeApp_up.altitude_m        = centerAlt + sin(simPhase * PI/180) * heightAmpl_m;
-    trackMeApp_up.accuracy_10thM    = centerAcc + sin(simPhase * PI/180) * 2.0f;
+      /* Motion vector entities */
+      trackMeApp_up.course_deg        = (uint8_t) (360U - (uint16_t)simPhase);
+      trackMeApp_up.speed_m_s         = 2*PI*radius_m * (30.f / 360.f);
+      trackMeApp_up.vertspeed_m_s     = cos(simPhase * PI/180) * height_m_p_s;
 
-    /* Motion vector entities */
-    trackMeApp_up.course_deg        = (uint8_t) (360U - (uint16_t)simPhase);
-    trackMeApp_up.speed_m_s         = 2*PI*radius_m * (30.f / 360.f);
-    trackMeApp_up.vertspeed_m_s     = cos(simPhase * PI/180) * height_m_p_s;
+      /* Weather entities */
+      trackMeApp_up.temp_100th_C      = adcGetTemp_100();
+      trackMeApp_up.humitidy_1000th   = (uint16_t) (500 + sin(simPhase * PI/180) * humidityAmpl);
+      trackMeApp_up.baro_Pa           = 101325;
 
-    /* Weather entities */
-    trackMeApp_up.temp_100th_C      = adcGetTemp_100();
-    trackMeApp_up.humitidy_1000th   = (uint16_t) (500 + sin(simPhase * PI/180) * humidityAmpl);
-    trackMeApp_up.baro_Pa           = 101325;
-
-    /* System entities */
-    trackMeApp_up.vbat_mV           = adcGetVbat_mV();
-    trackMeApp_up.ibat_uA           = -1000;  // drawing from the battery
+      /* System entities */
+      trackMeApp_up.vbat_mV           = adcGetVbat_mV();
+      trackMeApp_up.ibat_uA           = -1000;  // drawing from the battery
 
 
-    /* Simulator phase increment - each 10 secs */
-    simPhase += 30.f;
-    if (simPhase > 359.9f) {
-      simPhase = 0.f;
-    }
-  }
-
-  /* Free semaphore */
-  osSemaphoreRelease(trackMeApplUpDataBinarySemHandle);
-  __asm volatile( "ISB" );
-
-  /* Signal to take-over data and do upload */
-  {
-    const uint8_t c_msgToLoRaWAN[2] = { 1, LoraInQueueCmds__TrackMeApplUp };
-
-    /* Write message into loraInQueue */
-    for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
-      xQueueSendToBack(loraInQueueHandle, c_msgToLoRaWAN + idx, Controller_MaxWaitMs);
+      /* Simulator phase increment - each 10 secs */
+      simPhase += 30.f;
+      if (simPhase > 359.9f) {
+        simPhase = 0.f;
+      }
     }
 
-    /* Set QUEUE_IN bit */
-    xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
+    /* Free semaphore */
+    xSemaphoreGive(trackMeApplUpDataMutexHandle);
+
+    /* Signal to take-over data and do upload */
+    {
+      const uint8_t c_msgToLoRaWAN[2] = { 1, LoraInQueueCmds__TrackMeApplUp };
+
+      /* Write message into loraInQueue */
+      for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
+        xQueueSendToBack(loraInQueueHandle, c_msgToLoRaWAN + idx, Controller_MaxWaitMs);
+      }
+
+      /* Set QUEUE_IN bit */
+      xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
+    }
+
+  } else {
+    /* Without luck to fill in data, abort plan to transfer */
   }
 }
 
