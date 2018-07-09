@@ -29,6 +29,12 @@ typedef enum gpscomInQueueCmds {
   gpscomInQueueCmds__NOP              = 0,
 } gpscomInQueueCmds_t;
 
+/* Command types for the gpscomOutQueue */
+typedef enum gpscomOutQueueCmds {
+  gpscomOutQueueCmds__NOP             = 0,
+  gpscomOutQueueCmds__EndOfParse,
+} gpscomOutQueueCmds_t;
+
 
 #define Gps_Rcvr_Channels             12
 #define Gps_Channels                  24
@@ -83,6 +89,7 @@ typedef struct GpscomGpsCtx {
   GpsMode_t                           mode;
   GpsMode1_t                          mode1;
   GpsMode2_t                          mode2;
+  int32_t                             bootMsg;
 
   /* 3D position */
   float                               lat_deg;

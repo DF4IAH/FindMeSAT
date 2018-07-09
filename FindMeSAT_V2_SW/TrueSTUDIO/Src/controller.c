@@ -19,6 +19,7 @@
 #include "adc.h"
 #include "spi.h"
 #include "LoRaWAN.h"
+#include "gpsCom.h"
 
 #include "controller.h"
 
@@ -36,6 +37,7 @@ extern osMessageQId         interOutQueueHandle;
 extern osTimerId            controllerSendTimerHandle;
 extern osMutexId            trackMeApplUpDataMutexHandle;
 extern osMutexId            trackMeApplDnDataMutexHandle;
+extern osMutexId            gpscomCtxMutexHandle;
 extern osSemaphoreId        usbToHostBinarySemHandle;
 extern osSemaphoreId        trackMeApplUpBinarySemHandle;
 extern EventGroupHandle_t   usbToHostEventGroupHandle;
@@ -43,6 +45,7 @@ extern EventGroupHandle_t   loraEventGroupHandle;
 extern EventGroupHandle_t   controllerEventGroupHandle;
 
 extern LoRaWANctx_t         loRaWANctx;
+extern GpscomGpsCtx_t       gpscomGpsCtx;
 
 /* Application data for track_me */
 extern TrackMeApp_up_t      trackMeApp_up;
@@ -105,7 +108,7 @@ void prvControllerInitBeforeGreet(void)
 
   /* Check for attached SX127x_mbed_shield */
   if (HAL_OK == spiDetectShieldSX127x()) {
-#if 0
+#if 1
     /* Send INIT message to the LoRaWAN task */
     const uint8_t c_maxWaitMs = 25;
     const uint8_t c_msgToLoRaWAN[2] = { 1, LoraInQueueCmds__Init };
@@ -255,8 +258,12 @@ void prvControllerPrintMCU(void)
 }
 
 
+// #define GPS_SIMU
+// #define WEATHER_SIMU
+// #define CURRENT_SIMU
 void prvControllerGetDataAndUpload(void)
 {
+#ifdef GPS_SIMU
   const  float  centerLat     =  49.473185f;
   const  float  centerLon     =   8.614806f;
   const  float  centerAlt     =  98.0f;
@@ -266,11 +273,14 @@ void prvControllerGetDataAndUpload(void)
   const  float  height_m_p_s  =   0.1f;
   const  float  humidityAmpl  = 100.0f;  // +/- 10%
   static float  simPhase      =   0.0f;
+#endif
 
   /* Take mutex to access LoRaWAN TrackMeApp */
   if (pdTRUE == xSemaphoreTake(trackMeApplUpDataMutexHandle, 500 / portTICK_PERIOD_MS)) {
     /* Fill in data to send */
     {
+#ifdef GPS_SIMU
+      // This part is done by the gpsCom module
       /* TTN Mapper entities */
       trackMeApp_up.latitude_deg      = centerLat + ((radius_m / (60.f * 1852.f)) * sin(simPhase * PI/180));
       trackMeApp_up.longitude_deg     = centerLon + ((radius_m / (60.f * 1852.f)) * cos(simPhase * PI/180) / cos(2*PI * centerLat));
@@ -281,22 +291,28 @@ void prvControllerGetDataAndUpload(void)
       trackMeApp_up.course_deg        = (uint8_t) (360U - (uint16_t)simPhase);
       trackMeApp_up.speed_m_s         = 2*PI*radius_m * (30.f / 360.f);
       trackMeApp_up.vertspeed_m_s     = cos(simPhase * PI/180) * height_m_p_s;
+#endif
 
+#ifdef WEATHER_SIMU
       /* Weather entities */
       trackMeApp_up.temp_100th_C      = adcGetTemp_100();
       trackMeApp_up.humitidy_1000th   = (uint16_t) (500 + sin(simPhase * PI/180) * humidityAmpl);
       trackMeApp_up.baro_Pa           = 101325;
+#endif
 
       /* System entities */
       trackMeApp_up.vbat_mV           = adcGetVbat_mV();
+#ifdef CURRENT_SIMU
       trackMeApp_up.ibat_uA           = -1000;  // drawing from the battery
+#endif
 
-
+#ifdef GPS_SIMU
       /* Simulator phase increment - each 10 secs */
       simPhase += 30.f;
       if (simPhase > 359.9f) {
         simPhase = 0.f;
       }
+#endif
     }
 
     /* Free semaphore */
@@ -316,7 +332,7 @@ void prvControllerGetDataAndUpload(void)
     }
 
   } else {
-    /* Without luck to fill in data, abort plan to transfer */
+    /* No luck filling in current data - abort plan to upload data */
   }
 }
 
@@ -439,6 +455,61 @@ void prvPullFromLoraOutQueue(void)
   } while (!xQueueIsQueueEmptyFromISR(loraOutQueueHandle));
 }
 
+void prvPullFromGpscomOutQueue(void)
+{
+  BaseType_t  xStatus;
+  uint8_t     inAry[4]  = { 0 };
+  uint8_t     inLen     = 0;
+
+  do {
+    xStatus = xQueueReceive(gpscomOutQueueHandle, &inLen, 1);
+    if (pdPASS == xStatus) {
+      for (uint8_t idx = 0; idx < inLen; idx++) {
+        xStatus = xQueueReceive(gpscomOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
+        if (pdFALSE == xStatus) {
+          /* Bad communication - drop */
+          return;
+        }
+      }
+    }
+
+    switch (inAry[0]) {
+    case gpscomOutQueueCmds__EndOfParse:
+      {
+        /* Take over data important for the track_me App*/
+        /* Try to get the mutex within that short time or drop the message */
+        if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, 100 / portTICK_PERIOD_MS))
+        {
+          const float lat_deg         = gpscomGpsCtx.lat_deg;
+          const float lon_deg         = gpscomGpsCtx.lon_deg;
+          const float alt_m           = gpscomGpsCtx.alt_m;
+          const float accuracy_10thM  = gpscomGpsCtx.hdop * 71.f;
+          const float course_deg      = gpscomGpsCtx.course_deg;
+          const float speed_m_s       = gpscomGpsCtx.speed_kts * 1.852f / 3.6f;
+
+          /* Give mutex back */
+          xSemaphoreGive(gpscomCtxMutexHandle);
+
+          /* Try to get trackMeApplUpData mutex */
+          if (pdTRUE == xSemaphoreTake(trackMeApplUpDataMutexHandle, 100 / portTICK_PERIOD_MS))
+          {
+            trackMeApp_up.latitude_deg    = lat_deg;
+            trackMeApp_up.longitude_deg   = lon_deg;
+            trackMeApp_up.altitude_m      = alt_m;
+            trackMeApp_up.accuracy_10thM  = accuracy_10thM;
+            trackMeApp_up.course_deg      = course_deg;
+            trackMeApp_up.speed_m_s       = speed_m_s;
+
+            /* Give mutex back */
+            xSemaphoreGive(gpscomCtxMutexHandle);
+          }
+        }
+      }
+      break;
+    }  // switch
+  } while (!xQueueIsQueueEmptyFromISR(gpscomOutQueueHandle));
+}
+
 
 /* Global functions ----------------------------------------------------------*/
 void controllerSendTimerCallbackImpl(TimerHandle_t xTimer)
@@ -469,7 +540,7 @@ void controllerControllerTaskLoop(void)
 {
   /* Keep controllerEventGroupHandle for 25 ms */
   EventBits_t eb = xEventGroupWaitBits(controllerEventGroupHandle,
-      Controller_EGW__INTER_QUEUE_OUT | Controller_EGW__LORA_QUEUE_OUT | Controller_EGW__INTER_SENS_DO_SEND,
+      Controller_EGW__INTER_QUEUE_OUT | Controller_EGW__LORA_QUEUE_OUT | Controller_EGW__GPSCOM_QUEUE_OUT | Controller_EGW__INTER_SENS_DO_SEND,
       0,
       0, 25 / portTICK_PERIOD_MS);
 
@@ -481,6 +552,11 @@ void controllerControllerTaskLoop(void)
   if (eb & Controller_EGW__LORA_QUEUE_OUT) {
     xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__LORA_QUEUE_OUT);
     prvPullFromLoraOutQueue();
+  }
+
+  if (eb & Controller_EGW__GPSCOM_QUEUE_OUT) {
+    xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__GPSCOM_QUEUE_OUT);
+    prvPullFromGpscomOutQueue();
   }
 
   if (eb & Controller_EGW__INTER_SENS_DO_SEND) {

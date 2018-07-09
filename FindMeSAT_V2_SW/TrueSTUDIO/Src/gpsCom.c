@@ -14,6 +14,7 @@
 #include "FreeRTOS.h"
 #include "main.h"
 #include "usb.h"
+#include "controller.h"
 
 #include "gpsCom.h"
 
@@ -25,6 +26,8 @@ extern osMessageQId         gpscomOutQueueHandle;
 extern osTimerId            gpscomtRXTimerHandle;
 extern osMutexId            gpscomCtxMutexHandle;
 extern EventGroupHandle_t   gpscomEventGroupHandle;
+extern EventGroupHandle_t   controllerEventGroupHandle;
+
 extern UART_HandleTypeDef*  usartHuart3;
 
 
@@ -41,7 +44,28 @@ static uint8_t              gpscomGpsRxLineBufIdx             = 0;
 static uint8_t              gpscomGpsRxLineBuf[128]           = { 0 };
 
 
-/* Global functions ----------------------------------------------------------*/
+/* Local functions ----------------------------------------------------------*/
+
+static void prvGpscom_QueueOut_Process(gpscomOutQueueCmds_t cmd)
+{
+  switch (cmd) {
+  case gpscomOutQueueCmds__EndOfParse:
+    {
+      const uint8_t c_qM[2] = { 1, gpscomOutQueueCmds__EndOfParse };
+
+      for (uint8_t idx = 0; idx < sizeof(c_qM); idx++) {
+        xQueueSendToBack(gpscomOutQueueHandle, c_qM + idx, 5 / portTICK_PERIOD_MS);
+      }
+
+      /* Set QUEUE_OUT bit */
+      xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__GPSCOM_QUEUE_OUT);
+    }
+    break;
+
+  default:
+    { /* Nothing to be done */ }
+  }  // switch (cmd)
+}
 
 static float prvGpscomCalc_NmeaLonLat_float(float dddmm, uint8_t indicator)
 {
@@ -309,8 +333,9 @@ static void prvGpscomNmeaParser__GSV(const char* buf, uint16_t len)
         chStart =  1 + ((thisPage - 1) << 2);
         chEnd   =  min((thisPage << 2), gpscomGpsCtx.satsView);
 
-      } else if (buf[2] == 'N') {
-        /* GLONASS entries */
+      } else if (buf[2] == 'N' ||
+                 buf[2] == 'D') {
+        /* GLONASS / BEIDOU entries */
         chStart = Gps_Channels + 1 + ((thisPage - 1) << 2);
         chEnd   = Gps_Channels + min((thisPage << 2), gpscomGpsCtx.satsView);
       }
@@ -395,10 +420,105 @@ static void prvGpscomNmeaParser__RMC(const char* buf, uint16_t len)
 
 static void prvGpscomNmeaParser__VTG(const char* buf, uint16_t len)
 {
+  float   fAry[4] = { 0. };
+  int32_t iAry[0] = {    };
+  uint8_t bAry[5] = { 0U };
+  uint8_t fIdx = 0, /* iIdx = 0, */ bIdx = 0;
+
+  prvGpscomNmeaParserStringParser(buf + 7, len - 7, "fbfbfbfbb", fAry, iAry, bAry);
+
+  /* Try to get the mutex within that short time or drop the message */
+  if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, GpscomNmeaDataMutexWaitMax / portTICK_PERIOD_MS))
+  {
+    // TODO: function not verified, yet!
+    //memset(&gpscomGpsCtx, 0, sizeof(gpscomGpsCtx));    // TODO: remove me!
+
+    gpscomGpsCtx.course_deg = fAry[fIdx++];
+    const uint8_t cRef1     = bAry[bIdx++];
+    (void) cRef1;
+
+    const float c2          = fAry[fIdx++];
+    const uint8_t cRef2     = bAry[bIdx++];
+    (void) c2;
+    (void) cRef2;
+
+    gpscomGpsCtx.speed_kts  = fAry[fIdx++];
+    const uint8_t spdU      = bAry[bIdx++];
+    (void) spdU;
+
+    const float   spd2      = fAry[fIdx++];
+    const uint8_t spdU2     = bAry[bIdx++];
+    (void) spd2;
+    (void) spdU2;
+
+    const char mode         = bAry[bIdx++];
+    switch (mode) {
+    case 'A':
+      gpscomGpsCtx.mode     = GpsMode__A_Autonomous;
+      break;
+
+    case 'D':
+      gpscomGpsCtx.mode     = GpsMode__D_DGPS;
+      break;
+
+    case 'N':
+      gpscomGpsCtx.mode     = GpsMode__N_DatNotValid;
+      break;
+
+    case 'R':
+      gpscomGpsCtx.mode     = GpsMode__R_CoarsePosition;
+      break;
+
+    case 'S':
+      gpscomGpsCtx.mode     = GpsMode__S_Simulator;
+      break;
+
+    default:
+      { /* Skip setting */ }
+    }
+
+    /* Give mutex back */
+    xSemaphoreGive(gpscomCtxMutexHandle);
+  }
+}
+
+static void prvGpscomNmeaParser__TXT(const char* buf, uint16_t len)
+{
+
+#if 0
+  /* Try to get the mutex within that short time or drop the message */
+  if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, GpscomNmeaDataMutexWaitMax / portTICK_PERIOD_MS))
+  {
+
+    /* Give mutex back */
+    xSemaphoreGive(gpscomCtxMutexHandle);
+  }
+#endif
+
+  /* Last NMEA data of a second processed - send end of parse to controller */
+  prvGpscom_QueueOut_Process(gpscomOutQueueCmds__EndOfParse);
 }
 
 static void prvGpscomNmeaParser__PMT(const char* buf, uint16_t len)
 {
+  float   fAry[0] = {    };
+  int32_t iAry[1] = { 0  };
+  uint8_t bAry[0] = {    };
+  uint8_t /* fIdx = 0, */ iIdx = 0 /*,  bIdx = 0 */ ;
+
+  if (!strncmp(buf + 1, "PMTK010", 7)) {
+    prvGpscomNmeaParserStringParser(buf + 7, len - 7, "i", fAry, iAry, bAry);
+
+    /* Try to get the mutex within that short time or drop the message */
+    if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, GpscomNmeaDataMutexWaitMax / portTICK_PERIOD_MS))
+    {
+      const int32_t msg     = iAry[iIdx++];
+      gpscomGpsCtx.bootMsg  = msg;
+
+      /* Give mutex back */
+      xSemaphoreGive(gpscomCtxMutexHandle);
+    }
+  }
 }
 
 static void prvGpscomNmeaParser(const char* buf, uint16_t len)
@@ -414,12 +534,14 @@ static void prvGpscomNmeaParser(const char* buf, uint16_t len)
     prvGpscomNmeaParser__GLL(buf, len);
 
   } else if ((!strncmp(buf + 1, "GPGSA", 5)) ||
-             (!strncmp(buf + 1, "GNGSA", 5))) {
+             (!strncmp(buf + 1, "GNGSA", 5)) ||
+             (!strncmp(buf + 1, "BDGSA", 5))) {
     /* GSA - GNSS DOP and Active Satellites */
     prvGpscomNmeaParser__GSA(buf, len);
 
   } else if ((!strncmp(buf + 1, "GPGSV", 5)) ||
-             (!strncmp(buf + 1, "GLGSV", 5))) {
+             (!strncmp(buf + 1, "GLGSV", 5)) ||
+             (!strncmp(buf + 1, "BDGSV", 5))) {
     /* GSV - GNSS Satellites in View */
     prvGpscomNmeaParser__GSV(buf, len);
 
@@ -432,17 +554,22 @@ static void prvGpscomNmeaParser(const char* buf, uint16_t len)
     /* VTG - Course Over Ground and Ground Speed */
     prvGpscomNmeaParser__VTG(buf, len);
 
+  } else if ( !strncmp(buf + 1, "GPTXT", 5)) {
+    /* VTG - Course Over Ground and Ground Speed */
+    prvGpscomNmeaParser__TXT(buf, len);
+
   } else if (!strncmp(buf + 1, "PMT", 3)) {
     /* System response messages */
     prvGpscomNmeaParser__PMT(buf, len);
   }
 }
 
+// #define NMEA_DEBUG
 static void prvGpscomInterpreter(const uint8_t* buf, uint16_t len)
 {
   uint8_t chkVld = prvGpscomNmeaChecksum(NULL, buf, len);
 
-#if 1
+#ifdef NMEA_DEBUG
   /* Debugging */
   {
     char  l_buf[64];
@@ -549,6 +676,8 @@ static void prvGpscomGpsRX(void)
   xEventGroupSetBits(gpscomEventGroupHandle, Gpscom_EGW__DMA_RX_RUN);
 }
 
+
+/* Global functions ----------------------------------------------------------*/
 
 void gpscomtRXTimerCallbackImpl(TimerHandle_t argument)
 {
