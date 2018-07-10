@@ -18,6 +18,7 @@
 #include "usb.h"
 #include "gpsCom.h"
 #include "LoRaWAN.h"
+#include "tim.h"
 #include "spi.h"
 #include "adc.h"
 
@@ -55,8 +56,10 @@ extern LoraliveApp_up_t     loraliveApp_up;
 extern LoraliveApp_down_t   loraliveApp_down;
 
 extern uint32_t             g_tim5_CCR2;
+extern int32_t              g_tim5_ofs;
 
-const uint16_t              Controller_MaxWaitMs              = 100;
+
+const  uint16_t             Controller_MaxWaitMs              = 100;
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -262,12 +265,14 @@ void prvControllerPrintMCU(void)
 
 void prvTimeService(void)
 {
+  static uint8_t    ofsHoldOff  = 0U;
   static uint32_t   pps_last    = 0UL;
   static uint8_t    trim_last   = 0x40U;
-  uint32_t          trim_new    = trim_last;
-  uint32_t          icscr       = RCC->ICSCR;
   const uint32_t    pps_tc      = g_tim5_CCR2;
-  const uint32_t    pps_span    = pps_tc > pps_last ?  pps_tc - pps_last : (960000000UL + pps_tc) - pps_last;
+  const uint32_t    pps_span    = pps_tc > pps_last ?  pps_tc - pps_last : (tim5_reloadValue + pps_tc) - pps_last;  // HSI16 correction
+  float             gnss_time   = 0.f;
+  uint32_t          trim_new    = trim_last;
+  const uint32_t    icscr       = RCC->ICSCR;
   char              logBuf[128];
 
   uint32_t  tc_s  =  pps_tc / 16000000UL;
@@ -294,18 +299,54 @@ void prvTimeService(void)
     }
   }
 
-  int logLen = sprintf(logBuf, "\r\n*** PPS TC=%3lu.%07lu, Span=%lu - RCC_ICSCR=0x%08lx\r\n", tc_s, tc_mu, pps_span, icscr);
-
   /* Write back trimmed value */
   if (trim_last != trim_new)
   {
-    trim_last   = trim_new;
+    uint32_t icscr_new = icscr;
 
-    icscr      &= 0x0000ff00UL;
-    icscr      |= ((uint32_t) trim_new) << 24U;
-    RCC->ICSCR  = icscr;
+    icscr_new  &= 0x0000ff00UL;
+    icscr_new  |= ((uint32_t) trim_new) << 24U;
+    RCC->ICSCR  = icscr_new;
+
+    trim_last = trim_new;
   }
 
+  /* Access GNSS time */
+  if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, 5 / portTICK_PERIOD_MS))
+  {
+    gnss_time = gpscomGpsCtx.time;
+
+    /* Give mutex back */
+    xSemaphoreGive(gpscomCtxMutexHandle);
+  }
+
+  /* Correct TIM5 timer when offset is more than it could easily be trimmed away */
+  uint8_t  realtime_secs  = 0U;
+  if (gnss_time) {
+    uint32_t gnss_time_ul = (uint32_t) gnss_time;
+    realtime_secs         = (uint8_t) (((++gnss_time_ul) % 100UL) % 60UL);
+
+    /* PPS timer offset correction hold of timer */
+    if (ofsHoldOff) {
+      --ofsHoldOff;
+    }
+
+    /* Avoid corrections at the start of a minute */
+    if (realtime_secs > 3 && !ofsHoldOff) {
+      uint32_t pps_should  = realtime_secs * 16000000UL;
+      int32_t  pps_offset  = pps_should - pps_tc;
+
+      /* Adjust when abs(offset) > 5 ms */
+      if ((abs(pps_offset) > 160000L) && !g_tim5_ofs) {
+        g_tim5_ofs = pps_offset;
+
+        /* Do not touch for this number of seconds */
+        ofsHoldOff = 5;
+      }
+    }
+  }
+
+  int logLen = sprintf(logBuf, "\r\n*** PPS TC=%3lu.%07lu, Span=%lu - RCC_ICSCR=0x%08lx - GNSS_secs=%02u\r\n", tc_s, tc_mu, pps_span, icscr, realtime_secs);
   usbLogLen(logBuf, logLen);
 }
 

@@ -60,8 +60,8 @@
 
 extern EventGroupHandle_t   controllerEventGroupHandle;
 
-
 uint32_t                    g_tim5_CCR2                       = 0UL;
+int32_t                     g_tim5_ofs                        = 0L;
 
 /* USER CODE END 0 */
 
@@ -185,7 +185,21 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 
     /* Set current value to the read out structure */
     {
-      g_tim5_CCR2 = ts;
+      /* Correct read-out value */
+      if (g_tim5_ofs >= 0) {
+        g_tim5_CCR2 = (ts > g_tim5_ofs) ?  ts - g_tim5_ofs : (ts + tim5_reloadValue) - g_tim5_ofs;
+
+      } else {
+        const uint32_t l_m  = -g_tim5_ofs;
+        g_tim5_CCR2         = (ts + l_m) % tim5_reloadValue;
+      }
+
+      /* Offset correction gets activated 1 second later */
+      if (g_tim5_ofs) {
+        htim->Instance->CNT  += g_tim5_ofs;
+        g_tim5_ofs            = 0L;
+      }
+
       if (controllerEventGroupHandle) {
         xEventGroupSetBitsFromISR(controllerEventGroupHandle, Controller_EGW__TIM_PPS, &higherPriorityTaskWOken);
       }

@@ -64,6 +64,7 @@
 extern TIM_HandleTypeDef htim5;
 
 /* USER CODE BEGIN Private defines */
+#define tim5_reloadValue                                      (HSI_VALUE * 60UL)
 
 /* USER CODE END Private defines */
 
