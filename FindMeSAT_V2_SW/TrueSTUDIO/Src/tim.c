@@ -53,6 +53,15 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN 0 */
+#include "FreeRTOS.h"
+#include "cmsis_os.h"
+#include "controller.h"
+
+
+extern EventGroupHandle_t   controllerEventGroupHandle;
+
+
+uint32_t                    g_tim5_CCR2                       = 0UL;
 
 /* USER CODE END 0 */
 
@@ -68,7 +77,7 @@ void MX_TIM5_Init(void)
   htim5.Instance = TIM5;
   htim5.Init.Prescaler = 0;
   htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim5.Init.Period = 1200000000;
+  htim5.Init.Period = 960000000;
   htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
   if (HAL_TIM_Base_Init(&htim5) != HAL_OK)
@@ -122,8 +131,8 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     */
     GPIO_InitStruct.Pin = GPS_1PPS_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF2_TIM5;
     HAL_GPIO_Init(GPS_1PPS_GPIO_Port, &GPIO_InitStruct);
 
@@ -142,6 +151,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
   if(tim_baseHandle->Instance==TIM5)
   {
   /* USER CODE BEGIN TIM5_MspDeInit 0 */
+    HAL_TIM_IC_Stop_IT(tim_baseHandle, TIM_CHANNEL_2);
 
   /* USER CODE END TIM5_MspDeInit 0 */
     /* Peripheral clock disable */
@@ -161,6 +171,27 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
 } 
 
 /* USER CODE BEGIN 1 */
+/**
+  * @brief  Input Capture callback in non-blocking mode
+  * @param  htim TIM IC handle
+  * @retval None
+  */
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+  BaseType_t higherPriorityTaskWOken = 0UL;
+
+  if (htim->Channel == HAL_TIM_ACTIVE_CHANNEL_2) {
+    const uint32_t ts = htim->Instance->CCR2;
+
+    /* Set current value to the read out structure */
+    {
+      g_tim5_CCR2 = ts;
+      if (controllerEventGroupHandle) {
+        xEventGroupSetBitsFromISR(controllerEventGroupHandle, Controller_EGW__TIM_PPS, &higherPriorityTaskWOken);
+      }
+    }
+  }
+}
 
 /* USER CODE END 1 */
 

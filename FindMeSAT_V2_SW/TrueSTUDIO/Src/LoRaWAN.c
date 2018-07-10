@@ -1834,7 +1834,7 @@ static void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
 
 //#define DEBUG_RX_TIMING
 
-static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t diffToTxStartMs, uint32_t diffToTxStopMs)
+static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t diffToTxStartMs, uint32_t diffToTxStop1Ms, uint32_t diffToTxStop2Ms)
 {
 #ifdef DEBUG_RX_TIMING
   uint32_t rxBeginTs    = xTaskGetTickCount();
@@ -1874,7 +1874,7 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
     {
       /* Turn on receiver continuously and wait for the next message */
       spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
-      spiSX127x_WaitUntil_RxDone(ctx, msg, ctx->TsEndOfTx + diffToTxStopMs);
+      spiSX127x_WaitUntil_RxDone(ctx, msg, ctx->TsEndOfTx + diffToTxStop1Ms, ctx->TsEndOfTx + diffToTxStop2Ms);
 
       /* After the RX time decide whether to be able for changing the frequency quickly or to turn the receiver off */
       spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | ((ctx->Current_RXTX_Window == CurWin_RXTX2 ?  FSRX : STANDBY)));
@@ -2064,8 +2064,9 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX1(void)
 
     /* Gateway response after DELAY1 at RX1 - switch on receiver */
     LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg,
-        LORAWAN_EU868_DELAY1_MS - LORAWAN_RX_PREPARE_MS,
-        LORAWAN_EU868_DELAY2_MS - LORAWAN_FRQ_HOPPING_MS);                                      // Same frequency and SF as during transmission
+        LORAWAN_EU868_DELAY1_MS -  LORAWAN_RX_PREPARE_MS,
+        LORAWAN_EU868_DELAY2_MS - (LORAWAN_RX_PREPARE_MS + LORAWAN_FRQ_JUMP_PREPARE_MS),
+        LORAWAN_EU868_DELAY1_MS +  LORAWAN_EU868_MAX_TX_DURATION_MS);                           // Same frequency and SF as during transmission
 
     if (loRaWanRxMsg.msg_encoded_Len == 0) {
       /* Listen to next window */
@@ -2098,8 +2099,9 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX2(void)
 
     /* Gateway response after DELAY2 at RX2 */
     LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg,
-        LORAWAN_EU868_DELAY2_MS - LORAWAN_RX_PREPARE_MS,
-        LORAWAN_EU868_DELAY2_MS + LORAWAN_EU868_MAX_TX_DURATION_MS - LORAWAN_FRQ_HOPPING_MS);
+        LORAWAN_EU868_DELAY2_MS -  LORAWAN_RX_PREPARE_MS,
+        LORAWAN_EU868_DELAY2_MS + (LORAWAN_EU868_DELAY2_MS - LORAWAN_EU868_DELAY1_MS),
+        LORAWAN_EU868_DELAY2_MS +  LORAWAN_EU868_MAX_TX_DURATION_MS);
 
     if (loRaWanRxMsg.msg_encoded_Len == 0) {
       /* No message received - try again if packet is of confirmed type */
@@ -2188,12 +2190,13 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX1(void)
 
     /* Receive on RX1 frequency */
     LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg,
-        LORAWAN_EU868_JOIN_ACCEPT_DELAY1_MS - LORAWAN_RX_PREPARE_MS,
-        LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS - LORAWAN_FRQ_HOPPING_MS);                          // Same frequency and SF as during transmission
+        LORAWAN_EU868_JOIN_ACCEPT_DELAY1_MS -  LORAWAN_RX_PREPARE_MS,
+        LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS - (LORAWAN_FRQ_JUMP_PREPARE_MS + LORAWAN_RX_PREPARE_MS),
+        LORAWAN_EU868_JOIN_ACCEPT_DELAY1_MS +  LORAWAN_EU868_MAX_TX_DURATION_MS);               // Same frequency and SF as during transmission
 
     if (loRaWanRxMsg.msg_encoded_Len == 0) {
       /* Receive response at JOINREQUEST_RX2 */
-      loRaWANctx.FsmState             = Fsm_JoinRequestRX2;
+      loRaWANctx.FsmState = Fsm_JoinRequestRX2;
 
     } else {
       /* USB: info */
@@ -2224,8 +2227,9 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX2(void)
 
     /* Listen on RX2 frequency */
     LoRaWAN_RX_msg(&loRaWANctx, &loRaWanRxMsg,
-        LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS - LORAWAN_RX_PREPARE_MS,
-        LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS + LORAWAN_EU868_MAX_TX_DURATION_MS - LORAWAN_FRQ_HOPPING_MS);
+        LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS -  LORAWAN_RX_PREPARE_MS,
+        LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS + (LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS - LORAWAN_EU868_JOIN_ACCEPT_DELAY1_MS),
+        LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS +  LORAWAN_EU868_MAX_TX_DURATION_MS);
 
     if (loRaWanRxMsg.msg_encoded_Len == 0) {
       usbLog("LoRaWAN: Failed to RX.\r\n\r\n");

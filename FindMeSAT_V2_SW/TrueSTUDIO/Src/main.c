@@ -86,9 +86,11 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-static GPIO_InitTypeDef  GPIO_InitStruct;
-volatile uint32_t	g_timer_us = 0;
-volatile uint32_t	g_timerStart_us = 0;
+extern TIM_HandleTypeDef    htim5;
+
+static GPIO_InitTypeDef     GPIO_InitStruct;
+volatile uint32_t	          g_timer_us                        = 0;
+volatile uint32_t	          g_timerStart_us                   = 0;
 
 /* USER CODE END PV */
 
@@ -198,6 +200,9 @@ int main(void)
   MX_CRC_Init();
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  /* Enable 1PPS time capture on TIM5/Channel2 */
+  HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2);
 
   /* Enable external SMPS for Vdd12 */
   SMPS_Init();

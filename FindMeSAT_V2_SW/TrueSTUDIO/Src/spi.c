@@ -829,6 +829,7 @@ uint32_t spiSX127x_WaitUntil_TxDone(uint32_t stopTime)
 
 
 //#define DEBUG_RX
+//#define DEBUG_RX2
 //#define DEBUG_RX_TIMING
 
 #ifdef DEBUG_RX
@@ -928,18 +929,20 @@ static void spiSX127x_WaitUntil__RX_analyzer(LoRaWANctx_t* ctx, uint32_t now, ui
 }
 #endif
 
-void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t stopTime)
+void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t stopTime1, uint32_t stopTime2)
 {
-  EventBits_t           eb              = 0UL;
   uint8_t               irq;
   uint32_t              now             = xTaskGetTickCount();
 //uint8_t               modemStat       = 0;
   uint8_t               packetSnr       = 0;
   uint8_t               packetRssi      = 0;
   uint8_t               rssi            = 0;
+  uint8_t               validHdr        = 0;
 
-#ifdef DEBUG_RX_TIMING
+#ifdef DEBUG_RX
   static uint8_t        entryCntr       = 0;
+#endif
+#ifdef DEBUG_RX_TIMING
   uint32_t              rxWaitStartTs   = 0UL;
   uint32_t              rxCadDetTs      = 0UL;
   uint32_t              rxCadDoneTs     = 0UL;
@@ -955,8 +958,8 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
   spiProcessSpiMsg(2);
 
 #ifdef DEBUG_RX
-  if (++entryCntr == 5  ) {
-    spiSX127x_WaitUntil__RX_analyzer(ctx, now, stopTime);
+  if (++entryCntr == 4) {
+    spiSX127x_WaitUntil__RX_analyzer(ctx, now, stopTime2);
 
     while (1)  HAL_Delay(250);
   }
@@ -966,13 +969,22 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
     /* Wait for EXTI / IRQ line(s) */
     TickType_t ticks = 1;
 
-    if (stopTime > now) {
-      ticks = (stopTime - now) / portTICK_PERIOD_MS;
+    if (!validHdr) {
+      if (stopTime1 > now) {
+        ticks = (stopTime1 - now) / portTICK_PERIOD_MS;
+      } else {
+        break;
+      }
+
     } else {
-      break;
+      if (stopTime2 > now) {
+        ticks = (stopTime2 - now) / portTICK_PERIOD_MS;
+      } else {
+        break;
+      }
     }
 
-    eb  = xEventGroupWaitBits(extiEventGroupHandle,
+    xEventGroupWaitBits(extiEventGroupHandle,
         (EXTI_SX__DIO0 | EXTI_SX__DIO1 | EXTI_SX__DIO3),
         (EXTI_SX__DIO0 | EXTI_SX__DIO1 | EXTI_SX__DIO3),
         0,
@@ -984,7 +996,10 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
     spiProcessSpiMsg(2);
     irq = spi1RxBuffer[1];
 
-#ifdef DEBUG_RX_TIMING
+    /* Reset all IRQ flags */
+    spiSX127xRegister_IRQ_clearAll();
+
+    #ifdef DEBUG_RX_TIMING
     if (!rxCadDetTs   && (irq & (0x1 << 0))) {                                                  // 0 CadDetectedMask
       rxCadDetTs = xTaskGetTickCount();
     }
@@ -1002,10 +1017,14 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
     }
 #endif
 
-    if ((eb & EXTI_SX__DIO0) || (irq & (1U << RxDoneMask))) {
-      /* Reset all IRQ flags */
-      spiSX127xRegister_IRQ_clearAll();
+    if (irq & (1U << RxTimeoutMask)) {
+      // Not in use, yet
+      //timeout = 1;
 
+    } else if (irq & (1U << ValidHeaderMask)) {
+      validHdr = 1;
+
+    } else if (irq & (1U << RxDoneMask)) {
       /* Check for CRC */
       if (irq & (1U << PayloadCrcErrorMask)) {
         continue;
@@ -1031,7 +1050,7 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
       ctx->LastFeiHz  = ((fei / 32e6) * (1UL << 24) * 125.) / 500.;
       ctx->LastFeiPpm = ctx->LastFeiHz / ctx->FrequencyMHz;
 
-#ifdef DEBUG2_RX
+#ifdef DEBUG_RX2
       spi1TxBuffer[0] = SPI_RD_FLAG | 0x14;    // ValidHeaderCnt, ValidPacketCnt
       spiProcessSpiMsg(5);
       uint16_t rxHeaderCnt   = ((uint16_t)spi1RxBuffer[1] << 8) | spi1RxBuffer[2];
@@ -1072,7 +1091,7 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
 
       spi1TxBuffer[0] = SPI_RD_FLAG | 0x13;                                                     // RegRxNbBytes
       spiProcessSpiMsg(2);
-      volatile uint8_t rxNbBytes = spi1RxBuffer[1];
+      uint8_t rxNbBytes = spi1RxBuffer[1];
 
       /* FIFO readout */
       if (rxNbBytes) {
@@ -1086,7 +1105,7 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
           spi1TxBuffer[1] = fifoRxCurrentAddr;
           spiProcessSpiMsg(2);
 
-#ifdef DEBUG2_RX
+#ifdef DEBUG_RX2
         debugLen += sprintf((char*)debugBuf + debugLen, " rxNbBytes=%03u fifoRxCurrentAddr=%02x:", rxNbBytes, fifoRxCurrentAddr);
 #endif
         }
@@ -1100,7 +1119,7 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
           memcpy((void*)msg->msg_encoded_Buf, (const void*)spi1RxBuffer + 1, rxNbBytes);
           msg->msg_encoded_Len = rxNbBytes;
 
-#ifdef DEBUG2_RX
+#ifdef DEBUG_RX2
           for (uint8_t idx = 0; idx < rxNbBytes; ++idx) {
             debugLen += sprintf((char*)debugBuf + debugLen, " %02x", spi1RxBuffer[1 + idx]);
           }
@@ -1111,7 +1130,7 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
         }
       }
 
-#ifdef DEBUG2_RX
+#ifdef DEBUG_RX2
       /* Debugging */
       debugLen += sprintf((char*)debugBuf + debugLen, "\r\n");
       osSemaphoreWait(usbToHostBinarySemHandle, 0);

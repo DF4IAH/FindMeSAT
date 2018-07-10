@@ -19,6 +19,7 @@ typedef enum Controller_EGW_BM {
   Controller_EGW__LORA_QUEUE_OUT      = 0x00000020UL,
   Controller_EGW__GPSCOM_QUEUE_OUT    = 0x00000200UL,
   Controller_EGW__SENSORS_QUEUE_OUT   = 0x00002000UL,
+  Controller_EGW__TIM_PPS             = 0x00010000UL,
 } Controller_EGW_BM_t;
 
 

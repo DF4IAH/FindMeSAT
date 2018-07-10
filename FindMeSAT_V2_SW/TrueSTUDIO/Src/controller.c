@@ -14,12 +14,12 @@
 #include "FreeRTOS.h"
 #include "stm32l496xx.h"
 #include "cmsis_os.h"
-#include "usb.h"
 #include "interpreter.h"
-#include "adc.h"
-#include "spi.h"
-#include "LoRaWAN.h"
+#include "usb.h"
 #include "gpsCom.h"
+#include "LoRaWAN.h"
+#include "spi.h"
+#include "adc.h"
 
 #include "controller.h"
 
@@ -53,6 +53,8 @@ extern TrackMeApp_down_t    trackMeApp_down;
 
 extern LoraliveApp_up_t     loraliveApp_up;
 extern LoraliveApp_down_t   loraliveApp_down;
+
+extern uint32_t             g_tim5_CCR2;
 
 const uint16_t              Controller_MaxWaitMs              = 100;
 
@@ -255,6 +257,56 @@ void prvControllerPrintMCU(void)
       "\t\tMCU Temp.\t%+02d.%02u C\r\n\r\n\r\n",
       lotBuf, uidWaf, uidPosX, uidPosY, packagePtr, flashSize, adc1Vdda_mV, adc1Vbat_mV, adc1Temp_100_i, adc1Temp_100_f);
   usbLogLen(buf, len);
+}
+
+
+void prvTimeService(void)
+{
+  static uint32_t   pps_last    = 0UL;
+  static uint8_t    trim_last   = 0x40U;
+  uint32_t          trim_new    = trim_last;
+  uint32_t          icscr       = RCC->ICSCR;
+  const uint32_t    pps_tc      = g_tim5_CCR2;
+  const uint32_t    pps_span    = pps_tc > pps_last ?  pps_tc - pps_last : (960000000UL + pps_tc) - pps_last;
+  char              logBuf[128];
+
+  uint32_t  tc_s  =  pps_tc / 16000000UL;
+  float     tc_m  = (pps_tc - (tc_s * 16000000UL)) / 1.6f;
+  uint32_t  tc_mu = (uint32_t) tc_m;
+
+  pps_last = pps_tc;
+
+  /* Sanity check */
+  if (pps_span < 15000000UL ||
+      pps_span > 17000000UL) {
+    return;
+  }
+
+  /* New correction value */
+  if ((pps_span < 16000000UL) && (tc_mu > 5000000UL)) {
+    if (++trim_new > 0x50U) {
+      trim_new = 0x50U;
+    }
+
+  } else if ((pps_span > 16000000UL) && (tc_mu < 5000000UL)) {
+    if (--trim_new < 0x30U) {
+      trim_new = 0x30U;
+    }
+  }
+
+  int logLen = sprintf(logBuf, "\r\n*** PPS TC=%3lu.%07lu, Span=%lu - RCC_ICSCR=0x%08lx\r\n", tc_s, tc_mu, pps_span, icscr);
+
+  /* Write back trimmed value */
+  if (trim_last != trim_new)
+  {
+    trim_last   = trim_new;
+
+    icscr      &= 0x0000ff00UL;
+    icscr      |= ((uint32_t) trim_new) << 24U;
+    RCC->ICSCR  = icscr;
+  }
+
+  usbLogLen(logBuf, logLen);
 }
 
 
@@ -483,7 +535,7 @@ void prvPullFromGpscomOutQueue(void)
           const float lat_deg         = gpscomGpsCtx.lat_deg;
           const float lon_deg         = gpscomGpsCtx.lon_deg;
           const float alt_m           = gpscomGpsCtx.alt_m;
-          const float accuracy_10thM  = gpscomGpsCtx.hdop * 71.f;
+          const float accuracy_10thM  = gpscomGpsCtx.hdop * 35.f;
           const float course_deg      = gpscomGpsCtx.course_deg;
           const float speed_m_s       = gpscomGpsCtx.speed_kts * 1.852f / 3.6f;
 
@@ -501,7 +553,7 @@ void prvPullFromGpscomOutQueue(void)
             trackMeApp_up.speed_m_s       = speed_m_s;
 
             /* Give mutex back */
-            xSemaphoreGive(gpscomCtxMutexHandle);
+            xSemaphoreGive(trackMeApplUpDataMutexHandle);
           }
         }
       }
@@ -540,9 +592,14 @@ void controllerControllerTaskLoop(void)
 {
   /* Keep controllerEventGroupHandle for 25 ms */
   EventBits_t eb = xEventGroupWaitBits(controllerEventGroupHandle,
-      Controller_EGW__INTER_QUEUE_OUT | Controller_EGW__LORA_QUEUE_OUT | Controller_EGW__GPSCOM_QUEUE_OUT | Controller_EGW__INTER_SENS_DO_SEND,
+      Controller_EGW__TIM_PPS | Controller_EGW__INTER_QUEUE_OUT | Controller_EGW__LORA_QUEUE_OUT | Controller_EGW__GPSCOM_QUEUE_OUT | Controller_EGW__INTER_SENS_DO_SEND,
       0,
       0, 25 / portTICK_PERIOD_MS);
+
+  if (eb & Controller_EGW__TIM_PPS) {
+    xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__TIM_PPS);
+    prvTimeService();
+  }
 
   if (eb & Controller_EGW__INTER_QUEUE_OUT) {
     xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__INTER_QUEUE_OUT);
