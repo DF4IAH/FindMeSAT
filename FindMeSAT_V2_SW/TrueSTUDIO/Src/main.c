@@ -89,8 +89,9 @@
 extern TIM_HandleTypeDef    htim5;
 
 static GPIO_InitTypeDef     GPIO_InitStruct;
-volatile uint32_t	          g_timer_us                        = 0;
-volatile uint32_t	          g_timerStart_us                   = 0;
+volatile uint64_t	          g_timer_us                        = 0ULL;
+volatile uint64_t	          g_timerStart_us                   = 0ULL;
+volatile uint64_t           g_realTime_Boot                   = 0ULL;
 
 /* USER CODE END PV */
 
@@ -199,10 +200,14 @@ int main(void)
   MX_ADC1_Init();
   MX_CRC_Init();
   MX_USART3_UART_Init();
+  MX_TIM4_Init();
+  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-  /* Enable 1PPS time capture on TIM5/Channel2 */
+  /* Enable 1PPS time capture on TIM5/Channel2 and start chain: TIM4 / TIM3 / TIM5 */
   HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2);
+  HAL_TIM_Base_Start_IT(&htim3);
+  HAL_TIM_Base_Start_IT(&htim4);
 
   /* Enable external SMPS for Vdd12 */
   SMPS_Init();
@@ -441,20 +446,107 @@ void SMPS_Init(void)
 }
 
 
+/* Used by the run-time stats */
 void configureTimerForRunTimeStats(void)
 {
   getRunTimeCounterValue();
-  g_timerStart_us = g_timer_us;
+
+  /* Interrupt disabled block */
+  {
+    taskDISABLE_INTERRUPTS();
+    g_timerStart_us = g_timer_us;
+    taskENABLE_INTERRUPTS();
+  }
 }
 
+/* Used by the run-time stats */
 unsigned long getRunTimeCounterValue(void)
 {
+  uint64_t l_timerStart_us;
   uint64_t timer_us = HAL_GetTick() & 0x003fffffUL;  // avoid overflows
   timer_us *= 1000UL;
   timer_us += TIM2->CNT;
-  g_timer_us = timer_us;
-  return timer_us - g_timerStart_us;
+
+  /* Interrupt disabled block */
+  {
+    taskDISABLE_INTERRUPTS();
+    g_timer_us      = timer_us;
+    l_timerStart_us = g_timerStart_us;
+    taskENABLE_INTERRUPTS();
+  }
+
+  return (unsigned long) (timer_us - l_timerStart_us);
 }
+
+
+/* Adjusts the global timers TIM4 / TIM3 / TIM5 with UNIX time (µs) */
+int32_t setRealTime(uint64_t unixTime_us)
+{
+  uint16_t  l_TIM4_CNT;
+  uint16_t  l_TIM3_CNT;
+  uint32_t  l_TIM5_CNT;
+  uint64_t  l_realTime_Outdated;
+  uint64_t  l_realTime_Now;
+  int64_t   l_diff_last;
+
+  /* Interrupt disabled block */
+  {
+    taskDISABLE_INTERRUPTS();
+    l_TIM5_CNT = TIM5->CNT;
+    l_TIM3_CNT = TIM3->CNT;
+    l_TIM4_CNT = TIM4->CNT;
+    taskENABLE_INTERRUPTS();
+  }
+
+  /* Calculate the timestamp of the outdated timer */
+  l_realTime_Outdated  = (uint64_t)l_TIM4_CNT << 48U;
+  l_realTime_Outdated |= (uint64_t)l_TIM3_CNT << 32U;
+  l_realTime_Outdated += (uint64_t) (l_TIM5_CNT / (HSI_VALUE / 1e7));
+
+  /* Calculate the last offset */
+  l_diff_last = l_realTime_Outdated - unixTime_us;
+
+  /* Calculate the new boot timestamp */
+  l_realTime_Now  = l_realTime_Outdated;
+  l_realTime_Now -= l_diff_last;
+
+  /* Interrupt disabled block */
+  {
+    taskDISABLE_INTERRUPTS();
+    TIM5->CNT = l_TIM5_CNT;
+    TIM3->CNT = l_TIM3_CNT;
+    TIM4->CNT = l_TIM4_CNT;
+    taskENABLE_INTERRUPTS();
+  }
+
+  return (int32_t) l_diff_last;
+}
+
+/* Returns the UNIX time in µs */
+uint64_t getRealTime(void)
+{
+  uint16_t  l_TIM4_CNT;
+  uint16_t  l_TIM3_CNT;
+  uint32_t  l_TIM5_CNT;
+  uint64_t  l_realTime_Now;
+
+  /* Interrupt disabled block */
+  {
+    taskDISABLE_INTERRUPTS();
+    l_TIM5_CNT = TIM5->CNT;
+    l_TIM3_CNT = TIM3->CNT;
+    l_TIM4_CNT = TIM4->CNT;
+    taskENABLE_INTERRUPTS();
+  }
+
+  /* Calculate the timestamp of now */
+  l_realTime_Now  = (uint64_t)l_TIM4_CNT << 48U;
+  l_realTime_Now |= (uint64_t)l_TIM3_CNT << 32U;
+  l_realTime_Now += (uint64_t) (l_TIM5_CNT / (HSI_VALUE / 1e7));
+
+  return l_realTime_Now;
+}
+
 
 void SystemResetbyARMcore(void)
 {

@@ -180,7 +180,7 @@
 #endif
 
 
-#define FINDMESAT_VERSION   20180710U
+#define FINDMESAT_VERSION   20180712U
 
 
 typedef void* TaskHandle_t;
@@ -190,6 +190,10 @@ void mainDefaultTaskLoop(void);
 
 void configureTimerForRunTimeStats(void);
 unsigned long getRunTimeCounterValue(void);
+
+int32_t setRealTime(uint64_t unixTime_us);
+uint64_t getRealTime(void);
+
 void SystemResetbyARMcore(void);
 void vAssertCalled( const char *pcFile, uint32_t ulLine);
 void vApplicationStackOverflowHook(TaskHandle_t xTask, signed char *pcTaskName);
