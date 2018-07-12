@@ -86,6 +86,8 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
+extern TIM_HandleTypeDef    htim3;
+extern TIM_HandleTypeDef    htim4;
 extern TIM_HandleTypeDef    htim5;
 
 static GPIO_InitTypeDef     GPIO_InitStruct;
@@ -204,10 +206,82 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
+  /* Correct bad settings from STM32CubeMX code generation - CR2 */
+  {
+    /* TIM5: MMS=010 Update Events */
+    uint16_t l_u16 = htim5.Instance->CR2;
+    l_u16 &= ~0x0050U;
+    l_u16 |=  0x0020U;
+    htim5.Instance->CR2 = l_u16;
+  }
+
+  {
+    /* TIM3: MMS=010 Update Events */
+    uint16_t l_u16 = htim3.Instance->CR2;
+    l_u16 &= ~0x0050U;
+    l_u16 |=  0x0020U;
+    htim3.Instance->CR2 = l_u16;
+  }
+
+  {
+    /* TIM4: MMS=000 Reset */
+    uint16_t l_u16 = htim4.Instance->CR2;
+    l_u16 &= ~0x0070U;
+    l_u16 |=  0x0000U;
+    htim4.Instance->CR2 = l_u16;
+  }
+
+  /* Correct bad settings from STM32CubeMX code generation - SMCR */
+  {
+    /* TIM5: MSM=0 no clock delay, TS=(any), SMS=0.000 disabled */
+    uint32_t l_u32 = htim5.Instance->SMCR;
+    l_u32 &= ~0x00010087UL;
+    l_u32 |=  0x00000000UL;
+    htim5.Instance->SMCR = l_u32;
+  }
+
+  {
+    /* TIM3: MSM=1 slave clock delay, TS=010 ITR2 (master: TIM5), SMS=0.111 External Clock Mode 1 */
+    uint32_t l_u32 = htim3.Instance->SMCR;
+    l_u32 &= ~0x00010050UL;
+    l_u32 |=  0x000000a7UL;
+    htim3.Instance->SMCR = l_u32;
+  }
+
+  {
+    /* TIM4: MSM=1 slave clock delay, TS=010 ITR2 (master: TIM5), SMS=0.111 External Clock Mode 1 */
+    uint32_t l_u32 = htim4.Instance->SMCR;
+    l_u32 &= ~0x00010050UL;
+    l_u32 |=  0x000000a7UL;
+    htim4.Instance->SMCR = l_u32;
+  }
+
   /* Enable 1PPS time capture on TIM5/Channel2 and start chain: TIM4 / TIM3 / TIM5 */
-  HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2);
-  HAL_TIM_Base_Start(&htim3);
   HAL_TIM_Base_Start(&htim4);
+  HAL_TIM_Base_Start(&htim3);
+  HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2);
+
+  htim4.Instance->EGR = (uint16_t)0x01U;                                                        // Update Generation
+  htim3.Instance->EGR = (uint16_t)0x01U;                                                        // Update Generation
+  htim5.Instance->EGR = (uint16_t)0x01U;                                                        // Update Generation
+  __asm volatile( "ISB" );
+
+  {
+    volatile uint16_t  tmr4_CNT;
+    volatile uint16_t  tmr3_CNT;
+    volatile uint32_t  tmr5_CNT;
+
+    while (1) {
+      tmr4_CNT = htim4.Instance->CNT;
+      tmr3_CNT = htim3.Instance->CNT;
+      tmr5_CNT = htim5.Instance->CNT;
+
+      __asm volatile( "ISB" );
+      (void) tmr4_CNT;
+      (void) tmr3_CNT;
+      (void) tmr5_CNT;
+    }
+  }
 
   /* Enable external SMPS for Vdd12 */
   SMPS_Init();
