@@ -210,7 +210,7 @@ int main(void)
   {
     /* TIM5: MMS=010 Update Events */
     uint16_t l_u16 = htim5.Instance->CR2;
-    l_u16 &= ~0x0050U;
+    l_u16 &= ~0x0070U;
     l_u16 |=  0x0020U;
     htim5.Instance->CR2 = l_u16;
   }
@@ -218,7 +218,7 @@ int main(void)
   {
     /* TIM3: MMS=010 Update Events */
     uint16_t l_u16 = htim3.Instance->CR2;
-    l_u16 &= ~0x0050U;
+    l_u16 &= ~0x0070U;
     l_u16 |=  0x0020U;
     htim3.Instance->CR2 = l_u16;
   }
@@ -235,7 +235,7 @@ int main(void)
   {
     /* TIM5: MSM=0 no clock delay, TS=(any), SMS=0.000 disabled */
     uint32_t l_u32 = htim5.Instance->SMCR;
-    l_u32 &= ~0x00010087UL;
+    l_u32 &= ~0x000100f7UL;
     l_u32 |=  0x00000000UL;
     htim5.Instance->SMCR = l_u32;
   }
@@ -243,7 +243,7 @@ int main(void)
   {
     /* TIM3: MSM=1 slave clock delay, TS=010 ITR2 (master: TIM5), SMS=0.111 External Clock Mode 1 */
     uint32_t l_u32 = htim3.Instance->SMCR;
-    l_u32 &= ~0x00010050UL;
+    l_u32 &= ~0x000100f7UL;
     l_u32 |=  0x000000a7UL;
     htim3.Instance->SMCR = l_u32;
   }
@@ -251,7 +251,7 @@ int main(void)
   {
     /* TIM4: MSM=1 slave clock delay, TS=010 ITR2 (master: TIM5), SMS=0.111 External Clock Mode 1 */
     uint32_t l_u32 = htim4.Instance->SMCR;
-    l_u32 &= ~0x00010050UL;
+    l_u32 &= ~0x000100f7UL;
     l_u32 |=  0x000000a7UL;
     htim4.Instance->SMCR = l_u32;
   }
