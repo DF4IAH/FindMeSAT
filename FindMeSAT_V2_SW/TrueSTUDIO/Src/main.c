@@ -206,8 +206,8 @@ int main(void)
 
   /* Enable 1PPS time capture on TIM5/Channel2 and start chain: TIM4 / TIM3 / TIM5 */
   HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2);
-  HAL_TIM_Base_Start_IT(&htim3);
-  HAL_TIM_Base_Start_IT(&htim4);
+  HAL_TIM_Base_Start(&htim3);
+  HAL_TIM_Base_Start(&htim4);
 
   /* Enable external SMPS for Vdd12 */
   SMPS_Init();
@@ -479,7 +479,7 @@ unsigned long getRunTimeCounterValue(void)
 }
 
 
-/* Adjusts the global timers TIM4 / TIM3 / TIM5 with UNIX time (µs) */
+/* Adjusts the global timers TIM4 / TIM3 / TIM5 with UNIX time (ï¿½s) */
 int32_t setRealTime(uint64_t unixTime_us)
 {
   uint16_t  l_TIM4_CNT;
@@ -522,7 +522,7 @@ int32_t setRealTime(uint64_t unixTime_us)
   return (int32_t) l_diff_last;
 }
 
-/* Returns the UNIX time in µs */
+/* Returns the UNIX time in ï¿½s */
 uint64_t getRealTime(void)
 {
   uint16_t  l_TIM4_CNT;
