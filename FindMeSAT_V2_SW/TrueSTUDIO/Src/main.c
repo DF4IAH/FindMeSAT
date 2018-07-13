@@ -206,82 +206,94 @@ int main(void)
   MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
+  /* Enable 1PPS time capture on TIM5/Channel2 and start chain: TIM4 / TIM3 / TIM5 */
+//HAL_TIM_Base_Start(&htim4);
+  HAL_TIM_Base_Start(&htim3);
+  HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2);
+
   /* Correct bad settings from STM32CubeMX code generation - CR2 */
   {
-    /* TIM5: MMS=010 Update Events */
-    uint16_t l_u16 = htim5.Instance->CR2;
-    l_u16 &= ~0x0050U;
-    l_u16 |=  0x0020U;
-    htim5.Instance->CR2 = l_u16;
-  }
+    const uint16_t l_mms_010 = 0x00000020UL;
+    const uint16_t l_mms_000 = 0x00000000UL;
 
-  {
-    /* TIM3: MMS=010 Update Events */
-    uint16_t l_u16 = htim3.Instance->CR2;
-    l_u16 &= ~0x0050U;
-    l_u16 |=  0x0020U;
-    htim3.Instance->CR2 = l_u16;
-  }
-
-  {
     /* TIM4: MMS=000 Reset */
-    uint16_t l_u16 = htim4.Instance->CR2;
-    l_u16 &= ~0x0070U;
-    l_u16 |=  0x0000U;
-    htim4.Instance->CR2 = l_u16;
+//  htim4.Instance->CR2 = l_mms_000;
+
+    /* TIM3: MMS=010 Update Events */
+    htim3.Instance->CR2 = l_mms_000;
+
+    /* TIM5: MMS=010 Update Events */
+    htim5.Instance->CR2 = l_mms_010;
   }
 
   /* Correct bad settings from STM32CubeMX code generation - SMCR */
   {
-    /* TIM5: MSM=0 no clock delay, TS=(any), SMS=0.000 disabled */
-    uint32_t l_u32 = htim5.Instance->SMCR;
-    l_u32 &= ~0x00010087UL;
-    l_u32 |=  0x00000000UL;
-    htim5.Instance->SMCR = l_u32;
-  }
+    const uint32_t l_msm_1_ts_010_sms_0111 = 0x000000a7UL;
+    const uint32_t l_msm_0_ts_000_sms_0000 = 0x00000000UL;
 
-  {
-    /* TIM3: MSM=1 slave clock delay, TS=010 ITR2 (master: TIM5), SMS=0.111 External Clock Mode 1 */
-    uint32_t l_u32 = htim3.Instance->SMCR;
-    l_u32 &= ~0x00010050UL;
-    l_u32 |=  0x000000a7UL;
-    htim3.Instance->SMCR = l_u32;
-  }
-
-  {
     /* TIM4: MSM=1 slave clock delay, TS=010 ITR2 (master: TIM5), SMS=0.111 External Clock Mode 1 */
-    uint32_t l_u32 = htim4.Instance->SMCR;
-    l_u32 &= ~0x00010050UL;
-    l_u32 |=  0x000000a7UL;
-    htim4.Instance->SMCR = l_u32;
+//  htim4.Instance->SMCR = l_msm_1_ts_010_sms_0111;
+
+    /* TIM3: MSM=1 slave clock delay, TS=010 ITR2 (master: TIM5), SMS=0.111 External Clock Mode 1 */
+    htim3.Instance->SMCR = 0x00000000UL;
+
+    /* TIM5: MSM=0 no clock delay, TS=(any), SMS=0.000 disabled */
+    htim5.Instance->SMCR = l_msm_0_ts_000_sms_0000;
   }
 
-  /* Enable 1PPS time capture on TIM5/Channel2 and start chain: TIM4 / TIM3 / TIM5 */
-  HAL_TIM_Base_Start(&htim4);
-  HAL_TIM_Base_Start(&htim3);
-  HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2);
+  /* Stop all counters */
+  {
+    const uint16_t l_tim_disable = 0x0000U;
 
-  htim4.Instance->EGR = (uint16_t)0x01U;                                                        // Update Generation
+    /* TIM4 disable for settings taking place */
+//  htim4.Instance->CR1 = l_tim_disable;
+
+    /* TIM3 disable for settings taking place */
+    htim3.Instance->CR1 = l_tim_disable;
+
+    /* TIM5 disable for settings taking place */
+    htim5.Instance->CR1 = l_tim_disable;
+  }
+
+  /* Reset timers */
+//htim4.Instance->EGR = (uint16_t)0x01U;                                                        // Update Generation
   htim3.Instance->EGR = (uint16_t)0x01U;                                                        // Update Generation
   htim5.Instance->EGR = (uint16_t)0x01U;                                                        // Update Generation
   __asm volatile( "ISB" );
 
+  /* Start all timers */
   {
-    volatile uint16_t  tmr4_CNT;
+    const uint16_t l_tim_enable = 0x0001U;
+
+    /* TIM4 enable */
+//  htim4.Instance->CR1 = l_tim_enable;
+
+    /* TIM3 enable */
+    htim3.Instance->CR1 = l_tim_enable;
+
+    /* TIM5 enable */
+    htim5.Instance->CR1 = l_tim_enable;
+  }
+  /* Here the counter increments since 0 */
+  __asm volatile( "ISB" );
+
+  {
+//  volatile uint16_t  tmr4_CNT;
     volatile uint16_t  tmr3_CNT;
     volatile uint32_t  tmr5_CNT;
 
     while (1) {
-      tmr4_CNT = htim4.Instance->CNT;
+//    tmr4_CNT = htim4.Instance->CNT;
       tmr3_CNT = htim3.Instance->CNT;
       tmr5_CNT = htim5.Instance->CNT;
 
       __asm volatile( "ISB" );
-      (void) tmr4_CNT;
+//    (void) tmr4_CNT;
       (void) tmr3_CNT;
       (void) tmr5_CNT;
     }
   }
+
 
   /* Enable external SMPS for Vdd12 */
   SMPS_Init();
