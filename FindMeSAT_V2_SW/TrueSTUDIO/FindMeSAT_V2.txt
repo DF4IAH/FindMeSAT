@@ -1,6 +1,6 @@
 Configuration	FindMeSAT_V2
 STM32CubeMX 	4.25.0
-Date	07/12/2018
+Date	07/13/2018
 MCU	STM32L496ZGTxP
 
 
@@ -27,12 +27,6 @@ SYS	Trace Asynchronous Sw	SYS_JTMS-SWDIO	PA13 (JTMS/SWDIO)
 SYS	Trace Asynchronous Sw	SYS_JTCK-SWCLK	PA14 (JTCK/SWCLK)
 SYS	Trace Asynchronous Sw	SYS_JTDO-SWO	PB3 (JTDO/TRACESWO)
 SYS	TIM2	SYS_VS_tim2	VP_SYS_VS_tim2
-TIM3	Trigger Mode	TIM3_VS_ControllerModeTrigger	VP_TIM3_VS_ControllerModeTrigger
-TIM3	ITR2	TIM3_VS_ClockSourceITR	VP_TIM3_VS_ClockSourceITR
-TIM3	Internal Clock	TIM3_VS_ClockSourceINT	VP_TIM3_VS_ClockSourceINT
-TIM4	Trigger Mode	TIM4_VS_ControllerModeTrigger	VP_TIM4_VS_ControllerModeTrigger
-TIM4	ITR2	TIM4_VS_ClockSourceITR	VP_TIM4_VS_ClockSourceITR
-TIM4	Internal Clock	TIM4_VS_ClockSourceINT	VP_TIM4_VS_ClockSourceINT
 TIM5	Internal Clock	TIM5_VS_ClockSourceINT	VP_TIM5_VS_ClockSourceINT
 TIM5	Input Capture direct mode	TIM5_CH2	PF7
 UART5	Asynchronous	UART5_RX	PD2

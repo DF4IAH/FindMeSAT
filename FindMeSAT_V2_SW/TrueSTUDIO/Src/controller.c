@@ -55,9 +55,10 @@ extern TrackMeApp_down_t    trackMeApp_down;
 extern LoraliveApp_up_t     loraliveApp_up;
 extern LoraliveApp_down_t   loraliveApp_down;
 
-extern uint64_t             g_UNIX_us;
 extern uint32_t             g_TIM5_CCR2;
 extern int32_t              g_TIM5_ofs;
+extern uint64_t             g_pps_us;
+extern uint32_t             g_unx_s;
 
 
 const  uint16_t             Controller_MaxWaitMs              = 100;
@@ -264,100 +265,104 @@ void prvControllerPrintMCU(void)
 }
 
 
-#define Delay_us                      (0ULL)
 void prvTimeService(void)
 {
-  static uint8_t    ofsHoldOff  = 0U;
-  static uint32_t   pps_last    = 0UL;
-  static uint8_t    trim_last   = 0x40U;
-  const  uint64_t   c_UNIX_us   = g_UNIX_us;
-  const  uint64_t   c_span      = c_UNIX_us > pps_last ?  c_UNIX_us - pps_last : (tim5_reloadValue + c_UNIX_us) - pps_last;  // HSI16 correction
-  float             gnss_time   = 0.f;
-  uint32_t          trim_new    = trim_last;
-  const  uint32_t   icscr       = RCC->ICSCR;
-  char              logBuf[128];
+  static uint32_t   s_lastpps_us  = 0UL;
+  static uint8_t    s_ofsHoldOff  = 0U;
 
-  uint64_t  tc_s    =  c_UNIX_us          / HSI_VALUE;
-  float     tc_frac = (c_UNIX_us - (tc_s  * HSI_VALUE)) / (HSI_VALUE / 1e7);
-  uint32_t  tc_us   = (uint32_t) tc_frac;
+  static uint8_t    s_trim_last   = 0x40U;
+  uint32_t          trim_new      = s_trim_last;
 
-  /* Update 1PPS timestamp */
-  pps_last = c_UNIX_us;
+  taskDISABLE_INTERRUPTS();
+  const  uint64_t   c_pps_us      = g_pps_us;
+  taskENABLE_INTERRUPTS();
 
-#if 0  // TODO
-  /* Get UNIX time from GNSS data */
-  uint64_t l_gnss_us  = getGnssUnixTime() * 1000000UL;
-  l_gnss_us          += tc_us;
-  int32_t ofs = setRealTime(l_gnss_us - Delay_us);
-#endif
+  /* Split 1PPS event time into s / us parts */
+  const  uint32_t   tc_s          = (uint32_t) (c_pps_us / 1000000UL);
+  const  uint32_t   tc_us         = (uint32_t) (c_pps_us % 1000000UL);
 
-  /* Sanity check */
-  if (c_span < 15000000UL ||
-      c_span > 17000000UL) {
-    return;
-  }
+  const  float      c_ticks_mhz   = tim5_reloadValue / 1e6;
+  const  int32_t    c_span        = (int32_t)tc_us - (int32_t)s_lastpps_us;
 
-  /* New correction value */
-  if ((c_span < 16000000UL) && (tc_us > 5000000UL)) {
+  uint8_t           realtime_secs = 0U;
+
+  const  uint32_t   icscr         = RCC->ICSCR;
+
+  /* Update for history */
+  s_lastpps_us = tc_us;
+
+  /* New correction value - time window +/-10ms */
+  if (       (-10000L < c_span) && (c_span <      0L) && (tc_us > 500000UL)) {
     if (++trim_new > 0x50U) {
       trim_new = 0x50U;
     }
 
-  } else if ((c_span > 16000000UL) && (tc_us < 5000000UL)) {
+  } else if ((     0L < c_span) && (c_span <  10000L) && (tc_us < 500000UL)) {
     if (--trim_new < 0x30U) {
       trim_new = 0x30U;
     }
   }
 
   /* Write back trimmed value */
-  if (trim_last != trim_new)
+  if (s_trim_last != trim_new)
   {
-    uint32_t icscr_new = icscr;
-
+    uint32_t icscr_new  = icscr;
     icscr_new  &= 0x0000ff00UL;
     icscr_new  |= ((uint32_t) trim_new) << 24U;
     RCC->ICSCR  = icscr_new;
 
-    trim_last = trim_new;
+    s_trim_last = trim_new;
+  }
+
+  /* PPS timer offset correction hold of timer */
+  if (s_ofsHoldOff > 0) {
+    --s_ofsHoldOff;
   }
 
   /* Access GNSS time */
   if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, 5 / portTICK_PERIOD_MS))
   {
-    gnss_time = gpscomGpsCtx.time;
+    taskDISABLE_INTERRUPTS();
+    const float     gnss_time = gpscomGpsCtx.time + 1.f;
+    const uint32_t  gnss_date = gpscomGpsCtx.date;
+    taskENABLE_INTERRUPTS();
 
     /* Give mutex back */
     xSemaphoreGive(gpscomCtxMutexHandle);
-  }
 
-  /* Correct TIM5 timer when offset is more than it could easily be trimmed away */
-  uint8_t  realtime_secs  = 0U;
-  if (gnss_time) {
-    uint32_t gnss_time_ul = (uint32_t) gnss_time;
-    realtime_secs         = (uint8_t) (((++gnss_time_ul) % 100UL) % 60UL);
+    /* Correct TIM5 timer when offset is more than it could easily be trimmed away */
+    if (gnss_time && gnss_date) {
+      const uint32_t  gnss_time_ul  = (uint32_t) gnss_time;
 
-    /* PPS timer offset correction hold of timer */
-    if (ofsHoldOff) {
-      --ofsHoldOff;
-    }
+      realtime_secs = (uint8_t) ((gnss_time_ul % 100UL) % 60UL);
 
-    /* Avoid corrections at the start of a minute */
-    if (realtime_secs > 3 && !ofsHoldOff) {
-      uint32_t pps_should  = realtime_secs * 16000000UL;
-      int32_t  pps_offset  = pps_should - c_UNIX_us;
+      /* Avoid corrections at the start of a minute */
+      if (realtime_secs > 3 && !s_ofsHoldOff) {
+        float           s_frac      = 0.f;
+        const uint32_t  l_unx_s_f   = calcDataTime_to_unx_s(&s_frac, gnss_date, gnss_time);
+        const uint64_t  pps_should  = l_unx_s_f * 1000000ULL + ((uint64_t) (s_frac * 1e6));
+        const int64_t   pps_offset  = pps_should - c_pps_us;
 
-      /* Adjust when abs(offset) > 5 ms */
-      if ((abs(pps_offset) > 160000L) && !g_TIM5_ofs) {
-        g_TIM5_ofs = pps_offset;
+        /* Adjust when abs(offset) > 5 ms */
+        if ((abs(pps_offset) > 25000UL) && !g_TIM5_ofs) {
+          taskDISABLE_INTERRUPTS();
+          g_TIM5_ofs  = (uint32_t) ((pps_offset % 1000000ULL) * c_ticks_mhz);
+          g_unx_s     = (uint32_t) (pps_should / 1000000ULL);
+          taskENABLE_INTERRUPTS();
 
-        /* Do not touch for this number of seconds */
-        ofsHoldOff = 5;
+          /* Do not touch g_TIM5_ofs again for this number of seconds */
+          s_ofsHoldOff = 5;
+        }
       }
     }
   }
 
-  int logLen = sprintf(logBuf, "\r\n*** PPS TC=%3lu.%07lu, Span=%lu - RCC_ICSCR=0x%08lx - GNSS_secs=%02u\r\n", (uint32_t) tc_s, tc_us, (uint32_t) c_span, icscr, realtime_secs);
-  usbLogLen(logBuf, logLen);
+  /* Logging */
+  {
+    char logBuf[128];
+    int logLen = sprintf(logBuf, "\r\n*** PPS TC=%lu.%06lu, Span=%-7ld - RCC_ICSCR=0x%08lx - GNSS_secs=%02u\r\n", tc_s, tc_us, c_span, icscr, realtime_secs);
+    usbLogLen(logBuf, logLen);
+  }
 }
 
 

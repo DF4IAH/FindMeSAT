@@ -67,6 +67,7 @@
 #include <stdio.h>
 #include "stm32l4xx_nucleo_144.h"
 #include "stm32l4xx_hal.h"
+#include "controller.h"
 
 
 #ifndef portAIRCR_REG
@@ -90,10 +91,20 @@ extern TIM_HandleTypeDef    htim3;
 extern TIM_HandleTypeDef    htim4;
 extern TIM_HandleTypeDef    htim5;
 
+extern EventGroupHandle_t   controllerEventGroupHandle;
+
+
 static GPIO_InitTypeDef     GPIO_InitStruct;
 volatile uint64_t	          g_timer_us                        = 0ULL;
 volatile uint64_t	          g_timerStart_us                   = 0ULL;
 volatile uint64_t           g_realTime_Boot                   = 0ULL;
+
+volatile uint32_t           g_unx_s                           = 0UL;                            // Current    time - since UN*X epoch in  s
+volatile uint64_t           g_pps_us                          = 0UL;                            // 1PPS event time - since UN*X epoch in us
+
+volatile uint32_t           g_TIM5_CCR2                       = 0UL;
+volatile int32_t            g_TIM5_ofs                        = 0L;
+
 
 /* USER CODE END PV */
 
@@ -202,98 +213,10 @@ int main(void)
   MX_ADC1_Init();
   MX_CRC_Init();
   MX_USART3_UART_Init();
-  MX_TIM4_Init();
-  MX_TIM3_Init();
   /* USER CODE BEGIN 2 */
 
-  /* Enable 1PPS time capture on TIM5/Channel2 and start chain: TIM4 / TIM3 / TIM5 */
-//HAL_TIM_Base_Start(&htim4);
-  HAL_TIM_Base_Start(&htim3);
+  /* Enable 1PPS time capture on TIM5/Channel2 */
   HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2);
-
-  /* Correct bad settings from STM32CubeMX code generation - CR2 */
-  {
-    const uint16_t l_mms_010 = 0x00000020UL;
-    const uint16_t l_mms_000 = 0x00000000UL;
-
-    /* TIM4: MMS=000 Reset */
-//  htim4.Instance->CR2 = l_mms_000;
-
-    /* TIM3: MMS=010 Update Events */
-    htim3.Instance->CR2 = l_mms_000;
-
-    /* TIM5: MMS=010 Update Events */
-    htim5.Instance->CR2 = l_mms_010;
-  }
-
-  /* Correct bad settings from STM32CubeMX code generation - SMCR */
-  {
-    const uint32_t l_msm_1_ts_010_sms_0111 = 0x000000a7UL;
-    const uint32_t l_msm_0_ts_000_sms_0000 = 0x00000000UL;
-
-    /* TIM4: MSM=1 slave clock delay, TS=010 ITR2 (master: TIM5), SMS=0.111 External Clock Mode 1 */
-//  htim4.Instance->SMCR = l_msm_1_ts_010_sms_0111;
-
-    /* TIM3: MSM=1 slave clock delay, TS=010 ITR2 (master: TIM5), SMS=0.111 External Clock Mode 1 */
-    htim3.Instance->SMCR = 0x00000000UL;
-
-    /* TIM5: MSM=0 no clock delay, TS=(any), SMS=0.000 disabled */
-    htim5.Instance->SMCR = l_msm_0_ts_000_sms_0000;
-  }
-
-  /* Stop all counters */
-  {
-    const uint16_t l_tim_disable = 0x0000U;
-
-    /* TIM4 disable for settings taking place */
-//  htim4.Instance->CR1 = l_tim_disable;
-
-    /* TIM3 disable for settings taking place */
-    htim3.Instance->CR1 = l_tim_disable;
-
-    /* TIM5 disable for settings taking place */
-    htim5.Instance->CR1 = l_tim_disable;
-  }
-
-  /* Reset timers */
-//htim4.Instance->EGR = (uint16_t)0x01U;                                                        // Update Generation
-  htim3.Instance->EGR = (uint16_t)0x01U;                                                        // Update Generation
-  htim5.Instance->EGR = (uint16_t)0x01U;                                                        // Update Generation
-  __asm volatile( "ISB" );
-
-  /* Start all timers */
-  {
-    const uint16_t l_tim_enable = 0x0001U;
-
-    /* TIM4 enable */
-//  htim4.Instance->CR1 = l_tim_enable;
-
-    /* TIM3 enable */
-    htim3.Instance->CR1 = l_tim_enable;
-
-    /* TIM5 enable */
-    htim5.Instance->CR1 = l_tim_enable;
-  }
-  /* Here the counter increments since 0 */
-  __asm volatile( "ISB" );
-
-  {
-//  volatile uint16_t  tmr4_CNT;
-    volatile uint16_t  tmr3_CNT;
-    volatile uint32_t  tmr5_CNT;
-
-    while (1) {
-//    tmr4_CNT = htim4.Instance->CNT;
-      tmr3_CNT = htim3.Instance->CNT;
-      tmr5_CNT = htim5.Instance->CNT;
-
-      __asm volatile( "ISB" );
-//    (void) tmr4_CNT;
-      (void) tmr3_CNT;
-      (void) tmr5_CNT;
-    }
-  }
-
 
   /* Enable external SMPS for Vdd12 */
   SMPS_Init();
@@ -730,6 +653,83 @@ void mainCalc_Float2Int(float in, uint32_t* out_i, uint16_t* out_p1000)
   *out_p1000  = (uint16_t) (((uint32_t) (in * 1000.f)) % 1000);
 }
 
+
+/**
+  * @brief  Input Capture callback in non-blocking mode
+  * @param  htim TIM IC handle
+  * @retval None
+  */
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+  static uint32_t s_unx_s = 0UL;
+
+  if ((htim->Instance  == htim5.Instance           ) &&
+      (htim->Channel   == HAL_TIM_ACTIVE_CHANNEL_2)) {
+    uint32_t    l_TIM5_CCR2             = htim5.Instance->CCR2;
+    int32_t     l_TIM5_ofs              = g_TIM5_ofs;
+    BaseType_t  higherPriorityTaskWOken = 0UL;
+
+    /* Sanity check */
+    if (l_TIM5_CCR2 > tim5_reloadValue) {
+      l_TIM5_CCR2 %= tim5_reloadValue;
+    }
+
+    /* Set current value to the read out structure */
+    {
+      /* Correct read-out value */
+#if 0
+      if (l_TIM5_ofs > 0) {
+        l_TIM5_CCR2 = ((l_TIM5_CCR2 > l_TIM5_ofs) ?  (l_TIM5_CCR2 - l_TIM5_ofs) : ((l_TIM5_CCR2 + tim5_reloadValue) - l_TIM5_ofs)) % tim5_reloadValue;
+
+      } else if (l_TIM5_ofs < 0) {
+        const uint32_t c_minusOfs  = -l_TIM5_ofs;
+        l_TIM5_CCR2 = (l_TIM5_CCR2 + c_minusOfs) % tim5_reloadValue;
+      }
+#endif
+
+      /* Offset correction gets activated 1 second later */
+      if (l_TIM5_ofs) {
+        taskDISABLE_INTERRUPTS();
+        uint32_t l_cnt        = htim->Instance->CNT;
+        l_cnt                += l_TIM5_ofs;
+        l_cnt                %= tim5_reloadValue;
+        htim->Instance->CNT   = l_cnt;
+        taskENABLE_INTERRUPTS();
+      }
+
+      /* Update static sec counter */
+      if (l_TIM5_CCR2 + 10000UL > tim5_reloadValue) {                                           // Max. 10ms before roll-over .. one clock before roll-over
+        /* 1PPS previous timer roll-over -->  global seconds counter is valid*/
+        s_unx_s = g_unx_s;
+
+      } else {
+        /* One sec later */
+        ++s_unx_s;
+
+        /* For the case some PPS were lost */
+        if (s_unx_s < g_unx_s) {
+          s_unx_s = g_unx_s;  // Or plus one
+        }
+      }
+
+      /* Add fractional seconds to the UNIX us time value */
+      uint64_t l_pps_us  = (uint32_t) (l_TIM5_CCR2 / (HSI_VALUE / 1e6));
+               l_pps_us += s_unx_s * 1000000ULL;
+
+      /* Write back to global vars */
+      {
+        g_pps_us    = l_pps_us;
+        g_TIM5_CCR2 = l_TIM5_CCR2;
+        g_TIM5_ofs  = 0UL;
+      }
+
+      if (controllerEventGroupHandle) {
+        xEventGroupSetBitsFromISR(controllerEventGroupHandle, Controller_EGW__TIM_PPS, &higherPriorityTaskWOken);
+      }
+    }
+  }
+}
+
 /* USER CODE END 4 */
 
 /**
@@ -750,6 +750,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
   /* USER CODE BEGIN Callback 1 */
 
+  if (htim->Instance == TIM5) {
+    /* Seconds counter */
+    ++g_unx_s;
+  }
   /* USER CODE END Callback 1 */
 }
 

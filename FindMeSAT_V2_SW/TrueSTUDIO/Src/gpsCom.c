@@ -9,6 +9,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
+#include <time.h>
 #include "stm32l4xx_hal.h"
 #include "cmsis_os.h"
 #include "FreeRTOS.h"
@@ -683,6 +684,44 @@ void gpscomtRXTimerCallbackImpl(TimerHandle_t argument)
 {
   /* Set bit */
   xEventGroupSetBits(gpscomEventGroupHandle, Gpscom_EGW__TIMER_SERVICE_RX);
+}
+
+
+/* Calculate Date and Time to unx time */
+uint32_t calcDataTime_to_unx_s(float* out_s_frac, uint32_t gnss_date, float gnss_time)
+{
+  time_t l_unx_s;
+
+  {
+    struct tm timp  = { 0 };
+
+    uint16_t year   = gnss_date % 100;
+    uint8_t  month  = (gnss_date / 100) % 100;
+    uint8_t  mday   = (gnss_date / 10000);
+    uint8_t  hour   = (uint8_t) (((uint32_t)  gnss_time) / 10000UL);
+    uint8_t  minute = (uint8_t) ((((uint32_t) gnss_time) / 100) % 100);
+    uint8_t  second = (uint8_t) (((uint32_t)  gnss_time) % 100);
+
+    /* Sanity checks */
+    if (month < 1) {
+      return 0.f;
+    }
+
+    timp.tm_year    = year + 100;
+    timp.tm_mon     = month - 1;
+    timp.tm_mday    = mday;
+    timp.tm_hour    = hour;
+    timp.tm_min     = minute;
+    timp.tm_sec     = second;
+    l_unx_s         = mktime(&timp);
+  }
+
+  if (out_s_frac){
+    float l_s_frac = gnss_time - floor(gnss_time);
+    *out_s_frac = l_s_frac;
+  }
+
+  return l_unx_s;
 }
 
 

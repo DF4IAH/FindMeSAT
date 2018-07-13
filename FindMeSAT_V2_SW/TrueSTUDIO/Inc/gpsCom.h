@@ -120,6 +120,7 @@ typedef struct GpscomGpsCtx {
 
 void gpscomtRXTimerCallbackImpl(TimerHandle_t argument);
 
+uint32_t calcDataTime_to_unx_s(float* out_s_frac, uint32_t gnss_date, float gnss_time);
 void gpscomGpscomTaskInit(void);
 void gpscomGpscomTaskLoop(void);
 
