@@ -270,7 +270,6 @@ void prvControllerPrintMCU(void)
 void prvTimeService(void)
 {
   static uint32_t   s_pps_us_last = 0UL;
-  static int32_t    s_span_integ  = 0L;
   #define           c_ofsHoldStrt   10U
   static uint8_t    s_ofsHoldOff  = c_ofsHoldStrt;
 
@@ -278,14 +277,15 @@ void prvTimeService(void)
   uint32_t          trim_new      = s_trim_last;
 
   const  float      c_ticks_mhz   = Tim5_reloadValue / 1e6;
-  const int32_t     DiffGlitch    =  20000L;
-  const int32_t     DiffCourse    = 100000L;
+  const  uint32_t   SecHalf       =  500000UL;
+  const  uint32_t   SecFull       = 1000000UL;
+  const  int32_t    DiffCourse    =   100000L;                                                  // 100ms
 
   const  uint32_t   c_pps_us      = g_pps_us;
   const  uint32_t   icscr         = RCC->ICSCR;
 
   /* Time span */
-  const  int32_t    c_pps_span    = (int32_t)c_pps_us - (int32_t)s_pps_us_last;
+  const  int32_t    c_pps_span    = ((((int32_t)c_pps_us - (int32_t)s_pps_us_last) + SecHalf) % SecFull) - SecHalf;
   s_pps_us_last                   = c_pps_us;
 
   uint8_t           gnss_seconds  = 0U;
@@ -297,18 +297,21 @@ void prvTimeService(void)
 
   /* Oscillator trimming */
   {
+    const int     DiffGlitch    =  20000L;
+    int32_t       l_span_integ  =      0L;
+
     /* Sum up to integral - avoid glitches */
     if (abs(c_pps_span) < DiffGlitch) {
-      s_span_integ += c_pps_span;
+      l_span_integ = ((int32_t) ((c_pps_us + SecHalf) % SecFull)) - (int32_t)SecHalf;
     }
 
     /* New correction value - time window +/-(5ms .. 100ms) */
-    if ((       -DiffCourse < s_span_integ) && (s_span_integ <        0L  ) && (c_pps_span < 0)) {
+    if ((       -DiffCourse < l_span_integ) && (l_span_integ <        0L  ) && (c_pps_span < 0)) {
       if (++trim_new > 0x50U) {
         trim_new = 0x50U;
       }
 
-    } else if ((         0L < s_span_integ) && (s_span_integ <  DiffCourse) && (c_pps_span > 0)) {
+    } else if ((         0L < l_span_integ) && (l_span_integ <  DiffCourse) && (c_pps_span > 0)) {
       if (--trim_new < 0x30U) {
         trim_new = 0x30U;
       }
@@ -343,7 +346,7 @@ void prvTimeService(void)
       g_unx_s_next = calcDataTime_to_unx_s(&s_frac, gnss_date, gnss_time);
 
       /* unx time correction for 1PPS event before timer roll-over */
-      if (c_pps_us > 500000UL) {
+      if (c_pps_us > SecHalf) {
         --g_unx_s;
       }
 
@@ -354,12 +357,12 @@ void prvTimeService(void)
       /* Avoid corrections at the start of a minute */
       if (gnss_seconds > 3 && !s_ofsHoldOff) {
         int32_t pps_us_offset   = (int32_t) c_pps_us;
-                pps_us_offset  +=  500000L;
-                pps_us_offset  %= 1000000L;
-                pps_us_offset  -=  500000L;
+                pps_us_offset  +=  SecHalf;
+                pps_us_offset  %= SecFull;
+                pps_us_offset  -=  SecHalf;
 
-        /* Adjust when abs(offset) > 1 ms */
-        if ((abs(pps_us_offset) >= 1000L) && !g_TIM5_ofs) {
+        /* Adjust when more than DiffCourse */
+        if ((abs(pps_us_offset) >= DiffCourse) && !g_TIM5_ofs) {
           int32_t l_TIM5_ofs = (int32_t) (-pps_us_offset * c_ticks_mhz);
           l_TIM5_ofs += Tim5_reloadValue;
           l_TIM5_ofs %= Tim5_reloadValue;
@@ -374,10 +377,10 @@ void prvTimeService(void)
 
   /* Logging */
   {
-    char logBuf[256];
+    char logBuf[128];
     int logLen = sprintf(logBuf,
-        "\r\n*** PPS TC=%lu.%06lu, Span=%+5ld SpanIntegral=%+7ld - RCC_ICSCR=0x%08lx - GNSS_secs=%02u\r\n",
-        g_unx_s, c_pps_us, c_pps_span, s_span_integ, icscr, gnss_seconds);
+        "\r\n*** PPS TC=%lu.%06lu, Span=%+8ld - RCC_ICSCR=0x%08lx - GNSS_secs=%02u\r\n",
+        g_unx_s, c_pps_us, c_pps_span, icscr, gnss_seconds);
     usbLogLen(logBuf, logLen);
   }
 }
