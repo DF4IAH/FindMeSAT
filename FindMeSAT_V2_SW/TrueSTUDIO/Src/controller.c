@@ -334,7 +334,7 @@ void prvTimeService(void)
   {
     float           s_frac    = 0.f;
 
-    const float     gnss_time = gpscomGpsCtx.time + 1.f;
+    const float     gnss_time = gpscomGpsCtx.time + 1.f;                                        // Current time
     const uint32_t  gnss_date = gpscomGpsCtx.date;
 
     /* Give mutex back */
@@ -343,7 +343,7 @@ void prvTimeService(void)
     /* Correct TIM5 timer when offset is more than it could easily be trimmed away */
     if (gnss_time && gnss_date) {
       /* Set next coming second for the ISR */
-      g_unx_s_next = calcDataTime_to_unx_s(&s_frac, gnss_date, gnss_time);
+      g_unx_s_next = 1UL + calcDataTime_to_unx_s(&s_frac, gnss_date, gnss_time);                // One second advance
 
       /* unx time correction for 1PPS event before timer roll-over */
       if (c_pps_us > SecHalf) {
