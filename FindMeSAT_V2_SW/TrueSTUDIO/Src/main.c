@@ -104,7 +104,7 @@ volatile uint32_t           g_unx_s_next                      = 0UL;
 volatile uint32_t           g_pps_us                          = 0UL;                            // 1PPS event time - 0 .. 999999 us
 
 volatile uint32_t           g_TIM5_CCR2                       = 0UL;
-volatile int32_t            g_TIM5_ofs                        = 0L;
+volatile uint32_t           g_TIM5_ofs                        = 0UL;
 
 
 /* USER CODE END PV */
@@ -669,7 +669,7 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
     taskDISABLE_INTERRUPTS();
 
     const uint32_t l_TIM5_CNT   = htim->Instance->CNT;
-    htim->Instance->CNT         = (l_TIM5_CNT + g_TIM5_ofs) % Tim5_reloadValue;
+    htim->Instance->CNT         = (uint32_t) ((l_TIM5_CNT + g_TIM5_ofs) % Tim5_reloadValue);
     g_TIM5_ofs                  = 0UL;
 
     const uint32_t l_TIM5_CCR2  = htim->Instance->CCR2;
