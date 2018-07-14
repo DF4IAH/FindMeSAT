@@ -100,7 +100,8 @@ volatile uint64_t	          g_timerStart_us                   = 0ULL;
 volatile uint64_t           g_realTime_Boot                   = 0ULL;
 
 volatile uint32_t           g_unx_s                           = 0UL;                            // Current    time - since UN*X epoch in  s
-volatile uint64_t           g_pps_us                          = 0UL;                            // 1PPS event time - since UN*X epoch in us
+volatile uint32_t           g_unx_s_next                      = 0UL;
+volatile uint32_t           g_pps_us                          = 0UL;                            // 1PPS event time - 0 .. 999999 us
 
 volatile uint32_t           g_TIM5_CCR2                       = 0UL;
 volatile int32_t            g_TIM5_ofs                        = 0L;
@@ -661,67 +662,33 @@ void mainCalc_Float2Int(float in, uint32_t* out_i, uint16_t* out_p1000)
   */
 void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
 {
-  static uint32_t s_unx_s = 0UL;
-
   if ((htim->Instance  == htim5.Instance           ) &&
       (htim->Channel   == HAL_TIM_ACTIVE_CHANNEL_2)) {
-    uint32_t    l_TIM5_CCR2             = htim5.Instance->CCR2;
-    int32_t     l_TIM5_ofs              = g_TIM5_ofs;
-    BaseType_t  higherPriorityTaskWOken = 0UL;
 
-    /* Sanity check */
-    if (l_TIM5_CCR2 > tim5_reloadValue) {
-      l_TIM5_CCR2 %= tim5_reloadValue;
-    }
+    /* Fetch and Stash - BEGIN */
+    taskDISABLE_INTERRUPTS();
 
-    /* Set current value to the read out structure */
-    {
-      /* Correct read-out value */
-#if 0
-      if (l_TIM5_ofs > 0) {
-        l_TIM5_CCR2 = ((l_TIM5_CCR2 > l_TIM5_ofs) ?  (l_TIM5_CCR2 - l_TIM5_ofs) : ((l_TIM5_CCR2 + tim5_reloadValue) - l_TIM5_ofs)) % tim5_reloadValue;
+    const uint32_t l_TIM5_CNT   = htim->Instance->CNT;
+    htim->Instance->CNT         = (l_TIM5_CNT + g_TIM5_ofs) % Tim5_reloadValue;
+    g_TIM5_ofs                  = 0UL;
 
-      } else if (l_TIM5_ofs < 0) {
-        const uint32_t c_minusOfs  = -l_TIM5_ofs;
-        l_TIM5_CCR2 = (l_TIM5_CCR2 + c_minusOfs) % tim5_reloadValue;
-      }
+    const uint32_t l_TIM5_CCR2  = htim->Instance->CCR2;
+    g_TIM5_CCR2                 = l_TIM5_CCR2;
+
+    g_unx_s                     = g_unx_s_next;
+#ifdef IS_N_X_1MHZ
+    g_pps_us                    = (uint32_t) (l_TIM5_CCR2 / (Tim5_reloadValue / 1000000UL));
+#else
+    g_pps_us                    = (uint32_t) (l_TIM5_CCR2 / (Tim5_reloadValue / 1e6));
 #endif
 
-      /* Offset correction gets activated 1 second later */
-      if (l_TIM5_ofs) {
-        taskDISABLE_INTERRUPTS();
-        uint32_t l_cnt        = htim->Instance->CNT;
-        l_cnt                += l_TIM5_ofs;
-        l_cnt                %= tim5_reloadValue;
-        htim->Instance->CNT   = l_cnt;
-        taskENABLE_INTERRUPTS();
-      }
+    taskENABLE_INTERRUPTS();
+    /* Fetch and Stash - END */
 
-      /* Update static sec counter */
-      if (l_TIM5_CCR2 + 10000UL > tim5_reloadValue) {                                           // Max. 10ms before roll-over .. one clock before roll-over
-        /* 1PPS previous timer roll-over -->  global seconds counter is valid*/
-        s_unx_s = g_unx_s;
 
-      } else {
-        /* One sec later */
-        ++s_unx_s;
-
-        /* For the case some PPS were lost */
-        if (s_unx_s < g_unx_s) {
-          s_unx_s = g_unx_s;  // Or plus one
-        }
-      }
-
-      /* Add fractional seconds to the UNIX us time value */
-      uint64_t l_pps_us  = (uint32_t) (l_TIM5_CCR2 / (HSI_VALUE / 1e6));
-               l_pps_us += s_unx_s * 1000000ULL;
-
-      /* Write back to global vars */
-      {
-        g_pps_us    = l_pps_us;
-        g_TIM5_CCR2 = l_TIM5_CCR2;
-        g_TIM5_ofs  = 0UL;
-      }
+    /* Message to controller */
+    {
+      BaseType_t  higherPriorityTaskWOken = 0UL;
 
       if (controllerEventGroupHandle) {
         xEventGroupSetBitsFromISR(controllerEventGroupHandle, Controller_EGW__TIM_PPS, &higherPriorityTaskWOken);
