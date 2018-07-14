@@ -377,7 +377,7 @@ void prvTimeService(void)
 
   /* Logging */
   {
-    char logBuf[128];
+    char logBuf[256];
     int logLen = sprintf(logBuf,
         "\r\n*** PPS TC=%lu.%06lu, Span=%+8ld - RCC_ICSCR=0x%08lx - GNSS_secs=%02u\r\n",
         g_unx_s, c_pps_us, c_pps_span, icscr, gnss_seconds);
