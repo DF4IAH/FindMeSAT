@@ -237,7 +237,7 @@ if (!isset($_SERVER["HTTP_HOST"])) {
       }
 
       $l_course_deg = $app__crs;
-      $l_speed_kn   = $app__spd / 1.852;
+      $l_speed_kn   = $app__spd * 3.6 / 1.852;  // m/s --> kn
       
       /* APRS constants */
       $g_aprs_login_user          = "DF4IAH";
