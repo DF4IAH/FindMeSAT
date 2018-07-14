@@ -244,7 +244,7 @@ void spiSX127xMode(spiSX127x_Mode_t mode);
 void spiSX127xRegister_IRQ_clearAll(void);
 void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg);
 uint32_t spiSX127x_WaitUntil_TxDone(uint32_t stopTime);
-void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t stopTime);
+void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t stopTime1, uint32_t stopTime2);
 
 uint8_t spiDetectShieldSX127x(void);
 

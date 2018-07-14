@@ -7,6 +7,10 @@
 
 #ifndef LORAWAN_H_
 #define LORAWAN_H_
+#ifdef __cplusplus
+ extern "C" {
+#endif
+
 
 #include "stm32l4xx_hal.h"
 
@@ -20,26 +24,31 @@
 
 
 /* Bit-mask for the loRaWANEventGroup */
-typedef enum LORAWAN_EGW_BM {
-  LORAWAN_EGW__QUEUE_IN               = 0x00000001UL,
-  LORAWAN_EGW__QUEUE_OUT              = 0x00000002UL,
-
-  LORAWAN_EGW__DO_INIT                = 0x00000010UL,
-
-  LORAWAN_EGW__DO_LINKCHECKREQ        = 0x00000100UL,
-  LORAWAN_EGW__DO_DEVICETIMEREQ       = 0x00000200UL,
-} LORAWAN_EGW_BM_t;
-
-typedef enum LoRaWAN_SIGNAL {
-  LoRaSIG_Ready                       = 1,
-} LoRaWAN_SIGNAL_t;
+typedef enum Lora_EGW_BM {
+  Lora_EGW__QUEUE_IN                  = 0x00000001UL,
+  Lora_EGW__DO_INIT                   = 0x00000010UL,
+  Lora_EGW__DO_LINKCHECKREQ           = 0x00000100UL,
+  Lora_EGW__DO_DEVICETIMEREQ          = 0x00000200UL,
+} Lora_EGW_BM_t;
 
 /* Command types for the loraInQueue */
-typedef enum loraInQueueCmds {
-  loraInQueueCmds__NOP                = 0,
-  loraInQueueCmds__Init,
-  loraInQueueCmds__TrackMeApplUp,
-} loraInQueueCmds_t;
+typedef enum LoraInQueueCmds {
+  LoraInQueueCmds__NOP                = 0,
+  LoraInQueueCmds__Init,
+  LoraInQueueCmds__LinkCheckReq,
+  LoraInQueueCmds__DeviceTimeReq,
+  LoraInQueueCmds__ConfirmedPackets,
+  LoraInQueueCmds__ADRset,
+  LoraInQueueCmds__PwrRedDb,
+  LoraInQueueCmds__DRset,
+  LoraInQueueCmds__TrackMeApplUp,
+} LoraInQueueCmds_t;
+
+/* Command types for the loraOutQueue */
+typedef enum LoraOutQueueCmds {
+  LoraOutQueueCmds__NOP                = 0,
+  LoraOutQueueCmds__Connected,
+} LoraOutQueueCmds_t;
 
 typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
   MIC_JOINREQUEST                     = 0x01,
@@ -105,10 +114,10 @@ typedef enum CurrentWindow {
 
 /* LoRaWAN RX windows */
 typedef enum LoRaWAN_RX_windows {
-  LORAWAN_BALANCING_AT_MOST_MS        =  200,
-  LORAWAN_RX_PREPARE_MS               =   25,
-  LORAWAN_FRQ_HOPPING_MS              =   75,                                                   // BAD: 0 - 48, GOOD: 49 - ...
-  LORAWAN_EU868_MAX_TX_DURATION_MS    = 2900,                                                   // TODO: Search for right value
+  LORAWAN_BALANCING_AT_MOST_MS        =  250,
+  LORAWAN_FRQ_JUMP_PREPARE_MS         =  100,                                                   // Last good value:  100
+  LORAWAN_RX_PREPARE_MS               =  50,                                                    // Last good value:   50
+  LORAWAN_EU868_MAX_TX_DURATION_MS    = 1990,                                                   // EU-868 M=59 / N=51 @ 250 bits/sec
 
   LORAWAN_EU868_DELAY1_MS             = 1000,
   LORAWAN_EU868_DELAY2_MS             = 2000,
@@ -123,7 +132,7 @@ typedef enum LoRaWAN_MTypeBF {
   JoinRequest                         = 0,
   JoinAccept                          = 1,
   UnconfDataUp                        = 2,
-  UncondDataDn                        = 3,
+  UnconfDataDn                        = 3,
   ConfDataUp                          = 4,
   ConfDataDn                          = 5,
   RejoinReq                           = 6,
@@ -365,6 +374,7 @@ typedef struct LoRaWANctx {
   volatile float                      GatewayPpm;                                               // PPM value to adjust RX for remote gateway crystal drift
 
   /* MAC communicated data */
+  volatile uint8_t                    ConfirmedPackets_enabled;                                 // Setting: global MType
   volatile uint8_t                    ADR_enabled;                                              // Setting: global ADR
   volatile uint8_t                    TX_MAC_Len;                                               // MAC list to be sent at next transmission
   volatile uint8_t                    TX_MAC_Buf[16];                                           // MAC list to be sent at next transmission
@@ -577,9 +587,12 @@ float LoRaWAN_calc_Channel_to_MHz(LoRaWANctx_t* ctx, uint8_t channel, LoRaWANctx
 void LoRaWAN_MAC_Queue_Push(const uint8_t* macAry, uint8_t cnt);
 void LoRaWAN_MAC_Queue_Pull(uint8_t* macAry, uint8_t cnt);
 void LoRaWAN_MAC_Queue_Reset(void);
-uint8_t LoRaWAN_MAC_Queue_isAvail(uint8_t* snoop);
 
-void loRaWANLoRaWANTaskInit(void);
-void loRaWANLoRaWANTaskLoop(void);
+void loRaWANLoraTaskInit(void);
+void loRaWANLoraTaskLoop(void);
 
+
+#ifdef __cplusplus
+}
+#endif
 #endif /* LORAWAN_H_ */

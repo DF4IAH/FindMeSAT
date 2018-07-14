@@ -67,6 +67,7 @@
 #include <stdio.h>
 #include "stm32l4xx_nucleo_144.h"
 #include "stm32l4xx_hal.h"
+#include "controller.h"
 
 
 #ifndef portAIRCR_REG
@@ -86,9 +87,25 @@
 
 /* USER CODE BEGIN PV */
 /* Private variables ---------------------------------------------------------*/
-static GPIO_InitTypeDef  GPIO_InitStruct;
-volatile uint32_t	g_timer_us = 0;
-volatile uint32_t	g_timerStart_us = 0;
+extern TIM_HandleTypeDef    htim3;
+extern TIM_HandleTypeDef    htim4;
+extern TIM_HandleTypeDef    htim5;
+
+extern EventGroupHandle_t   controllerEventGroupHandle;
+
+
+static GPIO_InitTypeDef     GPIO_InitStruct;
+volatile uint64_t	          g_timer_us                        = 0ULL;
+volatile uint64_t	          g_timerStart_us                   = 0ULL;
+volatile uint64_t           g_realTime_Boot                   = 0ULL;
+
+volatile uint32_t           g_unx_s                           = 0UL;                            // Current    time - since UN*X epoch in  s
+volatile uint32_t           g_unx_s_next                      = 0UL;
+volatile uint32_t           g_pps_us                          = 0UL;                            // 1PPS event time - 0 .. 999999 us
+
+volatile uint32_t           g_TIM5_CCR2                       = 0UL;
+volatile uint32_t           g_TIM5_ofs                        = 0UL;
+
 
 /* USER CODE END PV */
 
@@ -196,7 +213,11 @@ int main(void)
   MX_RTC_Init();
   MX_ADC1_Init();
   MX_CRC_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
+
+  /* Enable 1PPS time capture on TIM5/Channel2 */
+  HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2);
 
   /* Enable external SMPS for Vdd12 */
   SMPS_Init();
@@ -216,6 +237,10 @@ int main(void)
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
+  /* Something got wrong! */
+  Error_Handler();
+
   while (1)
   {
   /* USER CODE END WHILE */
@@ -251,13 +276,7 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
   RCC_OscInitStruct.HSICalibrationValue = 64;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 2;
-  RCC_OscInitStruct.PLL.PLLN = 20;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
-  RCC_OscInitStruct.PLL.PLLQ = RCC_PLLQ_DIV8;
-  RCC_OscInitStruct.PLL.PLLR = RCC_PLLR_DIV2;
+  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -267,19 +286,21 @@ void SystemClock_Config(void)
     */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_4) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
   }
 
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_UART5
-                              |RCC_PERIPHCLK_LPUART1|RCC_PERIPHCLK_I2C1
-                              |RCC_PERIPHCLK_USB|RCC_PERIPHCLK_ADC;
+  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_USART3
+                              |RCC_PERIPHCLK_UART5|RCC_PERIPHCLK_LPUART1
+                              |RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_USB
+                              |RCC_PERIPHCLK_ADC;
+  PeriphClkInit.Usart3ClockSelection = RCC_USART3CLKSOURCE_HSI;
   PeriphClkInit.Uart5ClockSelection = RCC_UART5CLKSOURCE_HSI;
   PeriphClkInit.Lpuart1ClockSelection = RCC_LPUART1CLKSOURCE_HSI;
   PeriphClkInit.I2c1ClockSelection = RCC_I2C1CLKSOURCE_HSI;
@@ -435,20 +456,107 @@ void SMPS_Init(void)
 }
 
 
+/* Used by the run-time stats */
 void configureTimerForRunTimeStats(void)
 {
   getRunTimeCounterValue();
-  g_timerStart_us = g_timer_us;
+
+  /* Interrupt disabled block */
+  {
+    taskDISABLE_INTERRUPTS();
+    g_timerStart_us = g_timer_us;
+    taskENABLE_INTERRUPTS();
+  }
 }
 
+/* Used by the run-time stats */
 unsigned long getRunTimeCounterValue(void)
 {
+  uint64_t l_timerStart_us;
   uint64_t timer_us = HAL_GetTick() & 0x003fffffUL;  // avoid overflows
   timer_us *= 1000UL;
   timer_us += TIM2->CNT;
-  g_timer_us = timer_us;
-  return timer_us - g_timerStart_us;
+
+  /* Interrupt disabled block */
+  {
+    taskDISABLE_INTERRUPTS();
+    g_timer_us      = timer_us;
+    l_timerStart_us = g_timerStart_us;
+    taskENABLE_INTERRUPTS();
+  }
+
+  return (unsigned long) (timer_us - l_timerStart_us);
 }
+
+
+/* Adjusts the global timers TIM4 / TIM3 / TIM5 with UNIX time (�s) */
+int32_t setRealTime(uint64_t unixTime_us)
+{
+  uint16_t  l_TIM4_CNT;
+  uint16_t  l_TIM3_CNT;
+  uint32_t  l_TIM5_CNT;
+  uint64_t  l_realTime_Outdated;
+  uint64_t  l_realTime_Now;
+  int64_t   l_diff_last;
+
+  /* Interrupt disabled block */
+  {
+    taskDISABLE_INTERRUPTS();
+    l_TIM5_CNT = TIM5->CNT;
+    l_TIM3_CNT = TIM3->CNT;
+    l_TIM4_CNT = TIM4->CNT;
+    taskENABLE_INTERRUPTS();
+  }
+
+  /* Calculate the timestamp of the outdated timer */
+  l_realTime_Outdated  = (uint64_t)l_TIM4_CNT << 48U;
+  l_realTime_Outdated |= (uint64_t)l_TIM3_CNT << 32U;
+  l_realTime_Outdated += (uint64_t) (l_TIM5_CNT / (HSI_VALUE / 1e7));
+
+  /* Calculate the last offset */
+  l_diff_last = l_realTime_Outdated - unixTime_us;
+
+  /* Calculate the new boot timestamp */
+  l_realTime_Now  = l_realTime_Outdated;
+  l_realTime_Now -= l_diff_last;
+
+  /* Interrupt disabled block */
+  {
+    taskDISABLE_INTERRUPTS();
+    TIM5->CNT = l_TIM5_CNT;
+    TIM3->CNT = l_TIM3_CNT;
+    TIM4->CNT = l_TIM4_CNT;
+    taskENABLE_INTERRUPTS();
+  }
+
+  return (int32_t) l_diff_last;
+}
+
+/* Returns the UNIX time in �s */
+uint64_t getRealTime(void)
+{
+  uint16_t  l_TIM4_CNT;
+  uint16_t  l_TIM3_CNT;
+  uint32_t  l_TIM5_CNT;
+  uint64_t  l_realTime_Now;
+
+  /* Interrupt disabled block */
+  {
+    taskDISABLE_INTERRUPTS();
+    l_TIM5_CNT = TIM5->CNT;
+    l_TIM3_CNT = TIM3->CNT;
+    l_TIM4_CNT = TIM4->CNT;
+    taskENABLE_INTERRUPTS();
+  }
+
+  /* Calculate the timestamp of now */
+  l_realTime_Now  = (uint64_t)l_TIM4_CNT << 48U;
+  l_realTime_Now |= (uint64_t)l_TIM3_CNT << 32U;
+  l_realTime_Now += (uint64_t) (l_TIM5_CNT / (HSI_VALUE / 1e7));
+
+  return l_realTime_Now;
+}
+
 
 void SystemResetbyARMcore(void)
 {
@@ -526,7 +634,7 @@ void  vApplicationIdleHook(void)
   HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_SET);                                    // Blue on
 #endif
 
-  /* Go into sleep mode */
+  /* Enter sleep mode */
   __asm volatile( "WFI" );
 
 #ifdef LED_IDLE_DEBUG
@@ -544,6 +652,49 @@ void mainCalc_Float2Int(float in, uint32_t* out_i, uint16_t* out_p1000)
 
   *out_i      = (uint32_t) in;
   *out_p1000  = (uint16_t) (((uint32_t) (in * 1000.f)) % 1000);
+}
+
+
+/**
+  * @brief  Input Capture callback in non-blocking mode
+  * @param  htim TIM IC handle
+  * @retval None
+  */
+void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
+{
+  if ((htim->Instance  == htim5.Instance           ) &&
+      (htim->Channel   == HAL_TIM_ACTIVE_CHANNEL_2)) {
+
+    /* Fetch and Stash - BEGIN */
+    taskDISABLE_INTERRUPTS();
+
+    const uint32_t l_TIM5_CNT   = htim->Instance->CNT;
+    htim->Instance->CNT         = (uint32_t) ((l_TIM5_CNT + g_TIM5_ofs) % Tim5_reloadValue);
+    g_TIM5_ofs                  = 0UL;
+
+    const uint32_t l_TIM5_CCR2  = htim->Instance->CCR2;
+    g_TIM5_CCR2                 = l_TIM5_CCR2;
+
+    g_unx_s                     = g_unx_s_next;
+#ifdef IS_N_X_1MHZ
+    g_pps_us                    = (uint32_t) (l_TIM5_CCR2 / (Tim5_reloadValue / 1000000UL));
+#else
+    g_pps_us                    = (uint32_t) (l_TIM5_CCR2 / (Tim5_reloadValue / 1e6));
+#endif
+
+    taskENABLE_INTERRUPTS();
+    /* Fetch and Stash - END */
+
+
+    /* Message to controller */
+    {
+      BaseType_t  higherPriorityTaskWOken = 0UL;
+
+      if (controllerEventGroupHandle) {
+        xEventGroupSetBitsFromISR(controllerEventGroupHandle, Controller_EGW__TIM_PPS, &higherPriorityTaskWOken);
+      }
+    }
+  }
 }
 
 /* USER CODE END 4 */
@@ -566,6 +717,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
   }
   /* USER CODE BEGIN Callback 1 */
 
+  if (htim->Instance == TIM5) {
+    /* Seconds counter */
+    ++g_unx_s;
+  }
   /* USER CODE END Callback 1 */
 }
 

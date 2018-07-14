@@ -14,11 +14,13 @@
 #include "FreeRTOS.h"
 #include "stm32l496xx.h"
 #include "cmsis_os.h"
-#include "usb.h"
 #include "interpreter.h"
-#include "adc.h"
-#include "spi.h"
+#include "usb.h"
+#include "gpsCom.h"
 #include "LoRaWAN.h"
+#include "tim.h"
+#include "spi.h"
+#include "adc.h"
 
 #include "controller.h"
 
@@ -28,16 +30,23 @@
 /* Private variables ---------------------------------------------------------*/
 extern osMessageQId         loraInQueueHandle;
 extern osMessageQId         loraOutQueueHandle;
+extern osMessageQId         gpscomInQueueHandle;
+extern osMessageQId         gpscomOutQueueHandle;
+extern osMessageQId         sensorsInQueueHandle;
+extern osMessageQId         sensorsOutQueueHandle;
+extern osMessageQId         interOutQueueHandle;
 extern osTimerId            controllerSendTimerHandle;
+extern osMutexId            trackMeApplUpDataMutexHandle;
+extern osMutexId            trackMeApplDnDataMutexHandle;
+extern osMutexId            gpscomCtxMutexHandle;
 extern osSemaphoreId        usbToHostBinarySemHandle;
 extern osSemaphoreId        trackMeApplUpBinarySemHandle;
-extern osSemaphoreId        trackMeApplUpDataBinarySemHandle;
-extern osSemaphoreId        trackMeApplDownDataBinarySemHandle;
 extern EventGroupHandle_t   usbToHostEventGroupHandle;
-extern EventGroupHandle_t   loRaWANEventGroupHandle;
+extern EventGroupHandle_t   loraEventGroupHandle;
 extern EventGroupHandle_t   controllerEventGroupHandle;
 
 extern LoRaWANctx_t         loRaWANctx;
+extern GpscomGpsCtx_t       gpscomGpsCtx;
 
 /* Application data for track_me */
 extern TrackMeApp_up_t      trackMeApp_up;
@@ -46,7 +55,15 @@ extern TrackMeApp_down_t    trackMeApp_down;
 extern LoraliveApp_up_t     loraliveApp_up;
 extern LoraliveApp_down_t   loraliveApp_down;
 
-const uint16_t              Controller_MaxWaitMs = 100;
+extern uint32_t             g_unx_s;
+extern uint32_t             g_unx_s_next;
+extern uint32_t             g_pps_us;
+
+extern uint32_t             g_TIM5_CCR2;
+extern uint32_t             g_TIM5_ofs;
+
+
+const  uint16_t             Controller_MaxWaitMs              = 100;
 
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,28 +83,31 @@ const char controllerGreetMsg11[] =
     "\tFindMeSAT_V2 version:\r\n"
     "\t=====================\r\n"
     "\r\n"
-    "\t\tDate\t\t%08u\r\n";
+    "\t\tSoftware date\t%08u\r\n";
 void prvControllerUsbGreet(void)
 {
-  char verBuf[70];
+  char verBuf[128];
 
   sprintf(verBuf, controllerGreetMsg11, FINDMESAT_VERSION);
 
-  osSemaphoreWait(usbToHostBinarySemHandle, 0);
+  /* usbToHost block */
+  {
+    osSemaphoreWait(usbToHostBinarySemHandle, 0);
 
-  usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
-  usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
-  usbToHostWait((uint8_t*) controllerGreetMsg04, strlen(controllerGreetMsg04));
-  usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
-  usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
-  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
-  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
+    usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
+    usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
+    usbToHostWait((uint8_t*) controllerGreetMsg04, strlen(controllerGreetMsg04));
+    usbToHostWait((uint8_t*) controllerGreetMsg03, strlen(controllerGreetMsg03));
+    usbToHostWait((uint8_t*) controllerGreetMsg02, strlen(controllerGreetMsg02));
+    usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
+    usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
 
-  usbToHostWait((uint8_t*) verBuf, strlen(verBuf));
-  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
-  usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
+    usbToHostWait((uint8_t*) verBuf, strlen(verBuf));
+    usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
+    usbToHostWait((uint8_t*) controllerGreetMsg01, strlen(controllerGreetMsg01));
 
-  osSemaphoreRelease(usbToHostBinarySemHandle);
+    osSemaphoreRelease(usbToHostBinarySemHandle);
+  }
 }
 
 void prvControllerInitBeforeGreet(void)
@@ -97,9 +117,10 @@ void prvControllerInitBeforeGreet(void)
 
   /* Check for attached SX127x_mbed_shield */
   if (HAL_OK == spiDetectShieldSX127x()) {
+#if 1
     /* Send INIT message to the LoRaWAN task */
     const uint8_t c_maxWaitMs = 25;
-    const uint8_t c_msgToLoRaWAN[2] = { 1, loraInQueueCmds__Init };
+    const uint8_t c_msgToLoRaWAN[2] = { 1, LoraInQueueCmds__Init };
 
     /* Write message into loraInQueue */
     for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
@@ -107,7 +128,8 @@ void prvControllerInitBeforeGreet(void)
     }
 
     /* Set QUEUE_IN bit */
-    xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
+    xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
+#endif
   }
 }
 
@@ -227,7 +249,7 @@ void prvControllerPrintMCU(void)
   int16_t  adc1Temp_100_i = adc1Temp_100 / 100;
   uint16_t adc1Temp_100_f = adc1Temp_100 >= 0 ?  (adc1Temp_100 % 100) : (-adc1Temp_100 % 100);
 
-  sprintf(buf,
+  int len = sprintf(buf,
       "\r\n"
       "\tMCU Info:\r\n"
       "\t=========\r\n"
@@ -241,12 +263,135 @@ void prvControllerPrintMCU(void)
       "\t\tVbat\t\t%4lu mV\r\n"
       "\t\tMCU Temp.\t%+02d.%02u C\r\n\r\n\r\n",
       lotBuf, uidWaf, uidPosX, uidPosY, packagePtr, flashSize, adc1Vdda_mV, adc1Vbat_mV, adc1Temp_100_i, adc1Temp_100_f);
-  usbLog(buf);
+  usbLogLen(buf, len);
 }
 
 
+void prvTimeService(void)
+{
+  static uint32_t   s_pps_us_last = 0UL;
+  #define           c_ofsHoldStrt   10U
+  static uint8_t    s_ofsHoldOff  = c_ofsHoldStrt;
+
+  static uint8_t    s_trim_last   = 0x40U;
+  uint32_t          trim_new      = s_trim_last;
+
+  const  float      c_ticks_mhz   = Tim5_reloadValue / 1e6;
+  const  uint32_t   SecHalf       =  500000UL;
+  const  uint32_t   SecFull       = 1000000UL;
+  const  int32_t    DiffCourse    =   100000L;                                                  // 100ms
+
+  const  uint32_t   c_pps_us      = g_pps_us;
+  const  uint32_t   icscr         = RCC->ICSCR;
+
+  /* Time span */
+  const  int32_t    c_pps_span    = ((((int32_t)c_pps_us - (int32_t)s_pps_us_last) + SecHalf) % SecFull) - SecHalf;
+  s_pps_us_last                   = c_pps_us;
+
+  uint8_t           gnss_seconds  = 0U;
+
+  /* PPS timer offset correction hold of timer */
+  if (s_ofsHoldOff > 0) {
+    --s_ofsHoldOff;
+  }
+
+  /* Oscillator trimming */
+  {
+    const int     DiffGlitch    =  20000L;
+    int32_t       l_span_integ  =      0L;
+
+    /* Sum up to integral - avoid glitches */
+    if (abs(c_pps_span) < DiffGlitch) {
+      l_span_integ = ((int32_t) ((c_pps_us + SecHalf) % SecFull)) - (int32_t)SecHalf;
+    }
+
+    /* New correction value - time window +/-(5ms .. 100ms) */
+    if ((       -DiffCourse < l_span_integ) && (l_span_integ <        0L  ) && (c_pps_span < 0)) {
+      if (++trim_new > 0x50U) {
+        trim_new = 0x50U;
+      }
+
+    } else if ((         0L < l_span_integ) && (l_span_integ <  DiffCourse) && (c_pps_span > 0)) {
+      if (--trim_new < 0x30U) {
+        trim_new = 0x30U;
+      }
+    }
+
+    /* Write back trimmed value */
+    if (s_trim_last != trim_new)
+    {
+      uint32_t icscr_new  = icscr;
+      icscr_new  &= 0x0000ff00UL;
+      icscr_new  |= ((uint32_t) trim_new) << 24U;
+      RCC->ICSCR  = icscr_new;
+
+      s_trim_last = trim_new;
+    }
+  }
+
+  /* Get GNSS time */
+  if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, 5 / portTICK_PERIOD_MS))
+  {
+    float           s_frac    = 0.f;
+
+    const float     gnss_time = gpscomGpsCtx.time + 1.f;                                        // Current time
+    const uint32_t  gnss_date = gpscomGpsCtx.date;
+
+    /* Give mutex back */
+    xSemaphoreGive(gpscomCtxMutexHandle);
+
+    /* Correct TIM5 timer when offset is more than it could easily be trimmed away */
+    if (gnss_time && gnss_date) {
+      /* Set next coming second for the ISR */
+      g_unx_s_next = 1UL + calcDataTime_to_unx_s(&s_frac, gnss_date, gnss_time);                // One second advance
+
+      /* unx time correction for 1PPS event before timer roll-over */
+      if (c_pps_us > SecHalf) {
+        --g_unx_s;
+      }
+
+      /* The current GNSS second */
+      const uint32_t gnss_time_ul = (uint32_t) gnss_time;
+      gnss_seconds                = (uint8_t) ((gnss_time_ul % 100UL) % 60UL);
+
+      /* Avoid corrections at the start of a minute */
+      if (gnss_seconds > 3 && !s_ofsHoldOff) {
+        int32_t pps_us_offset   = (int32_t) c_pps_us;
+                pps_us_offset  +=  SecHalf;
+                pps_us_offset  %= SecFull;
+                pps_us_offset  -=  SecHalf;
+
+        /* Adjust when more than DiffCourse */
+        if ((abs(pps_us_offset) >= DiffCourse) && !g_TIM5_ofs) {
+          int32_t l_TIM5_ofs = (int32_t) (-pps_us_offset * c_ticks_mhz);
+          l_TIM5_ofs += Tim5_reloadValue;
+          l_TIM5_ofs %= Tim5_reloadValue;
+          g_TIM5_ofs  = (uint32_t) l_TIM5_ofs;
+
+          /* Do not touch g_TIM5_ofs again for this number of seconds */
+          s_ofsHoldOff = c_ofsHoldStrt;
+        }
+      }
+    }
+  }
+
+  /* Logging */
+  {
+    char logBuf[256];
+    int logLen = sprintf(logBuf,
+        "\r\n*** PPS TC=%lu.%06lu, Span=%+8ld - RCC_ICSCR=0x%08lx - GNSS_secs=%02u\r\n",
+        g_unx_s, c_pps_us, c_pps_span, icscr, gnss_seconds);
+    usbLogLen(logBuf, logLen);
+  }
+}
+
+
+// #define GPS_SIMU
+// #define WEATHER_SIMU
+// #define CURRENT_SIMU
 void prvControllerGetDataAndUpload(void)
 {
+#ifdef GPS_SIMU
   const  float  centerLat     =  49.473185f;
   const  float  centerLon     =   8.614806f;
   const  float  centerAlt     =  98.0f;
@@ -256,65 +401,249 @@ void prvControllerGetDataAndUpload(void)
   const  float  height_m_p_s  =   0.1f;
   const  float  humidityAmpl  = 100.0f;  // +/- 10%
   static float  simPhase      =   0.0f;
+#endif
 
-  /* Wait for semaphore to access LoRaWAN TrackMeApp */
-  osSemaphoreWait(trackMeApplUpDataBinarySemHandle, 0);
+  /* Take mutex to access LoRaWAN TrackMeApp */
+  if (pdTRUE == xSemaphoreTake(trackMeApplUpDataMutexHandle, 500 / portTICK_PERIOD_MS)) {
+    /* Fill in data to send */
+    {
+#ifdef GPS_SIMU
+      // This part is done by the gpsCom module
+      /* TTN Mapper entities */
+      trackMeApp_up.latitude_deg      = centerLat + ((radius_m / (60.f * 1852.f)) * sin(simPhase * PI/180));
+      trackMeApp_up.longitude_deg     = centerLon + ((radius_m / (60.f * 1852.f)) * cos(simPhase * PI/180) / cos(2*PI * centerLat));
+      trackMeApp_up.altitude_m        = centerAlt + sin(simPhase * PI/180) * heightAmpl_m;
+      trackMeApp_up.accuracy_10thM    = centerAcc + sin(simPhase * PI/180) * 2.0f;
 
-  /* Fill in data to send */
-  {
-    /* TTN Mapper entities */
-    trackMeApp_up.latitude_deg      = centerLat + ((radius_m / (60.f * 1852.f)) * sin(simPhase * PI/180));
-    trackMeApp_up.longitude_deg     = centerLon + ((radius_m / (60.f * 1852.f)) * cos(simPhase * PI/180) / cos(2*PI * centerLat));
-    trackMeApp_up.altitude_m        = centerAlt + sin(simPhase * PI/180) * heightAmpl_m;
-    trackMeApp_up.accuracy_10thM    = centerAcc + sin(simPhase * PI/180) * 2.0f;
+      /* Motion vector entities */
+      trackMeApp_up.course_deg        = (uint8_t) (360U - (uint16_t)simPhase);
+      trackMeApp_up.speed_m_s         = 2*PI*radius_m * (30.f / 360.f);
+      trackMeApp_up.vertspeed_m_s     = cos(simPhase * PI/180) * height_m_p_s;
+#endif
 
-    /* Motion vector entities */
-    trackMeApp_up.course_deg        = (uint8_t) (360U - (uint16_t)simPhase);
-    trackMeApp_up.speed_m_s         = 2*PI*radius_m * (30.f / 360.f);
-    trackMeApp_up.vertspeed_m_s     = cos(simPhase * PI/180) * height_m_p_s;
+#ifdef WEATHER_SIMU
+      /* Weather entities */
+      trackMeApp_up.temp_100th_C      = adcGetTemp_100();
+      trackMeApp_up.humitidy_1000th   = (uint16_t) (500 + sin(simPhase * PI/180) * humidityAmpl);
+      trackMeApp_up.baro_Pa           = 101325;
+#endif
 
-    /* Weather entities */
-    trackMeApp_up.temp_100th_C      = adcGetTemp_100();
-    trackMeApp_up.humitidy_1000th   = (uint16_t) (500 + sin(simPhase * PI/180) * humidityAmpl);
-    trackMeApp_up.baro_Pa           = 101325;
+      /* System entities */
+      trackMeApp_up.vbat_mV           = adcGetVbat_mV();
+#ifdef CURRENT_SIMU
+      trackMeApp_up.ibat_uA           = -1000;  // drawing from the battery
+#endif
 
-    /* System entities */
-    trackMeApp_up.vbat_mV           = adcGetVbat_mV();
-    trackMeApp_up.ibat_uA           = -1000;  // drawing from the battery
-
-
-    /* Simulator phase increment - each 10 secs */
-    simPhase += 30.f;
-    if (simPhase > 359.9f) {
-      simPhase = 0.f;
-    }
-  }
-
-  /* Free semaphore */
-  osSemaphoreRelease(trackMeApplUpDataBinarySemHandle);
-  __asm volatile( "ISB" );
-
-  /* Signal to take-over data and do upload */
-  {
-    const uint8_t c_msgToLoRaWAN[2] = { 1, loraInQueueCmds__TrackMeApplUp };
-
-    /* Write message into loraInQueue */
-    for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
-      xQueueSendToBack(loraInQueueHandle, c_msgToLoRaWAN + idx, Controller_MaxWaitMs);
+#ifdef GPS_SIMU
+      /* Simulator phase increment - each 10 secs */
+      simPhase += 30.f;
+      if (simPhase > 359.9f) {
+        simPhase = 0.f;
+      }
+#endif
     }
 
-    /* Set QUEUE_IN bit */
-    xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__QUEUE_IN);
+    /* Free semaphore */
+    xSemaphoreGive(trackMeApplUpDataMutexHandle);
+
+    /* Signal to take-over data and do upload */
+    {
+      const uint8_t c_msgToLoRaWAN[2] = { 1, LoraInQueueCmds__TrackMeApplUp };
+
+      /* Write message into loraInQueue */
+      for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
+        xQueueSendToBack(loraInQueueHandle, c_msgToLoRaWAN + idx, Controller_MaxWaitMs);
+      }
+
+      /* Set QUEUE_IN bit */
+      xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
+    }
+
+  } else {
+    /* No luck filling in current data - abort plan to upload data */
   }
 }
 
+
+void prvPushToLoraInQueue(const uint8_t* cmdAry, uint8_t cmdLen)
+{
+  for (uint8_t idx = 0; idx < cmdLen; ++idx) {
+    xQueueSendToBack(loraInQueueHandle, cmdAry + idx, 1);
+  }
+  xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
+}
+
+void prvPullFromInterpreterOutQueue(void)
+{
+  BaseType_t  xStatus;
+  uint8_t     inAry[4]  = { 0 };
+  uint8_t     inLen     = 0;
+
+  do {
+    xStatus = xQueueReceive(interOutQueueHandle, &inLen, 1);
+    if (pdPASS == xStatus) {
+      for (uint8_t idx = 0; idx < inLen; idx++) {
+        xStatus = xQueueReceive(interOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
+        if (pdFALSE == xStatus) {
+          /* Bad communication - drop */
+          return;
+        }
+      }
+    }
+
+    switch (inAry[0]) {
+    case InterOutQueueCmds__DoSendDataUp:
+      {
+        prvControllerGetDataAndUpload();
+      }
+      break;
+
+    case InterOutQueueCmds__LinkCheckReq:
+      {
+        const uint8_t cmdAry[2] = { 1, LoraInQueueCmds__LinkCheckReq };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
+
+    case InterOutQueueCmds__DeviceTimeReq:
+      {
+        const uint8_t cmdAry[2] = { 1, LoraInQueueCmds__DeviceTimeReq };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
+
+    case InterOutQueueCmds__ConfirmedPackets:
+      {
+        const uint8_t confSet = inAry[1];
+        const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__ConfirmedPackets, confSet };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
+
+    case InterOutQueueCmds__ADRset:
+      {
+        const uint8_t adrSet = inAry[1];
+        const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__ADRset, adrSet };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
+
+    case InterOutQueueCmds__DRset:
+      {
+        const uint8_t drSet = inAry[1];
+        const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__DRset, drSet };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
+
+    case InterOutQueueCmds__PwrRedDb:
+      {
+        const uint8_t pwrRed_db = inAry[1];
+        const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__PwrRedDb, pwrRed_db };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
+    }  // switch
+  } while (!xQueueIsQueueEmptyFromISR(interOutQueueHandle));
+}
+
+void prvPullFromLoraOutQueue(void)
+{
+  BaseType_t  xStatus;
+  uint8_t     inAry[4]  = { 0 };
+  uint8_t     inLen     = 0;
+
+  do {
+    xStatus = xQueueReceive(loraOutQueueHandle, &inLen, 1);
+    if (pdPASS == xStatus) {
+      for (uint8_t idx = 0; idx < inLen; idx++) {
+        xStatus = xQueueReceive(loraOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
+        if (pdFALSE == xStatus) {
+          /* Bad communication - drop */
+          return;
+        }
+      }
+    }
+
+    switch (inAry[0]) {
+    case LoraOutQueueCmds__Connected:
+      {
+        /* Ready from LoRaWAN task received - activate upload timer */
+        xStatus = xTimerStart(controllerSendTimerHandle, 1);
+        xStatus = xTimerChangePeriod(controllerSendTimerHandle, 5 * 60 * 1000 / portTICK_PERIOD_MS, 1);   // 5 minutes
+
+        /* Request LoRaWAN link check and network time */
+        const uint8_t cmdAry[4] = {
+            1, LoraInQueueCmds__LinkCheckReq,
+            1, LoraInQueueCmds__DeviceTimeReq };
+        prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
+    }  // switch
+  } while (!xQueueIsQueueEmptyFromISR(loraOutQueueHandle));
+}
+
+void prvPullFromGpscomOutQueue(void)
+{
+  BaseType_t  xStatus;
+  uint8_t     inAry[4]  = { 0 };
+  uint8_t     inLen     = 0;
+
+  do {
+    xStatus = xQueueReceive(gpscomOutQueueHandle, &inLen, 1);
+    if (pdPASS == xStatus) {
+      for (uint8_t idx = 0; idx < inLen; idx++) {
+        xStatus = xQueueReceive(gpscomOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
+        if (pdFALSE == xStatus) {
+          /* Bad communication - drop */
+          return;
+        }
+      }
+    }
+
+    switch (inAry[0]) {
+    case gpscomOutQueueCmds__EndOfParse:
+      {
+        /* Take over data important for the track_me App*/
+        /* Try to get the mutex within that short time or drop the message */
+        if (pdTRUE == xSemaphoreTake(gpscomCtxMutexHandle, 100 / portTICK_PERIOD_MS))
+        {
+          const float lat_deg         = gpscomGpsCtx.lat_deg;
+          const float lon_deg         = gpscomGpsCtx.lon_deg;
+          const float alt_m           = gpscomGpsCtx.alt_m;
+          const float accuracy_10thM  = gpscomGpsCtx.hdop * 35.f;
+          const float course_deg      = gpscomGpsCtx.course_deg;
+          const float speed_m_s       = gpscomGpsCtx.speed_kts * 1.852f / 3.6f;
+
+          /* Give mutex back */
+          xSemaphoreGive(gpscomCtxMutexHandle);
+
+          /* Try to get trackMeApplUpData mutex */
+          if (pdTRUE == xSemaphoreTake(trackMeApplUpDataMutexHandle, 100 / portTICK_PERIOD_MS))
+          {
+            trackMeApp_up.latitude_deg    = lat_deg;
+            trackMeApp_up.longitude_deg   = lon_deg;
+            trackMeApp_up.altitude_m      = alt_m;
+            trackMeApp_up.accuracy_10thM  = accuracy_10thM;
+            trackMeApp_up.course_deg      = course_deg;
+            trackMeApp_up.speed_m_s       = speed_m_s;
+
+            /* Give mutex back */
+            xSemaphoreGive(trackMeApplUpDataMutexHandle);
+          }
+        }
+      }
+      break;
+    }  // switch
+  } while (!xQueueIsQueueEmptyFromISR(gpscomOutQueueHandle));
+}
 
 
 /* Global functions ----------------------------------------------------------*/
 void controllerSendTimerCallbackImpl(TimerHandle_t xTimer)
 {
   /* Set flag for sending and upload data */
-  xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__DO_SEND);
+  xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__INTER_SENS_DO_SEND);
 }
 
 
@@ -337,64 +666,34 @@ void controllerControllerTaskInit(void)
 
 void controllerControllerTaskLoop(void)
 {
-  /* Controller itself */
-  {
-    /* Keep controllerEventGroupHandle for 25 ms */
-    EventBits_t eb = xEventGroupWaitBits(controllerEventGroupHandle,
-        Controller_EGW__DO_SEND | Controller_EGW__DO_LINKCHECKREQ | Controller_EGW__DO_DEVICETIMEREQ,
-        Controller_EGW__DO_SEND | Controller_EGW__DO_LINKCHECKREQ | Controller_EGW__DO_DEVICETIMEREQ,
-        0, 25 / portTICK_PERIOD_MS);
+  /* Keep controllerEventGroupHandle for 25 ms */
+  EventBits_t eb = xEventGroupWaitBits(controllerEventGroupHandle,
+      Controller_EGW__TIM_PPS | Controller_EGW__INTER_QUEUE_OUT | Controller_EGW__LORA_QUEUE_OUT | Controller_EGW__GPSCOM_QUEUE_OUT | Controller_EGW__INTER_SENS_DO_SEND,
+      0,
+      0, 25 / portTICK_PERIOD_MS);
 
-    if (eb & Controller_EGW__DO_SEND) {
-      prvControllerGetDataAndUpload();
-    }
-
-    if (eb & Controller_EGW__DO_LINKCHECKREQ) {
-      /**/
-      xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_LINKCHECKREQ);
-    }
-
-    if (eb & Controller_EGW__DO_DEVICETIMEREQ) {
-      xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_DEVICETIMEREQ);
-    }
+  if (eb & Controller_EGW__TIM_PPS) {
+    xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__TIM_PPS);
+    prvTimeService();
   }
 
-  /* LoRaWAN */
-  {
-    /* Check for new data from the LoRaWAN module */
-    EventBits_t eb = xEventGroupWaitBits(loRaWANEventGroupHandle,
-        LORAWAN_EGW__QUEUE_OUT,
-        LORAWAN_EGW__QUEUE_OUT,
-        0, 1);
+  if (eb & Controller_EGW__INTER_QUEUE_OUT) {
+    xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__INTER_QUEUE_OUT);
+    prvPullFromInterpreterOutQueue();
+  }
 
-    if (eb & LORAWAN_EGW__QUEUE_OUT) {
-      BaseType_t  xStatus;
-      uint8_t     inAry[4]  = { 0 };
-      uint8_t     inLen     = 0;
+  if (eb & Controller_EGW__LORA_QUEUE_OUT) {
+    xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__LORA_QUEUE_OUT);
+    prvPullFromLoraOutQueue();
+  }
 
-      xStatus = xQueueReceive(loraOutQueueHandle, &inLen, 1);
-      if (pdPASS == xStatus) {
-        for (uint8_t idx = 0; idx < inLen; idx++) {
-          xStatus = xQueueReceive(loraOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
-          if (pdFALSE == xStatus) {
-            /* Bad communication - drop */
-            return;
-          }
-        }
-      }
+  if (eb & Controller_EGW__GPSCOM_QUEUE_OUT) {
+    xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__GPSCOM_QUEUE_OUT);
+    prvPullFromGpscomOutQueue();
+  }
 
-      switch (inAry[0]) {
-      case 'R':
-        {
-          /* Ready from LoRaWAN task received - activate upload timer */
-          xStatus = xTimerStart(controllerSendTimerHandle, 1);
-          xStatus = xTimerChangePeriod(controllerSendTimerHandle, 5 * 60 * 1000 / portTICK_PERIOD_MS, 1);   // 5 minutes
-
-          /* Request LoRaWAN link check and network time */
-          xEventGroupSetBits(loRaWANEventGroupHandle, LORAWAN_EGW__DO_LINKCHECKREQ | LORAWAN_EGW__DO_DEVICETIMEREQ);
-        }
-        break;
-      }  // switch
-    }
+  if (eb & Controller_EGW__INTER_SENS_DO_SEND) {
+    xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__INTER_SENS_DO_SEND);
+    prvControllerGetDataAndUpload();
   }
 }
