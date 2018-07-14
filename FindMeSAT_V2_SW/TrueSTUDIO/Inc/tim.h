@@ -64,6 +64,10 @@
 extern TIM_HandleTypeDef htim5;
 
 /* USER CODE BEGIN Private defines */
+#ifdef HSI_VALUE
+# define Tim5_reloadValue                                     (HSI_VALUE)
+# define IS_N_X_1MHZ                                          1
+#endif
 
 /* USER CODE END Private defines */
 

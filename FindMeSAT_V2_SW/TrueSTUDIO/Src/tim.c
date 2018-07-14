@@ -53,6 +53,12 @@
 #include "gpio.h"
 
 /* USER CODE BEGIN 0 */
+#include "FreeRTOS.h"
+#include "cmsis_os.h"
+
+
+extern uint32_t             g_TIM5_CCR2;
+extern int32_t              g_TIM5_ofs;
 
 /* USER CODE END 0 */
 
@@ -68,9 +74,9 @@ void MX_TIM5_Init(void)
   htim5.Instance = TIM5;
   htim5.Init.Prescaler = 0;
   htim5.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim5.Init.Period = 1200000000;
+  htim5.Init.Period = 16000000;
   htim5.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
-  htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_ENABLE;
+  htim5.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
   if (HAL_TIM_Base_Init(&htim5) != HAL_OK)
   {
     _Error_Handler(__FILE__, __LINE__);
@@ -122,8 +128,8 @@ void HAL_TIM_Base_MspInit(TIM_HandleTypeDef* tim_baseHandle)
     */
     GPIO_InitStruct.Pin = GPS_1PPS_Pin;
     GPIO_InitStruct.Mode = GPIO_MODE_AF_PP;
-    GPIO_InitStruct.Pull = GPIO_PULLUP;
-    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
+    GPIO_InitStruct.Pull = GPIO_PULLDOWN;
+    GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
     GPIO_InitStruct.Alternate = GPIO_AF2_TIM5;
     HAL_GPIO_Init(GPS_1PPS_GPIO_Port, &GPIO_InitStruct);
 
@@ -142,6 +148,7 @@ void HAL_TIM_Base_MspDeInit(TIM_HandleTypeDef* tim_baseHandle)
   if(tim_baseHandle->Instance==TIM5)
   {
   /* USER CODE BEGIN TIM5_MspDeInit 0 */
+    HAL_TIM_IC_Stop_IT(tim_baseHandle, TIM_CHANNEL_2);
 
   /* USER CODE END TIM5_MspDeInit 0 */
     /* Peripheral clock disable */
