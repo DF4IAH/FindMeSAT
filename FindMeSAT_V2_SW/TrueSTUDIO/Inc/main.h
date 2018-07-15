@@ -180,7 +180,7 @@
 #endif
 
 
-#define FINDMESAT_VERSION   20180714U
+#define FINDMESAT_VERSION   20180715U
 
 
 typedef void* TaskHandle_t;

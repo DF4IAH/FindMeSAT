@@ -1,6 +1,6 @@
 Configuration	FindMeSAT_V2
-STM32CubeMX 	4.25.0
-Date	07/13/2018
+STM32CubeMX 	4.26.0
+Date	07/15/2018
 MCU	STM32L496ZGTxP
 
 
@@ -98,7 +98,7 @@ Project Settings :
 Project Name : FindMeSAT_V2
 Project Folder : Z:\nfs_ds_nfs\git\FindMeSAT__SW\FindMeSAT_V2_SW\TrueSTUDIO
 Toolchain / IDE : TrueSTUDIO
-Firmware Package Name and Version : STM32Cube FW_L4 V1.11.0
+Firmware Package Name and Version : STM32Cube FW_L4 V1.12.0
 
 
 Code Generation Settings : 
