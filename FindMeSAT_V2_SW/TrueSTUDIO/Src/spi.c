@@ -342,7 +342,7 @@ void spiSX127xFrequency_MHz(float mhz)
   spiProcessSpiMsg(4);
 }
 
-uint8_t spiSX127xPower_GetSetting(LoRaWANctx_t* ctx)
+uint8_t spiSX1276Power_GetSetting(LoRaWANctx_t* ctx)
 {
   int16_t pow_dBm = (int16_t)14 - ctx->LinkADR_TxPowerReduction_dB;
   uint8_t reg;
@@ -485,7 +485,7 @@ void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void)
 }
 
 
-void spiSX127xMode(spiSX127x_Mode_t mode)
+void spiSX1276Mode(spiSX1276_Mode_t mode)
 {
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
   spi1TxBuffer[1] = mode;
@@ -523,7 +523,7 @@ void spiSX127xRegister_IRQ_clearAll(void)
 
 //#define PPM_CALIBRATION
 //#define POWER_CALIBRATION
-void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg)
+void spiSX1276_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg)
 {
 #ifdef POWER_CALIBRATION
   ctx->SpreadingFactor              = SF7_DR5_VAL;
@@ -558,17 +558,17 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
 
   if (DIO_TxRx_Mode_IQ_Balancing == mode) {
     /* Switching to FSK/OOK via SLEEP mode */
-    spiSX127xMode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
-    spiSX127xMode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
+    spiSX1276Mode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+    spiSX1276Mode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 
     /* Set the frequency */
     spiSX127xFrequency_MHz(ctx->FrequencyMHz * (1 + 1e-6 * ctx->CrystalPpm));
 
 #ifdef TRY
-    spiSX127xMode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
+    spiSX1276Mode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
     TickType_t xLastWakeTime = xTaskGetTickCount();
     vTaskDelayUntil(&xLastWakeTime, 50 / portTICK_PERIOD_MS);
-    spiSX127xMode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
+    spiSX1276Mode(MODE_FSK_OOK | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
 #endif
 
     /* Start I/Q balancing */
@@ -611,8 +611,8 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
     HAL_GPIO_WritePin(LED2_GPIO_PORT, LED2_PIN, GPIO_PIN_RESET);
 
     /* Return to LoRa mode */
-    spiSX127xMode(MODE_LoRa    | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
-    spiSX127xMode(MODE_LoRa    | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
+    spiSX1276Mode(MODE_LoRa    | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+    spiSX1276Mode(MODE_LoRa    | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
 
     return;
   }
@@ -620,8 +620,8 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
   /* Skip for RX2 where only frequency and SpreadingFactor is changed */
   if (DIO_TxRx_Mode_RX2 != mode) {
     /* Switching to LoRa via SLEEP mode */
-    spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
-    spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
+    spiSX1276Mode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+    spiSX1276Mode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
   }
 
   /* Debugging information */
@@ -684,7 +684,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
       spi1TxBuffer[1] = (0x0 << 7) | (0x0 << 4) | (0x0 << 0);                                   // --> -43 dBm @ RTL-stick  Minimal power @ RFO pin
 //    spi1TxBuffer[1] = (0x0 << 7) | (0x4 << 4) | (0xf << 0);                                   // --> -25 dBm @ RTL-stick
 #else
-      spi1TxBuffer[1] = spiSX127xPower_GetSetting(ctx);
+      spi1TxBuffer[1] = spiSX1276Power_GetSetting(ctx);
 #endif
       spi1TxBuffer[2] = PA_RAMP_50us;                                                           // PA ramp time 50us
       spi1TxBuffer[3] = (0x1 << 5) | (0xb << 0);                                                // OverCurrentProtection ON, normal: 100mA
@@ -707,7 +707,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
       spiSX127xLoRa_setTxMsgLen(msg->msg_encoded_Len);
 
       /* Prepare the transmitter circuits */
-      spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | FSTX);
+      spiSX1276Mode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | FSTX);
     }
     break;
 
@@ -764,7 +764,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
       }
 
       /* Prepare the receiver circuits */
-      spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | FSRX);
+      spiSX1276Mode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | FSRX);
     }
     break;
 
@@ -776,7 +776,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
       spiProcessSpiMsg(2);
 
       /* Turn on receiver */
-      spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
+      spiSX1276Mode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
     }
     break;
 
@@ -1168,13 +1168,13 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
 }
 
 
-uint8_t spiDetectShieldSX127x(void)
+uint8_t spiDetectShieldSX1276(void)
 {
   /* Reset pulse for SX127x */
   spiSX127xReset();
 
   /* Turn to sleep mode if not already done */
-  spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
+  spiSX1276Mode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | SLEEP);
 
   /* Request RD-address 0x42 RegVersion */
   {
@@ -1185,15 +1185,13 @@ uint8_t spiDetectShieldSX127x(void)
       sxVersion = spi1RxBuffer[1];
     }
 
-    if ((sxVersion != 0x22)                                                                     // SX1272
-        &&
-        (sxVersion != 0x12)) {                                                                  // SX1276
-      /* We can handle Version  0x22 (SX1272)  and  0x12 (SX1276) only */
+    if (sxVersion != 0x12) {                                                                    // SX1276
+      /* We can handle Version  0x12 (SX1276) only */
       return HAL_ERROR;
     }
   }
 
-  /* SX127x mbed shield found and ready for transmissions */
+  /* SX1276 mbed shield found and ready for transmissions */
   return HAL_OK;
 }
 

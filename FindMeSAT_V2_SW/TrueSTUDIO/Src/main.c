@@ -688,6 +688,8 @@ void HAL_TIM_IC_CaptureCallback(TIM_HandleTypeDef *htim)
     taskENABLE_INTERRUPTS();
     /* Fetch and Stash - END */
 
+    /* Show 1PPS by reversing the red LED */
+    HAL_GPIO_TogglePin(LED3_GPIO_PORT, LED3_PIN);                                               // Red toggling
 
     /* Message to controller */
     {

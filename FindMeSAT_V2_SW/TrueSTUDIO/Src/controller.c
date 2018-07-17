@@ -13,6 +13,7 @@
 #include <math.h>
 #include "FreeRTOS.h"
 #include "stm32l496xx.h"
+#include "stm32l4xx_nucleo_144.h"
 #include "cmsis_os.h"
 #include "interpreter.h"
 #include "usb.h"
@@ -119,7 +120,7 @@ void prvControllerInitBeforeGreet(void)
   xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON);                       // TODO: should be from Config-FLASH page
 
   /* Check for attached SX127x_mbed_shield */
-  if (HAL_OK == spiDetectShieldSX127x()) {
+  if (HAL_OK == spiDetectShieldSX1276()) {
 #if 1
     /* Send INIT message to the LoRaWAN task */
     const uint8_t c_maxWaitMs = 25;
@@ -388,6 +389,9 @@ static void prvTimeService(void)
       }
     }
   }
+
+  /* Reversing toggling of the red LED */
+  HAL_GPIO_TogglePin(LED3_GPIO_PORT, LED3_PIN);                                                 // Red 2nd toggling
 
   /* Logging */
   if (g_monMsk & MON_MASK__GPS_TIMESYNC) {
