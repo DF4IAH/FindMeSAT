@@ -1805,7 +1805,7 @@ static void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
   uint32_t now;
 
   /* Prepare TX */
-  spiSX127x_TxRx_Preps(ctx, DIO_TxRx_Mode_TX, msg);
+  spiSX1272_TxRx_Preps(ctx, DIO_TxRx_Mode_TX, msg);
 
   /* Prepare the FIFO */
   spiSX127xLoRa_Fifo_Init();
@@ -1826,7 +1826,7 @@ static void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
     /* Start transmitter and wait until the message is being sent */
     {
       now = xTaskGetTickCount();
-      spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | TX);
+      spiSX1272Mode(MODE_LoRa | ACCESS_SHARE_OFF | TX);
     }
 
     /* Wait until TX has finished - the transceiver changes to STANDBY by itself */
@@ -1875,7 +1875,7 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
   /* Receive window */
   if (diffToTxNowMs < diffToTxStartMs) {
     /* Prepare RX */
-    spiSX127x_TxRx_Preps(ctx, (ctx->Current_RXTX_Window == CurWin_RXTX2 ?  DIO_TxRx_Mode_RX2 : DIO_TxRx_Mode_RX), NULL);
+    spiSX1272_TxRx_Preps(ctx, (ctx->Current_RXTX_Window == CurWin_RXTX2 ?  DIO_TxRx_Mode_RX2 : DIO_TxRx_Mode_RX), NULL);
 
     /* Prepare the FIFO */
     spiSX127xLoRa_Fifo_Init();
@@ -1889,11 +1889,11 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
     /* Receiver on */
     {
       /* Turn on receiver continuously and wait for the next message */
-      spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
+      spiSX1272Mode(MODE_LoRa | ACCESS_SHARE_OFF | RXCONTINUOUS);
       spiSX127x_WaitUntil_RxDone(ctx, msg, ctx->TsEndOfTx + diffToTxStop1Ms, ctx->TsEndOfTx + diffToTxStop2Ms);
 
       /* After the RX time decide whether to be able for changing the frequency quickly or to turn the receiver off */
-      spiSX127xMode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | ((ctx->Current_RXTX_Window == CurWin_RXTX2 ?  FSRX : STANDBY)));
+      spiSX1272Mode(MODE_LoRa | ACCESS_SHARE_OFF | ((ctx->Current_RXTX_Window == CurWin_RXTX2 ?  FSRX : STANDBY)));
     }
 #ifdef DEBUG_RX_TIMING
     rxEndTs = xTaskGetTickCount();
@@ -2007,7 +2007,7 @@ void loRaWANLoraTaskInit(void)
         Up,
         1);                                                                                     // Most traffic on the RX2 channel
     loRaWANctx.SpreadingFactor              = SF7_DR5_VAL;                                      // Use that SF for more noise
-    spiSX127x_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_RX_Randomizer, NULL);
+    spiSX1272_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_RX_Randomizer, NULL);
 
     /* Forging the random number */
     {
@@ -2050,7 +2050,7 @@ void loRaWANLoraTaskInit(void)
         1);                                                                                     // First default channel is about in the middle of the band
 
     /* Do I/Q balancing with that center frequency */
-    spiSX127x_TxRx_Preps(&loRaWANctx, TxRx_Mode_IQ_Balancing, NULL);
+    spiSX1272_TxRx_Preps(&loRaWANctx, TxRx_Mode_IQ_Balancing, NULL);
   }
 #endif
 
@@ -2071,7 +2071,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX1(void)
     spiSX127xReset();
 
     /* Balance I/Q  */
-    spiSX127x_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_IQ_Balancing, NULL);
+    spiSX1272_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_IQ_Balancing, NULL);
 
     /* Adjust the context */
     loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
@@ -2197,7 +2197,7 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX1(void)
     spiSX127xReset();
 
     /* Balance I/Q  */
-    spiSX127x_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_IQ_Balancing, NULL);
+    spiSX1272_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_IQ_Balancing, NULL);
 
     /* Adjust the context */
     loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
