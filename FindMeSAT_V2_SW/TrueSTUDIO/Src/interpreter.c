@@ -120,8 +120,9 @@ static void prvDoInterprete(const uint8_t *buf, uint32_t len)
 
   } else if (!strncmp("timer ", cb, 6) && (6 < len)) {
     const long    val         = strtol(cb + 6, NULL, 10);
-    const uint8_t repeatTimer = (uint8_t) val;
-    const uint8_t pushAry[3]  = { 2, InterOutQueueCmds__Timer, repeatTimer };
+    const uint8_t repeatTimer0 = (uint8_t) (val     ) & 0xffUL;
+    const uint8_t repeatTimer1 = (uint8_t) (val >> 8) & 0xffUL;
+    const uint8_t pushAry[4]  = { 3, InterOutQueueCmds__Timer, repeatTimer0, repeatTimer1 };
     prvPushToInterOutQueue(pushAry, sizeof(pushAry));
 
   } else if (!strncmp("$", cb, 1) && (1 < len)) {
