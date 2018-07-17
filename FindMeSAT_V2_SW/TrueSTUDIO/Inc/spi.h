@@ -91,7 +91,7 @@ typedef enum spiSX1272_Mode {
 
   MODE_FSK_OOK            = (0b0 << 7),
   MODE_LoRa               = (0b1 << 7)
-} spiSX127x_Mode_t;
+} spiSX1272_Mode_t;
 
 typedef enum spiSX1272_ModemConfig1 {
   LOW_DR_OPTI_OFF         = (0b0 << 0),
@@ -111,7 +111,7 @@ typedef enum spiSX1272_ModemConfig1 {
   BW_125kHz               = (0b00 << 6),
   BW_250kHz               = (0b01 << 6),
   BW_500kHz               = (0b10 << 6)
-} spiSX127x_ModemConfig1_t;
+} spiSX1272_ModemConfig1_t;
 
 typedef enum spiSX1272_ModemConfig2 {
   AGC_AUTO_OFF            = (0b0 << 2),
@@ -135,7 +135,7 @@ typedef enum spiSX1272_ModemConfig2 {
   SF11_DR1                = ( 11 << 4),
   SF12_DR0_VAL            =   12      ,
   SF12_DR0                = ( 12 << 4)
-} spiSX127x_ModemConfig2_t;
+} spiSX1272_ModemConfig2_t;
 
 typedef enum spiSX127x_DetectOptimize {
   OPTI_SF7_to_SF12        = (0b011 << 0),
@@ -180,7 +180,7 @@ typedef enum spiSX1272_LNA {
   LnaGain_G4              = (0b100 << 5),
   LnaGain_G5              = (0b101 << 5),
   LnaGain_G6              = (0b110 << 5)
-} spiSX127x_LNA_t;
+} spiSX1272_LNA_t;
 
 typedef enum spiSX127x_IRQ_Mask {
   CadDetectedMask         = 0,
@@ -226,7 +226,7 @@ void spiSX127xLoRa_Fifo_Init(void);
 void spiSX127xLoRa_Fifo_SetFifoPtrFromTxBase(void);
 void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void);
 
-void spiSX1272Mode(spiSX127x_Mode_t mode);
+void spiSX1272Mode(spiSX1272_Mode_t mode);
 void spiSX127xRegister_IRQ_clearAll(void);
 void spiSX1272_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg);
 uint32_t spiSX127x_WaitUntil_TxDone(uint32_t stopTime);

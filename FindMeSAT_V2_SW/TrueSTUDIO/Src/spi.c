@@ -479,7 +479,7 @@ void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void)
 }
 
 
-void spiSX1272Mode(spiSX127x_Mode_t mode)
+void spiSX1272Mode(spiSX1272_Mode_t mode)
 {
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
   spi1TxBuffer[1] = mode;
