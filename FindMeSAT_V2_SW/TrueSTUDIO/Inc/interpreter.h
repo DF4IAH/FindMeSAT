@@ -22,11 +22,14 @@ typedef enum InterOutQueueCmds {
   InterOutQueueCmds__ADRset,
   InterOutQueueCmds__DRset,
   InterOutQueueCmds__PwrRedDb,
+  InterOutQueueCmds__Timer,
+  InterOutQueueCmds__NmeaSend,
 } InterOutQueueCmds_t;
 
 
 void interpreterPrintHelp(void);
 void interpreterShowCursor(void);
+void interpreterClearScreen(void);
 
 void interpreterInterpreterTaskInit(void);
 void interpreterInterpreterTaskLoop(void);

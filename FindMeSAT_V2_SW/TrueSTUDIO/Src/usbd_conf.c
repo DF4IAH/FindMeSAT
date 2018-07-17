@@ -67,7 +67,7 @@
 
 /* USER CODE END PV */
 
-PCD_HandleTypeDef hpcd_USB_OTG_FS;
+                PCD_HandleTypeDef hpcd_USB_OTG_FS;
 void _Error_Handler(char * file, int line);
 
 /* USER CODE BEGIN 0 */

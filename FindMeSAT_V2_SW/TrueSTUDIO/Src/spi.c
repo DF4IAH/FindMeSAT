@@ -66,15 +66,16 @@
 
 /* Private typedef -----------------------------------------------------------*/
 /* Private define ------------------------------------------------------------*/
-extern EventGroupHandle_t spiEventGroupHandle;
-extern EventGroupHandle_t extiEventGroupHandle;
-extern osSemaphoreId      usbToHostBinarySemHandle;
+extern EventGroupHandle_t   spiEventGroupHandle;
+extern EventGroupHandle_t   extiEventGroupHandle;
+extern osSemaphoreId        usbToHostBinarySemHandle;
+extern uint32_t             g_monMsk;
 
 /* Buffer used for transmission */
-volatile uint8_t spi1TxBuffer[SPI1_BUFFERSIZE] = { 0 };
+volatile uint8_t            spi1TxBuffer[SPI1_BUFFERSIZE]     = { 0 };
 
 /* Buffer used for reception */
-volatile uint8_t spi1RxBuffer[SPI1_BUFFERSIZE] = { 0 };
+volatile uint8_t            spi1RxBuffer[SPI1_BUFFERSIZE]     = { 0 };
 
 /* USER CODE END 0 */
 
@@ -624,7 +625,7 @@ void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
   }
 
   /* Debugging information */
-  {
+  if (g_monMsk & MON_MASK__LORA) {
     uint8_t  buf[64];
     int bufLen;
 

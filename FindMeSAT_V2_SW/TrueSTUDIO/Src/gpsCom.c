@@ -7,6 +7,7 @@
 
 #include <sys/_stdint.h>
 #include <string.h>
+#include <ctype.h>
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
@@ -30,6 +31,8 @@ extern EventGroupHandle_t   gpscomEventGroupHandle;
 extern EventGroupHandle_t   controllerEventGroupHandle;
 
 extern UART_HandleTypeDef*  usartHuart3;
+
+extern uint32_t             g_monMsk;
 
 
 volatile GpscomGpsCtx_t     gpscomGpsCtx                      = { 0 };
@@ -83,7 +86,7 @@ static float prvGpscomCalc_NmeaLonLat_float(float dddmm, uint8_t indicator)
   return latLon_deg;
 }
 
-static uint8_t prvGpscomNmeaChecksum(char* outBuf, const uint8_t* inBuf, uint16_t len)
+uint8_t gpscomNmeaChecksum(char* outBuf, const uint8_t* inBuf, uint16_t len)
 {
   char l_crcPad[3] = { 0 };
 
@@ -568,17 +571,21 @@ static void prvGpscomNmeaParser(const char* buf, uint16_t len)
 // #define NMEA_DEBUG
 static void prvGpscomInterpreter(const uint8_t* buf, uint16_t len)
 {
-  uint8_t chkVld = prvGpscomNmeaChecksum(NULL, buf, len);
+  uint8_t chkVld = gpscomNmeaChecksum(NULL, buf, len);
 
-#ifdef NMEA_DEBUG
   /* Debugging */
-  {
+  if (g_monMsk & MON_MASK__GPS_RX) {
     char  l_buf[64];
-    int   l_len = sprintf(l_buf, "%c%c%c%c%c%c ... %c%c%c - len=%3u   valid=%u\r\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5],  buf[len - 5], buf[len - 4], buf[len - 3], len, chkVld);
+    int   l_len;
 
-    usbLogLen(l_buf, l_len);
+    if (!strncmp(buf, "$PMTK", 5)) {
+      usbLogLen(buf, len);
+
+    } else {
+      l_len = sprintf(l_buf, "%c%c%c%c%c%c ... %c%c%c - len=%3u   valid=%u\r\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5],  buf[len - 5], buf[len - 4], buf[len - 3], len, chkVld);
+      usbLogLen(l_buf, l_len);
+    }
   }
-#endif
 
   if (chkVld) {
     prvGpscomNmeaParser((const char*) buf, len);
@@ -596,11 +603,15 @@ static void prvGpscomGpsTX(const uint8_t* cmdBuf, uint8_t cmdLen)
         Gpscom_EGW__DMA_TX_END,
         0,
         0, 1000 / portTICK_PERIOD_MS);
+    if (!(eb & Gpscom_EGW__DMA_TX_RUN)) {
+      /* Failed to send NMEA message */
+      return;
+    }
   }
 
   /* Copy to DMA TX buffer */
   memcpy(gpscomGpsTxDmaBuf, cmdBuf, cmdLen);
-  memset(gpscomGpsTxDmaBuf + cmdLen, 0, sizeof(gpscomGpsTxDmaBuf) - cmdLen);
+  memset(gpscomGpsTxDmaBuf + cmdLen, 0, sizeof(gpscomGpsTxDmaBuf) - cmdLen);                    // Clear end of buffer
 
   /* Re-set flags for TX */
   xEventGroupClearBits(gpscomEventGroupHandle, Gpscom_EGW__DMA_TX_END);
@@ -611,6 +622,23 @@ static void prvGpscomGpsTX(const uint8_t* cmdBuf, uint8_t cmdLen)
   {
     /* Drop packet */
   }
+}
+
+static void prvGpscomGpsRX(void)
+{
+  const uint16_t dmaBufSize = sizeof(gpscomGpsRxDmaBuf);
+
+  /* Reset working indexes */
+  gpscomGpsRxDmaBufLast = gpscomGpsRxDmaBufIdx = 0U;
+
+  /* Start RX DMA */
+  if (HAL_UART_Receive_DMA(usartHuart3, gpscomGpsRxDmaBuf, dmaBufSize) != HAL_OK)
+  {
+    //Error_Handler();
+  }
+
+  /* Set RX running flag */
+  xEventGroupSetBits(gpscomEventGroupHandle, Gpscom_EGW__DMA_RX_RUN);
 }
 
 static void prvGpscomGpsServiceRX(void)
@@ -660,21 +688,41 @@ static void prvGpscomGpsServiceRX(void)
   taskENABLE_INTERRUPTS();
 }
 
-static void prvGpscomGpsRX(void)
+static void prvGpscomSendNMEA(const uint8_t* nmeaStr, uint8_t nmeaStrLen)
 {
-  const uint16_t dmaBufSize = sizeof(gpscomGpsRxDmaBuf);
+  char      pushAry[64]   = { 0 };
 
-  /* Reset working indexes */
-  gpscomGpsRxDmaBufLast = gpscomGpsRxDmaBufIdx = 0U;
+  if (nmeaStrLen > 3) {
+    /* Get command into own buffer */
+    for (int len = nmeaStrLen, idx = 0; len; --len, ++idx) {
+      *(pushAry + idx) = toupper(*(nmeaStr + idx));
+    }
 
-  /* Start RX DMA */
-  if (HAL_UART_Receive_DMA(usartHuart3, gpscomGpsRxDmaBuf, dmaBufSize) != HAL_OK)
-  {
-    //Error_Handler();
+    /* Right trim string */
+    while ((*(pushAry + (nmeaStrLen - 1)) == '\r') || (*(pushAry + (nmeaStrLen - 1)) ==  '\n')) {
+      if (--nmeaStrLen < 5) {
+        return;
+      }
+      *(pushAry + nmeaStrLen) = 0;
+    }
+
+    /* Check if checksum is present */
+    if (*(pushAry + (nmeaStrLen - 3)) != '*') {
+      uint8_t nmeaChk = 0U;
+
+      /* Calculate the checksum*/
+      for (uint16_t idx = 1; idx < nmeaStrLen; idx++) {
+        nmeaChk ^= *(pushAry + idx);
+      }
+
+      /* Concatenate checksum data */
+      nmeaStrLen += sprintf(pushAry + nmeaStrLen, "*%02X", nmeaChk);
+    }
+    nmeaStrLen += sprintf(pushAry + nmeaStrLen, "\r\n");
+
+    /* Send message to the GPS device */
+    prvGpscomGpsTX((uint8_t*) pushAry, nmeaStrLen);
   }
-
-  /* Set RX running flag */
-  xEventGroupSetBits(gpscomEventGroupHandle, Gpscom_EGW__DMA_RX_RUN);
 }
 
 
@@ -688,7 +736,7 @@ void gpscomtRXTimerCallbackImpl(TimerHandle_t argument)
 
 
 /* Calculate Date and Time to unx time */
-uint32_t calcDataTime_to_unx_s(float* out_s_frac, uint32_t gnss_date, float gnss_time)
+uint32_t gpscomCalcDataTime_to_unx_s(float* out_s_frac, uint32_t gnss_date, float gnss_time)
 {
   time_t l_unx_s;
 
@@ -820,10 +868,9 @@ void gpscomGpscomTaskLoop(void)
 
     /* Process the message */
     switch (s_buf[0]) {
-    case 0:  //GpscomInQueueCmds__XXX:
+    case gpscomInQueueCmds__NmeaSendToGPS:
       {
-  //      /* Set event mask bit for INIT */
-  //      xEventGroupSetBits(loraEventGroupHandle, LORAWAN_EGW__DO_INIT);
+        prvGpscomSendNMEA(s_buf + 1, s_bufMsgLen - 1);
       }
       break;
     default:
