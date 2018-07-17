@@ -37,6 +37,7 @@ extern osMutexId            trackMeApplUpDataMutexHandle;
 extern osMutexId            trackMeApplDnDataMutexHandle;
 extern EventGroupHandle_t   loraEventGroupHandle;
 extern EventGroupHandle_t   controllerEventGroupHandle;
+extern uint32_t             g_monMsk;
 
 
 const uint16_t              loRaWANWait_EGW_MaxWaitTicks      = 60000 / portTICK_PERIOD_MS;           // One minute
@@ -95,6 +96,21 @@ inline
 uint8_t GET_BYTE_OF_WORD(uint32_t word, uint8_t pos)
 {
   return (uint8_t) ((word >> (8 * pos)) & 0x000000ffUL);
+}
+
+
+static void usbLogLenLora(const char* str, int len)
+{
+  if (g_monMsk & MON_MASK__LORA) {
+    usbLogLen(str, len);
+  }
+}
+
+static void usbLogLora(const char* str)
+{
+  if (g_monMsk & MON_MASK__LORA) {
+    usbLog(str);
+  }
 }
 
 
@@ -556,7 +572,7 @@ static void LoRaWAN_QueueIn_Process__Fsm_TX(void)
   /* Prepare to transmit data buffer */
   if (loRaWANctx.FsmState == Fsm_NOP) {
     /* USB: info */
-    usbLog("\r\nLoRaWAN: Going to send sensors data.\r\n");
+    usbLogLora("\r\nLoRaWAN: Going to send sensors data.\r\n");
 
     /* Adjust the context */
     loRaWANctx.Ch_Selected  = LoRaWAN_calc_randomChannel(&loRaWANctx);                // Randomized RX1 frequency
@@ -1826,7 +1842,7 @@ static void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
     int  len;
 
     len = sprintf(usbDbgBuf, "LoRaWAN:\tb=%06lu,\te=%06lu\r\n", now, ctx->TsEndOfTx);
-    usbLogLen(usbDbgBuf, len);
+    usbLogLoraLen(usbDbgBuf, len);
   }
 #endif
 }
@@ -1893,7 +1909,7 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
     int  len;
 
     len = sprintf(usbDbgBuf, "LoRaWAN:\tb=%06lu,\tbb=%06lu,\tbe=%06lu,\te=%06lu\r\n", rxBeginTs, rxBalBeginTs, rxBalEndTs, rxEndTs);
-    usbLogLen(usbDbgBuf, len);
+    usbLogLoraLen(usbDbgBuf, len);
   }
 #endif
 }
@@ -2021,7 +2037,7 @@ void loRaWANLoraTaskInit(void)
   {
     uint32_t PreviousWakeTime = 0UL;
 
-    osDelayUntil(&PreviousWakeTime, 4000);
+    osDelayUntil(&PreviousWakeTime, 4500);
   }
 
 #ifdef INIT_BALANCING_ENABLED
@@ -2049,7 +2065,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX1(void)
     /* TX response after DELAY1 at RX1 - switch on receiver */
 
     /* USB: info */
-    usbLog("\r\nLoRaWAN: RX1 (1 s).\r\n");
+    usbLogLora("\r\nLoRaWAN: RX1 (1 s).\r\n");
 
     /* Reset to POR/Reset defaults */
     spiSX127xReset();
@@ -2075,8 +2091,8 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX1(void)
 
     } else {
       /* USB: info */
-      usbLog("LoRaWAN: received packet within RX1 window.\r\n");
-      usbLog("LoRaWAN: (TRX off)\r\n");
+      usbLogLora("LoRaWAN: received packet within RX1 window.\r\n");
+      usbLogLora("LoRaWAN: (TRX off)\r\n");
 
       /* Process message */
       loRaWANctx.FsmState = Fsm_MAC_Decoder;
@@ -2090,7 +2106,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX2(void)
     /* TX response after DELAY2 at RX2 */
 
     /* USB: info */
-    usbLog("\r\nLoRaWAN: RX2 (2 s).\r\n");
+    usbLogLora("\r\nLoRaWAN: RX2 (2 s).\r\n");
 
     /* Adjust the context */
     loRaWANctx.Current_RXTX_Window  = CurWin_RXTX2;
@@ -2107,7 +2123,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX2(void)
       /* No message received - try again if packet is of confirmed type */
       if (ConfDataUp == loRaWANctx.MHDR_MType) {
         /* USB: info */
-        usbLog("LoRaWAN: Failed to RX.\r\n\r\n");
+        usbLogLora("LoRaWAN: Failed to RX.\r\n\r\n");
 
 #ifdef DO_RESEND
         loRaWANctx.FsmState = Fsm_TX;
@@ -2126,7 +2142,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX2(void)
         loRaWANctx.bkpRAM->FCntUp++;
 
         /* USB: info */
-        usbLog("\r\n\r\n");
+        usbLogLora("\r\n\r\n");
 
         /* Work on MAC queue to clean it up */
         loRaWANctx.FsmState = Fsm_MAC_Proc;
@@ -2134,7 +2150,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX2(void)
 
     } else {
       /* USB: info */
-      usbLog("LoRaWAN: received packet within RX2 window.\r\n\r\n");
+      usbLogLora("LoRaWAN: received packet within RX2 window.\r\n\r\n");
 
       /* Process message */
       loRaWANctx.FsmState = Fsm_MAC_Decoder;
@@ -2175,7 +2191,7 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX1(void)
     /* JOIN-ACCEPT response after JOIN_ACCEPT_DELAY1 at RX1 - switch on receiver */
 
     /* USB: info */
-    usbLog("\r\nLoRaWAN: JOIN-ACCEPT RX1 (5 s).\r\n");
+    usbLogLora("\r\nLoRaWAN: JOIN-ACCEPT RX1 (5 s).\r\n");
 
     /* Reset to POR/Reset defaults */
     spiSX127xReset();
@@ -2200,7 +2216,7 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX1(void)
 
     } else {
       /* USB: info */
-      usbLog("LoRaWAN: JOIN-RESPONSE received within window JR-Delay_RX1.\r\n");
+      usbLogLora("LoRaWAN: JOIN-RESPONSE received within window JR-Delay_RX1.\r\n");
 
       /* Process message */
       loRaWANctx.FsmState = Fsm_MAC_JoinAccept;
@@ -2218,7 +2234,7 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX2(void)
     /* JOIN-ACCEPT response after JOIN_ACCEPT_DELAY2 at RX2 */
 
     /* USB: info */
-    usbLog("\r\nLoRaWAN: JOIN-ACCEPT RX2 (6 s).\r\n");
+    usbLogLora("\r\nLoRaWAN: JOIN-ACCEPT RX2 (6 s).\r\n");
 
     /* Adjust the context */
     loRaWANctx.Current_RXTX_Window  = CurWin_RXTX2;
@@ -2232,7 +2248,7 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX2(void)
         LORAWAN_EU868_JOIN_ACCEPT_DELAY2_MS +  LORAWAN_EU868_MAX_TX_DURATION_MS);
 
     if (loRaWanRxMsg.msg_encoded_Len == 0) {
-      usbLog("LoRaWAN: Failed to RX.\r\n\r\n");
+      usbLogLora("LoRaWAN: Failed to RX.\r\n\r\n");
 
 #if 0
       if (loRaWANctx.SpreadingFactor < SF12_DR0_VAL) {
@@ -2245,7 +2261,7 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX2(void)
 
     } else {  // if (loRaWanRxMsg.msg_encoded_Len == 0) {} else
       /* USB: info */
-      usbLog("LoRaWAN: JOIN-RESPONSE received within window JR-Delay_RX2.\r\n");
+      usbLogLora("LoRaWAN: JOIN-RESPONSE received within window JR-Delay_RX2.\r\n");
 
       /* Continue with the JoinAccept handling */
       loRaWANctx.FsmState = Fsm_MAC_JoinAccept;
@@ -2268,7 +2284,7 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX2(void)
 static void loRaWANLoRaWANTaskLoop__Fsm_TX(void)
 {
   /* USB: info */
-  usbLog("LoRaWAN: TX packet.\r\n");
+  usbLogLora("LoRaWAN: TX packet.\r\n");
 
   /* Clear RX msg buffer */
   {
@@ -2302,7 +2318,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_Decoder(void)
   /* Non-valid short message */
   if (loRaWanRxMsg.msg_encoded_Len < 5) {
     /* USB: info */
-    usbLog("LoRaWAN: Decoder informs: FAIL - message too short.\r\n");
+    usbLogLora("LoRaWAN: Decoder informs: FAIL - message too short.\r\n");
 
     /* Sequence has ended */
     LoRaWAN_calc_TxMsg_Reset(&loRaWANctx, &loRaWanTxMsg);
@@ -2342,7 +2358,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_Decoder(void)
         len = sprintf(usbDbgBuf,
             "LoRaWAN: Decoder informs: SUCCESS - more data pending?=%u, ACK=%u\r\n",
             loRaWANctx.FCtrl_FPending, loRaWANctx.FCtrl_ACK);
-        usbLogLen(usbDbgBuf, len);
+        usbLogLenLora(usbDbgBuf, len);
       }
 
       /* Default setting */
@@ -2379,7 +2395,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_Decoder(void)
 
     } else {
       /* USB: info */
-      usbLog("LoRaWAN: Decoder informs: FAIL - bad format.\r\n");
+      usbLogLora("LoRaWAN: Decoder informs: FAIL - bad format.\r\n");
 
       if ((JoinRequest  == (loRaWanRxMsg.msg_parted_MHDR >> LoRaWAN_MHDR_MType_SHIFT)) ||
           (JoinAccept   == (loRaWanRxMsg.msg_parted_MHDR >> LoRaWAN_MHDR_MType_SHIFT))) {
@@ -2469,7 +2485,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_JoinRequest(void)
   loRaWANctx.Ch_Selected          = LoRaWAN_calc_randomChannel(&loRaWANctx);                    // Randomized RX1 frequency
 
   /* USB: info */
-  usbLog("\r\nLoRaWAN: JOIN-REQUEST going to be sent TX.\r\n");
+  usbLogLora("\r\nLoRaWAN: JOIN-REQUEST going to be sent TX.\r\n");
 
   /* Compile packet */
   LoRaWAN_calc_TxMsg_Compiler_MHDR_JOINREQUEST(&loRaWANctx, &loRaWanTxMsg);
@@ -2505,7 +2521,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_JoinAccept(void)
           loRaWANctx.LinkADR_DataRate_RXTX2,
           loRaWANctx.LinkADR_DataRate_RX1_DRofs,
           loRaWANctx.RXDelay);
-      usbLogLen(usbDbgBuf, len);
+      usbLogLenLora(usbDbgBuf, len);
     }
 
     /* Switch to unconfirmed packet mode */
@@ -2516,7 +2532,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_JoinAccept(void)
 
   } else {
     /* USB: info */
-    usbLog("LoRaWAN: JOIN-RESPONSE message failed to decode.\r\n\r\n");
+    usbLogLora("LoRaWAN: JOIN-RESPONSE message failed to decode.\r\n\r\n");
 
     /* Try again with new JOINREQUEST */
     loRaWANLoRaWANTaskLoop__JoinRequest_NextTry();
@@ -2540,7 +2556,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkCheckReq(void)
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX LinkCheckReq.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX LinkCheckReq.\r\n");
 
   /* Prepare for transmission */
  loRaWANctx.FsmState = Fsm_TX;
@@ -2562,9 +2578,9 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkCheckAns(void)
     int  len;
 
     len = sprintf(usbDbgBuf,
-        "LoRaWAN: Got RX LinkCheckAns: SNR=+%02udB, Gateways heard us=%u\r\n",
+        "LoRaWAN: Got RX LinkCheckAns: Signal +%02u dB above decoding level, %u gateways heard us\r\n",
         loRaWANctx.LinkCheck_Ppm_SNR, loRaWANctx.LinkCheck_GW_cnt);
-    usbLogLen(usbDbgBuf, len);
+    usbLogLenLora(usbDbgBuf, len);
   }
 }
 
@@ -2618,7 +2634,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkADRReq(void)
       len = sprintf(usbDbgBuf,
           "LoRaWAN: Got RX LinkADRReq: Power reduction by=%02udB, DataRate TX1=DR%u, new channel mask=0x%04X, NbTrans=%u\r\n",
           loRaWANctx.LinkADR_TxPowerReduction_dB, loRaWANctx.LinkADR_DataRate_TX1, loRaWANctx.LinkADR_ChannelMask, loRaWANctx.LinkADR_NbTrans);
-      usbLogLen(usbDbgBuf, len);
+      usbLogLenLora(usbDbgBuf, len);
     }
 
     if (xQueueIsQueueEmptyFromISR(loraMacQueueHandle)) {
@@ -2651,7 +2667,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkADRAns(void)
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX LinkADRAns.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX LinkADRAns.\r\n");
 
   /* Prepare for transmission */
   loRaWANctx.FsmState = Fsm_TX;
@@ -2675,7 +2691,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DutyCycleReq(void)
     len = sprintf(usbDbgBuf,
         "LoRaWAN: Got RX DutyCycleReq: Max duty cycle=%02u\r\n",
         loRaWANctx.DutyCycle_MaxDutyCycle);
-    usbLogLen(usbDbgBuf, len);
+    usbLogLenLora(usbDbgBuf, len);
   }
 
   loRaWANctx.FsmState = Fsm_MAC_DutyCycleAns;
@@ -2684,7 +2700,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DutyCycleReq(void)
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DutyCycleAns(void)
 {
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX DutyCycleAns.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX DutyCycleAns.\r\n");
 
   /* Adjust the context */
   loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
@@ -2731,7 +2747,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RXParamSetupReq(void)
         loRaWANctx.LinkADR_DataRate_RXTX2,
         loRaWANctx.LinkADR_DataRate_RX1_DRofs,
         fmt_mhz, fmt_mhz_f1);
-    usbLogLen(usbDbgBuf, len);
+    usbLogLenLora(usbDbgBuf, len);
   }
 
   loRaWANctx.FsmState = Fsm_MAC_RXParamSetupAns;
@@ -2740,7 +2756,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RXParamSetupReq(void)
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RXParamSetupAns(void)
 {
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX RXParamSetupAns.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX RXParamSetupAns.\r\n");
 
   /* Adjust the context */
   loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
@@ -2776,7 +2792,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DevStatusReq(void)
 
     len = sprintf(usbDbgBuf,
         "LoRaWAN: Got RX DevStatusReq: (no data)\r\n");
-    usbLogLen(usbDbgBuf, len);
+    usbLogLenLora(usbDbgBuf, len);
   }
 
   loRaWANctx.FsmState = Fsm_MAC_DevStatusAns;
@@ -2799,7 +2815,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DevStatusAns(void)
     len = sprintf(usbDbgBuf,
         "\r\nLoRaWAN: Going to TX DevStatusAns: Battery=Ext.Power(0), Margin=%3ddB\r\n",
         margin);
-    usbLogLen(usbDbgBuf, len);
+    usbLogLenLora(usbDbgBuf, len);
   }
 
   /* Adjust the context */
@@ -2879,7 +2895,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_NewChannelReq(void)
         l_chIdx,
         fmt_mhz, fmt_mhz_f1,
         l_DRmin, l_DRmax);
-    usbLogLen(usbDbgBuf, len);
+    usbLogLenLora(usbDbgBuf, len);
   }
 
   loRaWANctx.FsmState = Fsm_MAC_NewChannelAns;
@@ -2888,7 +2904,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_NewChannelReq(void)
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_NewChannelAns(void)
 {
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX NewChannelAns.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX NewChannelAns.\r\n");
 
   /* Adjust the context */
   loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
@@ -2952,7 +2968,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DlChannelReq(void)
         "LoRaWAN: Got RX DlChannelReq: ChannelIdx=%u, new Downlink f = %03lu.%03u MHz\r\n",
         l_chIdx,
         fmt_mhz, fmt_mhz_f1);
-    usbLogLen(usbDbgBuf, len);
+    usbLogLenLora(usbDbgBuf, len);
   }
 
   loRaWANctx.FsmState = Fsm_MAC_DlChannelAns;
@@ -2961,7 +2977,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DlChannelReq(void)
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DlChannelAns(void)
 {
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX DlChannelAns.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX DlChannelAns.\r\n");
 
   /* Adjust the context */
   loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
@@ -3006,7 +3022,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RXTimingSetupReq(void)
     len = sprintf(usbDbgBuf,
         "LoRaWAN: Got RX RXTimingSetupReq: RX1 delay=%u s after TX.\r\n",
         loRaWANctx.RXDelay);
-    usbLogLen(usbDbgBuf, len);
+    usbLogLenLora(usbDbgBuf, len);
   }
 
   loRaWANctx.FsmState = Fsm_MAC_RXTimingSetupAns;
@@ -3015,7 +3031,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RXTimingSetupReq(void)
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RXTimingSetupAns(void)
 {
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX RXTimingSetupAns.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX RXTimingSetupAns.\r\n");
 
   /* Adjust the context */
   loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
@@ -3056,7 +3072,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_TxParamSetupReq(void)
     len = sprintf(usbDbgBuf,
         "LoRaWAN: Got RX TxParamSetupReq: Max EIRP=%u dBm, Uplink-Dwell-Time = %u ms, Downlink-Dwell-Time = % ms.\r\n",
         loRaWANctx.TxParamSetup_MaxEIRP_dBm, loRaWANctx.TxParamSetup_UplinkDwellTime_ms, loRaWANctx.TxParamSetup_DownlinkDwellTime_ms);
-    usbLogLen(usbDbgBuf, len);
+    usbLogLenLora(usbDbgBuf, len);
   }
 
   loRaWANctx.FsmState = Fsm_MAC_TxParamSetupAns;
@@ -3065,7 +3081,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_TxParamSetupReq(void)
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_TxParamSetupAns(void)
 {
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX TxParamSetupAns.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX TxParamSetupAns.\r\n");
 
   /* Adjust the context */
   loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
@@ -3102,7 +3118,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DeviceTimeReq(void)
   loRaWANctx.MHDR_Major = LoRaWAN_R1;
 
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX DeviceTimeReq.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX DeviceTimeReq.\r\n");
 
   /* Prepare for transmission */
  loRaWANctx.FsmState = Fsm_TX;
@@ -3158,7 +3174,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DeviceTimeAns(void)
         "LoRaWAN: Got RX DeviceTimeAns: GPS epoch = %lu.%u s: %s\r\n",
         ((uint32_t) timeDeviceTimeReqNow), ((uint16_t) (((uint64_t) (timeDeviceTimeReqNow * 1000.)) % 1000)),
         timeStrBuf);
-    usbLogLen(usbDbgBuf, len);
+    usbLogLenLora(usbDbgBuf, len);
   }
 }
 
@@ -3171,7 +3187,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RekeyConf(void)
   uint8_t macBuf[1] = { 0 };
 
   /* USB: info */
-  usbLog("LoRaWAN: Got RX RekeyConf.\r\n");
+  usbLogLora("LoRaWAN: Got RX RekeyConf.\r\n");
 
   LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
 //      loRaWANctx.xxx = macBuf[0];
@@ -3181,7 +3197,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RekeyConf(void)
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RekeyConf2(void)
 {
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX RekeyConf2.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX RekeyConf2.\r\n");
 
   /* Adjust the context */
   loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
@@ -3199,7 +3215,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_ADRParamSetupReq(void)
   uint8_t macBuf[1] = { 0 };
 
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Got RX ADRParamSetupReq.\r\n");
+  usbLogLora("\r\nLoRaWAN: Got RX ADRParamSetupReq.\r\n");
 
   LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
 //      loRaWANctx.xxx = macBuf[0];
@@ -3209,7 +3225,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_ADRParamSetupReq(void)
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_ADRParamSetupAns(void)
 {
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX ADRParamSetupAns.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX ADRParamSetupAns.\r\n");
 
   /* Adjust the context */
   loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
@@ -3223,7 +3239,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_ADRParamSetupAns(void)
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DeviceTimeReq(void)
 {
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX DeviceTimeReq.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX DeviceTimeReq.\r\n");
 
   /* Adjust the context */
   loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
@@ -3239,7 +3255,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_DeviceTimeAns(void)
   uint8_t macBuf[1] = { 0 };
 
   /* USB: info */
-  usbLog("LoRaWAN: Got RX DeviceTimeAns.\r\n");
+  usbLogLora("LoRaWAN: Got RX DeviceTimeAns.\r\n");
 
   LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
 //      loRaWANctx.xxx = macBuf[0];
@@ -3253,7 +3269,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_ForceRejoinReq(void)
   uint8_t macBuf[1] = { 0 };
 
   /* USB: info */
-  usbLog("LoRaWAN: Got RX ForceRejoinReq.\r\n");
+  usbLogLora("LoRaWAN: Got RX ForceRejoinReq.\r\n");
 
   LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
 //      loRaWANctx.xxx = macBuf[0];
@@ -3263,7 +3279,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_ForceRejoinReq(void)
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_ForceRejoinAns(void)
 {
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX ForceRejoinAns.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX ForceRejoinAns.\r\n");
 
   /* Adjust the context */
   loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;
@@ -3281,7 +3297,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RejoinParamSetupReq(void)
   uint8_t macBuf[1] = { 0 };
 
   /* USB: info */
-  usbLog("LoRaWAN: Got RX RejoinParamSetupReq.\r\n");
+  usbLogLora("LoRaWAN: Got RX RejoinParamSetupReq.\r\n");
 
   LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
 //    loRaWANctx.xxx = macBuf[0];
@@ -3291,7 +3307,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RejoinParamSetupReq(void)
 static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RejoinParamSetupAns(void)
 {
   /* USB: info */
-  usbLog("\r\nLoRaWAN: Going to TX RejoinParamSetupAns.\r\n");
+  usbLogLora("\r\nLoRaWAN: Going to TX RejoinParamSetupAns.\r\n");
 
   /* Adjust the context */
   loRaWANctx.Current_RXTX_Window  = CurWin_RXTX1;

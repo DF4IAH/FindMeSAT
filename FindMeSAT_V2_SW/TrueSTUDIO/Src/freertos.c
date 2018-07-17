@@ -277,43 +277,53 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* definition and creation of usbToHostQueue */
+/* what about the sizeof here??? cd native code */
   osMessageQDef(usbToHostQueue, 512, uint8_t);
   usbToHostQueueHandle = osMessageCreate(osMessageQ(usbToHostQueue), NULL);
 
   /* definition and creation of usbFromHostQueue */
+/* what about the sizeof here??? cd native code */
   osMessageQDef(usbFromHostQueue, 32, uint8_t);
   usbFromHostQueueHandle = osMessageCreate(osMessageQ(usbFromHostQueue), NULL);
 
   /* definition and creation of loraInQueue */
+/* what about the sizeof here??? cd native code */
   osMessageQDef(loraInQueue, 8, uint8_t);
   loraInQueueHandle = osMessageCreate(osMessageQ(loraInQueue), NULL);
 
   /* definition and creation of loraOutQueue */
+/* what about the sizeof here??? cd native code */
   osMessageQDef(loraOutQueue, 8, uint8_t);
   loraOutQueueHandle = osMessageCreate(osMessageQ(loraOutQueue), NULL);
 
   /* definition and creation of loraMacQueue */
+/* what about the sizeof here??? cd native code */
   osMessageQDef(loraMacQueue, 32, uint8_t);
   loraMacQueueHandle = osMessageCreate(osMessageQ(loraMacQueue), NULL);
 
   /* definition and creation of gpscomInQueue */
-  osMessageQDef(gpscomInQueue, 8, uint8_t);
+/* what about the sizeof here??? cd native code */
+  osMessageQDef(gpscomInQueue, 64, uint8_t);
   gpscomInQueueHandle = osMessageCreate(osMessageQ(gpscomInQueue), NULL);
 
   /* definition and creation of gpscomOutQueue */
+/* what about the sizeof here??? cd native code */
   osMessageQDef(gpscomOutQueue, 8, uint8_t);
   gpscomOutQueueHandle = osMessageCreate(osMessageQ(gpscomOutQueue), NULL);
 
   /* definition and creation of sensorsOutQueue */
+/* what about the sizeof here??? cd native code */
   osMessageQDef(sensorsOutQueue, 32, uint8_t);
   sensorsOutQueueHandle = osMessageCreate(osMessageQ(sensorsOutQueue), NULL);
 
   /* definition and creation of sensorsInQueue */
+/* what about the sizeof here??? cd native code */
   osMessageQDef(sensorsInQueue, 8, uint8_t);
   sensorsInQueueHandle = osMessageCreate(osMessageQ(sensorsInQueue), NULL);
 
   /* definition and creation of interOutQueue */
-  osMessageQDef(interOutQueue, 8, uint8_t);
+/* what about the sizeof here??? cd native code */
+  osMessageQDef(interOutQueue, 64, uint8_t);
   interOutQueueHandle = osMessageCreate(osMessageQ(interOutQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */

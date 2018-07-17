@@ -172,15 +172,24 @@
 #endif
 
 #ifndef min
-# define min(a,b)   (a) < (b) ?  (a) : (b);
+# define min(a,b)   (a) < (b) ?  (a) : (b)
 #endif
 
 #ifndef max
-# define max(a,b)   (a) > (b) ?  (a) : (b);
+# define max(a,b)   (a) > (b) ?  (a) : (b)
 #endif
 
 
-#define FINDMESAT_VERSION   20180714U
+#define FINDMESAT_VERSION   20180717U
+
+
+typedef enum MON_MASK {
+
+  MON_MASK__LORA                                              = 0x01UL,
+  MON_MASK__GPS_RX                                            = 0x04UL,
+  MON_MASK__GPS_TIMESYNC                                      = 0x08UL,
+
+} MON_MASK_t;
 
 
 typedef void* TaskHandle_t;
