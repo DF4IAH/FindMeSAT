@@ -70,7 +70,7 @@ extern SPI_HandleTypeDef hspi1;
 #define SPI_WR_FLAG   (1 << 7)
 #define SPI_RD_FLAG   (0 << 7)
 
-typedef enum spiSX127x_Mode {
+typedef enum spiSX1276_Mode {
   TXRX_MODE_MASK          = 0x0f,
   SLEEP                   = (0b000 << 0),
   STANDBY                 = (0b001 << 0),
@@ -94,9 +94,9 @@ typedef enum spiSX127x_Mode {
 
   MODE_FSK_OOK            = (0b0 << 7),
   MODE_LoRa               = (0b1 << 7)
-} spiSX127x_Mode_t;
+} spiSX1276_Mode_t;
 
-typedef enum spiSX127x_ModemConfig1 {
+typedef enum spiSX1276_ModemConfig1 {
   IHM_OFF                 = (0b0 << 0),
   IHM_ON                  = (0b1 << 0),
 
@@ -117,7 +117,7 @@ typedef enum spiSX127x_ModemConfig1 {
   BW_500kHz               = (0b1001 << 4)
 } spiSX127x_ModemConfig1_t;
 
-typedef enum spiSX127x_ModemConfig2 {
+typedef enum spiSX1276_ModemConfig2 {
   RX_PAYLOAD_CRC_OFF      = (0b0 << 2),
   RX_PAYLOAD_CRC_ON       = (0b1 << 2),
 
@@ -141,7 +141,7 @@ typedef enum spiSX127x_ModemConfig2 {
   SF12_DR0                = ( 12 << 4)
 } spiSX127x_ModemConfig2_t;
 
-typedef enum spiSX127x_ModemConfig3 {
+typedef enum spiSX1276_ModemConfig3 {
   AGC_AUTO_OFF            = (0b0 << 2),
   AGC_AUTO_ON             = (0b1 << 2),
 
@@ -182,7 +182,7 @@ typedef enum spiSX127x_PaRamp {
   LOW_PWR_PLL_ON          = (0b1 << 4)
 } spiSX127x_PaRamp_t;
 
-typedef enum spiSX127x_LNA {
+typedef enum spiSX1276_LNA {
   LnaBoost_Hf_OFF         = (0b00 << 0),
   LnaBoost_Hf_ON          = (0b11 << 0),
 
@@ -240,13 +240,13 @@ void spiSX127xLoRa_Fifo_Init(void);
 void spiSX127xLoRa_Fifo_SetFifoPtrFromTxBase(void);
 void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void);
 
-void spiSX127xMode(spiSX127x_Mode_t mode);
+void spiSX1276Mode(spiSX1276_Mode_t mode);
 void spiSX127xRegister_IRQ_clearAll(void);
-void spiSX127x_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg);
+void spiSX1276_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg);
 uint32_t spiSX127x_WaitUntil_TxDone(uint32_t stopTime);
 void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t stopTime1, uint32_t stopTime2);
 
-uint8_t spiDetectShieldSX127x(void);
+uint8_t spiDetectShieldSX1276(void);
 
 /* USER CODE END Prototypes */
 

@@ -119,7 +119,7 @@ void prvControllerInitBeforeGreet(void)
   xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON);                       // TODO: should be from Config-FLASH page
 
   /* Check for attached SX127x_mbed_shield */
-  if (HAL_OK == spiDetectShieldSX127x()) {
+  if (HAL_OK == spiDetectShieldSX1276()) {
 #if 1
     /* Send INIT message to the LoRaWAN task */
     const uint8_t c_maxWaitMs = 25;
