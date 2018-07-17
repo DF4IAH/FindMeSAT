@@ -303,7 +303,7 @@ void MX_FREERTOS_Init(void) {
 
   /* definition and creation of gpscomInQueue */
 /* what about the sizeof here??? cd native code */
-  osMessageQDef(gpscomInQueue, 8, uint8_t);
+  osMessageQDef(gpscomInQueue, 64, uint8_t);
   gpscomInQueueHandle = osMessageCreate(osMessageQ(gpscomInQueue), NULL);
 
   /* definition and creation of gpscomOutQueue */
@@ -323,7 +323,7 @@ void MX_FREERTOS_Init(void) {
 
   /* definition and creation of interOutQueue */
 /* what about the sizeof here??? cd native code */
-  osMessageQDef(interOutQueue, 8, uint8_t);
+  osMessageQDef(interOutQueue, 64, uint8_t);
   interOutQueueHandle = osMessageCreate(osMessageQ(interOutQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */

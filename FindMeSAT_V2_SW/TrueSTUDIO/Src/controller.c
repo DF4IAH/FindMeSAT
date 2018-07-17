@@ -41,9 +41,10 @@ extern osMutexId            trackMeApplDnDataMutexHandle;
 extern osMutexId            gpscomCtxMutexHandle;
 extern osSemaphoreId        usbToHostBinarySemHandle;
 extern osSemaphoreId        trackMeApplUpBinarySemHandle;
+extern EventGroupHandle_t   controllerEventGroupHandle;
 extern EventGroupHandle_t   usbToHostEventGroupHandle;
 extern EventGroupHandle_t   loraEventGroupHandle;
-extern EventGroupHandle_t   controllerEventGroupHandle;
+extern EventGroupHandle_t   gpscomEventGroupHandle;
 
 extern LoRaWANctx_t         loRaWANctx;
 extern GpscomGpsCtx_t       gpscomGpsCtx;
@@ -54,6 +55,8 @@ extern TrackMeApp_down_t    trackMeApp_down;
 
 extern LoraliveApp_up_t     loraliveApp_up;
 extern LoraliveApp_down_t   loraliveApp_down;
+
+extern uint32_t             g_monMsk;
 
 extern uint32_t             g_unx_s;
 extern uint32_t             g_unx_s_next;
@@ -193,7 +196,7 @@ const char controllerPackages0x04[] = "LQFP144, WLCSP81 or WLCSP72";
 const char controllerPackages0x10[] = "UFBGA169";
 const char controllerPackages0x11[] = "WLCSP100";
 const char controllerPackages0xXX[] = "(reserved)";
-void prvControllerPrintMCU(void)
+static void prvControllerPrintMCU(void)
 {
   char lotBuf[8];
   char buf[220] = { 0 };
@@ -267,7 +270,18 @@ void prvControllerPrintMCU(void)
 }
 
 
-void prvTimeService(void)
+static void prvControllerSetTimer_ms(uint32_t tmr_ms)
+{
+  if (!tmr_ms) {
+    xTimerStop(controllerSendTimerHandle, 1);
+
+  } else {
+    xTimerStart(controllerSendTimerHandle, 1);
+    xTimerChangePeriod(controllerSendTimerHandle, max(5, tmr_ms) / portTICK_PERIOD_MS, 1);
+  }
+}
+
+static void prvTimeService(void)
 {
   static uint32_t   s_pps_us_last = 0UL;
   #define           c_ofsHoldStrt   10U
@@ -343,7 +357,7 @@ void prvTimeService(void)
     /* Correct TIM5 timer when offset is more than it could easily be trimmed away */
     if (gnss_time && gnss_date) {
       /* Set next coming second for the ISR */
-      g_unx_s_next = 1UL + calcDataTime_to_unx_s(&s_frac, gnss_date, gnss_time);                // One second advance
+      g_unx_s_next = 1UL + gpscomCalcDataTime_to_unx_s(&s_frac, gnss_date, gnss_time);                // One second advance
 
       /* unx time correction for 1PPS event before timer roll-over */
       if (c_pps_us > SecHalf) {
@@ -376,7 +390,7 @@ void prvTimeService(void)
   }
 
   /* Logging */
-  {
+  if (g_monMsk & MON_MASK__GPS_TIMESYNC) {
     char logBuf[256];
     int logLen = sprintf(logBuf,
         "\r\n*** PPS TC=%lu.%06lu, Span=%+8ld - RCC_ICSCR=0x%08lx - GNSS_secs=%02u\r\n",
@@ -389,7 +403,7 @@ void prvTimeService(void)
 // #define GPS_SIMU
 // #define WEATHER_SIMU
 // #define CURRENT_SIMU
-void prvControllerGetDataAndUpload(void)
+static void prvControllerGetDataAndUpload(void)
 {
 #ifdef GPS_SIMU
   const  float  centerLat     =  49.473185f;
@@ -465,24 +479,34 @@ void prvControllerGetDataAndUpload(void)
 }
 
 
-void prvPushToLoraInQueue(const uint8_t* cmdAry, uint8_t cmdLen)
+static void prvPushToAnyInQueue(osMessageQId msgInH, const uint8_t* cmdAry, uint8_t cmdLen)
 {
   for (uint8_t idx = 0; idx < cmdLen; ++idx) {
-    xQueueSendToBack(loraInQueueHandle, cmdAry + idx, 1);
+    xQueueSendToBack(msgInH, cmdAry + idx, 1);
   }
+}
+
+static void prvPushToLoraInQueue(const uint8_t* cmdAry, uint8_t cmdLen)
+{
+  prvPushToAnyInQueue(loraInQueueHandle, cmdAry, cmdLen);
   xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
 }
 
-void prvPullFromInterpreterOutQueue(void)
+static void prvPushToGpscomInQueue(const uint8_t* cmdAry, uint8_t cmdLen)
+{
+  prvPushToAnyInQueue(gpscomInQueueHandle, cmdAry, cmdLen);
+  xEventGroupSetBits(gpscomEventGroupHandle, Gpscom_EGW__QUEUE_IN);
+}
+
+static void prvPullFromInterpreterOutQueue(void)
 {
   BaseType_t  xStatus;
-  uint8_t     inAry[4]  = { 0 };
-  uint8_t     inLen     = 0;
+  uint8_t     inAry[128]  = { 0 };
 
   do {
-    xStatus = xQueueReceive(interOutQueueHandle, &inLen, 1);
+    xStatus = xQueueReceive(interOutQueueHandle, &(inAry[0]), 1);
     if (pdPASS == xStatus) {
-      for (uint8_t idx = 0; idx < inLen; idx++) {
+      for (uint8_t idx = 1; idx < (1 + inAry[0]); idx++) {
         xStatus = xQueueReceive(interOutQueueHandle, inAry + idx, Controller_MaxWaitMs / portTICK_PERIOD_MS);
         if (pdFALSE == xStatus) {
           /* Bad communication - drop */
@@ -491,7 +515,7 @@ void prvPullFromInterpreterOutQueue(void)
       }
     }
 
-    switch (inAry[0]) {
+    switch (inAry[1]) {
     case InterOutQueueCmds__DoSendDataUp:
       {
         prvControllerGetDataAndUpload();
@@ -514,7 +538,7 @@ void prvPullFromInterpreterOutQueue(void)
 
     case InterOutQueueCmds__ConfirmedPackets:
       {
-        const uint8_t confSet = inAry[1];
+        const uint8_t confSet = inAry[2];
         const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__ConfirmedPackets, confSet };
         prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
       }
@@ -522,7 +546,7 @@ void prvPullFromInterpreterOutQueue(void)
 
     case InterOutQueueCmds__ADRset:
       {
-        const uint8_t adrSet = inAry[1];
+        const uint8_t adrSet = inAry[2];
         const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__ADRset, adrSet };
         prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
       }
@@ -530,7 +554,7 @@ void prvPullFromInterpreterOutQueue(void)
 
     case InterOutQueueCmds__DRset:
       {
-        const uint8_t drSet = inAry[1];
+        const uint8_t drSet = inAry[2];
         const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__DRset, drSet };
         prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
       }
@@ -538,16 +562,31 @@ void prvPullFromInterpreterOutQueue(void)
 
     case InterOutQueueCmds__PwrRedDb:
       {
-        const uint8_t pwrRed_db = inAry[1];
+        const uint8_t pwrRed_db = inAry[2];
         const uint8_t cmdAry[3] = { 2, LoraInQueueCmds__PwrRedDb, pwrRed_db };
         prvPushToLoraInQueue(cmdAry, sizeof(cmdAry));
+      }
+      break;
+
+    case InterOutQueueCmds__Timer:
+      {
+        const uint8_t repeatTime = inAry[2];
+        prvControllerSetTimer_ms(repeatTime * 1000UL);
+      }
+      break;
+
+    case InterOutQueueCmds__NmeaSend:
+      {
+        /* Re-use buffer to forward message */
+        inAry[1] = gpscomInQueueCmds__NmeaSendToGPS;
+        prvPushToGpscomInQueue(inAry, (1 + inAry[0]));
       }
       break;
     }  // switch
   } while (!xQueueIsQueueEmptyFromISR(interOutQueueHandle));
 }
 
-void prvPullFromLoraOutQueue(void)
+static void prvPullFromLoraOutQueue(void)
 {
   BaseType_t  xStatus;
   uint8_t     inAry[4]  = { 0 };
@@ -570,7 +609,7 @@ void prvPullFromLoraOutQueue(void)
       {
         /* Ready from LoRaWAN task received - activate upload timer */
         xStatus = xTimerStart(controllerSendTimerHandle, 1);
-        xStatus = xTimerChangePeriod(controllerSendTimerHandle, 5 * 60 * 1000 / portTICK_PERIOD_MS, 1);   // 5 minutes
+        prvControllerSetTimer_ms(30U * 1000UL);
 
         /* Request LoRaWAN link check and network time */
         const uint8_t cmdAry[4] = {
@@ -583,7 +622,7 @@ void prvPullFromLoraOutQueue(void)
   } while (!xQueueIsQueueEmptyFromISR(loraOutQueueHandle));
 }
 
-void prvPullFromGpscomOutQueue(void)
+static void prvPullFromGpscomOutQueue(void)
 {
   BaseType_t  xStatus;
   uint8_t     inAry[4]  = { 0 };

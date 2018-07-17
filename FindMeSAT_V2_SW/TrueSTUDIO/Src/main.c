@@ -95,6 +95,9 @@ extern EventGroupHandle_t   controllerEventGroupHandle;
 
 
 static GPIO_InitTypeDef     GPIO_InitStruct;
+
+volatile uint32_t           g_monMsk                          = 0x01UL;
+
 volatile uint64_t	          g_timer_us                        = 0ULL;
 volatile uint64_t	          g_timerStart_us                   = 0ULL;
 volatile uint64_t           g_realTime_Boot                   = 0ULL;
