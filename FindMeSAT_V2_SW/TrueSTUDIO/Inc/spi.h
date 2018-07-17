@@ -115,7 +115,7 @@ typedef enum spiSX1276_ModemConfig1 {
   BW_125kHz               = (0b0111 << 4),
   BW_250kHz               = (0b1000 << 4),
   BW_500kHz               = (0b1001 << 4)
-} spiSX127x_ModemConfig1_t;
+} spiSX1276_ModemConfig1_t;
 
 typedef enum spiSX1276_ModemConfig2 {
   RX_PAYLOAD_CRC_OFF      = (0b0 << 2),
@@ -139,7 +139,7 @@ typedef enum spiSX1276_ModemConfig2 {
   SF11_DR1                = ( 11 << 4),
   SF12_DR0_VAL            =   12      ,
   SF12_DR0                = ( 12 << 4)
-} spiSX127x_ModemConfig2_t;
+} spiSX1276_ModemConfig2_t;
 
 typedef enum spiSX1276_ModemConfig3 {
   AGC_AUTO_OFF            = (0b0 << 2),
@@ -147,7 +147,7 @@ typedef enum spiSX1276_ModemConfig3 {
 
   LOW_DR_OPTI_OFF         = (0b0 << 3),
   LOW_DR_OPTI_ON          = (0b1 << 3)
-} spiSX127x_ModemConfig3_t;
+} spiSX1276_ModemConfig3_t;
 
 typedef enum spiSX127x_DetectOptimize {
   OPTI_SF7_to_SF12        = (0b011 << 0),
@@ -194,7 +194,7 @@ typedef enum spiSX1276_LNA {
   LnaGain_G4              = (0b100 << 5),
   LnaGain_G5              = (0b101 << 5),
   LnaGain_G6              = (0b110 << 5)
-} spiSX127x_LNA_t;
+} spiSX1276_LNA_t;
 
 typedef enum spiSX127x_IRQ_Mask {
   CadDetectedMask         = 0,
