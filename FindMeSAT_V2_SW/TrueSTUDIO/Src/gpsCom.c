@@ -578,8 +578,8 @@ static void prvGpscomInterpreter(const uint8_t* buf, uint16_t len)
     char  l_buf[64];
     int   l_len;
 
-    if (!strncmp(buf, "$PMTK", 5)) {
-      usbLogLen(buf, len);
+    if (!strncmp((const char*) buf, "$PMTK", 5)) {
+      usbLogLen((const char*) buf, len);
 
     } else {
       l_len = sprintf(l_buf, "%c%c%c%c%c%c ... %c%c%c - len=%3u   valid=%u\r\n", buf[0], buf[1], buf[2], buf[3], buf[4], buf[5],  buf[len - 5], buf[len - 4], buf[len - 3], len, chkVld);

@@ -13,6 +13,7 @@
 #include <math.h>
 #include "FreeRTOS.h"
 #include "stm32l496xx.h"
+#include "stm32l4xx_nucleo_144.h"
 #include "cmsis_os.h"
 #include "interpreter.h"
 #include "usb.h"
@@ -388,6 +389,9 @@ static void prvTimeService(void)
       }
     }
   }
+
+  /* Reversing toggling of the red LED */
+  HAL_GPIO_TogglePin(LED3_GPIO_PORT, LED3_PIN);                                                 // Red 2nd toggling
 
   /* Logging */
   if (g_monMsk & MON_MASK__GPS_TIMESYNC) {
