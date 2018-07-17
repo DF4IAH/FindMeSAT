@@ -570,7 +570,9 @@ static void prvPullFromInterpreterOutQueue(void)
 
     case InterOutQueueCmds__Timer:
       {
-        const uint8_t repeatTime = inAry[2];
+        const uint8_t  repeatTime0  = inAry[2];
+        const uint8_t  repeatTime1  = inAry[3];
+        const uint16_t repeatTime   = (((uint16_t) repeatTime1) << 8U) | repeatTime0;
         prvControllerSetTimer_ms(repeatTime * 1000UL);
       }
       break;
