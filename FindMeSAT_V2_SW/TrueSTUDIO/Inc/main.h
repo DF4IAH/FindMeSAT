@@ -122,10 +122,10 @@
 #define USB_VBUS_GPIO_Port GPIOA
 #define USB_ID_Pin GPIO_PIN_10
 #define USB_ID_GPIO_Port GPIOA
-#define USB_DM_Pin GPIO_PIN_11
-#define USB_DM_GPIO_Port GPIOA
-#define USB_DP_Pin GPIO_PIN_12
-#define USB_DP_GPIO_Port GPIOA
+#define PA_USB_N_Pin GPIO_PIN_11
+#define PA_USB_N_GPIO_Port GPIOA
+#define PA_USB_P_Pin GPIO_PIN_12
+#define PA_USB_P_GPIO_Port GPIOA
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
