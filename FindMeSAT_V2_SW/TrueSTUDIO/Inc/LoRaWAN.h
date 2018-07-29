@@ -23,6 +23,12 @@
 #define GPS_UTC_LEAP_SECS             (+18)
 
 
+/* Default settings */
+#define  LORAWAN_CONFPACKS_DEFAULT    0
+#define  LORAWAN_ADR_ENABLED_DEFAULT  0
+
+
+
 /* Bit-mask for the loRaWANEventGroup */
 typedef enum Lora_EGW_BM {
   Lora_EGW__QUEUE_IN                  = 0x00000001UL,
@@ -182,6 +188,17 @@ typedef enum DataRates {
   DR6_SF7_250kHz_LoRa,
   DR7_50kHz_FSK,                                                                                // nRF905 "OGN Tracking Protocol" compatible?
 } DataRates_t;
+
+
+
+/* --- LoRa_Bare --- */
+
+typedef struct LoRaBareCtx {
+  char dummy;
+} LoRaBareCtx_t;
+
+
+/* --- LoRaWAN --- */
 
 typedef enum LoRaWANMAC_CID {
   ResetInd_UP                         = 0x01,                                                   // ABP devices only, LW 1.1

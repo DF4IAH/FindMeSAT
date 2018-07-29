@@ -69,7 +69,10 @@
 extern EventGroupHandle_t   spiEventGroupHandle;
 extern EventGroupHandle_t   extiEventGroupHandle;
 extern osSemaphoreId        usbToHostBinarySemHandle;
-extern uint32_t             g_monMsk;
+
+extern ENABLE_MASK_t        g_enableMsk;
+extern MON_MASK_t           g_monMsk;
+
 
 /* Buffer used for transmission */
 volatile uint8_t            spi1TxBuffer[SPI1_BUFFERSIZE]     = { 0 };

@@ -32,7 +32,8 @@ extern EventGroupHandle_t   controllerEventGroupHandle;
 
 extern UART_HandleTypeDef*  usartHuart3;
 
-extern uint32_t             g_monMsk;
+extern ENABLE_MASK_t        g_enableMsk;
+extern MON_MASK_t           g_monMsk;
 
 
 volatile GpscomGpsCtx_t     gpscomGpsCtx                      = { 0 };
@@ -866,17 +867,20 @@ void gpscomGpscomTaskLoop(void)
       }
     } while (1);
 
-    /* Process the message */
-    switch (s_buf[0]) {
-    case gpscomInQueueCmds__NmeaSendToGPS:
-      {
-        prvGpscomSendNMEA(s_buf + 1, s_bufMsgLen - 1);
-      }
-      break;
-    default:
-      /* Nothing to do */
-      { }
-    }  // switch (s_buf[0])
+    /* Process message if enabled */
+    if (ENABLE_MASK__GPS_DATA & g_enableMsk) {
+      /* Process the message */
+      switch (s_buf[0]) {
+      case gpscomInQueueCmds__NmeaSendToGPS:
+        {
+          prvGpscomSendNMEA(s_buf + 1, s_bufMsgLen - 1);
+        }
+        break;
+      default:
+        /* Nothing to do */
+        { }
+      }  // switch (s_buf[0])
+    }  // if (ENABLE_MASK__GPS_DATA .. )
 
 gpscom_Error_clrInBuf:
     {

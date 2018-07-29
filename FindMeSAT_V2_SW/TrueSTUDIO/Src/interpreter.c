@@ -27,7 +27,10 @@ extern osMessageQId         interOutQueueHandle;
 extern osSemaphoreId        usbToHostBinarySemHandle;
 extern EventGroupHandle_t   usbToHostEventGroupHandle;
 extern EventGroupHandle_t   controllerEventGroupHandle;
-extern uint32_t             g_monMsk;
+
+extern ENABLE_MASK_t        g_enableMsk;
+extern MON_MASK_t           g_monMsk;
+
 extern char                 usbClrScrBuf[4];
 
 

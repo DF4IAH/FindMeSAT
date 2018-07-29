@@ -180,7 +180,20 @@
 #endif
 
 
-#define FINDMESAT_VERSION   20180718U
+#define FINDMESAT_VERSION   20180729U
+
+
+typedef enum ENABLE_MASK {
+
+//ENABLE_MASK__AFSK_APRS1200                                  = 0x0001UL,                       // AFSK APRS 1200 baud - supported by AX5243, only
+  ENABLE_MASK__FSK_APRS1200_AFSK_EMU                          = 0x0002UL,                       // AFSK APRS 1200 baud - audio Packet-Radio emulation
+  ENABLE_MASK__FSK_APRS9600                                   = 0x0004UL,                       // FSK APRS 9600 baud
+  ENABLE_MASK__LORA_BARE                                      = 0x0010UL,                       // LoRa bare Transceiver
+  ENABLE_MASK__LORAWAN_DEVICE                                 = 0x0020UL,                       // LoRaWAN as Device role
+  ENABLE_MASK__GPS_DATA                                       = 0x0100UL,                       // GPS data interpreter
+  ENABLE_MASK__GPS_1PPS                                       = 0x0200UL,                       // GPS 1PPS controlled MCU clock
+
+} ENABLE_MASK_t;
 
 
 typedef enum MON_MASK {

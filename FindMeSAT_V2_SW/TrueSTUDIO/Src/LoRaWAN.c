@@ -28,8 +28,6 @@
 
 
 /* SPI communication buffers */
-extern uint8_t              spi1TxBuffer[SPI1_BUFFERSIZE];
-extern uint8_t              spi1RxBuffer[SPI1_BUFFERSIZE];
 extern osMessageQId         loraInQueueHandle;
 extern osMessageQId         loraOutQueueHandle;
 extern osMessageQId         loraMacQueueHandle;
@@ -37,7 +35,12 @@ extern osMutexId            trackMeApplUpDataMutexHandle;
 extern osMutexId            trackMeApplDnDataMutexHandle;
 extern EventGroupHandle_t   loraEventGroupHandle;
 extern EventGroupHandle_t   controllerEventGroupHandle;
-extern uint32_t             g_monMsk;
+
+extern ENABLE_MASK_t        g_enableMsk;
+extern MON_MASK_t           g_monMsk;
+
+extern uint8_t              spi1TxBuffer[SPI1_BUFFERSIZE];
+extern uint8_t              spi1RxBuffer[SPI1_BUFFERSIZE];
 
 
 const uint16_t              loRaWANWait_EGW_MaxWaitTicks      = 60000 / portTICK_PERIOD_MS;           // One minute
@@ -75,6 +78,9 @@ const uint8_t               AppKey_BE[16]                     = { 0xD9, 0x0E, 0x
 
 /* Non-volatile counters in the RTC_Backup domain */
 volatile LoRaWANctxBkpRam_t *const LoRaWANctxBkpRam     = (void*) 0x40002850UL;
+
+/* LoRa_Bare information */
+LoRaBareCtx_t               loRaBareCtx                       = { 0 };
 
 /* Network context of LoRaWAN */
 LoRaWANctx_t                loRaWANctx                        = { 0 };
@@ -636,22 +642,25 @@ static void LoRaWAN_QueueIn_Process(void)
 
     case LoraInQueueCmds__TrackMeApplUp:
       {
-        /* Prepare data to upload */
-        {
-          /* Take mutex to access LoRaWAN TrackMeApp */
-          if (pdTRUE == xSemaphoreTake(trackMeApplUpDataMutexHandle, 500 / portTICK_PERIOD_MS)) {
-            /* Marshal data for upload */
-            loRaWanTxMsg.msg_prep_FRMPayload_Len = LoRaWAN_marshalling_PayloadCompress_TrackMeAppUp(loRaWanTxMsg.msg_prep_FRMPayload_Buf, &trackMeApp_up);
+        /* Process LoRaWAN if enabled */
+        if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
+          /* Prepare data to upload */
+          {
+            /* Take mutex to access LoRaWAN TrackMeApp */
+            if (pdTRUE == xSemaphoreTake(trackMeApplUpDataMutexHandle, 500 / portTICK_PERIOD_MS)) {
+              /* Marshal data for upload */
+              loRaWanTxMsg.msg_prep_FRMPayload_Len = LoRaWAN_marshalling_PayloadCompress_TrackMeAppUp(loRaWanTxMsg.msg_prep_FRMPayload_Buf, &trackMeApp_up);
 
-            /* Give back mutex */
-            xSemaphoreGive(trackMeApplUpDataMutexHandle);
+              /* Give back mutex */
+              xSemaphoreGive(trackMeApplUpDataMutexHandle);
 
-            /* Prepare to transmit data buffer */
-            LoRaWAN_QueueIn_Process__Fsm_TX();
+              /* Prepare to transmit data buffer */
+              LoRaWAN_QueueIn_Process__Fsm_TX();
 
-          } else {
-            /* No luck, abort plan to transmit */
-            loRaWANctx.FsmState = Fsm_NOP;
+            } else {
+              /* No luck, abort plan to transmit */
+              loRaWANctx.FsmState = Fsm_NOP;
+            }
           }
         }
       }
@@ -659,67 +668,85 @@ static void LoRaWAN_QueueIn_Process(void)
 
     case LoraInQueueCmds__LinkCheckReq:
       {
-        if (loRaWANctx.FsmState == Fsm_NOP) {
-          loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
-        } else {
-          xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__DO_LINKCHECKREQ);
+        /* Process LoRaWAN if enabled */
+        if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
+          if (loRaWANctx.FsmState == Fsm_NOP) {
+            loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
+          } else {
+            xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__DO_LINKCHECKREQ);
+          }
         }
       }
       break;
 
     case LoraInQueueCmds__DeviceTimeReq:
       {
-        if (loRaWANctx.FsmState == Fsm_NOP) {
-          loRaWANctx.FsmState = Fsm_MAC_DeviceTimeReq;
-        } else {
-          xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__DO_DEVICETIMEREQ);
+        /* Process LoRaWAN if enabled */
+        if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
+          if (loRaWANctx.FsmState == Fsm_NOP) {
+            loRaWANctx.FsmState = Fsm_MAC_DeviceTimeReq;
+          } else {
+            xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__DO_DEVICETIMEREQ);
+          }
         }
       }
       break;
 
     case LoraInQueueCmds__ConfirmedPackets:
       {
-        const uint8_t confSet               = buf[1];
-        loRaWANctx.ConfirmedPackets_enabled = confSet ?  1 : 0;
+        /* Process LoRaWAN if enabled */
+        if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
+          const uint8_t confSet               = buf[1];
+          loRaWANctx.ConfirmedPackets_enabled = confSet ?  1 : 0;
+        }
       }
       break;
 
     case LoraInQueueCmds__ADRset:
       {
-        const uint8_t adrSet    = buf[1];
-        loRaWANctx.ADR_enabled  = adrSet ?  1 : 0;
+        /* Process LoRaWAN if enabled */
+        if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
+          const uint8_t adrSet    = buf[1];
+          loRaWANctx.ADR_enabled  = adrSet ?  1 : 0;
+        }
       }
       break;
 
     case LoraInQueueCmds__DRset:
       {
-        DataRates_t drSet = buf[1];
-        if (drSet > DR5_SF7_125kHz_LoRa) {
-          drSet   = DR5_SF7_125kHz_LoRa;
-        }
+        /* Process LoRaWAN if enabled */
+        if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
+          DataRates_t drSet = buf[1];
+          if (drSet > DR5_SF7_125kHz_LoRa) {
+            drSet   = DR5_SF7_125kHz_LoRa;
+          }
 
-        loRaWANctx.ADR_enabled  = 0;
+          loRaWANctx.ADR_enabled  = 0;
 
-        /* Set all RX1 channels with manual DataRate */
-        for (uint8_t idx = 0; idx < 15; idx++) {
-          loRaWANctx.Ch_DataRateTX_Selected[idx] = drSet;
+          /* Set all RX1 channels with manual DataRate */
+          for (uint8_t idx = 0; idx < 15; idx++) {
+            loRaWANctx.Ch_DataRateTX_Selected[idx] = drSet;
+          }
         }
       }
       break;
 
     case LoraInQueueCmds__PwrRedDb:
       {
-        uint8_t pwrRed = buf[1];
-        if (pwrRed > 20) {
-          pwrRed = 20;
-        }
+        /* Process LoRaWAN if enabled */
+        if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
+          uint8_t pwrRed = buf[1];
+          if (pwrRed > 20) {
+            pwrRed = 20;
+          }
 
-        loRaWANctx.ADR_enabled                  = 0;
-        loRaWANctx.LinkADR_TxPowerReduction_dB  = pwrRed;
+          loRaWANctx.ADR_enabled                  = 0;
+          loRaWANctx.LinkADR_TxPowerReduction_dB  = pwrRed;
 
-        /* Do a link check after current power reduction setting */
-        if (loRaWANctx.FsmState == Fsm_NOP) {
-          loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
+          /* Do a link check after current power reduction setting */
+          if (loRaWANctx.FsmState == Fsm_NOP) {
+            loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
+          }
         }
       }
       break;
@@ -727,20 +754,23 @@ static void LoRaWAN_QueueIn_Process(void)
 #if 0
     case loraInQueueCmds__LoraliveApplUp:
       {
-        /* Prepare data to upload */
-        {
-          /* Wait for semaphore to access LoRaWAN LoraliveApp */
-          osSemaphoreWait(loraliveApplUpDataBinarySemHandle, 0);
+        /* Process LoRaWAN if enabled */
+        if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
+          /* Prepare data to upload */
+          {
+            /* Wait for semaphore to access LoRaWAN LoraliveApp */
+            osSemaphoreWait(loraliveApplUpDataBinarySemHandle, 0);
 
-          /* Marshal data for upload */
-          loRaWanTxMsg.msg_prep_FRMPayload_Len = LoRaWAN_marshalling_PayloadCompress_LoraliveAppUp(&(loRaWanTxMsg.msg_prep_FRMPayload_Buf), &loraliveApp_up);
+            /* Marshal data for upload */
+            loRaWanTxMsg.msg_prep_FRMPayload_Len = LoRaWAN_marshalling_PayloadCompress_LoraliveAppUp(&(loRaWanTxMsg.msg_prep_FRMPayload_Buf), &loraliveApp_up);
 
-          /* Free semaphore */
-          osSemaphoreRelease(loraliveApplUpDataBinarySemHandle);
+            /* Free semaphore */
+            osSemaphoreRelease(loraliveApplUpDataBinarySemHandle);
+          }
+
+          /* Prepare to transmit data buffer */
+          LoRaWAN_QueueIn_Process__Fsm_TX();
         }
-
-        /* Prepare to transmit data buffer */
-        LoRaWAN_QueueIn_Process__Fsm_TX();
       }
       break;
 #endif
@@ -1946,116 +1976,208 @@ void loRaWANLoraTaskInit(void)
     }
   } while (1);
 
-  /* Prepare LoRaWAN context */
-  {
-    memset(&loRaWANctx, 0, sizeof(LoRaWANctx_t));
-    loRaWANctx.bkpRAM = LoRaWANctxBkpRam;
-
-    /* Check CRC */
-    uint32_t crcC = crcCalc((const uint32_t*) ((&LoRaWANctxBkpRam->LoRaWANcrc) + 1), bkpRAMLen - 1);
-    crcC = 0;  // TODO: remove me!
-    if (crcC != LoRaWANctxBkpRam->LoRaWANcrc) {
-      /* Non valid content - reset all to zero */
-      volatile uint32_t* ptr = &LoRaWANctxBkpRam->LoRaWANcrc;
-      for (uint8_t idx = 1; idx < bkpRAMLen; idx++) {
-        *++ptr = 0UL;
-      }
-
-      /* Calc new CRC */
-      LoRaWANctxBkpRam->LoRaWANcrc = crcCalc((const uint32_t*) ((&LoRaWANctxBkpRam->LoRaWANcrc) + 1), bkpRAMLen - 1);
-    }
-  }
-
-  /* Setup data from FLASH NVM */
-  LoRaWANctx_readFLASH();
-
-  /* Set-up LoRaWAN context */
-  {
-    /* RX1 - Copy default channel settings */
-    for (uint8_t ch = 1; ch <= 8; ch++) {
-      const uint8_t idx = ch - 1;
-      loRaWANctx.Ch_FrequenciesDownlink_MHz[idx]  = loRaWANctx.Ch_FrequenciesUplink_MHz[idx]  = LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, ch, Up, 1);  // Default values / default channels
-      loRaWANctx.Ch_DataRateTX_Selected[idx]      = loRaWANctx.Ch_DataRateTX_min[idx]         = DR0_SF12_125kHz_LoRa;
-      loRaWANctx.Ch_DataRateTX_max[idx]                                                       = DR5_SF7_125kHz_LoRa;
-    }
-    /* RX2 - Default channel */
-    loRaWANctx.Ch_DataRateTX_Selected[16 - 1]     = loRaWANctx.Ch_DataRateTX_min[16 - 1]      = DR0_SF12_125kHz_LoRa;
-    loRaWANctx.Ch_DataRateTX_max[16 - 1]                                                      = DR5_SF7_125kHz_LoRa;
-
-    loRaWANctx.Current_RXTX_Window          = CurWin_none;                                      // out of any window
-//  loRaWANctx.MHDR_MType                   = ConfDataUp;                                       // Confirmed data transport in use
-//  loRaWANctx.MHDR_Major                   = LoRaWAN_R1;                                       // Major release in use
-    loRaWANctx.FPort_absent                 = 1;                                                // Without FRMPayload this field is disabled
-    loRaWANctx.FPort                        = 1;                                                // Default application port
-    loRaWANctx.ConfirmedPackets_enabled     = 1;                                                // ConfDataUp to be used
-    loRaWANctx.ADR_enabled                  = 1;                                                // Global setting for ADR
-    loRaWANctx.LinkADR_TxPowerReduction_dB  = 0;                                                // No power reduction
-    loRaWANctx.LinkADR_DataRate_TX1         = loRaWANctx.Ch_DataRateTX_Selected[ 1 - 1];        // RX1 - Channel 1 as an example
-    loRaWANctx.LinkADR_DataRate_RX1_DRofs   = 0;                                                // Default
-    loRaWANctx.LinkADR_DataRate_RXTX2       = loRaWANctx.Ch_DataRateTX_Selected[16 - 1];        // RX2
-    loRaWANctx.LinkADR_ChannelMask          = 0x0087U;                                          // Enable default channels (1..3, 16) only
-    loRaWANctx.LinkADR_NbTrans              = 1;                                                // No repetitions for unconfirmed packets
-    loRaWANctx.LinkADR_ChMaskCntl           = ChMaskCntl__appliesTo_1to16;                      // Mask settings 1..16 are valid
-  }
-
-  /* Seed randomizer */
-  {
-    /* Prepare and start the receiver */
-    loRaWANctx.FrequencyMHz                 = LoRaWAN_calc_Channel_to_MHz(
-        &loRaWANctx,
-        16,
-        Up,
-        1);                                                                                     // Most traffic on the RX2 channel
-    loRaWANctx.SpreadingFactor              = SF7_DR5_VAL;                                      // Use that SF for more noise
-    spiSX1276_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_RX_Randomizer, NULL);
-
-    /* Forging the random number */
+  /* Init LoRaWAN if enabled */
+  if (ENABLE_MASK__LORAWAN_DEVICE & g_enableMsk) {
+    /* Prepare LoRaWAN context */
     {
-      uint32_t r = 0x12345678U;
-      for (uint8_t cnt = 32; cnt; cnt--) {
-        uint8_t rssi;
-        uint32_t rotBit;
+      memset(&loRaBareCtx, 0, sizeof(LoRaBareCtx_t));
+      memset(&loRaWANctx, 0, sizeof(LoRaWANctx_t));
+      loRaWANctx.bkpRAM = LoRaWANctxBkpRam;
 
-        /* Left rotating */
-        rotBit    = r >> 31;
-        r       <<= 1;
-        r        |= rotBit;
+      /* Check CRC */
+      uint32_t crcC = crcCalc((const uint32_t*) ((&LoRaWANctxBkpRam->LoRaWANcrc) + 1), bkpRAMLen - 1);
+      crcC = 0;  // TODO: remove me!
+      if (crcC != LoRaWANctxBkpRam->LoRaWANcrc) {
+        /* Non valid content - reset all to zero */
+        volatile uint32_t* ptr = &LoRaWANctxBkpRam->LoRaWANcrc;
+        for (uint8_t idx = 1; idx < bkpRAMLen; idx++) {
+          *++ptr = 0UL;
+        }
 
-        /* Read the current broadband RSSI value */
-        osDelay(1);
-        rssi = spiSX127xMode_LoRa_GetBroadbandRSSI();
-        r ^= rssi;
+        /* Calc new CRC */
+        LoRaWANctxBkpRam->LoRaWANcrc = crcCalc((const uint32_t*) ((&LoRaWANctxBkpRam->LoRaWANcrc) + 1), bkpRAMLen - 1);
       }
-      srand(r);
     }
 
-    /* Reset to POR/Reset defaults */
-    spiSX127xReset();
-  }
+    /* Setup data from FLASH NVM */
+    LoRaWANctx_readFLASH();
 
-  /* Delay until USB DCD is ready */
-  {
-    uint32_t PreviousWakeTime = 0UL;
+    /* Set-up LoRaWAN context */
+    {
+      /* RX1 - Copy default channel settings */
+      for (uint8_t ch = 1; ch <= 8; ch++) {
+        const uint8_t idx = ch - 1;
+        loRaWANctx.Ch_FrequenciesDownlink_MHz[idx]  = loRaWANctx.Ch_FrequenciesUplink_MHz[idx]  = LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, ch, Up, 1);  // Default values / default channels
+        loRaWANctx.Ch_DataRateTX_Selected[idx]      = loRaWANctx.Ch_DataRateTX_min[idx]         = DR0_SF12_125kHz_LoRa;
+        loRaWANctx.Ch_DataRateTX_max[idx]                                                       = DR5_SF7_125kHz_LoRa;
+      }
+      /* RX2 - Default channel */
+      loRaWANctx.Ch_DataRateTX_Selected[16 - 1]     = loRaWANctx.Ch_DataRateTX_min[16 - 1]      = DR0_SF12_125kHz_LoRa;
+      loRaWANctx.Ch_DataRateTX_max[16 - 1]                                                      = DR5_SF7_125kHz_LoRa;
 
-    osDelayUntil(&PreviousWakeTime, 4500);
-  }
+      loRaWANctx.Current_RXTX_Window          = CurWin_none;                                      // out of any window
+//    loRaWANctx.MHDR_MType                   = ConfDataUp;                                       // Confirmed data transport in use
+//    loRaWANctx.MHDR_Major                   = LoRaWAN_R1;                                       // Major release in use
+      loRaWANctx.FPort_absent                 = 1;                                                // Without FRMPayload this field is disabled
+      loRaWANctx.FPort                        = 1;                                                // Default application port
+      loRaWANctx.ConfirmedPackets_enabled     = LORAWAN_CONFPACKS_DEFAULT;                        // ConfDataUp to be used
+      loRaWANctx.ADR_enabled                  = LORAWAN_ADR_ENABLED_DEFAULT;                      // Global setting for ADR
+      loRaWANctx.LinkADR_TxPowerReduction_dB  = 0;                                                // No power reduction
+      loRaWANctx.LinkADR_DataRate_TX1         = loRaWANctx.Ch_DataRateTX_Selected[ 1 - 1];        // RX1 - Channel 1 as an example
+      loRaWANctx.LinkADR_DataRate_RX1_DRofs   = 0;                                                // Default
+      loRaWANctx.LinkADR_DataRate_RXTX2       = loRaWANctx.Ch_DataRateTX_Selected[16 - 1];        // RX2
+      loRaWANctx.LinkADR_ChannelMask          = 0x0087U;                                          // Enable default channels (1..3, 16) only
+      loRaWANctx.LinkADR_NbTrans              = 1;                                                // Number of repetitions for unconfirmed packets
+      loRaWANctx.LinkADR_ChMaskCntl           = ChMaskCntl__appliesTo_1to16;                      // Mask settings 1..16 are valid
+    }
+
+    /* Seed randomizer */
+    {
+      /* Prepare and start the receiver */
+      loRaWANctx.FrequencyMHz                 = LoRaWAN_calc_Channel_to_MHz(
+          &loRaWANctx,
+          16,
+          Up,
+          1);                                                                                     // Most traffic on the RX2 channel
+      loRaWANctx.SpreadingFactor              = SF7_DR5_VAL;                                      // Use that SF for more noise
+      spiSX1276_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_RX_Randomizer, NULL);
+
+      /* Forging the random number */
+      {
+        uint32_t r = 0x12345678U;
+        for (uint8_t cnt = 32; cnt; cnt--) {
+          uint8_t rssi;
+          uint32_t rotBit;
+
+          /* Left rotating */
+          rotBit    = r >> 31;
+          r       <<= 1;
+          r        |= rotBit;
+
+          /* Read the current broadband RSSI value */
+          osDelay(1);
+          rssi = spiSX127xMode_LoRa_GetBroadbandRSSI();
+          r ^= rssi;
+        }
+        srand(r);
+      }
+
+      /* Reset to POR/Reset defaults */
+      spiSX127xReset();
+    }
 
 #ifdef INIT_BALANCING_ENABLED
-  /* I/Q balancing - no SX127x reset or band-change without re-balancing */
-  {
-    /* Set center frequency of EU-868 */
-    loRaWANctx.FrequencyMHz = LoRaWAN_calc_Channel_to_MHz(
-        &loRaWANctx,
-        1,
-        1);                                                                                     // First default channel is about in the middle of the band
+    /* I/Q balancing - no SX127x reset or band-change without re-balancing */
+    {
+      /* Set center frequency of EU-868 */
+      loRaWANctx.FrequencyMHz = LoRaWAN_calc_Channel_to_MHz(
+          &loRaWANctx,
+          1,
+          1);                                                                                     // First default channel is about in the middle of the band
 
-    /* Do I/Q balancing with that center frequency */
-    spiSX1276_TxRx_Preps(&loRaWANctx, TxRx_Mode_IQ_Balancing, NULL);
-  }
+      /* Do I/Q balancing with that center frequency */
+      spiSX1276_TxRx_Preps(&loRaWANctx, TxRx_Mode_IQ_Balancing, NULL);
+    }
 #endif
 
-  /* Start with JOIN-REQUEST */
-  loRaWANctx.FsmState = Fsm_MAC_JoinRequest;
+    /* Delay until USB DCD is ready */
+    {
+      uint32_t PreviousWakeTime = 0UL;
+
+      osDelayUntil(&PreviousWakeTime, 4500);
+    }
+
+    /* Start with JOIN-REQUEST */
+    loRaWANctx.FsmState = Fsm_MAC_JoinRequest;
+
+
+  } else if (ENABLE_MASK__LORA_BARE & g_enableMsk) {
+    /* Init LoRa_Bare mode if enabled */
+
+    /* Prepare LoRa_Bare context */
+    {
+      memset(&loRaBareCtx, 0, sizeof(LoRaBareCtx_t));
+      memset(&loRaWANctx, 0, sizeof(LoRaWANctx_t));
+      loRaWANctx.bkpRAM = LoRaWANctxBkpRam;
+    }
+
+    /* Setup data from FLASH NVM */
+    LoRaWANctx_readFLASH();
+
+    /* Set-up LoRa_Bare context */
+    {
+      /* RX1 - Copy default channel settings */
+      for (uint8_t ch = 1; ch <= 8; ch++) {
+        const uint8_t idx = ch - 1;
+        loRaWANctx.Ch_FrequenciesDownlink_MHz[idx]  = loRaWANctx.Ch_FrequenciesUplink_MHz[idx]  = LoRaWAN_calc_Channel_to_MHz(&loRaWANctx, ch, Up, 1);  // Default values / default channels
+        loRaWANctx.Ch_DataRateTX_Selected[idx]      = loRaWANctx.Ch_DataRateTX_min[idx]         = DR0_SF12_125kHz_LoRa;
+        loRaWANctx.Ch_DataRateTX_max[idx]                                                       = DR5_SF7_125kHz_LoRa;
+      }
+      /* RX2 - Default channel */
+      loRaWANctx.Ch_DataRateTX_Selected[16 - 1]     = loRaWANctx.Ch_DataRateTX_min[16 - 1]      = DR0_SF12_125kHz_LoRa;
+      loRaWANctx.Ch_DataRateTX_max[16 - 1]                                                      = DR5_SF7_125kHz_LoRa;
+
+    }
+
+    /* Seed randomizer */
+    {
+      /* Prepare and start the receiver */
+      loRaWANctx.FrequencyMHz                 = LoRaWAN_calc_Channel_to_MHz(
+          &loRaWANctx,
+          16,
+          Up,
+          1);                                                                                     // Most traffic on the RX2 channel
+      loRaWANctx.SpreadingFactor              = SF7_DR5_VAL;                                      // Use that SF for more noise
+      spiSX1276_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_RX_Randomizer, NULL);
+
+      /* Forging the random number */
+      {
+        uint32_t r = 0x12345678U;
+        for (uint8_t cnt = 32; cnt; cnt--) {
+          uint8_t rssi;
+          uint32_t rotBit;
+
+          /* Left rotating */
+          rotBit    = r >> 31;
+          r       <<= 1;
+          r        |= rotBit;
+
+          /* Read the current broadband RSSI value */
+          osDelay(1);
+          rssi = spiSX127xMode_LoRa_GetBroadbandRSSI();
+          r ^= rssi;
+        }
+        srand(r);
+      }
+
+      /* Reset to POR/Reset defaults */
+      spiSX127xReset();
+    }
+
+#ifdef INIT_BALANCING_ENABLED
+    /* I/Q balancing - no SX127x reset or band-change without re-balancing */
+    {
+      /* Set center frequency of EU-868 */
+      loRaWANctx.FrequencyMHz = LoRaWAN_calc_Channel_to_MHz(
+          &loRaWANctx,
+          1,
+          1);                                                                                     // First default channel is about in the middle of the band
+
+      /* Do I/Q balancing with that center frequency */
+      spiSX1276_TxRx_Preps(&loRaWANctx, TxRx_Mode_IQ_Balancing, NULL);
+    }
+#endif
+
+    /* Delay until USB DCD is ready */
+    {
+      uint32_t PreviousWakeTime = 0UL;
+
+      osDelayUntil(&PreviousWakeTime, 4500);
+    }
+
+    /* No LoRaWAN actions to take */
+    loRaWANctx.FsmState = Fsm_NOP;
+  }
 }
 
 
@@ -2523,9 +2645,6 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_JoinAccept(void)
           loRaWANctx.RXDelay);
       usbLogLenLora(usbDbgBuf, len);
     }
-
-    /* Switch to unconfirmed packet mode */
-    loRaWANctx.ConfirmedPackets_enabled = 0;
 
     /* Inform the controller that link is established */
     LoRaWAN_QueueOut_Process(LoraOutQueueCmds__Connected);
@@ -3532,15 +3651,21 @@ void loRaWANLoraTaskLoop(void)
       /* Clear event group bit */
       xEventGroupClearBits(loraEventGroupHandle, Lora_EGW__DO_LINKCHECKREQ);
 
-      /* LinkCheckReq is next on the priority table */
-      loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
+      /* Process message if enabled */
+      if (ENABLE_MASK__LORAWAN_DEVICE & g_enableMsk) {
+        /* LinkCheckReq is next on the priority table */
+        loRaWANctx.FsmState = Fsm_MAC_LinkCheckReq;
+      }
 
     } else if (eb & Lora_EGW__DO_DEVICETIMEREQ) {
       /* Clear event group bit */
       xEventGroupClearBits(loraEventGroupHandle, Lora_EGW__DO_DEVICETIMEREQ);
 
-      /* LinkCheckReq is last on the priority table */
-      loRaWANctx.FsmState = Fsm_MAC_DeviceTimeReq;
+      /* Process message if enabled */
+      if (ENABLE_MASK__LORAWAN_DEVICE & g_enableMsk) {
+        /* LinkCheckReq is last on the priority table */
+        loRaWANctx.FsmState = Fsm_MAC_DeviceTimeReq;
+      }
     }
   }  // switch ()
 }
