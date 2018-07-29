@@ -490,6 +490,25 @@ static void prvControllerGetDataAndUpload(void)
   }
 }
 
+static void prvControllerLoRaBareSend(void)
+{
+  /* Re-send message to the LoRaWAN queue */  // TODO
+
+
+  /* Signal to take-over data and do upload */
+  {
+    const uint8_t c_msgToLoRaWAN[2] = { 1, LoraInQueueCmds__TrackMeApplUp };
+
+    /* Write message into loraInQueue */
+    for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
+      xQueueSendToBack(loraInQueueHandle, c_msgToLoRaWAN + idx, Controller_MaxWaitMs);
+    }
+
+    /* Set QUEUE_IN bit */
+    xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
+  }
+}
+
 
 static void prvPushToAnyInQueue(osMessageQId msgInH, const uint8_t* cmdAry, uint8_t cmdLen)
 {
@@ -528,6 +547,12 @@ static void prvPullFromInterpreterOutQueue(void)
     }
 
     switch (inAry[1]) {
+    case InterOutQueueCmds__LoRaBareSend:
+      {
+        prvControllerLoRaBareSend();
+      }
+      break;
+
     case InterOutQueueCmds__DoSendDataUp:
       {
         prvControllerGetDataAndUpload();

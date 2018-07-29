@@ -532,23 +532,29 @@ void spiSX1276_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
   ctx->SpreadingFactor              = SF7_DR5_VAL;
   ctx->LinkADR_TxPowerReduction_dB  = 0;                                                        // Range: 0 - 20 dB reduction
 # ifdef PPM_CALIBRATION
-  loRaWANctx.FrequencyMHz           = 870.0;
-  loRaWANctx.SpreadingFactor        = SF12_DR0_VAL;
+  ctx->FrequencyMHz                 = 870.0;
+  ctx->SpreadingFactor              = SF12_DR0_VAL;
 # endif
 #else
-  ctx->FrequencyMHz                 = LoRaWAN_calc_Channel_to_MHz(
-                                        ctx,
-                                        ctx->Ch_Selected,
-                                        ctx->Dir,
-                                        0);                                                     // Jump to RX2 frequency (default frequency)
+  /* Determine the frequency to use */
+  if (!ctx->FrequencyMHz) {
+    ctx->FrequencyMHz                 = LoRaWAN_calc_Channel_to_MHz(
+                                          ctx,
+                                          ctx->Ch_Selected,
+                                          ctx->Dir,
+                                          0);                                                     // Jump to RX2 frequency (default frequency)
+  }
 
-  if (CurWin_RXTX1 == ctx->Current_RXTX_Window) {
-    /* RX1 - DownLink */
-    ctx->SpreadingFactor  = spiSX127xDR_to_SF(ctx->Ch_DataRateTX_Selected[ctx->Ch_Selected - 1] + ctx->LinkADR_DataRate_RX1_DRofs);
+  /* Determine the data rate to use */
+  if (!ctx->SpreadingFactor) {
+    if (CurWin_RXTX1 == ctx->Current_RXTX_Window) {
+      /* RX1 - DownLink */
+      ctx->SpreadingFactor  = spiSX127xDR_to_SF(ctx->Ch_DataRateTX_Selected[ctx->Ch_Selected - 1] + ctx->LinkADR_DataRate_RX1_DRofs);
 
-  } else if (CurWin_RXTX2 == ctx->Current_RXTX_Window) {
-    /* RX2 - DownLink */
-    ctx->SpreadingFactor  = spiSX127xDR_to_SF(ctx->Ch_DataRateTX_Selected[ctx->Ch_Selected - 1]);
+    } else if (CurWin_RXTX2 == ctx->Current_RXTX_Window) {
+      /* RX2 - DownLink */
+      ctx->SpreadingFactor  = spiSX127xDR_to_SF(ctx->Ch_DataRateTX_Selected[ctx->Ch_Selected - 1]);
+    }
   }
 #endif  //
 

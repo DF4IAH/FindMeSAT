@@ -1835,6 +1835,8 @@ static void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
   uint32_t now;
 
   /* Prepare TX */
+  ctx->FrequencyMHz     = 0.f;
+  ctx->SpreadingFactor  = 0;
   spiSX1276_TxRx_Preps(ctx, DIO_TxRx_Mode_TX, msg);
 
   /* Prepare the FIFO */
@@ -1905,6 +1907,8 @@ static void LoRaWAN_RX_msg(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_
   /* Receive window */
   if (diffToTxNowMs < diffToTxStartMs) {
     /* Prepare RX */
+    ctx->FrequencyMHz     = 0.f;
+    ctx->SpreadingFactor  = 0;
     spiSX1276_TxRx_Preps(ctx, (ctx->Current_RXTX_Window == CurWin_RXTX2 ?  DIO_TxRx_Mode_RX2 : DIO_TxRx_Mode_RX), NULL);
 
     /* Prepare the FIFO */
@@ -2094,7 +2098,7 @@ void loRaWANLoraTaskInit(void)
   } else if (ENABLE_MASK__LORA_BARE & g_enableMsk) {
     /* Init LoRa_Bare mode if enabled */
 
-    /* Prepare LoRa_Bare context */
+    /* Prepare LoRaBareCtx context */
     {
       memset(&loRaBareCtx, 0, sizeof(LoRaBareCtx_t));
       memset(&loRaWANctx, 0, sizeof(LoRaWANctx_t));
@@ -2117,6 +2121,10 @@ void loRaWANLoraTaskInit(void)
       loRaWANctx.Ch_DataRateTX_Selected[16 - 1]     = loRaWANctx.Ch_DataRateTX_min[16 - 1]      = DR0_SF12_125kHz_LoRa;
       loRaWANctx.Ch_DataRateTX_max[16 - 1]                                                      = DR5_SF7_125kHz_LoRa;
 
+      /* LoRaBareCtx */
+      loRaBareCtx.sxMode                            = RXCONTINUOUS;                             // Turn receiver on
+      loRaBareCtx.spreadingFactor                   = SF12_DR0_VAL;                             // Best SNR for 125kHz bandwidth
+      loRaBareCtx.frequencyMHz                      = 868.1f;                                   // Default frequency equals to default channel 1 of LoRaWAN
     }
 
     /* Seed randomizer */
@@ -2193,6 +2201,8 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX1(void)
     spiSX127xReset();
 
     /* Balance I/Q  */
+    loRaBareCtx.frequencyMHz     = 0.f;
+    loRaBareCtx.spreadingFactor  = 0;
     spiSX1276_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_IQ_Balancing, NULL);
 
     /* Adjust the context */
@@ -2319,6 +2329,8 @@ static void loRaWANLoRaWANTaskLoop__JoinRequestRX1(void)
     spiSX127xReset();
 
     /* Balance I/Q  */
+    loRaBareCtx.frequencyMHz     = 0.f;
+    loRaBareCtx.spreadingFactor  = 0;
     spiSX1276_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_IQ_Balancing, NULL);
 
     /* Adjust the context */
@@ -3438,6 +3450,74 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_RejoinParamSetupAns(void)
 }
 #endif
 
+static void loRaWANLoRaWANTaskLoop__Fsm_Bare_SetTrxMode(void)
+{
+  /* Reset to POR/Reset defaults */
+  spiSX127xReset();
+
+  switch (TXRX_MODE_MASK & loRaBareCtx.sxMode) {
+  case TX:
+    {
+      /* Prepare TX */
+      loRaWANctx.FrequencyMHz     = loRaBareCtx.frequencyMHz;
+      loRaWANctx.SpreadingFactor  = loRaBareCtx.spreadingFactor;
+      spiSX1276_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_TX, &loRaWanTxMsg);
+
+      /* Prepare the FIFO */
+      spiSX127xLoRa_Fifo_Init();
+      spiSX127xLoRa_Fifo_SetFifoPtrFromTxBase();
+
+      /* Push the message to the FIFO */
+      {
+        /* FIFO data register */
+        spi1TxBuffer[0] = SPI_WR_FLAG | 0x00;
+        memcpy((void*)spi1TxBuffer + 1, (const void*)loRaWanTxMsg.msg_encoded_Buf, loRaWanTxMsg.msg_encoded_Len);
+        spiProcessSpiMsg(1 + loRaWanTxMsg.msg_encoded_Len);
+      }
+
+      /* Transmission */
+      {
+        uint32_t now;
+
+        HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_SET);                              // Red on
+
+        /* Start transmitter and wait until the message is being sent */
+        {
+          now = xTaskGetTickCount();
+          spiSX1276Mode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | TX);
+        }
+
+        /* Wait until TX has finished - the transceiver changes to STANDBY by itself */
+        loRaWANctx.TsEndOfTx = spiSX127x_WaitUntil_TxDone(now + LORAWAN_EU868_MAX_TX_DURATION_MS);
+
+        HAL_GPIO_WritePin(LED3_GPIO_PORT, LED3_PIN, GPIO_PIN_RESET);                            // Red off
+      }
+    }
+    break;
+
+  case RXCONTINUOUS:
+    {
+      /* Balance I/Q  */
+      loRaWANctx.FrequencyMHz     = loRaBareCtx.frequencyMHz;
+      loRaWANctx.SpreadingFactor  = loRaBareCtx.spreadingFactor;
+      spiSX1276_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_IQ_Balancing, NULL);
+
+      /* Prepare receiver */
+      loRaWANctx.FrequencyMHz     = loRaBareCtx.frequencyMHz;
+      loRaWANctx.SpreadingFactor  = loRaBareCtx.spreadingFactor;
+      spiSX1276_TxRx_Preps(&loRaWANctx, DIO_TxRx_Mode_RX, NULL);
+
+      /* Turn receiver on */
+      spiSX1276Mode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
+    }
+    break;
+
+  default:
+    { }
+  }
+
+}
+
 
 void loRaWANLoraTaskLoop(void)
 {
@@ -3630,6 +3710,10 @@ void loRaWANLoraTaskLoop(void)
     loRaWANLoRaWANTaskLoop__Fsm_MAC_RejoinParamSetupAns();
     break;
 #endif
+
+  case Fsm_Bare_SetTrxMode:
+    loRaWANLoRaWANTaskLoop__Fsm_Bare_SetTrxMode();
+    break;
 
   default:
     loRaWANctx.FsmState = Fsm_NOP;
