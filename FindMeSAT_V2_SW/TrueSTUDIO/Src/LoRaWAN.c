@@ -98,6 +98,14 @@ LoraliveApp_up_t            loraliveApp_up                    = { 0 };
 LoraliveApp_down_t          loraliveApp_down                  = {   };
 
 
+/* Forward declarations */
+
+static void LoRaWAN_Bare_TX_msg(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare, LoRaWAN_TX_Message_t* msg, const uint8_t* strBuf, uint8_t strLen);
+static void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg);
+
+
+/* Implementations */
+
 inline
 uint8_t GET_BYTE_OF_WORD(uint32_t word, uint8_t pos)
 {
@@ -806,7 +814,7 @@ static void LoRaWAN_QueueIn_Process(void)
 
     case LoraInQueueCmds__LoRaBareSend:
       {
-        // TODO
+        LoRaWAN_Bare_TX_msg(&loRaWANctx, &loRaBareCtx, &loRaWanTxMsg, buf + 1, bufMsgLen);
       }
       break;
 
@@ -1862,6 +1870,25 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
 #endif
 
 
+static void LoRaWAN_Bare_TX_msg(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare, LoRaWAN_TX_Message_t* msg, const uint8_t* strBuf, uint8_t strLen)
+{
+  /* Copy send string to message object */
+  memcpy((uint8_t*) msg->msg_encoded_Buf, strBuf, strLen);
+  msg->msg_encoded_Len = strLen;
+
+  /* Send message */
+  ctxWan->FrequencyMHz                = ctxBare->frequencyMHz;
+  ctxWan->SpreadingFactor             = ctxBare->spreadingFactor;
+  ctxWan->LinkADR_TxPowerReduction_dB = ctxBare->pwrred;
+  LoRaWAN_TX_msg(ctxWan, msg);
+
+  /* Turn receiver on again when requested */
+  if (ctxBare->sxMode == RXCONTINUOUS) {
+    spiSX1276Mode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | ctxBare->sxMode);
+  }
+}
+
+
 //#define DEBUG_TX_TIMING
 
 /* Push the complete message to the FIFO and go to transmission mode */
@@ -1870,8 +1897,10 @@ static void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg)
   uint32_t now;
 
   /* Prepare TX */
-  ctx->FrequencyMHz     = 0.f;
-  ctx->SpreadingFactor  = 0;
+  if (!(ENABLE_MASK__LORA_BARE & g_enableMsk)) {
+    ctx->FrequencyMHz     = 0.f;
+    ctx->SpreadingFactor  = 0;
+  }
   spiSX1276_TxRx_Preps(ctx, DIO_TxRx_Mode_TX, msg);
 
   /* Prepare the FIFO */
@@ -2157,10 +2186,10 @@ void loRaWANLoraTaskInit(void)
       loRaWANctx.Ch_DataRateTX_max[16 - 1]                                                      = DR5_SF7_125kHz_LoRa;
 
       /* LoRaBareCtx */
-      loRaBareCtx.sxMode                            = RXCONTINUOUS;                             // Turn receiver on
+      loRaBareCtx.sxMode                            = STANDBY;                                  // Receiver turned off
       loRaBareCtx.spreadingFactor                   = SF12_DR0_VAL;                             // Best SNR for 125kHz bandwidth
       loRaBareCtx.pwrred                            = 0U;                                       // No reduction of power, use +14dBm
-      loRaBareCtx.frequencyMHz                      = 868.1f;                                   // Default frequency equals to default channel 1 of LoRaWAN
+      loRaBareCtx.frequencyMHz                      = 868.5f;                                   // Default frequency equals to default channel 3 of LoRaWAN
     }
 
     /* Seed randomizer */
