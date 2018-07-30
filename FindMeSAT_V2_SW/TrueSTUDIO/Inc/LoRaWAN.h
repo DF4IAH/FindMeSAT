@@ -132,6 +132,7 @@ typedef struct LoRaBareCtx {
   /* Transceiver settings */
   uint8_t                             sxMode;                                                   // Mode of the SX transceiver chip
   uint8_t                             spreadingFactor;                                          // Spreading factor to be used
+  uint8_t                             pwrred;                                                   // Power reduction in dB from +14dBm
   float                               frequencyMHz;                                             // Frequency in use for current TX or RX
 } LoRaBareCtx_t;
 

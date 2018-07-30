@@ -714,6 +714,12 @@ static void LoRaWAN_QueueIn_Process(void)
 
     case LoraInQueueCmds__DRset:
       {
+        /* Process LoRaBare if enabled */
+        if (ENABLE_MASK__LORA_BARE  & g_enableMsk) {
+          /* LoRaBare mode setting */
+          loRaBareCtx.spreadingFactor = spiSX127xDR_to_SF(buf[1]);
+        }
+
         /* Process LoRaWAN if enabled */
         if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
           DataRates_t drSet = buf[1];
@@ -733,12 +739,19 @@ static void LoRaWAN_QueueIn_Process(void)
 
     case LoraInQueueCmds__PwrRedDb:
       {
+        uint8_t pwrRed = buf[1];
+        if (pwrRed > 20) {
+          pwrRed = 20;
+        }
+
+        /* Process LoRaBare if enabled */
+        if (ENABLE_MASK__LORA_BARE  & g_enableMsk) {
+          /* LoRaBare mode setting */
+          loRaBareCtx.pwrred = pwrRed;
+        }
+
         /* Process LoRaWAN if enabled */
         if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
-          uint8_t pwrRed = buf[1];
-          if (pwrRed > 20) {
-            pwrRed = 20;
-          }
 
           loRaWANctx.ADR_enabled                  = 0;
           loRaWANctx.LinkADR_TxPowerReduction_dB  = pwrRed;
@@ -777,22 +790,23 @@ static void LoRaWAN_QueueIn_Process(void)
 
     case LoraInQueueCmds__LoRaBareFrequency:
       {
-        // TODO
-        usbLog("BareFrequency\r\n");
+        const uint32_t frequencyHz  =   ((uint32_t) buf[1])         |
+                                       (((uint32_t) buf[2]) <<  8U) |
+                                       (((uint32_t) buf[3]) << 16U) |
+                                       (((uint32_t) buf[4]) << 24U);
+        loRaBareCtx.frequencyMHz    = frequencyHz / 1e6f;
       }
       break;
 
     case LoraInQueueCmds__LoRaBareRxEnable:
       {
-        // TODO
-        usbLog("BareRxEnable\r\n");
+        loRaBareCtx.sxMode = buf[1] ?  RXCONTINUOUS : STANDBY;
       }
       break;
 
     case LoraInQueueCmds__LoRaBareSend:
       {
         // TODO
-        usbLog("BareSend\r\n");
       }
       break;
 
@@ -2145,6 +2159,7 @@ void loRaWANLoraTaskInit(void)
       /* LoRaBareCtx */
       loRaBareCtx.sxMode                            = RXCONTINUOUS;                             // Turn receiver on
       loRaBareCtx.spreadingFactor                   = SF12_DR0_VAL;                             // Best SNR for 125kHz bandwidth
+      loRaBareCtx.pwrred                            = 0U;                                       // No reduction of power, use +14dBm
       loRaBareCtx.frequencyMHz                      = 868.1f;                                   // Default frequency equals to default channel 1 of LoRaWAN
     }
 
