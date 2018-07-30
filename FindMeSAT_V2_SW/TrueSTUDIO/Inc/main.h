@@ -180,7 +180,7 @@
 #endif
 
 
-#define FINDMESAT_VERSION   20180729U
+#define FINDMESAT_VERSION   20180730U
 
 
 typedef enum ENABLE_MASK {

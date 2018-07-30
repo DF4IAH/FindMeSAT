@@ -775,6 +775,27 @@ static void LoRaWAN_QueueIn_Process(void)
       break;
 #endif
 
+    case LoraInQueueCmds__LoRaBareFrequency:
+      {
+        // TODO
+        usbLog("BareFrequency\r\n");
+      }
+      break;
+
+    case LoraInQueueCmds__LoRaBareRxEnable:
+      {
+        // TODO
+        usbLog("BareRxEnable\r\n");
+      }
+      break;
+
+    case LoraInQueueCmds__LoRaBareSend:
+      {
+        // TODO
+        usbLog("BareSend\r\n");
+      }
+      break;
+
     case LoraInQueueCmds__NOP:
     default:
       /* Nothing to do */

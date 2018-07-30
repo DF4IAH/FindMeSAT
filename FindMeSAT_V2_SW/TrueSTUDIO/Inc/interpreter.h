@@ -23,6 +23,8 @@ typedef enum InterOutQueueCmds {
   InterOutQueueCmds__DRset,
   InterOutQueueCmds__PwrRedDb,
   InterOutQueueCmds__Timer,
+  InterOutQueueCmds__LoRaBareFrequency,
+  InterOutQueueCmds__LoRaBareRxEnable,
   InterOutQueueCmds__LoRaBareSend,
   InterOutQueueCmds__NmeaSend,
 } InterOutQueueCmds_t;

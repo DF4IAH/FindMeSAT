@@ -490,25 +490,6 @@ static void prvControllerGetDataAndUpload(void)
   }
 }
 
-static void prvControllerLoRaBareSend(void)
-{
-  /* Re-send message to the LoRaWAN queue */  // TODO
-
-
-  /* Signal to take-over data and do upload */
-  {
-    const uint8_t c_msgToLoRaWAN[2] = { 1, LoraInQueueCmds__TrackMeApplUp };
-
-    /* Write message into loraInQueue */
-    for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
-      xQueueSendToBack(loraInQueueHandle, c_msgToLoRaWAN + idx, Controller_MaxWaitMs);
-    }
-
-    /* Set QUEUE_IN bit */
-    xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
-  }
-}
-
 
 static void prvPushToAnyInQueue(osMessageQId msgInH, const uint8_t* cmdAry, uint8_t cmdLen)
 {
@@ -547,9 +528,35 @@ static void prvPullFromInterpreterOutQueue(void)
     }
 
     switch (inAry[1]) {
+    case InterOutQueueCmds__NmeaSend:
+      {
+        /* Re-use buffer to forward message */
+        inAry[1] = gpscomInQueueCmds__NmeaSendToGPS;
+        prvPushToGpscomInQueue(inAry, (1 + inAry[0]));
+      }
+      break;
+
     case InterOutQueueCmds__LoRaBareSend:
       {
-        prvControllerLoRaBareSend();
+        /* Re-use buffer to forward message */
+        inAry[1] = LoraInQueueCmds__LoRaBareSend;
+        prvPushToLoraInQueue(inAry, (1 + inAry[0]));
+      }
+      break;
+
+    case InterOutQueueCmds__LoRaBareFrequency:
+      {
+        /* Re-use buffer to forward message */
+        inAry[1] = LoraInQueueCmds__LoRaBareFrequency;
+        prvPushToLoraInQueue(inAry, (1 + inAry[0]));
+      }
+      break;
+
+    case InterOutQueueCmds__LoRaBareRxEnable:
+      {
+        /* Re-use buffer to forward message */
+        inAry[1] = LoraInQueueCmds__LoRaBareRxEnable;
+        prvPushToLoraInQueue(inAry, (1 + inAry[0]));
       }
       break;
 
@@ -611,14 +618,6 @@ static void prvPullFromInterpreterOutQueue(void)
         const uint8_t  repeatTime1  = inAry[3];
         const uint16_t repeatTime   = (((uint16_t) repeatTime1) << 8U) | repeatTime0;
         prvControllerSetTimer_ms(repeatTime * 1000UL);
-      }
-      break;
-
-    case InterOutQueueCmds__NmeaSend:
-      {
-        /* Re-use buffer to forward message */
-        inAry[1] = gpscomInQueueCmds__NmeaSendToGPS;
-        prvPushToGpscomInQueue(inAry, (1 + inAry[0]));
       }
       break;
     }  // switch

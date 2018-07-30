@@ -48,6 +48,9 @@ typedef enum LoraInQueueCmds {
   LoraInQueueCmds__PwrRedDb,
   LoraInQueueCmds__DRset,
   LoraInQueueCmds__TrackMeApplUp,
+  LoraInQueueCmds__LoRaBareFrequency,
+  LoraInQueueCmds__LoRaBareRxEnable,
+  LoraInQueueCmds__LoRaBareSend,
 } LoraInQueueCmds_t;
 
 /* Command types for the loraOutQueue */
