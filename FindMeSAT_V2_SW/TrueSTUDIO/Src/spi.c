@@ -538,17 +538,28 @@ void spiSX1276_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
 #else
   /* Determine the frequency to use */
   if (!ctx->FrequencyMHz) {
-    ctx->FrequencyMHz                 = LoRaWAN_calc_Channel_to_MHz(
-                                          ctx,
-                                          ctx->Ch_Selected,
-                                          ctx->Dir,
-                                          0);                                                     // Jump to RX2 frequency (default frequency)
+    if (CurWin_RXTX1 == ctx->Current_RXTX_Window) {
+      /* Set TX/RX1 frequency */
+      ctx->FrequencyMHz                 = LoRaWAN_calc_Channel_to_MHz(
+                                            ctx,
+                                            ctx->Ch_Selected,
+                                            ctx->Dir,
+                                            0);
+
+    } else if (CurWin_RXTX2 == ctx->Current_RXTX_Window) {
+      /* Jump to RX2 frequency (default frequency) */
+      ctx->FrequencyMHz                 = LoRaWAN_calc_Channel_to_MHz(
+                                            ctx,
+                                            0,                                                  // The default RX2 channel
+                                            ctx->Dir,
+                                            1);                                                 // Use default settings
+    }
   }
 
   /* Determine the data rate to use */
   if (!ctx->SpreadingFactor) {
     if (CurWin_RXTX1 == ctx->Current_RXTX_Window) {
-      /* RX1 - DownLink */
+      /* TX/RX1 - UpLink and DownLink */
       ctx->SpreadingFactor  = spiSX127xDR_to_SF(ctx->Ch_DataRateTX_Selected[ctx->Ch_Selected - 1] + ctx->LinkADR_DataRate_RX1_DRofs);
 
     } else if (CurWin_RXTX2 == ctx->Current_RXTX_Window) {
@@ -556,7 +567,7 @@ void spiSX1276_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Me
       ctx->SpreadingFactor  = spiSX127xDR_to_SF(ctx->Ch_DataRateTX_Selected[ctx->Ch_Selected - 1]);
     }
   }
-#endif  //
+#endif
 
   const float     l_f               = ctx->FrequencyMHz;
   const uint8_t   l_SF              = (ctx->SpreadingFactor & 0x0f) << SFx_SHIFT;
