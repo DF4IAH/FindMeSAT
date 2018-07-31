@@ -101,6 +101,7 @@ LoraliveApp_down_t          loraliveApp_down                  = {   };
 /* Forward declarations */
 
 static void LoRaWAN_LoRaBare_TX_msg(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare, LoRaWAN_TX_Message_t* msg, const uint8_t* strBuf, uint8_t strLen);
+static void LoRaWAN_LoRaBare_RX(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare, uint8_t turnOn);
 static void LoRaWAN_TX_msg(LoRaWANctx_t* ctx, LoRaWAN_TX_Message_t* msg);
 
 
@@ -809,6 +810,7 @@ static void LoRaWAN_QueueIn_Process(void)
     case LoraInQueueCmds__LoRaBareRxEnable:
       {
         loRaBareCtx.sxMode = buf[1] ?  RXCONTINUOUS : STANDBY;
+        LoRaWAN_LoRaBare_RX(&loRaWANctx, &loRaBareCtx, buf[1]);
       }
       break;
 
@@ -1893,6 +1895,48 @@ static void LoRaWAN_LoRaBare_TX_msg(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare
   }
 }
 
+static void LoRaWAN_LoRaBare_RX(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare, uint8_t turnOn)
+{
+  const uint8_t sxMode = TXRX_MODE_MASK & spiSX1276GetMode();
+
+  /* Activate RX mode */
+  if (turnOn && (sxMode != RXCONTINUOUS)) {
+    /* Get DIO ready for interrupt operations */
+    spiSX1276_TxRx_Preps(ctxWan, DIO_TxRx_Mode_RX, NULL);
+
+    /* Prepare the FIFO */
+    spiSX127xLoRa_Fifo_Init();
+    spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase();
+
+    /* Activate IRQ at the SX device */
+    spiSX127xRegister_IRQ_clearAll();
+    spiSX127xRegister_IRQ_enableBits(0x1 << RxTimeoutMask);                                     // RxDone
+
+    HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_SET);                                  // Green on
+
+    /* Turn on receiver continuously */
+    spiSX1276Mode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | RXCONTINUOUS);
+
+  } else if (!turnOn && (sxMode == RXCONTINUOUS)) {
+    /* Turn RX mode off */
+    spiSX1276Mode(MODE_LoRa | ACCESS_SHARE_OFF | LOW_FREQ_MODE_OFF | STANDBY);
+
+    HAL_GPIO_WritePin(LED1_GPIO_PORT, LED1_PIN, GPIO_PIN_RESET);                                // Green off
+  }
+}
+
+static void LoRaWAN_LoRaBare_RX__RXdone(void)
+{
+  /* Clear receiving message buffer */
+  LoRaWAN_calc_RxMsg_Reset(&loRaWanRxMsg);
+
+  /* Read message */
+  spiSX127x_Process_RxDone(&loRaWANctx, &loRaWanRxMsg);
+
+  /* Show content */
+  usbLogLen((const char*) loRaWanRxMsg.msg_encoded_Buf, loRaWanRxMsg.msg_encoded_Len);
+}
+
 
 //#define DEBUG_TX_TIMING
 
@@ -2764,7 +2808,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkADRReq(void)
   do {
     LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
     loRaWANctx.LinkADR_TxPowerReduction_dB  =                (macBuf[0] & 0x0f) << 1;
-    loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) ((macBuf[0] & 0xf0) >> 4);
+  //loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) ((macBuf[0] & 0xf0) >> 4);          // Do not honor DR as long as ADR is sent only once
 
     /* For all RX1 channels, do */
     for (uint8_t idx = 0; idx < 15; idx++) {
@@ -2801,8 +2845,12 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkADRReq(void)
       int  len;
 
       len = sprintf(usbDbgBuf,
-          "LoRaWAN: Got RX LinkADRReq: Power reduction by=%02udB, DataRate TX1=DR%u, new channel mask=0x%04X, NbTrans=%u\r\n",
-          loRaWANctx.LinkADR_TxPowerReduction_dB, loRaWANctx.LinkADR_DataRate_TX1, loRaWANctx.LinkADR_ChannelMask, loRaWANctx.LinkADR_NbTrans);
+          "LoRaWAN: Got RX LinkADRReq: Power reduction by=%02udB, DataRate TX1=DR%u (do not honor and keep DR%u), new channel mask=0x%04X, NbTrans=%u\r\n",
+          loRaWANctx.LinkADR_TxPowerReduction_dB,
+          ((macBuf[0] & 0xf0) >> 4),
+          loRaWANctx.LinkADR_DataRate_TX1,
+          loRaWANctx.LinkADR_ChannelMask,
+          loRaWANctx.LinkADR_NbTrans);
       usbLogLenLora(usbDbgBuf, len);
     }
 
@@ -3758,7 +3806,7 @@ void loRaWANLoraTaskLoop(void)
     // Fall-through.
   case Fsm_NOP:
     eb = xEventGroupWaitBits(loraEventGroupHandle,
-        Lora_EGW__QUEUE_IN | Lora_EGW__DO_LINKCHECKREQ | Lora_EGW__DO_DEVICETIMEREQ,
+        Lora_EGW__QUEUE_IN | Lora_EGW__DO_LINKCHECKREQ | Lora_EGW__DO_DEVICETIMEREQ | Lora_EGW__EXTI_DIO0,
         0,
         0, loRaWANWait_EGW_MaxWaitTicks);
 
@@ -3787,6 +3835,16 @@ void loRaWANLoraTaskLoop(void)
       if (ENABLE_MASK__LORAWAN_DEVICE & g_enableMsk) {
         /* LinkCheckReq is last on the priority table */
         loRaWANctx.FsmState = Fsm_MAC_DeviceTimeReq;
+      }
+
+    } else if (eb & Lora_EGW__EXTI_DIO0) {
+      /* Clear event group bit */
+      xEventGroupClearBits(loraEventGroupHandle, Lora_EGW__EXTI_DIO0);
+
+      if (ENABLE_MASK__LORA_BARE & g_enableMsk) {
+        if (loRaBareCtx.sxMode == RXCONTINUOUS) {
+          LoRaWAN_LoRaBare_RX__RXdone();
+        }
       }
     }
   }  // switch ()

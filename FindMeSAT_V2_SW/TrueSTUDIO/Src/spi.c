@@ -488,6 +488,16 @@ void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void)
 }
 
 
+uint8_t spiSX1276GetMode(void)
+{
+  spi1TxBuffer[0] = SPI_RD_FLAG | 0x01;
+
+  /* Read current mode setting */
+  spiProcessSpiMsg(2);
+
+  return spi1RxBuffer[1];
+}
+
 void spiSX1276Mode(spiSX1276_Mode_t mode)
 {
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x01;
@@ -520,6 +530,14 @@ void spiSX127xRegister_IRQ_clearAll(void)
 {
   spi1TxBuffer[0] = SPI_WR_FLAG | 0x12;     // LoRa: RegIrqFlags
   spi1TxBuffer[1] = 0xff;
+  spiProcessSpiMsg(2);
+}
+
+void spiSX127xRegister_IRQ_enableBits(uint8_t enaBits)
+{
+  /* Use TxDone and RxDone - mask out all other IRQs */
+  spi1TxBuffer[0] = SPI_WR_FLAG | 0x11;                                                         // RegIrqFlagsMask
+  spi1TxBuffer[1] = enaBits;
   spiProcessSpiMsg(2);
 }
 
@@ -1185,6 +1203,58 @@ void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, ui
         usbLogLen(usbDbgBuf, len);
       }
 #endif
+}
+
+void spiSX127x_Process_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg)
+{
+  uint8_t irq;
+
+  /* Get the current IRQ flags */
+  spi1TxBuffer[0] = SPI_RD_FLAG | 0x12;                                                         // LoRa: RegIrqFlags
+  spiProcessSpiMsg(2);
+  irq = spi1RxBuffer[1];
+
+  /* Reset all IRQ flags */
+  spiSX127xRegister_IRQ_clearAll();
+
+  if (irq & (1U << RxDoneMask)) {
+    /* Check for CRC */
+    if (irq & (1U << PayloadCrcErrorMask)) {
+      return;
+    }
+
+    spi1TxBuffer[0] = SPI_RD_FLAG | 0x13;                                                       // RegRxNbBytes
+    spiProcessSpiMsg(2);
+    uint8_t rxNbBytes = spi1RxBuffer[1];
+
+    /* FIFO readout */
+    if (rxNbBytes) {
+      /* Positioning of the FIFO addr ptr */
+      {
+        spi1TxBuffer[0] = SPI_RD_FLAG | 0x10;                                                   // RegFifoRxCurrentAddr
+        spiProcessSpiMsg(2);
+        uint8_t fifoRxCurrentAddr = spi1RxBuffer[1];
+
+        spi1TxBuffer[0] = SPI_WR_FLAG | 0x0d;                                                   // RegFifoAddrPtr
+        spi1TxBuffer[1] = fifoRxCurrentAddr;
+        spiProcessSpiMsg(2);
+      }
+
+      /* FIFO read out */
+      if (rxNbBytes < sizeof(spi1RxBuffer)) {
+        spi1TxBuffer[0] = SPI_RD_FLAG | 0x00;    // RegFifo
+        spiProcessSpiMsg(1 + rxNbBytes);
+
+        /* Copy SPI receive buffer content to msg object */
+        memcpy((void*)msg->msg_encoded_Buf, (const void*)spi1RxBuffer + 1, rxNbBytes);
+        msg->msg_encoded_Len = rxNbBytes;
+
+      } else {
+        /* Buffer to small */
+        Error_Handler();
+      }
+    }
+  }
 }
 
 

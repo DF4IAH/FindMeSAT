@@ -25,7 +25,7 @@
 
 /* Default settings */
 #define  LORAWAN_CONFPACKS_DEFAULT    0
-#define  LORAWAN_ADR_ENABLED_DEFAULT  0
+#define  LORAWAN_ADR_ENABLED_DEFAULT  1
 
 
 
@@ -35,6 +35,7 @@ typedef enum Lora_EGW_BM {
   Lora_EGW__DO_INIT                   = 0x00000010UL,
   Lora_EGW__DO_LINKCHECKREQ           = 0x00000100UL,
   Lora_EGW__DO_DEVICETIMEREQ          = 0x00000200UL,
+  Lora_EGW__EXTI_DIO0                 = 0x00001000UL,
 } Lora_EGW_BM_t;
 
 /* Command types for the loraInQueue */
