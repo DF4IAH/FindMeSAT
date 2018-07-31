@@ -814,7 +814,7 @@ static void LoRaWAN_QueueIn_Process(void)
 
     case LoraInQueueCmds__LoRaBareSend:
       {
-        LoRaWAN_Bare_TX_msg(&loRaWANctx, &loRaBareCtx, &loRaWanTxMsg, buf + 1, bufMsgLen);
+        LoRaWAN_Bare_TX_msg(&loRaWANctx, &loRaBareCtx, &loRaWanTxMsg, buf + 1, bufMsgLen - 2);
       }
       break;
 
@@ -1873,7 +1873,7 @@ static uint8_t LoRaWAN_App_loralive_data2FRMPayload(LoRaWANctx_t* ctx,
 static void LoRaWAN_Bare_TX_msg(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare, LoRaWAN_TX_Message_t* msg, const uint8_t* strBuf, uint8_t strLen)
 {
   /* Copy send string to message object */
-  memcpy((uint8_t*) msg->msg_encoded_Buf, strBuf, strLen);
+  memcpy((uint8_t*) msg->msg_encoded_Buf, strBuf, strLen + 1);
   msg->msg_encoded_Len = strLen;
 
   /* Send message */

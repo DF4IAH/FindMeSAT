@@ -57,12 +57,14 @@ static void prvPushToInterOutQueue(const uint8_t* cmdAry, uint8_t cmdLen)
 static void prvSendLoRaBare(const char* sendMsg)
 {
   const uint8_t sendMsgLen = strlen(sendMsg);
-  uint8_t sendAry[64] = { (sendMsgLen + 1),  InterOutQueueCmds__LoRaBareSend};
+  uint8_t sendAry[128] = { (sendMsgLen + 2),  InterOutQueueCmds__LoRaBareSend};
 
-  memcpy((sendAry + 2), sendMsg, sendMsgLen);
+  if (sendMsgLen && (sendMsgLen < (sizeof(sendAry) - 2))) {
+    memcpy((sendAry + 2), sendMsg, sendMsgLen + 1);
 
-  /* Send message with LoRa bare */
-  prvPushToInterOutQueue(sendAry, sendMsgLen + 2);
+    /* Send message with LoRa bare */
+    prvPushToInterOutQueue(sendAry, sendMsgLen + 3);
+  }
 }
 
 static void prvSendNMEA(const char* nmeaStr)
@@ -156,7 +158,7 @@ static void prvDoInterprete(const uint8_t *buf, uint32_t len)
     prvPushToInterOutQueue(pushAry, sizeof(pushAry));
 
   } else if (!strncmp("\"", cb, 1) && (1 < len)) {
-    prvSendLoRaBare(cb);
+    prvSendLoRaBare(cb + 1);
 
   } else if (!strncmp("$", cb, 1) && (1 < len)) {
     prvSendNMEA(cb);
