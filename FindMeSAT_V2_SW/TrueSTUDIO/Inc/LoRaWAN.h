@@ -23,6 +23,12 @@
 #define GPS_UTC_LEAP_SECS             (+18)
 
 
+/* Default settings */
+#define  LORAWAN_CONFPACKS_DEFAULT    0
+#define  LORAWAN_ADR_ENABLED_DEFAULT  0
+
+
+
 /* Bit-mask for the loRaWANEventGroup */
 typedef enum Lora_EGW_BM {
   Lora_EGW__QUEUE_IN                  = 0x00000001UL,
@@ -42,6 +48,9 @@ typedef enum LoraInQueueCmds {
   LoraInQueueCmds__PwrRedDb,
   LoraInQueueCmds__DRset,
   LoraInQueueCmds__TrackMeApplUp,
+  LoraInQueueCmds__LoRaBareFrequency,
+  LoraInQueueCmds__LoRaBareRxEnable,
+  LoraInQueueCmds__LoRaBareSend,
 } LoraInQueueCmds_t;
 
 /* Command types for the loraOutQueue */
@@ -50,10 +59,17 @@ typedef enum LoraOutQueueCmds {
   LoraOutQueueCmds__Connected,
 } LoraOutQueueCmds_t;
 
-typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
-  MIC_JOINREQUEST                     = 0x01,
-  MIC_DATAMESSAGE                     = 0x11,
-} LoRaWAN_CalcMIC_VARIANT_t;
+
+typedef enum DataRates {
+  DR0_SF12_125kHz_LoRa                = 0,
+  DR1_SF11_125kHz_LoRa,
+  DR2_SF10_125kHz_LoRa,
+  DR3_SF9_125kHz_LoRa,
+  DR4_SF8_125kHz_LoRa,
+  DR5_SF7_125kHz_LoRa,
+  DR6_SF7_250kHz_LoRa,
+  DR7_50kHz_FSK,                                                                                // nRF905 "OGN Tracking Protocol" compatible?
+} DataRates_t;
 
 
 /* FSM states of the loRaWANLoRaWANTaskLoop */
@@ -103,7 +119,31 @@ typedef enum Fsm_States {
 
   Fsm_MAC_DeviceTimeReq,
   Fsm_MAC_DeviceTimeAns,
+
+
+  Fsm_Bare_SetTrxMode                 = 0x80,
 } Fsm_States_t;
+
+
+
+/* --- LoRaBare --- */
+
+typedef struct LoRaBareCtx {
+  /* Transceiver settings */
+  uint8_t                             sxMode;                                                   // Mode of the SX transceiver chip
+  uint8_t                             spreadingFactor;                                          // Spreading factor to be used
+  uint8_t                             pwrred;                                                   // Power reduction in dB from +14dBm
+  float                               frequencyMHz;                                             // Frequency in use for current TX or RX
+} LoRaBareCtx_t;
+
+
+
+/* --- LoRaWAN --- */
+
+typedef enum LoRaWAN_CalcMIC_JOINREQUEST {
+  MIC_JOINREQUEST                     = 0x01,
+  MIC_DATAMESSAGE                     = 0x11,
+} LoRaWAN_CalcMIC_VARIANT_t;
 
 
 typedef enum CurrentWindow {
@@ -172,16 +212,6 @@ typedef enum LoRaWANctxDir {
   Dn                                  = 1
 } LoRaWANctxDir_t;
 
-typedef enum DataRates {
-  DR0_SF12_125kHz_LoRa                = 0,
-  DR1_SF11_125kHz_LoRa,
-  DR2_SF10_125kHz_LoRa,
-  DR3_SF9_125kHz_LoRa,
-  DR4_SF8_125kHz_LoRa,
-  DR5_SF7_125kHz_LoRa,
-  DR6_SF7_250kHz_LoRa,
-  DR7_50kHz_FSK,                                                                                // nRF905 "OGN Tracking Protocol" compatible?
-} DataRates_t;
 
 typedef enum LoRaWANMAC_CID {
   ResetInd_UP                         = 0x01,                                                   // ABP devices only, LW 1.1

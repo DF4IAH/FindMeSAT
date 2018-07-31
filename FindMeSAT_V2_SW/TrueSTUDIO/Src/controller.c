@@ -57,7 +57,8 @@ extern TrackMeApp_down_t    trackMeApp_down;
 extern LoraliveApp_up_t     loraliveApp_up;
 extern LoraliveApp_down_t   loraliveApp_down;
 
-extern uint32_t             g_monMsk;
+extern ENABLE_MASK_t        g_enableMsk;
+extern MON_MASK_t           g_monMsk;
 
 extern uint32_t             g_unx_s;
 extern uint32_t             g_unx_s_next;
@@ -119,21 +120,25 @@ void prvControllerInitBeforeGreet(void)
   /* USB typing echo */
   xEventGroupSetBits(usbToHostEventGroupHandle, USB_TO_HOST_EG__ECHO_ON);                       // TODO: should be from Config-FLASH page
 
-  /* Check for attached SX127x_mbed_shield */
-  if (HAL_OK == spiDetectShieldSX1276()) {
+  /* Init LoRa / LoRaWAN if enabled */
+  if ((ENABLE_MASK__LORA_BARE       & g_enableMsk) ||
+      (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk)) {
+    /* Check for attached SX127x_mbed_shield */
+    if (HAL_OK == spiDetectShieldSX1276()) {
 #if 1
-    /* Send INIT message to the LoRaWAN task */
-    const uint8_t c_maxWaitMs = 25;
-    const uint8_t c_msgToLoRaWAN[2] = { 1, LoraInQueueCmds__Init };
+      /* Send INIT message to the LoRaWAN task */
+      const uint8_t c_maxWaitMs = 25;
+      const uint8_t c_msgToLoRaWAN[2] = { 1, LoraInQueueCmds__Init };
 
-    /* Write message into loraInQueue */
-    for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
-      xQueueSendToBack(loraInQueueHandle, c_msgToLoRaWAN + idx, c_maxWaitMs);
-    }
+      /* Write message into loraInQueue */
+      for (uint8_t idx = 0; idx < sizeof(c_msgToLoRaWAN); idx++) {
+        xQueueSendToBack(loraInQueueHandle, c_msgToLoRaWAN + idx, c_maxWaitMs);
+      }
 
-    /* Set QUEUE_IN bit */
-    xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
+      /* Set QUEUE_IN bit */
+      xEventGroupSetBits(loraEventGroupHandle, Lora_EGW__QUEUE_IN);
 #endif
+    }
   }
 }
 
@@ -148,45 +153,48 @@ void prvControllerInitAfterGreet(void)
   /* At the last position show the cursor */
   interpreterShowCursor();
 
-  /* Test LoRaWAN access */
-  if (loRaWANctx.bkpRAM)
-  {
+  /* Init LoRaWAN application if enabled */
+  if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
+    /* Test LoRaWAN access */
+    if (loRaWANctx.bkpRAM)
+    {
 #if 0
-    loraliveApp_up.id = 'E';
+      loraliveApp_up.id = 'E';
 
-    loraliveApp_up.voltage_32_v  = (uint8_t) (3.3f * 32 + 0.5f);
+      loraliveApp_up.voltage_32_v  = (uint8_t) (3.3f * 32 + 0.5f);
 
-    loraliveApp_up.dust025_10_hi = 0U; loraliveApp_up.dust025_10_lo = 0U;
-    loraliveApp_up.dust025_10_hi = 0U; loraliveApp_up.dust025_10_lo = 0U;
+      loraliveApp_up.dust025_10_hi = 0U; loraliveApp_up.dust025_10_lo = 0U;
+      loraliveApp_up.dust025_10_hi = 0U; loraliveApp_up.dust025_10_lo = 0U;
 
-    uint32_t latitude_1000 = 49473;
-    loraliveApp_up.u.l14.latitude_1000_sl24  = (uint8_t) ((latitude_1000  >> 24) & 0xffUL);
-    loraliveApp_up.u.l14.latitude_1000_sl16  = (uint8_t) ((latitude_1000  >> 16) & 0xffUL);
-    loraliveApp_up.u.l14.latitude_1000_sl08  = (uint8_t) ((latitude_1000  >>  8) & 0xffUL);
-    loraliveApp_up.u.l14.latitude_1000_sl00  = (uint8_t) ((latitude_1000  >>  0) & 0xffUL);
+      uint32_t latitude_1000 = 49473;
+      loraliveApp_up.u.l14.latitude_1000_sl24  = (uint8_t) ((latitude_1000  >> 24) & 0xffUL);
+      loraliveApp_up.u.l14.latitude_1000_sl16  = (uint8_t) ((latitude_1000  >> 16) & 0xffUL);
+      loraliveApp_up.u.l14.latitude_1000_sl08  = (uint8_t) ((latitude_1000  >>  8) & 0xffUL);
+      loraliveApp_up.u.l14.latitude_1000_sl00  = (uint8_t) ((latitude_1000  >>  0) & 0xffUL);
 
-    uint32_t longitude_1000 = 8615;
-    loraliveApp_up.u.l14.longitude_1000_sl24 = (uint8_t) ((longitude_1000 >> 24) & 0xffUL);
-    loraliveApp_up.u.l14.longitude_1000_sl16 = (uint8_t) ((longitude_1000 >> 16) & 0xffUL);
-    loraliveApp_up.u.l14.longitude_1000_sl08 = (uint8_t) ((longitude_1000 >>  8) & 0xffUL);
-    loraliveApp_up.u.l14.longitude_1000_sl00 = (uint8_t) ((longitude_1000 >>  0) & 0xffUL);
+      uint32_t longitude_1000 = 8615;
+      loraliveApp_up.u.l14.longitude_1000_sl24 = (uint8_t) ((longitude_1000 >> 24) & 0xffUL);
+      loraliveApp_up.u.l14.longitude_1000_sl16 = (uint8_t) ((longitude_1000 >> 16) & 0xffUL);
+      loraliveApp_up.u.l14.longitude_1000_sl08 = (uint8_t) ((longitude_1000 >>  8) & 0xffUL);
+      loraliveApp_up.u.l14.longitude_1000_sl00 = (uint8_t) ((longitude_1000 >>  0) & 0xffUL);
 
-    /* TODO_ DEBUG Loop to be removed */
-    for (uint8_t i = 0; i < 3; i++) {
-      usbLog("\r\nTX:\r\n");
-      LoRaWAN_App_trackMeApp_pushUp(&loRaWANctx, &loraliveApp_up, 14);
+      /* TODO_ DEBUG Loop to be removed */
+      for (uint8_t i = 0; i < 3; i++) {
+        usbLog("\r\nTX:\r\n");
+        LoRaWAN_App_trackMeApp_pushUp(&loRaWANctx, &loraliveApp_up, 14);
 
-      usbLog("\r\nRX:\r\n");
-      LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
-    }
+        usbLog("\r\nRX:\r\n");
+        LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
+      }
 
-    while (1) {
-      spiPreviousWakeTime = xTaskGetTickCount();
+      while (1) {
+        spiPreviousWakeTime = xTaskGetTickCount();
 
-      usbLog("\r\nRX:\r\n");
-      LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
-    }
+        usbLog("\r\nRX:\r\n");
+        LoRaWAN_App_trackMeApp_receiveLoop(&loRaWANctx);
+      }
 #endif
+    }
   }
 }
 
@@ -520,6 +528,38 @@ static void prvPullFromInterpreterOutQueue(void)
     }
 
     switch (inAry[1]) {
+    case InterOutQueueCmds__NmeaSend:
+      {
+        /* Re-use buffer to forward message */
+        inAry[1] = gpscomInQueueCmds__NmeaSendToGPS;
+        prvPushToGpscomInQueue(inAry, (1 + inAry[0]));
+      }
+      break;
+
+    case InterOutQueueCmds__LoRaBareSend:
+      {
+        /* Re-use buffer to forward message */
+        inAry[1] = LoraInQueueCmds__LoRaBareSend;
+        prvPushToLoraInQueue(inAry, (1 + inAry[0]));
+      }
+      break;
+
+    case InterOutQueueCmds__LoRaBareFrequency:
+      {
+        /* Re-use buffer to forward message */
+        inAry[1] = LoraInQueueCmds__LoRaBareFrequency;
+        prvPushToLoraInQueue(inAry, (1 + inAry[0]));
+      }
+      break;
+
+    case InterOutQueueCmds__LoRaBareRxEnable:
+      {
+        /* Re-use buffer to forward message */
+        inAry[1] = LoraInQueueCmds__LoRaBareRxEnable;
+        prvPushToLoraInQueue(inAry, (1 + inAry[0]));
+      }
+      break;
+
     case InterOutQueueCmds__DoSendDataUp:
       {
         prvControllerGetDataAndUpload();
@@ -578,14 +618,6 @@ static void prvPullFromInterpreterOutQueue(void)
         const uint8_t  repeatTime1  = inAry[3];
         const uint16_t repeatTime   = (((uint16_t) repeatTime1) << 8U) | repeatTime0;
         prvControllerSetTimer_ms(repeatTime * 1000UL);
-      }
-      break;
-
-    case InterOutQueueCmds__NmeaSend:
-      {
-        /* Re-use buffer to forward message */
-        inAry[1] = gpscomInQueueCmds__NmeaSendToGPS;
-        prvPushToGpscomInQueue(inAry, (1 + inAry[0]));
       }
       break;
     }  // switch
@@ -719,7 +751,11 @@ void controllerControllerTaskLoop(void)
 
   if (eb & Controller_EGW__TIM_PPS) {
     xEventGroupClearBits(controllerEventGroupHandle, Controller_EGW__TIM_PPS);
-    prvTimeService();
+
+    /* Process 1PPS when enabled */
+    if (ENABLE_MASK__GPS_1PPS & g_enableMsk) {
+      prvTimeService();
+    }
   }
 
   if (eb & Controller_EGW__INTER_QUEUE_OUT) {

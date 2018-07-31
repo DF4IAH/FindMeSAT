@@ -27,8 +27,13 @@ extern osMessageQId         usbToHostQueueHandle;
 extern osMessageQId         usbFromHostQueueHandle;
 extern EventGroupHandle_t   usbToHostEventGroupHandle;
 extern osSemaphoreId        usbToHostBinarySemHandle;
-uint8_t                     usbFromHostISRBuf[64]	            = { 0 };
-uint32_t                    usbFromHostISRBufLen	            = 0;
+
+extern ENABLE_MASK_t        g_enableMsk;
+extern MON_MASK_t           g_monMsk;
+
+uint8_t                     usbFromHostISRBuf[64]                  = { 0 };
+uint32_t                    usbFromHostISRBufLen                   = 0;
+
 
 
 const uint8_t usbToHost_MaxWaitQueueMs = 100;
