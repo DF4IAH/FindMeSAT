@@ -65,14 +65,14 @@ const uint8_t               AppSKey_BE[16]                    = { 0xADU, 0xDAU, 
 /* USE_OTAA */
 
 /* TheThingsNetwork - assigned codes to this device - R1.03 */
-// Device ID   findmesat2_002
-//const uint8_t             DevEUI_LE[8]                      = { 0x31, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };                                                 // "FMS2_001"
-const uint8_t               DevEUI_LE[8]                      = { 0x32, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };                                                 // "FMS2_002"
+// Device ID   findmesat2_001  and  findmesat2_002
+const uint8_t               DevEUI_LE[8]                      = { 0x31, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };                                                 // "FMS2_001"
+//const uint8_t             DevEUI_LE[8]                      = { 0x32, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };                                                 // "FMS2_002"
 const uint8_t               AppEUI_LE[8]                      = { 0x08, 0xF6, 0x00, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
 //const uint8_t             JoinEUI_LE[8]                     = { 0 };                                                                                              // V1.1: former AppEUI
 //const uint8_t             NwkKey_BE[16]                     = { 0 };                                                                                              // Since LoRaWAN V1.1
-//const uint8_t             AppKey_BE[16]                     = { 0x01, 0xE3, 0x27, 0x88, 0xBA, 0x99, 0x2C, 0x45, 0x6D, 0x92, 0xBF, 0xE0, 0xEE, 0xAD, 0xBE, 0x45 }; // findmesat2_001
-const uint8_t               AppKey_BE[16]                     = { 0xD9, 0x0E, 0x09, 0x0B, 0xDB, 0x61, 0xF1, 0xBB, 0x37, 0x4C, 0xE7, 0x9B, 0x23, 0x96, 0x07, 0x11 }; // findmesat2_002
+const uint8_t               AppKey_BE[16]                     = { 0xBC, 0x60, 0x73, 0xFC, 0xF0, 0xC7, 0xF1, 0x5D, 0x49, 0x30, 0x6E, 0x03, 0x07, 0xD9, 0xAB, 0xDC }; // findmesat2_001
+//const uint8_t             AppKey_BE[16]                     = { 0xD9, 0x0E, 0x09, 0x0B, 0xDB, 0x61, 0xF1, 0xBB, 0x37, 0x4C, 0xE7, 0x9B, 0x23, 0x96, 0x07, 0x11 }; // findmesat2_002
 #endif
 
 
