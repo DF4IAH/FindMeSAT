@@ -96,10 +96,12 @@ extern EventGroupHandle_t   controllerEventGroupHandle;
 
 static GPIO_InitTypeDef     GPIO_InitStruct;
 
-#if 1
-volatile ENABLE_MASK_t      g_enableMsk                       = ENABLE_MASK__LORA_BARE      | ENABLE_MASK__GPS_DATA | ENABLE_MASK__GPS_1PPS;
+#if 0
+volatile ENABLE_MASK_t      g_enableMsk                       = ENABLE_MASK__LORA_BARE      |                               ENABLE_MASK__GPS_DATA | ENABLE_MASK__GPS_1PPS;
+#elif 0
+volatile ENABLE_MASK_t      g_enableMsk                       =                               ENABLE_MASK__LORAWAN_DEVICE | ENABLE_MASK__GPS_DATA | ENABLE_MASK__GPS_1PPS;
 #else
-volatile ENABLE_MASK_t      g_enableMsk                       = ENABLE_MASK__LORAWAN_DEVICE | ENABLE_MASK__GPS_DATA | ENABLE_MASK__GPS_1PPS;
+volatile ENABLE_MASK_t      g_enableMsk                       = ENABLE_MASK__LORA_BARE      | ENABLE_MASK__LORAWAN_DEVICE | ENABLE_MASK__GPS_DATA | ENABLE_MASK__GPS_1PPS;
 #endif
 volatile MON_MASK_t         g_monMsk                          = MON_MASK__LORA;
 
