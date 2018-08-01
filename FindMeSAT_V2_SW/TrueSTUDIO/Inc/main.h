@@ -122,10 +122,10 @@
 #define USB_VBUS_GPIO_Port GPIOA
 #define USB_ID_Pin GPIO_PIN_10
 #define USB_ID_GPIO_Port GPIOA
-#define USB_DM_Pin GPIO_PIN_11
-#define USB_DM_GPIO_Port GPIOA
-#define USB_DP_Pin GPIO_PIN_12
-#define USB_DP_GPIO_Port GPIOA
+#define PA_USB_N_Pin GPIO_PIN_11
+#define PA_USB_N_GPIO_Port GPIOA
+#define PA_USB_P_Pin GPIO_PIN_12
+#define PA_USB_P_GPIO_Port GPIOA
 #define TMS_Pin GPIO_PIN_13
 #define TMS_GPIO_Port GPIOA
 #define TCK_Pin GPIO_PIN_14
@@ -180,7 +180,20 @@
 #endif
 
 
-#define FINDMESAT_VERSION   20180718U
+#define FINDMESAT_VERSION   20180801U
+
+
+typedef enum ENABLE_MASK {
+
+//ENABLE_MASK__AFSK_APRS1200                                  = 0x0001UL,                       // AFSK APRS 1200 baud - supported by AX5243, only
+  ENABLE_MASK__FSK_APRS1200_AFSK_EMU                          = 0x0002UL,                       // AFSK APRS 1200 baud - audio Packet-Radio emulation
+  ENABLE_MASK__FSK_APRS9600                                   = 0x0004UL,                       // FSK APRS 9600 baud
+  ENABLE_MASK__LORA_BARE                                      = 0x0010UL,                       // LoRa bare Transceiver
+  ENABLE_MASK__LORAWAN_DEVICE                                 = 0x0020UL,                       // LoRaWAN as Device role
+  ENABLE_MASK__GPS_DATA                                       = 0x0100UL,                       // GPS data interpreter
+  ENABLE_MASK__GPS_1PPS                                       = 0x0200UL,                       // GPS 1PPS controlled MCU clock
+
+} ENABLE_MASK_t;
 
 
 typedef enum MON_MASK {

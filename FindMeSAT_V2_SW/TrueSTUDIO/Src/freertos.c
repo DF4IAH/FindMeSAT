@@ -256,7 +256,7 @@ void MX_FREERTOS_Init(void) {
   controllerTaskHandle = osThreadCreate(osThread(controllerTask), NULL);
 
   /* definition and creation of interpreterTask */
-  osThreadDef(interpreterTask, StartInterpreterTask, osPriorityNormal, 0, 128);
+  osThreadDef(interpreterTask, StartInterpreterTask, osPriorityNormal, 0, 512);
   interpreterTaskHandle = osThreadCreate(osThread(interpreterTask), NULL);
 
   /* definition and creation of loraTask */
@@ -288,7 +288,7 @@ void MX_FREERTOS_Init(void) {
 
   /* definition and creation of loraInQueue */
 /* what about the sizeof here??? cd native code */
-  osMessageQDef(loraInQueue, 8, uint8_t);
+  osMessageQDef(loraInQueue, 256, uint8_t);
   loraInQueueHandle = osMessageCreate(osMessageQ(loraInQueue), NULL);
 
   /* definition and creation of loraOutQueue */
@@ -323,7 +323,7 @@ void MX_FREERTOS_Init(void) {
 
   /* definition and creation of interOutQueue */
 /* what about the sizeof here??? cd native code */
-  osMessageQDef(interOutQueue, 64, uint8_t);
+  osMessageQDef(interOutQueue, 256, uint8_t);
   interOutQueueHandle = osMessageCreate(osMessageQ(interOutQueue), NULL);
 
   /* USER CODE BEGIN RTOS_QUEUES */
