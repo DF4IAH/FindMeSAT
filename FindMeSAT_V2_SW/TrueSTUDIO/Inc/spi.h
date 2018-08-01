@@ -240,7 +240,7 @@ void spiSX127xLoRa_Fifo_Init(void);
 void spiSX127xLoRa_Fifo_SetFifoPtrFromTxBase(void);
 void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void);
 
-uint8_t spiSX1276GetMode(void);
+uint8_t spiSX127xGetMode(void);
 void spiSX1276Mode(spiSX1276_Mode_t mode);
 void spiSX127xRegister_IRQ_clearAll(void);
 void spiSX127xRegister_IRQ_enableBits(uint8_t enaBits);

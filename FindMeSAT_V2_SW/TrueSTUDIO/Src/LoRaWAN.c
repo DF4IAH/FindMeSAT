@@ -1898,7 +1898,7 @@ static void LoRaWAN_LoRaBare_TX_msg(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare
 
 static void LoRaWAN_LoRaBare_RX(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare, uint8_t turnOn)
 {
-  const uint8_t sxMode = TXRX_MODE_MASK & spiSX1276GetMode();
+  const uint8_t sxMode = TXRX_MODE_MASK & spiSX127xGetMode();
 
   /* Activate RX mode */
   if (turnOn && (sxMode != RXCONTINUOUS)) {
