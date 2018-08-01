@@ -811,6 +811,7 @@ static void LoRaWAN_QueueIn_Process(void)
       {
         loRaBareCtx.sxMode = buf[1] ?  RXCONTINUOUS : STANDBY;
         LoRaWAN_LoRaBare_RX(&loRaWANctx, &loRaBareCtx, buf[1]);
+
       }
       break;
 
@@ -1901,7 +1902,12 @@ static void LoRaWAN_LoRaBare_RX(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare, ui
 
   /* Activate RX mode */
   if (turnOn && (sxMode != RXCONTINUOUS)) {
-    /* Get DIO ready for interrupt operations */
+    /* Copy settings from Bare context */
+    ctxWan->FrequencyMHz                = ctxBare->frequencyMHz;
+    ctxWan->SpreadingFactor             = ctxBare->spreadingFactor;
+    ctxWan->LinkADR_TxPowerReduction_dB = ctxBare->pwrred;
+
+    /* Prepare receiver register settings */
     spiSX1276_TxRx_Preps(ctxWan, DIO_TxRx_Mode_RX, NULL);
 
     /* Prepare the FIFO */
@@ -2808,7 +2814,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkADRReq(void)
   do {
     LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
     loRaWANctx.LinkADR_TxPowerReduction_dB  =                (macBuf[0] & 0x0f) << 1;
-  //loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) ((macBuf[0] & 0xf0) >> 4);          // Do not honor DR as long as ADR is sent only once
+    loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) ((macBuf[0] & 0xf0) >> 4);          // Do not honor DR as long as ADR is sent only once
 
     /* For all RX1 channels, do */
     for (uint8_t idx = 0; idx < 15; idx++) {
