@@ -25,7 +25,7 @@
 
 /* Default settings */
 #define  LORAWAN_CONFPACKS_DEFAULT    1
-#define  LORAWAN_ADR_ENABLED_DEFAULT  1
+#define  LORAWAN_ADR_ENABLED_DEFAULT  0
 
 
 

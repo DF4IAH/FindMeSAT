@@ -7,6 +7,7 @@
 
 #define __STDC_WANT_LIB_EXT1__ 1
 
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -1933,14 +1934,38 @@ static void LoRaWAN_LoRaBare_RX(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare, ui
 
 static void LoRaWAN_LoRaBare_RX__RXdone(void)
 {
+  char usbDbgBuf[64];
+  int  len;
+
   /* Clear receiving message buffer */
   LoRaWAN_calc_RxMsg_Reset(&loRaWanRxMsg);
 
   /* Read message */
   spiSX127x_Process_RxDone(&loRaWANctx, &loRaWanRxMsg);
 
-  /* Show content */
-  usbLogLen((const char*) loRaWanRxMsg.msg_encoded_Buf, loRaWanRxMsg.msg_encoded_Len);
+  /* Show content */  // TODO
+  {
+    len = sprintf(usbDbgBuf, "LoRaBare RX:  len=%u\r\n", loRaWanRxMsg.msg_encoded_Len);
+    usbLogLen((const char*) usbDbgBuf, len);
+
+    len = sprintf(usbDbgBuf, "LoRaBare RX:  Payload=");
+    for (uint8_t idx = 0; idx < loRaWanRxMsg.msg_encoded_Len; idx++) {
+      len += sprintf(usbDbgBuf + len, "0x%02X ", loRaWanRxMsg.msg_encoded_Buf[idx]);
+    }
+    len += sprintf(usbDbgBuf + len, "\r\n");
+    usbLogLen((const char*) usbDbgBuf, len);
+
+    len = sprintf(usbDbgBuf, "LoRaBare RX:  string=\"");
+    for (uint8_t idx = 0; idx < loRaWanRxMsg.msg_encoded_Len; idx++) {
+      char c = loRaWanRxMsg.msg_encoded_Buf[idx];
+      if (!isprint(c)) {
+        c = 0xb7;
+      }
+      len += sprintf(usbDbgBuf + len, "%c", c);
+    }
+    len += sprintf(usbDbgBuf + len, "\"\r\n");
+    usbLogLen((const char*) usbDbgBuf, len);
+  }
 }
 
 
@@ -2158,7 +2183,6 @@ void loRaWANLoraTaskInit(void)
 
       /* Check CRC */
       uint32_t crcC = crcCalc((const uint32_t*) ((&LoRaWANctxBkpRam->LoRaWANcrc) + 1), bkpRAMLen - 1);
-      crcC = 0;  // TODO: remove me!
       if (crcC != LoRaWANctxBkpRam->LoRaWANcrc) {
         /* Non valid content - reset all to zero */
         volatile uint32_t* ptr = &LoRaWANctxBkpRam->LoRaWANcrc;
@@ -2196,7 +2220,7 @@ void loRaWANLoraTaskInit(void)
       loRaWANctx.ADR_enabled                  = LORAWAN_ADR_ENABLED_DEFAULT;                      // Global setting for ADR
       loRaWANctx.LinkADR_TxPowerReduction_dB  = 0;                                                // No power reduction
       loRaWANctx.LinkADR_DataRate_TX1         = loRaWANctx.Ch_DataRateTX_Selected[ 1 - 1];        // RX1 - Channel 1 as an example
-      loRaWANctx.LinkADR_DataRate_RX1_DRofs   = 0;                                                // Default
+      loRaWANctx.LinkADR_DataRate_RX1_DRofs   = 0;                                                // Default (SF12)
       loRaWANctx.LinkADR_DataRate_RXTX2       = loRaWANctx.Ch_DataRateTX_Selected[16 - 1];        // RX2
       loRaWANctx.LinkADR_ChannelMask          = 0x0007U;                                          // Enable default channels (1..3) only
       loRaWANctx.LinkADR_NbTrans              = 1;                                                // Number of repetitions for unconfirmed packets
@@ -2814,7 +2838,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkADRReq(void)
   do {
     LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
     loRaWANctx.LinkADR_TxPowerReduction_dB  =                (macBuf[0] & 0x0f) << 1;
-    loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) ((macBuf[0] & 0xf0) >> 4);          // Do not honor DR as long as ADR is sent only once
+    loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) ((macBuf[0] & 0xf0) >> 4);          // Do not honor DR as long as ADR is sent only once ?
 
     /* For all RX1 channels, do */
     for (uint8_t idx = 0; idx < 15; idx++) {
