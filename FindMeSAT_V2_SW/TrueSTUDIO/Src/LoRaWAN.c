@@ -724,15 +724,11 @@ static void LoRaWAN_QueueIn_Process(void)
 
     case LoraInQueueCmds__DRset:
       {
-        /* Process LoRaBare if enabled */
-        if (ENABLE_MASK__LORA_BARE  & g_enableMsk) {
-          /* LoRaBare mode setting */
-          loRaBareCtx.spreadingFactor = spiSX127xDR_to_SF(buf[1]);
-        }
+        const DataRates_t drSet = buf[1];
 
         /* Process LoRaWAN if enabled */
         if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
-          DataRates_t drSet = buf[1];
+
           if (drSet > DR5_SF7_125kHz_LoRa) {
             drSet   = DR5_SF7_125kHz_LoRa;
           }
@@ -742,6 +738,19 @@ static void LoRaWAN_QueueIn_Process(void)
           /* Set all RX1 channels with manual DataRate */
           for (uint8_t idx = 0; idx < 15; idx++) {
             loRaWANctx.Ch_DataRateTX_Selected[idx] = drSet;
+          }
+        }
+
+        /* Process LoRaBare if enabled */
+        if (ENABLE_MASK__LORA_BARE  & g_enableMsk) {
+          /* LoRaBare mode setting */
+          loRaBareCtx.spreadingFactor = spiSX127xDR_to_SF(drSet);
+
+          /* Restart bare RX to take changes over */
+          if (loRaBareCtx.sxMode == RXCONTINUOUS) {
+            usbLog("LoRaBare RX: Restart RX to take changes over.\r\n");
+            LoRaWAN_LoRaBare_RX(&loRaWANctx, &loRaBareCtx, 0);
+            LoRaWAN_LoRaBare_RX(&loRaWANctx, &loRaBareCtx, 1);
           }
         }
       }
@@ -805,6 +814,12 @@ static void LoRaWAN_QueueIn_Process(void)
                                        (((uint32_t) buf[3]) << 16U) |
                                        (((uint32_t) buf[4]) << 24U);
         loRaBareCtx.frequencyMHz    = frequencyHz / 1e6f;
+
+        /* If bare RX mode is activated, change frequency at once */
+        if (loRaBareCtx.sxMode == RXCONTINUOUS) {
+          usbLog("LoRaBare RX: Frequency changed.\r\n");
+          spiSX127xFrequency_MHz(loRaBareCtx.frequencyMHz);
+        }
       }
       break;
 
@@ -812,7 +827,6 @@ static void LoRaWAN_QueueIn_Process(void)
       {
         loRaBareCtx.sxMode = buf[1] ?  RXCONTINUOUS : STANDBY;
         LoRaWAN_LoRaBare_RX(&loRaWANctx, &loRaBareCtx, buf[1]);
-
       }
       break;
 
@@ -2323,7 +2337,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX1(void)
 
     } else {
       /* USB: info */
-      usbLogLora("LoRaWAN: received packet within RX1 window.\r\n");
+      usbLogLora("LoRaWAN: Received packet within RX1 window.\r\n");
       usbLogLora("LoRaWAN: (TRX off)\r\n");
 
       /* Process message */
@@ -2382,7 +2396,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX2(void)
 
     } else {
       /* USB: info */
-      usbLogLora("LoRaWAN: received packet within RX2 window.\r\n\r\n");
+      usbLogLora("LoRaWAN: Received packet within RX2 window.\r\n\r\n");
 
       /* Process message */
       loRaWANctx.FsmState = Fsm_MAC_Decoder;
