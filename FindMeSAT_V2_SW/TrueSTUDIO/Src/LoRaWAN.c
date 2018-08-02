@@ -724,15 +724,13 @@ static void LoRaWAN_QueueIn_Process(void)
 
     case LoraInQueueCmds__DRset:
       {
-        const DataRates_t drSet = buf[1];
+        DataRates_t drSet = buf[1];
+        if (drSet > DR5_SF7_125kHz_LoRa) {
+          drSet   = DR5_SF7_125kHz_LoRa;
+        }
 
         /* Process LoRaWAN if enabled */
         if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
-
-          if (drSet > DR5_SF7_125kHz_LoRa) {
-            drSet   = DR5_SF7_125kHz_LoRa;
-          }
-
           loRaWANctx.ADR_enabled  = 0;
 
           /* Set all RX1 channels with manual DataRate */
