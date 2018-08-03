@@ -124,7 +124,7 @@ void prvControllerInitBeforeGreet(void)
   if ((ENABLE_MASK__LORA_BARE       & g_enableMsk) ||
       (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk)) {
     /* Check for attached SX1272_mbed_shield */
-    if (HAL_OK == spiDetectShieldSX1272()) {
+    if (HAL_OK == spiDetectShieldSX1276()) {
 #if 1
       /* Send INIT message to the LoRaWAN task */
       const uint8_t c_maxWaitMs = 25;
