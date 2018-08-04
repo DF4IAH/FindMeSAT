@@ -16,6 +16,7 @@
 
 
 extern EventGroupHandle_t extiEventGroupHandle;
+extern EventGroupHandle_t loraEventGroupHandle;
 
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
@@ -53,12 +54,12 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     /* Check for PF15 pin */
     if (GPIOF->IDR & GPIO_IDR_ID15) {
       xEventGroupSetBitsFromISR(extiEventGroupHandle, EXTI_SX__DIO0, &taskWoken);
+      xEventGroupSetBitsFromISR(loraEventGroupHandle, /*Lora_EGW__EXTI_DIO0*/ 0x00001000UL, &taskWoken);
     }
     break;
 
   default:
-    //xEventGroupSetBitsFromISR(extiEventGroupHandle, EXTI_SX__DIO4, &taskWoken);
-    //xEventGroupSetBitsFromISR(extiEventGroupHandle, EXTI_SX__DIO5, &taskWoken);
+    { }
     break;
   }
 }

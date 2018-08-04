@@ -123,7 +123,7 @@ void prvControllerInitBeforeGreet(void)
   /* Init LoRa / LoRaWAN if enabled */
   if ((ENABLE_MASK__LORA_BARE       & g_enableMsk) ||
       (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk)) {
-    /* Check for attached SX127x_mbed_shield */
+    /* Check for attached SX1272_mbed_shield */
     if (HAL_OK == spiDetectShieldSX1276()) {
 #if 1
       /* Send INIT message to the LoRaWAN task */
