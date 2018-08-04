@@ -260,7 +260,7 @@ void MX_FREERTOS_Init(void) {
   interpreterTaskHandle = osThreadCreate(osThread(interpreterTask), NULL);
 
   /* definition and creation of loraTask */
-  osThreadDef(loraTask, StartLoraTask, osPriorityHigh, 0, 1024);
+  osThreadDef(loraTask, StartLoraTask, osPriorityHigh, 0, 2048);
   loraTaskHandle = osThreadCreate(osThread(loraTask), NULL);
 
   /* definition and creation of gpscomTask */

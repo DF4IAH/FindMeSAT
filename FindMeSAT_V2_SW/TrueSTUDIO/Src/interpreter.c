@@ -10,6 +10,7 @@
 #include <cmsis_os.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <ctype.h>
 #include <string.h>
 #include "FreeRTOS.h"
 #include "stm32l496xx.h"
@@ -46,18 +47,27 @@ static void prvUnknownCommand(void)
   usbLog("\r\n?? unknown command - please try 'help' ??\r\n\r\n");
 }
 
-static void prvPushToInterOutQueue(const uint8_t* cmdAry, uint8_t cmdLen)
+static void prvPushToInterOutQueue(const uint8_t* cmdAry, uint16_t cmdLen)
 {
+  /* Sanity check */
+  if (cmdLen > 255U) {
+    return;
+  }
+
   for (uint8_t idx = 0; idx < cmdLen; ++idx) {
     xQueueSendToBack(interOutQueueHandle, cmdAry + idx, 1);
   }
   xEventGroupSetBits(controllerEventGroupHandle, Controller_EGW__INTER_QUEUE_OUT);
 }
 
-static void prvSendLoRaBare(const char* sendMsg)
+static void prvSendLoRaBare(const char* sendMsg, uint16_t sendMsgLen)
 {
-  const uint8_t sendMsgLen = strlen(sendMsg);
   uint8_t sendAry[128] = { (sendMsgLen + 2),  InterOutQueueCmds__LoRaBareSend};
+
+  /* Sanity check */
+  if (sendMsgLen > (sizeof(sendAry) - 2)) {
+    return;
+  }
 
   if (sendMsgLen && (sendMsgLen < (sizeof(sendAry) - 2))) {
     memcpy((sendAry + 2), sendMsg, sendMsgLen + 1);
@@ -67,10 +77,14 @@ static void prvSendLoRaBare(const char* sendMsg)
   }
 }
 
-static void prvSendNMEA(const char* nmeaStr)
+static void prvSendNMEA(const char* nmeaStr, uint16_t nmeaStrLen)
 {
-  const uint8_t nmeaStrLen = strlen(nmeaStr);
   uint8_t nmeaAry[64] = { (nmeaStrLen + 1),  InterOutQueueCmds__NmeaSend};
+
+  /* Sanity check */
+  if (nmeaStrLen > (sizeof(nmeaAry) - 2)) {
+    return;
+  }
 
   memcpy((nmeaAry + 2), nmeaStr, nmeaStrLen);
 
@@ -78,7 +92,83 @@ static void prvSendNMEA(const char* nmeaStr)
   prvPushToInterOutQueue(nmeaAry, nmeaStrLen + 2);
 }
 
-static void prvDoInterprete(const uint8_t *buf, uint32_t len)
+static uint8_t prvDoInterprete__HexString_HexNibbleParser(char c)
+{
+  if ('0' <= c && c <= '9') {
+    return c - '0';
+  }
+
+  c = tolower(c);
+  if ('a' <= c && c <= 'f') {
+    return (c - 'a') + 10;
+  }
+
+  /* Bad hex */
+  return 0;
+}
+
+static void prvDoInterprete__HexString(const char* buf, uint16_t len)
+{
+  uint8_t hexAry[256] = { 0 };
+  uint8_t idxIn = 0U, idxOut = 0U;
+
+  /* Sanity check: 0xAB is minimal valid length */
+  if (!len) {
+    return;
+  }
+
+  while ((idxIn  < len) &&
+         (idxOut < (sizeof(hexAry) - 1))) {
+    uint8_t c = buf[idxIn++];
+    uint8_t nibLo = 0U, nibHi = 0U;
+
+    /* Parse first nibble */
+    {
+      /* Skip any blanks */
+      while (isspace(c) &&
+            (idxIn < len)) {
+        c = buf[idxIn++];
+      }
+
+      /* Skip HEX prefix */
+      if ((c == '0') && (tolower(buf[idxIn]) == 'x')) {
+        idxIn++;
+        c = buf[idxIn++];
+      }
+
+      /* Length check: at least two bytes are needed here */
+      if (idxIn > len) {
+        return prvSendLoRaBare((char*) hexAry, idxOut);
+      }
+
+      /* Scan first hex nibble */
+      nibHi = prvDoInterprete__HexString_HexNibbleParser(c);
+    }
+
+    /* Parse second nibble */
+    {
+      c = buf[idxIn++];
+
+      /* one nibble only */
+      if ((idxIn > len) || isspace(c)) {
+        --idxIn;
+        nibLo = nibHi;
+        nibHi = 0U;
+
+      } else {
+        nibLo = prvDoInterprete__HexString_HexNibbleParser(c);
+      }
+    }
+
+    /* Write out */
+    const uint8_t byte = (uint8_t) (0xff & ((nibHi << 4) | (nibLo)));
+    hexAry[idxOut++] = byte;
+  }
+
+  prvSendLoRaBare((char*) hexAry, idxOut);
+}
+
+static void prvDoInterprete(const uint8_t* buf, uint16_t len)
 {
   const char *cb = (const char*) buf;
 
@@ -158,10 +248,13 @@ static void prvDoInterprete(const uint8_t *buf, uint32_t len)
     prvPushToInterOutQueue(pushAry, sizeof(pushAry));
 
   } else if (!strncmp("\"", cb, 1) && (1 < len)) {
-    prvSendLoRaBare(cb + 1);
+    prvSendLoRaBare(cb + 1, len - 1);
+
+  } else if (!strncmp("0x", cb, 2) && (2 < len)) {
+    prvDoInterprete__HexString(cb + 2, len - 2);
 
   } else if (!strncmp("$", cb, 1) && (1 < len)) {
-    prvSendNMEA(cb);
+    prvSendNMEA(cb, len);
 
   } else {
     prvUnknownCommand();
@@ -199,6 +292,7 @@ const uint8_t               interpreterHelpMsg331[]            = "\t\trx <n>\t\t
 const uint8_t               interpreterHelpMsg332[]            = "\t\t\t\t\t0 = off.\r\n";
 const uint8_t               interpreterHelpMsg333[]            = "\t\t\t\t\t1 = on.\r\n";
 const uint8_t               interpreterHelpMsg341[]            = "\t\t\"...\t\tTransmit message via LoRa bare mode.\r\n\r\n";
+const uint8_t               interpreterHelpMsg342[]            = "\t\t0x \t\t<hex><hex>... data array.\r\n\r\n";
 
 const uint8_t               interpreterHelpMsg411[]            = "\r\n\t\t> LoRaWAN mode specific settings\r\n";
 //const uint8_t             interpreterHelpMsgXXX[]            =     "\t\t--------------------------------------------------------------------------\r\n";
@@ -255,6 +349,7 @@ void interpreterPrintHelp(void)
   usbToHostWait(interpreterHelpMsg332, strlen((char*) interpreterHelpMsg332));
   usbToHostWait(interpreterHelpMsg333, strlen((char*) interpreterHelpMsg333));
   usbToHostWait(interpreterHelpMsg341, strlen((char*) interpreterHelpMsg341));
+  usbToHostWait(interpreterHelpMsg342, strlen((char*) interpreterHelpMsg342));
 
   usbToHostWait(interpreterHelpMsg411, strlen((char*) interpreterHelpMsg411));
   usbToHostWait(interpreterHelpMsg112, strlen((char*) interpreterHelpMsg112));
@@ -300,8 +395,8 @@ void interpreterInterpreterTaskInit(void)
 
 void interpreterInterpreterTaskLoop(void)
 {
-  static uint8_t inBuf[64] = { 0 };
-  static uint32_t inBufPos = 0;
+  static uint8_t inBuf[512] = { 0 };
+  static uint16_t inBufPos = 0;
   static uint8_t prevCr = 0;
   uint8_t chr;
   BaseType_t xStatus;

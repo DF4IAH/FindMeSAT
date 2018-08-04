@@ -7,6 +7,7 @@
 
 #define __STDC_WANT_LIB_EXT1__ 1
 
+#include <ctype.h>
 #include <string.h>
 #include <stdlib.h>
 #include <math.h>
@@ -65,14 +66,14 @@ const uint8_t               AppSKey_BE[16]                    = { 0xADU, 0xDAU, 
 /* USE_OTAA */
 
 /* TheThingsNetwork - assigned codes to this device - R1.03 */
-// Device ID   findmesat2_002
-//const uint8_t             DevEUI_LE[8]                      = { 0x31, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };                                                 // "FMS2_001"
-const uint8_t               DevEUI_LE[8]                      = { 0x32, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };                                                 // "FMS2_002"
+// Device ID   findmesat2_001  and  findmesat2_002
+const uint8_t               DevEUI_LE[8]                      = { 0x31, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };                                                 // "FMS2_001"
+//const uint8_t             DevEUI_LE[8]                      = { 0x32, 0x30, 0x30, 0x5F, 0x32, 0x53, 0x4D, 0x46 };                                                 // "FMS2_002"
 const uint8_t               AppEUI_LE[8]                      = { 0x08, 0xF6, 0x00, 0xD0, 0x7E, 0xD5, 0xB3, 0x70 };
 //const uint8_t             JoinEUI_LE[8]                     = { 0 };                                                                                              // V1.1: former AppEUI
 //const uint8_t             NwkKey_BE[16]                     = { 0 };                                                                                              // Since LoRaWAN V1.1
-//const uint8_t             AppKey_BE[16]                     = { 0x01, 0xE3, 0x27, 0x88, 0xBA, 0x99, 0x2C, 0x45, 0x6D, 0x92, 0xBF, 0xE0, 0xEE, 0xAD, 0xBE, 0x45 }; // findmesat2_001
-const uint8_t               AppKey_BE[16]                     = { 0xD9, 0x0E, 0x09, 0x0B, 0xDB, 0x61, 0xF1, 0xBB, 0x37, 0x4C, 0xE7, 0x9B, 0x23, 0x96, 0x07, 0x11 }; // findmesat2_002
+const uint8_t               AppKey_BE[16]                     = { 0xBC, 0x60, 0x73, 0xFC, 0xF0, 0xC7, 0xF1, 0x5D, 0x49, 0x30, 0x6E, 0x03, 0x07, 0xD9, 0xAB, 0xDC }; // findmesat2_001
+//const uint8_t             AppKey_BE[16]                     = { 0xD9, 0x0E, 0x09, 0x0B, 0xDB, 0x61, 0xF1, 0xBB, 0x37, 0x4C, 0xE7, 0x9B, 0x23, 0x96, 0x07, 0x11 }; // findmesat2_002
 #endif
 
 
@@ -723,24 +724,31 @@ static void LoRaWAN_QueueIn_Process(void)
 
     case LoraInQueueCmds__DRset:
       {
-        /* Process LoRaBare if enabled */
-        if (ENABLE_MASK__LORA_BARE  & g_enableMsk) {
-          /* LoRaBare mode setting */
-          loRaBareCtx.spreadingFactor = spiSX127xDR_to_SF(buf[1]);
+        DataRates_t drSet = buf[1];
+        if (drSet > DR5_SF7_125kHz_LoRa) {
+          drSet   = DR5_SF7_125kHz_LoRa;
         }
 
         /* Process LoRaWAN if enabled */
         if (ENABLE_MASK__LORAWAN_DEVICE  & g_enableMsk) {
-          DataRates_t drSet = buf[1];
-          if (drSet > DR5_SF7_125kHz_LoRa) {
-            drSet   = DR5_SF7_125kHz_LoRa;
-          }
-
           loRaWANctx.ADR_enabled  = 0;
 
           /* Set all RX1 channels with manual DataRate */
           for (uint8_t idx = 0; idx < 15; idx++) {
             loRaWANctx.Ch_DataRateTX_Selected[idx] = drSet;
+          }
+        }
+
+        /* Process LoRaBare if enabled */
+        if (ENABLE_MASK__LORA_BARE  & g_enableMsk) {
+          /* LoRaBare mode setting */
+          loRaBareCtx.spreadingFactor = spiSX127xDR_to_SF(drSet);
+
+          /* Restart bare RX to take changes over */
+          if (loRaBareCtx.sxMode == RXCONTINUOUS) {
+            usbLog("LoRaBare RX: Restart RX to take changes over.\r\n");
+            LoRaWAN_LoRaBare_RX(&loRaWANctx, &loRaBareCtx, 0);
+            LoRaWAN_LoRaBare_RX(&loRaWANctx, &loRaBareCtx, 1);
           }
         }
       }
@@ -804,6 +812,12 @@ static void LoRaWAN_QueueIn_Process(void)
                                        (((uint32_t) buf[3]) << 16U) |
                                        (((uint32_t) buf[4]) << 24U);
         loRaBareCtx.frequencyMHz    = frequencyHz / 1e6f;
+
+        /* If bare RX mode is activated, change frequency at once */
+        if (loRaBareCtx.sxMode == RXCONTINUOUS) {
+          usbLog("LoRaBare RX: Frequency changed.\r\n");
+          spiSX127xFrequency_MHz(loRaBareCtx.frequencyMHz);
+        }
       }
       break;
 
@@ -811,7 +825,6 @@ static void LoRaWAN_QueueIn_Process(void)
       {
         loRaBareCtx.sxMode = buf[1] ?  RXCONTINUOUS : STANDBY;
         LoRaWAN_LoRaBare_RX(&loRaWANctx, &loRaBareCtx, buf[1]);
-
       }
       break;
 
@@ -1898,7 +1911,7 @@ static void LoRaWAN_LoRaBare_TX_msg(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare
 
 static void LoRaWAN_LoRaBare_RX(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare, uint8_t turnOn)
 {
-  const uint8_t sxMode = TXRX_MODE_MASK & spiSX1276GetMode();
+  const uint8_t sxMode = TXRX_MODE_MASK & spiSX127xGetMode();
 
   /* Activate RX mode */
   if (turnOn && (sxMode != RXCONTINUOUS)) {
@@ -1933,6 +1946,9 @@ static void LoRaWAN_LoRaBare_RX(LoRaWANctx_t* ctxWan, LoRaBareCtx_t* ctxBare, ui
 
 static void LoRaWAN_LoRaBare_RX__RXdone(void)
 {
+  char usbDbgBuf[512];
+  int  len;
+
   /* Clear receiving message buffer */
   LoRaWAN_calc_RxMsg_Reset(&loRaWanRxMsg);
 
@@ -1940,7 +1956,28 @@ static void LoRaWAN_LoRaBare_RX__RXdone(void)
   spiSX127x_Process_RxDone(&loRaWANctx, &loRaWanRxMsg);
 
   /* Show content */
-  usbLogLen((const char*) loRaWanRxMsg.msg_encoded_Buf, loRaWanRxMsg.msg_encoded_Len);
+  if (loRaWanRxMsg.msg_encoded_Len) {
+    len = sprintf(usbDbgBuf, "LoRaBare RX:  len=%u\r\n", loRaWanRxMsg.msg_encoded_Len);
+    usbLogLen((const char*) usbDbgBuf, len);
+
+    len = sprintf(usbDbgBuf, "LoRaBare RX:  Payload=");
+    for (uint8_t idx = 0; idx < loRaWanRxMsg.msg_encoded_Len; idx++) {
+      len += sprintf(usbDbgBuf + len, "0x%02X ", loRaWanRxMsg.msg_encoded_Buf[idx]);
+    }
+    len += sprintf(usbDbgBuf + len, "\r\n");
+    usbLogLen((const char*) usbDbgBuf, len);
+
+    len = sprintf(usbDbgBuf, "LoRaBare RX:  string=\"");
+    for (uint8_t idx = 0; idx < loRaWanRxMsg.msg_encoded_Len; idx++) {
+      char c = loRaWanRxMsg.msg_encoded_Buf[idx];
+      if (!isprint(c)) {
+        c = '.';
+      }
+      len += sprintf(usbDbgBuf + len, "%c", c);
+    }
+    len += sprintf(usbDbgBuf + len, "\"\r\n\r\n");
+    usbLogLen((const char*) usbDbgBuf, len);
+  }
 }
 
 
@@ -2158,7 +2195,6 @@ void loRaWANLoraTaskInit(void)
 
       /* Check CRC */
       uint32_t crcC = crcCalc((const uint32_t*) ((&LoRaWANctxBkpRam->LoRaWANcrc) + 1), bkpRAMLen - 1);
-      crcC = 0;  // TODO: remove me!
       if (crcC != LoRaWANctxBkpRam->LoRaWANcrc) {
         /* Non valid content - reset all to zero */
         volatile uint32_t* ptr = &LoRaWANctxBkpRam->LoRaWANcrc;
@@ -2196,7 +2232,7 @@ void loRaWANLoraTaskInit(void)
       loRaWANctx.ADR_enabled                  = LORAWAN_ADR_ENABLED_DEFAULT;                      // Global setting for ADR
       loRaWANctx.LinkADR_TxPowerReduction_dB  = 0;                                                // No power reduction
       loRaWANctx.LinkADR_DataRate_TX1         = loRaWANctx.Ch_DataRateTX_Selected[ 1 - 1];        // RX1 - Channel 1 as an example
-      loRaWANctx.LinkADR_DataRate_RX1_DRofs   = 0;                                                // Default
+      loRaWANctx.LinkADR_DataRate_RX1_DRofs   = 0;                                                // Default (SF12)
       loRaWANctx.LinkADR_DataRate_RXTX2       = loRaWANctx.Ch_DataRateTX_Selected[16 - 1];        // RX2
       loRaWANctx.LinkADR_ChannelMask          = 0x0007U;                                          // Enable default channels (1..3) only
       loRaWANctx.LinkADR_NbTrans              = 1;                                                // Number of repetitions for unconfirmed packets
@@ -2299,7 +2335,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX1(void)
 
     } else {
       /* USB: info */
-      usbLogLora("LoRaWAN: received packet within RX1 window.\r\n");
+      usbLogLora("LoRaWAN: Received packet within RX1 window.\r\n");
       usbLogLora("LoRaWAN: (TRX off)\r\n");
 
       /* Process message */
@@ -2358,7 +2394,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_RX2(void)
 
     } else {
       /* USB: info */
-      usbLogLora("LoRaWAN: received packet within RX2 window.\r\n\r\n");
+      usbLogLora("LoRaWAN: Received packet within RX2 window.\r\n\r\n");
 
       /* Process message */
       loRaWANctx.FsmState = Fsm_MAC_Decoder;
@@ -2814,7 +2850,7 @@ static void loRaWANLoRaWANTaskLoop__Fsm_MAC_LinkADRReq(void)
   do {
     LoRaWAN_MAC_Queue_Pull(macBuf, sizeof(macBuf));
     loRaWANctx.LinkADR_TxPowerReduction_dB  =                (macBuf[0] & 0x0f) << 1;
-    loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) ((macBuf[0] & 0xf0) >> 4);          // Do not honor DR as long as ADR is sent only once
+    loRaWANctx.LinkADR_DataRate_TX1         = (DataRates_t) ((macBuf[0] & 0xf0) >> 4);          // Do not honor DR as long as ADR is sent only once ?
 
     /* For all RX1 channels, do */
     for (uint8_t idx = 0; idx < 15; idx++) {

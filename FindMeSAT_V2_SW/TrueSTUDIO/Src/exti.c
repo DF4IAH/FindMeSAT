@@ -59,8 +59,7 @@ void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin)
     break;
 
   default:
-    //xEventGroupSetBitsFromISR(extiEventGroupHandle, EXTI_SX__DIO4, &taskWoken);
-    //xEventGroupSetBitsFromISR(extiEventGroupHandle, EXTI_SX__DIO5, &taskWoken);
+    { }
     break;
   }
 }
