@@ -1955,8 +1955,8 @@ static void LoRaWAN_LoRaBare_RX__RXdone(void)
   /* Read message */
   spiSX127x_Process_RxDone(&loRaWANctx, &loRaWanRxMsg);
 
-  /* Show content */  // TODO
-  {
+  /* Show content */
+  if (loRaWanRxMsg.msg_encoded_Len) {
     len = sprintf(usbDbgBuf, "LoRaBare RX:  len=%u\r\n", loRaWanRxMsg.msg_encoded_Len);
     usbLogLen((const char*) usbDbgBuf, len);
 
