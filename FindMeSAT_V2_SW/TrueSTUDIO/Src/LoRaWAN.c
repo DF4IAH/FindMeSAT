@@ -13,6 +13,8 @@
 #include <math.h>
 #include <time.h>
 #include <sys/time.h>
+#include <stdio.h>
+
 #include "crypto.h"
 #include "crc.h"
 #include "FreeRTOS.h"
@@ -1808,7 +1810,7 @@ void LoRaWAN_MAC_Queue_Push(const uint8_t* macBuf, uint8_t cnt)
   for (uint8_t idx = 0; idx < cnt; ++idx) {
     BaseType_t xStatus = xQueueSendToBack(loraMacQueueHandle, macBuf + idx, LoRaWAN_MaxWaitMs / portTICK_PERIOD_MS);
     if (pdTRUE != xStatus) {
-      _Error_Handler(__FILE__, __LINE__);
+      Error_Handler();
     }
   }
 }
@@ -1819,7 +1821,7 @@ void LoRaWAN_MAC_Queue_Pull(uint8_t* macBuf, uint8_t cnt)
   for (uint8_t idx = 0; idx < cnt; ++idx) {
     BaseType_t xStatus = xQueueReceive(loraMacQueueHandle, macBuf + idx, LoRaWAN_MaxWaitMs / portTICK_PERIOD_MS);
     if (pdTRUE != xStatus) {
-      _Error_Handler(__FILE__, __LINE__);
+      Error_Handler();
     }
   }
 }

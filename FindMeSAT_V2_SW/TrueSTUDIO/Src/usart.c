@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -50,9 +50,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "usart.h"
 
-#include "gpio.h"
-#include "dma.h"
-
 /* USER CODE BEGIN 0 */
 #include "gpsCom.h"
 
@@ -91,7 +88,7 @@ void MX_LPUART1_UART_Init(void)
   hlpuart1.AdvancedInit.DMADisableonRxError = UART_ADVFEATURE_DMA_DISABLEONRXERROR;
   if (HAL_UART_Init(&hlpuart1) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
 
 }
@@ -113,7 +110,7 @@ void MX_UART5_Init(void)
   huart5.AdvancedInit.DMADisableonRxError = UART_ADVFEATURE_DMA_DISABLEONRXERROR;
   if (HAL_UART_Init(&huart5) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
 
 }
@@ -136,7 +133,7 @@ void MX_USART3_UART_Init(void)
   huart3.AdvancedInit.DMADisableonRxError = UART_ADVFEATURE_DMA_DISABLEONRXERROR;
   if (HAL_UART_Init(&huart3) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
 
 }
@@ -144,7 +141,7 @@ void MX_USART3_UART_Init(void)
 void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
 {
 
-  GPIO_InitTypeDef GPIO_InitStruct;
+  GPIO_InitTypeDef GPIO_InitStruct = {0};
   if(uartHandle->Instance==LPUART1)
   {
   /* USER CODE BEGIN LPUART1_MspInit 0 */
@@ -153,6 +150,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     /* LPUART1 clock enable */
     __HAL_RCC_LPUART1_CLK_ENABLE();
   
+    __HAL_RCC_GPIOG_CLK_ENABLE();
+    HAL_PWREx_EnableVddIO2();
     /**LPUART1 GPIO Configuration    
     PG7     ------> LPUART1_TX
     PG8     ------> LPUART1_RX 
@@ -184,7 +183,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     hdma_lpuart_tx.Init.Priority = DMA_PRIORITY_HIGH;
     if (HAL_DMA_Init(&hdma_lpuart_tx) != HAL_OK)
     {
-      _Error_Handler(__FILE__, __LINE__);
+      Error_Handler();
     }
 
     __HAL_LINKDMA(uartHandle,hdmatx,hdma_lpuart_tx);
@@ -201,7 +200,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     hdma_lpuart_rx.Init.Priority = DMA_PRIORITY_HIGH;
     if (HAL_DMA_Init(&hdma_lpuart_rx) != HAL_OK)
     {
-      _Error_Handler(__FILE__, __LINE__);
+      Error_Handler();
     }
 
     __HAL_LINKDMA(uartHandle,hdmarx,hdma_lpuart_rx);
@@ -218,6 +217,9 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     /* UART5 clock enable */
     __HAL_RCC_UART5_CLK_ENABLE();
   
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOD_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
     /**UART5 GPIO Configuration    
     PC12     ------> UART5_TX
     PD2     ------> UART5_RX
@@ -265,7 +267,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     hdma_uart5_tx.Init.Priority = DMA_PRIORITY_HIGH;
     if (HAL_DMA_Init(&hdma_uart5_tx) != HAL_OK)
     {
-      _Error_Handler(__FILE__, __LINE__);
+      Error_Handler();
     }
 
     __HAL_LINKDMA(uartHandle,hdmatx,hdma_uart5_tx);
@@ -282,7 +284,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     hdma_uart5_rx.Init.Priority = DMA_PRIORITY_HIGH;
     if (HAL_DMA_Init(&hdma_uart5_rx) != HAL_OK)
     {
-      _Error_Handler(__FILE__, __LINE__);
+      Error_Handler();
     }
 
     __HAL_LINKDMA(uartHandle,hdmarx,hdma_uart5_rx);
@@ -302,6 +304,8 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     /* USART3 clock enable */
     __HAL_RCC_USART3_CLK_ENABLE();
   
+    __HAL_RCC_GPIOC_CLK_ENABLE();
+    __HAL_RCC_GPIOB_CLK_ENABLE();
     /**USART3 GPIO Configuration    
     PC5     ------> USART3_RX
     PB10     ------> USART3_TX 
@@ -333,7 +337,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     hdma_usart3_tx.Init.Priority = DMA_PRIORITY_HIGH;
     if (HAL_DMA_Init(&hdma_usart3_tx) != HAL_OK)
     {
-      _Error_Handler(__FILE__, __LINE__);
+      Error_Handler();
     }
 
     __HAL_LINKDMA(uartHandle,hdmatx,hdma_usart3_tx);
@@ -350,7 +354,7 @@ void HAL_UART_MspInit(UART_HandleTypeDef* uartHandle)
     hdma_usart3_rx.Init.Priority = DMA_PRIORITY_HIGH;
     if (HAL_DMA_Init(&hdma_usart3_rx) != HAL_OK)
     {
-      _Error_Handler(__FILE__, __LINE__);
+      Error_Handler();
     }
 
     __HAL_LINKDMA(uartHandle,hdmarx,hdma_usart3_rx);
@@ -504,13 +508,5 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *UartHandle)
 }
 
 /* USER CODE END 1 */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

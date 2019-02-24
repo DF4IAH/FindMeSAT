@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -59,12 +59,12 @@ RTC_HandleTypeDef hrtc;
 /* RTC init function */
 void MX_RTC_Init(void)
 {
-  RTC_TimeTypeDef sTime;
-  RTC_DateTypeDef sDate;
-  RTC_AlarmTypeDef sAlarm;
+  RTC_TimeTypeDef sTime = {0};
+  RTC_DateTypeDef sDate = {0};
+  RTC_AlarmTypeDef sAlarm = {0};
 
-    /**Initialize RTC Only 
-    */
+  /**Initialize RTC Only 
+  */
   hrtc.Instance = RTC;
   hrtc.Init.HourFormat = RTC_HOURFORMAT_24;
   hrtc.Init.AsynchPrediv = 127;
@@ -75,14 +75,15 @@ void MX_RTC_Init(void)
   hrtc.Init.OutPutType = RTC_OUTPUT_TYPE_OPENDRAIN;
   if (HAL_RTC_Init(&hrtc) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
-  /* USER CODE BEGIN RTC_Init 2 */
 
-  /* USER CODE END RTC_Init 2 */
+  /* USER CODE BEGIN Check_RTC_BKUP */
+    
+  /* USER CODE END Check_RTC_BKUP */
 
-    /**Initialize RTC and set the Time and Date 
-    */
+  /**Initialize RTC and set the Time and Date 
+  */
   sTime.Hours = 0;
   sTime.Minutes = 0;
   sTime.Seconds = 0;
@@ -90,12 +91,8 @@ void MX_RTC_Init(void)
   sTime.StoreOperation = RTC_STOREOPERATION_RESET;
   if (HAL_RTC_SetTime(&hrtc, &sTime, RTC_FORMAT_BIN) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
-  /* USER CODE BEGIN RTC_Init 3 */
-
-  /* USER CODE END RTC_Init 3 */
-
   sDate.WeekDay = RTC_WEEKDAY_MONDAY;
   sDate.Month = RTC_MONTH_JANUARY;
   sDate.Date = 1;
@@ -103,14 +100,10 @@ void MX_RTC_Init(void)
 
   if (HAL_RTC_SetDate(&hrtc, &sDate, RTC_FORMAT_BIN) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
-  /* USER CODE BEGIN RTC_Init 4 */
-
-  /* USER CODE END RTC_Init 4 */
-
-    /**Enable the Alarm A 
-    */
+  /**Enable the Alarm A 
+  */
   sAlarm.AlarmTime.Hours = 0;
   sAlarm.AlarmTime.Minutes = 0;
   sAlarm.AlarmTime.Seconds = 0;
@@ -124,21 +117,14 @@ void MX_RTC_Init(void)
   sAlarm.Alarm = RTC_ALARM_A;
   if (HAL_RTC_SetAlarm_IT(&hrtc, &sAlarm, RTC_FORMAT_BIN) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
-  /* USER CODE BEGIN RTC_Init 5 */
-
-  /* USER CODE END RTC_Init 5 */
-
-    /**Enable the WakeUp 
-    */
+  /**Enable the WakeUp 
+  */
   if (HAL_RTCEx_SetWakeUpTimer_IT(&hrtc, 0, RTC_WAKEUPCLOCK_RTCCLK_DIV16) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
-  /* USER CODE BEGIN RTC_Init 6 */
-
-  /* USER CODE END RTC_Init 6 */
 
 }
 
@@ -187,13 +173,5 @@ void HAL_RTC_MspDeInit(RTC_HandleTypeDef* rtcHandle)
 /* USER CODE BEGIN 1 */
 
 /* USER CODE END 1 */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

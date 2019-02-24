@@ -1,3 +1,4 @@
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * File Name          : freertos.c
@@ -9,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -45,12 +46,15 @@
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
 
 /* Includes ------------------------------------------------------------------*/
 #include "FreeRTOS.h"
 #include "task.h"
+#include "main.h"
 #include "cmsis_os.h"
 
+/* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */     
 #include "stm32l4xx_nucleo_144.h"
 #include "stm32l4xx_hal.h"
@@ -63,7 +67,35 @@
 
 /* USER CODE END Includes */
 
-/* Variables -----------------------------------------------------------------*/
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
+
+/* Private variables ---------------------------------------------------------*/
+/* USER CODE BEGIN Variables */
+extern uint8_t usbFromHostISRBuf[64];
+extern uint32_t usbFromHostISRBufLen;
+EventGroupHandle_t usbToHostEventGroupHandle;
+EventGroupHandle_t adcEventGroupHandle;
+EventGroupHandle_t extiEventGroupHandle;
+EventGroupHandle_t spiEventGroupHandle;
+EventGroupHandle_t loraEventGroupHandle;
+EventGroupHandle_t controllerEventGroupHandle;
+EventGroupHandle_t gpscomEventGroupHandle;
+EventGroupHandle_t sensorsEventGroupHandle;
+
+/* USER CODE END Variables */
 osThreadId defaultTaskHandle;
 osThreadId usbToHostTaskHandle;
 osThreadId usbFromHostTaskHandle;
@@ -89,21 +121,11 @@ osMutexId trackMeApplUpDataMutexHandle;
 osMutexId trackMeApplDnDataMutexHandle;
 osSemaphoreId usbToHostBinarySemHandle;
 
-/* USER CODE BEGIN Variables */
-extern uint8_t usbFromHostISRBuf[64];
-extern uint32_t usbFromHostISRBufLen;
-EventGroupHandle_t usbToHostEventGroupHandle;
-EventGroupHandle_t adcEventGroupHandle;
-EventGroupHandle_t extiEventGroupHandle;
-EventGroupHandle_t spiEventGroupHandle;
-EventGroupHandle_t loraEventGroupHandle;
-EventGroupHandle_t controllerEventGroupHandle;
-EventGroupHandle_t gpscomEventGroupHandle;
-EventGroupHandle_t sensorsEventGroupHandle;
+/* Private function prototypes -----------------------------------------------*/
+/* USER CODE BEGIN FunctionPrototypes */
 
-/* USER CODE END Variables */
+/* USER CODE END FunctionPrototypes */
 
-/* Function prototypes -------------------------------------------------------*/
 void StartDefaultTask(void const * argument);
 void StartUsbToHostTask(void const * argument);
 void StartUsbFromHostTask(void const * argument);
@@ -117,10 +139,6 @@ void gpscomtRXTimerCallback(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
-
-/* USER CODE BEGIN FunctionPrototypes */
-
-/* USER CODE END FunctionPrototypes */
 
 /* Hook prototypes */
 void configureTimerForRunTimeStats(void);
@@ -181,8 +199,11 @@ __weak void vApplicationMallocFailedHook(void)
 }
 /* USER CODE END 5 */
 
-/* Init FreeRTOS */
-
+/**
+  * @brief  FreeRTOS initialization
+  * @param  None
+  * @retval None
+  */
 void MX_FREERTOS_Init(void) {
   /* USER CODE BEGIN Init */
 
@@ -277,52 +298,42 @@ void MX_FREERTOS_Init(void) {
 
   /* Create the queue(s) */
   /* definition and creation of usbToHostQueue */
-/* what about the sizeof here??? cd native code */
   osMessageQDef(usbToHostQueue, 512, uint8_t);
   usbToHostQueueHandle = osMessageCreate(osMessageQ(usbToHostQueue), NULL);
 
   /* definition and creation of usbFromHostQueue */
-/* what about the sizeof here??? cd native code */
   osMessageQDef(usbFromHostQueue, 32, uint8_t);
   usbFromHostQueueHandle = osMessageCreate(osMessageQ(usbFromHostQueue), NULL);
 
   /* definition and creation of loraInQueue */
-/* what about the sizeof here??? cd native code */
   osMessageQDef(loraInQueue, 256, uint8_t);
   loraInQueueHandle = osMessageCreate(osMessageQ(loraInQueue), NULL);
 
   /* definition and creation of loraOutQueue */
-/* what about the sizeof here??? cd native code */
   osMessageQDef(loraOutQueue, 8, uint8_t);
   loraOutQueueHandle = osMessageCreate(osMessageQ(loraOutQueue), NULL);
 
   /* definition and creation of loraMacQueue */
-/* what about the sizeof here??? cd native code */
   osMessageQDef(loraMacQueue, 32, uint8_t);
   loraMacQueueHandle = osMessageCreate(osMessageQ(loraMacQueue), NULL);
 
   /* definition and creation of gpscomInQueue */
-/* what about the sizeof here??? cd native code */
   osMessageQDef(gpscomInQueue, 64, uint8_t);
   gpscomInQueueHandle = osMessageCreate(osMessageQ(gpscomInQueue), NULL);
 
   /* definition and creation of gpscomOutQueue */
-/* what about the sizeof here??? cd native code */
   osMessageQDef(gpscomOutQueue, 8, uint8_t);
   gpscomOutQueueHandle = osMessageCreate(osMessageQ(gpscomOutQueue), NULL);
 
   /* definition and creation of sensorsOutQueue */
-/* what about the sizeof here??? cd native code */
   osMessageQDef(sensorsOutQueue, 32, uint8_t);
   sensorsOutQueueHandle = osMessageCreate(osMessageQ(sensorsOutQueue), NULL);
 
   /* definition and creation of sensorsInQueue */
-/* what about the sizeof here??? cd native code */
   osMessageQDef(sensorsInQueue, 8, uint8_t);
   sensorsInQueueHandle = osMessageCreate(osMessageQ(sensorsInQueue), NULL);
 
   /* definition and creation of interOutQueue */
-/* what about the sizeof here??? cd native code */
   osMessageQDef(interOutQueue, 256, uint8_t);
   interOutQueueHandle = osMessageCreate(osMessageQ(interOutQueue), NULL);
 
@@ -342,7 +353,13 @@ void MX_FREERTOS_Init(void) {
   /* USER CODE END RTOS_QUEUES */
 }
 
-/* StartDefaultTask function */
+/* USER CODE BEGIN Header_StartDefaultTask */
+/**
+  * @brief  Function implementing the defaultTask thread.
+  * @param  argument: Not used 
+  * @retval None
+  */
+/* USER CODE END Header_StartDefaultTask */
 void StartDefaultTask(void const * argument)
 {
   /* init code for USB_DEVICE */
@@ -358,7 +375,13 @@ void StartDefaultTask(void const * argument)
   /* USER CODE END StartDefaultTask */
 }
 
-/* StartUsbToHostTask function */
+/* USER CODE BEGIN Header_StartUsbToHostTask */
+/**
+* @brief Function implementing the usbToHostTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartUsbToHostTask */
 void StartUsbToHostTask(void const * argument)
 {
   /* USER CODE BEGIN StartUsbToHostTask */
@@ -375,7 +398,13 @@ void StartUsbToHostTask(void const * argument)
   /* USER CODE END StartUsbToHostTask */
 }
 
-/* StartUsbFromHostTask function */
+/* USER CODE BEGIN Header_StartUsbFromHostTask */
+/**
+* @brief Function implementing the usbFromHostTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartUsbFromHostTask */
 void StartUsbFromHostTask(void const * argument)
 {
   /* USER CODE BEGIN StartUsbFromHostTask */
@@ -392,7 +421,13 @@ void StartUsbFromHostTask(void const * argument)
   /* USER CODE END StartUsbFromHostTask */
 }
 
-/* StartControllerTask function */
+/* USER CODE BEGIN Header_StartControllerTask */
+/**
+* @brief Function implementing the controllerTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartControllerTask */
 void StartControllerTask(void const * argument)
 {
   /* USER CODE BEGIN StartControllerTask */
@@ -410,7 +445,13 @@ void StartControllerTask(void const * argument)
   /* USER CODE END StartControllerTask */
 }
 
-/* StartInterpreterTask function */
+/* USER CODE BEGIN Header_StartInterpreterTask */
+/**
+* @brief Function implementing the interpreterTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartInterpreterTask */
 void StartInterpreterTask(void const * argument)
 {
   /* USER CODE BEGIN StartInterpreterTask */
@@ -428,7 +469,13 @@ void StartInterpreterTask(void const * argument)
   /* USER CODE END StartInterpreterTask */
 }
 
-/* StartLoraTask function */
+/* USER CODE BEGIN Header_StartLoraTask */
+/**
+* @brief Function implementing the loraTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartLoraTask */
 void StartLoraTask(void const * argument)
 {
   /* USER CODE BEGIN StartLoraTask */
@@ -446,7 +493,13 @@ void StartLoraTask(void const * argument)
   /* USER CODE END StartLoraTask */
 }
 
-/* StartGpscomTask function */
+/* USER CODE BEGIN Header_StartGpscomTask */
+/**
+* @brief Function implementing the gpscomTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartGpscomTask */
 void StartGpscomTask(void const * argument)
 {
   /* USER CODE BEGIN StartGpscomTask */
@@ -464,7 +517,13 @@ void StartGpscomTask(void const * argument)
   /* USER CODE END StartGpscomTask */
 }
 
-/* StartSensorsTask function */
+/* USER CODE BEGIN Header_StartSensorsTask */
+/**
+* @brief Function implementing the sensorsTask thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_StartSensorsTask */
 void StartSensorsTask(void const * argument)
 {
   /* USER CODE BEGIN StartSensorsTask */
@@ -498,6 +557,7 @@ void gpscomtRXTimerCallback(void const * argument)
   /* USER CODE END gpscomtRXTimerCallback */
 }
 
+/* Private application code --------------------------------------------------*/
 /* USER CODE BEGIN Application */
      
 /* USER CODE END Application */

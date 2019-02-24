@@ -254,7 +254,7 @@ static void prvControllerPrintMCU(void)
   uint32_t adc1Vdda_mV = adcGetVdda_mV();
 
   /* Request ADC1 Vbat */
-  uint32_t adc1Vbat_mV    = adcGetVbat_mV();
+  uint32_t adc1Vbat_mV = adcGetVbat_mV();
 
   /* Request ADC1 Temp */
   int32_t  adc1Temp_100   = adcGetTemp_100();
