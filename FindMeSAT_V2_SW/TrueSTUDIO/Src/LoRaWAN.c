@@ -889,8 +889,17 @@ uint8_t LoRaWAN_calc_randomChannel(LoRaWANctx_t* ctx)
   static uint8_t s_channel = 255;
   uint8_t channel;
 
+#if 1  // as long as rand() is kaputt, use this term
+  static uint32_t r = 0xeb2794fbUL;
+#endif
+
   do {
+#if 1
+    r = r * 37 ^ (r >> 31) ^ (r >> 17) ^ (r >> 6) ^ 1UL;
+    channel = (r % 16);
+#else
     channel = (rand() % 16);
+#endif
     if (!((1UL << channel) & ctx->LinkADR_ChannelMask)) {
       /* Channel disabled, try another channel */
       channel = s_channel;

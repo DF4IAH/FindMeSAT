@@ -259,43 +259,6 @@ void MX_FREERTOS_Init(void) {
 
   /* USER CODE END RTOS_TIMERS */
 
-  /* Create the thread(s) */
-  /* definition and creation of defaultTask */
-  osThreadDef(defaultTask, StartDefaultTask, osPriorityLow, 0, 128);
-  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
-
-  /* definition and creation of usbToHostTask */
-  osThreadDef(usbToHostTask, StartUsbToHostTask, osPriorityAboveNormal, 0, 128);
-  usbToHostTaskHandle = osThreadCreate(osThread(usbToHostTask), NULL);
-
-  /* definition and creation of usbFromHostTask */
-  osThreadDef(usbFromHostTask, StartUsbFromHostTask, osPriorityAboveNormal, 0, 128);
-  usbFromHostTaskHandle = osThreadCreate(osThread(usbFromHostTask), NULL);
-
-  /* definition and creation of controllerTask */
-  osThreadDef(controllerTask, StartControllerTask, osPriorityNormal, 0, 1024);
-  controllerTaskHandle = osThreadCreate(osThread(controllerTask), NULL);
-
-  /* definition and creation of interpreterTask */
-  osThreadDef(interpreterTask, StartInterpreterTask, osPriorityNormal, 0, 512);
-  interpreterTaskHandle = osThreadCreate(osThread(interpreterTask), NULL);
-
-  /* definition and creation of loraTask */
-  osThreadDef(loraTask, StartLoraTask, osPriorityHigh, 0, 2048);
-  loraTaskHandle = osThreadCreate(osThread(loraTask), NULL);
-
-  /* definition and creation of gpscomTask */
-  osThreadDef(gpscomTask, StartGpscomTask, osPriorityRealtime, 0, 1024);
-  gpscomTaskHandle = osThreadCreate(osThread(gpscomTask), NULL);
-
-  /* definition and creation of sensorsTask */
-  osThreadDef(sensorsTask, StartSensorsTask, osPriorityAboveNormal, 0, 128);
-  sensorsTaskHandle = osThreadCreate(osThread(sensorsTask), NULL);
-
-  /* USER CODE BEGIN RTOS_THREADS */
-  /* add threads, ... */
-  /* USER CODE END RTOS_THREADS */
-
   /* Create the queue(s) */
   /* definition and creation of usbToHostQueue */
   osMessageQDef(usbToHostQueue, 512, uint8_t);
@@ -351,6 +314,44 @@ void MX_FREERTOS_Init(void) {
   vQueueAddToRegistry(sensorsOutQueueHandle,      "sensorsOutQ");
   vQueueAddToRegistry(interOutQueueHandle,        "interOutQ");
   /* USER CODE END RTOS_QUEUES */
+
+  /* Create the thread(s) */
+  /* definition and creation of defaultTask */
+  osThreadDef(defaultTask, StartDefaultTask, osPriorityLow, 0, 128);
+  defaultTaskHandle = osThreadCreate(osThread(defaultTask), NULL);
+
+  /* definition and creation of usbToHostTask */
+  osThreadDef(usbToHostTask, StartUsbToHostTask, osPriorityAboveNormal, 0, 128);
+  usbToHostTaskHandle = osThreadCreate(osThread(usbToHostTask), NULL);
+
+  /* definition and creation of usbFromHostTask */
+  osThreadDef(usbFromHostTask, StartUsbFromHostTask, osPriorityAboveNormal, 0, 128);
+  usbFromHostTaskHandle = osThreadCreate(osThread(usbFromHostTask), NULL);
+
+  /* definition and creation of controllerTask */
+  osThreadDef(controllerTask, StartControllerTask, osPriorityNormal, 0, 1024);
+  controllerTaskHandle = osThreadCreate(osThread(controllerTask), NULL);
+
+  /* definition and creation of interpreterTask */
+  osThreadDef(interpreterTask, StartInterpreterTask, osPriorityNormal, 0, 512);
+  interpreterTaskHandle = osThreadCreate(osThread(interpreterTask), NULL);
+
+  /* definition and creation of loraTask */
+  osThreadDef(loraTask, StartLoraTask, osPriorityHigh, 0, 2048);
+  loraTaskHandle = osThreadCreate(osThread(loraTask), NULL);
+
+  /* definition and creation of gpscomTask */
+  osThreadDef(gpscomTask, StartGpscomTask, osPriorityRealtime, 0, 1024);
+  gpscomTaskHandle = osThreadCreate(osThread(gpscomTask), NULL);
+
+  /* definition and creation of sensorsTask */
+  osThreadDef(sensorsTask, StartSensorsTask, osPriorityAboveNormal, 0, 128);
+  sensorsTaskHandle = osThreadCreate(osThread(sensorsTask), NULL);
+
+  /* USER CODE BEGIN RTOS_THREADS */
+  /* add threads, ... */
+  /* USER CODE END RTOS_THREADS */
+
 }
 
 /* USER CODE BEGIN Header_StartDefaultTask */

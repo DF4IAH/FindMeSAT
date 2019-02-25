@@ -201,7 +201,7 @@ void Error_Handler(void);
 #endif
 
 
-#define FINDMESAT_VERSION   20190223U
+#define FINDMESAT_VERSION   20190225U
 
 
 typedef enum ENABLE_MASK {
