@@ -1175,7 +1175,7 @@ status_code_t spi_ax_sync2Powerdown(void)
 	return STATUS_OK;
 }
 
-static void s_spi_ax_xtal_waitReady(void)
+static void spi_ax_xtal_waitReady(void)
 {
 	/*  Wait until crystal oscillator is ready */
 	do {
