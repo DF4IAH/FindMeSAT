@@ -1,4 +1,4 @@
-
+/* USER CODE BEGIN Header */
 /**
   ******************************************************************************
   * @file           : main.c
@@ -10,7 +10,7 @@
   * inserted by the user or by software development tools
   * are owned by their respective copyright owners.
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
+  * Copyright (c) 2019 STMicroelectronics International N.V. 
   * All rights reserved.
   *
   * Redistribution and use in source and binary forms, with or without 
@@ -46,9 +46,10 @@
   *
   ******************************************************************************
   */
+/* USER CODE END Header */
+
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "stm32l4xx_hal.h"
 #include "cmsis_os.h"
 #include "adc.h"
 #include "crc.h"
@@ -61,6 +62,7 @@
 #include "usb_device.h"
 #include "gpio.h"
 
+/* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stddef.h>
 #include <sys/_stdint.h>
@@ -82,6 +84,21 @@
 
 
 /* USER CODE END Includes */
+
+/* Private typedef -----------------------------------------------------------*/
+/* USER CODE BEGIN PTD */
+
+/* USER CODE END PTD */
+
+/* Private define ------------------------------------------------------------*/
+/* USER CODE BEGIN PD */
+
+/* USER CODE END PD */
+
+/* Private macro -------------------------------------------------------------*/
+/* USER CODE BEGIN PM */
+
+/* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
@@ -122,7 +139,6 @@ volatile uint32_t           g_TIM5_ofs                        = 0UL;
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 void MX_FREERTOS_Init(void);
-
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_16MHz(void);
@@ -130,17 +146,15 @@ void SMPS_Init(void);
 
 /* USER CODE END PFP */
 
+/* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
 
 void mainDefaultTaskInit(void)
 {
   /* -1- Enable GPIO Clock (to be able to program the configuration registers) */
-  LED1_GPIO_CLK_ENABLE()
-  ;  // Green
-  LED2_GPIO_CLK_ENABLE()
-  ;  // Blue
-  LED3_GPIO_CLK_ENABLE()
-  ;  // Red
+  LED1_GPIO_CLK_ENABLE();  // Green
+  LED2_GPIO_CLK_ENABLE();  // Blue
+  LED3_GPIO_CLK_ENABLE();  // Red
 
   /* -2- Configure IO in output push-pull mode to drive external LEDs */
   GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
@@ -153,6 +167,12 @@ void mainDefaultTaskInit(void)
   HAL_GPIO_Init(LED2_GPIO_PORT, &GPIO_InitStruct);
   GPIO_InitStruct.Pin = LED3_PIN;
   HAL_GPIO_Init(LED3_GPIO_PORT, &GPIO_InitStruct);
+
+  /* Enable 1PPS time capture on TIM5/Channel2 */
+  HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2);
+
+  /* Enable external SMPS for Vdd12 */
+  SMPS_Init();
 }
 
 void mainDefaultTaskLoop(void)
@@ -172,8 +192,7 @@ void mainDefaultTaskLoop(void)
 
 /**
   * @brief  The application entry point.
-  *
-  * @retval None
+  * @retval int
   */
 int main(void)
 {
@@ -193,7 +212,7 @@ int main(void)
 
   /* USER CODE END 1 */
 
-  /* MCU Configuration----------------------------------------------------------*/
+  /* MCU Configuration--------------------------------------------------------*/
 
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
@@ -226,12 +245,6 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
 
-  /* Enable 1PPS time capture on TIM5/Channel2 */
-  HAL_TIM_IC_Start_IT(&htim5, TIM_CHANNEL_2);
-
-  /* Enable external SMPS for Vdd12 */
-  SMPS_Init();
-
   /* Speed down to 16 MHz */
   SystemClock_16MHz();
 
@@ -253,12 +266,11 @@ int main(void)
 
   while (1)
   {
-  /* USER CODE END WHILE */
+    /* USER CODE END WHILE */
 
-  /* USER CODE BEGIN 3 */
+    /* USER CODE BEGIN 3 */
   }
   /* USER CODE END 3 */
-
 }
 
 /**
@@ -267,33 +279,29 @@ int main(void)
   */
 void SystemClock_Config(void)
 {
+  RCC_OscInitTypeDef RCC_OscInitStruct = {0};
+  RCC_ClkInitTypeDef RCC_ClkInitStruct = {0};
+  RCC_PeriphCLKInitTypeDef PeriphClkInit = {0};
 
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
-  RCC_PeriphCLKInitTypeDef PeriphClkInit;
-
-    /**Configure LSE Drive Capability 
-    */
+  /** Configure LSE Drive Capability 
+  */
   HAL_PWR_EnableBkUpAccess();
-
   __HAL_RCC_LSEDRIVE_CONFIG(RCC_LSEDRIVE_LOW);
-
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
+  /** Initializes the CPU, AHB and APB busses clocks 
+  */
   RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI48|RCC_OSCILLATORTYPE_HSI
                               |RCC_OSCILLATORTYPE_LSE;
   RCC_OscInitStruct.LSEState = RCC_LSE_ON;
   RCC_OscInitStruct.HSIState = RCC_HSI_ON;
   RCC_OscInitStruct.HSI48State = RCC_HSI48_ON;
-  RCC_OscInitStruct.HSICalibrationValue = 64;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
-
-    /**Initializes the CPU, AHB and APB busses clocks 
-    */
+  /** Initializes the CPU, AHB and APB busses clocks 
+  */
   RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_HCLK|RCC_CLOCKTYPE_SYSCLK
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
@@ -303,9 +311,8 @@ void SystemClock_Config(void)
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
-
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_USART3
                               |RCC_PERIPHCLK_UART5|RCC_PERIPHCLK_LPUART1
                               |RCC_PERIPHCLK_I2C1|RCC_PERIPHCLK_USB
@@ -326,30 +333,17 @@ void SystemClock_Config(void)
   PeriphClkInit.PLLSAI1.PLLSAI1ClockOut = RCC_PLLSAI1_ADC1CLK;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
-
-    /**Configure the main internal regulator output voltage 
-    */
+  /** Configure the main internal regulator output voltage 
+  */
   if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
-
-    /**Configure the Systick interrupt time 
-    */
-  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
-
-    /**Configure the Systick 
-    */
-  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-
-    /**Enable MSI Auto calibration 
-    */
+  /** Enable MSI Auto calibration 
+  */
   HAL_RCCEx_EnableMSIPLLMode();
-
-  /* SysTick_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SysTick_IRQn, 15, 0);
 }
 
 /* USER CODE BEGIN 4 */
@@ -376,7 +370,7 @@ void SystemClock_16MHz(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
 
     /**Initializes the CPU, AHB and APB busses clocks
@@ -390,7 +384,7 @@ void SystemClock_16MHz(void)
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
 
   PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_RTC|RCC_PERIPHCLK_UART5
@@ -403,14 +397,14 @@ void SystemClock_16MHz(void)
   PeriphClkInit.UsbClockSelection = RCC_USBCLKSOURCE_HSI48;
   if (HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
 
     /**Configure the main internal regulator output voltage
     */
   if (HAL_PWREx_ControlVoltageScaling(PWR_REGULATOR_VOLTAGE_SCALE1) != HAL_OK)
   {
-    _Error_Handler(__FILE__, __LINE__);
+    Error_Handler();
   }
 
     /**Configure the Systick interrupt time
@@ -499,7 +493,7 @@ unsigned long getRunTimeCounterValue(void)
 }
 
 
-/* Adjusts the global timers TIM4 / TIM3 / TIM5 with UNIX time (�s) */
+/* Adjusts the global timers TIM4 / TIM3 / TIM5 with UNIX time (ï¿½s) */
 int32_t setRealTime(uint64_t unixTime_us)
 {
   uint16_t  l_TIM4_CNT;
@@ -542,7 +536,7 @@ int32_t setRealTime(uint64_t unixTime_us)
   return (int32_t) l_diff_last;
 }
 
-/* Returns the UNIX time in �s */
+/* Returns the UNIX time in ï¿½s */
 uint64_t getRealTime(void)
 {
   uint16_t  l_TIM4_CNT;
@@ -738,15 +732,13 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 
 /**
   * @brief  This function is executed in case of error occurrence.
-  * @param  file: The file name as string.
-  * @param  line: The line in file as a number.
   * @retval None
   */
-void _Error_Handler(char *file, int line)
+void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  vAssertCalled(file, line);
+  vAssertCalled(__FILE__, __LINE__);
   /* USER CODE END Error_Handler_Debug */
 }
 
@@ -758,20 +750,12 @@ void _Error_Handler(char *file, int line)
   * @param  line: assert_param error line source number
   * @retval None
   */
-void assert_failed(uint8_t* file, uint32_t line)
+void assert_failed(char *file, uint32_t line)
 { 
   /* USER CODE BEGIN 6 */
   vAssertCalled((char *) file, line);
   /* USER CODE END 6 */
 }
 #endif /* USE_FULL_ASSERT */
-
-/**
-  * @}
-  */
-
-/**
-  * @}
-  */
 
 /************************ (C) COPYRIGHT STMicroelectronics *****END OF FILE****/

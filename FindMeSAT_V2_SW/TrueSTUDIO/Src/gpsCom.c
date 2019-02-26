@@ -11,6 +11,8 @@
 #include <stdlib.h>
 #include <math.h>
 #include <time.h>
+#include <stdio.h>
+
 #include "stm32l4xx_hal.h"
 #include "cmsis_os.h"
 #include "FreeRTOS.h"

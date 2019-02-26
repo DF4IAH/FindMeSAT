@@ -4,45 +4,15 @@
   * Description        : This file provides code for the configuration
   *                      of the SPI instances.
   ******************************************************************************
-  * This notice applies to any and all portions of this file
-  * that are not between comment pairs USER CODE BEGIN and
-  * USER CODE END. Other portions of this file, whether 
-  * inserted by the user or by software development tools
-  * are owned by their respective copyright owners.
+  * @attention
   *
-  * Copyright (c) 2018 STMicroelectronics International N.V. 
-  * All rights reserved.
+  * <h2><center>&copy; Copyright (c) 2019 STMicroelectronics.
+  * All rights reserved.</center></h2>
   *
-  * Redistribution and use in source and binary forms, with or without 
-  * modification, are permitted, provided that the following conditions are met:
-  *
-  * 1. Redistribution of source code must retain the above copyright notice, 
-  *    this list of conditions and the following disclaimer.
-  * 2. Redistributions in binary form must reproduce the above copyright notice,
-  *    this list of conditions and the following disclaimer in the documentation
-  *    and/or other materials provided with the distribution.
-  * 3. Neither the name of STMicroelectronics nor the names of other 
-  *    contributors to this software may be used to endorse or promote products 
-  *    derived from this software without specific written permission.
-  * 4. This software, including modifications and/or derivative works of this 
-  *    software, must execute solely and exclusively on microcontroller or
-  *    microprocessor devices manufactured by or for STMicroelectronics.
-  * 5. Redistribution and use of this software other than as permitted under 
-  *    this license is void and will automatically terminate your rights under 
-  *    this license. 
-  *
-  * THIS SOFTWARE IS PROVIDED BY STMICROELECTRONICS AND CONTRIBUTORS "AS IS" 
-  * AND ANY EXPRESS, IMPLIED OR STATUTORY WARRANTIES, INCLUDING, BUT NOT 
-  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A 
-  * PARTICULAR PURPOSE AND NON-INFRINGEMENT OF THIRD PARTY INTELLECTUAL PROPERTY
-  * RIGHTS ARE DISCLAIMED TO THE FULLEST EXTENT PERMITTED BY LAW. IN NO EVENT 
-  * SHALL STMICROELECTRONICS OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
-  * INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
-  * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, 
-  * OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF 
-  * LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING 
-  * NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE,
-  * EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+  * This software component is licensed by ST under Ultimate Liberty license
+  * SLA0044, the "License"; You may not use this file except in compliance with
+  * the License. You may obtain a copy of the License at:
+  *                             www.st.com/SLA0044
   *
   ******************************************************************************
   */
@@ -54,7 +24,6 @@
 #endif
 
 /* Includes ------------------------------------------------------------------*/
-#include "stm32l4xx_hal.h"
 #include "main.h"
 
 /* USER CODE BEGIN Includes */
@@ -70,7 +39,7 @@ extern SPI_HandleTypeDef hspi1;
 #define SPI_WR_FLAG   (1 << 7)
 #define SPI_RD_FLAG   (0 << 7)
 
-typedef enum spiSX1276_Mode {
+typedef enum spiSX1272_Mode {
   TXRX_MODE_MASK          = 0x0f,
   SLEEP                   = (0b000 << 0),
   STANDBY                 = (0b001 << 0),
@@ -80,9 +49,6 @@ typedef enum spiSX1276_Mode {
   RXCONTINUOUS            = (0b101 << 0),
   RXSINGLE                = (0b110 << 0),
   CAD                     = (0b111 << 0),
-
-  LOW_FREQ_MODE_OFF       = (0b0 << 3),
-  LOW_FREQ_MODE_ON        = (0b1 << 3),
 
   /* Non-LoRa Mode */
   MOD_TYPE_FSK            = (0b00 << 5),
@@ -94,32 +60,31 @@ typedef enum spiSX1276_Mode {
 
   MODE_FSK_OOK            = (0b0 << 7),
   MODE_LoRa               = (0b1 << 7)
-} spiSX1276_Mode_t;
+} spiSX1272_Mode_t;
 
-typedef enum spiSX1276_ModemConfig1 {
-  IHM_OFF                 = (0b0 << 0),
-  IHM_ON                  = (0b1 << 0),
+typedef enum spiSX1272_ModemConfig1 {
+  LOW_DR_OPTI_OFF         = (0b0 << 0),
+  LOW_DR_OPTI_ON          = (0b1 << 0),
 
-  CR_4_5                  = (0b001 << 1),
-  CR_4_6                  = (0b010 << 1),
-  CR_4_7                  = (0b011 << 1),
-  CR_4_8                  = (0b100 << 1),
+  RX_PAYLOAD_CRC_OFF      = (0b0 << 1),
+  RX_PAYLOAD_CRC_ON       = (0b1 << 1),
 
-  BW_7kHz8                = (0b0000 << 4),
-  BW_10kHz4               = (0b0001 << 4),
-  BW_15kHz6               = (0b0010 << 4),
-  BW_20kHz8               = (0b0011 << 4),
-  BW_31kHz25              = (0b0100 << 4),
-  BW_41kHz7               = (0b0101 << 4),
-  BW_62kHz5               = (0b0110 << 4),
-  BW_125kHz               = (0b0111 << 4),
-  BW_250kHz               = (0b1000 << 4),
-  BW_500kHz               = (0b1001 << 4)
-} spiSX1276_ModemConfig1_t;
+  IHM_OFF                 = (0b0 << 2),
+  IHM_ON                  = (0b1 << 2),
 
-typedef enum spiSX1276_ModemConfig2 {
-  RX_PAYLOAD_CRC_OFF      = (0b0 << 2),
-  RX_PAYLOAD_CRC_ON       = (0b1 << 2),
+  CR_4_5                  = (0b001 << 3),
+  CR_4_6                  = (0b010 << 3),
+  CR_4_7                  = (0b011 << 3),
+  CR_4_8                  = (0b100 << 3),
+
+  BW_125kHz               = (0b00 << 6),
+  BW_250kHz               = (0b01 << 6),
+  BW_500kHz               = (0b10 << 6)
+} spiSX1272_ModemConfig1_t;
+
+typedef enum spiSX1272_ModemConfig2 {
+  AGC_AUTO_OFF            = (0b0 << 2),
+  AGC_AUTO_ON             = (0b1 << 2),
 
   TXCONT_OFF              = (0b0 << 3),
   TXCONT_ON               = (0b1 << 3),
@@ -139,15 +104,7 @@ typedef enum spiSX1276_ModemConfig2 {
   SF11_DR1                = ( 11 << 4),
   SF12_DR0_VAL            =   12      ,
   SF12_DR0                = ( 12 << 4)
-} spiSX1276_ModemConfig2_t;
-
-typedef enum spiSX1276_ModemConfig3 {
-  AGC_AUTO_OFF            = (0b0 << 2),
-  AGC_AUTO_ON             = (0b1 << 2),
-
-  LOW_DR_OPTI_OFF         = (0b0 << 3),
-  LOW_DR_OPTI_ON          = (0b1 << 3)
-} spiSX1276_ModemConfig3_t;
+} spiSX1272_ModemConfig2_t;
 
 typedef enum spiSX127x_DetectOptimize {
   OPTI_SF7_to_SF12        = (0b011 << 0),
@@ -182,11 +139,9 @@ typedef enum spiSX127x_PaRamp {
   LOW_PWR_PLL_ON          = (0b1 << 4)
 } spiSX127x_PaRamp_t;
 
-typedef enum spiSX1276_LNA {
-  LnaBoost_Hf_OFF         = (0b00 << 0),
-  LnaBoost_Hf_ON          = (0b11 << 0),
-
-  LnaBoost_Lf_XXX         = (0b00 << 3),
+typedef enum spiSX1272_LNA {
+  LnaBoost_OFF            = (0b00 << 0),
+  LnaBoost_ON             = (0b11 << 0),
 
   LnaGain_G1              = (0b001 << 5),
   LnaGain_G2              = (0b010 << 5),
@@ -194,7 +149,7 @@ typedef enum spiSX1276_LNA {
   LnaGain_G4              = (0b100 << 5),
   LnaGain_G5              = (0b101 << 5),
   LnaGain_G6              = (0b110 << 5)
-} spiSX1276_LNA_t;
+} spiSX1272_LNA_t;
 
 typedef enum spiSX127x_IRQ_Mask {
   CadDetectedMask         = 0,
@@ -218,8 +173,6 @@ typedef enum DIO_TxRx_Mode {
 
 /* USER CODE END Private defines */
 
-extern void _Error_Handler(char *, int);
-
 void MX_SPI1_Init(void);
 
 /* USER CODE BEGIN Prototypes */
@@ -231,7 +184,6 @@ uint8_t spiProcessSpiMsg(uint8_t msgLen);
 
 void spiSX127xReset(void);
 void spiSX127xFrequency_MHz(float mhz);
-uint8_t spiSX1276Power_GetSetting(LoRaWANctx_t* ctx);
 void spiSX127xDio_Mapping(DIO_TxRx_Mode_t mode);
 uint8_t spiSX127xDR_to_SF(DataRates_t dr);
 
@@ -242,15 +194,15 @@ void spiSX127xLoRa_Fifo_SetFifoPtrFromTxBase(void);
 void spiSX127xLoRa_Fifo_SetFifoPtrFromRxBase(void);
 
 uint8_t spiSX127xGetMode(void);
-void spiSX1276Mode(spiSX1276_Mode_t mode);
+void spiSX1272Mode(spiSX1272_Mode_t mode);
 void spiSX127xRegister_IRQ_clearAll(void);
 void spiSX127xRegister_IRQ_enableBits(uint8_t enaBits);
-void spiSX1276_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg);
+void spiSX1272_TxRx_Preps(LoRaWANctx_t* ctx, DIO_TxRx_Mode_t mode, LoRaWAN_TX_Message_t* msg);
 uint32_t spiSX127x_WaitUntil_TxDone(uint32_t stopTime);
 void spiSX127x_WaitUntil_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg, uint32_t stopTime1, uint32_t stopTime2);
 void spiSX127x_Process_RxDone(LoRaWANctx_t* ctx, LoRaWAN_RX_Message_t* msg);
 
-uint8_t spiDetectShieldSX1276(void);
+uint8_t spiDetectShieldSX1272(void);
 
 /* USER CODE END Prototypes */
 
